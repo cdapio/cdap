@@ -4,15 +4,13 @@
 
 package com.continuuity.internal.app.deploy;
 
-import com.continuuity.TestHelper;
 import com.continuuity.ToyApp;
 import com.continuuity.WebCrawlApp;
-import com.continuuity.app.DefaultId;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.JarFinder;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.test.app.DefaultId;
+import com.continuuity.test.app.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -21,7 +19,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.jar.Manifest;
 

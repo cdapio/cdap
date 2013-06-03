@@ -4,7 +4,6 @@
 
 package com.continuuity.internal.app.program;
 
-import com.continuuity.TestHelper;
 import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
@@ -40,6 +39,8 @@ import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.test.app.DefaultId;
+import com.continuuity.test.app.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.base.Charsets;
 import com.google.inject.AbstractModule;
@@ -62,7 +63,7 @@ public class MDSBasedStoreTest {
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
     // cleanups data
     TestHelper.getInjector().getInstance(OperationExecutor.class)
-      .execute(new OperationContext("developer"), new ClearFabric());
+      .execute(new OperationContext(DefaultId.ACCOUNT.getId()), new ClearFabric());
   }
 
   @Test
@@ -87,7 +88,7 @@ public class MDSBasedStoreTest {
   @Test
   public void testLoadingProgram() throws Exception {
     TestHelper.deployApplication(ToyApp.class);
-    Program program = store.loadProgram(Id.Program.from("developer", "ToyApp", "ToyFlow"), Type.FLOW);
+    Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"), Type.FLOW);
     Assert.assertNotNull(program);
   }
 
@@ -388,7 +389,8 @@ public class MDSBasedStoreTest {
 
     ApplicationSpecification spec = new WordCountApp().configure();
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
-    Id.Application appId = new Id.Application(new Id.Account("developer"), spec.getName());
+    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
+//    final Id.Application appId = DefaultId.APPLICATION;
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Id.Program programId = new Id.Program(appId, "WordCountFlow");

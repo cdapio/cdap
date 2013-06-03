@@ -38,8 +38,9 @@ import java.util.jar.JarFile;
  */
 public class AppFabricClient {
 
-  private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help",
-    "promote", "status");
+  private static final String DEVELOPER_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
+  private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
+                                                                 "status");
   private final String ARCHIVE_LONG_OPT_ARG = "archive";
   private final String APPLICATION_LONG_OPT_ARG = "application";
   private final String PROCEDURE_LONG_OPT_ARG = "procedure";
@@ -93,15 +94,15 @@ public class AppFabricClient {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
-          identifier = new FlowIdentifier("developer", application, this.flow, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Starting flow %s for application %s ",this.flow, this.application));
         } else if (this.mapReduce != null) {
-          identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
           System.out.println(String.format("Starting mapreduce job %s for application %s ",this.mapReduce, this.application));
         } else {
-          identifier = new FlowIdentifier("developer", application, this.procedure, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Starting procedure %s for application %s ",
                                             this.procedure, this.application));
@@ -116,16 +117,16 @@ public class AppFabricClient {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
-          identifier = new FlowIdentifier("developer", application, this.flow, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Stopping flow %s for application %s ",this.flow, this.application));
         } else if (this.mapReduce != null) {
-          identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
           System.out.println(String.format("Killing mapreduce job %s for application %s ",
             this.mapReduce, this.application));
         } else {
-          identifier = new FlowIdentifier("developer", application, this.procedure, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Stopping procedure %s for application %s ",
             this.procedure, this.application));
@@ -136,7 +137,7 @@ public class AppFabricClient {
       }
 
       if ("promote".equals(command)) {
-        ResourceIdentifier identifier = new ResourceIdentifier("developer", this.application, "noresource", 1);
+        ResourceIdentifier identifier = new ResourceIdentifier(DEVELOPER_ACCOUNT_ID, this.application, "noresource", 1);
         boolean status = client.promote(new AuthToken(this.authToken), identifier, this.hostname);
         if (status) {
           System.out.println("Promoted to cloud");
@@ -148,13 +149,13 @@ public class AppFabricClient {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
-          identifier = new FlowIdentifier("developer", application, this.flow, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Getting status for flow %s in application %s ",
                                             this.flow, this.application));
         }
         else {
-          identifier = new FlowIdentifier("developer", application, this.procedure, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Getting status for procedure %s in application %s ",
             this.flow, this.application));
@@ -324,7 +325,10 @@ public class AppFabricClient {
     AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
     System.out.println(String.format("Deploying... :%s", this.resource));
 
-    ResourceIdentifier identifier = client.init(dummyAuthToken, new ResourceInfo("developer","", file.getName(),                                                                    (int)file.getTotalSpace(), file.lastModified()));
+    ResourceIdentifier identifier =
+      client.init(dummyAuthToken, new ResourceInfo(DEVELOPER_ACCOUNT_ID,"", file.getName(), (int)file.getTotalSpace(),
+                                                   file.lastModified()));
+
     Preconditions.checkNotNull(identifier, "Resource identifier is null");
 
     BufferFileInputStream is =

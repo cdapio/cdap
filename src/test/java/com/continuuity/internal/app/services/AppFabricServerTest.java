@@ -4,16 +4,14 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.TempFolder;
-import com.continuuity.app.guice.AppFabricTestModule;
+import com.continuuity.test.app.TempFolder;
+import com.continuuity.test.app.guice.AppFabricTestModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.weave.internal.utils.Networks;
-import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
