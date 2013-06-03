@@ -6,6 +6,9 @@ smartyFacts {
         enableJavadoc()
         enableSourceJar()
     }
+    testbase {
+      enableJavadoc()
+    }
 }
 
 dependencies {
