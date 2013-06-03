@@ -173,7 +173,7 @@ rotate_log () {
 # Copyright message
 print_copyright() {
     echo "======================================================================================"
-    echo "Continuuity AppFabric (tm) - Copyright 2012-2013 Continuuity,Inc. All Rights Reserved."
+    echo "Continuuity Reactor (tm) - Copyright 2012-2013 Continuuity,Inc. All Rights Reserved."
     echo "======================================================================================"
 }
 
@@ -189,11 +189,11 @@ start() {
 
     print_copyright
     check_for_updates
-    echo -n "Starting Continuuity AppFabric (tm)"
+    echo -n "Starting Continuuity Reactor (tm)"
     while kill -0 $! ; do
-      if grep 'AppFabric started successfully' $APP_HOME/logs/appfabric.log > /dev/null 2>&1; then
+      if grep 'Reactor started successfully' $APP_HOME/logs/appfabric.log > /dev/null 2>&1; then
         echo ""
-        grep -A 1 'AppFabric started successfully' $APP_HOME/logs/appfabric.log
+        grep -A 1 'Reactor started successfully' $APP_HOME/logs/appfabric.log
         break
       else
         echo -n "."
@@ -208,7 +208,7 @@ stop() {
       # kill -0 == see if the PID exists
       if kill -0 $pidToKill > /dev/null 2>&1; then
         print_copyright
-        echo -n "Stopping Continuuity AppFabric (tm)"
+        echo -n "Stopping Continuuity Reactor (tm)"
         kill $pidToKill > /dev/null 2>&1
         while kill -0 $pidToKill > /dev/null 2>&1;
         do
