@@ -42,6 +42,20 @@ task jshint << {
   if(executeCommand(cloud) != 0) {
     throw new GradleScriptException("JSHint reported errors while building cloud app", null)
   }
+
+  def enterprise = [
+    "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
+    "$rootProject.projectDir/web-cloud-app/client/core/models/",
+    "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
+    "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
+    "$rootProject.projectDir/web-cloud-app/client/core/",
+    "$rootProject.projectDir/web-cloud-app/client/enterprise/patch/views",
+    "$rootProject.projectDir/web-cloud-app/server/enterprise/main.js",
+    "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
+  ]
+  if(executeCommand(enterprise) != 0) {
+    throw new GradleScriptException("JSHint reported errors while building enterprise app", null)
+  }
 }
 
 /**
@@ -129,6 +143,10 @@ task developer(dependsOn: ['jshint', 'nodeTests']) {
   build_edition('developer', null)
 }
 
+task enterprise(dependsOn: ['jshint', 'nodeTests']) {
+  build_edition('enterprise', null)
+}
+
 task prepackager(dependsOn: 'build', overwrite: true) {
   def stageDir = file("$buildDir/stage-packaging")
   def installDir = file("$stageDir/opt/continuuity/$project.name")
@@ -148,4 +166,4 @@ task prepackager(dependsOn: 'build', overwrite: true) {
 debianPrepackager.dependsOn prepackager
 rpmPrepackager.dependsOn prepackager
 
-task build(dependsOn: [ 'cloud', 'developer' ]) { }
+task build(dependsOn: [ 'cloud', 'developer', 'enterprise' ]) { }
