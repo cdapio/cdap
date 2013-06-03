@@ -84,10 +84,12 @@ public class TestHelper {
     Location deployedJar = lf.create(
       JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
     );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
-    return (ApplicationWithPrograms) p.get();
+    try {
+      ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+      return (ApplicationWithPrograms) p.get();
+    } finally {
+      deployedJar.delete(true);
+    }
   }
 
   /**
@@ -105,33 +107,37 @@ public class TestHelper {
     Location deployedJar = lf.create(
       JarFinder.getJar(application, TestHelper.getManifestWithMainClass(application))
     );
-    deployedJar.deleteOnExit();
 
-    // Call init to get a session identifier - yes, the name needs to be changed.
-    AuthToken token = new AuthToken("12345");
-    ResourceIdentifier id = server.init(token, new ResourceInfo("developer","", fileName, 123455, 45343));
-
-    // Upload the jar file to remote location.
-    BufferFileInputStream is =
-      new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
     try {
-      while(true) {
-        byte[] toSubmit = is.read();
-        if(toSubmit.length==0) break;
-        server.chunk(token, id, ByteBuffer.wrap(toSubmit));
-        DeploymentStatus status = server.dstatus(token, id);
-        Assert.assertEquals(2, status.getOverall());
-      }
-    } finally {
-      is.close();
-    }
 
-    server.deploy(token, id);
-    int status = server.dstatus(token, id).getOverall();
-    while(status == 3) {
-      status = server.dstatus(token, id).getOverall();
-      Thread.sleep(100);
+      // Call init to get a session identifier - yes, the name needs to be changed.
+      AuthToken token = new AuthToken("12345");
+      ResourceIdentifier id = server.init(token, new ResourceInfo("developer","", fileName, 123455, 45343));
+
+      // Upload the jar file to remote location.
+      BufferFileInputStream is =
+        new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
+      try {
+        while(true) {
+          byte[] toSubmit = is.read();
+          if(toSubmit.length==0) break;
+          server.chunk(token, id, ByteBuffer.wrap(toSubmit));
+          DeploymentStatus status = server.dstatus(token, id);
+          Assert.assertEquals(2, status.getOverall());
+        }
+      } finally {
+        is.close();
+      }
+
+      server.deploy(token, id);
+      int status = server.dstatus(token, id).getOverall();
+      while(status == 3) {
+        status = server.dstatus(token, id).getOverall();
+        Thread.sleep(100);
+      }
+      Assert.assertEquals(5, status); // Deployed successfully.
+    } finally {
+      deployedJar.delete(true);
     }
-    Assert.assertEquals(5, status); // Deployed successfully.
   }
 }
