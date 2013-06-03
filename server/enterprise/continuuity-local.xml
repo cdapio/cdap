@@ -1,0 +1,81 @@
+<!--
+    Copyright (c) 2013 to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+	<property>
+		<name>node-port</name>
+		<value>9999</value>
+	</property>
+
+	<property>
+		<name>accounts-host</name>
+		<value>accounts.continuuity.com</value>
+	</property>
+
+	<property>
+		<name>accounts-port</name>
+		<value>443</value>
+	</property>
+
+	<property>
+		<name>resource.manager.server.address</name>
+		<value>127.0.0.1</value>
+	</property>
+
+	<property>
+		<name>resource.manager.server.port</name>
+		<value>45000</value>
+	</property>
+
+	<property>
+		<name>metadata.server.address</name>
+		<value>127.0.0.1</value>
+	</property>
+
+	<property>
+		<name>metadata.server.port</name>
+		<value>45004</value>
+	</property>
+
+	<property>
+		<name>flow.manager.server.address</name>
+		<value>127.0.0.1</value>
+	</property>
+
+	<property>
+		<name>flow.manager.server.port</name>
+		<value>45001</value>
+	</property>
+
+	<property>
+		<name>flow.monitor.server.address</name>
+		<value>127.0.0.1</value>
+	</property>
+
+	<property>
+		<name>flow.monitor.server.port</name>
+		<value>45002</value>
+	</property>
+
+	<property>
+		<name>gateway.hostname</name>
+		<value>127.0.0.1</value>
+	</property>
+
+	<property>
+		<name>gateway.port</name>
+		<value>10000</value>
+	</property>
+
+	<property>
+		<name>stream.rest.port</name>
+		<value>10000</value>
+	</property>
+
+	<property>
+		<name>procedure.rest.port</name>
+		<value>10010</value>
+	</property>
+
+</configuration>
