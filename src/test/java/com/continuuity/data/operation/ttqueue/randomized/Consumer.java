@@ -42,7 +42,7 @@ public class Consumer implements Runnable {
   private final AtomicInteger dequeueRunsDone = new AtomicInteger(0);
   private final AtomicInteger stopFlag = new AtomicInteger(0);
   private final AtomicInteger asyncDegree = new AtomicInteger(0);
-  private static final int MAX_STOP_TRIES = 3;
+  private static final int STOP_TRIES_PER_INSTANCE = 3;
 
   private final ConsumerHolder consumerHolder;
 
@@ -77,9 +77,10 @@ public class Consumer implements Runnable {
       int stopTries = 0;
       int runId = 0;
       int msgCtr = 0;
+      int maxStopTries = STOP_TRIES_PER_INSTANCE * maxAsyncDegree;
 
       // Run till end of queue or number of runs are done
-      while(stopTries < MAX_STOP_TRIES &&
+      while(stopTries < maxStopTries &&
         dequeueRunsDone.get() + asyncDegree.get() < consumerControl.getNumDequeueRuns()) {
         // Create maxAsyncDegree dequeues at a time
         if(asyncDegree.get() < maxAsyncDegree) {
@@ -122,9 +123,9 @@ public class Consumer implements Runnable {
         TimeUnit.MILLISECONDS.sleep(100);
       }
 
-      // If all dequeues report empty queue for MAX_STOP_TRIES, then the queue is really empty.
+      // If all dequeues report empty queue for maxStopTries, then the queue is really empty.
       // Report it to the consumer group.
-      if(stopTries >= MAX_STOP_TRIES - 1) {
+      if(stopTries >= maxStopTries - 1) {
         LOG.info(getLogMessage("Consumer at queue end."));
         consumerControl.setConsumersAtQueueEnd(id);
       } else {
@@ -190,6 +191,8 @@ public class Consumer implements Runnable {
             return;
           }
           DequeueResult result = queue.dequeue(consumer, transaction.getReadPointer());
+          QueueInfo queueInfo = queue.getQueueInfo();
+          LOG.info(getLogMessage(String.format("QueueInfo=%s", queueInfo.getJSONString())));
           if(result.isEmpty()) {
             if(testController.canDequeueStop()) {
               stopFlag.incrementAndGet();
