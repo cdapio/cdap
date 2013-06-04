@@ -8,7 +8,6 @@ var util = require("util"),
   xml2js = require('xml2js'),
   sys = require('sys');
 
-var Api = require('../common/api');
 var WebAppServer = require('../common/server');
 
 /**
@@ -47,7 +46,7 @@ EntServer.prototype.getConfig = function(opt_callback) {
         self.config[item.name] = item.value[0];
       }
     });
-    Api.configure(self.config, null);
+    self.Api.configure(self.config, null);
     self.configSet = true;
     if (opt_callback && typeof opt_callback === "function") {
       opt_callback();

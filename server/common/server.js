@@ -28,6 +28,11 @@ var WebAppServer = function(dirPath, logLevel) {
 };
 
 /**
+ * Thrift API service.
+ */
+WebAppServer.prototype.Api = Api;
+
+/**
  * Server version.
  */
 WebAppServer.prototype.VERSION = '';
@@ -152,34 +157,34 @@ WebAppServer.prototype.configureIoHandlers = function(io, name, version) {
 
     self.socket = newSocket;
     self.socket.emit('env',
-                          {"name": name, "version": version, "credential": Api.credential });
+                          {"name": name, "version": version, "credential": self.Api.credential });
 
     self.socket.on('metadata', function (request) {
-      Api.metadata(version, request.method, request.params, function (error, response) {
+      self.Api.metadata(version, request.method, request.params, function (error, response) {
         self.socketResponse(request, error, response);
       });
     });
 
     self.socket.on('far', function (request) {
-      Api.far(version, request.method, request.params, function (error, response) {
+      self.Api.far(version, request.method, request.params, function (error, response) {
         self.socketResponse(request, error, response);
       });
     });
 
     self.socket.on('gateway', function (request) {
-      Api.gateway('apikey', request.method, request.params, function (error, response) {
+      self.Api.gateway('apikey', request.method, request.params, function (error, response) {
         self.socketResponse(request, error, response);
       });
     });
 
     self.socket.on('monitor', function (request) {
-      Api.monitor(version, request.method, request.params, function (error, response) {
+      self.Api.monitor(version, request.method, request.params, function (error, response) {
         self.socketResponse(request, error, response);
       });
     });
 
     self.socket.on('manager', function (request) {
-      Api.manager(version, request.method, request.params, function (error, response) {
+      self.Api.manager(version, request.method, request.params, function (error, response) {
 
         if (response && response.length) {
           var int64values = {
@@ -217,7 +222,7 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.post('/upload/:file', function (req, res) {
     var accountID = 'developer';
-    Api.upload(accountID, req, res, req.params.file, self.socket);
+    self.Api.upload(accountID, req, res, req.params.file, self.socket);
   });
 
   /**
@@ -334,7 +339,7 @@ WebAppServer.prototype.bindRoutes = function() {
           res.end();
 
         } else {
-          Api.credential = apiKey;
+          self.Api.credential = apiKey;
 
           res.write('true');
           res.end();
