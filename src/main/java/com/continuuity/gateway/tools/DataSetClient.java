@@ -543,11 +543,11 @@ public class DataSetClient {
           IOUtils.toString(response.getEntity().getContent());
         if (verbose) {
           System.out.println(response.getStatusLine());
-          if (reason != null) {
+          if (reason != null && !reason.isEmpty()) {
             System.out.println(reason);
           }
         } else {
-          if (reason != null) {
+          if (reason != null && !reason.isEmpty()) {
             System.err.println(response.getStatusLine().getReasonPhrase() + ": " + reason);
           } else {
             System.err.println(response.getStatusLine().getReasonPhrase());

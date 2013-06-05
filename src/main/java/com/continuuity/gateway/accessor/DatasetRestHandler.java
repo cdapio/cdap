@@ -446,7 +446,7 @@ public class DatasetRestHandler extends NettyRestHandler {
                     e.getMessage() + ") for URI '" + request.getUri() + "'");
       }
       helper.finish(BadRequest);
-      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND, "table does not exist");
       return;
     }
 
