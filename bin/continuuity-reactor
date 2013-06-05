@@ -191,9 +191,9 @@ start() {
     check_for_updates
     echo -n "Starting Continuuity Reactor (tm)"
     while kill -0 $! ; do
-      if grep 'Reactor started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
+      if grep 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
         echo ""
-        grep -A 1 'Reactor started successfully' $APP_HOME/logs/reactor.log
+        grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
         break
       else
         echo -n "."
