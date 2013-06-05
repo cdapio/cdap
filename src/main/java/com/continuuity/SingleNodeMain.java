@@ -148,7 +148,7 @@ public class SingleNodeMain {
     out.println("           The \"node\" executable must be in the system $PATH environment variable");
     out.println("");
     out.println("Usage: ");
-    out.println("  ./continuuity-app-fabric [options]");
+    out.println("  ./continuuity-reactor [options]");
     out.println("");
     out.println("Additional options:");
     out.println("  --help      To print this message");

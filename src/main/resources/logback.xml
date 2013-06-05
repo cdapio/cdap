@@ -19,7 +19,7 @@
 
     <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
-        <file>logs/appfabric.log</file>
+        <file>logs/reactor.log</file>
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
@@ -28,7 +28,7 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/appfabric.log.%i</FileNamePattern>
+            <FileNamePattern>logs/reactor.log.%i</FileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
             <MaxFileSize>50000KB</MaxFileSize>
@@ -36,7 +36,7 @@
     </appender>
 
     <appender name="Debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/appfabric-debug.log</file>
+        <file>logs/reactor-debug.log</file>
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
@@ -45,7 +45,7 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/appfabric-debug.log.%i</FileNamePattern>
+            <FileNamePattern>logs/reactor-debug.log.%i</FileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
             <MaxFileSize>50000KB</MaxFileSize>

@@ -40,7 +40,7 @@ task createApiJar(type: Jar) {
  * http://issues.gradle.org/browse/GRADLE-2207 may make this easier 
  */
 startScripts {
-    applicationName = "continuuity-app-fabric"
+    applicationName = "continuuity-reactor"
     doLast {
         def scriptFile = file "${outputDir}/${applicationName}"
         scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
@@ -55,7 +55,7 @@ startScripts {
     inputs.property("jvmOpts", { jvmOpts }) // for incremental build to work properly
     doLast { 
         def optsEnvVar = "DEFAULT_JVM_OPTS" 
-        unixScript.text = unixScript.text.replace("$optsEnvVar=${'""'}","""$optsEnvVar=${'"'}$jvmOpts${'"'}\nCONTINUUITY_APP_FABRIC_OPTS=${'"'}$hadoopOpts${'"'}""")
+        unixScript.text = unixScript.text.replace("$optsEnvVar=${'""'}","""$optsEnvVar=${'"'}$jvmOpts${'"'}\nCONTINUUITY_REACTOR_OPTS=${'"'}$hadoopOpts${'"'}""")
         windowsScript.text = windowsScript.text.replace("set $optsEnvVar=", "set $optsEnvVar=$jvmOpts") 
         windowsScript.delete()
     }

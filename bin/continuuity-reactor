@@ -2,7 +2,7 @@
 
 ##############################################################################
 ##
-##  continuuity-app-fabric start up script for UN*X
+##  continuuity-reactor start up script for UN*X
 ##
 ##############################################################################
 
@@ -13,10 +13,10 @@ else
  DEFAULT_JVM_OPTS="-Xmx1024m"
 fi
 
-# Add default JVM options here. You can also use JAVA_OPTS and CONTINUUITY_APP_FABRIC_OPTS to pass JVM options to this script.
-CONTINUUITY_APP_FABRIC_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc="
+# Add default JVM options here. You can also use JAVA_OPTS and CONTINUUITY_REACTOR_OPTS to pass JVM options to this script.
+CONTINUUITY_REACTOR_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc="
 
-APP_NAME="continuuity-app-fabric"
+APP_NAME="continuuity-reactor"
 APP_BASE_NAME=`basename "$0"`
 
 warn ( ) {
@@ -72,11 +72,11 @@ location of your Java installation."
 fi
 
 
-# Split up the JVM_OPTS And CONTINUUITY_APP_FABRIC_OPTS values into an array, following the shell quoting and substitution rules
+# Split up the JVM_OPTS And CONTINUUITY_REACTOR_OPTS values into an array, following the shell quoting and substitution rules
 function splitJvmOpts() {
     JVM_OPTS=("$@")
 }
-eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_APP_FABRIC_OPTS
+eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_REACTOR_OPTS
 
 if [ -d /opt/continuuity ]; then
  CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME
@@ -181,19 +181,19 @@ print_copyright() {
 start() {
     check_before_start
     mkdir -p $APP_HOME/logs
-    rotate_log $APP_HOME/logs/appfabric.log
-    rotate_log $APP_HOME/logs/appfabric-debug.log
+    rotate_log $APP_HOME/logs/reactor.log
+    rotate_log $APP_HOME/logs/reactor-debug.log
 
-    nohup "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@" >> $APP_HOME/logs/appfabric.log 2>&1 < /dev/null &
+    nohup "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@" >> $APP_HOME/logs/reactor.log 2>&1 < /dev/null &
     echo $! > $pid
 
     print_copyright
     check_for_updates
     echo -n "Starting Continuuity Reactor (tm)"
     while kill -0 $! ; do
-      if grep 'Reactor started successfully' $APP_HOME/logs/appfabric.log > /dev/null 2>&1; then
+      if grep 'Reactor started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
         echo ""
-        grep -A 1 'Reactor started successfully' $APP_HOME/logs/appfabric.log
+        grep -A 1 'Reactor started successfully' $APP_HOME/logs/reactor.log
         break
       else
         echo -n "."
