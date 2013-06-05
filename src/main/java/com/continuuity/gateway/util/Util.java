@@ -1,5 +1,6 @@
 package com.continuuity.gateway.util;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Constants;
 import com.google.common.base.Charsets;
@@ -370,6 +371,13 @@ public class Util {
   //-----------------------------------------------------------------------------------
 
   public static String encodeBinary(byte[] binary, String encoding) {
+    return encodeBinary(binary, encoding, false);
+  }
+
+  public static String encodeBinary(byte[] binary, String encoding, boolean counter) {
+    if (counter && Bytes.SIZEOF_LONG == binary.length) {
+      return Long.toString(Bytes.toLong(binary));
+    }
     if (encoding == null) {
       return new String(binary, Charsets.US_ASCII);
     }
@@ -395,7 +403,13 @@ public class Util {
   }
 
   public static byte[] decodeBinary(String str, String encoding) throws NumberFormatException {
+    return decodeBinary(str, encoding, false);
+  }
 
+  public static byte[] decodeBinary(String str, String encoding, boolean counter) throws NumberFormatException {
+    if (counter) {
+      return Bytes.toBytes(Long.parseLong(str));
+    }
     if (encoding == null) {
       return str.getBytes(Charsets.US_ASCII);
     }

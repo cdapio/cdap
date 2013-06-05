@@ -40,9 +40,26 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param status  the HTTP status to return
    */
   protected void respondError(Channel channel, HttpResponseStatus status) {
+    respondError(channel, status, null);
+  }
+
+  /**
+   * Respond to the client with an error and a message. That closes the connection.
+   *
+   * @param channel the channel on which the request came
+   * @param status  the HTTP status to return
+   * @param reason the reason for the error, will be returned in the body of the response.
+   */
+  protected void respondError(Channel channel, HttpResponseStatus status, String reason) {
     HttpResponse response = new DefaultHttpResponse(
       HttpVersion.HTTP_1_1, status);
-    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+    if (reason != null) {
+      ChannelBuffer body = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(reason));
+      response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, body.readableBytes());
+      response.setContent(body);
+    } else {
+      response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+    }
     ChannelFuture future = channel.write(response);
     future.addListener(ChannelFutureListener.CLOSE);
   }
@@ -166,7 +183,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
       LOG.trace("Received an unsupported request (" + reason + ") with URI '" + request.getUri() + "'");
     }
     helper.finish(BadRequest);
-    respondError(message.getChannel(), status);
+    respondError(message.getChannel(), status, reason);
   }
 
   protected void respondBadRequest(MessageEvent message, HttpRequest request, MetricsHelper helper, String reason,
