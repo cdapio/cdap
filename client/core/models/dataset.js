@@ -106,7 +106,7 @@ define([], function () {
 	Model.reopenClass({
 		type: 'Dataset',
 		kind: 'Model',
-		find: function (dataset_id) {
+		find: function (dataset_id, http) {
 			var promise = Ember.Deferred.create();
 
 			C.get('metadata', {

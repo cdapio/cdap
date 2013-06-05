@@ -301,7 +301,7 @@ define([], function () {
 
 		type: 'Stream',
 		kind: 'Model',
-		find: function (stream_id) {
+		find: function (stream_id, http) {
 
 			var promise = Ember.Deferred.create();
 

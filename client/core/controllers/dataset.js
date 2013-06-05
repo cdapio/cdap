@@ -163,7 +163,7 @@ define([], function () {
 
 		},
 
-		delete: function () {
+		"delete": function () {
 
 			C.Modal.show(
 				"Delete Dataset",

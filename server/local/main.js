@@ -64,7 +64,7 @@ DevServer.prototype.start = function() {
   this.getConfig(function() {
     this.server = this.getServerInstance(this.app);
     this.io = this.getSocketIo(this.server);
-    this.configureIoHandlers(this.io, 'local', 'developer');
+    this.configureIoHandlers(this.io, 'Local', 'developer');
     this.bindRoutes();
     this.server.listen(this.config['node-port']);
     this.logger.info('Listening on port', this.config['node-port']);

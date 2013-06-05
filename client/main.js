@@ -1,26 +1,107 @@
 /*
- * Main entry point for Local Reactor UI
+ * Main entry point for Reactor UI
+ * Defines routes
  */
 
 require.config({
 	paths: {
-		"core": "../core/"
+		"core": "../core"
 	}
 });
 
-define (['core/application', 'patch/views/index'], function (C, Patch) {
+define (['core/application'], function (Application) {
 
 	/*
-	 * Patching feature not being used yet.
+	 * Determine whether to swap out specific components with mocks.
 	 */
+	var mocks = window.location.search.split('?')[1];
 
+	if (mocks) {
+		mocks = mocks.split('=')[1];
+		if (mocks) {
+			mocks = mocks.split(',');
+		} else {
+			mocks = null;
+		}
+	} else {
+		mocks = null;
+	}
+
+	/*
+	 * Inject requested mocks into our controllers.
+	 */
+	if (mocks) {
+
+		Em.Application.initializer({
+			name: "mocks",
+			before: "resources",
+
+			initialize: function(container, application) {
+
+				var i = mocks.length;
+				while (i--) {
+					C.__mocked[mocks[i]] = true;
+					mocks[i] = 'mocks/' + mocks[i].toLowerCase();
+				}
+
+				/*
+				 * Note: This is async. The 'resources' initializer is not.
+				 */
+				require(mocks, function () {
+
+					mocks = Array.prototype.slice.call(arguments, 0);
+
+					var i = mocks.length, type, resource;
+					while (i--) {
+
+						type = mocks[i].type;
+
+						container.optionsForType(type, { singleton: true });
+						container.register(type + ':main', mocks[i]);
+						container.typeInjection('controller', type, type + ':main');
+
+						/*
+						 * Check Application-level event handlers on the resource.
+						 */
+						if (typeof C.__handlers[type] === 'object') {
+
+							resource = container.lookup(type + ':main');
+							for (var event in C.__handlers[type]) {
+								resource.on(event, C.__handlers[type][event]);
+							}
+							if (typeof resource.connect === 'function') {
+								resource.connect();
+							}
+
+						}
+
+						/*
+						 * Temporary for Backwards Compat.
+						 */
+						if (type === 'Socket') {
+							C.Socket = container.lookup('Socket:main');
+							C.get = function () {
+								C.Socket.request.apply(C.Socket, arguments);
+							};
+						}
+					}
+				});
+			}
+		});
+
+	}
+
+	/*
+	 * Instantiate the Application.
+	 */
+	window.C = Application.create();
+
+	/*
+	 * The following define the routes in use by the application.
+	 * Templates are referred to by resource name and inserted automatically.
+	 * Models are determined by the dynamic route and loaded automatically.
+	 */
 	C.Router.map(function() {
-
-		/*
-		 * The following define the routes in use by the application.
-		 * Templates are referred to by resource name and inserted automatically.
-		 * Models are determined by the dynamic route and loaded automatically.
-		 */
 
 		this.resource('App', { path: '/apps/:app_id' } );
 
@@ -71,7 +152,26 @@ define (['core/application', 'patch/views/index'], function (C, Patch) {
 		 */
 		deactivate: function () {
 			this.controller.unload();
+		},
+		/*
+		 * Override to load a model based on parameter name and inject HTTP resource.
+		 */
+		model: function (params) {
+			for (var key in params) {
+				/*
+				 * Converts e.g. 'app_id' into 'App', 'flow_id' into 'Flow'
+				 */
+				var type = key.charAt(0).toUpperCase() + key.slice(1, key.length - 3);
+				/*
+				 * Finds type and injects HTTP
+				 */
+				if (type in C) {
+					return C[type].find(params[key],
+						this.controllerFor('Application').HTTP);
+				}
+			}
 		}
+
 	});
 
 	/*
@@ -167,7 +267,7 @@ define (['core/application', 'patch/views/index'], function (C, Patch) {
 			deactivate: function () {
 				this.controllerFor('List').unload();
 			}
-		}
+		};
 	}
 
 	$.extend(C, {

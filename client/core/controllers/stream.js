@@ -39,7 +39,7 @@ define([], function () {
 
 		},
 
-		delete: function () {
+		"delete": function () {
 
 			C.Modal.show("Delete Stream",
 				"Are you sure you would like to delete this Stream? This action is not reversible.",

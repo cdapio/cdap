@@ -8,7 +8,6 @@
 	"debug"        : false,
 	"eqeqeq"       : true,
 	"eqnull"       : false,
-	"es5"          : true,
 	"evil"         : false,
 	"expr"         : true,
 	"forin"        : false,

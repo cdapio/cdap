@@ -20,7 +20,7 @@
 
 	<property>
 		<name>resource.manager.server.address</name>
-		<value>127.0.0.1</value>
+		<value>192.168.1.25</value>
 	</property>
 
 	<property>
@@ -50,7 +50,7 @@
 
 	<property>
 		<name>flow.monitor.server.address</name>
-		<value>127.0.0.1</value>
+		<value>192.168.1.25</value>
 	</property>
 
 	<property>

@@ -168,7 +168,7 @@ define([], function () {
 	Model.reopenClass({
 		type: 'Procedure',
 		kind: 'Model',
-		find: function(model_id) {
+		find: function(model_id, http) {
 
 			var promise = Ember.Deferred.create();
 
