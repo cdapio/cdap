@@ -14,18 +14,17 @@ define([], function () {
 	var averageOver = 30;
 	var maxResponseTime = 5000;
 
-	var connectedHandlers = [];
-	var errorHandlers = [];
-
 	var socket;
 
 	var eventHandlers = {
+		'connect': [],
+		'error': [],
 		'upload': []
 	};
 
 	function connected (env) {
 
-		connectedHandlers.forEach(function (callback) {
+		eventHandlers['connect'].forEach(function (callback) {
 			callback(env);
 		});
 
@@ -33,27 +32,15 @@ define([], function () {
 
 	function error (env) {
 
-		errorHandlers.forEach(function (callback) {
+		eventHandlers['error'].forEach(function (callback) {
 			callback(env);
 		});
 
 	}
 
-	var Socket = Em.Object.extend({
+	var Resource = Em.Object.extend({
 
-		addConnectedHandler: function (callback) {
-
-			connectedHandlers.push(callback);
-
-		},
-
-		addErrorHandler: function (callback) {
-
-			errorHandlers.push(callback);
-
-		},
-
-		addEventHandler: function (event, callback) {
+		on: function (event, callback) {
 
 			if (undefined === eventHandlers[event]) {
 				eventHandlers[event] = [];
@@ -84,7 +71,7 @@ define([], function () {
 				if (pending[response.id] &&
 					typeof pending[response.id][0] === 'function') {
 
-					if (self.get('watchLatency')) {
+					if (C.WATCH_LATENCY) {
 
 						toAverage.push(new Date().getTime() - pending[response.id][2]);
 
@@ -160,6 +147,11 @@ define([], function () {
 
 	});
 
-	return Socket.create();
+	Resource.reopenClass({
+		type: 'Socket',
+		kind: 'Resource'
+	});
+
+	return Resource;
 
 });

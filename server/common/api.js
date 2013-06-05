@@ -32,7 +32,7 @@ try {
 /**
 * Configure logger.
 */
-var LOG_LEVEL = 'TRACE';
+var LOG_LEVEL = 'INFO';
 log4js.configure({
 	appenders: [
 		{ type : 'console' }
@@ -64,7 +64,7 @@ logger.setLevel(LOG_LEVEL);
 			protocol: tprotocol.TBinaryProtocol
 		});
 		conn.on('error', function (error) {
-			logger.warn(error);
+			logger.warn('Could not connect to MetadataService.');
 			done({'fatal': 'Could not connect to MetadataService.'});
 		});
 
@@ -117,7 +117,7 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
-			logger.warn(error);
+			logger.warn('Could not connect to AppFabric (Manager).');
 			done({'fatal': 'Could not connect to AppFabric (Manager).'});
 		});
 
@@ -205,7 +205,7 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
-			logger.warn(error);
+			logger.warn('Could not connect to MetricsService.');
 			done({'fatal': 'Could not connect to MetricsService.'});
 		});
 
@@ -460,7 +460,7 @@ logger.setLevel(LOG_LEVEL);
 				protocol: tprotocol.TBinaryProtocol
 			});
 			conn.on('error', function (error) {
-				logger.warn(error);
+			logger.warn('Could not connect to AppFabricService (Upload).');
 				socket.emit('upload', {'status': 'failed', 'step': 4, 'message': 'Could not connect to AppFabricService'});
 			});
 

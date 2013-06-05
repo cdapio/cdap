@@ -101,7 +101,7 @@ define([], function () {
 	Model.reopenClass({
 		type: 'App',
 		kind: 'Model',
-		find: function(model_id) {
+		find: function(model_id, http) {
 			var promise = Ember.Deferred.create();
 
 			C.get('metadata', {

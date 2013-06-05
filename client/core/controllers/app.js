@@ -28,7 +28,7 @@ define([], function () {
 			/*
 			 * Load Streams
 			 */
-			C.Api.getElements('Stream', function (objects) {
+			this.HTTP.getElements('Stream', function (objects) {
 
 				self.get('elements.Stream').pushObjects(objects);
 				self.__loaded();
@@ -38,7 +38,7 @@ define([], function () {
 			/*
 			 * Load Flows
 			 */
-			C.Api.getElements('Flow', function (objects) {
+			this.HTTP.getElements('Flow', function (objects) {
 
 				self.get('elements.Flow').pushObjects(objects);
 				self.__loaded();
@@ -48,7 +48,7 @@ define([], function () {
 			/*
 			 * Load Datasets
 			 */
-			C.Api.getElements('Dataset', function (objects) {
+			this.HTTP.getElements('Dataset', function (objects) {
 
 				self.get('elements.Dataset').pushObjects(objects);
 				self.__loaded();
@@ -58,7 +58,7 @@ define([], function () {
 			/*
 			 * Load Procedures
 			 */
-			C.Api.getElements('Procedure', function (objects) {
+			this.HTTP.getElements('Procedure', function (objects) {
 
 				self.get('elements.Procedure').pushObjects(objects);
 				self.__loaded();
@@ -303,7 +303,7 @@ define([], function () {
 		 * Application maintenance features
 		 */
 
-		delete: function () {
+		"delete": function () {
 
 			C.Modal.show(
 				"Delete Application",

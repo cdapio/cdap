@@ -334,9 +334,9 @@ fs.readFile(configPath, function (error, result) {
 		 * Express static directory.
 		 */
 		if (fs.existsSync(__dirname + '/../client/')) {
-			app.use(express.static(__dirname + '/../client/'));
+			app.use(express["static"](__dirname + '/../client/'));
 		} else {
-			app.use(express.static(__dirname + '/../../client/'));
+			app.use(express["static"](__dirname + '/../../client/'));
 		}
 
 		/**
@@ -401,6 +401,7 @@ fs.readFile(configPath, function (error, result) {
 				 */
 
 				socket.emit('env', {
+					"product": "Sandbox",
 					"location": "remote",
 					"version": Env.version || 'UNKNOWN',
 					"ip": Env.ip,
@@ -495,7 +496,7 @@ fs.readFile(configPath, function (error, result) {
 		app.post('/upload/:file', function (req, res) {
 
 			var session_id = req.session.session_id;
-			Api.upload(req.session.account_id, req, res, req.params.file, io.sockets.in(session_id));
+			Api.upload(req.session.account_id, req, res, req.params.file, io.sockets["in"](session_id));
 
 		});
 

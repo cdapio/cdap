@@ -87,7 +87,7 @@ define([], function () {
 	Model.reopenClass({
 		type: 'Flowlet',
 		kind: 'Model',
-		find: function (flowlet_id) {
+		find: function (flowlet_id, http) {
 
 			/*
 			 * We will use this Flowlet and its ID to find the

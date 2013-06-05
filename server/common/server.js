@@ -148,16 +148,19 @@ WebAppServer.prototype.socketResponse = function(request, error, response) {
 /**
  * Configures socket io handlers. Async binds socket io methods.
  * @param {Object} instance of the socket io.
- * @param {string} name of evn for socket to emit.
+ * @param {string} product of evn for socket to emit.
  * @param {string} version.
  */
-WebAppServer.prototype.configureIoHandlers = function(io, name, version) {
+WebAppServer.prototype.configureIoHandlers = function(io, product, version) {
   var self = this;
   io.sockets.on('connection', function (newSocket) {
 
     self.socket = newSocket;
-    self.socket.emit('env',
-                          {"name": name, "version": version, "credential": self.Api.credential });
+    self.socket.emit('env', {
+      "product": product,
+      "version": version,
+      "credential": self.Api.credential
+    });
 
     self.socket.on('metadata', function (request) {
       self.Api.metadata(version, request.method, request.params, function (error, response) {

@@ -9,7 +9,7 @@ var assert = require('chai').assert,
 //Changing environment to test.
 process.env.NODE_ENV = "test";
 
-var devServer = require('../server/developer/main.js');
+var devServer = require('../server/local/main.js');
 var app = devServer.app;
 
 describe('Node js tests', function() {
@@ -17,7 +17,7 @@ describe('Node js tests', function() {
   describe('GET /version', function() {
     it('should respond with json', function(done) {
       request(app)
-        .get('/version')  
+        .get('/version')
         .expect(200)
         .expect('Content-Type', /json/)
         .end(function(err, res) {
@@ -70,7 +70,7 @@ describe('Node js tests', function() {
       assert.notEqual(devServer.server, {});
       done();
     });
-  
+
     it('should get localhost address', function(done) {
       assert.equal(devServer.getLocalHost(), '127.0.0.1');
       done();

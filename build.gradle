@@ -11,61 +11,46 @@ def executeCommand(command) {
 }
 
 /**
- * Task for running jshint over developer and cloud code base.
+ * Task for running jshint over Javascript code base.
  */
 task jshint << {
-  def developer = [
+  def command = [
     "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
+
     "$rootProject.projectDir/web-cloud-app/client/core/models/",
     "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
     "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
     "$rootProject.projectDir/web-cloud-app/client/core/",
-    "$rootProject.projectDir/web-cloud-app/client/developer/patch/views",
-    "$rootProject.projectDir/web-cloud-app/server/developer/main.js",
-    "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
-  ]
+    "$rootProject.projectDir/web-cloud-app/client/mocks/",
+    "$rootProject.projectDir/web-cloud-app/client/main.js",
 
-  if(executeCommand(developer) != 0) {
-    throw new GradleScriptException("JSHint reported errors while building developer app", null)
-  }
+    "$rootProject.projectDir/web-cloud-app/client/local/views",
+    "$rootProject.projectDir/web-cloud-app/client/sandbox/views",
+    "$rootProject.projectDir/web-cloud-app/client/enterprise/views",
 
-  def cloud = [
-    "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
-    "$rootProject.projectDir/web-cloud-app/client/core/models/",
-    "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
-    "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
-    "$rootProject.projectDir/web-cloud-app/client/core/",
-    "$rootProject.projectDir/web-cloud-app/client/cloud/patch/views",
-    "$rootProject.projectDir/web-cloud-app/server/cloud/main.js",
-    "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
-  ]
-  if(executeCommand(cloud) != 0) {
-    throw new GradleScriptException("JSHint reported errors while building cloud app", null)
-  }
-
-  def enterprise = [
-    "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
-    "$rootProject.projectDir/web-cloud-app/client/core/models/",
-    "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
-    "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
-    "$rootProject.projectDir/web-cloud-app/client/core/",
-    "$rootProject.projectDir/web-cloud-app/client/enterprise/patch/views",
+    "$rootProject.projectDir/web-cloud-app/server/local/main.js",
+    "$rootProject.projectDir/web-cloud-app/server/sandbox/main.js",
     "$rootProject.projectDir/web-cloud-app/server/enterprise/main.js",
+
     "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
   ]
-  if(executeCommand(enterprise) != 0) {
-    throw new GradleScriptException("JSHint reported errors while building enterprise app", null)
+
+  print command.join(' ');
+
+  if(executeCommand(command) != 0) {
+    throw new GradleScriptException("JSHint reported errors while building command app", null)
   }
+
 }
 
 /**
  * Runs node js tests.
  */
 task nodeTests << {
-  def developer = [
+  def command = [
     "$rootProject.projectDir/web-cloud-app/test/node_modules/mocha/bin/mocha"
   ]
-  if(executeCommand(developer) != 0) {
+  if(executeCommand(command) != 0) {
     throw new GradleScriptException("Error running node tests", null)
   }
 }
@@ -87,7 +72,7 @@ def build_edition(edition, base) {
     "node",
     "$projectDir/tools/requirejs/bin/r.js",
     "-o", "$projectDir/app.build.js",
-    "baseUrl=$projectDir/client/${edition}",
+    "baseUrl=$projectDir/client/",
     "out=$installDir/client/main.js"
   ]
 
@@ -106,17 +91,23 @@ def build_edition(edition, base) {
   }
 
   copy {
-    from "client/${edition}/patch/assets"
-    into "$installDir/client/patch/assets"
+    from "client/${edition}/views"
+    into "$installDir/client/${edition}/views"
+  }
+
+  copy {
+    from "client/${edition}/partials"
+    into "$installDir/client/${edition}/partials"
   }
 
   copy {
     from "client/${edition}"
-    include('index.html')
-    if(edition == 'cloud') {
-      from "client/$edition/access-error.html"
-      from "client/$edition/internal-error.html"
-    }
+    include('*.html')
+    into "$installDir/client/"
+  }
+
+  copy {
+    from "client/index.html"
     into "$installDir/client/"
   }
 
@@ -129,18 +120,18 @@ def build_edition(edition, base) {
     from "server/${edition}"
     into "$installDir/server"
     include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'continuuity-local.xml', 'main.js')
-    if(edition == 'cloud') {
+    if(edition == 'sandbox') {
       include 'env.js'
     }
   }
 }
 
-task cloud(dependsOn: 'jshint') {
-  build_edition('cloud', null)
+task local(dependsOn: ['jshint', 'nodeTests']) {
+  build_edition('local', null)
 }
 
-task developer(dependsOn: ['jshint', 'nodeTests']) {
-  build_edition('developer', null)
+task sandbox(dependsOn: 'jshint') {
+  build_edition('sandbox', null)
 }
 
 task enterprise(dependsOn: ['jshint', 'nodeTests']) {
@@ -151,7 +142,7 @@ task prepackager(dependsOn: 'build', overwrite: true) {
   def stageDir = file("$buildDir/stage-packaging")
   def installDir = file("$stageDir/opt/continuuity/$project.name")
   doLast {
-    build_edition('developer', 'stage-packaging/opt/continuuity/web-cloud-app')
+    build_edition('enterprise', 'stage-packaging/opt/continuuity/web-cloud-app')
     copy {
       from "$rootProject.projectDir/common/bin"
       into "${installDir}/bin"
@@ -166,4 +157,4 @@ task prepackager(dependsOn: 'build', overwrite: true) {
 debianPrepackager.dependsOn prepackager
 rpmPrepackager.dependsOn prepackager
 
-task build(dependsOn: [ 'cloud', 'developer', 'enterprise' ]) { }
+task build(dependsOn: [ 'local', 'sandbox', 'enterprise' ]) { }

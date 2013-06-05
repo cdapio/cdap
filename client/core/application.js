@@ -13,14 +13,14 @@ require.config({
 	}
 });
 
-define(['core/components', 'core/api', 'core/embeddables/index', 'core/util'],
-function(Components, Api, Embeddables, Util){
+define(['core/components', 'core/embeddables/index', 'core/http', 'core/socket', 'core/util'],
+function(Components, Embeddables, HTTP, Socket, Util){
 
 	var Application = Ember.Application.extend({
 		/*
 		 * Logs router transitions to the Developer Console
 		 */
-		LOG_TRANSITIONS: true,
+		LOG_TRANSITIONS: false,
 
 		/*
 		 * Constant: Polling interval for metrics.
@@ -31,6 +31,11 @@ function(Components, Api, Embeddables, Util){
 		 * Constant: Delay to wait for Embeddables to configure before checking them.
 		 */
 		EMBEDDABLE_DELAY: 100,
+
+		/*
+		 * Variable: Whether to watch and warn about latency.
+		 */
+		WATCH_LATENCY: false,
 
 		/*
 		 * Allows us to set the ID of the main view element.
@@ -51,10 +56,85 @@ function(Components, Api, Embeddables, Util){
 
 				Em.debug('Routing started');
 
-			}
+				/*
+				 * Do version check.
+				 */
+				this.HTTP.get('/version', function (version) {
 
+					if (version && version.current !== 'UNKNOWN') {
+
+						if (version.current !== version.newest) {
+
+							$('#warning').html('<div>New version available: ' + version.current + ' » ' +
+								version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
+								'Click here to download</a>.</div>').show();
+
+						}
+
+					}
+
+				});
+			}
 		}),
 
+		setupEnvironment: function (env) {
+
+			C.Env.set('version', env.version);
+			C.Env.set('location', env.location);
+			C.Env.set('productName', env.product.toLowerCase());
+
+			$('title').text(env.product + ' » Continuuity');
+
+			if (env.account) {
+
+				C.Env.set('authenticated', true);
+				C.Env.set('user', env.account);
+				C.Env.set('cluster', env.cluster.info);
+
+				$('title').text(C.Env.cluster.vpc_label + ' » Continuuity');
+
+				C.set('WATCH_LATENCY', true);
+
+				Em.debug('Authenticated');
+
+			} else {
+
+				C.Env.set('credential', env.credential || '');
+				C.Env.set('user', { id: 'developer' });
+
+			}
+
+			if (env.version && env.version !== 'UNKNOWN') {
+				$('#build-number').html(' &#183; BUILD <span>' + env.version + '</span>').attr('title', env.ip);
+			}
+
+			/*
+			 * Append the product theme CSS
+			 */
+			var themeLink = document.createElement('link');
+			themeLink.setAttribute("rel", "stylesheet");
+			themeLink.setAttribute("type", "text/css");
+			themeLink.setAttribute("href", "/assets/css/" + C.Env.get('productName') + ".css");
+			document.getElementsByTagName("head")[0].appendChild(themeLink);
+
+			/*
+			 * Load patch.
+			 */
+			require([C.Env.productName + '/views/index'], function (Patch) {
+
+				/*
+				 * Patching feature not being used yet.
+				 */
+
+				/*
+				 * Proceed with routing.
+				 */
+				C.advanceReadiness();
+				C.set('initialized', true);
+
+			});
+
+		},
 		setTimeRange: function (millis) {
 			this.set('__timeRange', millis);
 			this.set('__timeLabel', {
@@ -72,7 +152,46 @@ function(Components, Api, Embeddables, Util){
 		},
 		removeResizeHandler: function (id) {
 			delete this.resizeHandlers[id];
-		}
+		},
+		/*
+		 * Application-level event handlers for Resource events
+		 */
+		__handlers: {
+			'Socket': {
+				/*
+				 * Called when the socket is (re)connected.
+				 */
+				'connect': function (env) {
+
+					if (!C.initialized) {
+						C.setupEnvironment(env);
+					} else {
+						$('#warning').html('<div>Reconnected!</div>').fadeOut();
+					}
+				},
+				/*
+				 * Called when the socket experiences an error.
+				 */
+				'error': function (message, args) {
+
+					if (typeof message === "object") {
+						message = message.message;
+					}
+					$('#warning').html('<div>' + message + '</div>').show();
+
+				},
+				/*
+				 * Called when the socket receives JAR upload status information.
+				 */
+				'upload': function (status) {
+					Util.Upload.update(status);
+				}
+			}
+		},
+		/*
+		 * Stores an indication of which resources are being mocked.
+		 */
+		__mocked: {}
 
 	});
 
@@ -92,91 +211,6 @@ function(Components, Api, Embeddables, Util){
 
 		assignments[component.kind === 'Model' ?
 			component.type : component.type + component.kind] = component;
-
-	});
-
-	/*
-	 * Assign API and socket connection handlers.
-	 */
-	assignments['Api'] = Api;
-
-	/*
-	 * Called when the socket is (re)connected.
-	 */
-	Api.Socket.addConnectedHandler(function (env) {
-
-		if (!C.initialized) {
-
-			C.set('version', env.version);
-			C.set('location', env.location);
-
-			if (env.account) {
-
-				C.Env.set('authenticated', true);
-				C.Env.set('user', env.account);
-				C.Env.set('cluster', env.cluster.info);
-
-				C.Api.Socket.set('watchLatency', true);
-
-				Em.debug('Authenticated');
-
-				$('title').text('Sandbox » Continuuity');
-
-			} else {
-
-				C.Env.set('credential', env.credential);
-				C.Env.set('user', { id: 'developer' });
-
-				$('title').text('Developer » Continuuity');
-
-			}
-
-			if (env.version && env.version !== 'UNKNOWN') {
-				$('#build-number').html(' &#183; BUILD <span>' + env.version + '</span>').attr('title', env.ip);
-			}
-
-			C.advanceReadiness();
-			C.set('initialized', true);
-
-			/*
-			 * Do version check.
-			 */
-			$(function () {
-
-				$.getJSON('/version', function (version) {
-
-					if (version && version.current !== 'UNKNOWN') {
-
-						if (version.current !== version.newest) {
-
-							$('#warning').html('<div>New version available: ' + version.current + ' » ' +
-								version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
-								'Click here to download</a>.</div>').show();
-
-						}
-
-					}
-
-				});
-
-			});
-
-		} else {
-
-			$('#warning').html('<div>Reconnected!</div>').fadeOut();
-
-		}
-	});
-
-	/*
-	 * Called when the socket experiences an error.
-	 */
-	Api.Socket.addErrorHandler(function error (message, args) {
-
-		if (typeof message === "object") {
-			message = message.message;
-		}
-		$('#warning').html('<div>' + message + '</div>').show();
 
 	});
 
@@ -213,27 +247,62 @@ function(Components, Api, Embeddables, Util){
 	Application.reopen(assignments);
 
 	/*
-	 * Instantiate the Application.
+	 * Inject default services into our controllers.
 	 */
-	window.C = Application.create();
+	Em.Application.initializer({
+		name: "resources",
 
-	/*
-	 * Temporary shortcut to invoke a method on the API socket. Deprecating since it collides.
-	 */
-	C.get = function () {
-		C.Api.Socket.request.apply(C.socket, arguments);
-	};
+		initialize: function(container, application) {
 
-	/*
-	 * Defer readiness until we have connected the Websocket.
-	 * See "advanceReadiness" in the connection handler above.
-	 */
-	C.deferReadiness();
+			var resources = [HTTP, Socket];
+			var i = resources.length, type, resource;
+			while(i--) {
 
-	/*
-	 * Connect the Websocket.
-	 */
-	C.Api.connect();
+				type = resources[i].type;
+
+				if (!C.__mocked[type]) {
+					container.optionsForType(type, { singleton: true });
+					container.register(type + ':main', resources[i]);
+					/*
+					 * This injection actually constructs the resource.
+					 */
+					container.typeInjection('controller', type, type + ':main');
+
+					/*
+					 * Check Application-level event handlers on the resource.
+					 */
+					if (typeof C.__handlers[type] === 'object') {
+
+						resource = container.lookup(type + ':main');
+						for (var event in C.__handlers[type]) {
+							resource.on(event, C.__handlers[type][event]);
+						}
+						if (typeof resource.connect === 'function') {
+							resource.connect();
+						}
+
+					}
+
+					/*
+					 * Temporary for Backwards Compat.
+					 */
+					if (type === 'Socket') {
+						C.Socket = container.lookup('Socket:main');
+						C.get = function () {
+							C.Socket.request.apply(C.Socket, arguments);
+						};
+					}
+				}
+			}
+
+			/*
+			 * Defer readiness until the Websocket is connected and Patch loaded.
+			 * See "advanceReadiness" in the "setupEnvironment" call above.
+			 */
+			C.deferReadiness();
+
+		}
+	});
 
 	/*
 	 * Handle window resize events (e.g. for Sparkline resize)
@@ -265,8 +334,8 @@ function(Components, Api, Embeddables, Util){
 		}
 	};
 
-	Em.debug('Setup complete');
+	Em.debug('Application setup complete');
 
-	return C;
+	return Application;
 
 });
