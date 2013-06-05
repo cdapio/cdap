@@ -2,7 +2,9 @@
  * HTTP Mock
  */
 
-define([], function () {
+define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/timeseries',
+		'mocks/results/metrics/counters', 'mocks/results/metrics/summaries'],
+	function (Elements, RPC, TimeSeries, Counters, Summaries) {
 
 	Em.debug('Loading HTTP Mock');
 
@@ -40,7 +42,7 @@ define([], function () {
 
 	var Mock = Em.Object.extend({
 
-		get: function () {
+		"get": function () {
 
 			var path = getPath(arguments);
 			var callback = getCallback(arguments);
@@ -52,7 +54,7 @@ define([], function () {
 
 		},
 
-		put: function () {
+		"put": function () {
 
 			var path = getPath(arguments);
 			var object = getObject(arguments);
@@ -67,7 +69,10 @@ define([], function () {
 
 		},
 
-		post: function () {
+		/*
+		 * RPC is executed via POST.
+		 */
+		"post": function () {
 
 			var path = getPath(arguments);
 			var object = getObject(arguments);
@@ -93,9 +98,20 @@ define([], function () {
 
 		},
 
-		getElements: function (type, callback, appId, arg) {
+		"getElements": function (type, callback, appId, arg) {
 
-			callback([], arg);
+			var objects = Elements[type].result;
+			var params = [type, callback];
+
+			var i = objects.length, type = params[0];
+
+			while (i--) {
+				objects[i] = C[type].create(objects[i]);
+			}
+
+			if (typeof params[1] === 'function') {
+				callback(objects, arg);
+			}
 
 		}
 

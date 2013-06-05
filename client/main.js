@@ -1,6 +1,6 @@
 /*
  * Main entry point for Reactor UI
- * Defines routes
+ * Defines routes and attaches mocks
  */
 
 require.config({
@@ -62,6 +62,7 @@ define (['core/application'], function (Application) {
 
 						/*
 						 * Check Application-level event handlers on the resource.
+						 * E.g. Socket.on('connect');
 						 */
 						if (typeof C.__handlers[type] === 'object') {
 
