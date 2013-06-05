@@ -37,7 +37,7 @@ public class DataFormat {
         Copyright.print(out);
         out.println("data-format utility:");
         out.println("  This utility will reformat the continuuity data-store," +
-            " wiping out any existing user data.  The continuuity-app-fabric " +
+            " wiping out any existing user data.  The continuuity-reactor " +
             "application must be stopped before reformatting.");
         out.println("");
         out.println("Usage: ");
@@ -152,7 +152,7 @@ public class DataFormat {
         }
         // determine if singleNode is already running
         if(checkIfRunning(Integer.parseInt(port))) {
-            System.out.println("Error: continuuity-app-fabric must first be " +
+            System.out.println("Error: continuuity-reactor must first be " +
                 "stopped.");
             System.exit(-1);
         }
