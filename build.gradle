@@ -151,7 +151,7 @@ task prepackager(dependsOn: 'build', overwrite: true) {
   def stageDir = file("$buildDir/stage-packaging")
   def installDir = file("$stageDir/opt/continuuity/$project.name")
   doLast {
-    build_edition('developer', 'stage-packaging/opt/continuuity/web-cloud-app')
+    build_edition('enterprise', 'stage-packaging/opt/continuuity/web-cloud-app')
     copy {
       from "$rootProject.projectDir/common/bin"
       into "${installDir}/bin"
