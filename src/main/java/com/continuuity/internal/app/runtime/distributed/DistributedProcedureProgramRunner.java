@@ -59,7 +59,6 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .withArguments(procedureSpec.getName(),
                            "--jar", program.getProgramJarLocation().getName(),
-                           "--instances", "1",
                            "--runId", runId.getId());
 
     final WeaveController controller = preparer.start();

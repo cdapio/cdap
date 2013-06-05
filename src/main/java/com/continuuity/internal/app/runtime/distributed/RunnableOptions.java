@@ -8,7 +8,6 @@ package com.continuuity.internal.app.runtime.distributed;
  */
 final class RunnableOptions {
   static final String JAR = "jar";
-  static final String INSTANCES = "instances";
   static final String RUN_ID = "runId";
 
   private RunnableOptions() {

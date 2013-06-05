@@ -341,11 +341,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
       Preconditions.checkNotNull(runtimeInfo, "Unable to find runtime info for %s", identifier);
-      runtimeInfo.getController().command("instances", ImmutableMap.of(flowletId, (int) instances)).get();
       store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                                 identifier.getFlowId()), flowletId, instances);
+      runtimeInfo.getController().command("instances", ImmutableMap.of(flowletId, (int) instances)).get();
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn("Exception when setting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), flowletId, instances, throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }

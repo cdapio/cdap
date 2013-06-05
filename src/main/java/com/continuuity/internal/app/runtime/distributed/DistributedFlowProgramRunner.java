@@ -65,7 +65,6 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       preparer.withArguments(entry.getKey(),
                              "--jar", program.getProgramJarLocation().getName(),
-                             "--instances", Integer.toString(entry.getValue().getInstances()),
                              "--runId", runId.getId());
     }
 
@@ -105,7 +104,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       if (!"instances".equals(name) || !(value instanceof Map)) {
         return;
       }
-      Map<String, Integer> command = (Map<String, Integer>)value;
+      Map<String, Integer> command = (Map<String, Integer>) value;
       lock.lock();
       try {
         for (Map.Entry<String, Integer> entry : command.entrySet()) {
@@ -127,7 +126,9 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
      * @throws InterruptedException
      */
     private synchronized void changeInstances(String flowletName, final int newInstanceCount) throws Exception {
-      // TODO (ENG-2526)
+      controller.sendCommand(flowletName, ProgramCommands.SUSPEND).get();
+      controller.changeInstances(flowletName, newInstanceCount);
+      controller.sendCommand(flowletName, ProgramCommands.RESUME).get();
     }
   }
 }

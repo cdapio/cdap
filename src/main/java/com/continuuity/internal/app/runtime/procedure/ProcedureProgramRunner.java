@@ -202,7 +202,9 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       LOG.info("Stopping procedure: " + procedureContext);
       cancellable.cancel();
       try {
-        channelGroup.close().await();
+        if (!channelGroup.close().await(5, TimeUnit.SECONDS)) {
+          LOG.warn("Timeout when closing all channels.");
+        }
       } finally {
         bootstrap.releaseExternalResources();
         executionHandler.releaseExternalResources();
