@@ -32,11 +32,11 @@ import java.util.jar.JarFile;
  * c) promote to cloud
  * <p/>
  * Usage:
- * AppFabricClient client = new AppFabricClient();
+ * ReactorClient client = new ReactorClient();
  * client.configure(CConfiguration.create(), args);
  * client.execute();
  */
-public class AppFabricClient {
+public class ReactorClient {
 
   private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help",
     "promote", "status");
@@ -90,7 +90,7 @@ public class AppFabricClient {
       }
 
       if ("start".equals(command)) {
-        AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
+        AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
@@ -113,7 +113,7 @@ public class AppFabricClient {
 
       if ("stop".equals(command)) {
 
-        AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
+        AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
@@ -145,7 +145,7 @@ public class AppFabricClient {
         }
       }
       if ("status".equals(command)) {
-        AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
+        AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
@@ -287,11 +287,11 @@ public class AppFabricClient {
     Copyright.print(out);
 
     out.println("Usage:");
-    out.println("  app-fabric-client deploy  --archive <filename>");
-    out.println("  app-fabric-client start   --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  app-fabric-client stop    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  app-fabric-client status  --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  app-fabric-client promote --application <id> --host <hostname> --apikey <key>");
+    out.println("  reactor-client deploy  --archive <filename>");
+    out.println("  reactor-client start   --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
+    out.println("  reactor-client stop    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
+    out.println("  reactor-client status  --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
+    out.println("  reactor-client promote --application <id> --host <hostname> --apikey <key>");
 
     out.println("Options:");
     out.println("  --archive <filename> \t Archive containing the application.");
@@ -305,9 +305,9 @@ public class AppFabricClient {
 
   public static void main(String[] args) throws TException, AppFabricServiceException {
     String command = null;
-    AppFabricClient client = null;
+    ReactorClient client = null;
     try {
-      client = new AppFabricClient();
+      client = new ReactorClient();
       client.configure(CConfiguration.create(), args);
     } catch (Exception e) {
       System.out.println(e.getMessage());
@@ -321,7 +321,7 @@ public class AppFabricClient {
     File file = new File(this.resource);
     JarFile jarFile = new JarFile(file);
 
-    AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
+    AuthToken dummyAuthToken = new AuthToken("ReactorClient");
     System.out.println(String.format("Deploying... :%s", this.resource));
 
     ResourceIdentifier identifier = client.init(dummyAuthToken, new ResourceInfo("developer","", file.getName(),                                                                    (int)file.getTotalSpace(), file.lastModified()));
