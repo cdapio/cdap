@@ -127,7 +127,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                                               new BasicArguments(ImmutableMap.of(
                                                 "instanceId", Integer.toString(context.getInstanceId()),
                                                 "instances", Integer.toString(context.getInstanceCount()),
-                                                "runId", cmdLine.getOptionValue(RunnableOptions.RUN_ID))),
+                                                "runId", context.getApplicationRunId().getId())),
                                               new BasicArguments());
 
       LOG.info("Runnable initialized: " + name);
@@ -190,9 +190,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   private CommandLine parseArgs(String[] args) {
-    Options opts = new Options()
-      .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
-      .addOption(createOption(RunnableOptions.RUN_ID, "Run id for the running process."));
+    Options opts = new Options().addOption(createOption(RunnableOptions.JAR, "Program jar location"));
 
     try {
       return new PosixParser().parse(opts, args);
