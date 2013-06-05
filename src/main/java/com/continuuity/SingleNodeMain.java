@@ -108,7 +108,7 @@ public class SingleNodeMain {
     webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println("Continuuity AppFabric started successfully");
+    System.out.println("Continuuity Reactor (tm) started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
   }
 
@@ -263,7 +263,7 @@ public class SingleNodeMain {
     String environment =
       configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
     if (environment.equals("vpc")) {
-      System.err.println("AppFabric Environment : " + environment);
+      System.err.println("Reactor Environment : " + environment);
       inVPC = true;
     }
 
