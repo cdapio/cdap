@@ -1,6 +1,6 @@
 package com.continuuity.services;
 
-import com.continuuity.app.services.AppFabricClient;
+import com.continuuity.app.services.ReactorClient;
 import com.continuuity.common.conf.CConfiguration;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
@@ -15,7 +15,7 @@ public class TestAppFabricClientConfigParse {
   @Test
   public void testOptionsParsing() throws ParseException {
     String[] args = {"deploy", "-archive", "jar"};
-    AppFabricClient client = new AppFabricClient();
+    ReactorClient client = new ReactorClient();
     client.configure(CConfiguration.create(), args);
     assert (client != null);
     assertTrue("deploy".equals(client.getCommand()));
@@ -23,40 +23,40 @@ public class TestAppFabricClientConfigParse {
 
   @Test(expected = IllegalArgumentException.class)
   public void testUnknownCommands() throws ParseException {
-    AppFabricClient client = new AppFabricClient();
+    ReactorClient client = new ReactorClient();
     String command = client.configure(CConfiguration.create(), new String[]{"Foobaz", "-jar", "jar"});
   }
 
   @Test (expected = IllegalArgumentException.class)
   public void testValidInvalidDeployArgs() throws ParseException {
-    AppFabricClient client = new AppFabricClient();
+    ReactorClient client = new ReactorClient();
     String command = client.configure(CConfiguration.create(), new String[]{"deploy"});
     assert (command == null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStartArgs() throws ParseException {
-    AppFabricClient client = new AppFabricClient();
+    ReactorClient client = new ReactorClient();
     String command = client.configure(CConfiguration.create(), new String[]{"SomeRandomCommand", "--application", "args"});
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStopArgs() throws ParseException {
-    AppFabricClient client = new AppFabricClient();
+    ReactorClient client = new ReactorClient();
     String command = client.configure(CConfiguration.create(), new String[]{"stop", "--application", "args"});
 
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStatusArgs() throws ParseException {
-    AppFabricClient client = new AppFabricClient();
+    ReactorClient client = new ReactorClient();
     String command = null;
     command = client.configure(CConfiguration.create(), new String[]{"status", "--application", "args"});
  }
 
   @Test
   public void testValidInvalidPromoteArgs() throws ParseException {
-    AppFabricClient client = new AppFabricClient();
+    ReactorClient client = new ReactorClient();
     String command = null;
     command = client.configure(CConfiguration.create(), new String[]{"promote", "--hostname", "host",
       "--application", "application"});
@@ -66,7 +66,7 @@ public class TestAppFabricClientConfigParse {
   @Test
   public void testValidArguments() throws ParseException {
 
-    AppFabricClient client = new AppFabricClient();
+    ReactorClient client = new ReactorClient();
     String command = null;
     command = client.configure(CConfiguration.create(), new String[]{"deploy", "--archive", "jar"});
     assertTrue("deploy".equals(command));
