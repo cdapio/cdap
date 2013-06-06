@@ -8,10 +8,18 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics2.common.DBUtils;
 import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.continuuity.metrics2.temporaldb.Timeseries;
-import com.continuuity.metrics2.thrift.*;
+import com.continuuity.metrics2.thrift.Counter;
+import com.continuuity.metrics2.thrift.CounterRequest;
+import com.continuuity.metrics2.thrift.FlowArgument;
+import com.continuuity.metrics2.thrift.MetricTimeseriesLevel;
+import com.continuuity.metrics2.thrift.MetricsFrontendService;
+import com.continuuity.metrics2.thrift.MetricsServiceException;
+import com.continuuity.metrics2.thrift.Point;
+import com.continuuity.metrics2.thrift.Points;
+import com.continuuity.metrics2.thrift.TimeseriesRequest;
+import com.continuuity.weave.common.Threads;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -31,7 +39,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * MetricsService provides a readonly service for metrics.
@@ -46,6 +60,8 @@ public class MetricsFrontendServiceImpl
 
   private static short SKIP_POINTS = 10;
 
+  private static int MAX_THREAD_POOL_SIZE = 50;
+
   /**
    * Connection string to connect to database.
    */
@@ -58,11 +74,17 @@ public class MetricsFrontendServiceImpl
 
   private LogCollector collector;
 
-  /**
-   *
-   */
-  private final ExecutorService executor
-    = Executors.newCachedThreadPool();
+  // Thread pool of size max MAX_THREAD_POOL_SIZE.
+  // 60 seconds wait time before killing idle threads.
+  // Keep no idle threads more than 60 seconds.
+  // If max thread pool size reached, reject the new coming
+  private final ExecutorService executor =
+    new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
+                           60L, TimeUnit.SECONDS,
+                           new SynchronousQueue<Runnable>(),
+                           Threads.createDaemonThreadFactory("metrics-service-%d"),
+                           new ThreadPoolExecutor.DiscardPolicy());
+
 
   /**
    * DB Connection Pool manager.
@@ -93,6 +115,18 @@ public class MetricsFrontendServiceImpl
     // as a library, but rather should talk to it thru remote API.
     // This is going to be extracted anyways
     collector = new LogCollector(configuration, new Configuration());
+  }
+
+  private ExecutorService createExecutor() {
+    // Thread pool of size max TX_EXECUTOR_POOL_SIZE.
+    // 60 seconds wait time before killing idle threads.
+    // Keep no idle threads more than 60 seconds.
+    // If max thread pool size reached, reject the new coming
+    return new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
+                                  60L, TimeUnit.SECONDS,
+                                  new SynchronousQueue<Runnable>(),
+                                  Threads.createDaemonThreadFactory("metrics-service-%d"),
+                                  new ThreadPoolExecutor.DiscardPolicy());
   }
 
   /**
@@ -434,6 +468,7 @@ public class MetricsFrontendServiceImpl
     }
     @Override
     public ImmutablePair<String, List<DataPoint>> call() throws Exception {
+      long id = System.nanoTime();
       MetricTimeseriesLevel level = MetricTimeseriesLevel.FLOW_LEVEL;
       if(request.isSetLevel()) {
         level = request.getLevel();
