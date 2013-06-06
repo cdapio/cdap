@@ -5,7 +5,9 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 
 /**
- *
+ * This flowlet reads events from a stream and parses them as sentences of the form
+ * <pre><name> bought <n> <items> for $<price></pre>. The event is then converted into
+ * a Purchase object and emitted. If the event does not have this form, it is dropped.
  */
 public class PurchaseStreamReader extends AbstractFlowlet {
 
@@ -18,12 +20,29 @@ public class PurchaseStreamReader extends AbstractFlowlet {
     if (tokens.length != 6) {
       return;
     }
+    String customer = tokens[0];
+    if (!"bought".equals(tokens[1])) {
+      return;
+    }
+    int quantity = Integer.parseInt(tokens[2]);
+    String item = tokens[3];
+    if (quantity != 1 && item.length() > 1) {
+      item = item.substring(0, item.length() - 1);
+    }
+    if (!"for".equals(tokens[4])) {
+      return;
+    }
+    String price = tokens[5];
+    if (!price.startsWith("$")) {
+      return;
+    }
+    int amount = Integer.parseInt(tokens[5].substring(1));
+
     try {
-      Purchase purchase = new Purchase(tokens[0], tokens[3], Integer.parseInt(tokens[2]),
-                                       Integer.parseInt(tokens[5].substring(1)));
+      Purchase purchase = new Purchase(customer, item, quantity, amount);
       out.emit(purchase);
     } catch (Exception e) {
-      return;
+      // do nothing, just drop it.
     }
   }
 }
