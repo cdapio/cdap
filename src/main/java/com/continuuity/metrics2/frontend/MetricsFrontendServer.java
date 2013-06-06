@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
+import com.continuuity.weave.common.Threads;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -16,21 +17,33 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Metrics frontend server class that is injectable.
  */
 public class MetricsFrontendServer extends AbstractRegisteredServer
       implements MetricsFrontendServerInterface {
-  private static final Logger Log = LoggerFactory.getLogger(
-    MetricsFrontendServer.class
-  );
+
+  private static final Logger Log = LoggerFactory.getLogger(MetricsFrontendServer.class);
+  private static final int MAX_THREAD_POOL_SIZE = 50;
 
   /**
    * Manages threads.
+   *
+   * Thread pool of size max MAX_THREAD_POOL_SIZE.
+   * 60 seconds wait time before killing idle threads.
+   * Keep no idle threads more than 60 seconds.
+   * If max thread pool size reached, reject the new coming
    */
-  private ExecutorService executorService = Executors.newCachedThreadPool();
+  private final ExecutorService executorService =
+    new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
+                           60L, TimeUnit.SECONDS,
+                           new SynchronousQueue<Runnable>(),
+                           Threads.createDaemonThreadFactory("metrics-frontend-%d"),
+                           new ThreadPoolExecutor.DiscardPolicy());
 
   /**
    * Half-Sync, Half-Async Thrift server.

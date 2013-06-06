@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.weave.common.Threads;
 import com.google.inject.Inject;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
@@ -35,7 +36,8 @@ public class MetadataServer extends AbstractRegisteredServer
   /**
    * Manages threads.
    */
-  private ExecutorService executorService = Executors.newCachedThreadPool();
+  private ExecutorService executorService
+    = Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("metadata-server-%d"));
 
   /**
    * Half-Sync, Half-Async Thrift server.

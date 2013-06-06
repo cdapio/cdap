@@ -6,6 +6,7 @@ import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.metadata.MetadataService;
+import com.continuuity.weave.common.Threads;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -35,7 +36,8 @@ public class OverlordServer extends AbstractRegisteredServer implements
   /**
    * Manages threads.
    */
-  private ExecutorService executorService = Executors.newCachedThreadPool();
+  private ExecutorService executorService
+    = Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("overlord-server-%d"));
 
   /**
    * Half-Sync, Half-Async Thrift server.
