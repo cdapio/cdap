@@ -37,7 +37,7 @@ define([], function () {
 
 			this.__timeout = setTimeout(function () {
 				self.getStats();
-			}, C.METRICS_INTERVAL);
+			}, C.POLLING_INTERVAL);
 
 		},
 
