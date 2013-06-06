@@ -4,10 +4,7 @@
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +44,7 @@ public class WebCloudAppService {
     try {
 
       // Now try to launch the app
-      logger.info("Launching AppFabric User Interface Web Application");
+      logger.info("Launching Reactor User Interface Web Application");
       webAppProcess = builder.start();
 
       // Keep running..
