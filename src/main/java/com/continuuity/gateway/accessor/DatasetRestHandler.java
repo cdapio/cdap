@@ -13,7 +13,6 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.metadata.thrift.Account;
@@ -79,9 +78,6 @@ public class DatasetRestHandler extends NettyRestHandler {
   // This is the prefix that all valid URLs must have.
   private final String pathPrefix;
 
-  // The data set instantiator
-  private final DataSetInstantiatorFromMetaData instantiator;
-
   /**
    * Constructor requires the accessor that created this.
    *
@@ -93,7 +89,6 @@ public class DatasetRestHandler extends NettyRestHandler {
     this.pathPrefix =
       accessor.getHttpConfig().getPathPrefix() +
         accessor.getHttpConfig().getPathMiddle();
-    this.instantiator = accessor.getInstantiator();
   }
 
   LinkedList<String> splitPath(String path) {
@@ -182,7 +177,7 @@ public class DatasetRestHandler extends NettyRestHandler {
       if ("Table".equals(datasetType)) {
         handleTableOperation(message, request, helper, pathComponents, parameters, opContext);
       } else if ("KeyValueTable".equals(datasetType)) {
-        //handleKeyValueTableOperation(message, pathComponents, parameters);
+        // handleKeyValueTableOperation(message, pathComponents, parameters);
       } else {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Received request for unsupported Dataset type '" + datasetType +
@@ -301,6 +296,22 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
     }
 
+    // optional parameter counter - if true, column values are interpreted (and returned) as long numbers
+    boolean counter = false;
+    List<String> counterParams = parameters.get("counter");
+    if (counterParams != null) {
+      // make sure there is at most one
+      if (counterParams.size() > 1) {
+        respondBadRequest(message, request, helper, "more than one 'counter' parameter");
+        return;
+      }
+      // make sure that if there is one, it is supported
+      if (!counterParams.isEmpty()) {
+        String param = counterParams.get(0);
+        counter = "1".equals(param) || "true".equals(param);
+      }
+    }
+
     // make sure the operations and parameters are valid
     HttpMethod method = request.getMethod();
     if (HttpMethod.GET.equals(method)) {
@@ -379,8 +390,7 @@ public class DatasetRestHandler extends NettyRestHandler {
       operation = TableOp.Increment;
     }
 
-    Type stringMapType = new TypeToken<Map<String, String>>() {
-    }.getType();
+    Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
     // Type longMapType = new TypeToken<Map<String, Long>>() {}.getType();
 
     // for operations write and increment, there must be a JSON string in the body
@@ -436,7 +446,7 @@ public class DatasetRestHandler extends NettyRestHandler {
                     e.getMessage() + ") for URI '" + request.getUri() + "'");
       }
       helper.finish(BadRequest);
-      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND, "table does not exist");
       return;
     }
 
@@ -451,6 +461,7 @@ public class DatasetRestHandler extends NettyRestHandler {
 
     if (operation.equals(TableOp.List)) {
       // TODO not implemented
+
     } else if (operation.equals(TableOp.Read)) {
       Read read;
       try {
@@ -489,13 +500,14 @@ public class DatasetRestHandler extends NettyRestHandler {
         // first convert the bytes to strings
         Map<String, String> map = Maps.newTreeMap();
         for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
-          map.put(Util.encodeBinary(entry.getKey(), encoding), Util.encodeBinary(entry.getValue(), encoding));
+          map.put(Util.encodeBinary(entry.getKey(), encoding), Util.encodeBinary(entry.getValue(), encoding, counter));
         }
         // now write a json string representing the map
         byte[] response = new Gson().toJson(map).getBytes(Charsets.UTF_8);
         respondSuccess(message.getChannel(), request, response);
         helper.finish(Success);
       }
+
     } else if (operation.equals(TableOp.Delete)) {
       Delete delete;
       try {
@@ -520,6 +532,7 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
       helper.finish(Success);
       respondSuccess(message.getChannel(), request);
+
     } else if (operation.equals(TableOp.Write)) {
       Write write;
       // decode the columns and values into byte arrays
@@ -534,12 +547,12 @@ public class DatasetRestHandler extends NettyRestHandler {
         int i = 0;
         for (Map.Entry<String, String> entry : valueMap.entrySet()) {
           cols[i] = Util.decodeBinary(entry.getKey(), encoding);
-          vals[i] = Util.decodeBinary(entry.getValue(), encoding);
+          vals[i] = Util.decodeBinary(entry.getValue(), encoding, counter);
           i++;
         }
         write = new Write(rowKey, cols, vals);
       } catch (Exception e) {
-        respondBadRequest(message, request, helper, "error decoding column key(s) and values", e);
+        respondBadRequest(message, request, helper, "error decoding column key(s) and value(s)", e);
         return;
       }
       // now execute the write
@@ -572,7 +585,7 @@ public class DatasetRestHandler extends NettyRestHandler {
         }
         increment = new Increment(rowKey, cols, vals);
       } catch (Exception e) {
-        respondBadRequest(message, request, helper, "error decoding column key(s) and values", e);
+        respondBadRequest(message, request, helper, "error decoding column key(s) and value(s)", e);
         return;
       }
       // now execute the write

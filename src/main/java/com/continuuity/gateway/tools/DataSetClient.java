@@ -10,6 +10,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -63,6 +64,7 @@ public class DataSetClient {
   LinkedList<String> columns = Lists.newLinkedList(); // the columns to read/delete/write/increment
   LinkedList<String> values = Lists.newLinkedList(); // the values to write/increment
   String encoding = null;        // the encoding for row keys, column keys, values
+  boolean counter = false;         // to interpret values as counters
 
   String table = null;           // the name of the table to operate on
 
@@ -107,6 +109,7 @@ public class DataSetClient {
     out.println("  --hex                   To specify hex encoding for keys/values");
     out.println("  --url                   To specify hex encoding for keys/values");
     out.println("  --base64                To specify base64 encoding for keys/values");
+    out.println("  --counter               To interpret values as long counters");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --apikey <apikey>       To specify an API key for authentication");
@@ -217,6 +220,8 @@ public class DataSetClient {
           usage(true);
         }
         Collections.addAll(values, args[pos].split(","));
+      } else if ("--counter".equals(arg)) {
+        counter = true;
       } else if ("--hex".equals(arg)) {
         encoding = "hex";
       } else if ("--url".equals(arg)) {
@@ -388,6 +393,10 @@ public class DataSetClient {
       }
       if (encoding != null) {
         requestUrl += sep + "encoding=" + encoding;
+        sep = "&";
+      }
+      if (counter) {
+        requestUrl += sep + "counter=1";
       }
       // now execute this as a get
       try {
@@ -404,15 +413,16 @@ public class DataSetClient {
       if (!checkHttpStatus(response)) {
         return null;
       }
-      if (printResponse(response) == null) {
-        return null;
-      }
-      return "OK.";
+      return printResponse(response);
     }
 
     if ("write".equals(command)) {
       if (encoding != null) {
         requestUrl += sep + "encoding=" + encoding;
+        sep = "&";
+      }
+      if (counter) {
+        requestUrl += sep + "counter=1";
       }
       // request URL is complete - construct the Json body
       byte[] requestBody = buildJson(false);
@@ -460,10 +470,7 @@ public class DataSetClient {
       if (!checkHttpStatus(response)) {
         return null;
       }
-      if (printResponse(response) == null) {
-        return null;
-      }
-      return "OK.";
+      return printResponse(response);
     }
 
     if ("delete".equals(command)) {
@@ -529,18 +536,33 @@ public class DataSetClient {
    * @return whether the response indicates success
    */
   boolean checkHttpStatus(HttpResponse response) {
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+    try {
+      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        // get the error message from the body of the response
+        String reason = response.getEntity().getContent() == null ? null :
+          IOUtils.toString(response.getEntity().getContent());
+        if (verbose) {
+          System.out.println(response.getStatusLine());
+          if (reason != null && !reason.isEmpty()) {
+            System.out.println(reason);
+          }
+        } else {
+          if (reason != null && !reason.isEmpty()) {
+            System.err.println(response.getStatusLine().getReasonPhrase() + ": " + reason);
+          } else {
+            System.err.println(response.getStatusLine().getReasonPhrase());
+          }
+        }
+        return false;
+      }
       if (verbose) {
         System.out.println(response.getStatusLine());
-      } else {
-        System.err.println(response.getStatusLine().getReasonPhrase());
       }
+      return true;
+    } catch (IOException e) {
+      System.err.println("Error reading HTTP response: " + e.getMessage());
       return false;
     }
-    if (verbose) {
-      System.out.println(response.getStatusLine());
-    }
-    return true;
   }
 
   public String printResponse(HttpResponse response) {
@@ -550,13 +572,16 @@ public class DataSetClient {
           return null;
         }
         Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
-        Type stringMapType = new TypeToken<Map<String, String>>() {
-        }.getType();
+        Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
         Map<String, String> map = new Gson().fromJson(reader, stringMapType);
+        String value = null;
         for (Map.Entry<String, String> entry : map.entrySet()) {
+          if (value == null) {
+            value = entry.getValue();
+          }
           System.out.println(entry.getKey() + ":" + entry.getValue());
         }
-        return "OK.";
+        return value == null ? "<null>" : value;
       } catch (IOException e) {
         System.err.println("Error reading HTTP response: " + e.getMessage());
         return null;
