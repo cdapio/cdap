@@ -21,7 +21,6 @@ task jshint << {
     "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
     "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
     "$rootProject.projectDir/web-cloud-app/client/core/",
-    "$rootProject.projectDir/web-cloud-app/client/mocks/",
     "$rootProject.projectDir/web-cloud-app/client/main.js",
 
     "$rootProject.projectDir/web-cloud-app/client/local/views",
