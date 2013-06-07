@@ -29,6 +29,7 @@ public class CountCounts implements Application {
         .add(new CountCountsFlow())
       .withProcedures()
         .add(new CountCountsProcedure())
+      .noBatch()
       .build();
   }
 }
