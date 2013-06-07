@@ -8,7 +8,7 @@
 
 if [ -d /opt/continuuity ]; then
  CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME
- DEFAULT_JVM_OPTS="-Xmx6144m"
+ DEFAULT_JVM_OPTS="-Xmx3072m"
 else
  DEFAULT_JVM_OPTS="-Xmx1024m"
 fi
