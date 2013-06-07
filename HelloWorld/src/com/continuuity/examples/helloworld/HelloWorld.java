@@ -55,6 +55,7 @@ public class HelloWorld implements Application {
       withDataSets().add(new KeyValueTable("whom")).
       withFlows().add(new WhoFlow()).
       withProcedures().add(new Greeting()).
+      noBatch().
       build();
   }
 

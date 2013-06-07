@@ -63,6 +63,7 @@ public class TwitterScanner implements Application {
         .add(new TwitterFlow())
       .withProcedures()
         .add(new TwitterProcedure())
+      .noBatch()
       .build();
   }
 }

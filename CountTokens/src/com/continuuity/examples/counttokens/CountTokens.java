@@ -46,6 +46,7 @@ public class CountTokens implements Application {
       .withFlows()
         .add(new CountTokensFlow())
       .noProcedure()
+      .noBatch()
       .build();
   }
 }
