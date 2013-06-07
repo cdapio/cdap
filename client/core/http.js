@@ -114,6 +114,7 @@ define([], function () {
 				method: this.__methodNames[type] + (appId ? 'ByApplication' : ''),
 				params: appId ? [appId] : []
 			}, function (error, response, params) {
+				console.log("by appliation response is " + response.method, JSON.stringify(response));
 
 				if (error) {
 					if (typeof callback === 'function') {

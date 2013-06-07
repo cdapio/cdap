@@ -66,28 +66,9 @@ define(['mocks/socket-router'], function (SocketRouter) {
 
 			request.id = current_id ++;
 			var mockPath = getMockPath(request);
-			if (request.method == "getCounters") {
-				var response = {
-					id: request.id,
-					method: request.method,
-					params: SocketRouter[mockPath]
-				}
-				callback(null, response, params);
-				return;	
-			}
-			var response = {
-				id: request.id,
-				method: request.method,
-				params: {
-					points: {},
-					latest: null
-				}
-			};
-
-			if (request.params[2]) {
-				for (var i = 0, len = request.params[2].length; i < len; i++) {
-					response["params"]["points"][request.params[2][i]] = jQuery.extend(true, [], SocketRouter[mockPath]);
-				}
+			var response = {};
+			if (SocketRouter.hasOwnProperty(mockPath)) {
+				response = SocketRouter[mockPath](request);
 			}
 			callback(null, response, params);
 		}

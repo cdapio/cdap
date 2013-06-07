@@ -15,7 +15,13 @@ define([], function () {
 					"d": 1
 				}
 			}
-		}
+		},
+		"counterSample": [
+			{
+				"timestamp": 0,
+				"value": 234
+			}
+		]
 	};
 
 });

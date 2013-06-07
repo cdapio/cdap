@@ -57,6 +57,7 @@ define([], function () {
 				method: 'status',
 				params: [app_id, flow_id, -1]
 			}, function (error, response) {
+				console.log("status is ", JSON.stringify(response));
 
 				if (response.params) {
 					self.set('currentState', response.params.status);
@@ -68,8 +69,6 @@ define([], function () {
 				method: 'getTimeSeries',
 				params: [app_id, flow_id, metrics, start, undefined, 'FLOW_LEVEL']
 			}, function (error, response) {
-
-				console.log(response);
 
 				if (!response.params) {
 					return;
@@ -178,7 +177,7 @@ define([], function () {
 				method: 'getFlowDefinition',
 				params: [app_id, flow_id]
 			}, function (error, response) {
-
+				console.log("flow defintion response is", JSON.stringify(response));
 				if (error || !response.params) {
 					promise.reject(error);
 					return;
