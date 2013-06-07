@@ -42,7 +42,7 @@ final class DefaultProcedureRequest implements ProcedureRequest {
   @Override
   public <T> T getArgument(String key, Class<T> type) {
     Preconditions.checkNotNull(type, "Type cannnot be null.");
-    Preconditions.checkArgument(!Void.class.equals(type) && Void.TYPE.equals(type), "Void type not supported.");
+    Preconditions.checkArgument(!Void.class.equals(type) && !Void.TYPE.equals(type), "Void type not supported.");
 
     String value = getArgument(key);
 
