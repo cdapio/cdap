@@ -13,7 +13,7 @@ package com.continuuity.common.logging;
  * </p>
  */
 public class LoggingContextAccessor {
-  private static ThreadLocal<LoggingContext> loggingContext;
+  private static final ThreadLocal<LoggingContext> loggingContext = new ThreadLocal<LoggingContext>();
 
   /**
    * Sets the logging context.
@@ -25,9 +25,6 @@ public class LoggingContextAccessor {
    * @param context context to set
    */
   public static void setLoggingContext(LoggingContext context) {
-    if (loggingContext == null) {
-      loggingContext = new ThreadLocal<LoggingContext>();
-    }
     loggingContext.set(context);
   }
 
@@ -35,6 +32,6 @@ public class LoggingContextAccessor {
    * @return LoggingContext if it was set. Returns null otherwise.
    */
   public static LoggingContext getLoggingContext() {
-    return loggingContext == null ? null : loggingContext.get();
+    return loggingContext.get();
   }
 }

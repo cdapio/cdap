@@ -7,7 +7,7 @@ package com.continuuity.common.logging;
 /**
  * Account logging context.
  */
-public class AccountLoggingContext extends AbstractLoggingContext {
+public abstract class AccountLoggingContext extends AbstractLoggingContext {
   public static final String TAG_ACCOUNT_ID = "accountId";
 
   /**

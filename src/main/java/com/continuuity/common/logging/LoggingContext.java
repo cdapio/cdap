@@ -5,6 +5,7 @@
 package com.continuuity.common.logging;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Defines LoggingContext interface so that we have at least somewhat structured logging context data and know how to
@@ -15,6 +16,11 @@ public interface LoggingContext {
    * @return collection of system tags associated with this logging context
    */
   Collection<SystemTag> getSystemTags();
+
+  /**
+   * @return Map of tag name to system tag associated with this logging context
+   */
+  Map<String, SystemTag> getSystemTagsMap();
 
   // hack hack hack: time constraints
   /**

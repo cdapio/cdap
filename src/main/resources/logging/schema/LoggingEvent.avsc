@@ -1,0 +1,145 @@
+{
+    "type" : "record",
+    "name" : "LoggingEvent",
+    "namespace" : "com.continuuity.common.logging.logback.serialize",
+    "fields" : [ {
+        "name" : "threadName",
+        "type" : "string"
+    }, {
+        "name" : "level",
+        "type" : "int"
+    }, {
+        "name" : "message",
+        "type" : "string"
+    }, {
+        "name" : "argumentArray",
+        "type" : [ "null", {
+            "type" : "array",
+            "items" : "string"
+        } ],
+        "default" : null
+    }, {
+        "name" : "formattedMessage",
+        "type" : [ "null", "string" ],
+        "default" : null
+    }, {
+        "name" : "loggerName",
+        "type" : [ "null", "string" ],
+        "default" : null
+    }, {
+        "name" : "loggerContextVO",
+        "type" : [ "null", {
+            "type" : "record",
+            "name" : "LoggerContextVO",
+            "namespace" : "ch.qos.logback.classic.spi",
+            "fields" : [ {
+                "name" : "name",
+                "type" : "string"
+            }, {
+                "name" : "propertyMap",
+                "type" : {
+                    "type" : "map",
+                    "values" : "string"
+                }
+            }, {
+                "name" : "birthTime",
+                "type" : "long"
+            } ]
+        } ],
+        "default" : null
+    }, {
+        "name" : "throwableProxy",
+        "type" : [ "null", {
+            "type" : "record",
+            "name" : "ThrowableProxyVO",
+            "namespace" : "ch.qos.logback.classic.spi",
+            "fields" : [ {
+                "name" : "className",
+                "type" : "string"
+            }, {
+                "name" : "message",
+                "type" : "string"
+            }, {
+                "name" : "commonFramesCount",
+                "type" : "int"
+            }, {
+                "name" : "stackTraceElementProxyArray",
+                "type" : {
+                    "type" : "array",
+                    "items" : {
+                        "type" : "record",
+                        "name" : "StackTraceElementProxy",
+                        "fields" : [ {
+                            "name" : "ste",
+                            "type" : {
+                                "type" : "record",
+                                "name" : "StackTraceElement",
+                                "namespace" : "java.lang",
+                                "fields" : [ ]
+                            }
+                        }, {
+                            "name" : "cpd",
+                            "type" : {
+                                "type" : "record",
+                                "name" : "ClassPackagingData",
+                                "fields" : [ {
+                                    "name" : "codeLocation",
+                                    "type" : "string"
+                                }, {
+                                    "name" : "version",
+                                    "type" : "string"
+                                }, {
+                                    "name" : "exact",
+                                    "type" : "boolean"
+                                } ]
+                            }
+                        } ]
+                    }
+                }
+            }, {
+                "name" : "cause",
+                "type" : {
+                    "type" : "record",
+                    "name" : "IThrowableProxy",
+                    "fields" : [ ]
+                }
+            }, {
+                "name" : "suppressed",
+                "type" : {
+                    "type" : "array",
+                    "items" : "IThrowableProxy"
+                }
+            } ]
+        } ],
+        "default" : null
+    }, {
+        "name" : "callerData",
+        "type" : [ "null", {
+            "type" : "array",
+            "items" : "java.lang.StackTraceElement"
+        } ],
+        "default" : null
+    }, {
+        "name" : "hasCallerData",
+        "type" : "boolean"
+    }, {
+        "name" : "marker",
+        "type" : [ "null", {
+            "type" : "record",
+            "name" : "Marker",
+            "namespace" : "org.slf4j",
+            "fields" : [ ]
+        } ],
+        "default" : null
+    }, {
+        "name" : "mdc",
+        "type" : [ "null", {
+            "type" : "map",
+            "values" : "string"
+        } ],
+        "default" : null
+    }, {
+        "name" : "timestamp",
+        "type" : "long"
+    } ]
+}
