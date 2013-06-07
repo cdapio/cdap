@@ -11,7 +11,12 @@ define([], function () {
 				{
 					"id": "ABC",
 					"type": "App",
-					"name": "My App"
+					"name": "My app"
+				},
+				{
+					"id": "DEF",
+					"type": "App",
+					"name": "My app2"
 				}
 			]
 		},
@@ -22,6 +27,12 @@ define([], function () {
 					"id": "ABC",
 					"type": "Stream",
 					"name": "My Stream",
+					"storage": 0
+				},
+				{
+					"id": "DEF",
+					"type": "Stream",
+					"name": "My Stream2",
 					"storage": 0
 				}
 			]

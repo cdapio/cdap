@@ -69,6 +69,8 @@ define([], function () {
 				params: [app_id, flow_id, metrics, start, undefined, 'FLOW_LEVEL']
 			}, function (error, response) {
 
+				console.log(response);
+
 				if (!response.params) {
 					return;
 				}
@@ -80,13 +82,15 @@ define([], function () {
 					data = points[metric];
 
 					var k = data.length;
+
 					while(k --) {
 						data[k] = data[k].value;
 					}
 
+
 					metric = metric.replace(/\./g, '');
 					self.get('metricData').set(metric, data);
-					this.set('__loadingData', false);
+					self.set('__loadingData', false);
 				}
 
 			}];
