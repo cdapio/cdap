@@ -31,7 +31,7 @@ public abstract class AbstractStage<T> implements Stage {
   public final void process(Context ctx) throws Exception {
     this.ctx = ctx;
     Object upStream = ctx.getUpStream();
-    if(typeToken.isAssignableFrom(upStream.getClass())) {
+    if(typeToken.getRawType().isAssignableFrom(upStream.getClass())) {
       process((T) typeToken.getRawType().cast(upStream));
     }
   }
