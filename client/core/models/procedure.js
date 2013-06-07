@@ -183,6 +183,7 @@ define([], function () {
 					id: procedure_id
 				}]
 			}, function (error, response) {
+				console.log("get query is ", JSON.stringify(response));
 
 				response.params.currentState = 'UNKNOWN';
 				response.params.version = -1;

@@ -171,12 +171,6 @@ define([], function () {
           "timestamp": 0,
           "value": 25
       }
-		],
-		"counterSample": [
-			{
-				"timestamp": 0,
-				"value": 234
-			}
 		]
 	};
 
