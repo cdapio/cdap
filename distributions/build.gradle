@@ -165,6 +165,8 @@ task developer_suite_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
     exclude "PayvmentDemo/"
     exclude "DependencyRandomNumber/"
     exclude "TwitterScanner/"
+    exclude "LishApps/"
+    exclude "AggregateMetrics/"
   }
 
   //webapp
