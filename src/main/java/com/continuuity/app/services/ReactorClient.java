@@ -9,6 +9,7 @@ import com.continuuity.common.utils.Copyright;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.apache.commons.cli.*;
 import org.apache.thrift.TException;
@@ -74,7 +75,7 @@ public class ReactorClient {
     String address = "localhost";
     int port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
     TTransport transport = null;
-    TProtocol protocol = null;
+    TProtocol protocol;
     try {
       transport = new TFramedTransport(new TSocket(address, port));
       protocol = new TBinaryProtocol(transport);
@@ -91,22 +92,23 @@ public class ReactorClient {
 
       if ("start".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
-        FlowIdentifier identifier = null;
-        if( this.flow != null) {
+        FlowIdentifier identifier;
+        if (this.flow != null) {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
-          System.out.println(String.format("Starting flow %s for application %s ",this.flow, this.application));
+          System.out.println(String.format("Starting flow %s for application %s ", this.flow, this.application));
         } else if (this.mapReduce != null) {
           identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
-          System.out.println(String.format("Starting mapreduce job %s for application %s ",this.mapReduce, this.application));
+          System.out.println(String.format("Starting mapreduce job %s for application %s ",
+                                           this.mapReduce, this.application));
         } else {
           identifier = new FlowIdentifier("developer", application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Starting procedure %s for application %s ",
                                             this.procedure, this.application));
         }
-        client.start(dummyAuthToken,new FlowDescriptor(identifier,new ArrayList<String>()));
+        client.start(dummyAuthToken, new FlowDescriptor(identifier, ImmutableMap.<String, String>of()));
         System.out.println("Started ");
         return;
       }
@@ -115,10 +117,10 @@ public class ReactorClient {
 
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = null;
-        if( this.flow != null) {
+        if (this.flow != null) {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
-          System.out.println(String.format("Stopping flow %s for application %s ",this.flow, this.application));
+          System.out.println(String.format("Stopping flow %s for application %s ", this.flow, this.application));
         } else if (this.mapReduce != null) {
           identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
@@ -130,7 +132,7 @@ public class ReactorClient {
           System.out.println(String.format("Stopping procedure %s for application %s ",
             this.procedure, this.application));
         }
-        client.stop(dummyAuthToken,identifier);
+        client.stop(dummyAuthToken, identifier);
         System.out.println("Stopped ");
         return;
       }
@@ -146,14 +148,13 @@ public class ReactorClient {
       }
       if ("status".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
-        FlowIdentifier identifier = null;
-        if( this.flow != null) {
+        FlowIdentifier identifier;
+        if (this.flow != null) {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Getting status for flow %s in application %s ",
                                             this.flow, this.application));
-        }
-        else {
+        } else {
           identifier = new FlowIdentifier("developer", application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Getting status for procedure %s in application %s ",
@@ -193,13 +194,13 @@ public class ReactorClient {
 
     Options options = new Options();
 
-    options.addOption("a",APPLICATION_LONG_OPT_ARG, true, "Application Id.");
-    options.addOption("r",ARCHIVE_LONG_OPT_ARG,true, "Archive that contains the application.");
-    options.addOption("p",PROCEDURE_LONG_OPT_ARG, true, "Procedure Id.");
-    options.addOption("h",HOSTNAME_LONG_OPT_ARG, true, "Hostname to push the application to.");
-    options.addOption("k",APIKEY_LONG_OPT_ARG, true, "Apikey of the account.");
-    options.addOption("f",FLOW_LONG_OPT_ARG, true, "Flow Id.");
-    options.addOption("m",MAPREDUCE_LONG_OPT_ARG, true, "MapReduce job Id.");
+    options.addOption("a", APPLICATION_LONG_OPT_ARG, true, "Application Id.");
+    options.addOption("r", ARCHIVE_LONG_OPT_ARG, true, "Archive that contains the application.");
+    options.addOption("p", PROCEDURE_LONG_OPT_ARG, true, "Procedure Id.");
+    options.addOption("h", HOSTNAME_LONG_OPT_ARG, true, "Hostname to push the application to.");
+    options.addOption("k", APIKEY_LONG_OPT_ARG, true, "Apikey of the account.");
+    options.addOption("f", FLOW_LONG_OPT_ARG, true, "Flow Id.");
+    options.addOption("m", MAPREDUCE_LONG_OPT_ARG, true, "MapReduce job Id.");
 
     CommandLine commandLine = null;
 
@@ -304,8 +305,7 @@ public class ReactorClient {
   }
 
   public static void main(String[] args) throws TException, AppFabricServiceException {
-    String command = null;
-    ReactorClient client = null;
+    ReactorClient client;
     try {
       client = new ReactorClient();
       client.configure(CConfiguration.create(), args);
@@ -319,12 +319,12 @@ public class ReactorClient {
   private void deploy(AppFabricService.Client client, TTransport transport)
     throws IOException, TException, AppFabricServiceException, InterruptedException {
     File file = new File(this.resource);
-    JarFile jarFile = new JarFile(file);
 
     AuthToken dummyAuthToken = new AuthToken("ReactorClient");
     System.out.println(String.format("Deploying... :%s", this.resource));
 
-    ResourceIdentifier identifier = client.init(dummyAuthToken, new ResourceInfo("developer","", file.getName(),                                                                    (int)file.getTotalSpace(), file.lastModified()));
+    ResourceIdentifier identifier = client.init(dummyAuthToken, new ResourceInfo("developer", "", file.getName(),
+                                                (int) file.getTotalSpace(), file.lastModified()));
     Preconditions.checkNotNull(identifier, "Resource identifier is null");
 
     BufferFileInputStream is =
@@ -333,7 +333,9 @@ public class ReactorClient {
     try {
       while (true) {
         byte[] toSubmit = is.read();
-        if (toSubmit.length == 0) break;
+        if (toSubmit.length == 0) {
+          break;
+        }
         client.chunk(dummyAuthToken, identifier, ByteBuffer.wrap(toSubmit));
       }
     } finally {
