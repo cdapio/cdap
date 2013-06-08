@@ -16,6 +16,7 @@ struct AuthToken {
 enum EntityType {
   FLOW,
   QUERY,
+  MAPREDUCE,
 }
 
 /**
@@ -101,7 +102,7 @@ struct FlowStatus {
  */
 struct FlowDescriptor {
   1:FlowIdentifier identifier,
-  2:list<string> arguments,
+  2:map<string, string> arguments,
 }
 
 /**

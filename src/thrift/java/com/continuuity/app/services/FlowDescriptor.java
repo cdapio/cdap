@@ -37,7 +37,7 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FlowDescriptor");
 
   private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-  private static final org.apache.thrift.protocol.TField ARGUMENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("arguments", org.apache.thrift.protocol.TType.LIST, (short)2);
+  private static final org.apache.thrift.protocol.TField ARGUMENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("arguments", org.apache.thrift.protocol.TType.MAP, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -46,7 +46,7 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
   }
 
   private FlowIdentifier identifier; // required
-  private List<String> arguments; // required
+  private Map<String,String> arguments; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -116,7 +116,8 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
     tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
     tmpMap.put(_Fields.ARGUMENTS, new org.apache.thrift.meta_data.FieldMetaData("arguments", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FlowDescriptor.class, metaDataMap);
@@ -127,7 +128,7 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
 
   public FlowDescriptor(
     FlowIdentifier identifier,
-    List<String> arguments)
+    Map<String,String> arguments)
   {
     this();
     this.identifier = identifier;
@@ -142,9 +143,17 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
       this.identifier = new FlowIdentifier(other.identifier);
     }
     if (other.isSetArguments()) {
-      List<String> __this__arguments = new ArrayList<String>();
-      for (String other_element : other.arguments) {
-        __this__arguments.add(other_element);
+      Map<String,String> __this__arguments = new HashMap<String,String>();
+      for (Map.Entry<String, String> other_element : other.arguments.entrySet()) {
+
+        String other_element_key = other_element.getKey();
+        String other_element_value = other_element.getValue();
+
+        String __this__arguments_copy_key = other_element_key;
+
+        String __this__arguments_copy_value = other_element_value;
+
+        __this__arguments.put(__this__arguments_copy_key, __this__arguments_copy_value);
       }
       this.arguments = __this__arguments;
     }
@@ -187,22 +196,18 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
     return (this.arguments == null) ? 0 : this.arguments.size();
   }
 
-  public java.util.Iterator<String> getArgumentsIterator() {
-    return (this.arguments == null) ? null : this.arguments.iterator();
-  }
-
-  public void addToArguments(String elem) {
+  public void putToArguments(String key, String val) {
     if (this.arguments == null) {
-      this.arguments = new ArrayList<String>();
+      this.arguments = new HashMap<String,String>();
     }
-    this.arguments.add(elem);
+    this.arguments.put(key, val);
   }
 
-  public List<String> getArguments() {
+  public Map<String,String> getArguments() {
     return this.arguments;
   }
 
-  public void setArguments(List<String> arguments) {
+  public void setArguments(Map<String,String> arguments) {
     this.arguments = arguments;
   }
 
@@ -235,7 +240,7 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
       if (value == null) {
         unsetArguments();
       } else {
-        setArguments((List<String>)value);
+        setArguments((Map<String,String>)value);
       }
       break;
 
@@ -435,17 +440,19 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
             }
             break;
           case 2: // ARGUMENTS
-            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+            if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
-                struct.arguments = new ArrayList<String>(_list8.size);
-                for (int _i9 = 0; _i9 < _list8.size; ++_i9)
+                org.apache.thrift.protocol.TMap _map8 = iprot.readMapBegin();
+                struct.arguments = new HashMap<String,String>(2*_map8.size);
+                for (int _i9 = 0; _i9 < _map8.size; ++_i9)
                 {
-                  String _elem10; // required
-                  _elem10 = iprot.readString();
-                  struct.arguments.add(_elem10);
+                  String _key10; // required
+                  String _val11; // optional
+                  _key10 = iprot.readString();
+                  _val11 = iprot.readString();
+                  struct.arguments.put(_key10, _val11);
                 }
-                iprot.readListEnd();
+                iprot.readMapEnd();
               }
               struct.setArgumentsIsSet(true);
             } else { 
@@ -473,12 +480,13 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
       if (struct.arguments != null) {
         oprot.writeFieldBegin(ARGUMENTS_FIELD_DESC);
         {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.arguments.size()));
-          for (String _iter11 : struct.arguments)
+          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, struct.arguments.size()));
+          for (Map.Entry<String, String> _iter12 : struct.arguments.entrySet())
           {
-            oprot.writeString(_iter11);
+            oprot.writeString(_iter12.getKey());
+            oprot.writeString(_iter12.getValue());
           }
-          oprot.writeListEnd();
+          oprot.writeMapEnd();
         }
         oprot.writeFieldEnd();
       }
@@ -513,9 +521,10 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
       if (struct.isSetArguments()) {
         {
           oprot.writeI32(struct.arguments.size());
-          for (String _iter12 : struct.arguments)
+          for (Map.Entry<String, String> _iter13 : struct.arguments.entrySet())
           {
-            oprot.writeString(_iter12);
+            oprot.writeString(_iter13.getKey());
+            oprot.writeString(_iter13.getValue());
           }
         }
       }
@@ -532,13 +541,15 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
       }
       if (incoming.get(1)) {
         {
-          org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.arguments = new ArrayList<String>(_list13.size);
-          for (int _i14 = 0; _i14 < _list13.size; ++_i14)
+          org.apache.thrift.protocol.TMap _map14 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.arguments = new HashMap<String,String>(2*_map14.size);
+          for (int _i15 = 0; _i15 < _map14.size; ++_i15)
           {
-            String _elem15; // required
-            _elem15 = iprot.readString();
-            struct.arguments.add(_elem15);
+            String _key16; // required
+            String _val17; // optional
+            _key16 = iprot.readString();
+            _val17 = iprot.readString();
+            struct.arguments.put(_key16, _val17);
           }
         }
         struct.setArgumentsIsSet(true);
