@@ -60,6 +60,7 @@ public class LishApp implements Application {
           .add(new ClusterWriterFlow())
         .withProcedures()
           .add(new ClusterFeedQueryProvider())
+        .noBatch()
         .build();
   }
 }

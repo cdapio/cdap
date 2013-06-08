@@ -22,6 +22,7 @@ public class CountOddAndEven implements Application {
       .withFlows()
         .add(new CountOddAndEvenFlow())
       .noProcedure()
+      .noBatch()
       .build();
   }
 }
