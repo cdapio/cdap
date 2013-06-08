@@ -117,6 +117,9 @@ import java.util.concurrent.TimeUnit;
  * This is a concrete implementation of AppFabric thrift Interface.
  */
 public class DefaultAppFabricService implements AppFabricService.Iface {
+  /**
+   * Log handler.
+   */
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAppFabricService.class);
 
   /**
@@ -156,14 +159,24 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private final AuthorizationFactory authFactory;
 
+  /**
+   * Runtime program service for running and managing programs.
+   */
   private final ProgramRuntimeService runtimeService;
 
+  /**
+   * Store manages non-runtime lifecycle.
+   */
   private final Store store;
 
   /**
    * The directory where the uploaded files would be placed.
    */
   private final String archiveDir;
+
+  /**
+   * Timeout to upload to remote app fabric.
+   */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
   /**
@@ -238,11 +251,16 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         id.setType(EntityType.MAPREDUCE);
         program = store.loadProgram(programId, entityTypeToType(id));
       }
-      // TODO: User arguments
+
+      BasicArguments userArguments = new BasicArguments();
+      if (descriptor.isSetArguments()) {
+        userArguments = new BasicArguments(descriptor.getArguments());
+      }
+
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getFlowId(),
                                                              new BasicArguments(),
-                                                             new BasicArguments()));
+                                                             userArguments));
       store.setStart(programId, runtimeInfo.getController().getRunId().getId(),
                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
       return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
