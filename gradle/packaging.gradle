@@ -165,7 +165,7 @@ if(project.name == 'distributions') {
 uploadPackages {
   repositories {
     repositories.mavenDeployer {
-      repository(url: "https://repository.continuuity.com/content/repositories/packages") {
+      repository(url: finalRelease ? "https://repository.continuuity.com/service/local/staging/deploy/maven2" : "https://repository.continuuity.com/content/repositories/packages") {
         authentication(userName: nexusUsername, password: nexusPassword)
         pom.groupId = 'com.continuuity.distributions.release'
         pom.version = getPomVersion()
