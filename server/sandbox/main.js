@@ -74,7 +74,7 @@ function accountsRequest (path, done) {
 
 	var lib;
 
-	if (process.env.NODE_ENV === 'production') {
+	if (process.env.NODE_ENV === 'production' || +config['accounts-port'] === 443) {
 		lib = https;
 	} else {
 		lib = http;
@@ -120,7 +120,7 @@ function getRoot () {
 	}
 
 	if (process.env.NODE_ENV === 'development') {
-		root += 'cloud';
+		root += 'sandbox';
 	}
 	return root;
 }
@@ -179,6 +179,8 @@ fs.readFile(configPath, function (error, result) {
 		 * Display configuration.
 		 */
 		logger.info('Configuring with', config);
+		logger.info('CONTINUUITY_HOME is', process.env.CONTINUUITY_HOME);
+		logger.info('NODE_ENV is', process.env.NODE_ENV);
 
 		/**
 		 * Check cluster name.
@@ -214,7 +216,7 @@ fs.readFile(configPath, function (error, result) {
 			secret: config['cookie-secret'],
 			cookie: {
 				path: '/',
-				domain: process.env.NODE_ENV === 'production' ? '.continuuity.net' : '',
+				domain: '.continuuity.net',
 				maxAge: 24 * 60 * 60 * 1000
 			}
 		}));
@@ -226,24 +228,17 @@ fs.readFile(configPath, function (error, result) {
 
 			if (req.session.account_id) {
 
-				if (process.env.NODE_ENV === 'production') {
+				if (!config['info'].owner || !config['info'].owner.account_id) {
 
-					if (!config['info'].owner || !config['info'].owner.account_id) {
-
-						logger.error('Checking SSO. Owner information not found in the configuration!');
-						renderError(req, res);
-
-					} else {
-						if (req.session.account_id !== config['info'].owner.account_id) {
-							renderAccessError(req, res);
-						} else {
-							next();
-						}
-					}
+					logger.error('Checking SSO. Owner information not found in the configuration!');
+					renderError(req, res);
 
 				} else {
-					logger.warn('Allowed non-owner access (development only)');
-					next();
+					if (req.session.account_id !== config['info'].owner.account_id) {
+						renderAccessError(req, res);
+					} else {
+						next();
+					}
 				}
 
 			} else {
@@ -260,13 +255,9 @@ fs.readFile(configPath, function (error, result) {
 			}
 
 		}
-		// Root in production.
-		if (process.env.NODE_ENV === 'production') {
-			app.get('/', checkSSO);
-		} else {
-			// Root in development.
-			app.get('/cloud/', checkSSO);
-		}
+
+		// Check SSO.
+		app.get('/', checkSSO);
 
 		// Redirected from central with a fresh nonce.
 		// Todo: encrypt an SSO token with the user info.
@@ -543,8 +534,6 @@ fs.readFile(configPath, function (error, result) {
 				Env.getVersion(function (version) {
 					Env.getAddress(function (error, address) {
 
-						logger.info('CONTINUUITY_HOME is', process.env.CONTINUUITY_HOME);
-						logger.info('NODE_ENV is', process.env.NODE_ENV);
 						logger.info('Version', version);
 						logger.info('IP Address', address);
 
