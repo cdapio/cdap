@@ -5,22 +5,22 @@
 
 	<property>
 		<name>cloud-ui-port</name>
-		<value>9999</value>
+		<value>80</value>
 	</property>
 
 	<property>
 		<name>cloud-ui-ssl-port</name>
-		<value>9993</value>
+		<value>443</value>
 	</property>
 
 	<property>
 		<name>accounts-host</name>
-		<value>127.0.0.1</value>
+		<value>accounts.continuuity.com</value>
 	</property>
 
 	<property>
 		<name>accounts-port</name>
-		<value>7777</value>
+		<value>443</value>
 	</property>
 
 	<property>
@@ -85,7 +85,7 @@
 
 	<property>
         <name>gateway.cluster.name</name>
-        <value>mosites</value>
+        <value>box</value>
     </property>
 
 	<property>

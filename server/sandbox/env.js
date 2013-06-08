@@ -2,6 +2,8 @@
  * Server environment helpers
  */
 
+var fs = require('fs');
+
 (function () {
 
 	this.getVersion = function (done) {
