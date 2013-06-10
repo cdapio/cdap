@@ -26,5 +26,5 @@ public interface Pipeline<T> {
    *
    * @param o argument to run the pipeline.
    */
-  ListenableFuture<T> execute(Object o) throws Exception;
+  ListenableFuture<T> execute(Object o);
 }

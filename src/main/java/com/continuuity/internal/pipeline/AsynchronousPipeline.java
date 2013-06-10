@@ -41,7 +41,7 @@ public final class AsynchronousPipeline<T> extends AbstractPipeline<T> {
    * @param o argument to run the pipeline.
    */
   @Override
-  public ListenableFuture<T> execute(final Object o) throws Exception {
+  public ListenableFuture<T> execute(final Object o) {
     return service.submit(new Callable<T>() {
       @Override
       public T call() throws Exception {

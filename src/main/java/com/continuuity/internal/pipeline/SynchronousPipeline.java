@@ -29,7 +29,7 @@ public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
    * @param o argument to run the pipeline.
    */
   @Override
-  public ListenableFuture<T> execute(Object o) throws Exception {
+  public ListenableFuture<T> execute(Object o) {
     try {
       Object input = o;
       Object output = null;
