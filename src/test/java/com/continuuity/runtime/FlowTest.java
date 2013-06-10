@@ -1,5 +1,6 @@
 package com.continuuity.runtime;
 
+import com.continuuity.ArgumentCheckApp;
 import com.continuuity.CountAndFilterWord;
 import com.continuuity.TestCountRandomApp;
 import com.continuuity.TestHelper;
@@ -53,6 +54,33 @@ import java.util.concurrent.TimeUnit;
 public class FlowTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowTest.class);
+
+  @Test
+  public void testAppWithArgs() throws Exception {
+   final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(ArgumentCheckApp.class);
+   ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+
+    List<ProgramController> controllers = Lists.newArrayList();
+    for(final Program program : app.getPrograms()) {
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      controllers.add(runner.run(program, new ProgramOptions() {
+        @Override
+        public String getName() {
+          return program.getProgramName();
+        }
+
+        @Override
+        public Arguments getArguments() {
+          return new BasicArguments();
+        }
+
+        @Override
+        public Arguments getUserArguments() {
+          return new BasicArguments(ImmutableMap.<String, String>of("arg", "test"));
+        }
+      }));
+    }
+  }
 
   @Test
   public void testFlow() throws Exception {

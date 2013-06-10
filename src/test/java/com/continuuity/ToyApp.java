@@ -40,7 +40,9 @@ public class ToyApp implements Application {
       .withStreams().add(new Stream("X")).add(new Stream("Y"))
       .withDataSets().add(new KeyValueTable("data1"))
       .withFlows().add(new ToyFlow())
-      .noProcedure().build();
+      .noProcedure()
+      .noBatch()
+      .build();
   }
 
   public static final class ToyFlow implements Flow {

@@ -43,7 +43,9 @@ public class WebCrawlApp implements Application {
       .withStreams().add(new Stream("urls"))
       .withDataSets().add(new KeyValueTable("crawled-pages"))
       .withFlows().add(new CrawlFlow())
-      .noProcedure().build();
+      .noProcedure()
+      .noBatch()
+      .build();
   }
 
   /**
