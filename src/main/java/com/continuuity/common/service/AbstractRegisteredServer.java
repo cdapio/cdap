@@ -200,6 +200,11 @@ public abstract class AbstractRegisteredServer {
 
       DiscoveryService discoveryService = new ZKDiscoveryService(zkClient);
 
+      InetAddress address = InetAddress.getByName(serverArgs.getAddress());
+      if (address.isAnyLocalAddress()) {
+        address = InetAddress.getLocalHost();
+      }
+      final InetAddress finalAddress = address;
       discoveryServiceCancellable = discoveryService.register(new Discoverable() {
         @Override
         public String getName() {
@@ -208,7 +213,7 @@ public abstract class AbstractRegisteredServer {
 
         @Override
         public InetSocketAddress getSocketAddress() {
-          return new InetSocketAddress(serverArgs.getAddress(), serverArgs.getPort());
+          return new InetSocketAddress(finalAddress, serverArgs.getPort());
         }
       });
 
