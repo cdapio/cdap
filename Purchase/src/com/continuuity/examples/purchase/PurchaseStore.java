@@ -15,15 +15,11 @@ import java.util.List;
 public class PurchaseStore extends AbstractFlowlet {
 
   @UseDataSet("purchases")
-  private ObjectStore<List<Purchase>> store;
+  private ObjectStore<Purchase> store;
 
   public void process(Purchase purchase) throws OperationException {
     String customer = purchase.getCustomer();
-    List<Purchase> purchases = store.read(customer.getBytes());
-    if (purchases == null) {
-      purchases = new ArrayList<Purchase>();
-    }
-    purchases.add(purchase);
-    store.write(Bytes.toBytes(customer), purchases);
+    long time = System.currentTimeMillis();
+    store.write(Bytes.add(Bytes.toBytes(customer), Bytes.toBytes(time)), purchase);
   }
 }
