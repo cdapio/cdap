@@ -4,7 +4,7 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.RunId;
+import com.continuuity.weave.api.RunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

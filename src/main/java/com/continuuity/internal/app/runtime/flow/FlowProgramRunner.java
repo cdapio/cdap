@@ -12,11 +12,12 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.weave.api.RunId;
+import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -65,7 +66,7 @@ public final class FlowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getProgramName());
 
     // Launch flowlet program runners
-    RunId runId = RunId.generate();
+    RunId runId = RunIds.generate();
     final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId, flowSpec);
     return new FlowProgramController(flowlets, runId, program, flowSpec);
   }
@@ -199,7 +200,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       if (!"instances".equals(name) || !(value instanceof Map)) {
         return;
       }
-      Map<String, Integer> command = (Map<String, Integer>)value;
+      Map<String, Integer> command = (Map<String, Integer>) value;
       lock.lock();
       try {
         for (Map.Entry<String, Integer> entry : command.entrySet()) {
