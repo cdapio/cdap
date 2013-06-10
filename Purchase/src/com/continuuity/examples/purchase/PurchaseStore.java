@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * Store the incoming Purchase Objects in datastore.
  */
 public class PurchaseStore extends AbstractFlowlet {
 

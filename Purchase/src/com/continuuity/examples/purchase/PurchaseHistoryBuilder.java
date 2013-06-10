@@ -12,9 +12,10 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- *
+ * Map reduce job that reads Purchases from Object store and creates purchase history for every user.
  */
 public class PurchaseHistoryBuilder implements MapReduce  {
 
@@ -23,7 +24,8 @@ public class PurchaseHistoryBuilder implements MapReduce  {
   public MapReduceSpecification configure() {
     return MapReduceSpecification.Builder.with().
        setName("PurchaseHistoryBuilder").
-       setDescription("Purchase History Builder Map Reduce job").useInputDataSet("purchases").
+       setDescription("Purchase History Builder Map Reduce job").
+       useInputDataSet("purchases").
        useOutputDataSet("history").
        build();
   }
@@ -41,12 +43,14 @@ public class PurchaseHistoryBuilder implements MapReduce  {
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
   }
 
-  public static class PurchaseMapper extends Mapper<byte[], Purchase, Text, Text> {
+  public static class PurchaseMapper extends Mapper<byte[], List<Purchase>, Text, Text> {
     @Override
-    public void map(byte[] key, Purchase purchase, Context context)
+    public void map(byte[] key, List<Purchase> purchases, Context context)
       throws IOException, InterruptedException {
-      String user = purchase.getCustomer();
-      context.write(new Text(user), new Text(new Gson().toJson(purchase)));
+      for(Purchase purchase : purchases) {
+        String user = purchase.getCustomer();
+        context.write(new Text(user), new Text(new Gson().toJson(purchase)));
+      }
     }
   }
 

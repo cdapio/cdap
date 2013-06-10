@@ -6,6 +6,8 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.internal.io.UnsupportedTypeException;
 
+import java.util.List;
+
 /**
  * This implements a simple purchase history application. See the package info for more details.
  */
@@ -19,6 +21,7 @@ public class PurchaseApp implements Application {
         setDescription("Purchase history application").
         withStreams().add(new Stream("purchaseStream")).
         withDataSets().add(new ObjectStore<PurchaseHistory>("history", PurchaseHistory.class)).
+        add(new ObjectStore<List<Purchase>>("purchases", Purchase.class)).
         withFlows().add(new PurchaseFlow()).
         withProcedures().add(new PurchaseQuery()).
         withBatch().
