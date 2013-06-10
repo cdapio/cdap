@@ -8,14 +8,15 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
+import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -50,6 +51,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private static final int MAX_IO_THREADS = 5;
   private static final int MAX_HANDLER_THREADS = 20;
+  private static final int CLOSE_CHANNEL_TIMEOUT = 5;
 
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final ServiceAnnouncer serviceAnnouncer;
@@ -93,7 +95,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "0"));
 
-      RunId runId = RunId.generate();
+      RunId runId = RunIds.generate();
 
       // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
@@ -202,7 +204,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       LOG.info("Stopping procedure: " + procedureContext);
       cancellable.cancel();
       try {
-        if (!channelGroup.close().await(5, TimeUnit.SECONDS)) {
+        if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT, TimeUnit.SECONDS)) {
           LOG.warn("Timeout when closing all channels.");
         }
       } finally {

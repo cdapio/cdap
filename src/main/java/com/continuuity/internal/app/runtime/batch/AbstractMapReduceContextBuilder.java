@@ -6,7 +6,6 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
@@ -20,8 +19,8 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Injector;
@@ -31,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 
 /**
@@ -95,7 +93,7 @@ public abstract class AbstractMapReduceContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getProgramName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, RunId.from(runId), txAgent,
+      new BasicMapReduceContext(program, RunIds.fromString(runId), txAgent,
                                 // NOTE: we are initializing all datasets of application, so that user is not required
                                 //       to define all datasets used in Mapper and Reducer classes on MapReduceJob
                                 //       class level
