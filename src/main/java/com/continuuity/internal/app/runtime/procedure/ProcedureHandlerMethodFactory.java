@@ -3,6 +3,7 @@ package com.continuuity.internal.app.runtime.procedure;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.weave.api.RunId;
 import com.google.common.base.Throwables;
@@ -35,11 +36,12 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   private final RunId runId;
   private final int instanceId;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
+  private final ProgramOptions options;
 
   private Thread runThread;
 
   ProcedureHandlerMethodFactory(Program program, RunId runId, int instanceId,
-                                DataFabricFacadeFactory txAgentSupplierFactory) {
+                                ProgramOptions options, DataFabricFacadeFactory txAgentSupplierFactory) {
 
     Map<WeakReference<HandlerMethod>, ProcedureEntry> map = Maps.newIdentityHashMap();
     procedures = Collections.synchronizedMap(map);
@@ -48,13 +50,14 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
     this.program = program;
     this.runId = runId;
     this.instanceId = instanceId;
+    this.options = options;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
   }
 
   @Override
   public HandlerMethod create() {
     try {
-      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, runId, instanceId,
+      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, runId, instanceId, options,
                                                                         txAgentSupplierFactory);
       handlerMethod.init();
 

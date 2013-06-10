@@ -66,10 +66,10 @@ public class ArgumentCheckApp implements Application {
 
     @Override
     public void generate() throws Exception {
-      String arg = context.getSpecification().getArguments().get("arg");
-      if (!context.getSpecification().getArguments().containsKey("arg") ||
-          !context.getSpecification().getArguments().get("arg").equals("test")) {
-        throw new IllegalArgumentException("User argument functionality not working");
+      String arg = context.getRuntimeArguments().get("arg");
+      if (!context.getRuntimeArguments().containsKey("arg") ||
+          !context.getRuntimeArguments().get("arg").equals("test")) {
+        throw new IllegalArgumentException("User runtime argument functionality not working");
       }
       out.emit(arg);
     }
@@ -89,14 +89,16 @@ public class ArgumentCheckApp implements Application {
     @Override
     public void initialize(ProcedureContext context) {
       this.context = context;
+      if(! context.getRuntimeArguments().containsKey("arg")) {
+        throw new IllegalArgumentException("User runtime argument fuctionality not working.");
+      }
     }
 
     @Handle("arg")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+      // Don't need to do much here. As we want to test if the context carries runtime arguments.
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS),
                          context.getSpecification().getArguments());
     }
   }
-
-
 }

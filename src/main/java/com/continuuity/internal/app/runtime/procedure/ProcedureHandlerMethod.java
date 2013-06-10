@@ -8,6 +8,7 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
@@ -42,8 +43,8 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final Map<String, HandlerMethod> handlers;
   private final BasicProcedureContext context;
 
-  ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
-                                DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
+  ProcedureHandlerMethod(Program program, RunId runId, int instanceId, ProgramOptions options,
+                         DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
 
     DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
@@ -51,9 +52,11 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
     context = new BasicProcedureContext(program, runId, instanceId,
                                         DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
+                                        options.getUserArguments(),
                                         procedureSpec);
 
-    TypeToken<? extends Procedure> procedureType = (TypeToken<? extends Procedure>)TypeToken.of(program.getMainClass());
+    TypeToken<? extends Procedure> procedureType
+      = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
     procedure = new InstantiatorFactory(false).get(procedureType).create();
     context.injectFields(procedure);
     handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);

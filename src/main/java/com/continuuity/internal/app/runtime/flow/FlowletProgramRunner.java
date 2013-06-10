@@ -165,6 +165,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                    runId, instanceCount,
                                                                    DataSets.createDataSets(dataSetContext,
                                                                                            flowletDef.getDatasets()),
+                                                                   options.getUserArguments(),
                                                                    flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));
 

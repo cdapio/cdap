@@ -16,6 +16,7 @@ import java.util.Map;
 /**
  * Base class for program runtime context
  */
+@Deprecated
 public abstract class ProgramRuntimeContext {
   private final Program program;
   private final RunId runId;

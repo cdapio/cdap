@@ -7,11 +7,13 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.logging.ProcedureLoggingContext;
 import com.continuuity.app.metrics.ProcedureMetrics;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
 import com.continuuity.weave.api.RunId;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
@@ -27,15 +29,17 @@ final class BasicProcedureContext extends ProgramRuntimeContext implements Proce
   private final ProcedureMetrics procedureMetrics;
   private final ProcedureLoggingContext procedureLoggingContext;
   private final CMetrics systemMetrics;
+  private final Arguments runtimeArguments;
 
   BasicProcedureContext(Program program, RunId runId, int instanceId, Map<String, DataSet> datasets,
-                        ProcedureSpecification procedureSpec) {
+                        Arguments runtimeArguments, ProcedureSpecification procedureSpec) {
     super(program, runId, datasets);
     this.procedureId = program.getProgramName();
     this.instanceId = instanceId;
     this.procedureSpec = procedureSpec;
     this.procedureMetrics = new ProcedureMetrics(getAccountId(), getApplicationId(),
                                                  getProcedureId(), getRunId().toString(), getInstanceId());
+    this.runtimeArguments = runtimeArguments;
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
     this.systemMetrics = new CMetrics(MetricType.ProcedureSystem, getMetricName());
   }
@@ -78,5 +82,17 @@ final class BasicProcedureContext extends ProgramRuntimeContext implements Proce
                          getProcedureId(),
                          getRunId(),
                          getInstanceId());
+  }
+
+  /**
+   * @return A map of argument key and value.
+   */
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
+    while (runtimeArguments.iterator().hasNext()) {
+      arguments.put(runtimeArguments.iterator().next());
+    }
+    return arguments.build();
   }
 }

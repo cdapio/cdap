@@ -11,6 +11,7 @@ import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.logging.MapReduceLoggingContext;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
@@ -40,7 +41,8 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
   private final TransactionAgent txAgent;
 
   public BasicMapReduceContext(Program program, RunId runId,
-                               TransactionAgent txAgent, Map<String, DataSet> datasets, MapReduceSpecification spec) {
+                               TransactionAgent txAgent, Map<String, DataSet> datasets,
+                               MapReduceSpecification spec) {
     super(program, runId, datasets);
     this.txAgent = txAgent;
     this.systemMapperMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Mapper"));

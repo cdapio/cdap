@@ -6,6 +6,7 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
