@@ -1,61 +1,62 @@
-Continuuity AppFabric (tm) Developer Suite
+Continuuity (tm) Developer Suite
 
 Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 ================================================================================
 
-Continuuity Developer Suite is a fully functioning single node edition of the 
-Continuuity AppFabric runtime. You can use this edition to write, debug and
-test your BigData applications, before deploying to the Continuuity Cloud.
+Continuuity Developer Suite includes a Local Reactor: a fully functioning single
+node edition of the Continuuity Reactor runtime. You can use this edition to
+write, debug and test your Big Data applications, before deploying them to a
+remote staging or production Reactor.
 
 Installation
 ============
 
-To install and use AppFabric and the included examples there are a few simple
-pre-requisite requirements:
+To install and use Reactor and the included examples there are a few simple
+prerequisites:
 
-  1. Java 1.6+ (required to run AppFabric, note: $JAVA_HOME should be set)
-  2. Node.js 0.8.1+ (required to run the AppFabric UI)
+  1. JDK 6 (required to run Reactor, note: $JAVA_HOME should be set)
+  2. Node.js 0.8.1+ (required to run the Reactor Dashboard)
   3. Ant 1.8+ (required to build the example applications)
 
 Once you have installed the prerequisites, you should unzip the Developer Suite
 distribution to a suitable directory. E.g.
 
   %> cd ~/Projects
-  %> unzip /tmp/continuuity-developer-suite-1.4.0.zip
+  %> unzip /tmp/continuuity-developer-suite-1.5.0.zip
 
-You are now ready to start AppFabric. Do so by running the
-'continuuity-app-fabric' script in the $CONTINUUITY/bin folder. E.g.
+You are now ready to start Reactor. Do so by running the
+'continuuity-reactor' script in the $CONTINUUITY/bin folder. E.g.
 
-  %> cd ~/Projects/continuuity-developer-suite-1.4.0
-  %> bin/continuuity-app-fabric start
+  %> cd ~/Projects/continuuity-developer-suite-1.5.0
+  %> bin/continuuity-reactor start
 
 
 Directory Structure
 ===================
 The directory structure for the Developer Suite is shown below.
 
-continuuity-developer-suite-1.4.0
+continuuity-developer-suite-1.5.0
  |-- README                                                         (this file)
  |-- LICENSE                                      (the Developer Suite license)
- |-- continuuity-api-1.4.0.jar                      (the API jar for AppFabric)
- |-- continuuity-api-1.4.0-javadoc.jar  (the JavaDoc jar for the AppFabric API)
- |-- continuuity-api-1.4.0-source.jar    (the source jar for the AppFabric API)
- |-- continuuity-eclipse-plugin-1.4.0.jar        (the AppFabric Eclipse Plugin)
- |-- lib                                        (Single-Node runtime libraries)
- | |-- continuuity-test-1.4.0.jar            (the AppFabric Test Framework jar)
+ |-- continuuity-api-1.5.0.jar                        (the API jar for Reactor)
+ |-- continuuity-api-1.5.0-javadoc.jar    (the JavaDoc jar for the Reactor API)
+ |-- continuuity-api-1.5.0-source.jar      (the source jar for the Reactor API)
+ |-- continuuity-eclipse-plugin-1.5.0.jar          (the Reactor Eclipse Plugin)
+ |-- lib                                            (Reactor runtime libraries)
+ | |-- continuuity-test-1.5.0.jar              (the Reactor Test Framework jar)
  |-- bin                                              (Execution/Tools Scripts)
- | |-- continuuity-app-fabric                    (Single-Node AppFabric Daemon)
- | |-- data-format                               (Single-Node Data Format Tool)
+ | |-- continuuity-reactor                               (Local Reactor Daemon)
+ | |-- data-format                                   (Reactor Data Format Tool)
  | |-- stream-client                               (Command-Line Stream Client)
  | |-- data-client                                (Command-Line Dataset Client)
- | |-- app-fabric-client                       (Command-Line App Fabric Client)
+ | |-- reactor-client                             (Command-Line Reactor Client)
  |-- lib
  |-- docs
  | |-- api                                                       (API JavaDocs)
  |-- conf                                                 (Configuration files)
- | |-- logback.xml                          (Local AppFabric Log Configuration)
- | |-- continuuity-site.xml                     (Local AppFabric Configuration)
- |-- web-app                                         (AppFabric UI application)
+ | |-- logback.xml                            (Local Reactor Log Configuration)
+ | |-- continuuity-site.xml                       (Local Reactor Configuration)
+ |-- web-app                                    (Reactor Dashboard application)
  |-- examples                                            (example applications)
  | |-- WordCount                                (Sample Word Count Application)
  | |-- CountAndFilterWords                     (Sample Word Filter Application)
@@ -64,11 +65,12 @@ continuuity-developer-suite-1.4.0
  | |-- CountRandom                         (Sample Random Number Generator App)
  | |-- CountTokens                         (Sample String Counting Application)
  | |-- HelloWorld                              (Sample Hello World Application)
+ | |-- Purchase                           (Sample Purchase History Application)
  | |-- SimpleWriteAndRead                    (Sample Dataset using Application)
  | |-- build.xml                          (Ant build.xml for building examples)
 
 Further Information
 ===================
 
-Further information covering the core concepts for developing applications
-for the AppFabric platform can be found in Continuuity-AppFabric-Developer-Guide.pdf.
+Further information covering the core concepts for developing applications for
+the Reactor platform can be found in Continuuity-Reactor-Developer-Guide.pdf.
