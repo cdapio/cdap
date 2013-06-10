@@ -51,6 +51,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private static final int MAX_IO_THREADS = 5;
   private static final int MAX_HANDLER_THREADS = 20;
+  private static final int CLOSE_CHANNEL_TIMEOUT = 5;
 
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final ServiceAnnouncer serviceAnnouncer;
@@ -203,7 +204,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       LOG.info("Stopping procedure: " + procedureContext);
       cancellable.cancel();
       try {
-        if (!channelGroup.close().await(5, TimeUnit.SECONDS)) {
+        if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT, TimeUnit.SECONDS)) {
           LOG.warn("Timeout when closing all channels.");
         }
       } finally {
