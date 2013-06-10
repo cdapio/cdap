@@ -56,7 +56,7 @@ public class PurchaseStreamReader extends AbstractFlowlet {
     int amount = Integer.parseInt(tokens[5].substring(1));
 
     try {
-      Purchase purchase = new Purchase(customer, item, quantity, amount);
+      Purchase purchase = new Purchase(customer, item, quantity, amount, System.currentTimeMillis());
       out.emit(purchase);
     } catch (Exception e) {
       // do nothing, just drop it.
