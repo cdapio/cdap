@@ -3,6 +3,7 @@ package com.continuuity.app.runtime;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.weave.api.RunId;
 import com.google.common.util.concurrent.Service;
 
 import java.util.Map;

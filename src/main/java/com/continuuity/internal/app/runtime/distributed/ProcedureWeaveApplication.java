@@ -5,10 +5,11 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
-import com.continuuity.weave.filesystem.Location;
+import com.continuuity.app.program.Type;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;
+import com.continuuity.weave.filesystem.Location;
 
 import java.io.File;
 
@@ -40,7 +41,8 @@ public final class ProcedureWeaveApplication implements WeaveApplication {
     Location programLocation = program.getProgramJarLocation();
 
     return WeaveSpecification.Builder.with()
-      .setName(String.format("procedure.%s.%s.%s", program.getAccountId(), program.getApplicationId(), spec.getName()))
+      .setName(String.format("%s.%s.%s.%s",
+                             Type.PROCEDURE.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
         .add(spec.getName(),
              new ProcedureWeaveRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
