@@ -23,7 +23,7 @@ public class PurchaseApp implements Application {
           .add(new Stream("purchaseStream"))
         .withDataSets()
           .add(new ObjectStore<PurchaseHistory>("history", PurchaseHistory.class))
-          .add(new ObjectStore<List<Purchase>>("purchases", Purchase.class))
+          .add(new ObjectStore<Purchase>("purchases", Purchase.class))
         .withFlows()
           .add(new PurchaseFlow())
         .withProcedures()

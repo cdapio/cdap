@@ -18,8 +18,6 @@ public class PurchaseStore extends AbstractFlowlet {
   private ObjectStore<Purchase> store;
 
   public void process(Purchase purchase) throws OperationException {
-    String customer = purchase.getCustomer();
-    long time = System.currentTimeMillis();
-    store.write(Bytes.add(Bytes.toBytes(customer), Bytes.toBytes(time)), purchase);
+    store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
   }
 }

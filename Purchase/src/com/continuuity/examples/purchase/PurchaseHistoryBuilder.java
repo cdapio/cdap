@@ -3,8 +3,8 @@ package com.continuuity.examples.purchase;
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.batch.MapReduceContext;
 import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.common.Bytes;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -14,7 +14,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Map reduce job that reads Purchases from Object store and creates purchase history for every user.
@@ -54,17 +53,15 @@ public class PurchaseHistoryBuilder implements MapReduce  {
     }
   }
 
-  public static class PerUserReducer extends Reducer<Text, Text, String, List<Purchase>> {
+  public static class PerUserReducer extends Reducer<Text, Text, byte[], PurchaseHistory> {
 
-    public void reduce(Text user, Iterable<Text> values, Context context)
+    public void reduce(Text customer, Iterable<Text> values, Context context)
       throws IOException, InterruptedException {
-      ArrayList<Purchase> purchases = Lists.newArrayList();
-
+      PurchaseHistory purchases = new PurchaseHistory(customer.toString());
       for (Text val : values) {
         purchases.add(new Gson().fromJson(val.toString(), Purchase.class));
       }
-      context.write(user.toString(), purchases);
+      context.write(Bytes.toBytes(customer.toString()), purchases);
     }
   }
-
 }
