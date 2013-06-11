@@ -38,12 +38,15 @@ import java.util.jar.JarFile;
  */
 public class ReactorClient {
 
-  private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help",
-    "promote", "status");
+  private static final String DEVELOPER_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
+  private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
+                                                                 "status", "instances");
   private final String ARCHIVE_LONG_OPT_ARG = "archive";
   private final String APPLICATION_LONG_OPT_ARG = "application";
   private final String PROCEDURE_LONG_OPT_ARG = "procedure";
   private final String FLOW_LONG_OPT_ARG = "flow";
+  private final String FLOWLET_LONG_OPT_ARG = "flowlet";
+  private final String FLOWLET_INSTANCES_LONG_OPT_ARG = "flowlet";
   private final String MAPREDUCE_LONG_OPT_ARG = "mapreduce";
   private final String HOSTNAME_LONG_OPT_ARG = "host";
   private final String APIKEY_LONG_OPT_ARG = "apikey";
@@ -52,6 +55,8 @@ public class ReactorClient {
   private String application = null;
   private String procedure = null;
   private String flow = null;
+  private String flowlet = null;
+  private short flowletInstances = 1;
   private String mapReduce = null;
   private String hostname = null;
   private String authToken = null;
@@ -93,18 +98,18 @@ public class ReactorClient {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
-          identifier = new FlowIdentifier("developer", application, this.flow, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Starting flow %s for application %s ",this.flow, this.application));
         } else if (this.mapReduce != null) {
-          identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
           System.out.println(String.format("Starting mapreduce job %s for application %s ",this.mapReduce, this.application));
         } else {
-          identifier = new FlowIdentifier("developer", application, this.procedure, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Starting procedure %s for application %s ",
-                                            this.procedure, this.application));
+                                           this.procedure, this.application));
         }
         client.start(dummyAuthToken,new FlowDescriptor(identifier,new ArrayList<String>()));
         System.out.println("Started ");
@@ -116,27 +121,40 @@ public class ReactorClient {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
-          identifier = new FlowIdentifier("developer", application, this.flow, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Stopping flow %s for application %s ",this.flow, this.application));
         } else if (this.mapReduce != null) {
-          identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
           System.out.println(String.format("Killing mapreduce job %s for application %s ",
-            this.mapReduce, this.application));
+                                           this.mapReduce, this.application));
         } else {
-          identifier = new FlowIdentifier("developer", application, this.procedure, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Stopping procedure %s for application %s ",
-            this.procedure, this.application));
+                                           this.procedure, this.application));
         }
         client.stop(dummyAuthToken,identifier);
         System.out.println("Stopped ");
         return;
       }
 
+      if ("instances".equals(command)) {
+        AuthToken dummyAuthToken = new AuthToken("ReactorClient");
+        FlowIdentifier identifier = null;
+        if( this.flow != null) {
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
+          identifier.setType(EntityType.FLOW);
+          System.out.println(String.format("Starting flow %s for application %s ",this.flow, this.application));
+        }
+        client.setInstances(dummyAuthToken, identifier, flowlet, flowletInstances);
+        System.out.println("The number of flowlet instances have been changed.");
+        return;
+      }
+
       if ("promote".equals(command)) {
-        ResourceIdentifier identifier = new ResourceIdentifier("developer", this.application, "noresource", 1);
+        ResourceIdentifier identifier = new ResourceIdentifier(DEVELOPER_ACCOUNT_ID, this.application, "noresource", 1);
         boolean status = client.promote(new AuthToken(this.authToken), identifier, this.hostname);
         if (status) {
           System.out.println("Promoted to cloud");
@@ -148,16 +166,16 @@ public class ReactorClient {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
-          identifier = new FlowIdentifier("developer", application, this.flow, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Getting status for flow %s in application %s ",
-                                            this.flow, this.application));
+                                           this.flow, this.application));
         }
         else {
-          identifier = new FlowIdentifier("developer", application, this.procedure, 1);
+          identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Getting status for procedure %s in application %s ",
-            this.flow, this.application));
+                                           this.flow, this.application));
         }
         FlowStatus flowStatus = client.status(dummyAuthToken, identifier);
         Preconditions.checkNotNull(flowStatus, "Problem getting the status the application");
@@ -199,6 +217,8 @@ public class ReactorClient {
     options.addOption("h",HOSTNAME_LONG_OPT_ARG, true, "Hostname to push the application to.");
     options.addOption("k",APIKEY_LONG_OPT_ARG, true, "Apikey of the account.");
     options.addOption("f",FLOW_LONG_OPT_ARG, true, "Flow Id.");
+    options.addOption("l",FLOWLET_LONG_OPT_ARG, true, "Flowlet Id.");
+    options.addOption("i",FLOWLET_INSTANCES_LONG_OPT_ARG, true, "Flowlet Instances.");
     options.addOption("m",MAPREDUCE_LONG_OPT_ARG, true, "MapReduce job Id.");
 
     CommandLine commandLine = null;
@@ -213,16 +233,16 @@ public class ReactorClient {
       //Check if the appropriate args are passed in for each of the commands
       if ("deploy".equals(sentCommand)) {
         Preconditions.checkArgument(commandLine.hasOption(ARCHIVE_LONG_OPT_ARG),
-          "deploy command should have archive argument");
+                                    "deploy command should have archive argument");
         this.resource = commandLine.getOptionValue(ARCHIVE_LONG_OPT_ARG);
       }
       if ("start".equals(sentCommand)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
-                                    commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
-                                    commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
-          "start command should have procedure or flow or mapreduce argument");
+                                      commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
+                                      commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
+                                    "start command should have procedure or flow or mapreduce argument");
 
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
         this.procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
@@ -233,9 +253,9 @@ public class ReactorClient {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
-                                    commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
-                                    commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
-          "stop command should have procedure or flow or mapreduce argument");
+                                      commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
+                                      commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
+                                    "stop command should have procedure or flow or mapreduce argument");
 
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
         this.procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
@@ -247,8 +267,8 @@ public class ReactorClient {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
-                                    commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
-                                    commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
+                                      commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
+                                      commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
                                     "status command should have procedure or flow or mapreduce argument");
 
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
@@ -256,6 +276,23 @@ public class ReactorClient {
         this.flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
         this.mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
 
+      }
+      if ("instances".equals(sentCommand)) {
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
+          "application argument");
+        Preconditions.checkArgument(commandLine.hasOption(FLOW_LONG_OPT_ARG),
+                                    "status command should have flow argument");
+        Preconditions.checkArgument(commandLine.hasOption(FLOWLET_LONG_OPT_ARG),
+                                    "status command should have flowlet argument");
+        Preconditions.checkArgument(commandLine.hasOption(FLOWLET_INSTANCES_LONG_OPT_ARG),
+                                    "status command should have number of flowlet instances argument");
+
+        this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
+        this.flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
+        this.flowlet = commandLine.getOptionValue(FLOWLET_LONG_OPT_ARG);
+
+        this.flowletInstances = Short.parseShort(commandLine.getOptionValue(FLOWLET_INSTANCES_LONG_OPT_ARG));
+        Preconditions.checkArgument(flowletInstances > 0);
       }
       if ("promote".equals(sentCommand)) {
         Preconditions.checkArgument(commandLine.hasOption(HOSTNAME_LONG_OPT_ARG), "promote command should have" +
@@ -287,11 +324,12 @@ public class ReactorClient {
     Copyright.print(out);
 
     out.println("Usage:");
-    out.println("  reactor-client deploy  --archive <filename>");
-    out.println("  reactor-client start   --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  reactor-client stop    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  reactor-client status  --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  reactor-client promote --application <id> --host <hostname> --apikey <key>");
+    out.println("  reactor-client deploy    --archive <filename>");
+    out.println("  reactor-client start     --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
+    out.println("  reactor-client stop      --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
+    out.println("  reactor-client status    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
+    out.println("  reactor-client instances --application <id> --flow <id> --flowlet <id> --instances <number>");
+    out.println("  reactor-client promote   --application <id> --host <hostname> --apikey <key>");
 
     out.println("Options:");
     out.println("  --archive <filename> \t Archive containing the application.");
@@ -324,7 +362,10 @@ public class ReactorClient {
     AuthToken dummyAuthToken = new AuthToken("ReactorClient");
     System.out.println(String.format("Deploying... :%s", this.resource));
 
-    ResourceIdentifier identifier = client.init(dummyAuthToken, new ResourceInfo("developer","", file.getName(),                                                                    (int)file.getTotalSpace(), file.lastModified()));
+    ResourceIdentifier identifier =
+      client.init(dummyAuthToken, new ResourceInfo(DEVELOPER_ACCOUNT_ID,"", file.getName(), (int)file.getTotalSpace(),
+                                                   file.lastModified()));
+
     Preconditions.checkNotNull(identifier, "Resource identifier is null");
 
     BufferFileInputStream is =
@@ -353,6 +394,4 @@ public class ReactorClient {
     }
     return;
   }
-
-
 }
