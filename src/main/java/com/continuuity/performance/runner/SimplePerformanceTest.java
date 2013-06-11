@@ -1,8 +1,10 @@
 package com.continuuity.performance.runner;
 
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
-import com.continuuity.test.FlowManager;
-import com.continuuity.test.StreamWriter;
+import com.continuuity.performance.apps.simple.SimpleApp;
+import com.continuuity.performance.apps.trivial.TrivialApp;
+import com.continuuity.test.app.FlowManager;
+import com.continuuity.test.app.StreamWriter;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +18,7 @@ public class SimplePerformanceTest {
 
   @PerformanceTest
   public void testApp() throws IOException, TimeoutException, InterruptedException {
-    final int numStreamEvents = 10000;
+    final int numStreamEvents = 100000;
 
     FlowManager flowManager = PerformanceTestRunner.Context.startFlow("SimpleApp", "SimpleFlow");
 

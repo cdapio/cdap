@@ -189,8 +189,8 @@ public final class MensaMetricsDispatcher implements Runnable {
         // blocking call will wait till there is an element in the queue.
         element = queue.take();
       } catch (InterruptedException e) {
+        // this exception is expected when metrics reporter thread stops its dispatcher thread
         Thread.currentThread().interrupt();
-        LOG.warn("Thread has been interrupted.");
         continue;
       }
 

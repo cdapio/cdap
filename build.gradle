@@ -1,10 +1,14 @@
 apply plugin:'java'
 
+project.evaluationDependsOn(':app-fabric')
+
 dependencies {
 
    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+   compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true],"app-fabric")
+   compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
    compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
    compile elastic([group: 'com.continuuity', name: 'gateway', classifier: 'api', version: "${version}", changing: true], "gateway")
    compile elastic([group: 'com.continuuity', name: 'unit-test', version: "${version}", changing: true], "unit-test")
@@ -20,10 +24,17 @@ dependencies {
    compile libraries.weave_discovery_api
    compile libraries.weave_discovery_core
 
-
    testCompile libraries.mockito_core
    testCompile libraries.junit
+}
 
+sourceSets {
+  main {
+    compileClasspath += project(':app-fabric').sourceSets.testbase.output
+  }
+  test {
+    compileClasspath += project(':app-fabric').sourceSets.testbase.output
+  }
 }
 
 /**
