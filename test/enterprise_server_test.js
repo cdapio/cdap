@@ -17,7 +17,7 @@ describe('Node js tests', function() {
   describe('GET /version', function() {
     it('should respond with json', function(done) {
       request(app)
-        .get('/version')  
+        .get('/version')
         .expect(200)
         .expect('Content-Type', /json/)
         .end(function(err, res) {
@@ -60,7 +60,7 @@ describe('Node js tests', function() {
       assert.notEqual(entServer.server, {});
       done();
     });
-  
+
     it('should get localhost address', function(done) {
       assert.equal(entServer.getLocalHost(), '127.0.0.1');
       done();
@@ -68,7 +68,7 @@ describe('Node js tests', function() {
 
     it('should get logger', function(done) {
       var logger = entServer.getLogger('console', 'Enterprise UI');
-      assert.equal(logger.level.levelStr, 'TRACE');
+      assert.equal(logger.level.levelStr, 'INFO');
       assert.equal(logger.category, 'Enterprise UI');
       done();
     });

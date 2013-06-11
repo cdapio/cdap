@@ -36,21 +36,21 @@ define([], function () {
 			 * Load Apps
 			 * Also load all Elements for each App to calculate per-App totals
 			 */
-			C.Api.getElements('App', function (objects) {
+			this.HTTP.getElements('App', function (objects) {
 				var i = objects.length;
 				while (i--) {
 					objects[i] = C.App.create(objects[i]);
 
-					C.Api.getElements('Stream', function (obj, arg) {
+					self.HTTP.getElements('Stream', function (obj, arg) {
 						objects[arg].set('counts.Stream', obj.length);
 					}, objects[i].id, i);
-					C.Api.getElements('Flow', function (obj, arg) {
+					self.HTTP.getElements('Flow', function (obj, arg) {
 						objects[arg].set('counts.Flow', obj.length);
 					}, objects[i].id, i);
-					C.Api.getElements('Dataset', function (obj, arg) {
+					self.HTTP.getElements('Dataset', function (obj, arg) {
 						objects[arg].set('counts.Dataset', obj.length);
 					}, objects[i].id, i);
-					C.Api.getElements('Procedure', function (obj, arg) {
+					self.HTTP.getElements('Procedure', function (obj, arg) {
 						objects[arg].set('counts.Procedure', obj.length);
 					}, objects[i].id, i);
 
@@ -65,7 +65,7 @@ define([], function () {
 			/*
 			 * Load all Streams to calculate counts and storage
 			 */
-			C.Api.getElements('Stream', function (objects) {
+			this.HTTP.getElements('Stream', function (objects) {
 
 				self.get('elements.Stream').pushObjects(objects);
 				self.get('counts').set('Stream', objects.length);
@@ -76,7 +76,7 @@ define([], function () {
 			/*
 			 * Load all Flows to calculate counts
 			 */
-			C.Api.getElements('Flow', function (objects) {
+			this.HTTP.getElements('Flow', function (objects) {
 
 				self.get('counts').set('Flow', objects.length);
 				self.__loaded();
@@ -86,7 +86,7 @@ define([], function () {
 			/*
 			 * Load all Datasets to calculate counts and storage
 			 */
-			C.Api.getElements('Dataset', function (objects) {
+			this.HTTP.getElements('Dataset', function (objects) {
 
 				self.get('elements.Dataset').pushObjects(objects);
 				self.get('counts').set('Dataset', objects.length);
@@ -97,7 +97,7 @@ define([], function () {
 			/*
 			 * Load all Procedures to calculate counts
 			 */
-			C.Api.getElements('Procedure', function (objects) {
+			this.HTTP.getElements('Procedure', function (objects) {
 
 				self.get('counts').set('Procedure', objects.length);
 				self.__loaded();
@@ -109,12 +109,12 @@ define([], function () {
 			 */
 			if (C.Env.cluster) {
 
-				$.getJSON('/disk', function (status) {
-
-					var bytes = C.Util.bytes(status.free);
-					$('#diskspace').find('.sparkline-box-title').html(
-						'Storage (' + bytes[0] + bytes[1] + ' Free)');
-
+				this.HTTP.get('/disk', function (disk) {
+					if (disk) {
+						var bytes = C.Util.bytes(disk.free);
+						$('#diskspace').find('.sparkline-box-title').html(
+							'Storage (' + bytes[0] + bytes[1] + ' Free)');
+					}
 				});
 
 			}

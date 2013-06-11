@@ -18,7 +18,7 @@ process.env.NODE_ENV = 'development';
 /**
  * Log level.
  */
-var logLevel = 'TRACE';
+var logLevel = 'INFO';
 
 var EntServer = function() {
   EntServer.super_.call(this, __dirname, logLevel);
@@ -61,7 +61,7 @@ EntServer.prototype.start = function() {
   this.getConfig(function() {
     this.server = this.getServerInstance(this.app);
     this.io = this.getSocketIo(this.server);
-    this.configureIoHandlers(this.io, 'local', 'developer');
+    this.configureIoHandlers(this.io, 'Enterprise', 'developer');
     this.bindRoutes();
     this.server.listen(this.config['node-port']);
     this.logger.info('Listening on port', this.config['node-port']);

@@ -421,7 +421,7 @@ define([], function () {
 				this[action.toLowerCase()](app, id, -1);
 			}
 		},
-		delete: function () {
+		"delete": function () {
 
 			if (this.get('model').get('currentState') !== 'STOPPED' &&
 				this.get('model').get('currentState') !== 'DEPLOYED') {

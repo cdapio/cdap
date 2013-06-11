@@ -30,9 +30,9 @@ define([
 				element.addClass('drop-zone-loading');
 				element.html('');
 
-				if (!C.Api.Upload.processing) {
+				if (!C.Util.Upload.processing) {
 					var dt = e.originalEvent.dataTransfer;
-					C.Api.Upload.sendFiles(dt.files, self.get('entityType'));
+					C.Util.Upload.sendFiles(dt.files, self.get('entityType'));
 					$('#far-upload-alert').hide();
 				}
 			}
@@ -56,7 +56,7 @@ define([
 
 			file.change(function () {
 
-				C.Api.Upload.sendFiles(file[0].files, self.get('entityType'));
+				C.Util.Upload.sendFiles(file[0].files, self.get('entityType'));
 
 			});
 

@@ -65,7 +65,7 @@ define([], function () {
 					metric = metric.replace(/\./g, '');
 
 					self.get('metricData').set(metric, data);
-					this.set('__loadingData', false);
+					self.set('__loadingData', false);
 
 				}
 
@@ -87,7 +87,7 @@ define([], function () {
 	Model.reopenClass({
 		type: 'Flowlet',
 		kind: 'Model',
-		find: function (flowlet_id) {
+		find: function (flowlet_id, http) {
 
 			/*
 			 * We will use this Flowlet and its ID to find the

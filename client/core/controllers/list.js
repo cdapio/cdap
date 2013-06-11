@@ -23,7 +23,7 @@ define([], function () {
 			var self = this;
 			this.set('entityType', type);
 
-			C.Api.getElements(type, function (objects) {
+			this.HTTP.getElements(type, function (objects) {
 
 				//** Hax: Remove special case for Flow when ready **//
 
