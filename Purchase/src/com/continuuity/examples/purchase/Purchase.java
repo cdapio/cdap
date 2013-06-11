@@ -8,12 +8,14 @@ public class Purchase {
 
   private final String customer, product;
   private final int quantity, price;
+  private final long purchaseTime;
 
-  public Purchase(String customer, String product, int quantity, int price) {
+  public Purchase(String customer, String product, int quantity, int price, long purchaseTime) {
     this.customer = customer;
     this.product = product;
     this.quantity = quantity;
     this.price = price;
+    this.purchaseTime = purchaseTime;
   }
 
   public String getCustomer() {
@@ -22,6 +24,10 @@ public class Purchase {
 
   public String getProduct() {
     return product;
+  }
+
+  public long getPurchaseTime() {
+    return purchaseTime;
   }
 
   public int getQuantity() {

@@ -1,33 +1,64 @@
 package com.continuuity.examples.purchase;
 
-import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.batch.AbstractMapReduce;
+import com.continuuity.api.batch.MapReduce;
+import com.continuuity.api.batch.MapReduceContext;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * A flowlet that builds customer's purchase histories.
+ * Map reduce job that reads Purchases from Object store and creates purchase history for every user.
  */
-public class PurchaseHistoryBuilder extends AbstractFlowlet {
+public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
-  @UseDataSet("history")
-  private ObjectStore<PurchaseHistory> store;
 
-  /**
-   * For a given purchase, looks up the history of the customer and adds the new purchase,
-   * then writes back the history to the store. If the customer does not have a history yet,
-   * a new purchase history is created.
-   * @param purchase the new purchase
-   * @throws OperationException
-   */
-  public void process(Purchase purchase) throws OperationException {
-    String customer = purchase.getCustomer();
-    PurchaseHistory history = store.read(customer.getBytes());
-    if (history == null) {
-      history = new PurchaseHistory(purchase.getCustomer());
+  @Override
+  public MapReduceSpecification configure() {
+    return MapReduceSpecification.Builder.with()
+      .setName("PurchaseHistoryBuilder")
+      .setDescription("Purchase History Builder Map Reduce job")
+      .useInputDataSet("purchases")
+      .useOutputDataSet("history")
+      .build();
+  }
+
+  @Override
+  public void beforeSubmit(MapReduceContext context) throws Exception {
+    Job job = (Job) context.getHadoopJob();
+    job.setMapperClass(PurchaseMapper.class);
+    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputValueClass(Text.class);
+    job.setReducerClass(PerUserReducer.class);
+  }
+
+  public static class PurchaseMapper extends Mapper<byte[], Purchase, Text, Text> {
+    @Override
+    public void map(byte[] key, Purchase purchase, Context context)
+      throws IOException, InterruptedException {
+      String user = purchase.getCustomer();
+      context.write(new Text(user), new Text(new Gson().toJson(purchase)));
     }
-    history.add(purchase);
-    store.write(Bytes.toBytes(customer), history);
+  }
+
+  public static class PerUserReducer extends Reducer<Text, Text, byte[], PurchaseHistory> {
+
+    public void reduce(Text customer, Iterable<Text> values, Context context)
+      throws IOException, InterruptedException {
+      PurchaseHistory purchases = new PurchaseHistory(customer.toString());
+      for (Text val : values) {
+        purchases.add(new Gson().fromJson(val.toString(), Purchase.class));
+      }
+      context.write(Bytes.toBytes(customer.toString()), purchases);
+    }
   }
 }
