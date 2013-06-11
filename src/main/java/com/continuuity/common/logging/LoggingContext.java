@@ -24,10 +24,18 @@ public interface LoggingContext {
 
   // hack hack hack: time constraints
   /**
-   * @return log partition name that is used to group log messages into one storage partition on the back-end.
-   * In current implementation you can only tail/search thru single log partition when retrieving logs.
+   * Returns the partition name that is used to group log messages of a component into one partition for collection.
+   * The partition name must be consistent with the value returned as path fragment.
+   * @return partition name.
    */
   String getLogPartition();
+
+  /**
+   * Returns the path fragment that will be part of the log file name. The grouping of log messages into partitions
+   * should be consistent with the value returned as path fragment.
+   * @return the path fragment that will be part of the log file name.
+   */
+  String getLogPathFragment();
 
   /**
    * Defines the interface for the system tag associated with LoggingContext

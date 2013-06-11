@@ -5,14 +5,15 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.core.util.StatusPrinter;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.logging.ApplicationLoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.logback.LogAppenderInitializer;
+import com.continuuity.common.logging.logback.TestLoggingContext;
 import com.continuuity.common.logging.logback.kafka.KafkaLogAppender;
 import com.google.common.collect.ImmutableMap;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -23,6 +24,11 @@ import java.io.PrintStream;
 import java.util.Map;
 
 public class LoggingEventTest {
+
+  @BeforeClass
+  public static void setUpContext() {
+    LoggingContextAccessor.setLoggingContext(new TestLoggingContext("TEST_ACCT_ID1", "TEST_APP_ID1"));
+  }
 
   @Test @Ignore
   public void createLoggingEventSchema() {
@@ -79,8 +85,6 @@ public class LoggingEventTest {
     CConfiguration conf = CConfiguration.create();
     new LogAppenderInitializer(conf, new KafkaLogAppender(conf));
 
-    LoggingContextAccessor.setLoggingContext(new TestLoggingContext("ACCNT_ID_1", "APPL_ID_1"));
-
     Logger logger = LoggerFactory.getLogger(LoggingEventTest.class);
     logger.error("Test log message 1");
     logger.warn("Test log message 2 {} {}", "arg1", "arg2");
@@ -90,16 +94,5 @@ public class LoggingEventTest {
     StatusPrinter.setPrintStream(new PrintStream(bos));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
     System.out.println(bos.toString());
-  }
-
-  static class TestLoggingContext extends ApplicationLoggingContext {
-    public TestLoggingContext(String accountId, String applicationId) {
-      super(accountId, applicationId);
-    }
-
-    @Override
-    public String getLogPartition() {
-      return super.getLogPartition();
-    }
   }
 }

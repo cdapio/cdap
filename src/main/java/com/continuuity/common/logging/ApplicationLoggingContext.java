@@ -24,4 +24,9 @@ public abstract class ApplicationLoggingContext extends AccountLoggingContext {
   public String getLogPartition() {
     return super.getLogPartition() + String.format(":%s", getSystemTag(TAG_APPLICATION_ID));
   }
+
+  @Override
+  public String getLogPathFragment() {
+    return String.format("%s/%s", super.getLogPathFragment(), getSystemTag(TAG_APPLICATION_ID));
+  }
 }

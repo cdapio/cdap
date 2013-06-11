@@ -2,11 +2,19 @@ package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.logback.TestLoggingContext;
 import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
 import kafka.utils.VerifiableProperties;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class LoggingEventSerializerTest {
+
+  @BeforeClass
+  public static void setUpContext() {
+    LoggingContextAccessor.setLoggingContext(new TestLoggingContext("TEST_ACCT_ID1", "TEST_APP_ID1"));
+  }
 
   @Test
   public void testEmptySerialization() throws Exception {

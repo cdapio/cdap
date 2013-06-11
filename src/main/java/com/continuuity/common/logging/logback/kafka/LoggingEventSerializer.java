@@ -24,10 +24,18 @@ import java.io.IOException;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class LoggingEventSerializer implements Encoder<ILoggingEvent>, Decoder<ILoggingEvent> {
-  final Schema schema;
+  private final Schema schema;
+
+  public LoggingEventSerializer() throws IOException {
+    this.schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
+  }
 
   public LoggingEventSerializer(VerifiableProperties props) throws IOException {
-    this.schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
+    this();
+  }
+
+  public Schema getSchema() {
+    return schema;
   }
 
   @Override
@@ -45,13 +53,21 @@ public class LoggingEventSerializer implements Encoder<ILoggingEvent>, Decoder<I
 
   @Override
   public ILoggingEvent fromBytes(byte[] bytes) {
+    return LoggingEvent.decode(toGenericRecord(bytes));
+  }
+
+  public GenericRecord toGenericRecord(byte[] bytes) {
     ByteArrayInputStream in = new ByteArrayInputStream(bytes);
     BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(in, null);
     GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(schema);
     try {
-      return LoggingEvent.decode(reader.read(null, decoder));
+      return reader.read(null, decoder);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  public ILoggingEvent fromGenericRecord(GenericRecord datum) {
+    return LoggingEvent.decode(datum);
   }
 }

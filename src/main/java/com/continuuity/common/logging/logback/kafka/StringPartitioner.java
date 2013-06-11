@@ -12,7 +12,6 @@ public class StringPartitioner implements Partitioner<String> {
 
   @Override
   public int partition(String key, int numPartitions) {
-    System.out.println("Partitions=" + numPartitions);
     return key.hashCode() % numPartitions;
   }
 }

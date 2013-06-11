@@ -4,6 +4,7 @@
 
 package com.continuuity.common.logging;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
 import java.util.Collection;
@@ -67,6 +68,14 @@ public abstract class AbstractLoggingContext implements LoggingContext {
 
     public String getValue() {
       return value;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("name", name)
+        .add("value", value)
+        .toString();
     }
   }
 }

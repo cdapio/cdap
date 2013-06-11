@@ -5,6 +5,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxyVO;
+import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
@@ -16,10 +19,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
+import static com.continuuity.common.logging.LoggingContext.SystemTag;
+
 /**
 * Class used to serialize/de-serialize ILoggingEvent.
 */
 public class LoggingEvent implements ILoggingEvent {
+  private static final int MAX_MDC_TAGS = 12;
+
   private String threadName;
   private int level;
   private String message;
@@ -172,9 +179,33 @@ public class LoggingEvent implements ILoggingEvent {
     }
     datum.put("hasCallerData", loggingEvent.hasCallerData);
     //datum.put("marker", marker);
-    datum.put("mdc", event.getMDCPropertyMap());
+    datum.put("mdc", generateContextMdc(event.getMDCPropertyMap()));
     datum.put("timestamp", loggingEvent.timestamp);
     return datum;
+  }
+
+  private static Map<String, String> generateContextMdc(Map<String, String> mdc) {
+    LoggingContext loggingContext = LoggingContextAccessor.getLoggingContext();
+    if (loggingContext == null) {
+      throw new IllegalStateException(String.format("Logging context not setup correctly for MDC %s", mdc));
+    }
+
+    Map<String, SystemTag> systemTagMap = LoggingContextAccessor.getLoggingContext().getSystemTagsMap();
+    Map<String, String> contextMdcMap = Maps.newHashMapWithExpectedSize(systemTagMap.size() + MAX_MDC_TAGS);
+    // First add MAX_MDC_TAGS MDC tags
+    int i = 0;
+    for (Map.Entry<String, String> entry : mdc.entrySet()) {
+      if (i++ > MAX_MDC_TAGS) {
+        break;
+      }
+      contextMdcMap.put(entry.getKey(), entry.getValue());
+    }
+
+    // Now add system tags, this makes sure that system tags override MDC tags in case of duplicates
+    for (Map.Entry<String, SystemTag> entry : systemTagMap.entrySet()) {
+      contextMdcMap.put(entry.getKey(), entry.getValue().getValue());
+    }
+    return contextMdcMap;
   }
 
   public static ILoggingEvent decode(GenericRecord datum) {
@@ -197,14 +228,25 @@ public class LoggingEvent implements ILoggingEvent {
     //loggingEvent.callerData =
     loggingEvent.hasCallerData = (Boolean) datum.get("hasCallerData");
     //loggingEvent.marker =
-    //noinspection unchecked
-    loggingEvent.mdc = (Map<String, String>) datum.get("mdc");
+    loggingEvent.mdc = convertToStringMap((Map<?, ?>) datum.get("mdc"));
     loggingEvent.timestamp = (Long) datum.get("timestamp");
     return loggingEvent;
   }
 
   private static String stringOrNull(Object obj) {
     return obj == null ? null : obj.toString();
+  }
+
+  private static Map<String, String> convertToStringMap(Map<?, ?> map) {
+    if (map == null) {
+      return null;
+    }
+
+    Map<String, String> stringMap = Maps.newHashMapWithExpectedSize(map.size());
+    for (Map.Entry<?, ?> entry : map.entrySet()) {
+      stringMap.put(entry.getKey().toString(), entry.getValue().toString());
+    }
+    return stringMap;
   }
 
   @Override
