@@ -1,5 +1,6 @@
 package com.continuuity.examples.purchase;
 
+import com.continuuity.api.batch.AbstractMapReduce;
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.batch.MapReduceContext;
 import com.continuuity.api.batch.MapReduceSpecification;
@@ -18,7 +19,7 @@ import java.util.List;
 /**
  * Map reduce job that reads Purchases from Object store and creates purchase history for every user.
  */
-public class PurchaseHistoryBuilder implements MapReduce  {
+public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
 
   @Override
@@ -38,10 +39,6 @@ public class PurchaseHistoryBuilder implements MapReduce  {
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(Text.class);
     job.setReducerClass(PerUserReducer.class);
-  }
-
-  @Override
-  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
   }
 
   public static class PurchaseMapper extends Mapper<byte[], Purchase, Text, Text> {
