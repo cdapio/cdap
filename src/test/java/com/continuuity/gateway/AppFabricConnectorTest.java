@@ -93,6 +93,37 @@ public class AppFabricConnectorTest {
     Assert.assertEquals(200, TestUtil.sendPutRequest(deployUrl, bos.toByteArray(), headers));
   }
 
+  @Test
+  public void testSetFlowletInstances() throws Exception {
+    String baseUrl = "http://localhost:" + port + "/app/WordCountApp/WordCountFlow/Tokenizer";
+//    String setInstancesUrl = baseUrl + ";
+//
+    Map<String,String> headers= Maps.newHashMap();
+    headers.put(CONTINUUITY_API_KEY,"api-key-example");
+    headers.put("Content-Type", "application/json");
+
+    String json = "{\"instances\":3}";
+//
+    Assert.assertEquals(200, TestUtil.sendPutRequest(baseUrl, json, headers));
+//
+    //getFlowletInstances
+  }
+
+
+  @Test
+  public void testStartAndStopFlow() throws Exception {
+    String baseUrl = "http://localhost:" + port + "/app/WordCountApp/WordCountFlow?op=start";
+//    String setInstancesUrl = baseUrl + ";
+//
+    Map<String,String> headers= Maps.newHashMap();
+    headers.put(CONTINUUITY_API_KEY,"api-key-example");
+    headers.put("Content-Type", "application/json");
+
+//
+    Assert.assertEquals(200, TestUtil.sendPutRequest(baseUrl, headers));
+//
+  }
+
   @After
   public void stop() {
     Service.State state = server.stopAndWait();
