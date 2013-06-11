@@ -13,7 +13,7 @@ define([], function () {
 
 			this.interval = setInterval(function () {
 				self.updateStats();
-			}, C.METRICS_INTERVAL);
+			}, C.POLLING_INTERVAL);
 
 			/*
 			 * Give the chart Embeddables 100ms to configure

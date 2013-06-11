@@ -65,7 +65,7 @@ define([], function () {
 					metric = metric.replace(/\./g, '');
 
 					self.get('metricData').set(metric, data);
-					this.set('__loadingData', false);
+					self.set('__loadingData', false);
 
 				}
 

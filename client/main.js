@@ -16,6 +16,7 @@ define (['core/application'], function (Application) {
 	 */
 	var mocks = window.location.search.split('?')[1];
 
+
 	if (mocks) {
 		mocks = mocks.split('=')[1];
 		if (mocks) {
@@ -55,7 +56,6 @@ define (['core/application'], function (Application) {
 					while (i--) {
 
 						type = mocks[i].type;
-
 						container.optionsForType(type, { singleton: true });
 						container.register(type + ':main', mocks[i]);
 						container.typeInjection('controller', type, type + ':main');

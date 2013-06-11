@@ -37,7 +37,6 @@ define([], function () {
 			 * Also load all Elements for each App to calculate per-App totals
 			 */
 			this.HTTP.getElements('App', function (objects) {
-
 				var i = objects.length;
 				while (i--) {
 					objects[i] = C.App.create(objects[i]);

@@ -57,6 +57,7 @@ define([], function () {
 				method: 'status',
 				params: [app_id, flow_id, -1]
 			}, function (error, response) {
+				console.log("status is ", JSON.stringify(response));
 
 				if (response.params) {
 					self.set('currentState', response.params.status);
@@ -80,13 +81,15 @@ define([], function () {
 					data = points[metric];
 
 					var k = data.length;
+
 					while(k --) {
 						data[k] = data[k].value;
 					}
 
+
 					metric = metric.replace(/\./g, '');
 					self.get('metricData').set(metric, data);
-					this.set('__loadingData', false);
+					self.set('__loadingData', false);
 				}
 
 			}];
@@ -174,7 +177,7 @@ define([], function () {
 				method: 'getFlowDefinition',
 				params: [app_id, flow_id]
 			}, function (error, response) {
-
+				console.log("flow defintion response is", JSON.stringify(response));
 				if (error || !response.params) {
 					promise.reject(error);
 					return;

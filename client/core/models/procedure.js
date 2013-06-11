@@ -100,7 +100,7 @@ define([], function () {
 
 					metric = metric.replace(/\./g, '');
 					self.get('metricData').set(metric, data);
-					this.set('__loadingData', false);
+					self.set('__loadingData', false);
 				}
 
 			}];
@@ -183,6 +183,7 @@ define([], function () {
 					id: procedure_id
 				}]
 			}, function (error, response) {
+				console.log("get query is ", JSON.stringify(response));
 
 				response.params.currentState = 'UNKNOWN';
 				response.params.version = -1;

@@ -109,6 +109,7 @@ define([], function () {
 				method: 'getFlowsByDataset',
 				params: [model.id]
 			}, function (error, response) {
+				console.log("get flows by dataset is ", JSON.stringify(response));
 
 				if (error) {
 					return;

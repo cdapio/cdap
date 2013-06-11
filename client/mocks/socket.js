@@ -2,7 +2,7 @@
  * Socket.IO Mock
  */
 
-define([], function () {
+define(['mocks/socket-router'], function (SocketRouter) {
 
 	Em.debug('Loading Socket Mock');
 
@@ -13,6 +13,18 @@ define([], function () {
 		'connect': [],
 		'error': [],
 		'upload': []
+	};
+
+	var getMockPath = function(request) {
+	  // var path = [];
+   //  path.push(request.method);
+   //  for (var i=0, len=request.params.length; i<len; i++) {
+   //    if (request.params[i]) {
+   //      path.push(request.params[i]);
+   //    }
+   //  }
+   //  return path.join('/');
+   return request.method;
 	};
 
 	var Mock = Em.Object.extend({
@@ -50,18 +62,15 @@ define([], function () {
 			});
 
 		},
-		request: function (service, request, response, params) {
+		request: function (service, request, callback, params) {
 
 			request.id = current_id ++;
-			pending[request.id] = [response, params, new Date().getTime()];
-
-			var response = {
-				id: request.id
-			};
-
-			pending[response.id][0](null, {}, pending[response.id][1]);
-			delete pending[response.id];
-
+			var mockPath = getMockPath(request);
+			var response = {};
+			if (SocketRouter.hasOwnProperty(mockPath)) {
+				response = SocketRouter[mockPath](request);
+			}
+			callback(null, response, params);
 		}
 
 	});

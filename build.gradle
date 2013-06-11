@@ -21,7 +21,6 @@ task jshint << {
     "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
     "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
     "$rootProject.projectDir/web-cloud-app/client/core/",
-    "$rootProject.projectDir/web-cloud-app/client/mocks/",
     "$rootProject.projectDir/web-cloud-app/client/main.js",
 
     "$rootProject.projectDir/web-cloud-app/client/local/views",
@@ -141,8 +140,16 @@ task enterprise(dependsOn: ['jshint', 'nodeTests']) {
 task prepackager(dependsOn: 'build', overwrite: true) {
   def stageDir = file("$buildDir/stage-packaging")
   def installDir = file("$stageDir/opt/continuuity/$project.name")
+  def edition = 'enterprise'
+  if(project.hasProperty('edition')) {
+    edition = project.edition
+  }
+  if(edition != 'cloud' && edition != 'enterprise') {
+    throw new GradleException('Invalid edition supplied')
+  }
+  println "Packaging ${edition} ..."
   doLast {
-    build_edition('enterprise', 'stage-packaging/opt/continuuity/web-cloud-app')
+    build_edition(edition, 'stage-packaging/opt/continuuity/web-cloud-app')
     copy {
       from "$rootProject.projectDir/common/bin"
       into "${installDir}/bin"
