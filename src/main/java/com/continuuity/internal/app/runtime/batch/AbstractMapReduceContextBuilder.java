@@ -6,7 +6,7 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
@@ -55,6 +55,7 @@ public abstract class AbstractMapReduceContextBuilder {
    * @return instance of {@link BasicMapReduceContext}
    */
   public BasicMapReduceContext build(CConfiguration conf, String runId,
+                                     Arguments runtimeArguments,
                                      Transaction tx,
                                      ClassLoader classLoader,
                                      String programLocation,
@@ -94,7 +95,7 @@ public abstract class AbstractMapReduceContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getProgramName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, RunIds.fromString(runId), txAgent,
+      new BasicMapReduceContext(program, RunIds.fromString(runId), runtimeArguments, txAgent,
                                 // NOTE: we are initializing all datasets of application, so that user is not required
                                 //       to define all datasets used in Mapper and Reducer classes on MapReduceJob
                                 //       class level
