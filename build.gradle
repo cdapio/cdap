@@ -85,6 +85,11 @@ dependencies {
   testbaseCompile libraries.google_guice_multibindings
   testbaseCompile libraries.google_guava
   testbaseCompile libraries.junit
+  testbaseCompile libraries.weave_api
+  testbaseCompile libraries.weave_common
+  testbaseCompile (libraries.weave_yarn) {
+    exclude group: 'org.apache.hadoop'
+  }
 }
 
 /**

@@ -73,7 +73,7 @@ public class DefaultAppFabricServiceTest {
     Location deployedJar = lf.create(
       JarFinder.getJar(DumbProgrammerApp.class, TestHelper.getManifestWithMainClass(DumbProgrammerApp.class))
     );
-    deployedJar.deleteOnExit();
+//    deployedJar.deleteOnExit();
 
     // Call init to get a session identifier - yes, the name needs to be changed.
     AuthToken token = new AuthToken("12345");
