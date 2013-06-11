@@ -12,7 +12,6 @@ import com.continuuity.app.logging.MapReduceLoggingContext;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
-import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
