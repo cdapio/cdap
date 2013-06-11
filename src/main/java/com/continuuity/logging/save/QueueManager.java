@@ -6,9 +6,11 @@ import com.google.common.collect.Queues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -16,8 +18,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class QueueManager {
   private static final Logger LOG = LoggerFactory.getLogger(QueueManager.class);
-  private final Map<String, MessageQueue> allQueues;
-  private final BlockingQueue<MessageQueue> processingQueue;
+  private final Map<String, BlockingQueue<KafkaLogEvent>> allQueues;
+  private final BlockingQueue<BlockingQueue<KafkaLogEvent>> processingQueue;
   private final long eventProcessingDelayMs;
 
   /**
@@ -43,8 +45,8 @@ public class QueueManager {
       LOG.debug(String.format("path fragment is null for event %s. Skipping it.", event));
       return;
     }
-    MessageQueue queue = getQueue(queueName);
-    queue.getQueue().add(event);
+    BlockingQueue<KafkaLogEvent> queue = getQueue(queueName);
+    queue.add(event);
   }
 
   /**
@@ -58,9 +60,9 @@ public class QueueManager {
     final int numQueues = processingQueue.size();
     int numTries = 0;
     while (numTries++ < numQueues) {
-      MessageQueue queue = processingQueue.poll(200, TimeUnit.MILLISECONDS);
+      BlockingQueue<KafkaLogEvent> queue = processingQueue.poll(200, TimeUnit.MILLISECONDS);
 
-      KafkaLogEvent earliestEvent = (queue == null ? null : queue.getQueue().peek());
+      KafkaLogEvent earliestEvent = (queue == null ? null : queue.peek());
       if (earliestEvent == null || earliestEvent.getLogEvent().getTimeStamp() + eventProcessingDelayMs >= currentTs) {
         if (queue != null) {
           processingQueue.add(queue);
@@ -70,11 +72,11 @@ public class QueueManager {
 
       // At least one event is available
       int numElements = 0;
-      while (!queue.getQueue().isEmpty() && numElements++ < maxElements) {
-        if (queue.getQueue().peek().getLogEvent().getTimeStamp() + eventProcessingDelayMs >= currentTs) {
+      while (!queue.isEmpty() && numElements++ < maxElements) {
+        if (queue.peek().getLogEvent().getTimeStamp() + eventProcessingDelayMs >= currentTs) {
           break;
         }
-        events.add(queue.getQueue().poll());
+        events.add(queue.poll());
       }
       processingQueue.add(queue);
     }
@@ -84,14 +86,24 @@ public class QueueManager {
     return event.getLoggingContext().getLogPathFragment();
   }
 
-  private MessageQueue getQueue(String name) {
-    MessageQueue messageQueue = allQueues.get(name);
-    if (messageQueue == null) {
+  private BlockingQueue<KafkaLogEvent> getQueue(String name) {
+    BlockingQueue<KafkaLogEvent> queue = allQueues.get(name);
+    if (queue == null) {
       LOG.info(String.format("Creating queue with name %s", name));
-      messageQueue = new MessageQueue();
-      allQueues.put(name, messageQueue);
-      processingQueue.add(messageQueue);
+      queue = new PriorityBlockingQueue<KafkaLogEvent>(1000, LOGGING_EVENT_COMPARATOR);
+      allQueues.put(name, queue);
+      processingQueue.add(queue);
     }
-    return messageQueue;
+    return queue;
   }
+
+  private static final Comparator<KafkaLogEvent> LOGGING_EVENT_COMPARATOR =
+    new Comparator<KafkaLogEvent>() {
+      @Override
+      public int compare(KafkaLogEvent e1, KafkaLogEvent e2) {
+        long e1Timestamp = e1.getLogEvent().getTimeStamp();
+        long e2Timestamp = e2.getLogEvent().getTimeStamp();
+        return e1Timestamp == e2Timestamp ? 0 : (e1Timestamp > e2Timestamp ? 1 : -1);
+      }
+    };
 }

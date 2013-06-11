@@ -88,7 +88,7 @@ public class AvroFileWriter implements Closeable {
 
   private AvroFile createAvroFile(String pathFragment) throws IOException {
     Path path = createPath(pathFragment);
-    LOG.info(String.format("Creating Avro file %s", path.getName()));
+    LOG.info(String.format("Creating Avro file %s", path.toUri()));
     AvroFile avroFile = new AvroFile(path);
     fileMap.put(pathFragment, avroFile);
     return avroFile;
