@@ -27,6 +27,7 @@ public class DumbProgrammerApp implements Application {
       .noDataSet()
       .noFlow()
       .noProcedure()
+      .noBatch()
       .build();
   }
 }

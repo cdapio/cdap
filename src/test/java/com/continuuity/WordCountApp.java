@@ -61,7 +61,7 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency()).build();
+      .withProcedures().add(new WordFrequency()).noBatch().build();
   }
 
   public static final class MyRecord {

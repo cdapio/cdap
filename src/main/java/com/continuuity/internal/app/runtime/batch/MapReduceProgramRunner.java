@@ -121,7 +121,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     try {
       RunId runId = RunIds.generate();
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, runId, txAgent,
+        new BasicMapReduceContext(program, runId, options.getUserArguments(), txAgent,
                                   DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
 
       MapReduce job = (MapReduce) program.getMainClass().newInstance();

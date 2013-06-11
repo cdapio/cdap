@@ -75,7 +75,11 @@ public class AppWithMapReduce implements Application {
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       AggregateMetricsByTag.configureJob((Job) context.getHadoopJob());
-      context.setInput(table, table.getInput(2, Bytes.toBytes("metric"), 1, 3, Bytes.toBytes("tag1")));
+      String metricName = context.getRuntimeArguments().get("metric");
+      Long startTs = Long.valueOf(context.getRuntimeArguments().get("startTs"));
+      Long stopTs = Long.valueOf(context.getRuntimeArguments().get("stopTs"));
+      String tag = context.getRuntimeArguments().get("tag");
+      context.setInput(table, table.getInput(2, Bytes.toBytes(metricName), startTs, stopTs, Bytes.toBytes(tag)));
     }
 
     @Override

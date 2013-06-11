@@ -18,6 +18,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.collect.ImmutableList;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -151,7 +153,14 @@ public class MapReduceProgramRunnerTest {
     final Program program = getProgram(app, programClass);
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
 
-    return runner.run(program, new SimpleProgramOptions(program));
+    HashMap<String, String> userArgs = Maps.newHashMap();
+    userArgs.put("metric", "metric");
+    userArgs.put("startTs", "1");
+    userArgs.put("stopTs", "3");
+    userArgs.put("tag", "tag1");
+    return runner.run(program, new SimpleProgramOptions(program.getProgramName(),
+                                                        new BasicArguments(),
+                                                        new BasicArguments(userArgs)));
   }
 
   private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
