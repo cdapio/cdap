@@ -11,16 +11,17 @@ import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
-import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
+import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.weave.api.RunId;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Procedure runtime context
  */
-final class BasicProcedureContext extends ProgramRuntimeContext implements ProcedureContext {
+final class BasicProcedureContext extends AbstractContext implements ProcedureContext {
 
   private final String procedureId;
   private final int instanceId;
@@ -90,8 +91,9 @@ final class BasicProcedureContext extends ProgramRuntimeContext implements Proce
   @Override
   public Map<String, String> getRuntimeArguments() {
     ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    while (runtimeArguments.iterator().hasNext()) {
-      arguments.put(runtimeArguments.iterator().next());
+    Iterator<Map.Entry<String, String>> it = runtimeArguments.iterator();
+    while (it.hasNext()) {
+      arguments.put(it.next());
     }
     return arguments.build();
   }

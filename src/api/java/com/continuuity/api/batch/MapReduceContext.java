@@ -18,7 +18,6 @@ public interface MapReduceContext extends RuntimeContext {
   MapReduceSpecification getSpecification();
 
   /**
-   * @return an instance of {@link org.apache.hadoop.mapreduce.Job} that used to submit the job to Hadoop cluster.
    */
   <T> T getHadoopJob();
 

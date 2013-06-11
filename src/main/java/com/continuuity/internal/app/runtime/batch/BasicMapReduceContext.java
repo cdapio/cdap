@@ -16,7 +16,7 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
+import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.weave.api.RunId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Mapreduce job runtime context
  */
-public class BasicMapReduceContext extends ProgramRuntimeContext implements MapReduceContext {
+public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
   private final MapReduceSpecification spec;
   private Job job;
 
@@ -143,7 +143,7 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
   @Override
   public Map<String, String> getRuntimeArguments() {
     ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    Iterator<Map.Entry<String,String>> it = runtimeArguments.iterator();
+    Iterator<Map.Entry<String, String>> it = runtimeArguments.iterator();
     while (it.hasNext()) {
       arguments.put(it.next());
     }

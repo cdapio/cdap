@@ -16,6 +16,9 @@ import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.procedure.ProcedureSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -84,7 +87,16 @@ public class ArgumentCheckApp implements Application {
   }
 
   private class SimpleProcedure extends AbstractProcedure {
+    private final Logger LOG = LoggerFactory.getLogger(SimpleProcedure.class);
     private ProcedureContext context;
+
+    @Override
+    public ProcedureSpecification configure() {
+      return ProcedureSpecification.Builder.with()
+        .setName("SimpleProcedure")
+        .setDescription(getDescription())
+        .build();
+    }
 
     @Override
     public void initialize(ProcedureContext context) {
@@ -94,7 +106,7 @@ public class ArgumentCheckApp implements Application {
       }
     }
 
-    @Handle("arg")
+    @Handle("argtest")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
       // Don't need to do much here. As we want to test if the context carries runtime arguments.
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS),
