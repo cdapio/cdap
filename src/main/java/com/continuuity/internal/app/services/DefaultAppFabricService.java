@@ -237,12 +237,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param descriptor
    */
   @Override
-  public RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
+  public synchronized RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
     throws AppFabricServiceException, TException {
 
-    FlowIdentifier id = descriptor.getIdentifier();
-    Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
     try {
+      FlowIdentifier id = descriptor.getIdentifier();
+      ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
+      Preconditions.checkArgument(existingRuntimeInfo == null, "Flow is already running" );
+      Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+
       Program program;
       try {
         program = store.loadProgram(programId, entityTypeToType(id));
