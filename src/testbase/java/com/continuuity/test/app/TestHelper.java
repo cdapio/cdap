@@ -109,17 +109,18 @@ public class TestHelper {
     deployApplication(application, "app-" + System.currentTimeMillis()/1000 + ".jar");
   }
 
-  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass)
-    throws Exception {
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass) throws Exception {
     LocalLocationFactory lf = new LocalLocationFactory();
 
     Location deployedJar = lf.create(
       JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
     );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
-    return (ApplicationWithPrograms) p.get();
+    try {
+      ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+      return (ApplicationWithPrograms) p.get();
+    } finally {
+      deployedJar.delete(true);
+    }
   }
 
   /**
@@ -161,40 +162,43 @@ public class TestHelper {
                                           final String applicationId,
                                           final String fileName,
                                           Class<? extends Application> applicationClz) throws Exception {
-    Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
+      Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
 //    Location deployedJar = locationFactory.create(JarFinder.getJar(applicationClz, TestHelper.getManifestWithMainClass(applicationClz)));
-    Application application = applicationClz.newInstance();
-    ApplicationSpecification appSpec = application.configure();
-    Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).getAbsolutePath());
-    deployedJar.deleteOnExit();
+      Application application = applicationClz.newInstance();
+      ApplicationSpecification appSpec = application.configure();
+      Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).getAbsolutePath());
 
-    // Call init to get a session identifier - yes, the name needs to be changed.
-    ResourceIdentifier id = appFabricServer.init(
-      token, new ResourceInfo(account, applicationId, fileName, 0, System.currentTimeMillis()));
+      try {
+        // Call init to get a session identifier - yes, the name needs to be changed.
+        ResourceIdentifier id = appFabricServer.init(
+          token, new ResourceInfo(account, applicationId, fileName, 0, System.currentTimeMillis()));
 
-    // Upload the jar file to remote location.
-    BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
-    try {
-      byte[] chunk = is.read();
-      while (chunk.length > 0) {
-        appFabricServer.chunk(token, id, ByteBuffer.wrap(chunk));
-        chunk = is.read();
-        DeploymentStatus status = appFabricServer.dstatus(token, id);
-        Preconditions.checkState(status.getOverall() == 2, "Fail to deploy app.");
+        // Upload the jar file to remote location.
+        BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
+        try {
+          byte[] chunk = is.read();
+          while (chunk.length > 0) {
+            appFabricServer.chunk(token, id, ByteBuffer.wrap(chunk));
+            chunk = is.read();
+            DeploymentStatus status = appFabricServer.dstatus(token, id);
+            Preconditions.checkState(status.getOverall() == 2, "Fail to deploy app.");
+          }
+        } finally {
+          is.close();
+        }
+
+        // Deploy the app
+        appFabricServer.deploy(token, id);
+        int status = appFabricServer.dstatus(token, id).getOverall();
+        while (status == 3) {
+          status = appFabricServer.dstatus(token, id).getOverall();
+          TimeUnit.MILLISECONDS.sleep(100);
+        }
+        Preconditions.checkState(status == 5, "Fail to deploy app.");
+      } finally {
+        deployedJar.delete(true);
       }
-    } finally {
-      is.close();
-    }
-
-    // Deploy the app
-    appFabricServer.deploy(token, id);
-    int status = appFabricServer.dstatus(token, id).getOverall();
-    while (status == 3) {
-      status = appFabricServer.dstatus(token, id).getOverall();
-      TimeUnit.MILLISECONDS.sleep(100);
-    }
-    Preconditions.checkState(status == 5, "Fail to deploy app.");
     return deployedJar;
   }
 
