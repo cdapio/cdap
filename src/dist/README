@@ -62,10 +62,10 @@ continuuity-developer-suite-1.5.0
  | |-- CountAndFilterWords                     (Sample Word Filter Application)
  | |-- CountCounts                          (Sample Number Counter Application)
  | |-- CountOddAndEven                     (Sample Odd/Even Number Application)
- | |-- CountRandom                         (Sample Random Number Generator App)
+ | |-- CountRandom                 (Sample Random Number Generator Application)
  | |-- CountTokens                         (Sample String Counting Application)
  | |-- HelloWorld                              (Sample Hello World Application)
- | |-- Purchase                           (Sample Purchase History Application)
+ | |-- Purchase                 (Sample Purchase History MapReduce Application)
  | |-- SimpleWriteAndRead                    (Sample Dataset using Application)
  | |-- build.xml                          (Ant build.xml for building examples)
 
