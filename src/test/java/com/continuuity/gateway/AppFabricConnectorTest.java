@@ -76,7 +76,6 @@ public class AppFabricConnectorTest {
     configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle);
     restConnector.configure(configuration);
     restConnector.start();
-
   } // end of setupGateway
 
 
@@ -87,12 +86,11 @@ public class AppFabricConnectorTest {
 
   @Test
   public void testSetFlowletInstances() throws Exception {
-    //deployed Continuuity App is prereq
     Assert.assertEquals(200, deploy("WordCount.jar"));
-    String startFlowUrl = baseURL + "WordCountApp/WordCountFlow?type=flow&op=start";
-    String stopFlowUrl = baseURL + "WordCountApp/WordCountFlow?type=flow&op=stop";
-    String queryInstancesUrl = baseURL + "WordCountApp/WordCountFlow/Tokenizer?q=instances";
-    String setInstancesUrl = baseURL + "WordCountApp/WordCountFlow/Tokenizer";
+    String startFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=start";
+    String stopFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=stop";
+    String queryInstancesUrl = baseURL + "WordCountApp/flow/WordCountFlow/Tokenizer?q=instances";
+    String setInstancesUrl = baseURL + "WordCountApp/flow/WordCountFlow/Tokenizer";
 
     Map<String,String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
@@ -114,13 +112,12 @@ public class AppFabricConnectorTest {
 
   @Test
   public void testStartAndStopFlow() throws Exception {
-    //deployed Continuuity App is prereq
     Assert.assertEquals(200, deploy("WordCount.jar"));
-    String startFlowUrl = baseURL + "WordCountApp/WordCountFlow?type=flow&op=start";
-    String stopFlowUrl = baseURL + "WordCountApp/WordCountFlow?type=flow&op=stop";
-    String startProcedureUrl = baseURL + "WordCountApp/WordFrequency?type=procedure&op=start";
-    String stopProcedureUrl = baseURL + "WordCountApp/WordFrequency?type=procedure&op=stop";
-    String statusFlowUrl = baseURL + "WordCountApp/WordCountFlow?type=flow&op=status";
+    String startFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=start";
+    String stopFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=stop";
+    String startProcedureUrl = baseURL + "WordCountApp/procedure/WordFrequency?op=start";
+    String stopProcedureUrl = baseURL + "WordCountApp/procedure/WordFrequency?op=stop";
+    String statusFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=status";
 
     Map<String,String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");

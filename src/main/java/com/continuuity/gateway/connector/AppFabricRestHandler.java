@@ -233,24 +233,38 @@ public class AppFabricRestHandler extends NettyRestHandler {
           return;
         }
 
-        //from here on, path is either /app/<app-id>/<flow id> or /app/<app-id>/<flow id>/<flowlet id>
+        //from here on, path is either /app/<app-id>/<flow-type>/<flow id> or /app/<app-id>/flow/<flow id>/<flowlet id>
         String[] pathElements = path.substring(pathPrefix.length()).split("/");
 
-        if (pathElements.length < 2 || pathElements.length > 3) {
+        if (pathElements.length < 3 || pathElements.length > 4) {
           respondBadRequest(message, request, metricsHelper, "unsupported number of path elements in request URL");
           return;
         }
 
         String appId = pathElements[0];
-        String flowId = pathElements[1];
+        String flowType = pathElements[1];
+        String flowId = pathElements[2];
         FlowIdentifier flowIdent = new FlowIdentifier(accountId, appId, flowId, 1);
 
-        if (pathElements.length == 2) { //path is /app/<app-id>/<flow id> ?
+        //making sure flowType is among support flow types
+        if (!SUPPORTED_FLOW_TYPES.contains(flowType)) {
+          respondBadRequest(message, request, metricsHelper, "unsupported flow-type "+flowType+" specified in path");
+          return;
+        }
+
+        if ("flow".equals(flowType)) {
+          flowIdent.setType(EntityType.FLOW);
+        } else if ("procedure".equals(flowType)) {
+          flowIdent.setType(EntityType.QUERY);
+        } else if ("mapreduce".equals(flowType)) {
+          flowIdent.setType(EntityType.MAPREDUCE);
+        }
+
+        if (pathElements.length == 3) { //path is /app/<app-id>/<flow-type>/<flow id> ?
           handleFlowOperation(message, request, metricsHelper, client, token, flowIdent, decoder.getParameters());
 
-        } else if (pathElements.length == 3) { //path is /app/<app-id>/<flow id>/<flowlet id> ?
-          flowIdent.setType(EntityType.FLOW);
-          handleFlowletOperation(message, request, metricsHelper, client, token, flowIdent, pathElements[2],
+        } else if (pathElements.length == 4) { //path is /app/<app-id>/<flow-type>/<flow id>/<flowlet id> ?
+          handleFlowletOperation(message, request, metricsHelper, client, token, flowIdent, pathElements[3],
                                  decoder.getParameters());
         }
 
@@ -277,28 +291,6 @@ public class AppFabricRestHandler extends NettyRestHandler {
                                    AppFabricService.Client client, AuthToken token, FlowIdentifier flowIdent,
                                    Map<String, List<String>> parameters)
     throws TException, AppFabricServiceException {
-
-    //looking for type=flow or type=procedure or type=mapreduce parameter in request
-    List<String> types = parameters.get("type");
-    if (types == null || types.size() == 0) {
-      respondBadRequest(message, request, metricsHelper, "no 'type' parameter specified");
-      return;
-    } else if (types.size() > 1) {
-      respondBadRequest(message, request, metricsHelper, "more than one 'type' parameter specified");
-      return;
-    } else if (types.size() == 1 && !SUPPORTED_FLOW_TYPES.contains(types.get(0))) {
-      respondBadRequest(message, request, metricsHelper, "unsupported 'type' parameter specified");
-      return;
-    }
-
-    String flowType = types.get(0);
-    if ("flow".equals(flowType)) {
-      flowIdent.setType(EntityType.FLOW);
-    } else if ("procedure".equals(flowType)) {
-      flowIdent.setType(EntityType.QUERY);
-    } else if ("mapreduce".equals(flowType)) {
-      flowIdent.setType(EntityType.MAPREDUCE);
-    }
 
     //looking for ?op=start or ?op=stop parameter in request
     List<String> operations = parameters.get("op");
