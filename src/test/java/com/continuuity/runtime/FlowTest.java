@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -54,6 +55,18 @@ import java.util.concurrent.TimeUnit;
 public class FlowTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowTest.class);
+
+  @Test
+  public void testQuote() throws Exception {
+    Arguments args = new BasicArguments(ImmutableMap.<String, String>of("A", "1", "B", "2"));
+    Gson gson = new Gson();
+    String s = gson.toJson(args);
+    s = StringEscapeUtils.escapeJavaScript(s);
+
+    s = StringEscapeUtils.unescapeJavaScript(s);
+    Arguments args1 = gson.fromJson(s, BasicArguments.class);
+    Assert.assertTrue(args.equals(args1));
+  }
 
   @Test
   public void testAppWithArgs() throws Exception {
