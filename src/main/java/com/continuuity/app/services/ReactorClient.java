@@ -45,7 +45,7 @@ import java.util.Set;
  */
 public class ReactorClient {
 
-  private static final String DEVELOPER_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
+  private static final String DEVELOPER_ACCOUNT_ID = "developer";
   private static Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
                                                                   "status", "instances");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";
