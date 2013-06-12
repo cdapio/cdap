@@ -57,18 +57,6 @@ public class FlowTest {
   private static final Logger LOG = LoggerFactory.getLogger(FlowTest.class);
 
   @Test
-  public void testQuote() throws Exception {
-    Arguments args = new BasicArguments(ImmutableMap.<String, String>of("A", "1", "B", "2"));
-    Gson gson = new Gson();
-    String s = gson.toJson(args);
-    s = StringEscapeUtils.escapeJavaScript(s);
-
-    s = StringEscapeUtils.unescapeJavaScript(s);
-    Arguments args1 = gson.fromJson(s, BasicArguments.class);
-    Assert.assertTrue(args.equals(args1));
-  }
-
-  @Test
   public void testAppWithArgs() throws Exception {
    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(ArgumentCheckApp.class);
    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
