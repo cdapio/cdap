@@ -64,13 +64,15 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
- * This is the http request handler for the rest accessor. At this time it
- * only accepts GET requests to retrieve a value for a key from a named table.
+ * This is the Http request handler for the AppFabric rest accessor. At this time it
+ * accepts GET, POST and PUT requests to deploy an application, start, stop or get the status of a deployed
+ * flows, procedures or map reduce jobs. It also supports reading and changing the number of instances of a flowlet.
  */
 public class AppFabricRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
 
+  //the next two are additional accepted paths beside the default '/app/'
   private static final String ALLOW_APPS_STATUS = "/apps/status";
   private static final String ALLOW_APP_DEPLOY = "/app";
 
@@ -93,8 +95,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
     HttpMethod.GET);
 
   /**
-   * Will help validate URL paths, and also has the name of the connector and
-   * the data fabric executor.
+   * Will help validate URL paths, authenticate, getting a metrics helper
    */
   private AppFabricRestConnector connector;
 
@@ -169,8 +170,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
         return;
       }
 
-      // if authentication is enabled, verify an authentication token has been
-      // passed and then verify the token is valid
+      //if authentication is enabled, verify an authentication token has been
+      //passed and then verify the token is valid
       if (!connector.getAuthenticator().authenticateRequest(request)) {
         respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
         metricsHelper.finish(BadRequest);
@@ -190,7 +191,6 @@ public class AppFabricRestHandler extends NettyRestHandler {
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
 
       try {
-
         if (ALLOW_APPS_STATUS.equals(path)) {
           ResourceIdentifier rIdentifier = new ResourceIdentifier(accountId, "no-app", "no-res", 1);
           DeploymentStatus status = client.dstatus(token, rIdentifier);
@@ -307,13 +307,13 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
     String operation = operations.get(0);
 
-    //only HttpMethod.POST is supported for start and stop
+    //only HttpMethod.POST is supported for start and stop operations
     if (("start".equals(operation) || "stop".equals(operation)) && request.getMethod() != HttpMethod.POST) {
       respondBadRequest(message, request, metricsHelper, "only Http Post method is supported");
       return;
     }
 
-    //only HttpMethod.GET is supported for start and stop
+    //only HttpMethod.GET is supported for status operation
     if ("status".equals(operation) && request.getMethod() != HttpMethod.GET) {
       respondBadRequest(message, request, metricsHelper, "only Http Get method is supported");
       return;
@@ -353,7 +353,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
     throws TException, AppFabricServiceException {
 
     if (parameters.size() == 0) {
-      //only Put and Get are supported
+      //only Put and Get are supported for flowlet requests
       if (request.getMethod() != HttpMethod.PUT && request.getMethod() != HttpMethod.GET) {
         respondBadRequest(message, request, metricsHelper, "only Http Put and Get methods are supported");
         return;
