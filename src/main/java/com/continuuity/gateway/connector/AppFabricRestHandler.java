@@ -1,8 +1,11 @@
 package com.continuuity.gateway.connector;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
+import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowStatus;
@@ -14,6 +17,8 @@ import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
+import com.continuuity.internal.app.services.legacy.FlowletDefinition;
 import com.continuuity.weave.discovery.Discoverable;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -23,6 +28,7 @@ import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -54,6 +60,7 @@ import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
@@ -61,11 +68,21 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * only accepts GET requests to retrieve a value for a key from a named table.
  */
 public class AppFabricRestHandler extends NettyRestHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
+
+  private static final String ALLOW_APPS_STATUS = "/apps/status";
+  private static final String ALLOW_APP_DEPLOY = "/app";
+
+  private static final String FLOW_STATUS_RUNNING = "RUNNING";
+  private static final String FLOW_STATUS_STOPPED = "STOPPED";
+
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
   private static final String APPFABRIC_SERVICE_NAME = "app.fabric.service";
 
   private static final Set<String> SUPPORTED_FLOW_OPERATIONS = Sets.newHashSet("stop", "start", "status");
+  private static final Set<String> SUPPORTED_FLOW_TYPES = Sets.newHashSet("flow", "procedure", "mapreduce");
+  private static final Set<String> SUPPORTED_FLOWLET_QUERY_PARAMS = Sets.newHashSet("instances");
 
   /**
    * The allowed methods for this handler.
@@ -86,6 +103,9 @@ public class AppFabricRestHandler extends NettyRestHandler {
    */
   private final CMetrics metrics;
 
+  // This is the prefix that all valid URLs must have.
+  private final String pathPrefix;
+
   /**
    * Constructor requires the connector that created this.
    *
@@ -93,46 +113,74 @@ public class AppFabricRestHandler extends NettyRestHandler {
    */
   AppFabricRestHandler(AppFabricRestConnector connector) {
     this.connector = connector;
-    this.metrics = connector.getMetricsClient();
+    metrics = connector.getMetricsClient();
+    pathPrefix = connector.getHttpConfig().getPathPrefix() + connector.getHttpConfig().getPathMiddle();
+
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
+  public void messageReceived(ChannelHandlerContext context,
+                              MessageEvent message) throws Exception {
+
+    // first decode the request
     HttpRequest request = (HttpRequest) message.getMessage();
-
-    GatewayMetricsHelperWrapper helper =
-      new GatewayMetricsHelperWrapper(new MetricsHelper(this.getClass(), metrics, connector.getMetricsQualifier()),
-                                      connector.getGatewayMetrics());
-
+    HttpMethod method = request.getMethod();
+    String requestUri = request.getUri();
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
     String path = decoder.getPath();
 
-    // Ping doesn't need a auth token.
-    if ("/ping".equals(path)) {
-      helper.setMethod("ping");
-      respondToPing(message.getChannel(), request);
-      helper.finish(Success);
-      return;
+    // log and meter the request
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Request received: " + method + " " + requestUri);
     }
-
-    if (!connector.getAuthenticator().authenticateRequest(request)) {
-      respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
-      helper.finish(BadRequest);
-      return;
-    }
-
-    String accountId = connector.getAuthenticator().getAccountId(request);
-    if (accountId == null || accountId.isEmpty()) {
-      respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
-      helper.finish(BadRequest);
-      return;
-    }
+    GatewayMetricsHelperWrapper metricsHelper =
+      new GatewayMetricsHelperWrapper(new MetricsHelper(this.getClass(), metrics, connector.getMetricsQualifier()),
+                                      connector.getGatewayMetrics());
 
     try {
-      if (!ALLOWED_HTTP_METHODS.contains(request.getMethod())) {
-        LOG.trace("Received Unsupported http request method " + request.getMethod().getName());
+      // check whether the request's HTTP method is supported
+      if (!ALLOWED_HTTP_METHODS.contains(method)) {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Received a " + method + " request, which is not supported (path is + '" + path + "')");
+        }
         respondNotAllowed(message.getChannel(), ALLOWED_HTTP_METHODS);
-        helper.finish(BadRequest);
+        metricsHelper.finish(BadRequest);
+        return;
+      }
+
+      // Ping doesn't need a auth token.
+      if ("/ping".equals(requestUri) && HttpMethod.GET.equals(method)) {
+        metricsHelper.setMethod("ping");
+        respondToPing(message.getChannel(), request);
+        metricsHelper.finish(Success);
+        return;
+      }
+
+      // check that path begins with prefix or is the only exception
+      if (!path.startsWith(pathPrefix)
+        && !ALLOW_APPS_STATUS.equals(path)
+        && !ALLOW_APP_DEPLOY.equals(path)) {
+        metricsHelper.finish(NotFound);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Received a request with unkown path prefix " +
+                      "(must be '" + this.pathPrefix + "' but received '" + path + "'.");
+        }
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      // if authentication is enabled, verify an authentication token has been
+      // passed and then verify the token is valid
+      if (!connector.getAuthenticator().authenticateRequest(request)) {
+        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+        metricsHelper.finish(BadRequest);
+        return;
+      }
+      String accountId = connector.getAuthenticator().getAccountId(request);
+      if (accountId == null || accountId.isEmpty()) {
+        LOG.info("No valid account information found");
+        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+        metricsHelper.finish(BadRequest);
         return;
       }
 
@@ -143,7 +191,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
       try {
 
-        if (path.contains("/apps/status")) {
+        if (ALLOW_APPS_STATUS.equals(path)) {
           ResourceIdentifier rIdentifier = new ResourceIdentifier(accountId, "no-app", "no-res", 1);
           DeploymentStatus status = client.dstatus(token, rIdentifier);
           Map<String, String> headers = Maps.newHashMap();
@@ -151,14 +199,16 @@ public class AppFabricRestHandler extends NettyRestHandler {
           respond(message.getChannel(), request, HttpResponseStatus.OK, headers,
                   getJsonStatus(status.getOverall(),
                                 status.getMessage()).toString().getBytes(Charset.forName("UTF-8")));
-          helper.finish(Success);
+          metricsHelper.finish(Success);
+          return;
+        }
 
-        } else if ("/app".equals(path)) {
+        if (ALLOW_APP_DEPLOY.equals(path)) {
           String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
           if (archiveName == null || archiveName.isEmpty()) {
             LOG.trace("Archive name was not available in the header");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
-            helper.finish(BadRequest);
+            metricsHelper.finish(BadRequest);
             return;
           }
 
@@ -166,7 +216,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
           if (content == null) {
             LOG.trace("No body passed from client");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
-            helper.finish(BadRequest);
+            metricsHelper.finish(BadRequest);
             return;
           }
 
@@ -180,87 +230,30 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
           client.deploy(token, rIdentifier);
           respondSuccess(message.getChannel(), request);
-
-        } else if (path.startsWith("/app/")) {
-
-          //path is either /app/<app-id>/<flow id> or /app/<app-id>/<flow id>/<flowlet id>
-          String[] pathElements = path.substring(5).split("/"); //remove prefix '/app/' then split
-
-          if (pathElements.length < 2 || pathElements.length > 3) {
-            respondBadRequest(message, request, helper, " incorrect URL");
-            return;
-          }
-          String appid = pathElements[0];
-          String flowId = pathElements[1];
-          FlowIdentifier flowIdent = new FlowIdentifier(accountId, appid, flowId, -1);
-
-          if (pathElements.length == 2) { //pathElements are <app-id> and <flow id> ?
-
-            //only HttpMethod.POST is supported
-            if (request.getMethod() != HttpMethod.POST) {
-              respondBadRequest(message, request, helper,
-                                " only Http method " + HttpMethod.POST.getName() + " is supported");
-              return;
-            }
-
-            //looking for ?op=start or ?op=stop parameters in request url
-
-            List<String> operations = decoder.getParameters().get("op");
-            if (operations == null || operations.size() == 0) {
-              respondBadRequest(message, request, helper, "no 'op' parameter specified");
-              return;
-            } else if (operations.size() > 1) {
-              respondBadRequest(message, request, helper, "more than one 'op' parameter specified");
-              return;
-            } else if (operations.size() == 1 && !SUPPORTED_FLOW_OPERATIONS.contains(operations.get(0))) {
-              respondBadRequest(message, request, helper, "unsupported 'op' parameter specified");
-              return;
-            }
-
-            String op = operations.get(0);
-            if ("start".equals(op)) {
-              client.start(token, new FlowDescriptor(flowIdent,new ArrayList<String>()));
-            } else if ("stop".equals(op)) {
-              client.stop(token, flowIdent);
-            } else if ("status".equals(op)) {
-              FlowStatus flowStatus = client.status(token, flowIdent);
-              if (flowStatus == null) {
-                respondBadRequest(message, request, helper, "failed to get flow status");
-              }
-              byte[] response = flowStatus.toString().getBytes(Charsets.UTF_8);
-              respondSuccess(message.getChannel(), request, response);
-            }
-
-          } else if (pathElements.length == 3) { //pathElements are <app-id>, <flow id> and <flowlet id> ?
-
-            //String flowDef = client.getFlowDefinition(flowIdent);
-
-            //only HttpMethod.PUT is supported
-            if (request.getMethod() != HttpMethod.PUT) {
-              respondBadRequest(message, request, helper,
-                                " only Http method " + HttpMethod.PUT.getName() + " is supported");
-              return;
-            }
-            String flowletId = pathElements[2];
-
-            //looking for {"instances":<number>} in content of request body
-            Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
-            Map<String, String> valueMap;
-            try {
-              InputStreamReader reader =
-                new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
-              valueMap = new Gson().fromJson(reader, stringMapType);
-            } catch (Exception e) {
-              // failed to parse json, that is a bad request
-              respondBadRequest(message, request, helper, "failed to read body as json: " + e.getMessage());
-              return;
-            }
-
-            short numInstances = Short.parseShort(valueMap.get("instances"));
-            Preconditions.checkArgument(numInstances > 0);
-            client.setInstances(token, flowIdent, flowletId, numInstances);
-          }
+          return;
         }
+
+        //from here on, path is either /app/<app-id>/<flow id> or /app/<app-id>/<flow id>/<flowlet id>
+        String[] pathElements = path.substring(pathPrefix.length()).split("/");
+
+        if (pathElements.length < 2 || pathElements.length > 3) {
+          respondBadRequest(message, request, metricsHelper, "unsupported number of path elements in request URL");
+          return;
+        }
+
+        String appId = pathElements[0];
+        String flowId = pathElements[1];
+        FlowIdentifier flowIdent = new FlowIdentifier(accountId, appId, flowId, 1);
+
+        if (pathElements.length == 2) { //path is /app/<app-id>/<flow id> ?
+          handleFlowOperation(message, request, metricsHelper, client, token, flowIdent, decoder.getParameters());
+
+        } else if (pathElements.length == 3) { //path is /app/<app-id>/<flow id>/<flowlet id> ?
+          flowIdent.setType(EntityType.FLOW);
+          handleFlowletOperation(message, request, metricsHelper, client, token, flowIdent, pathElements[2],
+                                 decoder.getParameters());
+        }
+
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();
@@ -272,11 +265,160 @@ public class AppFabricRestHandler extends NettyRestHandler {
     } catch (Exception e) {
       LOG.debug(StackTraceUtil.toStringStackTrace(e));
       LOG.error("Exception caught for connector '" + this.connector.getName() + "'. ", e.getCause());
-      helper.finish(Error);
+      metricsHelper.finish(Error);
       if (message.getChannel().isOpen()) {
         respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
         message.getChannel().close();
       }
+    }
+  }
+
+  private void handleFlowOperation(MessageEvent message, HttpRequest request, GatewayMetricsHelperWrapper metricsHelper,
+                                   AppFabricService.Client client, AuthToken token, FlowIdentifier flowIdent,
+                                   Map<String, List<String>> parameters)
+    throws TException, AppFabricServiceException {
+
+    //looking for type=flow or type=procedure or type=mapreduce parameter in request
+    List<String> types = parameters.get("type");
+    if (types == null || types.size() == 0) {
+      respondBadRequest(message, request, metricsHelper, "no 'type' parameter specified");
+      return;
+    } else if (types.size() > 1) {
+      respondBadRequest(message, request, metricsHelper, "more than one 'type' parameter specified");
+      return;
+    } else if (types.size() == 1 && !SUPPORTED_FLOW_TYPES.contains(types.get(0))) {
+      respondBadRequest(message, request, metricsHelper, "unsupported 'type' parameter specified");
+      return;
+    }
+
+    String flowType = types.get(0);
+    if ("flow".equals(flowType)) {
+      flowIdent.setType(EntityType.FLOW);
+    } else if ("procedure".equals(flowType)) {
+      flowIdent.setType(EntityType.QUERY);
+    } else if ("mapreduce".equals(flowType)) {
+      flowIdent.setType(EntityType.MAPREDUCE);
+    }
+
+    //looking for ?op=start or ?op=stop parameter in request
+    List<String> operations = parameters.get("op");
+    if (operations == null || operations.size() == 0) {
+      respondBadRequest(message, request, metricsHelper, "no 'op' parameter specified");
+      return;
+    } else if (operations.size() > 1) {
+      respondBadRequest(message, request, metricsHelper, "more than one 'op' parameter specified");
+      return;
+    } else if (operations.size() == 1 && !SUPPORTED_FLOW_OPERATIONS.contains(operations.get(0))) {
+      respondBadRequest(message, request, metricsHelper, "unsupported 'op' parameter specified");
+      return;
+    }
+
+    String operation = operations.get(0);
+
+    //only HttpMethod.POST is supported for start and stop
+    if (("start".equals(operation) || "stop".equals(operation)) && request.getMethod() != HttpMethod.POST) {
+      respondBadRequest(message, request, metricsHelper, "only Http Post method is supported");
+      return;
+    }
+
+    //only HttpMethod.GET is supported for start and stop
+    if ("status".equals(operation) && request.getMethod() != HttpMethod.GET) {
+      respondBadRequest(message, request, metricsHelper, "only Http Get method is supported");
+      return;
+    }
+
+    //ignoring that flow might be running already when starting flow; or has been stopped before trying to stop flow
+    if ("start".equals(operation)) {
+      client.start(token, new FlowDescriptor(flowIdent,new ArrayList<String>()));
+      if (FLOW_STATUS_RUNNING.equals(client.status(token, flowIdent).getStatus())) {
+        respondSuccess(message.getChannel(), request);
+      } else {
+        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR, "Flow could not be started.");
+      }
+    } else if ("stop".equals(operation)) {
+      client.stop(token, flowIdent);
+      if (FLOW_STATUS_STOPPED.equals(client.status(token, flowIdent).getStatus())) {
+        respondSuccess(message.getChannel(), request);
+      } else {
+        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR, "Flow could not be stopped.");
+      }
+    } else if ("status".equals(operation)) {
+      FlowStatus flowStatus = client.status(token, flowIdent);
+      if (flowStatus != null) {
+        byte[] response = Bytes.toBytes("{\"status\":" + flowStatus.getStatus() + "}");
+        respondSuccess(message.getChannel(), request, response);
+      } else {
+        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                     "Flow status could not be retrieved.");
+      }
+    }
+  }
+
+  private void handleFlowletOperation(MessageEvent message, HttpRequest request,
+                                      GatewayMetricsHelperWrapper metricsHelper, AppFabricService.Client client,
+                                      AuthToken token, FlowIdentifier flowIdent, String flowletId,
+                                      Map<String, List<String>> parameters)
+    throws TException, AppFabricServiceException {
+
+    if (parameters.size() == 0) {
+      //only Put and Get are supported
+      if (request.getMethod() != HttpMethod.PUT && request.getMethod() != HttpMethod.GET) {
+        respondBadRequest(message, request, metricsHelper, "only Http Put and Get methods are supported");
+        return;
+      }
+      //looking for {"instances":<number>} in content of request body
+      Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
+      Map<String, String> valueMap;
+      try {
+        InputStreamReader reader =
+          new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+        valueMap = new Gson().fromJson(reader, stringMapType);
+      } catch (Exception e) {
+        // failed to parse json, that is a bad request
+        respondBadRequest(message, request, metricsHelper, "failed to read body as json: " + e.getMessage());
+        return;
+      }
+
+      short numInstances = Short.parseShort(valueMap.get("instances"));
+      if (numInstances < 1) {
+        respondBadRequest(message, request, metricsHelper, "number of specified instances has to be greather than 0.");
+        return;
+      }
+      client.setInstances(token, flowIdent, flowletId, numInstances);
+      respondSuccess(message.getChannel(), request);
+      return;
+    }
+
+    //looking for ?q=instances parameters in request url
+    List<String> operations = parameters.get("q");
+    if (operations == null || operations.size() == 0) {
+      respondBadRequest(message, request, metricsHelper, "no 'q' parameter specified");
+      return;
+    } else if (operations.size() > 1) {
+      respondBadRequest(message, request, metricsHelper, "more than one 'q' parameter specified");
+      return;
+    } else if (operations.size() == 1 && !SUPPORTED_FLOWLET_QUERY_PARAMS.contains(operations.get(0))) {
+      respondBadRequest(message, request, metricsHelper, "unsupported 'q' parameter specified");
+      return;
+    }
+
+    String q = operations.get(0);
+    if ("instances".equals(q)) {
+      String flowDefJson = client.getFlowDefinition(flowIdent);
+      if (flowDefJson == null) {
+        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                     "Failed to get number of flowlet instances");
+        return;
+      }
+      FlowDefinitionImpl flowDef = new Gson().fromJson(flowDefJson, FlowDefinitionImpl.class);
+      for (FlowletDefinition flowletDef : flowDef.getFlowlets()) {
+        if (flowletDef.getName().equals(flowletId)) {
+          byte[] response = Bytes.toBytes("{\"instances\":" + flowletDef.getInstances() + "}");
+          respondSuccess(message.getChannel(), request, response);
+          return;
+        }
+      }
+      respondBadRequest(message, request, metricsHelper, "flowlet " + flowletId + " does not exist");
     }
   }
 
