@@ -102,8 +102,8 @@ public class TestAppFabricClientConfigParse {
       "--application", "application"});
     assertTrue("promote".equals(command));
 
-    command = client.configure(CConfiguration.create(), new String[]{"instances", "--application", "appId",
+    command = client.configure(CConfiguration.create(), new String[]{"scale", "--application", "appId",
       "--flow", "processor", "--flowlet", "count", "--instances", "3"});
-    assertTrue("instances".equals(command));
+    assertTrue("scale".equals(command));
   }
 }
