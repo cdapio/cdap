@@ -64,15 +64,15 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
- * This is the Http request handler for the AppFabric rest accessor. At this time it
- * accepts GET, POST and PUT requests to deploy an application, start, stop or get the status of a deployed
- * flows, procedures or map reduce jobs. It also supports reading and changing the number of instances of a flowlet.
+ * This is the Http request handler for the AppFabric rest connector. At this time it accepts GET, POST and PUT
+ * requests. REST calls can be used to deploy an application, start or stop, or get the status of a flow, procedure
+ * or a map reduce job. It also supports reading and changing the number of instances of a flowlet.
  */
 public class AppFabricRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
 
-  //the next two are additional accepted paths beside the default '/app/'
+  //the next two are additional, accepted paths beside the default '/app/' path prefix
   private static final String ALLOW_APPS_STATUS = "/apps/status";
   private static final String ALLOW_APP_DEPLOY = "/app";
 
@@ -95,12 +95,12 @@ public class AppFabricRestHandler extends NettyRestHandler {
     HttpMethod.GET);
 
   /**
-   * Will help validate URL paths, authenticate, getting a metrics helper
+   * Will help validate URL paths, authenticate and get a metrics helper
    */
   private AppFabricRestConnector connector;
 
   /**
-   * The metrics object of the rest connector.
+   * The metrics object of this rest connector.
    */
   private final CMetrics metrics;
 
@@ -120,8 +120,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext context,
-                              MessageEvent message) throws Exception {
+  public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
 
     // first decode the request
     HttpRequest request = (HttpRequest) message.getMessage();
@@ -149,7 +148,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
         return;
       }
 
-      // Ping doesn't need a auth token.
+      // ping doesn't need an auth token.
       if ("/ping".equals(requestUri) && HttpMethod.GET.equals(method)) {
         metricsHelper.setMethod("ping");
         respondToPing(message.getChannel(), request);
@@ -157,21 +156,21 @@ public class AppFabricRestHandler extends NettyRestHandler {
         return;
       }
 
-      // check that path begins with prefix or is the only exception
+      // check that path begins with pathPrefix or is one of the two additional accepted paths
       if (!path.startsWith(pathPrefix)
         && !ALLOW_APPS_STATUS.equals(path)
         && !ALLOW_APP_DEPLOY.equals(path)) {
         metricsHelper.finish(NotFound);
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Received a request with unkown path prefix " +
-                      "(must be '" + this.pathPrefix + "' but received '" + path + "'.");
+          LOG.trace("Received a request with unkown path prefix (must be '" + this.pathPrefix + "' but received '"
+                      + path + "'.");
         }
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
         return;
       }
 
-      //if authentication is enabled, verify an authentication token has been
-      //passed and then verify the token is valid
+      // if authentication is enabled, verify an authentication token has been
+      // passed and then verify it is valid
       if (!connector.getAuthenticator().authenticateRequest(request)) {
         respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
         metricsHelper.finish(BadRequest);
@@ -233,7 +232,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
           return;
         }
 
-        //from here on, path is either /app/<app-id>/<flow-type>/<flow id> or /app/<app-id>/flow/<flow id>/<flowlet id>
+        // from here on, path is either /app/<app-id>/<flow-type>/<flow id> or /app/<app-id>/flow/<flow id>/<flowlet id>
         String[] pathElements = path.substring(pathPrefix.length()).split("/");
 
         if (pathElements.length < 3 || pathElements.length > 4) {
@@ -246,7 +245,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
         String flowId = pathElements[2];
         FlowIdentifier flowIdent = new FlowIdentifier(accountId, appId, flowId, 1);
 
-        //making sure flowType is among support flow types
+        // making sure flowType is among supported flow types
         if (!SUPPORTED_FLOW_TYPES.contains(flowType)) {
           respondBadRequest(message, request, metricsHelper, "unsupported flow-type "+flowType+" specified in path");
           return;
@@ -292,7 +291,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
                                    Map<String, List<String>> parameters)
     throws TException, AppFabricServiceException {
 
-    //looking for ?op=start or ?op=stop parameter in request
+    // looking for ?op=start, ?op=stop or ?op=status parameter in request
     List<String> operations = parameters.get("op");
     if (operations == null || operations.size() == 0) {
       respondBadRequest(message, request, metricsHelper, "no 'op' parameter specified");
@@ -307,19 +306,19 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
     String operation = operations.get(0);
 
-    //only HttpMethod.POST is supported for start and stop operations
+    // only HttpMethod.POST is supported for start and stop operations
     if (("start".equals(operation) || "stop".equals(operation)) && request.getMethod() != HttpMethod.POST) {
       respondBadRequest(message, request, metricsHelper, "only Http Post method is supported");
       return;
     }
 
-    //only HttpMethod.GET is supported for status operation
+    // only HttpMethod.GET is supported for status operation
     if ("status".equals(operation) && request.getMethod() != HttpMethod.GET) {
       respondBadRequest(message, request, metricsHelper, "only Http Get method is supported");
       return;
     }
 
-    //ignoring that flow might be running already when starting flow; or has been stopped before trying to stop flow
+    // ignoring that flow might be running already when starting flow; or has been stopped before trying to stop flow
     if ("start".equals(operation)) {
       client.start(token, new FlowDescriptor(flowIdent, ImmutableMap.<String, String>of()));
       if (FLOW_STATUS_RUNNING.equals(client.status(token, flowIdent).getStatus())) {
@@ -353,12 +352,12 @@ public class AppFabricRestHandler extends NettyRestHandler {
     throws TException, AppFabricServiceException {
 
     if (parameters.size() == 0) {
-      //only Put and Get are supported for flowlet requests
+      // only Put and Get are supported for flowlet requests
       if (request.getMethod() != HttpMethod.PUT && request.getMethod() != HttpMethod.GET) {
         respondBadRequest(message, request, metricsHelper, "only Http Put and Get methods are supported");
         return;
       }
-      //looking for {"instances":<number>} in content of request body
+      // looking for {"instances":<number>} in content of request body
       Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
       Map<String, String> valueMap;
       try {
@@ -366,7 +365,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
           new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
         valueMap = new Gson().fromJson(reader, stringMapType);
       } catch (Exception e) {
-        // failed to parse json, that is a bad request
+        // failed to parse json, so respond with bad request
         respondBadRequest(message, request, metricsHelper, "failed to read body as json: " + e.getMessage());
         return;
       }
@@ -381,7 +380,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
       return;
     }
 
-    //looking for ?q=instances parameters in request url
+    // looking for ?q=instances parameters in request
     List<String> operations = parameters.get("q");
     if (operations == null || operations.size() == 0) {
       respondBadRequest(message, request, metricsHelper, "no 'q' parameter specified");
