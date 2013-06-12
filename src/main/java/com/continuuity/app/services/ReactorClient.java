@@ -10,7 +10,11 @@ import com.continuuity.internal.app.BufferFileInputStream;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -22,14 +26,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.jar.JarFile;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Client for interacting with local app-fabric service to perform the following operations:
  * a) Deploy locally
  * b) Start/Stop/Status of local service
  * c) promote to cloud
+ * d) change number of instances of flowlet
  * <p/>
  * Usage:
  * ReactorClient client = new ReactorClient();
@@ -39,17 +45,17 @@ import java.util.jar.JarFile;
 public class ReactorClient {
 
   private static final String DEVELOPER_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
-  private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
-                                                                 "status", "instances");
-  private final String ARCHIVE_LONG_OPT_ARG = "archive";
-  private final String APPLICATION_LONG_OPT_ARG = "application";
-  private final String PROCEDURE_LONG_OPT_ARG = "procedure";
-  private final String FLOW_LONG_OPT_ARG = "flow";
-  private final String FLOWLET_LONG_OPT_ARG = "flowlet";
-  private final String FLOWLET_INSTANCES_LONG_OPT_ARG = "flowlet";
-  private final String MAPREDUCE_LONG_OPT_ARG = "mapreduce";
-  private final String HOSTNAME_LONG_OPT_ARG = "host";
-  private final String APIKEY_LONG_OPT_ARG = "apikey";
+  private static Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
+                                                                  "status", "instances");
+  private static final String ARCHIVE_LONG_OPT_ARG = "archive";
+  private static final String APPLICATION_LONG_OPT_ARG = "application";
+  private static final String PROCEDURE_LONG_OPT_ARG = "procedure";
+  private static final String FLOW_LONG_OPT_ARG = "flow";
+  private static final String FLOWLET_LONG_OPT_ARG = "flowlet";
+  private static final String FLOWLET_INSTANCES_LONG_OPT_ARG = "instances";
+  private static final String MAPREDUCE_LONG_OPT_ARG = "mapreduce";
+  private static final String HOSTNAME_LONG_OPT_ARG = "host";
+  private static final String APIKEY_LONG_OPT_ARG = "apikey";
 
   private String resource = null;
   private String application = null;
@@ -79,7 +85,7 @@ public class ReactorClient {
     String address = "localhost";
     int port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
     TTransport transport = null;
-    TProtocol protocol = null;
+    TProtocol protocol;
     try {
       transport = new TFramedTransport(new TSocket(address, port));
       protocol = new TBinaryProtocol(transport);
@@ -91,12 +97,12 @@ public class ReactorClient {
       }
 
       if ("deploy".equals(command)) {
-        deploy(client, transport);
+        deploy(client);
       }
 
       if ("start".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
-        FlowIdentifier identifier = null;
+        FlowIdentifier identifier;
         if( this.flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
@@ -119,7 +125,7 @@ public class ReactorClient {
       if ("stop".equals(command)) {
 
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
-        FlowIdentifier identifier = null;
+        FlowIdentifier identifier;
         if( this.flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
@@ -146,10 +152,12 @@ public class ReactorClient {
         if( this.flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
-          System.out.println(String.format("Starting flow %s for application %s ",this.flow, this.application));
+          System.out.println(String.format(
+            "Changing number of flowlet instances for flowlet %s in flow %s of application %s ",flowlet, flow,
+            application));
         }
         client.setInstances(dummyAuthToken, identifier, flowlet, flowletInstances);
-        System.out.println("The number of flowlet instances have been changed.");
+        System.out.println("The number of flowlet instances has been changed.");
         return;
       }
 
@@ -164,7 +172,7 @@ public class ReactorClient {
       }
       if ("status".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
-        FlowIdentifier identifier = null;
+        FlowIdentifier identifier;
         if( this.flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
@@ -195,14 +203,13 @@ public class ReactorClient {
    * @param configuration Instance of {@code CConfiguration}
    * @param args          array of String arguments
    * @return Command that will be executed
-   * @throws ParseException on errors in commnd line parsing
    */
   public String configure(CConfiguration configuration, String args[]) {
 
     this.configuration = configuration;
     this.command = null;
     Preconditions.checkArgument(args.length >= 1, "Not enough arguments");
-    boolean knownCommand = availableCommands.contains(args[0]);
+    boolean knownCommand = AVAILABLE_COMMANDS.contains(args[0]);
     Preconditions.checkArgument(knownCommand, "Unknown Command specified");
 
     String sentCommand = args[0];
@@ -211,23 +218,23 @@ public class ReactorClient {
 
     Options options = new Options();
 
-    options.addOption("a",APPLICATION_LONG_OPT_ARG, true, "Application Id.");
-    options.addOption("r",ARCHIVE_LONG_OPT_ARG,true, "Archive that contains the application.");
-    options.addOption("p",PROCEDURE_LONG_OPT_ARG, true, "Procedure Id.");
-    options.addOption("h",HOSTNAME_LONG_OPT_ARG, true, "Hostname to push the application to.");
-    options.addOption("k",APIKEY_LONG_OPT_ARG, true, "Apikey of the account.");
-    options.addOption("f",FLOW_LONG_OPT_ARG, true, "Flow Id.");
-    options.addOption("l",FLOWLET_LONG_OPT_ARG, true, "Flowlet Id.");
-    options.addOption("i",FLOWLET_INSTANCES_LONG_OPT_ARG, true, "Flowlet Instances.");
-    options.addOption("m",MAPREDUCE_LONG_OPT_ARG, true, "MapReduce job Id.");
+    options.addOption("a", APPLICATION_LONG_OPT_ARG, true, "Application Id.");
+    options.addOption("r", ARCHIVE_LONG_OPT_ARG,true, "Archive that contains the application.");
+    options.addOption("p", PROCEDURE_LONG_OPT_ARG, true, "Procedure Id.");
+    options.addOption("h", HOSTNAME_LONG_OPT_ARG, true, "Hostname to push the application to.");
+    options.addOption("k", APIKEY_LONG_OPT_ARG, true, "Apikey of the account.");
+    options.addOption("f", FLOW_LONG_OPT_ARG, true, "Flow Id.");
+    options.addOption("l", FLOWLET_LONG_OPT_ARG, true, "Flowlet Id.");
+    options.addOption("i", FLOWLET_INSTANCES_LONG_OPT_ARG, true, "Flowlet Instances.");
+    options.addOption("m", MAPREDUCE_LONG_OPT_ARG, true, "MapReduce job Id.");
 
-    CommandLine commandLine = null;
+    CommandLine commandLine;
 
     try {
       commandLine = commandLineParser.parse(options, Arrays.copyOfRange(args, 1, args.length));
 
       if ("help".equals(sentCommand)) {
-        printHelp(options);
+        printHelp();
       }
 
       //Check if the appropriate args are passed in for each of the commands
@@ -310,16 +317,16 @@ public class ReactorClient {
       command = sentCommand;
 
     } catch (ParseException e) {
-      printHelp(options);
+      printHelp();
     } catch (Exception e) {
-      printHelp(options);
+      printHelp();
       throw Throwables.propagate(e);
     }
 
     return command;
   }
 
-  private void printHelp(Options options) {
+  private void printHelp() {
     PrintStream out = System.out;
     Copyright.print(out);
 
@@ -342,8 +349,7 @@ public class ReactorClient {
   }
 
   public static void main(String[] args) throws TException, AppFabricServiceException {
-    String command = null;
-    ReactorClient client = null;
+    ReactorClient client;
     try {
       client = new ReactorClient();
       client.configure(CConfiguration.create(), args);
@@ -354,10 +360,9 @@ public class ReactorClient {
     client.execute();
   }
 
-  private void deploy(AppFabricService.Client client, TTransport transport)
+  private void deploy(AppFabricService.Client client)
     throws IOException, TException, AppFabricServiceException, InterruptedException {
     File file = new File(this.resource);
-    JarFile jarFile = new JarFile(file);
 
     AuthToken dummyAuthToken = new AuthToken("ReactorClient");
     System.out.println(String.format("Deploying... :%s", this.resource));
