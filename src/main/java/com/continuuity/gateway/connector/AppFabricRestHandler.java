@@ -22,6 +22,7 @@ import com.continuuity.internal.app.services.legacy.FlowletDefinition;
 import com.continuuity.weave.discovery.Discoverable;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -52,7 +53,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -329,7 +329,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
     //ignoring that flow might be running already when starting flow; or has been stopped before trying to stop flow
     if ("start".equals(operation)) {
-      client.start(token, new FlowDescriptor(flowIdent,new ArrayList<String>()));
+      client.start(token, new FlowDescriptor(flowIdent, ImmutableMap.<String, String>of()));
       if (FLOW_STATUS_RUNNING.equals(client.status(token, flowIdent).getStatus())) {
         respondSuccess(message.getChannel(), request);
       } else {
