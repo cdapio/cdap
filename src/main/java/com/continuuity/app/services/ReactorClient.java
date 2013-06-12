@@ -47,7 +47,7 @@ public class ReactorClient {
 
   private static final String DEVELOPER_ACCOUNT_ID = "developer";
   private static Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
-                                                                  "status", "instances");
+                                                                  "status", "scale");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";
   private static final String APPLICATION_LONG_OPT_ARG = "application";
   private static final String PROCEDURE_LONG_OPT_ARG = "procedure";
@@ -148,7 +148,7 @@ public class ReactorClient {
         return;
       }
 
-      if ("instances".equals(command)) {
+      if ("scale".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = null;
         if( this.flow != null) {
@@ -286,7 +286,7 @@ public class ReactorClient {
         this.mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
 
       }
-      if ("instances".equals(sentCommand)) {
+      if ("scale".equals(sentCommand)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(FLOW_LONG_OPT_ARG),
@@ -337,7 +337,7 @@ public class ReactorClient {
     out.println("  reactor-client start     --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
     out.println("  reactor-client stop      --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
     out.println("  reactor-client status    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  reactor-client instances --application <id> --flow <id> --flowlet <id> --instances <number>");
+    out.println("  reactor-client scale     --application <id> --flow <id> --flowlet <id> --instances <number>");
     out.println("  reactor-client promote   --application <id> --host <hostname> --apikey <key>");
 
     out.println("Options:");
