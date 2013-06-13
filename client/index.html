@@ -688,6 +688,44 @@
 
   </script>
 
+  <!-- Shared -->
+
+  <script type="text/x-handlebars" data-template-name="Runnable/Config">
+
+    <div class="popup-modal">
+      <div class="popup-container">
+        <div class="popup-body">
+          <div class="popup-close" {{action close on="click"}}>×</div>
+
+          <div class="popup-icon-stream"></div>
+          <h1 class="popup-title"><a {{bindAttr href="controller.model.href"}}>{{model.name}}</a></h1>
+
+          I am the configurator.
+
+        </div>
+      </div>
+    </div>
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Runnable/Log">
+
+    <div class="popup-modal">
+      <div class="popup-container">
+        <div class="popup-body">
+          <div class="popup-close" {{action close on="click"}}>×</div>
+
+          <div class="popup-icon-stream"></div>
+          <h1 class="popup-title"><a {{bindAttr href="controller.model.href"}}>{{model.name}}</a></h1>
+
+          I am the configurator.
+
+        </div>
+      </div>
+    </div>
+
+  </script>
+
   <!-- Partials -->
 
   <script type="text/x-handlebars" data-template-name="_apps-list">

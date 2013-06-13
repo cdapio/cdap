@@ -117,6 +117,7 @@ define (['core/application'], function (Application) {
 				// These live in FlowStatus so they can visually overlay the Flow.
 				this.route('Flowlet', { path: '/flowlets/:flowlet_id' });
 				this.route('Stream', { path: '/streams/:stream_id' });
+				this.route('Config', { path: '/config' });
 
 			});
 
@@ -198,6 +199,9 @@ define (['core/application'], function (Application) {
 		FlowLogRoute: basicRouter.extend({
 			model: function () {
 				return this.modelFor('Flow');
+			},
+			renderTemplate: function () {
+				this.render('RunnableLog');
 			}
 		}),
 
@@ -215,6 +219,16 @@ define (['core/application'], function (Application) {
 		}),
 
 		FlowStatusStreamRoute: basicRouter.extend(),
+
+		/*
+		 * This will use the FlowStatusConfigController with the RunnableConfig template.
+		 * FlowStatusConfigController extends RunnableConfigController.
+		 */
+		FlowStatusConfigRoute: basicRouter.extend({
+			renderTemplate: function () {
+				this.render('RunnableConfig');
+			}
+		}),
 
 		DatasetRoute: basicRouter.extend(),
 
