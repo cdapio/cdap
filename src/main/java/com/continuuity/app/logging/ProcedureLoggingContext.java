@@ -27,8 +27,4 @@ public class ProcedureLoggingContext extends ApplicationLoggingContext {
     return super.getLogPartition() + String.format(":%s", getSystemTag(TAG_PROCEDURE_ID));
   }
 
-  @Override
-  public String getLogPathFragment() {
-    return String.format("%s/procedure-%s", super.getLogPathFragment(), getSystemTag(TAG_PROCEDURE_ID));
-  }
 }
