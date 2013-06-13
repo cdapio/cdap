@@ -214,6 +214,10 @@ define([], function () {
 				params: [app, id, null, names]
 			}, function (error, response) {
 
+				if (C.currentPath !== 'Flow.FlowStatus.index') {
+					return;
+				}
+
 				if (!response.params) {
 					return;
 				}
