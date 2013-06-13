@@ -32,17 +32,16 @@ import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.internal.ApplicationBundler;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -52,6 +51,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Runs {@link com.continuuity.api.batch.MapReduce} programs
@@ -120,7 +121,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     try {
       RunId runId = RunIds.generate();
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, runId, txAgent,
+        new BasicMapReduceContext(program, runId, options.getUserArguments(), txAgent,
                                   DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
 
       MapReduce job = (MapReduce) program.getMainClass().newInstance();
@@ -182,18 +183,23 @@ public class MapReduceProgramRunner implements ProgramRunner {
     setInputDataSetIfNeeded(jobConf, context);
     setOutputDataSetIfNeeded(jobConf, context);
 
+    // packaging job jar which includes continuuity classes with dependencies
+    // NOTE: user's jar is added to classpath separately to leave the flexibility in future to create and use separate
+    //       classloader when executing user code. We need to submit a copy of the program jar because
+    //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
+    //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
+
+    final Location jobJar = buildJobJar(jobJarLocation);
+    final Location programJarCopy = createJobJarTempCopy(jobJarLocation);
+
+    jobConf.setJar(jobJar.toURI().toString());
+    jobConf.addFileToClassPath(new Path(programJarCopy.toURI()));
+
+    jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
+
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
     // apart from everything we also remember tx, so that we can re-use it in mapreduce tasks
-    contextProvider.set(context, cConf, tx);
-
-    // TODO: consider using approach that Weave uses: package all jars with submitted job all the time
-    // adding continuuity jars to classpath (which are located/cached on hdfs to avoid redundant copying with every job)
-    addContinuuityJarsToClasspath(jobConf);
-
-    jobConf.setJar(jobJarLocation.toURI().toString());
-    // This is needed for having the program jar file available in MR classpath
-    jobConf.addFileToClassPath(new Path(jobJarLocation.toURI()));
-    jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
+    contextProvider.set(context, cConf, tx, programJarCopy.getName());
 
     new Thread() {
       @Override
@@ -219,28 +225,37 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // stopping controller when mapreduce job is finished
           // (also that should finish transaction, but that might change after integration with "long running txs")
           stopController(success);
+          try {
+            jobJar.delete();
+          } catch (IOException e) {
+            LOG.warn("Failed to delete temp mr job jar: " + jobJar.toURI());
+            // failure should not affect other stuff
+          }
+          try {
+            programJarCopy.delete();
+          } catch (IOException e) {
+            LOG.warn("Failed to delete temp mr job jar: " + programJarCopy.toURI());
+            // failure should not affect other stuff
+          }
         }
       }
     }.start();
   }
 
-  private void addContinuuityJarsToClasspath(Job jobConf) throws IOException {
-    // ideally single line commented out below should be enough, but
-    // due to yarn bug (MAPREDUCE-4740) we need to do it the ugly way
-    // jobConf.addArchiveToClassPath(new Path("/continuuity/lib.zip"));
-
-    FileSystem fs = FileSystem.get(hConf);
-
-    Path libDir = new Path("/continuuity/lib");
-    if (!fs.exists(libDir)) {
-      LOG.warn("/continuuity/lib does NOT exist, only job jar is going to be in classpath of mapreduce tasks");
-      return;
+  private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {
+    Location programJarCopy = jobJarLocation.getTempFile("program.jar");
+    InputStream src = jobJarLocation.getInputStream();
+    try {
+      OutputStream dest = programJarCopy.getOutputStream();
+      try {
+        ByteStreams.copy(src, dest);
+      } finally {
+        dest.close();
+      }
+    } finally {
+      src.close();
     }
-    RemoteIterator<LocatedFileStatus> it = fs.listFiles(libDir, false);
-    while (it.hasNext()) {
-      LocatedFileStatus file = it.next();
-      jobConf.addFileToClassPath(file.getPath());
-    }
+    return programJarCopy;
   }
 
   private void wrapMapperClassIfNeeded(Job jobConf) throws ClassNotFoundException {
@@ -350,5 +365,17 @@ public class MapReduceProgramRunner implements ProgramRunner {
     protected void doCommand(String name, Object value) throws Exception {
       // No-op
     }
+  }
+
+  private static Location buildJobJar(Location jobJarLocation) throws IOException {
+    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"));
+    Location appFabricDependenciesJarLocation = jobJarLocation.getTempFile(".job.jar");
+
+    LOG.debug("Creating job jar: " + appFabricDependenciesJarLocation.toURI());
+    appBundler.createBundle(appFabricDependenciesJarLocation,
+                            MapReduce.class,
+                            DataSetOutputFormat.class, DataSetInputFormat.class,
+                            MapperWrapper.class, ReducerWrapper.class);
+    return appFabricDependenciesJarLocation;
   }
 }

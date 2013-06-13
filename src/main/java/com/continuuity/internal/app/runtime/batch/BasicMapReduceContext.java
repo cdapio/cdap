@@ -11,21 +11,24 @@ import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.logging.MapReduceLoggingContext;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
+import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.weave.api.RunId;
+import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Mapreduce job runtime context
  */
-public class BasicMapReduceContext extends ProgramRuntimeContext implements MapReduceContext {
+public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
   private final MapReduceSpecification spec;
   private Job job;
 
@@ -38,10 +41,13 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
   private final CMetrics systemMapperMetrics;
   private final CMetrics systemReducerMetrics;
   private final TransactionAgent txAgent;
+  private final Arguments runtimeArguments;
 
-  public BasicMapReduceContext(Program program, RunId runId,
-                               TransactionAgent txAgent, Map<String, DataSet> datasets, MapReduceSpecification spec) {
+  public BasicMapReduceContext(Program program, RunId runId, Arguments runtimeArguments,
+                               TransactionAgent txAgent, Map<String, DataSet> datasets,
+                               MapReduceSpecification spec) {
     super(program, runId, datasets);
+    this.runtimeArguments = runtimeArguments;
     this.txAgent = txAgent;
     this.systemMapperMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Mapper"));
     this.systemReducerMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Reducer"));
@@ -128,5 +134,19 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
 
   public void flushOperations() throws OperationException {
     txAgent.flush();
+  }
+
+  Arguments getRuntimeArgs() {
+    return runtimeArguments;
+  }
+
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
+    Iterator<Map.Entry<String, String>> it = runtimeArguments.iterator();
+    while (it.hasNext()) {
+      arguments.put(it.next());
+    }
+    return arguments.build();
   }
 }
