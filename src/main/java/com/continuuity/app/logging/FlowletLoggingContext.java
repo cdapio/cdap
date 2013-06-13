@@ -15,7 +15,7 @@ public class FlowletLoggingContext extends ApplicationLoggingContext {
   public static final String TAG_FLOWLET_ID = "flowletId";
 
   /**
-   * Constructs the FlowletLoggingContext
+   * Constructs the FlowletLoggingContext.
    * @param accountId account id
    * @param applicationId application id
    * @param flowId flow id
