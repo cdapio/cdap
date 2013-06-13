@@ -120,7 +120,7 @@ sourceSets {
 }
 
 test {
-    jvmArgs '-Xmx1024m'
+    jvmArgs '-Xmx1536m'
 }
 
 task testJar(type: Jar, dependsOn: testbaseClasses) {
