@@ -10,7 +10,7 @@ public class ProcedureLoggingContext extends ApplicationLoggingContext {
   public static final String TAG_PROCEDURE_ID = "procedureId";
 
   /**
-   * Constructs the ProcedureLoggingContext
+   * Constructs the ProcedureLoggingContext.
    * @param accountId account id
    * @param applicationId application id
    * @param procedureId flow id

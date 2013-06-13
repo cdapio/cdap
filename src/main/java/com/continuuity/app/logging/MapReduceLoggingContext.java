@@ -10,7 +10,7 @@ public class MapReduceLoggingContext extends ApplicationLoggingContext {
   public static final String TAG_MAP_REDUCE_JOB_ID = "mapReduceId";
 
   /**
-   * Constructs the MapReduceLoggingContext
+   * Constructs the MapReduceLoggingContext.
    * @param accountId account id
    * @param applicationId application id
    * @param mapReduceId mapreduce job id
