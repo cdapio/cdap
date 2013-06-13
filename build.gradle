@@ -90,7 +90,7 @@ sourceSets {
 }
 
 test {
-    jvmArgs '-Xmx1024m'
+    jvmArgs '-Xmx1536m'
 }
 
 
