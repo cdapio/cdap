@@ -4,12 +4,14 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.logging.LoggingContextLookup;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
 import com.continuuity.logging.kafka.KafkaMessage;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -30,14 +32,18 @@ import java.util.concurrent.TimeUnit;
 /**
  * Saves logs published through Kafka.
  */
-public class LogSaver extends AbstractExecutionThreadService {
+public final class LogSaver extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaver.class);
 
-  private List<ImmutablePair<String, Integer>> seedBrokers;
-  private String topic;
-  private int partition;
-  private LoggingEventSerializer serializer;
+  private final List<ImmutablePair<String, Integer>> seedBrokers;
+  private final String topic;
+  private final int partition;
+  private final LoggingEventSerializer serializer;
 
+  private final OperationExecutor opex;
+  private final OperationContext operationContext;
+  private final CheckpointManager checkpointManager;
+  private final FileManager fileManager;
   private final QueueManager queueManager;
   private final AvroFileWriter avroFileWriter;
   private final long kafkaErrorSleepMs;
@@ -45,27 +51,39 @@ public class LogSaver extends AbstractExecutionThreadService {
   private final int kafkaSaveFetchTimeoutMs = 1000;
   private final int syncIntervalBytes = 1024 * 1024;
   private final long maxLogFileSize = 100 * 1024 * 1024;
+  private final long checkpointIntervalMs = 60 * 1000;
+  private final long inactiveIntervalMs = 10 * 60 * 1000;
 
   private final int numThreads = 2;
+  private static final String TABLE_NAME = "__log_meta";
 
-  public LogSaver() throws IOException, URISyntaxException {
+  private volatile ListeningExecutorService listeningExecutorService;
+  private volatile Future<?> subTaskFutures;
+
+  public LogSaver(OperationExecutor opex, String account) throws IOException, URISyntaxException {
     this.seedBrokers = Lists.newArrayList(new ImmutablePair<String, Integer>("localhost", 9094));
     this.topic = "LOG_MESSAGES";
     this.partition = 0;
     this.serializer = new LoggingEventSerializer();
 
-
+    this.opex = opex;
+    this.operationContext = new OperationContext(account);
+    this.checkpointManager = new CheckpointManager(this.opex, operationContext, topic, partition, TABLE_NAME);
+    this.fileManager = new FileManager(opex, operationContext, TABLE_NAME);
     this.queueManager = new QueueManager(3000);
-    this.avroFileWriter = new AvroFileWriter(FileSystem.get(new Configuration()), "/tmp/logs", serializer.getSchema(),
-                                             maxLogFileSize, syncIntervalBytes);
+    this.avroFileWriter = new AvroFileWriter(checkpointManager, fileManager,
+                                             FileSystem.get(new Configuration()), "/tmp/logs",
+                                             serializer.getSchema(), maxLogFileSize, syncIntervalBytes,
+                                             checkpointIntervalMs, inactiveIntervalMs);
     this.kafkaErrorSleepMs = 2000;
     this.kafkaEmptySleepMs = 2000;
   }
 
   @Override
-  protected void run() throws Exception {
+  protected void startUp() throws Exception {
     LOG.info("Starting LogSaver...");
-    ListeningExecutorService listeningExecutorService =
+
+    listeningExecutorService =
       MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numThreads));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
 
@@ -75,21 +93,36 @@ public class LogSaver extends AbstractExecutionThreadService {
     future = listeningExecutorService.submit(new LogWriter());
     futures.add(future);
 
-    // Wait for tasks to complete
-    Future<?> compositeFuture = Futures.allAsList(futures);
-    compositeFuture.get();
+    subTaskFutures = Futures.allAsList(futures);
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // Wait for sub tasks to complete
+    subTaskFutures.get();
 
     LOG.info("Stopping LogSaver...");
 
     listeningExecutorService.shutdownNow();
   }
 
-  class LogCollector implements Runnable {
+  private void waitForRun() {
+    while (state() == State.STARTING) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(200);
+      } catch (InterruptedException e) {
+        LOG.warn("Caught exception while waiting for service to start", e);
+      }
+    }
+  }
+
+  private final class LogCollector implements Runnable {
     @Override
     public void run() {
-      KafkaConsumer kafkaConsumer = null;
+      waitForRun();
+
+      KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaSaveFetchTimeoutMs);
       try {
-        kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaSaveFetchTimeoutMs);
         long lastOffset = -1;
 
         List<KafkaMessage> messageList = Lists.newArrayListWithExpectedSize(1000);
@@ -137,9 +170,7 @@ public class LogSaver extends AbstractExecutionThreadService {
         LOG.info(String.format("Stopping LogCollector for topic %s, partition %d.", topic, partition));
       } finally {
         try {
-          if (kafkaConsumer != null) {
-            kafkaConsumer.close();
-          }
+          kafkaConsumer.close();
         } catch (IOException e) {
           LOG.error(String.format("Caught exception while closing KafkaConsumer for topic %s, partition %d:",
                                   topic, partition), e);
@@ -148,9 +179,11 @@ public class LogSaver extends AbstractExecutionThreadService {
     }
   }
 
-  class LogWriter implements Runnable {
+  private final class LogWriter implements Runnable {
     @Override
     public void run() {
+      waitForRun();
+
       int batchSize = 1000;
       List<KafkaLogEvent> events = Lists.newArrayListWithExpectedSize(batchSize);
       LOG.info(String.format("Starting LogWriter for topic %s, partition %d.", topic, partition));

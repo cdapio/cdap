@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
@@ -26,7 +27,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +35,7 @@ import static kafka.api.OffsetRequest.CurrentVersion;
 /**
  * Kafka consumer that listens on a topic/partition and retrieves messages.
  */
-public class KafkaConsumer implements Closeable {
+public final class KafkaConsumer implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaConsumer.class);
 
   private static final int MAX_KAFKA_FETCH_RETRIES = 5;
@@ -105,8 +105,7 @@ public class KafkaConsumer implements Closeable {
    */
   public long fetchOffset(Offset offset) throws OperationException {
     TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
-    Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo =
-      new HashMap<TopicAndPartition, PartitionOffsetRequestInfo>();
+    Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = Maps.newHashMap();
     requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(offset.getValue(), 1));
     OffsetRequest request = new OffsetRequest(requestInfo, CurrentVersion(), clientName);
 

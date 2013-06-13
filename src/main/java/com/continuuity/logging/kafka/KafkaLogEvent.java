@@ -7,7 +7,7 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Represents a log event fetched from Kafka.
  */
-public class KafkaLogEvent {
+public final class KafkaLogEvent {
   private final GenericRecord  genericRecord;
   private final ILoggingEvent logEvent;
   private final long offset;

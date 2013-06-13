@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Returns the LoggingContext object based on the log tags.
  */
-public class LoggingContextLookup {
+public final class LoggingContextLookup {
   public static LoggingContext getLoggingContext(Map<String, String> tags) {
     // Tags are empty, cannot determine logging context.
     if (tags == null || tags.isEmpty()) {

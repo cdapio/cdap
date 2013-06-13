@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Partitions KafkaLogEvents into different queues based on LoggingContext. This class is not thread-safe.
  */
-public class QueueManager {
+public final class QueueManager {
   private static final Logger LOG = LoggerFactory.getLogger(QueueManager.class);
   private final Map<String, BlockingQueue<KafkaLogEvent>> allQueues;
   private final BlockingQueue<BlockingQueue<KafkaLogEvent>> processingQueue;

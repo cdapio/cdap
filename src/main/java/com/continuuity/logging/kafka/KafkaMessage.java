@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 /**
  * Represents a Kafka message.
  */
-public class KafkaMessage {
+public final class KafkaMessage {
   private final ByteBuffer byteBuffer;
   private final long offset;
 

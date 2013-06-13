@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Tails logs by reading the log messages from Kafka.
  */
-public class LogTail {
+public final class LogTail {
   private static final Logger LOG = LoggerFactory.getLogger(LogTail.class);
 
   private static final int MAX_RETURN_COUNT = 1000;
@@ -68,7 +68,7 @@ public class LogTail {
    * @return list of log events.
    * @throws OperationException
    */
-  List<ILoggingEvent> tailLog(int partition, long fromTimeMs) throws OperationException {
+  private List<ILoggingEvent> tailLog(int partition, long fromTimeMs) throws OperationException {
     KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
     List<ILoggingEvent> loggingEvents = Lists.newArrayListWithExpectedSize(MAX_RETURN_COUNT);
     List<KafkaMessage> kafkaMessages = Lists.newArrayListWithExpectedSize(MAX_RETURN_COUNT);
