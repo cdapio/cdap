@@ -110,6 +110,21 @@ define([], function () {
 			___fixStreams.call(this);
 			//** End Hax
 
+			/*
+			 * Pretty rendering fix.
+			 * Determine whether there are any 'input-less' flowlets, and determine later where they should be rendered.
+			 */
+			this.get('controller').elements.Flowlet.content.forEach(function (item, index) {
+				if (!this.__cxn[item.id] || this.__cxn[item.id].length === 0) {
+					this.__positioningWatch.push(item.id);
+					this.__location[item.id] = {
+						col: 0,
+						row: this.__rowCounter[0] ++
+					};
+					return false;
+				}
+			}, this);
+
 			// Kickoff node insertions. Needs to be done for each source.
 			for (var i = 0; i < flowSources.length; i ++) {
 				this.__insert(flowSources[i].id);
@@ -147,31 +162,42 @@ define([], function () {
 			}
 		},
 
+		__positioningWatch: [],
+
 		__insert: function (id) {
 
-			var id2, k;
-			if (!id) { // Append the first node
-				this.get('controller').elements.Flowlet.content.forEach(function (item, index) {
-					if (!this.__cxn[item.id] || this.__cxn[item.id].length === 0) {
-						this.__append(this.get('controller').get_flowlet(item.id), 0);
-						this.__insert(item.id);
-						return false;
-					}
-				}, this);
-			} else {
-				for (id2 in this.__cxn) {
-					for (k = 0; k < this.__cxn[id2].length; k ++) {
-						if (this.__cxn[id2][k] === id) {
-							if (!this.__inserted[id2]) {
-								this.__append(this.get('controller').get_flowlet(id2), this.__location[id].col + 1);
-								this.__inserted[id2] = 1;
-
-								this.__insert(id2);
-							}
+			var id2, j, k;
+			/*
+			 * Pretty rendering fix.
+			 * Check whether this connects to an 'input-less' flowlet. If so, render the 'input-less' flowlet just behind it.
+			 */
+			for (k = this.__positioningWatch.length - 1; k >= 0; k --) {
+				if (this.__cxn[id]) {
+					for (j = 0; j < this.__cxn[id].length; j ++) {
+						if (this.__cxn[id][j] === this.__positioningWatch[k]) {
+							this.__append(this.get('controller').get_flowlet(this.__positioningWatch[k]), this.__location[id].col - 1);
+							this.__positioningWatch.splice(k, 1);
 						}
 					}
 				}
 			}
+
+			/*
+			 * Normal rendering.
+			 */
+			for (id2 in this.__cxn) {
+				for (k = 0; k < this.__cxn[id2].length; k ++) {
+					if (this.__cxn[id2][k] === id) {
+						if (!this.__inserted[id2]) {
+							this.__append(this.get('controller').get_flowlet(id2), this.__location[id].col + 1);
+							this.__inserted[id2] = 1;
+
+							this.__insert(id2);
+						}
+					}
+				}
+			}
+
 		},
 
 		__append: function (model, col) {
