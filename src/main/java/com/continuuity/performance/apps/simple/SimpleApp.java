@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.performance.runner;
+package com.continuuity.performance.apps.simple;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -27,7 +27,7 @@ public class SimpleApp implements Application {
 
   private static final Logger LOG = LoggerFactory.getLogger(SimpleApp.class);
 
-  public static final String TABLE_NAME = "SimpleAppTable";
+  public static final String TABLE_NAME = "writeAndRead";
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
@@ -55,7 +55,7 @@ public class SimpleApp implements Application {
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("SimpleFlow")
+        .setName("SimpleApp")
         .setDescription("Example flow that writes events from a stream to a data set and then reads them from there.")
         .withFlowlets()
         .add("source", new KeyValueSource())

@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.performance.runner;
+package com.continuuity.performance.apps.trivial;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;

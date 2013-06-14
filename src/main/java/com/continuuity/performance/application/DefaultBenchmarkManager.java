@@ -138,47 +138,6 @@ public class DefaultBenchmarkManager implements ApplicationManager {
   }
 
   @Override
-  public ProcedureManager startProcedure(final String procedureName) {
-    return startProcedure(procedureName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
-    try {
-      final FlowIdentifier procedureId = new FlowIdentifier(accountId, applicationId, procedureName, 0);
-      procedureId.setType(EntityType.QUERY);
-      Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
-                               "Procedure %s is already running", procedureName);
-      try {
-        appFabricServer.start(token, new FlowDescriptor(procedureId, arguments));
-      } catch (Exception e) {
-        runningProcessses.remove(procedureName);
-        throw Throwables.propagate(e);
-      }
-
-      return new ProcedureManager() {
-        @Override
-        public void stop() {
-          try {
-            if (runningProcessses.remove(procedureName, procedureId)) {
-              appFabricServer.stop(token, procedureId);
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public ProcedureClient getClient() {
-          return procedureClientFactory.create(accountId, applicationId, procedureName);
-        }
-      };
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
   public MapReduceManager startMapReduce(final String jobName) {
     return startMapReduce(jobName, ImmutableMap.<String, String>of());
   }
@@ -226,6 +185,47 @@ public class DefaultBenchmarkManager implements ApplicationManager {
             throw new TimeoutException("Time limit reached.");
           }
 
+        }
+      };
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public ProcedureManager startProcedure(final String procedureName) {
+    return startProcedure(procedureName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
+    try {
+      final FlowIdentifier procedureId = new FlowIdentifier(accountId, applicationId, procedureName, 0);
+      procedureId.setType(EntityType.QUERY);
+      Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
+                               "Procedure %s is already running", procedureName);
+      try {
+//        appFabricServer.start(token, new FlowDescriptor(procedureId, arguments));
+      } catch (Exception e) {
+        runningProcessses.remove(procedureName);
+        throw Throwables.propagate(e);
+      }
+
+      return new ProcedureManager() {
+        @Override
+        public void stop() {
+          try {
+            if (runningProcessses.remove(procedureName, procedureId)) {
+              appFabricServer.stop(token, procedureId);
+            }
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
+        @Override
+        public ProcedureClient getClient() {
+          return procedureClientFactory.create(accountId, applicationId, procedureName);
         }
       };
     } catch (Exception e) {

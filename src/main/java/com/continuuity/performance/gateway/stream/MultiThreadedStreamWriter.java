@@ -1,4 +1,4 @@
-package com.continuuity.performance.application;
+package com.continuuity.performance.gateway.stream;
 
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
@@ -6,7 +6,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.passport.PassportConstants;
-import com.continuuity.performance.gateway.stream.StreamEventDispatcher;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.test.app.StreamWriter;
