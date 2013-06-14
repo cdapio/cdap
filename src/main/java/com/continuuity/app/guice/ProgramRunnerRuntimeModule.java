@@ -4,8 +4,8 @@
 package com.continuuity.app.guice;
 
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.internal.Preconditions;
 import com.continuuity.weave.zookeeper.ZKClient;
+import com.google.common.base.Preconditions;
 import com.google.inject.Module;
 
 /**
