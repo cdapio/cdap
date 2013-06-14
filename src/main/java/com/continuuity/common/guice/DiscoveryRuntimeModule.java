@@ -4,12 +4,12 @@
 package com.continuuity.common.guice;
 
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.internal.Preconditions;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.continuuity.weave.discovery.ZKDiscoveryService;
 import com.continuuity.weave.zookeeper.ZKClient;
+import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
