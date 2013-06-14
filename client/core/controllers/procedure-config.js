@@ -1,5 +1,5 @@
 /*
- * Flow Config Controller
+ * Procedure Config Controller
  */
 
 define(['core/controllers/runnable-config'], function (RunnableConfigController) {
@@ -13,13 +13,13 @@ define(['core/controllers/runnable-config'], function (RunnableConfigController)
 		 * RunnableConfigController uses this value to do its work. Take a look there.
 		 *
 		 */
-		needs: ['FlowStatus']
+		needs: ['ProcedureStatus']
 
 	});
 
 	Controller.reopenClass({
 
-		type: 'FlowStatusConfig',
+		type: 'ProcedureStatusConfig',
 		kind: 'Controller'
 
 	});

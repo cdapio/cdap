@@ -111,8 +111,6 @@ define([], function () {
 				}]
 			}, function (error, response) {
 
-				console.log("get application response is ", JSON.stringify(response));
-
 				var model = C.App.create(response.params);
 
 				promise.resolve(model);

@@ -132,10 +132,17 @@ define (['core/application'], function (Application) {
 		this.resource('Procedures', { path: '/procedures' });
 		this.resource('Procedure', { path: '/procedures/:procedure_id' }, function () {
 
-			this.route('Status', { path: '/' });
+			this.resource('ProcedureStatus', { path: '/' }, function () {
+
+				// These live in FlowStatus so they can visually overlay the Procedure.
+				this.route('Config', { path: '/config' });
+			});
+
 			this.route('Log', { path: '/log' });
 
 		});
+
+		this.route("PageNotFound", { path: "*:"});
 
 	});
 
@@ -146,7 +153,8 @@ define (['core/application'], function (Application) {
 		/*
 		 * Override to load the Controller once the Route has been activated.
 		 */
-		setupController: function(controller) {
+		setupController: function(controller, model) {
+			controller.set('model', model);
 			controller.load();
 		},
 		/*
@@ -196,12 +204,16 @@ define (['core/application'], function (Application) {
 			}
 		}),
 
+		/*
+		 * This will use the FlowLogController with the RunnableLog template.
+		 * FlowLogController extends RunnableLogController.
+		 */
 		FlowLogRoute: basicRouter.extend({
 			model: function () {
 				return this.modelFor('Flow');
 			},
 			renderTemplate: function () {
-				this.render('RunnableLog');
+				this.render('Runnable/Log');
 			}
 		}),
 
@@ -226,7 +238,7 @@ define (['core/application'], function (Application) {
 		 */
 		FlowStatusConfigRoute: basicRouter.extend({
 			renderTemplate: function () {
-				this.render('RunnableConfig');
+				this.render('Runnable/Config');
 			}
 		}),
 
@@ -241,8 +253,23 @@ define (['core/application'], function (Application) {
 		ProcedureLogRoute: basicRouter.extend({
 			model: function () {
 				return this.modelFor('Procedure');
+			},
+			renderTemplate: function () {
+				this.render('Runnable/Log');
 			}
-		})
+		}),
+
+		/*
+		 * This will use the FlowStatusConfigController with the RunnableConfig template.
+		 * FlowStatusConfigController extends RunnableConfigController.
+		 */
+		ProcedureStatusConfigRoute: basicRouter.extend({
+			renderTemplate: function () {
+				this.render('Runnable/Config');
+			}
+		}),
+
+		PageNotFoundRoute: Ember.Route.extend()
 
 	});
 

@@ -136,6 +136,12 @@ define([], function () {
 			return true;
 
 		}.property('currentState'),
+		startDisabled: function () {
+			if (this.currentState === 'RUNNING') {
+				return true;
+			}
+			return false;
+		}.property('currentState'),
 		startPauseDisabled: function () {
 
 			if (this.currentState !== 'STOPPED' &&
