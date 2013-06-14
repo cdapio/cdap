@@ -1728,3 +1728,96 @@ only screen and (min-device-pixel-ratio: 1.5) {
 		font-family: 'HelveticaNeueW01-Thin';
 	}
 }
+
+/**
+ * Batch job CSS
+ */
+.batch-icon {
+	width: 120px;
+	height: 120px;
+	display: inline-table;
+	margin: 30px;
+	float: left;
+}
+
+#batchviz {
+	width: 800px;
+	margin: 0px auto;
+	margin-top: 40px;
+}
+
+.batch-start {
+	background: url('../img/stream-shape.png') no-repeat center;
+	background-size: 100%;
+}
+
+.batch-map {
+	border: 4px solid #70CDEB;
+	background: #40AECF;
+	border-radius: 100%;
+	color: #fff;
+}
+
+.batch-reduce {
+	background: #fff;
+	border: 1px solid #ccc;
+	color: #40AECF;
+	border-radius: 100%;
+}
+
+.batch-end {
+	border: 3px solid #ccc;
+	border-radius: 5px;
+}
+
+.info-window {
+	color: #fff;
+	text-transform: uppercase;
+	text-align: center;
+	font-size: 12px;
+	line-height: 14px;
+	font-family: "HelveticaNeueW01-57Cn";
+}
+
+.stream-icon {
+	background: url('../img/flowlet-types.png');
+	background-position: 0px 32px;
+	width: 32px;
+	height: 32px;
+}
+
+.mapper-icon{
+  background: url('../img/flowlet-types.png');
+	background-position: 0px 64px;
+	width: 32px;
+	height: 32px;
+	margin: 0px auto;
+}
+
+.end-icon {
+	background: url('../img/flowlet-types.png');
+	background-position: 0px 96px;
+	width: 32px;
+	height: 32px;
+	margin: 0px auto;	
+}
+
+.batch-start>.info-window {
+	text-align: left;
+	margin-left: 25px;
+	margin-top: 30px;
+}
+
+.batch-map>.info-window {
+	margin-top: 20px;
+}
+
+.batch-reduce>.info-window {
+	margin-top: 20px;
+	color: #40AECF;
+}
+
+.batch-end>.info-window {
+	margin-top: 20px;
+	color: #40AECF;
+}

@@ -258,6 +258,90 @@
     </div>
   </script>
 
+  <script type="text/x-handlebars" data-template-name="Batch">
+
+    <div id="title">
+      {{view C.Embed.TimeSelector}}
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo Batch.Status model}}Status{{/linkTo}}</li>
+        <li>{{#linkTo Batch.Status model}}Metrics{{/linkTo}}</li>
+        <li>{{#linkTo Batch.Log model}}Log{{/linkTo}}</li>
+      </ul>
+      <h1>{{model.meta.name}} <span>Batch Job</span></h1>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Batch/Status">
+    <div id="info">
+      <div class="info-box" style="float: right; border: 0;">
+        <div id="action-buttons" class="btn-group pull-right">
+
+          <button class="btn dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a {{action "delete"}} {{bindAttr state="model.currentState"}} {{bindAttr batchId="model.id"}} {{bindAttr applicationId="model.application"}}>Delete This Batch</a></li>
+          </ul>
+
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.applicationId"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+
+        </div>
+
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+
+      </div>
+      <div class="info-box"><span class="sparkline-box-title">Alerts</span></div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Processed Count" metrics="processed.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Busyness" metrics="busyness" unit="percent"}}</div>
+      <div class="info-box"><span class="sparkline-box-title">Start</span>
+        <div>{{model.getStartStr}}</div>
+      </div>
+    </div>
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="flowviz-container">
+          <div id="batchviz" class="chart">
+            <div id="batch-start" class="batch-start batch-icon">
+              <div class="info-window">
+                <div class="stream-icon"></div>
+                {{model.metricData.bytesIn}}Kb
+                <br />
+                {{model.metricData.partitions}}p
+              </div>
+            </div>
+            <div id="batch-map" class="batch-icon batch-map">
+              <div class="info-window">
+                <div class="mapper-icon"></div>
+                <div>{{model.metricData.mapperCompletion}}%</div>
+                <div>{{model.metricData.mapperRecordsIn}}Kr</div>
+                <div>{{model.metricData.mapperRecordsOut}}r</div>
+              </div>
+            </div>
+            <div id="batch-reduce" class="batch-icon batch-reduce">
+              <div class="info-window">
+                <div class="mapper-icon"></div>
+                <div>{{model.metricData.reducerCompletion}}%</div>
+                <div>{{model.metricData.reducerRecordsIn}}Kr</div>
+                <div>{{model.metricData.reducerRecordsOut}}r</div>
+              </div>
+            </div>
+            <div id="batch-end" class="batch-icon batch-end">
+              <div class="info-window">
+                <div class="end-icon"></div>
+                <div>{{model.metricData.bytesOut}}b</div>
+                <div>{{model.metricData.operations}}ops</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </script>  
+
   <script type="text/x-handlebars" data-template-name="Flow">
 
     <div id="title">
@@ -800,6 +884,35 @@
         <div class="object-list-empty-content">
           <div>No Flows.</div>
           <span>Add Flows by uploading an Application JAR.</span>
+        </div>
+      </div>
+    {{/if}}
+    {{#if elements.Batch.length}}
+      <table class="table">
+          <thead>
+            <th style="padding-left: 14px;">&nbsp;</th>
+            <th style="width: 100px;text-align: center;">Instances</th>
+            <th style="width: 262px;">Processing Rate</th>
+            <th style="width: 262px;">Busyness</th>
+          </thead>
+          <tbody>
+          {{#each elements.Batch.content }}
+            <tr>
+              <td class="app-list-name">
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
+              </td>
+              <td class="app-list-count">{{instances}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="processed.count"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="busyness" unit="percent"}}</td>
+            </tr>
+          {{/each}}
+          </tbody>
+        </table>
+    {{else}}
+      <div class="object-list-empty">
+        <div class="object-list-empty-content">
+          <div>No Batch jobs.</div>
+          <span>Add Batch jobs by uploading an Application JAR.</span>
         </div>
       </div>
     {{/if}}

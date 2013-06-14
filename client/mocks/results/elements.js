@@ -9,12 +9,12 @@ define([], function () {
 			"status": 200,
 			"result": [
 				{
-					"id": "ABC",
+					"id": "appid1",
 					"type": "App",
 					"name": "My app"
 				},
 				{
-					"id": "DEF",
+					"id": "appid2",
 					"type": "App",
 					"name": "My app2"
 				}
@@ -24,13 +24,13 @@ define([], function () {
 			"status": 200,
 			"result": [
 				{
-					"id": "ABC",
+					"id": "streamid1",
 					"type": "Stream",
 					"name": "My Stream",
 					"storage": 0
 				},
 				{
-					"id": "DEF",
+					"id": "streamid2",
 					"type": "Stream",
 					"name": "My Stream2",
 					"storage": 0
@@ -41,9 +41,23 @@ define([], function () {
 			"status": 200,
 			"result": [
 				{
-					"id": "ABC",
+					"id": "flowid1",
 					"type": "Flow",
-					"name": "My Flow"
+					"name": "My Flow",
+					"application": "SampleApplication",
+					"applicationId": "SampleApplicationId"
+				}
+			]
+		},
+		"Batch": {
+			"status": 200,
+			"result": [
+				{
+					"id": "batchid1",
+					"type": "Batch",
+					"name": "My Batch",
+					"application": "SampleApplication",
+					"applicationId": "SampleApplicationId"
 				}
 			]
 		},
@@ -51,7 +65,7 @@ define([], function () {
 			"status": 200,
 			"result": [
 				{
-					"id": "ABC",
+					"id": "jobid1",
 					"type": "Job",
 					"name": "My Job"
 				}
@@ -61,7 +75,7 @@ define([], function () {
 			"status": 200,
 			"result": [
 				{
-					"id": "ABC",
+					"id": "datasetid1",
 					"type": "Dataset",
 					"name": "My Dataset",
 					"storage": 0
@@ -72,9 +86,11 @@ define([], function () {
 			"status": 200,
 			"result": [
 				{
-					"id": "ABC",
+					"id": "procedureid1",
 					"type": "Procedure",
-					"name": "My Procedure"
+					"name": "My Procedure",
+					"application": "SampleApplication",
+					"applicationId": "SampleApplicationId"
 				}
 			]
 		}

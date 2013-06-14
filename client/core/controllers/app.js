@@ -15,9 +15,10 @@ define([], function () {
 			 * This is decremented to know when loading is complete.
 			 * There are 4 things to load. See __loaded below.
 			 */
-			this.__remaining = 3;
+			this.__remaining = 4;
 
 			this.set('elements.Flow', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Batch', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
@@ -41,6 +42,16 @@ define([], function () {
 			this.HTTP.getElements('Flow', function (objects) {
 
 				self.get('elements.Flow').pushObjects(objects);
+				self.__loaded();
+
+			}, model.id);
+
+			/**
+			 * Load Batches
+			 */
+			this.HTTP.getElements('Batch', function (objects) {
+
+				self.get('elements.Batch').pushObjects(objects);
 				self.__loaded();
 
 			}, model.id);
@@ -97,7 +108,7 @@ define([], function () {
 
 		updateStats: function () {
 
-			var self = this, types = ['Flow', 'Stream', 'Procedure', 'Dataset'];
+			var self = this, types = ['Flow', 'Batch', 'Stream', 'Procedure', 'Dataset'];
 
 			if (this.get('model')) {
 
@@ -204,6 +215,90 @@ define([], function () {
 							}
 
 						}, flows[toSend]);
+					}
+				}
+
+				if (!requested) {
+					done();
+				}
+
+			}
+
+		},
+
+		startAllBatches: function (done) {
+
+			var batches = this.get('elements.Batch').content;
+			var toSend = batches.length;
+			var toReceive = toSend;
+
+			if (!toSend) {
+
+				done();
+
+			} else {
+
+				var requested = false;
+
+				while(toSend--) {
+
+					batches[toSend].set('currentState', 'STARTING');
+
+					C.socket.request('manager', {
+						method: 'start',
+						params: [batches[toSend].app, batches[toSend].name, -1, 'BATCH']
+					}, function (error, response, batch) {
+
+						batch.set('currentState', 'RUNNING');
+
+						if (!--toReceive) {
+
+							done();
+
+						}
+
+					}, batches[toSend]);
+				}
+			}
+
+		},
+
+		stopAllBatches: function (done) {
+
+			var batches = this.get('elements.Batch').content;
+			var toSend = batches.length;
+			var toReceive = toSend;
+
+			if (!toSend) {
+
+				done();
+
+			} else {
+
+				var requested = false;
+
+				while(toSend--) {
+
+					if (batches[toSend].get('currentState') !== 'STOPPED') {
+
+						requested = true;
+
+						batches[toSend].set('currentState', 'STOPPING');
+
+						C.socket.request('manager', {
+							method: 'stop',
+							params: [batches[toSend].app, batches[toSend].name, -1, 'BATCH']
+						}, function (error, response, batch) {
+
+							batch.set('currentState', 'STOPPED');
+
+							if (!--toReceive) {
+
+								done();
+
+							}
+
+						}, batches[toSend]);
 					}
 				}
 

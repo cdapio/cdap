@@ -136,6 +136,11 @@ define (['core/application'], function (Application) {
 
 		});
 
+		this.resource('Batch', {path: '/batches/:batch_id'}, function() {
+			this.route('Status', { path: '/'});
+			this.route('Log', { path: '/log'});
+		});
+
 	});
 
 	/*
@@ -216,6 +221,12 @@ define (['core/application'], function (Application) {
 
 		FlowStatusStreamRoute: basicRouter.extend(),
 
+		BatchStatusRoute: basicRouter.extend({
+			model: function() {
+				return this.modelFor('Batch');
+			}
+		}),
+
 		DatasetRoute: basicRouter.extend(),
 
 		ProcedureStatusRoute: basicRouter.extend({
@@ -236,13 +247,15 @@ define (['core/application'], function (Application) {
 	 * Pages for lists of Elements use the List controller.
 	 * @param {string} type ['App', 'Stream', 'Flow', ...]
 	 */
-	function getListHandler(type) {
+	function getListHandler(types) {
 		return {
 			/*
 			 * Override to load the Controller once the Route has been activated.
 			 */
 			setupController: function  () {
-				this.controllerFor('List').load(type);
+				for (var i=0, len=types.length; i<len; i++) {
+					this.controllerFor('List').load(types[i]);
+				}
 			},
 			/*
 			 * Override the templates to be rendered and where.
@@ -257,10 +270,12 @@ define (['core/application'], function (Application) {
 				/*
 				 * Render a list type partial into the List Page template
 				 */
-				this.render('_' + type.toLowerCase() + 's-list', {
-					controller: 'List',
-					into: 'list-page'
-				});
+				for (var i=0, len=types.length; i<len; i++) {
+					this.render('_' + types[i].toLowerCase() + 's-list', {
+						controller: 'List',
+						into: 'list-page'
+					});
+				}
 			},
 			/*
 			 * Override to unload the Controller once the Route has been deactivated.
@@ -273,13 +288,15 @@ define (['core/application'], function (Application) {
 
 	$.extend(C, {
 
-		StreamsRoute: Em.Route.extend(getListHandler('Stream')),
+		StreamsRoute: Em.Route.extend(getListHandler(['Stream'])),
 
-		FlowsRoute: Em.Route.extend(getListHandler('Flow')),
+		FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Batch'])),
 
-		DatasetsRoute: Em.Route.extend(getListHandler('Dataset')),
+		BatchesRoute: Em.Route.extend(getListHandler(['Batch'])),
 
-		ProceduresRoute: Em.Route.extend(getListHandler('Procedure'))
+		DatasetsRoute: Em.Route.extend(getListHandler(['Dataset'])),
+
+		ProceduresRoute: Em.Route.extend(getListHandler(['Procedure']))
 
 	});
 

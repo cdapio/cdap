@@ -100,7 +100,7 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/ti
 
 		"getElements": function (type, callback, appId, arg) {
 
-			var objects = Elements[type].result;
+			var objects = $.extend(true, [], Elements[type].result);
 			var params = [type, callback];
 
 			var i = objects.length, type = params[0];
