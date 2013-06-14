@@ -541,7 +541,8 @@ define([], function() {
     "batchSample": {
       "meta": {
         "name": "BatchJobName1",
-        "app": "SampleApplication1"
+        "app": "SampleApplication1",
+        "startTime": "1371248384775"
       },
     }
   };

@@ -2,7 +2,7 @@
  * Batch Controller
  */
 
-define([], function () {
+define(['../../helpers/plumber'], function (Plumber) {
 
   var Controller = Em.Controller.extend({
     typesBinding: 'model.types',
@@ -39,15 +39,9 @@ define([], function () {
     },
 
     connectEntities: function() {
-      var e0 = jsPlumb.addEndpoint("batch-start"),
-      e1 = jsPlumb.addEndpoint("batch-map"),
-      e2 = jsPlumb.addEndpoint("batch-reduce"),
-      e4 = jsPlumb.addEndpoint("batch-map"),
-      e5 = jsPlumb.addEndpoint("batch-reduce"),
-      e3 = jsPlumb.addEndpoint("batch-end");
-      jsPlumb.connect({ source:e0, target:e1 });
-      jsPlumb.connect({ source:e4, target:e5 });
-      jsPlumb.connect({ source:e2, target:e3 });
+      Plumber.connect("batch-start", "batch-map");
+      Plumber.connect("batch-map", "batch-reduce");
+      Plumber.connect("batch-reduce", "batch-end");
     },
 
     unload: function () {

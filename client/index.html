@@ -297,14 +297,15 @@
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Processed Count" metrics="processed.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Busyness" metrics="busyness" unit="percent"}}</div>
       <div class="info-box"><span class="sparkline-box-title">Start</span>
-        <div>{{model.getStartStr}}</div>
+        <div class="emphasized-letters gf3-font">{{model.getStartHours}}</div>
+        <div class="gf3-font">{{model.getStartDate}}</div>
       </div>
     </div>
     <div id="panels">
       <div id="informer"></div>
       <div class="panel">
         <div id="flowviz-container">
-          <div id="batchviz" class="chart">
+          <div id="batchviz" class="clearfix chart">
             <div id="batch-start" class="batch-start batch-icon">
               <div class="info-window">
                 <div class="stream-icon"></div>
@@ -316,6 +317,7 @@
             <div id="batch-map" class="batch-icon batch-map">
               <div class="info-window">
                 <div class="mapper-icon"></div>
+                <br />
                 <div>{{model.metricData.mapperCompletion}}%</div>
                 <div>{{model.metricData.mapperRecordsIn}}Kr</div>
                 <div>{{model.metricData.mapperRecordsOut}}r</div>
@@ -323,7 +325,8 @@
             </div>
             <div id="batch-reduce" class="batch-icon batch-reduce">
               <div class="info-window">
-                <div class="mapper-icon"></div>
+                <div class="reducer-icon"></div>
+                <br />
                 <div>{{model.metricData.reducerCompletion}}%</div>
                 <div>{{model.metricData.reducerRecordsIn}}Kr</div>
                 <div>{{model.metricData.reducerRecordsOut}}r</div>
@@ -332,6 +335,7 @@
             <div id="batch-end" class="batch-icon batch-end">
               <div class="info-window">
                 <div class="end-icon"></div>
+                <br />
                 <div>{{model.metricData.bytesOut}}b</div>
                 <div>{{model.metricData.operations}}ops</div>
               </div>

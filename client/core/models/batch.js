@@ -2,7 +2,7 @@
  * Batch Model
  */
 
-define([], function () {
+define(['lib/date'], function (Datejs) {
 
   var Model = Em.Object.extend({
 
@@ -15,10 +15,18 @@ define([], function () {
     instances: 0,
     type: 'Batch',
     plural: 'Batches',
-    startTime: new Date(),
-    getStartStr: function() {
-      return this.startTime.toTimeString();
+    startTime: null,
+    getStartDate: function() {
+      var time = parseInt(this.get('startTime'));
+      return new Date(time).toString('MMM d, yyyy');
+
     }.property('startTime'),
+    getStartHours: function() {
+      var time = parseInt(this.get('startTime'));
+      return new Date(time).toString('hh:mm tt');
+
+    }.property('startTime'),
+    
     init: function() {
       this._super();
 
@@ -30,6 +38,7 @@ define([], function () {
       this.set('app', this.get('applicationId') || this.get('application'));
       this.set('id', this.get('app') + ':' +
         (this.get('flowId') || this.get('id') || this.get('meta').name));
+      this.set('startTime', this.get('meta').startTime);
 
     },
     addMetricName: function (name) {

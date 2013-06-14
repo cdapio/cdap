@@ -226,6 +226,7 @@ define([], function () {
 
 		},
 		__connect: function (from, to) {
+
 			var self = this;
 
 			Ember.run.next(this, function () {
@@ -263,6 +264,7 @@ define([], function () {
 						connector = [ "Flowchart", { gap: 0, stub: 1 } ];
 					}
 				}
+				console.log(connector);
 
 				var color = '#CCC';
 				self.plumber.connect({
@@ -283,7 +285,6 @@ define([], function () {
 		kind: 'Embeddable'
 
 	});
-
 	return Embeddable;
 
 });

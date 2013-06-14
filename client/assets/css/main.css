@@ -63,6 +63,11 @@ body {
 	text-rendering: optimizeLegibility;
 }
 
+.gf3-font {
+	font-family: "HelveticaNeueW01-57Cn";
+	color: #555;
+}
+
 .table th, .table td {
 	padding: 14px;
 	border-color: #eaeaea;
@@ -1747,26 +1752,24 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .batch-start {
-	background: url('../img/stream-shape.png') no-repeat center;
+	background: url('../img/batchstart.png') no-repeat center;
 	background-size: 100%;
 }
 
 .batch-map {
-	border: 4px solid #70CDEB;
-	background: #40AECF;
-	border-radius: 100%;
+	background: url('../img/batchmap.png') no-repeat center;
+	background-size: 100%;
 	color: #fff;
 }
 
 .batch-reduce {
-	background: #fff;
-	border: 1px solid #ccc;
+	background: url('../img/batchreduce.png') no-repeat center;
+	background-size: 100%;
 	color: #40AECF;
-	border-radius: 100%;
 }
 
 .batch-end {
-	border: 3px solid #ccc;
+	border: 3px solid #5bafce;
 	border-radius: 5px;
 }
 
@@ -1780,23 +1783,27 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .stream-icon {
-	background: url('../img/flowlet-types.png');
-	background-position: 0px 32px;
+	background: url('../img/streamer-icon.png') no-repeat;
 	width: 32px;
 	height: 32px;
 }
 
 .mapper-icon{
-  background: url('../img/flowlet-types.png');
-	background-position: 0px 64px;
+  background: url('../img/mapper-icon.png') no-repeat;
+	width: 32px;
+	height: 32px;
+	margin: 0px auto;
+}
+
+.reducer-icon{
+  background: url('../img/reducer-icon.png') no-repeat;
 	width: 32px;
 	height: 32px;
 	margin: 0px auto;
 }
 
 .end-icon {
-	background: url('../img/flowlet-types.png');
-	background-position: 0px 96px;
+	background: url('../img/end-icon.png') no-repeat;
 	width: 32px;
 	height: 32px;
 	margin: 0px auto;	
@@ -1820,4 +1827,9 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .batch-end>.info-window {
 	margin-top: 20px;
 	color: #40AECF;
+}
+
+.emphasized-letters {
+	font-size: 26px;
+	line-height: 36px;
 }
