@@ -9,7 +9,7 @@ import com.continuuity.passport.PassportConstants;
 import com.continuuity.performance.gateway.stream.StreamEventDispatcher;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.continuuity.test.StreamWriter;
+import com.continuuity.test.app.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
