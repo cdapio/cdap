@@ -34,8 +34,8 @@ import java.util.Set;
  * Client for interacting with local app-fabric service to perform the following operations:
  * a) Deploy locally
  * b) Start/Stop/Status of local service
- * c) promote to cloud
- * d) change number of instances of flowlet
+ * c) Promote to cloud
+ * d) Change the number of flowlet instances
  * <p/>
  * Usage:
  * ReactorClient client = new ReactorClient();
