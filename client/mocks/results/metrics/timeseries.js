@@ -17,7 +17,7 @@ define([], function () {
 		"timeSeriesSample": [
       {
           "timestamp": 0,
-          "value": 50
+          "value": 100
       },
       {
           "timestamp": 0,
@@ -169,7 +169,15 @@ define([], function () {
       },
       {
           "timestamp": 0,
-          "value": 25
+          "value": 50
+      },
+      {
+          "timestamp": 0,
+          "value": 100
+      },
+      {
+          "timestamp": 0,
+          "value": 100
       }
 		]
 	};

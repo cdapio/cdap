@@ -47,6 +47,9 @@ define([], function () {
 					self.HTTP.getElements('Flow', function (obj, arg) {
 						objects[arg].set('counts.Flow', obj.length);
 					}, objects[i].id, i);
+					self.HTTP.getElements('Batch', function (obj, arg) {
+						objects[arg].set('counts.Batch', obj.length);
+					}, objects[i].id, i);
 					self.HTTP.getElements('Dataset', function (obj, arg) {
 						objects[arg].set('counts.Dataset', obj.length);
 					}, objects[i].id, i);
@@ -79,6 +82,16 @@ define([], function () {
 			this.HTTP.getElements('Flow', function (objects) {
 
 				self.get('counts').set('Flow', objects.length);
+				self.__loaded();
+
+			});
+
+			/*
+			 * Load all Batches to calculate counts
+			 */
+			this.HTTP.getElements('Batch', function (objects) {
+
+				self.get('counts').set('Batch', objects.length);
 				self.__loaded();
 
 			});

@@ -22,6 +22,7 @@ define([], function () {
 			this.set('counts', {
 				Stream: 0,
 				Flow: 0,
+				Batch: 0,
 				Dataset: 0,
 				Query: 0
 			});
@@ -110,8 +111,6 @@ define([], function () {
 					id: model_id
 				}]
 			}, function (error, response) {
-
-				console.log("get application response is ", JSON.stringify(response));
 
 				var model = C.App.create(response.params);
 

@@ -8,7 +8,7 @@ define([], function () {
 
 		href: function () {
 			return '#/flows/' + this.get('id');
-		}.property(),
+		}.property('id'),
 		metricData: null,
 		metricNames: null,
 		__loadingData: false,

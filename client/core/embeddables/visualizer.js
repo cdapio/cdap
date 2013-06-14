@@ -252,6 +252,7 @@ define([], function () {
 
 		},
 		__connect: function (from, to) {
+
 			var self = this;
 
 			Ember.run.next(this, function () {
@@ -290,6 +291,7 @@ define([], function () {
 					}
 				}
 
+
 				var color = '#CCC';
 				self.plumber.connect({
 					paintStyle: { strokeStyle:color, lineWidth:4 },
@@ -309,7 +311,6 @@ define([], function () {
 		kind: 'Embeddable'
 
 	});
-
 	return Embeddable;
 
 });

@@ -82,7 +82,6 @@ WebAppServer.prototype.setVersion = function() {
 WebAppServer.prototype.getLogger = function(opt_appenderType, opt_loggerName) {
   var appenderType = opt_appenderType || 'console';
   var loggerName = opt_loggerName || 'Developer UI';
-  console.log(loggerName);
   log4js.configure({
     appenders: [
       {type: appenderType}

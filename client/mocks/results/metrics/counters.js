@@ -21,7 +21,19 @@ define([], function () {
 				"timestamp": 0,
 				"value": 234
 			}
-		]
+		],
+		"batchMetricCounters": {
+      "bytesIn": 37.34,
+      "partitions": 117,
+      "mapperCompletion": 74.3,
+      "mapperRecordsIn": 37.6,
+      "mapperRecordsOut": 846,
+      "reducerCompletion": 0,
+      "reducerRecordsIn": 3.6,
+      "reducerRecordsOut": 846,
+      "bytesOut": 0,
+      "operations": 0
+    }
 	};
 
 });

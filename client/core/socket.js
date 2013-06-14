@@ -135,7 +135,6 @@ define([], function () {
 
 		},
 		request: function (service, request, response, params) {
-
 			if (!service) {
 				return;
 			}

@@ -63,6 +63,11 @@ body {
 	text-rendering: optimizeLegibility;
 }
 
+.gf3-font {
+	font-family: "HelveticaNeueW01-57Cn";
+	color: #555;
+}
+
 .table th, .table td {
 	padding: 14px;
 	border-color: #eaeaea;
@@ -1727,4 +1732,104 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	.popup-description {
 		font-family: 'HelveticaNeueW01-Thin';
 	}
+}
+
+/**
+ * Batch job CSS
+ */
+.batch-icon {
+	width: 120px;
+	height: 120px;
+	display: inline-table;
+	margin: 30px;
+	float: left;
+}
+
+#batchviz {
+	width: 800px;
+	margin: 0px auto;
+	margin-top: 40px;
+}
+
+.batch-start {
+	background: url('../img/batchstart.png') no-repeat center;
+	background-size: 100%;
+}
+
+.batch-map {
+	background: url('../img/batchmap.png') no-repeat center;
+	background-size: 100%;
+	color: #fff;
+}
+
+.batch-reduce {
+	background: url('../img/batchreduce.png') no-repeat center;
+	background-size: 100%;
+	color: #40AECF;
+}
+
+.batch-end {
+	border: 3px solid #5bafce;
+	border-radius: 5px;
+}
+
+.info-window {
+	color: #fff;
+	text-transform: uppercase;
+	text-align: center;
+	font-size: 12px;
+	line-height: 14px;
+	font-family: "HelveticaNeueW01-57Cn";
+}
+
+.stream-icon {
+	background: url('../img/streamer-icon.png') no-repeat;
+	width: 32px;
+	height: 32px;
+}
+
+.mapper-icon{
+  background: url('../img/mapper-icon.png') no-repeat;
+	width: 32px;
+	height: 32px;
+	margin: 0px auto;
+}
+
+.reducer-icon{
+  background: url('../img/reducer-icon.png') no-repeat;
+	width: 32px;
+	height: 32px;
+	margin: 0px auto;
+}
+
+.end-icon {
+	background: url('../img/end-icon.png') no-repeat;
+	width: 32px;
+	height: 32px;
+	margin: 0px auto;	
+}
+
+.batch-start>.info-window {
+	text-align: left;
+	margin-left: 25px;
+	margin-top: 30px;
+}
+
+.batch-map>.info-window {
+	margin-top: 20px;
+}
+
+.batch-reduce>.info-window {
+	margin-top: 20px;
+	color: #40AECF;
+}
+
+.batch-end>.info-window {
+	margin-top: 20px;
+	color: #40AECF;
+}
+
+.emphasized-letters {
+	font-size: 26px;
+	line-height: 36px;
 }
