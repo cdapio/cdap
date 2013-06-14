@@ -7,6 +7,7 @@ import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.EntityType;
+import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowStatus;
 import com.continuuity.archive.JarClassLoader;
@@ -18,14 +19,14 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.internal.test.ProcedureClientFactory;
-import com.continuuity.test.ApplicationManager;
-import com.continuuity.test.FlowManager;
-import com.continuuity.test.MapReduceManager;
-import com.continuuity.test.ProcedureClient;
-import com.continuuity.test.ProcedureManager;
-import com.continuuity.test.RuntimeStats;
-import com.continuuity.test.StreamWriter;
+import com.continuuity.test.app.ApplicationManager;
+import com.continuuity.test.app.FlowManager;
+import com.continuuity.test.app.MapReduceManager;
+import com.continuuity.test.app.ProcedureClient;
+import com.continuuity.test.app.ProcedureClientFactory;
+import com.continuuity.test.app.ProcedureManager;
+import com.continuuity.test.app.RuntimeStats;
+import com.continuuity.test.app.StreamWriter;
 import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -103,7 +104,7 @@ public class DefaultBenchmarkManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-//        appFabricServer.start(token, new FlowDescriptor(flowId, arguments));
+        appFabricServer.start(token, new FlowDescriptor(flowId, arguments));
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
