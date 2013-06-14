@@ -64,7 +64,6 @@ dependencies {
   compile libraries.hadoop_annotations
   compile libraries.hadoop_auth
   compile libraries.hadoop_common
-  compile libraries.hadoop_yarn
   compile libraries.hadoop_yarn_api
   compile libraries.hadoop_yarn_client
   compile libraries.hadoop_yarn_common

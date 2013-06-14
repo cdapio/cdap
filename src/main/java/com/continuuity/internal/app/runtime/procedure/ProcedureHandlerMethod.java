@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.annotation.Handle;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
@@ -9,14 +8,14 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.RunId;
+import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.data.dataset.DataSetContext;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.io.InstantiatorFactory;
+import com.continuuity.weave.api.RunId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -44,8 +43,8 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final Map<String, HandlerMethod> handlers;
   private final BasicProcedureContext context;
 
-  ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
-                                DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
+  ProcedureHandlerMethod(Program program, RunId runId, int instanceId, ProgramOptions options,
+                         DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
 
     DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
@@ -53,9 +52,11 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
     context = new BasicProcedureContext(program, runId, instanceId,
                                         DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
+                                        options.getUserArguments(),
                                         procedureSpec);
 
-    TypeToken<? extends Procedure> procedureType = (TypeToken<? extends Procedure>)TypeToken.of(program.getMainClass());
+    TypeToken<? extends Procedure> procedureType
+      = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
     procedure = new InstantiatorFactory(false).get(procedureType).create();
     context.injectFields(procedure);
     handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);

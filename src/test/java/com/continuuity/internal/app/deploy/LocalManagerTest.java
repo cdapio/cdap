@@ -40,8 +40,11 @@ public class LocalManagerTest {
   public void testImproperOrNoManifestFile() throws Exception {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
-//    deployedJar.deleteOnExit();
-    TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+    try {
+      TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+    } finally {
+      deployedJar.delete(true);
+    }
   }
 
   /**

@@ -126,8 +126,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       programOpts =  new SimpleProgramOptions(name,
                                               new BasicArguments(ImmutableMap.of(
                                                 "instanceId", Integer.toString(context.getInstanceId()),
-                                                "instances", cmdLine.getOptionValue(RunnableOptions.INSTANCES),
-                                                "runId", cmdLine.getOptionValue(RunnableOptions.RUN_ID))),
+                                                "instances", Integer.toString(context.getInstanceCount()),
+                                                "runId", context.getApplicationRunId().getId())),
                                               new BasicArguments());
 
       LOG.info("Runnable initialized: " + name);
@@ -162,11 +162,10 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       controller.stop().get();
       LOG.info("Runnable stopped: " + name);
     } catch (Exception e) {
+      LOG.error("Fail to stop. {}", e, e);
       throw Throwables.propagate(e);
     } finally {
-      System.out.println("stopping overlord");
       OverlordMetricsReporter.disable();
-      System.out.println("overlord stopped");
     }
   }
 
@@ -191,10 +190,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   private CommandLine parseArgs(String[] args) {
-    Options opts = new Options()
-      .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
-      .addOption(createOption(RunnableOptions.INSTANCES, "Total number of instances"))
-      .addOption(createOption(RunnableOptions.RUN_ID, "Run id for the running process."));
+    Options opts = new Options().addOption(createOption(RunnableOptions.JAR, "Program jar location"));
 
     try {
       return new PosixParser().parse(opts, args);

@@ -20,7 +20,7 @@ import com.continuuity.test.app.DefaultId;
 import com.continuuity.test.app.TestHelper;
 import com.continuuity.test.app.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -118,7 +118,7 @@ public class DeployRunStopTest {
 
     AuthToken token = new AuthToken("12345");
     FlowIdentifier flowIdentifier = new FlowIdentifier(DefaultId.ACCOUNT.getId(), "GenSinkApp", "GenSinkFlow", 1);
-    server.start(token, new FlowDescriptor(flowIdentifier, Lists.<String>newArrayList()));
+    server.start(token, new FlowDescriptor(flowIdentifier, ImmutableMap.<String, String>of()));
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 

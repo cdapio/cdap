@@ -10,7 +10,7 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedProcedureProgramRunner;
-import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
+import com.continuuity.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.discovery.Discoverable;
@@ -82,8 +82,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
 
     // Bind and expose ProgramRuntimeService
-//    bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class);
-    bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class);
+    bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class);
     expose(ProgramRuntimeService.class);
   }
 

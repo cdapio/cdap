@@ -73,45 +73,49 @@ public class DefaultAppFabricServiceTest {
     Location deployedJar = lf.create(
       JarFinder.getJar(DumbProgrammerApp.class, TestHelper.getManifestWithMainClass(DumbProgrammerApp.class))
     );
-//    deployedJar.deleteOnExit();
 
-    // Call init to get a session identifier - yes, the name needs to be changed.
-    AuthToken token = new AuthToken("12345");
-    ResourceIdentifier id = server.init(token, new ResourceInfo(DefaultId.ACCOUNT.getId(),"",deployedJar.getName(), 123455, 45343));
-
-    // Upload the jar file to remote location.
-    BufferFileInputStream is =
-      new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
     try {
-      while(true) {
-        byte[] toSubmit = is.read();
-        if(toSubmit.length==0) break;
-        server.chunk(token, id, ByteBuffer.wrap(toSubmit));
-        DeploymentStatus status = server.dstatus(token, id);
-        Assert.assertEquals(2, status.getOverall());
+      // Call init to get a session identifier - yes, the name needs to be changed.
+      AuthToken token = new AuthToken("12345");
+      ResourceIdentifier id = server.init(token, new ResourceInfo(DefaultId.ACCOUNT.getId(),"",deployedJar.getName(),
+                                                                  123455, 45343));
+
+      // Upload the jar file to remote location.
+      BufferFileInputStream is =
+        new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
+      try {
+        while(true) {
+          byte[] toSubmit = is.read();
+          if(toSubmit.length==0) break;
+          server.chunk(token, id, ByteBuffer.wrap(toSubmit));
+          DeploymentStatus status = server.dstatus(token, id);
+          Assert.assertEquals(2, status.getOverall());
+        }
+      } finally {
+        is.close();
       }
-    } finally {
-      is.close();
-    }
 
-    // Now start the verification.
-    int status = 0;
-    try {
-      server.deploy(token, id);
-      status = server.dstatus(token, id).getOverall();
-      while(status == 3) {
+      // Now start the verification.
+      int status = 0;
+      try {
+        server.deploy(token, id);
         status = server.dstatus(token, id).getOverall();
-        Thread.sleep(100);
+        while(status == 3) {
+          status = server.dstatus(token, id).getOverall();
+          Thread.sleep(100);
+        }
+      } catch (AppFabricServiceException e) {
+        // What will you do ?
+      } catch (TException e) {
+        // What will you do ?
+      } catch (InterruptedException e) {
+        // What will you do ?
       }
-    } catch (AppFabricServiceException e) {
-      // What will you do ?
-    } catch (TException e) {
-      // What will you do ?
-    } catch (InterruptedException e) {
-      // What will you do ?
+      status = server.dstatus(token, id).getOverall();
+      Assert.assertEquals(4, status); // Deployed successfully.
+    } finally {
+      deployedJar.delete(true);
     }
-    status = server.dstatus(token, id).getOverall();
-    Assert.assertEquals(4, status); // Deployed successfully.
   }
 
   @Test

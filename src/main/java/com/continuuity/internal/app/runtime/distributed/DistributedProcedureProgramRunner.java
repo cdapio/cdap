@@ -9,9 +9,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
@@ -49,8 +47,6 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
     ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getProgramName());
     Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getProgramName());
 
-    RunId runId = RunId.generate();
-
     LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + procedureSpec.getName());
 
     // TODO (ENG-2526): deal with logging
@@ -58,42 +54,11 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
                                                                                hConfFile, cConfFile))
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .withArguments(procedureSpec.getName(),
-                           "--jar", program.getProgramJarLocation().getName(),
-                           "--instances", "1",
-                           "--runId", runId.getId());
+                           "--jar", program.getProgramJarLocation().getName());
 
     final WeaveController controller = preparer.start();
 
-    return new ProcedureProgramController(program, runId, controller);
+    return new ProcedureWeaveProgramController(program.getProgramName(), controller);
   }
 
-  private static final class ProcedureProgramController extends AbstractProgramController {
-
-    private final WeaveController controller;
-
-    protected ProcedureProgramController(Program program, RunId runId, WeaveController controller) {
-      super(program.getProgramName(), runId);
-      this.controller = controller;
-    }
-
-    @Override
-    protected void doSuspend() throws Exception {
-      controller.sendCommand(ProgramCommands.SUSPEND).get();
-    }
-
-    @Override
-    protected void doResume() throws Exception {
-      controller.sendCommand(ProgramCommands.RESUME).get();
-    }
-
-    @Override
-    protected void doStop() throws Exception {
-      controller.stopAndWait();
-    }
-
-    @Override
-    protected void doCommand(String name, Object value) throws Exception {
-      // TODO (ENG-2526)
-    }
-  }
 }
