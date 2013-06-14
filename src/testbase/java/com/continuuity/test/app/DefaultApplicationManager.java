@@ -83,12 +83,17 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public FlowManager startFlow(final String flowName) {
+    return startFlow(flowName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
     try {
       final FlowIdentifier flowId = new FlowIdentifier(accountId, applicationId, flowName, 0);
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-        appFabricServer.start(token, new FlowDescriptor(flowId, ImmutableMap.<String, String>of()));
+        appFabricServer.start(token, new FlowDescriptor(flowId, arguments));
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
@@ -123,6 +128,11 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public MapReduceManager startMapReduce(final String jobName) {
+    return startMapReduce(jobName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public MapReduceManager startMapReduce(final String jobName, Map<String, String> arguments) {
     try {
       final FlowIdentifier jobId = new FlowIdentifier(accountId, applicationId, jobName, 0);
       jobId.setType(EntityType.QUERY);
@@ -135,7 +145,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        appFabricServer.start(token, new FlowDescriptor(jobId, ImmutableMap.<String, String>of()));
+        appFabricServer.start(token, new FlowDescriptor(jobId, arguments));
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -173,13 +183,18 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public ProcedureManager startProcedure(final String procedureName) {
+    return startProcedure(procedureName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
     try {
       final FlowIdentifier procedureId = new FlowIdentifier(accountId, applicationId, procedureName, 0);
       procedureId.setType(EntityType.QUERY);
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        appFabricServer.start(token, new FlowDescriptor(procedureId, ImmutableMap.<String, String>of()));
+        appFabricServer.start(token, new FlowDescriptor(procedureId, arguments));
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);

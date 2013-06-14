@@ -2,9 +2,10 @@ package com.continuuity.test.app;
 
 import com.continuuity.api.data.DataSet;
 
+import java.util.Map;
+
 /**
  * Instance of this class is for managing deployed application.
- *
  */
 public interface ApplicationManager {
 
@@ -16,6 +17,14 @@ public interface ApplicationManager {
   FlowManager startFlow(String flowName);
 
   /**
+   * Starts a flow.
+   * @param flowName Name of the flow to start.
+   * @param arguments Arguments to be passed while starting a flow.
+   * @return A {@link FlowManager} for controlling the started flow.
+   */
+  FlowManager startFlow(String flowName, Map<String, String> arguments);
+
+  /**
    * Starts a mapreduce job.
    * @param jobName Name of the mapreduce job to start.
    * @return A {@link MapReduceManager} for controlling the started mapreduce job.
@@ -23,11 +32,27 @@ public interface ApplicationManager {
   MapReduceManager startMapReduce(String jobName);
 
   /**
+   * Starts a mapreduce job.
+   * @param jobName Name of the mapreduce job to start.
+   * @param arguments Arguments to be passed while starting a mapreduce.
+   * @return A {@link MapReduceManager} for controlling the started mapreduce job.
+   */
+  MapReduceManager startMapReduce(String jobName, Map<String, String> arguments);
+
+  /**
    * Starts a procedure.
    * @param procedureName Name of the procedure to start.
    * @return A {@link ProcedureManager} for controlling the started procedure.
    */
   ProcedureManager startProcedure(String procedureName);
+
+  /**
+   * Starts a procedure.
+   * @param procedureName Name of the procedure to start.
+   * @param arguments Arguments to be passed while starting a procedure.
+   * @return A {@link ProcedureManager} for controlling the started procedure.
+   */
+  ProcedureManager startProcedure(String procedureName, Map<String, String> arguments);
 
   /**
    * Gets a {@link StreamWriter} for writing data to the given stream.
