@@ -135,7 +135,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        appFabricServer.start(token, new FlowDescriptor(jobId, ImmutableList.<String>of()));
+        appFabricServer.start(token, new FlowDescriptor(jobId, ImmutableMap.<String, String>of()));
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -179,7 +179,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        appFabricServer.start(token, new FlowDescriptor(procedureId, ImmutableList.<String>of()));
+        appFabricServer.start(token, new FlowDescriptor(procedureId, ImmutableMap.<String, String>of()));
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
