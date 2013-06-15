@@ -135,7 +135,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   public MapReduceManager startMapReduce(final String jobName, Map<String, String> arguments) {
     try {
       final FlowIdentifier jobId = new FlowIdentifier(accountId, applicationId, jobName, 0);
-      jobId.setType(EntityType.QUERY);
+      jobId.setType(EntityType.MAPREDUCE);
 
       // mapreduce job can stop by itself, so refreshing info about its state
       if (!isRunning(jobId)) {
