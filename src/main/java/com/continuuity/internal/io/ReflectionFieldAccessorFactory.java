@@ -1,6 +1,6 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.Preconditions;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -21,10 +21,10 @@ public final class ReflectionFieldAccessorFactory implements FieldAccessorFactor
       @Override
       public FieldAccessor load(FieldEntry fieldEntry) throws Exception {
         Field field = null;
-        for(TypeToken<?> type : fieldEntry.getType().getTypes().classes()) {
+        for (TypeToken<?> type : fieldEntry.getType().getTypes().classes()) {
           try {
             field = type.getRawType().getDeclaredField(fieldEntry.getFieldName());
-          } catch(NoSuchFieldException e) {
+          } catch (NoSuchFieldException e) {
             // It's ok, keep searching.
             continue;
           }
@@ -59,42 +59,42 @@ public final class ReflectionFieldAccessorFactory implements FieldAccessorFactor
 
           @Override
           public boolean getBoolean(Object object) {
-            return (Boolean)get(object);
+            return (Boolean) get(object);
           }
 
           @Override
           public byte getByte(Object object) {
-            return (Byte)get(object);
+            return (Byte) get(object);
           }
 
           @Override
           public char getChar(Object object) {
-            return (Character)get(object);
+            return (Character) get(object);
           }
 
           @Override
           public short getShort(Object object) {
-            return (Short)get(object);
+            return (Short) get(object);
           }
 
           @Override
           public int getInt(Object object) {
-            return (Integer)get(object);
+            return (Integer) get(object);
           }
 
           @Override
           public long getLong(Object object) {
-            return (Long)get(object);
+            return (Long) get(object);
           }
 
           @Override
           public float getFloat(Object object) {
-            return (Float)get(object);
+            return (Float) get(object);
           }
 
           @Override
           public double getDouble(Object object) {
-            return (Double)get(object);
+            return (Double) get(object);
           }
 
           @Override
