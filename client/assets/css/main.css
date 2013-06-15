@@ -997,6 +997,10 @@ a strong {
 	margin: 2px 0px 0px 8px;
 }
 
+.btn-icon {
+	padding: 0px 8px !important;
+}
+
 #action-buttons .btn {
 	margin-right:0;
 	height: 56px;
@@ -1011,7 +1015,15 @@ a strong {
 	height: 24px;
 	margin: 0 auto;
 	background-image: url(../img/flow-controls.png);
-	background-position: 0px 72px;
+	background-position: 0px -24px;
+}
+#action-buttons .btn-config {
+	background-image: url(../img/flow-controls.png);
+	background-position: 0px -96px;
+	display: block;
+	width: 24px;
+	height: 24px;
+	margin: 0 auto;
 }
 #action-buttons .btn-start {
 	background-image: url(../img/flow-controls.png);
@@ -1023,7 +1035,7 @@ a strong {
 }
 #action-buttons .btn-pause {
 	background-image: url(../img/flow-controls.png);
-	background-position: 0px 48px;
+	background-position: 0px -48px;
 	display: block;
 	width: 24px;
 	height: 24px;
@@ -1429,6 +1441,89 @@ a strong {
 	height: 100px;
 }
 
+.config-modal {
+	top: 60px;
+	padding-top: 16px;
+}
+
+.config-editor {
+	border: 1px solid #eaeaea;
+	padding: 2px;
+	height: 250px;
+	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	padding-bottom: 32px;
+}
+.config-editor-key, .config-editor-value {
+	padding: 4px 0px 0px 4px;
+	cursor: pointer;
+	line-height: 20px;
+	font-size: 1em;
+	border-radius: 2px;
+	border-bottom: 1px solid #f0f0f0;
+}
+.config-editor-key input, .config-editor-value input {
+	display: none;
+}
+.config-editor-key.editing .config-text, .config-editor-value.editing .config-text {
+	display: none;
+}
+.config-editor-key.editing input, .config-editor-value.editing input {
+	display: block;
+	font-size: 16px;
+	padding-left: 7px !important;
+	font-family: sans-serif;
+}
+.config-editor-key {
+	float: left;
+	width: 200px;
+	clear: left;
+	margin-right: 4px;
+}
+.config-editor-key input {
+	width: 186px;
+}
+.config-editor-value {
+	float: left;
+	width: 384px;
+}
+.config-editor-value input {
+	width: 366px;
+}
+.config-editor-remove, .config-editor-add {
+	float: left;
+	width: 28px;
+	height: 28px;
+	line-height: 22px;
+	font-size: 1.5em;
+	border: 1px solid #f0f0f0;
+	color: #ccc;
+	margin: 4px 4px 0px;
+	text-align: center;
+	border-radius: 2px;
+	cursor: pointer;
+}
+.config-editor-add {
+	background-color: #e9f5e9;
+	border-color: #e9f5e9;
+	color: #a1b7a1;
+}
+.config-editor-remove:hover {
+	background-color: #f6e9e9;
+	border-color: #f6e9e9;
+	color: #b19e9e;
+}
+
+.config-text {
+	font-size: 16px;
+	font-family: sans-serif;
+	padding: 4px 8px;
+}
+.config-text:hover {
+	background-color: #fffff0;
+}
+
 .flowletviz {
 	position: absolute;
 	top: 22px;
@@ -1620,7 +1715,7 @@ ol {
 	margin-top: 74px;
 }
 .window-2 {
-	margin-top: 154px;
+	margin-top: 146px;
 }
 .window-3 {
 	margin-top: 220px;
@@ -1673,7 +1768,7 @@ ol {
 .window-icon {
 	height: 32px;
 	width: 32px;
-	margin: 20px auto 5px;
+	margin: 22px auto 5px;
 	background-image: url(../img/flowlet-types.png);
 	background-position: 0px 0px;
 }

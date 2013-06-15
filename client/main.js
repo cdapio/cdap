@@ -121,6 +121,7 @@ define (['core/application'], function (Application) {
 				// These live in FlowStatus so they can visually overlay the Flow.
 				this.route('Flowlet', { path: '/flowlets/:flowlet_id' });
 				this.route('Stream', { path: '/streams/:stream_id' });
+				this.route('Config', { path: '/config' });
 
 			});
 
@@ -135,7 +136,12 @@ define (['core/application'], function (Application) {
 		this.resource('Procedures', { path: '/procedures' });
 		this.resource('Procedure', { path: '/procedures/:procedure_id' }, function () {
 
-			this.route('Status', { path: '/' });
+			this.resource('ProcedureStatus', { path: '/' }, function () {
+
+				// These live in FlowStatus so they can visually overlay the Procedure.
+				this.route('Config', { path: '/config' });
+			});
+
 			this.route('Log', { path: '/log' });
 
 		});
@@ -144,6 +150,8 @@ define (['core/application'], function (Application) {
 			this.route('Status', { path: '/'});
 			this.route('Log', { path: '/log'});
 		});
+
+		this.route("PageNotFound", { path: "*:"});
 
 	});
 
@@ -154,7 +162,8 @@ define (['core/application'], function (Application) {
 		/*
 		 * Override to load the Controller once the Route has been activated.
 		 */
-		setupController: function(controller) {
+		setupController: function(controller, model) {
+			controller.set('model', model);
 			controller.load();
 		},
 		/*
@@ -204,9 +213,16 @@ define (['core/application'], function (Application) {
 			}
 		}),
 
+		/*
+		 * This will use the FlowLogController with the RunnableLog template.
+		 * FlowLogController extends RunnableLogController.
+		 */
 		FlowLogRoute: basicRouter.extend({
 			model: function () {
 				return this.modelFor('Flow');
+			},
+			renderTemplate: function () {
+				this.render('Runnable/Log');
 			}
 		}),
 
@@ -231,6 +247,16 @@ define (['core/application'], function (Application) {
 			}
 		}),
 
+		/*
+		 * This will use the FlowStatusConfigController with the RunnableConfig template.
+		 * FlowStatusConfigController extends RunnableConfigController.
+		 */
+		FlowStatusConfigRoute: basicRouter.extend({
+			renderTemplate: function () {
+				this.render('Runnable/Config');
+			}
+		}),
+
 		DatasetRoute: basicRouter.extend(),
 
 		ProcedureStatusRoute: basicRouter.extend({
@@ -242,8 +268,23 @@ define (['core/application'], function (Application) {
 		ProcedureLogRoute: basicRouter.extend({
 			model: function () {
 				return this.modelFor('Procedure');
+			},
+			renderTemplate: function () {
+				this.render('Runnable/Log');
 			}
-		})
+		}),
+
+		/*
+		 * This will use the FlowStatusConfigController with the RunnableConfig template.
+		 * FlowStatusConfigController extends RunnableConfigController.
+		 */
+		ProcedureStatusConfigRoute: basicRouter.extend({
+			renderTemplate: function () {
+				this.render('Runnable/Config');
+			}
+		}),
+
+		PageNotFoundRoute: Ember.Route.extend()
 
 	});
 
