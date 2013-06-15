@@ -996,7 +996,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
     private final ResultScanner scanner;
     private final ReadPointer readPointer;
 
-    private HBaseScanner(ResultScanner scanner, ReadPointer readPointer){
+    public HBaseScanner(ResultScanner scanner, ReadPointer readPointer){
       this.scanner = scanner;
       this.readPointer = readPointer;
     }
@@ -1043,7 +1043,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
                   colValue.put(column, removeTypePrefix(kv.getValue()));
                   last = column;
                   if (rowKey == null) {
-                    rowKey = kv.getKey();
+                    rowKey = kv.getRow();
                   }
                   deleted.clear(); //Read one version. So clear deleted hash to get non deleted versions of next cols.
                   break;
