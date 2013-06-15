@@ -29,6 +29,7 @@ import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -94,7 +95,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-        appFabricServer.start(token, new FlowDescriptor(flowId, ImmutableList.<String>of()));
+        appFabricServer.start(token, new FlowDescriptor(flowId, ImmutableMap.<String, String>of()));
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
@@ -141,7 +142,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        appFabricServer.start(token, new FlowDescriptor(jobId, ImmutableList.<String>of()));
+        appFabricServer.start(token, new FlowDescriptor(jobId, ImmutableMap.<String, String>of()));
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -185,7 +186,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        appFabricServer.start(token, new FlowDescriptor(procedureId, ImmutableList.<String>of()));
+        appFabricServer.start(token, new FlowDescriptor(procedureId, ImmutableMap.<String, String>of()));
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
