@@ -85,6 +85,10 @@ define (['core/application'], function (Application) {
 								C.Socket.request.apply(C.Socket, arguments);
 							};
 						}
+
+						if (type === 'HTTP') {
+							C.HTTP = container.lookup('HTTP:main');
+						}
 					}
 				});
 			}

@@ -16,16 +16,7 @@ define(['lib/date'], function (Datejs) {
     type: 'Batch',
     plural: 'Batches',
     startTime: null,
-    getStartDate: function() {
-      var time = parseInt(this.get('startTime'));
-      return new Date(time).toString('MMM d, yyyy');
-
-    }.property('startTime'),
-    getStartHours: function() {
-      var time = parseInt(this.get('startTime'));
-      return new Date(time).toString('hh:mm tt');
-
-    }.property('startTime'),
+    alertCount: 0,
     
     init: function() {
       this._super();
@@ -38,9 +29,21 @@ define(['lib/date'], function (Datejs) {
       this.set('app', this.get('applicationId') || this.get('application'));
       this.set('id', this.get('app') + ':' +
         (this.get('flowId') || this.get('id') || this.get('meta').name));
-      this.set('startTime', this.get('meta').startTime);
-
+      if (this.get('meta')) {
+        this.set('startTime', this.get('meta').startTime);
+      }
     },
+
+    getStartDate: function() {
+      var time = parseInt(this.get('startTime'));
+      return new Date(time).toString('MMM d, yyyy');
+    }.property('startTime'),
+
+    getStartHours: function() {
+      var time = parseInt(this.get('startTime'));
+      return new Date(time).toString('hh:mm tt');
+    }.property('startTime'),
+
     addMetricName: function (name) {
 
       this.get('metricNames')[name] = 1;
@@ -116,26 +119,48 @@ define(['lib/date'], function (Datejs) {
 
       var self = this;
 
-      var app_id = this.get('app'),
-        batch_id = this.get('name'),
-        start = C.__timeRange * -1;
-
-      return['manager', {
-        method: 'getBatchMetrics',
-        params: [app_id, batch_id, -1]
-      }, function (error, response) {
-
-        if(!response.params)
+      return ['batch/SampleApplicationId:batchid1?data=metrics', function(status, result) {
+        if(!result) {
           return;
+        }
 
-        for(var metric in response.params) {
-          if(response.params.hasOwnProperty(metric)) {
-            self.setMetricData(metric, response.params[metric]);
+        for (var metric in result) {
+          if(result.hasOwnProperty(metric)) {
+            self.setMetricData(metric, result[metric]);
           }
         }
       }];
 
+      // return['manager', {
+      //   method: 'getBatchMetrics',
+      //   params: [app_id, batch_id, -1]
+      // }, function (error, response) {
+
+      //   if(!response.params)
+      //     return;
+
+      //   for(var metric in response.params) {
+      //     if(response.params.hasOwnProperty(metric)) {
+      //       self.setMetricData(metric, response.params[metric]);
+      //     }
+      //   }
+      // }];
+
     },
+
+    getAlertsRequest: function() {
+      var self = this;
+
+      return ['batch/SampleApplicationId:batchid1?data=alerts', function(status, result) {
+        if(!result) {
+          return;
+        }
+
+        self.set('alertCount', result.length);
+      }];      
+
+    },
+
     getMeta: function () {
       var arr = [];
       for (var m in this.meta) {
@@ -210,36 +235,53 @@ define(['lib/date'], function (Datejs) {
       var app_id = model_id[0];
       var batch_id = model_id[1];
 
-      C.get('manager', {
-        method: 'getBatch',
-        params: [app_id, batch_id]
-      }, function (error, response) {
-        if (error || !response.params) {
-          promise.reject(error);
-          return;
-        }
-
-        response.params.currentState = 'UNKNOWN';
-        response.params.version = -1;
-        response.params.type = 'Batch';
-        response.params.applicationId = app_id;
-
-        var model = C.Batch.create(response.params);
+      C.HTTP.get('batch/SampleApplicationId:batchid1', function(status, result) {
+        
+        var model = C.Batch.create(result);
 
         C.get('manager', {
           method: 'status',
           params: [app_id, batch_id, -1]
         }, function (error, response) {
-
           if (response.params) {
             model.set('currentState', response.params.status);
           }
-
           promise.resolve(model);
 
-        });
+        });        
 
       });
+
+      // C.get('manager', {
+      //   method: 'getBatch',
+      //   params: [app_id, batch_id]
+      // }, function (error, response) {
+      //   if (error || !response.params) {
+      //     promise.reject(error);
+      //     return;
+      //   }
+
+      //   response.params.currentState = 'UNKNOWN';
+      //   response.params.version = -1;
+      //   response.params.type = 'Batch';
+      //   response.params.applicationId = app_id;
+
+      //   var model = C.Batch.create(response.params);
+
+      //   C.get('manager', {
+      //     method: 'status',
+      //     params: [app_id, batch_id, -1]
+      //   }, function (error, response) {
+
+      //     if (response.params) {
+      //       model.set('currentState', response.params.status);
+      //     }
+
+      //     promise.resolve(model);
+
+      //   });
+
+      // });
 
       return promise;
 

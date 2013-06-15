@@ -10,9 +10,11 @@ define(['../../helpers/plumber'], function (Plumber) {
     load: function () {
 
       var self = this;
+      self.updateAlerts();
       this.interval = setInterval(function () {
         self.updateStats();
         self.updateMetrics();
+        self.updateAlerts();
       }, C.POLLING_INTERVAL);
 
       /*
@@ -35,7 +37,11 @@ define(['../../helpers/plumber'], function (Plumber) {
     },
 
     updateMetrics: function() {
-      C.get.apply(C, this.get('model').getMetricsRequest());
+      C.HTTP.get.apply(C, this.get('model').getMetricsRequest());
+    },
+
+    updateAlerts: function() {
+      C.HTTP.get.apply(C, this.get('model').getAlertsRequest());
     },
 
     connectEntities: function() {

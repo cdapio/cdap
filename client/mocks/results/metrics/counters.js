@@ -22,7 +22,7 @@ define([], function () {
 				"value": 234
 			}
 		],
-		"batchMetricCounters": {
+		"batchMetrics": {
       "bytesIn": 37.34,
       "partitions": 117,
       "mapperCompletion": 74.3,
@@ -33,7 +33,29 @@ define([], function () {
       "reducerRecordsOut": 846,
       "bytesOut": 0,
       "operations": 0
-    }
+    },
+    "batchAlerts": [
+      {
+        "type": "critical",
+        "message": "sample message goes here"
+      },
+      {
+        "type": "warning",
+        "message": "sample message goes here"
+      },
+      {
+        "type": "critical",
+        "message": "sample message goes here"
+      },
+      {
+        "type": "debug",
+        "message": "sample message goes here"
+      },
+      {
+        "type": "danger",
+        "message": "sample message goes here"
+      }
+    ]
 	};
 
 });
