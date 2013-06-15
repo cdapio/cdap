@@ -76,6 +76,12 @@ DevServer.prototype.start = function() {
 var devServer = new DevServer();
 devServer.start();
 
+/**
+ * Catch anything uncaught.
+ */
+process.on('uncaughtException', function (err) {
+  devServer.logger.error('Uncaught Exception', err);
+});
 
 /**
  * Export app.

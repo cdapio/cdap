@@ -130,8 +130,6 @@ define([], function () {
 				this.__insert(flowSources[i].id);
 			}
 
-			this.__insert(null);
-
 			// Vertically center nodes
 			var maxHeight = 0, childViews, num, diff, el,
 				id, k; //, columns = this.get('childViews');

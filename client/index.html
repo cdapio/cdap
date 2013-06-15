@@ -12,8 +12,8 @@
 
   <script type="text/javascript" src="/core/lib/jquery-1.9.1.js"></script>
   <script type="text/javascript" src="/core/lib/bootstrap.js"></script>
-  <script type="text/javascript" src="/core/lib/handlebars-1.0.0-rc.3.js"></script>
-  <script type="text/javascript" src="/core/lib/ember-1.0.0-rc.3.js"></script>
+  <script type="text/javascript" src="/core/lib/handlebars.js"></script>
+  <script type="text/javascript" src="/core/lib/ember-1.0.0-rc.5.js"></script>
   <script type="text/javascript" src="/socket.io/socket.io.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.timeago.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
@@ -384,6 +384,8 @@
 
           <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
+          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
+
         </div>
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
@@ -695,7 +697,7 @@
     <div id="title">
       {{view C.Embed.TimeSelector}}
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
-        <li>{{#linkTo Procedure.Status model}}Status{{/linkTo}}</li>
+        <li>{{#linkTo ProcedureStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Procedure.Log model}}Log{{/linkTo}}</li>
       </ul>
       <h1>{{model.name}} <span>Procedure</span></h1>
@@ -705,7 +707,7 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Procedure/Status">
+  <script type="text/x-handlebars" data-template-name="ProcedureStatus">
 
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
@@ -764,9 +766,59 @@
       <div class="panel" style="padding: 10px;">
         {{view Ember.TextArea valueBinding="responseBody" classNames="well query-response"}}
       </div>
+
+    </div>
+
+    {{outlet}}
+
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Procedure/Log">
+  <script type="text/x-handlebars" data-template-name="PageNotFound">
+
+    <div id="panels">
+
+      <div class="panel">
+
+        <div class="panel-head">
+          <div class="panel-title">Not Found</div>
+        </div>
+        <div class="object-list-empty">
+          <div class="object-list-empty-content">
+            <div>Page not found.</div>
+            <span>Please double check the URL above.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </script>
+
+  <!-- Shared -->
+
+  <script type="text/x-handlebars" data-template-name="Runnable/Config">
+
+    <div class="popup-modal config-modal">
+      <div class="popup-container">
+        <div class="popup-body">
+          <div class="popup-close" {{action close on="click"}}>×</div>
+          <h2>Runtime Configuration</h2>
+
+          {{view C.Embed.KeyVal}}
+
+        </div>
+          <div class="modal-footer">
+            <button {{action close}} class="btn">Cancel</button>
+            <button {{action clear}} class="btn">Clear</button>
+            <button {{action runOnce}} class="btn">Run Once</button>
+            <button {{action saveAndRun}} class="btn" disabled="true">Save and Run</button>
+          </div>
+      </div>
+    </div>
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Runnable/Log">
 
     <div id="panels">
       <div class="panel" style="padding: 10px;">

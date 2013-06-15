@@ -365,7 +365,7 @@ define([], function () {
 		 * Lifecycle
 		 */
 
-		start: function (app, id, version) {
+		start: function (app, id, version, config) {
 
 			var self = this;
 			var model = this.get('model');
@@ -409,6 +409,15 @@ define([], function () {
 		/**
 		 * Action handlers from the View
 		 */
+
+		config: function () {
+
+			var self = this;
+			var model = this.get('model');
+
+			this.transitionToRoute('FlowStatus.Config');
+
+		},
 
 		exec: function (action) {
 
