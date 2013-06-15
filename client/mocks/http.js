@@ -2,9 +2,8 @@
  * HTTP Mock
  */
 
-define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/timeseries',
-		'mocks/results/metrics/counters', 'mocks/results/metrics/summaries'],
-	function (Elements, RPC, TimeSeries, Counters, Summaries) {
+define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/http-router'],
+	function (Elements, RPC, HttpRouter) {
 
 	Em.debug('Loading HTTP Mock');
 
@@ -46,9 +45,8 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/ti
 
 			var path = getPath(arguments);
 			var callback = getCallback(arguments);
-
 			var status = 200;
-			var result = {};
+			var result = HttpRouter.getResult(path);
 
 			callback(status, result);
 

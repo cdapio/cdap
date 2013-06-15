@@ -293,7 +293,11 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box"><span class="sparkline-box-title">Alerts</span></div>
+      <div class="info-box"><span class="sparkline-box-title">Alerts</span>
+        <div class="alert-box clearfix">
+          <div class="alert-text">{{model.alertCount}}</div>
+        </div>
+      </div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Processed Count" metrics="processed.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Busyness" metrics="busyness" unit="percent"}}</div>
       <div class="info-box"><span class="sparkline-box-title">Start</span>

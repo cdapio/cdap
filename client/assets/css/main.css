@@ -1833,3 +1833,19 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	font-size: 26px;
 	line-height: 36px;
 }
+
+.alert-box {
+	margin-top: 5px;
+	width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 50px solid #C2534F;
+}
+
+.alert-box .alert-text {
+	color: #fff;
+	float: left;
+	margin-top: 20px;
+	margin-left: -4px;
+}

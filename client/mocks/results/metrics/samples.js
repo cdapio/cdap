@@ -537,13 +537,13 @@ define([], function() {
         "serviceName": "RetrieveCounts",
         "datasets": [],
         "exists": true
-    },
-    "batchSample": {
-      "meta": {
-        "name": "BatchJobName1",
-        "app": "SampleApplication1",
-        "startTime": "1371248384775"
       },
-    }
+      "batchSample": {
+        "meta": {
+          "name": "BatchJobName1",
+          "app": "SampleApplication1",
+          "startTime": "1371248384775"
+        },
+      }
   };
 });
