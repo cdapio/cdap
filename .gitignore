@@ -10,9 +10,9 @@
 *.ipr
 *.iws
 atlassian-ide-plugin.xml
-out/
+./out/
 .DS_Store
 lib/
 .idea
-data/
-build/
+./data/
+./build/
