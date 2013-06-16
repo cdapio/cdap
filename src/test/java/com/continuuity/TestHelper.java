@@ -5,10 +5,8 @@
 package com.continuuity;
 
 import com.continuuity.api.Application;
-import com.continuuity.app.DefaultId;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
@@ -20,6 +18,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.test.app.DefaultId;
+import com.continuuity.test.app.TempFolder;
+import com.continuuity.test.app.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;

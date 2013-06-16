@@ -22,12 +22,10 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -35,19 +33,20 @@ import java.util.Set;
  * Client for interacting with local app-fabric service to perform the following operations:
  * a) Deploy locally
  * b) Start/Stop/Status of local service
- * c) promote to cloud
- * d) change number of instances of flowlet
+ * c) Promote to cloud
+ * d) Change the number of flowlet instances
  * <p/>
  * Usage:
  * ReactorClient client = new ReactorClient();
  * client.configure(CConfiguration.create(), args);
  * client.execute();
  */
+
 public class ReactorClient {
 
   private static final String DEVELOPER_ACCOUNT_ID = "developer";
-  private static Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
-                                                                  "status", "scale");
+  private static final Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
+                                                                        "status", "scale");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";
   private static final String APPLICATION_LONG_OPT_ARG = "application";
   private static final String PROCEDURE_LONG_OPT_ARG = "procedure";

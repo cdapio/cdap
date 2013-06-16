@@ -10,6 +10,9 @@ smartyFacts {
     enableSourceJar()
   }
   thrift
+  testbase {
+    enableJavadoc()
+  }
 }
 
 /**
@@ -29,8 +32,11 @@ testrunner {
 dependencies {
   // Dependencies for smartyFacts & main
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+//  testbaseCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+//  testbaseCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
 
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  testbaseCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
 
   // Dependencies required by api.
@@ -68,6 +74,21 @@ dependencies {
 
   // Test dependencies
   testCompile libraries.junit
+
+  // Dependencies required by testbase
+  testbaseCompile libraries.asm
+  testbaseCompile libraries.jsr_305  
+  testbaseCompile libraries.slf4j_api
+  testbaseCompile libraries.google_guice
+  testbaseCompile libraries.google_guice_assistedinject
+  testbaseCompile libraries.google_guice_multibindings
+  testbaseCompile libraries.google_guava
+  testbaseCompile libraries.junit
+  testbaseCompile libraries.weave_api
+  testbaseCompile libraries.weave_common
+  testbaseCompile (libraries.weave_yarn) {
+    exclude group: 'org.apache.hadoop'
+  }
 }
 
 /**
@@ -83,8 +104,18 @@ sourceSets {
   test {
     compileClasspath += api.output
     compileClasspath += thrift.output
+    compileClasspath += testbase.output
     runtimeClasspath += api.output
     runtimeClasspath += thrift.output
+    runtimeClasspath += testbase.output
+  }
+  testbase {
+    compileClasspath += api.output
+    compileClasspath += thrift.output
+    compileClasspath += main.output
+    runtimeClasspath += api.output
+    runtimeClasspath += thrift.output
+    runtimeClasspath += main.output
   }
 }
 
@@ -92,12 +123,18 @@ test {
     jvmArgs '-Xmx1024m'
 }
 
+task testJar(type: Jar, dependsOn: testbaseClasses) {
+    baseName = "${project.archivesBaseName}"
+    from sourceSets.testbase.output
+    classifier = 'testbase'
+    include('com/continuuity/test/app/*')
+}
 
 /**
  * Generates API javadoc.
  */
 javadoc {
-  classpath += (sourceSets.api.output + sourceSets.thrift.output)
+  classpath += (sourceSets.api.output + sourceSets.thrift.output + sourceSets.testbase.output)
 }
 
 /**

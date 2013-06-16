@@ -1,8 +1,11 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.app.guice;
+package com.continuuity.test.app.guice;
 
+import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
+import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
