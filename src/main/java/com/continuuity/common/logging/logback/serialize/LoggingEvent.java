@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static com.continuuity.common.logging.LoggingContext.SystemTag;
+import static com.continuuity.common.logging.logback.serialize.Util.stringOrNull;
 
 /**
 * Class used to serialize/de-serialize ILoggingEvent.
@@ -39,7 +40,7 @@ public class LoggingEvent implements ILoggingEvent {
   @Nullable
   private LoggerContextVO loggerContextVO;
   @Nullable
-  private ThrowableProxyVO throwableProxy;
+  private IThrowableProxy throwableProxy;
   @Nullable
   private StackTraceElement[] callerData;
   private boolean hasCallerData;
@@ -171,15 +172,17 @@ public class LoggingEvent implements ILoggingEvent {
 
     datum.put("formattedMessage", loggingEvent.formattedMessage);
     datum.put("loggerName", loggingEvent.loggerName);
-    datum.put("loggerContextVO", LoggerContext.encode(schema.getField("loggerContextVO").schema(),
-                                                      event.getLoggerContextVO()));
-    //datum.put("throwableProxy", throwableProxy);
-    if (event.hasCallerData()) {
-      //datum.put("callerData", callerData);
+    datum.put("loggerContextVO", LoggerContextSerializer.encode(schema.getField("loggerContextVO").schema(),
+                                                                loggingEvent.loggerContextVO));
+    datum.put("throwableProxy", ThrowableProxySerializer.encode(schema.getField("throwableProxy").schema(),
+                                                                loggingEvent.throwableProxy));
+    if (loggingEvent.hasCallerData) {
+      datum.put("callerData", CallerDataSerializer.encode(schema.getField("callerData").schema(),
+                                                                 loggingEvent.callerData));
     }
     datum.put("hasCallerData", loggingEvent.hasCallerData);
     //datum.put("marker", marker);
-    datum.put("mdc", generateContextMdc(event.getMDCPropertyMap()));
+    datum.put("mdc", generateContextMdc(loggingEvent.getMDCPropertyMap()));
     datum.put("timestamp", loggingEvent.timestamp);
     return datum;
   }
@@ -198,10 +201,12 @@ public class LoggingEvent implements ILoggingEvent {
       if (i++ > MAX_MDC_TAGS) {
         break;
       }
-      contextMdcMap.put(entry.getKey(), entry.getValue());
+      // Any tag beginning with . is reserved
+      if (!entry.getKey().startsWith(".")) {
+        contextMdcMap.put(entry.getKey(), entry.getValue());
+      }
     }
 
-    // Now add system tags, this makes sure that system tags override MDC tags in case of duplicates
     for (Map.Entry<String, SystemTag> entry : systemTagMap.entrySet()) {
       contextMdcMap.put(entry.getKey(), entry.getValue().getValue());
     }
@@ -223,18 +228,15 @@ public class LoggingEvent implements ILoggingEvent {
     }
     loggingEvent.formattedMessage = stringOrNull(datum.get("formattedMessage"));
     loggingEvent.loggerName = stringOrNull(datum.get("loggerName"));
-    loggingEvent.loggerContextVO = LoggerContext.decode((GenericRecord) datum.get("loggerContextVO"));
-    //loggingEvent.throwableProxy =
-    //loggingEvent.callerData =
+    loggingEvent.loggerContextVO = LoggerContextSerializer.decode((GenericRecord) datum.get("loggerContextVO"));
+    loggingEvent.throwableProxy = ThrowableProxySerializer.decode((GenericRecord) datum.get("throwableProxy"));
+    //noinspection unchecked
+    loggingEvent.callerData = CallerDataSerializer.decode((GenericArray<GenericRecord>) datum.get("callerData"));
     loggingEvent.hasCallerData = (Boolean) datum.get("hasCallerData");
     //loggingEvent.marker =
     loggingEvent.mdc = convertToStringMap((Map<?, ?>) datum.get("mdc"));
     loggingEvent.timestamp = (Long) datum.get("timestamp");
     return loggingEvent;
-  }
-
-  private static String stringOrNull(Object obj) {
-    return obj == null ? null : obj.toString();
   }
 
   private static Map<String, String> convertToStringMap(Map<?, ?> map) {

@@ -1,6 +1,7 @@
 package com.continuuity.common.logging.logback.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.continuuity.common.logging.logback.serialize.LogSchema;
 import com.continuuity.common.logging.logback.serialize.LoggingEvent;
 import com.google.common.base.Throwables;
 import kafka.serializer.Decoder;
@@ -24,27 +25,32 @@ import java.io.IOException;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class LoggingEventSerializer implements Encoder<ILoggingEvent>, Decoder<ILoggingEvent> {
-  private final Schema schema;
+  private LogSchema logSchema;
 
   public LoggingEventSerializer() throws IOException {
-    this.schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
+    this.logSchema = new LogSchema();
   }
 
   public LoggingEventSerializer(VerifiableProperties props) throws IOException {
     this();
   }
 
-  public Schema getSchema() {
-    return schema;
+  public Schema getAvroSchema() {
+    return logSchema.getAvroSchema();
   }
 
   @Override
   public byte[] toBytes(ILoggingEvent loggingEvent) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(out, null);
-    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(schema);
+    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(logSchema.getAvroSchema());
     try {
-      writer.write(LoggingEvent.encode(schema, loggingEvent), encoder);
+      writer.write(LoggingEvent.encode(logSchema.getAvroSchema(), loggingEvent), encoder);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+    try {
+      out.flush();
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -59,7 +65,7 @@ public class LoggingEventSerializer implements Encoder<ILoggingEvent>, Decoder<I
   public GenericRecord toGenericRecord(byte[] bytes) {
     ByteArrayInputStream in = new ByteArrayInputStream(bytes);
     BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(in, null);
-    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(schema);
+    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(logSchema.getAvroSchema());
     try {
       return reader.read(null, decoder);
     } catch (IOException e) {

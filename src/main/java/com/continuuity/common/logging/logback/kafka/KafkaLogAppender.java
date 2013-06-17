@@ -25,7 +25,6 @@ public class KafkaLogAppender extends AppenderBase<ILoggingEvent> {
     LoggingContext loggingContext = LoggingContextAccessor.getLoggingContext();
     eventObject.prepareForDeferredProcessing();
     producer.publish(loggingContext.getLogPartition(), eventObject);
-    System.out.println("Publishing - " + eventObject);
   }
 
   @Override

@@ -64,7 +64,7 @@
                 "type" : "int"
             }, {
                 "name" : "stackTraceElementProxyArray",
-                "type" : {
+                "type" : [ "null", {
                     "type" : "array",
                     "items" : {
                         "type" : "record",
@@ -75,11 +75,23 @@
                                 "type" : "record",
                                 "name" : "StackTraceElement",
                                 "namespace" : "java.lang",
-                                "fields" : [ ]
+                                "fields" : [ {
+                                    "name" : "declaringClass",
+                                    "type" : "string"
+                                }, {
+                                    "name" : "methodName",
+                                    "type" : "string"
+                                }, {
+                                    "name" : "fileName",
+                                    "type" : [ "null", "string" ]
+                                }, {
+                                    "name" : "lineNumber",
+                                    "type" : "int"
+                                } ]
                             }
                         }, {
                             "name" : "cpd",
-                            "type" : {
+                            "type" : [ "null", {
                                 "type" : "record",
                                 "name" : "ClassPackagingData",
                                 "fields" : [ {
@@ -92,23 +104,21 @@
                                     "name" : "exact",
                                     "type" : "boolean"
                                 } ]
-                            }
+                            } ]
                         } ]
                     }
-                }
+                } ]
             }, {
                 "name" : "cause",
-                "type" : {
-                    "type" : "record",
-                    "name" : "IThrowableProxy",
-                    "fields" : [ ]
-                }
+                "type" : [ "null", "ThrowableProxyVO" ],
+                "default" : "null"
             }, {
                 "name" : "suppressed",
-                "type" : {
+                "type" : [ "null", {
                     "type" : "array",
-                    "items" : "IThrowableProxy"
-                }
+                    "items" : "ThrowableProxyVO"
+                } ],
+                "default" : "null"
             } ]
         } ],
         "default" : null

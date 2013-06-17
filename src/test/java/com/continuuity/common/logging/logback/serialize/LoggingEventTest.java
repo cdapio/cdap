@@ -1,27 +1,14 @@
 package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggerContextVO;
-import ch.qos.logback.core.util.StatusPrinter;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.common.logging.logback.LogAppenderInitializer;
 import com.continuuity.common.logging.logback.TestLoggingContext;
-import com.continuuity.common.logging.logback.kafka.KafkaLogAppender;
 import com.google.common.collect.ImmutableMap;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.reflect.ReflectData;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Map;
 
 public class LoggingEventTest {
 
@@ -30,23 +17,13 @@ public class LoggingEventTest {
     LoggingContextAccessor.setLoggingContext(new TestLoggingContext("TEST_ACCT_ID1", "TEST_APP_ID1"));
   }
 
-  @Test @Ignore
-  public void createLoggingEventSchema() {
-    ReflectData reflectData = ReflectData.get();
-    Schema schema = reflectData.getSchema(LoggingEvent.class);
-    System.out.println(schema.toString(true));
-
-    schema = reflectData.getSchema(StackTraceElement.class);
-    System.out.println(schema.toString(true));
-  }
-
   @Test
   public void testSerialize() throws Exception {
     ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
     iLoggingEvent.setLevel(Level.ERROR);
     iLoggingEvent.setLoggerName("loggerName1");
     iLoggingEvent.setMessage("Log message1");
-    iLoggingEvent.setArgumentArray(new Object[] {"arg1", "arg2", 100});
+    iLoggingEvent.setArgumentArray(new Object[] {"arg1", "arg2", "100"});
     iLoggingEvent.setThreadName("threadName1");
     iLoggingEvent.setTimeStamp(1234567890L);
     iLoggingEvent.setLoggerContextRemoteView(new LoggerContextVO("loggerContextRemoteView",
@@ -57,15 +34,8 @@ public class LoggingEventTest {
     Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
     GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent);
 
-    System.out.println("GenericRecord = " + datum.toString());
-
-    LoggingEvent expectedEvent = new LoggingEvent(LoggingEvent.decode(datum));
-    System.out.println(expectedEvent);
-    for (Map.Entry<String, String> entry : expectedEvent.getMDCPropertyMap().entrySet()) {
-      String key = entry.getKey();
-      String value = entry.getValue();
-      System.out.println(key + "=" + value);
-    }
+    LoggingEvent actualEvent = new LoggingEvent(LoggingEvent.decode(datum));
+    LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, actualEvent);
   }
 
   @Test
@@ -76,23 +46,7 @@ public class LoggingEventTest {
     Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
     GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent);
 
-    LoggingEvent expectedEvent = new LoggingEvent(LoggingEvent.decode(datum));
-    System.out.println(expectedEvent);
-  }
-
-  @Test @Ignore
-  public void testPublish() throws Exception {
-    CConfiguration conf = CConfiguration.create();
-    new LogAppenderInitializer(conf, new KafkaLogAppender(conf));
-
-    Logger logger = LoggerFactory.getLogger(LoggingEventTest.class);
-    logger.error("Test log message 1");
-    logger.warn("Test log message 2 {} {}", "arg1", "arg2");
-    logger.info("Test log message 3", "arg1");
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    StatusPrinter.setPrintStream(new PrintStream(bos));
-    StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
-    System.out.println(bos.toString());
+    LoggingEvent actualEvent = new LoggingEvent(LoggingEvent.decode(datum));
+    LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, actualEvent);
   }
 }

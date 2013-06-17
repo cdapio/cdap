@@ -13,8 +13,15 @@ import org.slf4j.LoggerFactory;
  */
 public class LogAppenderInitializer {
   @Inject
-  public LogAppenderInitializer(CConfiguration configuration, AppenderBase<ILoggingEvent> logAppender) {
+  public LogAppenderInitializer(@SuppressWarnings("UnusedParameters") CConfiguration configuration,
+                                AppenderBase<ILoggingEvent> logAppender) {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+    // TODO: Add some way of saving/displaying loggerContext logs
+//    StatusManager statusManager = loggerContext.getStatusManager();
+//    OnConsoleStatusListener onConsoleListener = new OnConsoleStatusListener();
+//    statusManager.add(onConsoleListener);
+
     logAppender.setContext(loggerContext);
     logAppender.start();
 

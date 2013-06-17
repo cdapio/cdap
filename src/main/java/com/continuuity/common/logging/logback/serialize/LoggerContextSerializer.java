@@ -7,10 +7,12 @@ import org.apache.avro.generic.GenericRecord;
 
 import java.util.Map;
 
+import static com.continuuity.common.logging.logback.serialize.Util.stringOrNull;
+
 /**
  * Class used to serialize/de-serialize LoggerContextVO.
  */
-public class LoggerContext {
+public class LoggerContextSerializer {
   public static GenericRecord encode(Schema schema, LoggerContextVO context) {
     if (context != null) {
       GenericRecord datum = new GenericData.Record(schema.getTypes().get(1));
@@ -25,7 +27,7 @@ public class LoggerContext {
   public static LoggerContextVO decode(GenericRecord datum) {
     if (datum != null) {
       long birthTime = (Long) datum.get("birthTime");
-      String name = datum.get("name").toString();
+      String name = stringOrNull(datum.get("name"));
       //noinspection unchecked
       Map<String, String> propertyMap = (Map<String, String>) datum.get("propertyMap");
       return new LoggerContextVO(name, propertyMap, birthTime);
