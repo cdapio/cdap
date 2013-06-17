@@ -16,9 +16,9 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
 
   httpRouter.pathRouter = {
 
-    'batch/SampleApplicationId:batchid1': Samples.batchSample,
-    'batch/SampleApplicationId:batchid1?data=metrics': Counters.batchMetrics,
-    'batch/SampleApplicationId:batchid1?data=alerts': Counters.batchAlerts
+    '/batch/SampleApplicationId:batchid1': Samples.batchSample,
+    '/batch/SampleApplicationId:batchid1?data=metrics': Counters.batchMetrics,
+    '/batch/SampleApplicationId:batchid1?data=alerts': Counters.batchAlerts
   };
 
   /*

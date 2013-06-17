@@ -116,8 +116,8 @@ define(['lib/date'], function (Datejs) {
     },
     getMetricsRequest: function() {
 
-      // These template names are for Handlebars to render the associated metrics.
-      var templateNames = {
+      // These placeholders names are for Handlebars to render the associated metrics.
+      var placeholderNames = {
         '/store/bytes/datasets/dataset1?total=true': 'input1',
         '/store/records/datasets/dataset1?total=true': 'input2',
         '/process/events/jobs/mappers/job1?total=true': 'mappers1',
@@ -129,13 +129,13 @@ define(['lib/date'], function (Datejs) {
       };
 
       var paths = [];
-      for (var path in templateNames) {
+      for (var path in placeholderNames) {
         paths.push(path);
       }
 
       var self = this;
 
-      return ['/metrics', paths, function(status, result) {
+      return ['metrics', paths, function(status, result) {
 
         if(!result) {
           return;
@@ -143,7 +143,7 @@ define(['lib/date'], function (Datejs) {
 
         var i = result.length, metric;
         while (i--) {
-          metric = templateNames[paths[i]];
+          metric = placeholderNames[paths[i]];
           self.setMetricData(metric, result[i]);
         }
 
