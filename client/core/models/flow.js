@@ -8,7 +8,7 @@ define([], function () {
 
 		href: function () {
 			return '#/flows/' + this.get('id');
-		}.property(),
+		}.property('id'),
 		metricData: null,
 		metricNames: null,
 		__loadingData: false,
@@ -135,6 +135,12 @@ define([], function () {
 			}
 			return true;
 
+		}.property('currentState'),
+		startDisabled: function () {
+			if (this.currentState === 'RUNNING') {
+				return true;
+			}
+			return false;
 		}.property('currentState'),
 		startPauseDisabled: function () {
 

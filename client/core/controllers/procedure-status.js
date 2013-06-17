@@ -37,7 +37,7 @@ define([], function () {
 
 		},
 
-		start: function (app, id, version) {
+		start: function (app, id, version, config) {
 
 			var self = this;
 			var model = this.get('model');
@@ -46,7 +46,7 @@ define([], function () {
 
 			C.get('manager', {
 				method: 'start',
-				params: [app, id, -1, 'QUERY']
+				params: [app, id, -1, 'QUERY', config]
 			}, function (error, response) {
 
 				model.set('lastStarted', new Date().getTime() / 1000);

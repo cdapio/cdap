@@ -11,10 +11,12 @@ define([], function () {
 		__plurals: {
 			'App': 'Applications',
 			'Flow': 'Process',
+			'Batch': 'Process',
 			'Stream': 'Collect',
 			'Procedure': 'Query',
 			'Dataset': 'Store'
 		},
+		entityTypes: new Em.Set(),
 		title: function () {
 			return this.__plurals[this.get('entityType')];
 		}.property('entityType'),
@@ -22,6 +24,8 @@ define([], function () {
 
 			var self = this;
 			this.set('entityType', type);
+
+			this.entityTypes.add(type);
 
 			this.HTTP.getElements(type, function (objects) {
 
@@ -56,18 +60,21 @@ define([], function () {
 
 		updateStats: function () {
 
-			var objects, content, self = this;
+			var content, self = this;
+			for (var j=0; j<this.entityTypes.length; j++) {
+				var objects = this.get('elements.' + this.entityTypes[j]);
 
-			if ((objects = this.get('elements.' + this.get('entityType')))) {
+				if (objects) {
 
-				content = objects.get('content');
+					content = objects.get('content');
 
-				for (var i = 0; i < content.length; i ++) {
-					if (typeof content[i].getUpdateRequest === 'function') {
-						C.get.apply(C, content[i].getUpdateRequest());
+					for (var i = 0; i < content.length; i ++) {
+						if (typeof content[i].getUpdateRequest === 'function') {
+							C.get.apply(C, content[i].getUpdateRequest());
+						}
 					}
-				}
 
+				}				
 			}
 
 		},

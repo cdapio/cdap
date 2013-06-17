@@ -1,5 +1,5 @@
 /*
- * Flow Log Controller
+ * Batch Log Controller
  */
 
 define(['core/controllers/runnable-log'], function (RunnableLogController) {
@@ -8,14 +8,14 @@ define(['core/controllers/runnable-log'], function (RunnableLogController) {
 
 		init: function () {
 
-			this.set('expectedPath', 'Flow.Log');
+			this.set('expectedPath', 'Batch.Log');
 
 		}
 
 	});
 
 	Controller.reopenClass({
-		type: 'FlowLog',
+		type: 'BatchLog',
 		kind: 'Controller'
 	});
 

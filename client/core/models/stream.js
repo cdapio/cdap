@@ -144,7 +144,6 @@ define([], function () {
 				method: 'getFlowsByStream',
 				params: [this.get('id')]
 			}, function (error, response, id) {
-
 				var flows = response.params;
 
 				if (!flows) {

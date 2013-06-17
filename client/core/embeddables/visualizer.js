@@ -130,8 +130,6 @@ define([], function () {
 				this.__insert(flowSources[i].id);
 			}
 
-			this.__insert(null);
-
 			// Vertically center nodes
 			var maxHeight = 0, childViews, num, diff, el,
 				id, k; //, columns = this.get('childViews');
@@ -252,6 +250,7 @@ define([], function () {
 
 		},
 		__connect: function (from, to) {
+
 			var self = this;
 
 			Ember.run.next(this, function () {
@@ -290,6 +289,7 @@ define([], function () {
 					}
 				}
 
+
 				var color = '#CCC';
 				self.plumber.connect({
 					paintStyle: { strokeStyle:color, lineWidth:4 },
@@ -309,7 +309,6 @@ define([], function () {
 		kind: 'Embeddable'
 
 	});
-
 	return Embeddable;
 
 });

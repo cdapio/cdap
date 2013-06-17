@@ -101,6 +101,45 @@ define([], function() {
           "exists": true
       }
     ],
+    "batchSample": [
+      {
+          "id": "batchsampleid1",
+          "application": "SampleApplication1",
+          "name": "batchsamplename1",
+          "streams": [
+              "text"
+          ],
+          "datasets": [
+              "filterTable"
+          ],
+          "exists": true
+      },
+      {
+          "id": "batchsampleid2",
+          "application": "SampleApplication2",
+          "name": "batchsamplename2",
+          "streams": [],
+          "datasets": [
+              "randomTable"
+          ],
+          "exists": true
+      },
+      {
+          "id": "batchsampleid3",
+          "application": "SampleApplication3",
+          "name": "batchsamplename3",
+          "streams": [
+              "wordStream"
+          ],
+          "datasets": [
+              "wordCounts",
+              "wordStats",
+              "wordAssocs",
+              "uniqueCount"
+          ],
+          "exists": true
+      }
+    ],
     "queriesSample": [
       {
           "id": "RetrieveCounts",
@@ -498,6 +537,23 @@ define([], function() {
         "serviceName": "RetrieveCounts",
         "datasets": [],
         "exists": true
-    }
+      },
+      "batchSample": {
+        "meta": {
+          "name": "BatchJobName1",
+          "app": "SampleApplication1",
+          "startTime": "1371248384775"
+        },
+        "id": "batchid1",
+        "application": "SampleApplication1",
+        "name": "BatchJobName1",
+        "streams": [
+            "text"
+        ],
+        "datasets": [
+            "filterTable"
+        ],
+        "exists": true
+      }
   };
 });

@@ -32,6 +32,25 @@ define([], function () {
 
 	var Util = Em.Object.extend({
 
+		parseQueryString: function (path) {
+
+			var result = {};
+			var qs = path.split('?')[1];
+			if (!qs) {
+				return result;
+			}
+
+			var pairs = qs.split('&');
+			var i = pairs.length;
+			while (i--) {
+				pair = pairs[i].split('=');
+				result[pair[0]] = pair[1];
+			}
+
+			return result;
+
+		},
+
 		Upload: Em.Object.create({
 
 			processing: false,

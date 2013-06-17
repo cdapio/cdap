@@ -4,9 +4,9 @@
  * request should map to function names on this router.
  */
 
-define(['lib/jquery-1.9.1.js','mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
+define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
         'mocks/results/metrics/samples'],
- function (jQuery, TimeSeries, Counters, Samples) {
+ function (TimeSeries, Counters, Samples) {
 
   return {
     getTimeSeries : function(request) {
@@ -20,8 +20,9 @@ define(['lib/jquery-1.9.1.js','mocks/results/metrics/timeseries', 'mocks/results
       };
       if (request.params[2]) {
         for (var i = 0, len = request.params[2].length; i < len; i++) {
-          response.params.points[request.params[2][i]] = jQuery.extend(
-            true, [], TimeSeries.timeSeriesSample);
+          TimeSeries('', { start: 0, end: 0, count: 60 }, function (status, result) {
+            response.params.points[request.params[2][i]] = result;
+          });
         }
       }
       return response;
@@ -129,6 +130,20 @@ define(['lib/jquery-1.9.1.js','mocks/results/metrics/timeseries', 'mocks/results
         id: request.id,
         method: request.method,
         params: Samples.querySample
+      };
+    },
+    getBatch: function(request) {
+      return {
+        id: request.id,
+        method: request.method,
+        params: Samples.batchSample
+      };
+    },
+    getBatchMetrics: function(request) {
+      return {
+        id: request.id,
+        method: request.method,
+        params: Counters.batchMetricCounters
       };
     }
   };

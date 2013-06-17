@@ -2,9 +2,9 @@
  * HTTP Mock
  */
 
-define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/timeseries',
-		'mocks/results/metrics/counters', 'mocks/results/metrics/summaries'],
-	function (Elements, RPC, TimeSeries, Counters, Summaries) {
+define(['mocks/results/elements', 'mocks/results/metrics/counters',
+	'mocks/results/rpc', 'mocks/http-router'],
+	function (Elements, Counters, RPC, HttpRouter) {
 
 	Em.debug('Loading HTTP Mock');
 
@@ -13,13 +13,13 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/ti
 	 * e.g. HTTP.get('metrics', 1, 2, 3) => GET /metrics/1/2/3 HTTP/1.1
 	 */
 	function getPath(args) {
-		var i = args.length, path = [];
-		while (i--) {
+		var path = [];
+		for (var i = 0; i < args.length; i ++) {
 			if (typeof args[i] === 'string') {
 				path.push(args[i]);
 			}
 		}
-		return path.join('/');
+		return '/' + path.join('/');
 	}
 
 	/*
@@ -46,9 +46,8 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/ti
 
 			var path = getPath(arguments);
 			var callback = getCallback(arguments);
-
 			var status = 200;
-			var result = {};
+			var result = HttpRouter.getResult(path);
 
 			callback(status, result);
 
@@ -58,14 +57,9 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/ti
 
 			var path = getPath(arguments);
 			var object = getObject(arguments);
+			var callback = getCallback(arguments);
 
-			return {
-				status: 200,
-				result: {
-					id: '',
-					type: ''
-				}
-			};
+			callback(500, null);
 
 		},
 
@@ -76,14 +70,42 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/ti
 
 			var path = getPath(arguments);
 			var object = getObject(arguments);
+			var callback = getCallback(arguments);
+			var result = [];
 
-			return {
-				status: 200,
-				result: {
-					id: '',
-					type: ''
+			if (path === '/metrics') {
+
+				if (typeof object === 'object' && object.length) {
+					var path, query;
+					for (var i = 0; i < object.length; i ++) {
+
+						path = object[i].split('?')[0];
+						query = C.Util.parseQueryString(object[i]);
+
+						if (query.count) {
+							TimeSeries(path, query, function (status, metricsResult) {
+								result.push(metricsResult);
+							});
+						} else if (query.total) {
+							Counters(path, query, function (status, metricsResult) {
+								result.push(metricsResult);
+							});
+						} else if (query.summary) {
+							Summary(path, query, function (status, metricsResult) {
+								result.push(metricsResult);
+							});
+						}
+
+					}
+					callback(200, result);
+
+				} else {
+					callback(500, null);
 				}
-			};
+
+			} else {
+				callback(500, null);
+			}
 
 		},
 
@@ -100,7 +122,7 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/results/metrics/ti
 
 		"getElements": function (type, callback, appId, arg) {
 
-			var objects = Elements[type].result;
+			var objects = $.extend(true, [], Elements[type].result);
 			var params = [type, callback];
 
 			var i = objects.length, type = params[0];
