@@ -48,12 +48,12 @@ define(['mocks/socket-router'], function (SocketRouter) {
 				"ip": 'NO IP',
 				"cluster": {
 					"info": {
-						"vpc_label": "MOSITES SANDBOX"
+						"vpc_label": "SANDBOX NAME"
 					}
 				},
 				"account": {
 					"account_id": 'ABC',
-					"name": 'DONALD'
+					"name": 'USER NAME'
 				}
 			};
 
