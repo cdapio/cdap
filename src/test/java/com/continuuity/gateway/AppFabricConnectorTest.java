@@ -87,10 +87,10 @@ public class AppFabricConnectorTest {
   @Test
   public void testSetFlowletInstances() throws Exception {
     Assert.assertEquals(200, deploy("WordCount.jar"));
-    String startFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=start";
-    String stopFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=stop";
-    String queryInstancesUrl = baseURL + "WordCountApp/flow/WordCountFlow/Tokenizer?q=instances";
-    String setInstancesUrl = baseURL + "WordCountApp/flow/WordCountFlow/Tokenizer";
+    String startFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow/start";
+    String stopFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow/stop";
+    String queryInstancesUrl = baseURL + "WordCountApp/flow/WordCountFlow/flowlet/Tokenizer?q=instances";
+    String setInstancesUrl = baseURL + "WordCountApp/flow/WordCountFlow/flowlet/Tokenizer";
 
     Map<String,String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
@@ -113,11 +113,11 @@ public class AppFabricConnectorTest {
   @Test
   public void testStartAndStopFlow() throws Exception {
     Assert.assertEquals(200, deploy("WordCount.jar"));
-    String startFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=start";
-    String stopFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=stop";
-    String startProcedureUrl = baseURL + "WordCountApp/procedure/WordFrequency?op=start";
-    String stopProcedureUrl = baseURL + "WordCountApp/procedure/WordFrequency?op=stop";
-    String statusFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=status";
+    String startFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow/start";
+    String stopFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow/stop";
+    String startProcedureUrl = baseURL + "WordCountApp/procedure/WordFrequency/start";
+    String stopProcedureUrl = baseURL + "WordCountApp/procedure/WordFrequency/stop";
+    String statusFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow/status";
 
     Map<String,String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
