@@ -37,7 +37,7 @@ define(['../../helpers/plumber'], function (Plumber) {
     },
 
     updateMetrics: function() {
-      C.HTTP.get.apply(C, this.get('model').getMetricsRequest());
+      C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
     },
 
     updateAlerts: function() {

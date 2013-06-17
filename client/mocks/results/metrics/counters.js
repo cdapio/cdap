@@ -4,6 +4,26 @@
 
 define([], function () {
 
+  var sample = {
+    '/store/bytes/datasets/dataset1': 37.34,
+    '/store/records/datasets/dataset1': 117,
+    '/process/completion/jobs/mappers/job1': 75,
+    '/process/events/jobs/mappers/job1': 100,
+    '/process/bytes/jobs/mappers/job1': 30.00,
+    '/process/completion/jobs/reducers/job1': 0,
+    '/process/events/jobs/reducers/job1': 0,
+    '/process/bytes/jobs/reducers/job1': 0,
+    '/store/bytes/datasets/dataset2': 0,
+    '/store/records/datasets/dataset2': 0
+  };
+
+  return function (path, query, callback) {
+
+    callback(200, sample[path]);
+
+  };
+
+  /*
 	return {
 		"/counters/flow?a,b,c,d": {
 			"status": 200,
@@ -57,5 +77,6 @@ define([], function () {
       }
     ]
 	};
+  */
 
 });

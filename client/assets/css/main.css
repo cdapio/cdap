@@ -1881,6 +1881,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	background: url('../img/streamer-icon.png') no-repeat;
 	width: 32px;
 	height: 32px;
+	margin-bottom: 8px;
 }
 
 .mapper-icon{
@@ -1888,6 +1889,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	width: 32px;
 	height: 32px;
 	margin: 0px auto;
+	margin-bottom: 8px;
 }
 
 .reducer-icon{
@@ -1895,6 +1897,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	width: 32px;
 	height: 32px;
 	margin: 0px auto;
+	margin-bottom: 8px;
 }
 
 .end-icon {
@@ -1902,6 +1905,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	width: 32px;
 	height: 32px;
 	margin: 0px auto;
+	margin-bottom: 8px;
 }
 
 .batch-start>.info-window {
@@ -1911,11 +1915,11 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .batch-map>.info-window {
-	margin-top: 20px;
+	margin-top: 30px;
 }
 
 .batch-reduce>.info-window {
-	margin-top: 20px;
+	margin-top: 30px;
 	color: #40AECF;
 }
 

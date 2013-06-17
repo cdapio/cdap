@@ -106,7 +106,6 @@ define(['lib/date'], function (Datejs) {
             data[k] = data[k].value;
           }
 
-
           metric = metric.replace(/\./g, '');
           self.get('metricData').set(metric, data);
           self.set('__loadingData', false);
@@ -117,34 +116,38 @@ define(['lib/date'], function (Datejs) {
     },
     getMetricsRequest: function() {
 
+      // These template names are for Handlebars to render the associated metrics.
+      var templateNames = {
+        '/store/bytes/datasets/dataset1?total=true': 'input1',
+        '/store/records/datasets/dataset1?total=true': 'input2',
+        '/process/events/jobs/mappers/job1?total=true': 'mappers1',
+        '/process/bytes/jobs/mappers/job1?total=true': 'mappers2',
+        '/process/events/jobs/reducers/job1?total=true': 'reducers1',
+        '/process/bytes/jobs/reducers/job1?total=true': 'reducers2',
+        '/store/bytes/datasets/dataset2?total=true': 'output1',
+        '/store/records/datasets/dataset2?total=true': 'output2'
+      };
+
+      var paths = [];
+      for (var path in templateNames) {
+        paths.push(path);
+      }
+
       var self = this;
 
-      return ['batch/SampleApplicationId:batchid1?data=metrics', function(status, result) {
+      return ['/metrics', paths, function(status, result) {
+
         if(!result) {
           return;
         }
 
-        for (var metric in result) {
-          if(result.hasOwnProperty(metric)) {
-            self.setMetricData(metric, result[metric]);
-          }
+        var i = result.length, metric;
+        while (i--) {
+          metric = templateNames[paths[i]];
+          self.setMetricData(metric, result[i]);
         }
+
       }];
-
-      // return['manager', {
-      //   method: 'getBatchMetrics',
-      //   params: [app_id, batch_id, -1]
-      // }, function (error, response) {
-
-      //   if(!response.params)
-      //     return;
-
-      //   for(var metric in response.params) {
-      //     if(response.params.hasOwnProperty(metric)) {
-      //       self.setMetricData(metric, response.params[metric]);
-      //     }
-      //   }
-      // }];
 
     },
 

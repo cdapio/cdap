@@ -309,31 +309,27 @@
             <div id="batch-start" class="batch-start batch-icon">
               <div class="info-window">
                 <div class="stream-icon"></div>
-                <br />
-                {{model.metricData.bytesIn}}KB
+                <div>{{model.metricData.input1}}KB</div>
               </div>
             </div>
             <div id="batch-map" class="batch-icon batch-map">
               <div class="info-window">
                 <div class="mapper-icon"></div>
-                <br />
-                <div>{{model.metricData.mapperRecordsIn}}KB</div>
-                <div>{{model.metricData.mapperRecordsOut}}R</div>
+                <div>{{model.metricData.mappers1}}KB</div>
+                <div>{{model.metricData.mappers2}}R</div>
               </div>
             </div>
             <div id="batch-reduce" class="batch-icon batch-reduce">
               <div class="info-window">
                 <div class="reducer-icon"></div>
-                <br />
-                <div>{{model.metricData.reducerRecordsIn}}KB</div>
-                <div>{{model.metricData.reducerRecordsOut}}R</div>
+                <div>{{model.metricData.reducers1}}KB</div>
+                <div>{{model.metricData.reducers2}}R</div>
               </div>
             </div>
             <div id="batch-end" class="batch-icon batch-end">
               <div class="info-window">
                 <div class="end-icon"></div>
-                <br />
-                <div>{{model.metricData.bytesOut}}B</div>
+                <div>{{model.metricData.output1}}B</div>
               </div>
             </div>
           </div>

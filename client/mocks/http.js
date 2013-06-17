@@ -2,8 +2,9 @@
  * HTTP Mock
  */
 
-define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/http-router'],
-	function (Elements, RPC, HttpRouter) {
+define(['mocks/results/elements', 'mocks/results/metrics/counters',
+	'mocks/results/rpc', 'mocks/http-router'],
+	function (Elements, Counters, RPC, HttpRouter) {
 
 	Em.debug('Loading HTTP Mock');
 
@@ -56,14 +57,9 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/http-router'],
 
 			var path = getPath(arguments);
 			var object = getObject(arguments);
+			var callback = getCallback(arguments);
 
-			return {
-				status: 200,
-				result: {
-					id: '',
-					type: ''
-				}
-			};
+			callback(500, null);
 
 		},
 
@@ -74,14 +70,42 @@ define(['mocks/results/elements', 'mocks/results/rpc', 'mocks/http-router'],
 
 			var path = getPath(arguments);
 			var object = getObject(arguments);
+			var callback = getCallback(arguments);
+			var result = [];
 
-			return {
-				status: 200,
-				result: {
-					id: '',
-					type: ''
+			if (path === '/metrics') {
+
+				if (typeof object === 'object' && object.length) {
+					var path, query;
+					for (var i = 0; i < object.length; i ++) {
+
+						path = object[i].split('?')[0];
+						query = C.Util.parseQueryString(object[i]);
+
+						if (query.count) {
+							TimeSeries(path, query, function (status, metricsResult) {
+								result.push(metricsResult);
+							});
+						} else if (query.total) {
+							Counters(path, query, function (status, metricsResult) {
+								result.push(metricsResult);
+							});
+						} else if (query.summary) {
+							Summary(path, query, function (status, metricsResult) {
+								result.push(metricsResult);
+							});
+						}
+
+					}
+					callback(200, result);
+
+				} else {
+					callback(500, null);
 				}
-			};
+
+			} else {
+				callback(500, null);
+			}
 
 		},
 
