@@ -137,8 +137,7 @@ define (['core/application'], function (Application) {
 		this.resource('Procedure', { path: '/procedures/:procedure_id' }, function () {
 
 			this.resource('ProcedureStatus', { path: '/' }, function () {
-
-				// These live in FlowStatus so they can visually overlay the Procedure.
+				// These live in ProcedureStatus so they can visually overlay the Procedure.
 				this.route('Config', { path: '/config' });
 			});
 
@@ -147,8 +146,13 @@ define (['core/application'], function (Application) {
 		});
 
 		this.resource('Batch', {path: '/batches/:batch_id'}, function() {
-			this.route('Status', { path: '/'});
+
+			this.resource('BatchStatus', { path: '/' }, function () {
+				// These live in BatchStatus so they can visually overlay the Batch Job.
+				this.route('Config', { path: '/config' });
+			});
 			this.route('Log', { path: '/log'});
+
 		});
 
 		this.route("PageNotFound", { path: "*:"});
@@ -241,17 +245,32 @@ define (['core/application'], function (Application) {
 
 		FlowStatusStreamRoute: basicRouter.extend(),
 
+		/*
+		 * This will use the FlowStatusConfigController with the RunnableConfig template.
+		 * FlowStatusConfigController extends RunnableConfigController.
+		 */
+		FlowStatusConfigRoute: basicRouter.extend({
+			renderTemplate: function () {
+				this.render('Runnable/Config');
+			}
+		}),
+
 		BatchStatusRoute: basicRouter.extend({
 			model: function() {
 				return this.modelFor('Batch');
 			}
 		}),
 
-		/*
-		 * This will use the FlowStatusConfigController with the RunnableConfig template.
-		 * FlowStatusConfigController extends RunnableConfigController.
-		 */
-		FlowStatusConfigRoute: basicRouter.extend({
+		BatchLogRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Batch');
+			},
+			renderTemplate: function () {
+				this.render('Runnable/Log');
+			}
+		}),
+
+		BatchStatusConfigRoute: basicRouter.extend({
 			renderTemplate: function () {
 				this.render('Runnable/Config');
 			}

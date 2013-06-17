@@ -151,6 +151,15 @@ define([], function () {
 					self.updateStats();
 				}, C.POLLING_INTERVAL);
 
+				/*
+				 * Count hack to add Batch to Flows (Process)
+				 */
+
+				var batchCount = this.get('counts').get('Batch');
+				var flowCount = this.get('counts').get('Flow');
+
+				this.get('counts').set('Flow', batchCount + flowCount);
+
 			}
 
 		},

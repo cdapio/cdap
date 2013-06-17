@@ -14,8 +14,6 @@ define([], function () {
 
 			resize();
 
-			console.log(this.get("type"), this.get("kind"));
-
 			var goneOver = false;
 			var app = this.get('model').app;
 			var id = this.get('model').name;
@@ -47,12 +45,16 @@ define([], function () {
 					} else {
 
 						var items = response.params;
-						for (var i = 0; i < items.length; i ++) {
-							items[i] = '<code>' + items[i] + '</code>';
-						}
-						response = items.join('');
+						if (items) {
+							for (var i = 0; i < items.length; i ++) {
+								items[i] = '<code>' + items[i] + '</code>';
+							}
+							response = items.join('');
 
-						if (items.length === 0) {
+							if (items.length === 0) {
+								response = '[ No Log Messages ]';
+							}
+						} else {
 							response = '[ No Log Messages ]';
 						}
 

@@ -374,7 +374,7 @@ define([], function () {
 
 			C.get('manager', {
 				method: 'start',
-				params: [app, id, version]
+				params: [app, id, version, 'FLOW', config]
 			}, function (error, response) {
 
 				if (error) {

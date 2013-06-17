@@ -1872,7 +1872,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	color: #fff;
 	text-transform: uppercase;
 	text-align: center;
-	font-size: 12px;
+	font-size: 16px;
 	line-height: 14px;
 	font-family: "HelveticaNeueW01-57Cn";
 }
@@ -1901,7 +1901,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	background: url('../img/end-icon.png') no-repeat;
 	width: 32px;
 	height: 32px;
-	margin: 0px auto;	
+	margin: 0px auto;
 }
 
 .batch-start>.info-window {
@@ -1920,7 +1920,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .batch-end>.info-window {
-	margin-top: 20px;
+	margin-top: 30px;
 	color: #40AECF;
 }
 

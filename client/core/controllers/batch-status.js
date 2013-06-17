@@ -56,6 +56,80 @@ define(['../../helpers/plumber'], function (Plumber) {
 
     },
 
+    /**
+     * Lifecycle
+     */
+
+    start: function (app, id, version, config) {
+
+      var self = this;
+      var model = this.get('model');
+
+      model.set('currentState', 'STARTING');
+
+      C.get('manager', {
+        method: 'start',
+        params: [app, id, version, 'FLOW', config]
+      }, function (error, response) {
+
+        if (error) {
+          C.Modal.show(error.name, error.message);
+        } else {
+          model.set('lastStarted', new Date().getTime() / 1000);
+        }
+
+      });
+
+    },
+    stop: function (app, id, version) {
+
+      var self = this;
+      var model = this.get('model');
+
+      model.set('currentState', 'STOPPING');
+
+      C.get('manager', {
+        method: 'stop',
+        params: [app, id, version]
+      }, function (error, response) {
+
+        if (error) {
+          C.Modal.show(error.name, error.message);
+        }
+
+      });
+
+    },
+
+    /**
+     * Action handlers from the View
+     */
+
+    config: function () {
+
+      var self = this;
+      var model = this.get('model');
+
+      this.transitionToRoute('BatchStatus.Config');
+
+    },
+
+    exec: function (action) {
+
+      var control = $(event.target);
+      if (event.target.tagName === "SPAN") {
+        control = control.parent();
+      }
+
+      var id = control.attr('batch-id');
+      var app = control.attr('batch-app');
+      var action = control.attr('batch-action');
+
+      if (action && action.toLowerCase() in this) {
+        this[action.toLowerCase()](app, id, -1);
+      }
+    },
+
     "delete": function () {
 
       C.Modal.show("Delete Batch",

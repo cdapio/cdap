@@ -17,7 +17,7 @@ define(['lib/date'], function (Datejs) {
     plural: 'Batches',
     startTime: null,
     alertCount: 0,
-    
+
     init: function() {
       this._super();
 
@@ -50,7 +50,7 @@ define(['lib/date'], function (Datejs) {
 
     },
     setMetricData: function(name, value) {
-      
+
       this.get('metricData').set(name, value);
 
     },
@@ -157,7 +157,7 @@ define(['lib/date'], function (Datejs) {
         }
 
         self.set('alertCount', result.length);
-      }];      
+      }];
 
     },
 
@@ -236,7 +236,7 @@ define(['lib/date'], function (Datejs) {
       var batch_id = model_id[1];
 
       C.HTTP.get('batch/SampleApplicationId:batchid1', function(status, result) {
-        
+
         var model = C.Batch.create(result);
 
         C.get('manager', {
@@ -248,7 +248,7 @@ define(['lib/date'], function (Datejs) {
           }
           promise.resolve(model);
 
-        });        
+        });
 
       });
 

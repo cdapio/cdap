@@ -544,6 +544,16 @@ define([], function() {
           "app": "SampleApplication1",
           "startTime": "1371248384775"
         },
+        "id": "batchid1",
+        "application": "SampleApplication1",
+        "name": "BatchJobName1",
+        "streams": [
+            "text"
+        ],
+        "datasets": [
+            "filterTable"
+        ],
+        "exists": true
       }
   };
 });
