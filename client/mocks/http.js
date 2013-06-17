@@ -13,8 +13,8 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 	 * e.g. HTTP.get('metrics', 1, 2, 3) => GET /metrics/1/2/3 HTTP/1.1
 	 */
 	function getPath(args) {
-		var i = args.length, path = [];
-		while (i--) {
+		var i = 0, path = [];
+		for (var i = 0; i < args.length; i ++) {
 			if (typeof args[i] === 'string') {
 				path.push(args[i]);
 			}
