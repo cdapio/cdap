@@ -1486,10 +1486,10 @@ a strong {
 }
 .config-editor-value {
 	float: left;
-	width: 384px;
+	width: 366px;
 }
 .config-editor-value input {
-	width: 366px;
+	width: 348px;
 }
 .config-editor-remove, .config-editor-add {
 	float: left;
