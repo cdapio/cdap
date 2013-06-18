@@ -33,6 +33,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -570,18 +571,54 @@ public class TestUtil {
   }
 
   /**
+   * Send a GET request to the given URL and return the Http response
+   *
+   * @param url the URL to get
+   * @param headers map with header data
+   */
+  public static HttpResponse sendGetRequest(String url, Map<String, String> headers) throws Exception {
+    HttpClient client = new DefaultHttpClient();
+    HttpGet get = new HttpGet(url);
+    if (headers!=null) {
+      for(Map.Entry<String,String> header: headers.entrySet()) {
+        get.setHeader(header.getKey(), header.getValue());
+      }
+    }
+    HttpResponse response = client.execute(new HttpGet(url));
+    client.getConnectionManager().shutdown();
+    return response;
+  }
+
+
+  /**
    * Send a POST request to the given URL and return the HTTP status
    *
    * @param url the URL to post to
    */
   public static int sendPostRequest(String url) throws Exception {
+    return sendPostRequest(url, new HashMap<String, String>());
+  }
+
+  /**
+   * Send a POST request to the given URL and return the HTTP status
+   *
+   * @param url the URL to post to
+   * @param headers map with header data
+   */
+  public static int sendPostRequest(String url, Map<String, String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(url);
+    if (headers!=null) {
+      for(Map.Entry<String,String> header: headers.entrySet()) {
+        post.setHeader(header.getKey(), header.getValue());
+      }
+    }
     post.setEntity(new ByteArrayEntity(new byte[0]));
     HttpResponse response = client.execute(post);
     client.getConnectionManager().shutdown();
     return response.getStatusLine().getStatusCode();
   }
+
 
   /**
    * Send a POST request to the given URL and return the HTTP status
@@ -589,17 +626,27 @@ public class TestUtil {
    * @param url the URL to post to
    */
   public static int sendPutRequest(String url) throws Exception {
-    return sendPutRequest(url, new byte[0], new HashMap<String, String>());
+    return sendPutRequest(url, new HashMap<String, String>());
   }
 
   /**
-   * Send a Put request to the given URL and return the HTTP status
+   * Send a PUT request to the given URL and return the HTTP status
+   *
+   * @param url the URL to post to
+   * @param headers map with header data
+   */
+  public static int sendPutRequest(String url, Map<String, String> headers) throws Exception {
+    return sendPutRequest(url, new byte[0], headers);
+  }
+
+  /**
+   * Send a PUT request to the given URL and return the HTTP status
    *
    * @param url the URL to put to
    * @param content binary content
    * @param headers map with header data
    */
-  public static int sendPutRequest(String url, byte[] content, Map<String,String> headers) throws Exception {
+  public static int sendPutRequest(String url, byte[] content, Map<String, String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(url);
     if (headers!=null) {
@@ -612,4 +659,26 @@ public class TestUtil {
     client.getConnectionManager().shutdown();
     return response.getStatusLine().getStatusCode();
   }
+
+  /**
+   * Send a PUT request to the given URL and return the HTTP status
+   *
+   * @param url the URL to put to
+   * @param content String content
+   * @param headers map with header data
+   */
+  public static int sendPutRequest(String url, String content, Map<String, String> headers) throws Exception {
+    HttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut(url);
+    if (headers!=null) {
+      for(Map.Entry<String,String> header: headers.entrySet()) {
+        put.setHeader(header.getKey(), header.getValue());
+      }
+    }
+    put.setEntity(new StringEntity(content, "UTF-8"));
+    HttpResponse response = client.execute(put);
+    client.getConnectionManager().shutdown();
+    return response.getStatusLine().getStatusCode();
+  }
+
 }
