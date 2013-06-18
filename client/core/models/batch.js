@@ -35,12 +35,12 @@ define(['lib/date'], function (Datejs) {
     },
 
     getStartDate: function() {
-      var time = parseInt(this.get('startTime'));
+      var time = parseInt(this.get('startTime'), 10);
       return new Date(time).toString('MMM d, yyyy');
     }.property('startTime'),
 
     getStartHours: function() {
-      var time = parseInt(this.get('startTime'));
+      var time = parseInt(this.get('startTime'), 10);
       return new Date(time).toString('hh:mm tt');
     }.property('startTime'),
 
