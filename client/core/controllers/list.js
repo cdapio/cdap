@@ -74,7 +74,7 @@ define([], function () {
 						}
 					}
 
-				}				
+				}
 			}
 
 		},

@@ -40,7 +40,7 @@ define([], function () {
 				return result;
 			}
 
-			var pairs = qs.split('&');
+			var pairs = qs.split('&'), pair;
 			var i = pairs.length;
 			while (i--) {
 				pair = pairs[i].split('=');
