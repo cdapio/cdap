@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -15,9 +19,9 @@ import java.util.Properties;
 /**
  * A Kafka producer that publishes log messages to Kafka brokers.
  */
-public class SimpleKafkaProducer {
+public final class SimpleKafkaProducer {
   public static final String IGNORE_LOG = ".IGNORE_LOG";
-  private final String KAFKA_TOPIC;
+  private final String kafkaTopic;
   private Producer<String, ILoggingEvent> producer;
 
   public SimpleKafkaProducer(CConfiguration configuration) {
@@ -27,12 +31,12 @@ public class SimpleKafkaProducer {
     props.setProperty("key.serializer.class", "kafka.serializer.StringEncoder");
     props.setProperty("partitioner.class", "com.continuuity.common.logging.logback.kafka.StringPartitioner");
     props.setProperty("request.required.acks", "1");
-    props.setProperty(LoggingConfiguration.NUM_PARTITONS, configuration.get(LoggingConfiguration.NUM_PARTITONS));
+    props.setProperty(LoggingConfiguration.NUM_PARTITIONS, configuration.get(LoggingConfiguration.NUM_PARTITIONS));
 
     ProducerConfig config = new ProducerConfig(props);
 
     try {
-      KAFKA_TOPIC = KafkaTopic.getTopic();
+      kafkaTopic = KafkaTopic.getTopic();
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -46,7 +50,7 @@ public class SimpleKafkaProducer {
     }
     MDC.put(SimpleKafkaProducer.IGNORE_LOG, "");
     try {
-      KeyedMessage<String, ILoggingEvent> data = new KeyedMessage<String, ILoggingEvent>(KAFKA_TOPIC, key, event);
+      KeyedMessage<String, ILoggingEvent> data = new KeyedMessage<String, ILoggingEvent>(kafkaTopic, key, event);
       producer.send(data);
     } finally {
       MDC.remove(SimpleKafkaProducer.IGNORE_LOG);

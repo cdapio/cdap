@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
@@ -9,7 +13,9 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Serializer for ThrowableProxyArray.
  */
-public class ThrowableProxyArraySerializer {
+public final class ThrowableProxyArraySerializer {
+  private ThrowableProxyArraySerializer() {}
+
   public static GenericArray<GenericRecord> encode(Schema schema, IThrowableProxy[] throwableProxies) {
     if (throwableProxies != null) {
       Schema tpArraySchema = schema.getTypes().get(1);

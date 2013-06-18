@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.spi.LoggerContextVO;
@@ -12,7 +16,9 @@ import static com.continuuity.common.logging.logback.serialize.Util.stringOrNull
 /**
  * Class used to serialize/de-serialize LoggerContextVO.
  */
-public class LoggerContextSerializer {
+public final class LoggerContextSerializer {
+  private LoggerContextSerializer() {}
+
   public static GenericRecord encode(Schema schema, LoggerContextVO context) {
     if (context != null) {
       GenericRecord datum = new GenericData.Record(schema.getTypes().get(1));

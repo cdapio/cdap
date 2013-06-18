@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging;
 
 import com.google.common.base.Splitter;
@@ -9,10 +13,12 @@ import java.util.List;
 /**
  * Logging configuration helper.
  */
-public class LoggingConfiguration {
-  public static final String NUM_PARTITONS = "log.publish.num.partitions";
+public final class LoggingConfiguration {
+  public static final String NUM_PARTITIONS = "log.publish.num.partitions";
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_PATTERN = "log.pattern";
+
+  private LoggingConfiguration() {}
 
   /**
    * Given a string of format "host1:port1,host2:port2", the function returns a list of Kafka hosts.
@@ -30,6 +36,9 @@ public class LoggingConfiguration {
     return kafkaHosts;
   }
 
+  /**
+   * Represents a Kafka host with hostname and port.
+   */
   public static class KafkaHost {
     private final String hostname;
     private final int port;

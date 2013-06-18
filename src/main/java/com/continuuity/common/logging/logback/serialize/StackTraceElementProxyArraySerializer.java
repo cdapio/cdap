@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
@@ -9,7 +13,9 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Serializer for an array of StackTraceElementProxies.
  */
-public class StackTraceElementProxyArraySerializer {
+public final class StackTraceElementProxyArraySerializer {
+  private StackTraceElementProxyArraySerializer() {}
+
   public static GenericArray<GenericRecord> encode(Schema schema, StackTraceElementProxy[] stackTraceElementProxies) {
     if (stackTraceElementProxies != null) {
       Schema steArraySchema = schema.getTypes().get(1);

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.kafka;
 
 import com.continuuity.common.logging.logback.serialize.LogSchema;
@@ -7,7 +11,7 @@ import java.io.IOException;
 /**
  * Generates Kafka topic containing schema for logging.
  */
-public class KafkaTopic {
+public final class KafkaTopic {
   private static final String KAFKA_TOPIC_PREFIX = "LOG_MESSAGES";
 
   /**

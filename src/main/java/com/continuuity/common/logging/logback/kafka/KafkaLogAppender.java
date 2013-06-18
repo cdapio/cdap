@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -10,8 +14,8 @@ import com.google.inject.Inject;
 /**
  * Log appender that publishes log messages to Kafka.
  */
-public class KafkaLogAppender extends AppenderBase<ILoggingEvent> {
-  public final String APPENDER_NAME = "KafkaLogAppender";
+public final class KafkaLogAppender extends AppenderBase<ILoggingEvent> {
+  public static final String APPENDER_NAME = "KafkaLogAppender";
   private final SimpleKafkaProducer producer;
 
   @Inject

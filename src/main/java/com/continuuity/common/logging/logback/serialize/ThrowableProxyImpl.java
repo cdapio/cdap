@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
@@ -8,7 +12,7 @@ import java.util.Arrays;
 /**
  * Class used as helper during serialization of IThrowableProxy.
  */
-public class ThrowableProxyImpl implements IThrowableProxy {
+public final class ThrowableProxyImpl implements IThrowableProxy {
   private final IThrowableProxy cause;
   private final String className;
   private final int commonFrames;
@@ -63,7 +67,8 @@ public class ThrowableProxyImpl implements IThrowableProxy {
       ", className='" + className + '\'' +
       ", commonFrames=" + commonFrames +
       ", message='" + message + '\'' +
-      ", stackTraceElementProxyArray=" + (stackTraceElementProxyArray == null ? null : Arrays.asList(stackTraceElementProxyArray)) +
+      ", stackTraceElementProxyArray=" +
+      (stackTraceElementProxyArray == null ? null : Arrays.asList(stackTraceElementProxyArray)) +
       ", suppressed=" + (suppressed == null ? null : Arrays.asList(suppressed)) +
       '}';
   }

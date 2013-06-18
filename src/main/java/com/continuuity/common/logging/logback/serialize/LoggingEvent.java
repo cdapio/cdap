@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.Level;
@@ -25,7 +29,7 @@ import static com.continuuity.common.logging.logback.serialize.Util.stringOrNull
 /**
 * Class used to serialize/de-serialize ILoggingEvent.
 */
-public class LoggingEvent implements ILoggingEvent {
+public final class LoggingEvent implements ILoggingEvent {
   private static final int MAX_MDC_TAGS = 12;
 
   private String threadName;
@@ -70,7 +74,7 @@ public class LoggingEvent implements ILoggingEvent {
     this.loggerContextVO = loggingEvent.getLoggerContextVO();
     this.throwableProxy = ThrowableProxyVO.build(loggingEvent.getThrowableProxy());
 
-    if(loggingEvent.hasCallerData()) {
+    if (loggingEvent.hasCallerData()) {
       this.callerData = loggingEvent.getCallerData();
     }
     this.hasCallerData = loggingEvent.hasCallerData();

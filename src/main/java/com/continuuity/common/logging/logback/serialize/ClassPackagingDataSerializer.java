@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.spi.ClassPackagingData;
@@ -10,7 +14,9 @@ import static com.continuuity.common.logging.logback.serialize.Util.stringOrNull
 /**
  * Serializer for ClassPackagingData.
  */
-public class ClassPackagingDataSerializer {
+public final class ClassPackagingDataSerializer {
+  private ClassPackagingDataSerializer() {}
+
   public static GenericRecord encode(Schema schema, ClassPackagingData classPackagingData) {
     if (classPackagingData != null) {
       GenericRecord datum = new GenericData.Record(schema.getTypes().get(1));

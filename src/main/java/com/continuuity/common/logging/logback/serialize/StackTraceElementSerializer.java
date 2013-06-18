@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import org.apache.avro.Schema;
@@ -10,6 +14,8 @@ import static com.continuuity.common.logging.logback.serialize.Util.stringOrNull
  * Serializer for StackTraceElement.
  */
 public class StackTraceElementSerializer {
+  private StackTraceElementSerializer() {}
+
   public static GenericRecord encode(Schema schema, StackTraceElement stackTraceElement) {
     if (stackTraceElement != null) {
       GenericRecord datum = new GenericData.Record(schema);

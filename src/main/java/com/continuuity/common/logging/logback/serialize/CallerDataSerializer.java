@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import org.apache.avro.Schema;
@@ -8,7 +12,9 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Serializer for CallerData.
  */
-public class CallerDataSerializer {
+public final class CallerDataSerializer {
+  private CallerDataSerializer() {}
+
   public static GenericArray<GenericRecord> encode(Schema schema, StackTraceElement[] stackTraceElements) {
     if (stackTraceElements != null) {
       Schema steArraySchema = schema.getTypes().get(1);

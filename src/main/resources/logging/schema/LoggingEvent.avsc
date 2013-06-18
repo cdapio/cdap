@@ -3,11 +3,30 @@
     "name" : "LoggingEvent",
     "namespace" : "com.continuuity.common.logging.logback.serialize",
     "fields" : [ {
-        "name" : "threadName",
-        "type" : "string"
+        "name" : "timestamp",
+        "type" : "long"
     }, {
         "name" : "level",
         "type" : "int"
+    }, {
+        "name" : "mdc",
+        "type" : [ "null", {
+            "type" : "map",
+            "values" : "string"
+        } ],
+        "default" : null
+    }, {
+        "name" : "marker",
+        "type" : [ "null", {
+            "type" : "record",
+            "name" : "Marker",
+            "namespace" : "org.slf4j",
+            "fields" : [ ]
+        } ],
+        "default" : null
+    }, {
+        "name" : "threadName",
+        "type" : "string"
     }, {
         "name" : "message",
         "type" : "string"
@@ -70,7 +89,7 @@
                         "type" : "record",
                         "name" : "StackTraceElementProxy",
                         "fields" : [ {
-                            "name" : "ste",
+                            "name" : "stackTraceElement",
                             "type" : {
                                 "type" : "record",
                                 "name" : "StackTraceElement",
@@ -90,7 +109,7 @@
                                 } ]
                             }
                         }, {
-                            "name" : "cpd",
+                            "name" : "classPackagingData",
                             "type" : [ "null", {
                                 "type" : "record",
                                 "name" : "ClassPackagingData",
@@ -123,33 +142,14 @@
         } ],
         "default" : null
     }, {
+        "name" : "hasCallerData",
+        "type" : "boolean"
+    }, {
         "name" : "callerData",
         "type" : [ "null", {
             "type" : "array",
             "items" : "java.lang.StackTraceElement"
         } ],
         "default" : null
-    }, {
-        "name" : "hasCallerData",
-        "type" : "boolean"
-    }, {
-        "name" : "marker",
-        "type" : [ "null", {
-            "type" : "record",
-            "name" : "Marker",
-            "namespace" : "org.slf4j",
-            "fields" : [ ]
-        } ],
-        "default" : null
-    }, {
-        "name" : "mdc",
-        "type" : [ "null", {
-            "type" : "map",
-            "values" : "string"
-        } ],
-        "default" : null
-    }, {
-        "name" : "timestamp",
-        "type" : "long"
     } ]
 }

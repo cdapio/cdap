@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.serialize;
 
 import ch.qos.logback.classic.Level;
@@ -10,6 +14,8 @@ import kafka.utils.VerifiableProperties;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class LoggingEventSerializerTest {
 
@@ -33,7 +39,7 @@ public class LoggingEventSerializerTest {
     byte [] serializedBytes = serializer.toBytes(event);
 
     // De-serialize
-    ILoggingEvent actualEvent = serializer.fromBytes(serializedBytes);
+    ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));
     assertLoggingEventEquals(iLoggingEvent, actualEvent);
   }
 
@@ -51,7 +57,9 @@ public class LoggingEventSerializerTest {
       new StackTraceElement("com.Class1", "methodName1", "fileName1", 10),
       new StackTraceElement("com.Class2", "methodName2", "fileName2", 20),
     });
-    iLoggingEvent.setThrowableProxy(new ThrowableProxy(new Exception("Test Exception")));
+    Exception e1 = new Exception("Test Exception1");
+    Exception e2 = new Exception("Test Exception2", e1);
+    iLoggingEvent.setThrowableProxy(new ThrowableProxy(e2));
     iLoggingEvent.prepareForDeferredProcessing();
     ((ThrowableProxy) iLoggingEvent.getThrowableProxy()).calculatePackagingData();
 
@@ -60,7 +68,8 @@ public class LoggingEventSerializerTest {
     byte [] serializedBytes = serializer.toBytes(event);
 
     // De-serialize
-    ILoggingEvent actualEvent = serializer.fromBytes(serializedBytes);
+    ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));
+    System.out.println(actualEvent);
     assertLoggingEventEquals(iLoggingEvent, actualEvent);
   }
 

@@ -1,10 +1,13 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.common.logging.logback.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.logback.serialize.LogSchema;
 import com.continuuity.common.logging.logback.serialize.LoggingEvent;
 import com.google.common.base.Throwables;
-import kafka.serializer.Decoder;
 import kafka.serializer.Encoder;
 import kafka.utils.VerifiableProperties;
 import org.apache.avro.Schema;
@@ -19,12 +22,13 @@ import org.apache.avro.io.EncoderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Avro serializer for ILoggingEvent.
  */
 @SuppressWarnings("UnusedDeclaration")
-public class LoggingEventSerializer implements Encoder<ILoggingEvent>, Decoder<ILoggingEvent> {
+public final class LoggingEventSerializer implements Encoder<ILoggingEvent> {
   private LogSchema logSchema;
 
   public LoggingEventSerializer() throws IOException {
@@ -49,21 +53,23 @@ public class LoggingEventSerializer implements Encoder<ILoggingEvent>, Decoder<I
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    try {
-      out.flush();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
     return out.toByteArray();
   }
 
-  @Override
-  public ILoggingEvent fromBytes(byte[] bytes) {
-    return LoggingEvent.decode(toGenericRecord(bytes));
+  public ILoggingEvent fromBytes(ByteBuffer buffer) {
+    return LoggingEvent.decode(toGenericRecord(buffer));
   }
 
-  public GenericRecord toGenericRecord(byte[] bytes) {
-    ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+  public GenericRecord toGenericRecord(ByteBuffer buffer) {
+    ByteArrayInputStream in;
+    if (buffer.hasArray()) {
+      in = new ByteArrayInputStream(buffer.array(), buffer.arrayOffset(), buffer.limit());
+    } else {
+      byte [] bytes = new byte[buffer.limit()];
+      buffer.get(bytes);
+      in = new ByteArrayInputStream(bytes);
+    }
+
     BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(in, null);
     GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(logSchema.getAvroSchema());
     try {
