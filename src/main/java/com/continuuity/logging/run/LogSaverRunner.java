@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.run;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -10,9 +14,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
- * Weave wrapper for running LogSaver.
+ * Weave wrapper for running LogSaver through Weave.
  */
-public class LogSaverRunner extends AbstractWeaveRunnable {
+public final class LogSaverRunner extends AbstractWeaveRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverRunner.class);
   private int instanceId;
 

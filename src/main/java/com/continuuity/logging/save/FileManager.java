@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.save;
 
 import com.continuuity.api.common.Bytes;
@@ -10,10 +14,12 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 /**
  * Handles reading/writing of file metadata.
  */
-public class FileManager {
+public final class FileManager {
   private final OperationExecutor opex;
   private final OperationContext operationContext;
   private final String table;
+
+  private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(200);
 
   public FileManager(OperationExecutor opex, OperationContext operationContext, String table) {
     this.opex = opex;
@@ -23,7 +29,7 @@ public class FileManager {
 
   public void writeMetaData(LoggingContext loggingContext, long startTime, String fileName) throws OperationException {
     Write writeOp = new Write(table,
-                              Bytes.toBytes(loggingContext.getLogPartition()),
+                              Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition())),
                               Bytes.toBytes(startTime),
                               Bytes.toBytes(fileName)
                               );

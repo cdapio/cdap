@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -7,9 +11,9 @@ import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.logging.LoggingContextLookup;
+import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
-import com.continuuity.logging.kafka.KafkaMessage;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
@@ -25,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -123,7 +128,9 @@ public final class LogSaver extends AbstractIdleService {
     }
   }
 
-  private final class LogCollector implements Runnable {
+  private final class LogCollector implements Runnable, Callback {
+    long lastOffset;
+
     @Override
     public void run() {
       waitForRun();
@@ -131,45 +138,20 @@ public final class LogSaver extends AbstractIdleService {
       KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaSaveFetchTimeoutMs);
       try {
         CheckpointInfo checkpointInfo = checkpointManager.getCheckpoint();
-        long lastOffset = checkpointInfo == null ? -1 : checkpointInfo.getOffset();
-
-        List<KafkaMessage> messageList = Lists.newArrayListWithExpectedSize(1000);
+        lastOffset = checkpointInfo == null ? -1 : checkpointInfo.getOffset();
         LOG.info(String.format("Starting LogCollector for topic %s, partition %d.", topic, partition));
 
         while (isRunning()) {
           try {
-            messageList.clear();
-            kafkaConsumer.fetchMessages(lastOffset + 1, fetchSizeBytes, messageList);
-            if (messageList.isEmpty()) {
+            int msgCount = kafkaConsumer.fetchMessages(lastOffset + 1, fetchSizeBytes, this);
+            if (msgCount == 0) {
               LOG.info(String.format("No more messages in topic %s, partition %d. Will sleep for %d ms",
                                      topic, partition, kafkaEmptySleepMs));
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
             }
 
             LOG.info(String.format("Got %d log messages from Kafka for topic %s, partition %s",
-                                   messageList.size(), topic, partition));
-            for (KafkaMessage message : messageList) {
-              GenericRecord genericRecord = serializer.toGenericRecord(message.getByteBuffer().array());
-              ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
-              LoggingContext loggingContext = LoggingContextLookup.getLoggingContext(event.getMDCPropertyMap());
-              if (loggingContext == null) {
-                LOG.debug(String.format("Logging context is not set for event %s. Skipping it.", event));
-                continue;
-              }
-              synchronized (messageTable) {
-                long key = event.getTimeStamp() / eventProcessingDelayMs;
-                List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
-                if (msgList == null) {
-                  msgList = Lists.newArrayList();
-                  messageTable.put(key, loggingContext.getLogPathFragment(), msgList);
-                }
-                msgList.add(new KafkaLogEvent(genericRecord, event, message.getOffset(), loggingContext));
-              }
-            }
-
-            if (!messageList.isEmpty()) {
-              lastOffset = messageList.get(messageList.size() - 1).getOffset();
-            }
+                                   msgCount, topic, partition));
           } catch (Throwable e) {
             LOG.error(
               String.format("Caught exception during fetch of topic %s, partition %d, will try again after %d ms:",
@@ -194,6 +176,28 @@ public final class LogSaver extends AbstractIdleService {
                                   topic, partition), e);
         }
       }
+    }
+
+    @Override
+    public void handle(long offset, ByteBuffer msgBuffer) {
+      GenericRecord genericRecord = serializer.toGenericRecord(msgBuffer);
+      ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
+      LoggingContext loggingContext = LoggingContextLookup.getLoggingContext(event.getMDCPropertyMap());
+      if (loggingContext == null) {
+        LOG.debug(String.format("Logging context is not set for event %s. Skipping it.", event));
+        return;
+      }
+
+      synchronized (messageTable) {
+        long key = event.getTimeStamp() / eventProcessingDelayMs;
+        List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
+        if (msgList == null) {
+          msgList = Lists.newArrayList();
+          messageTable.put(key, loggingContext.getLogPathFragment(), msgList);
+        }
+        msgList.add(new KafkaLogEvent(genericRecord, event, loggingContext, offset));
+      }
+      lastOffset = offset;
     }
   }
 

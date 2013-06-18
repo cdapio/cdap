@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -10,15 +14,15 @@ import org.apache.avro.generic.GenericRecord;
 public final class KafkaLogEvent {
   private final GenericRecord  genericRecord;
   private final ILoggingEvent logEvent;
-  private final long offset;
   private final LoggingContext loggingContext;
+  private final long offset;
 
-  public KafkaLogEvent(GenericRecord genericRecord, ILoggingEvent logEvent, long offset,
-                       LoggingContext loggingContext) {
+  public KafkaLogEvent(GenericRecord genericRecord, ILoggingEvent logEvent, LoggingContext loggingContext,
+                       long offset) {
     this.genericRecord = genericRecord;
     this.logEvent = logEvent;
-    this.offset = offset;
     this.loggingContext = loggingContext;
+    this.offset = offset;
   }
 
   public GenericRecord getGenericRecord() {

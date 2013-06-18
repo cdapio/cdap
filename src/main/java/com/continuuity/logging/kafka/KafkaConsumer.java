@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.kafka;
 
 import com.continuuity.api.data.OperationException;
@@ -24,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -87,17 +90,19 @@ public final class KafkaConsumer implements Closeable {
   /**
    * Fetches Kafka messages from an offset.
    * @param offset message offset to start.
-   * @param messageList a list to add the fetched messages into. The list will not be truncated by the method.
+   * @param sizeBytes max bytes to fetch from Kafka in this call.
+   * @param callback callback to handle the messages fetched.
+   * @return number of messages fetched.
    * @throws OperationException
    */
-  public int fetchMessages(long offset, int sizeBytes, List<KafkaMessage> messageList) throws OperationException {
+  public int fetchMessages(long offset, int sizeBytes, Callback callback) throws OperationException {
     ByteBufferMessageSet messageSet = fetchMessageSet(offset, sizeBytes);
+    int msgCount = 0;
     for (MessageAndOffset msg : messageSet) {
-      byte[] bytes = new byte[msg.message().payload().limit()];
-      msg.message().payload().get(bytes);
-      messageList.add(new KafkaMessage(ByteBuffer.wrap(bytes), msg.offset()));
+      ++msgCount;
+      callback.handle(msg.offset(), msg.message().payload());
     }
-    return messageSet.validBytes();
+    return msgCount;
   }
 
   /**

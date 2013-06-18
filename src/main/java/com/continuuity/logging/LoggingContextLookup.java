@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging;
 
 import com.continuuity.app.logging.FlowletLoggingContext;
@@ -13,6 +17,8 @@ import java.util.Map;
  * Returns the LoggingContext object based on the log tags.
  */
 public final class LoggingContextLookup {
+  private LoggingContextLookup() {}
+
   public static LoggingContext getLoggingContext(Map<String, String> tags) {
     // Tags are empty, cannot determine logging context.
     if (tags == null || tags.isEmpty()) {

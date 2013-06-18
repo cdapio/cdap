@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.save;
 
 import com.continuuity.api.data.OperationException;
@@ -123,6 +127,12 @@ public final class AvroFileWriter implements Closeable {
     Path path = createPath(loggingContext.getLogPathFragment(), currentTs);
     LOG.info(String.format("Creating Avro file %s", path.toUri()));
     AvroFile avroFile = new AvroFile(path);
+    try {
+      avroFile.open();
+    } catch (IOException e) {
+      avroFile.close();
+      throw e;
+    }
     fileManager.writeMetaData(loggingContext, currentTs, path.toUri().toString());
     return avroFile;
   }
@@ -153,7 +163,7 @@ public final class AvroFileWriter implements Closeable {
       avroFile.flush();
 
       // Close inactive files
-      if (currentTs - avroFile.getLastWriteTs() > inactiveIntervalMs) {
+      if (currentTs - avroFile.getLastModifiedTs() > inactiveIntervalMs) {
         avroFile.close();
         it.remove();
       }
@@ -175,18 +185,26 @@ public final class AvroFileWriter implements Closeable {
    */
   public class AvroFile implements Closeable {
     private final Path path;
-    private final FSDataOutputStream outputStream;
-    private final DataFileWriter<GenericRecord> dataFileWriter;
+    private FSDataOutputStream outputStream;
+    private DataFileWriter<GenericRecord> dataFileWriter;
     private long maxOffsetSeen = -1;
-    private long lastWriteTs;
+    private long lastModifiedTs;
 
-    public AvroFile(Path path) throws IOException {
+    public AvroFile(Path path) {
       this.path = path;
+    }
+
+    /**
+     * Opens the underlying file for writing. If open throws an exception, then @{link #close()} needs to be called to
+     * free resources.
+     * @throws IOException
+     */
+    void open() throws IOException {
       this.outputStream = fileSystem.create(path, false);
       this.dataFileWriter = new DataFileWriter<GenericRecord>(new GenericDatumWriter<GenericRecord>(schema));
       this.dataFileWriter.create(schema, this.outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
-      this.lastWriteTs = System.currentTimeMillis();
+      this.lastModifiedTs = System.currentTimeMillis();
     }
 
     public Path getPath() {
@@ -198,7 +216,7 @@ public final class AvroFileWriter implements Closeable {
       if (event.getOffset() > maxOffsetSeen) {
         maxOffsetSeen = event.getOffset();
       }
-      lastWriteTs = System.currentTimeMillis();
+      lastModifiedTs = System.currentTimeMillis();
     }
 
     public long getPos() throws IOException {
@@ -209,8 +227,8 @@ public final class AvroFileWriter implements Closeable {
       return maxOffsetSeen;
     }
 
-    public long getLastWriteTs() {
-      return lastWriteTs;
+    public long getLastModifiedTs() {
+      return lastModifiedTs;
     }
 
     public void flush() throws IOException {
@@ -220,8 +238,12 @@ public final class AvroFileWriter implements Closeable {
 
     @Override
     public void close() throws IOException {
-      dataFileWriter.close();
-      outputStream.close();
+      if (dataFileWriter != null) {
+        dataFileWriter.close();
+      }
+      if (outputStream != null) {
+        outputStream.close();
+      }
     }
   }
 }

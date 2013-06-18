@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.save;
 
 import com.continuuity.api.common.Bytes;
@@ -28,6 +32,7 @@ public final class CheckpointManager {
   private final String table;
   private final byte [] rowKey;
 
+  private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(100);
   private static final byte [] OFFSET_COLNAME = Bytes.toBytes("lastOffset");
   private static final byte [] FILE_COLNAME = Bytes.toBytes("openedFiles");
   private static final byte [][] COLUMN_NAMES = new byte[][] {OFFSET_COLNAME, FILE_COLNAME};
@@ -37,7 +42,7 @@ public final class CheckpointManager {
     this.opex = opex;
     this.operationContext = operationContext;
     this.table = table;
-    this.rowKey = Bytes.add(Bytes.toBytes(111), Bytes.toBytes(topic), Bytes.toBytes(partition));
+    this.rowKey = Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(topic), Bytes.toBytes(partition));
   }
 
   public void saveCheckpoint(CheckpointInfo checkpointInfo) throws IOException, OperationException {
@@ -61,6 +66,9 @@ public final class CheckpointManager {
     return new CheckpointInfo(offset, files);
   }
 
+  /**
+   * Represents the information of a checkpoint.
+   */
   public static final class CheckpointInfo {
     private final long offset;
     private final Set<String> files;

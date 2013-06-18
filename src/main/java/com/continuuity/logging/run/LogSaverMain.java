@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -18,9 +22,9 @@ import java.io.PrintWriter;
 import java.net.URISyntaxException;
 
 /**
- *
+ * Wrapper class to run LogSaver as a process.
  */
-public class LogSaverMain extends DaemonMain {
+public final class LogSaverMain extends DaemonMain {
   private WeaveRunnerService weaveRunnerService;
   private WeavePreparer weavePreparer;
   private WeaveController weaveController;
@@ -35,7 +39,7 @@ public class LogSaverMain extends DaemonMain {
     weaveRunnerService = new YarnWeaveRunnerService(new YarnConfiguration(),
                                                     cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE));
 
-    int partitions = cConf.getInt(LoggingConfiguration.NUM_PARTITONS,  -1);
+    int partitions = cConf.getInt(LoggingConfiguration.NUM_PARTITIONS,  -1);
     if (partitions < 1) {
       throw new IllegalArgumentException("log.publish.partitions should be at least 1");
     }

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.logging.tail;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -10,14 +14,13 @@ import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.filter.LogFilterGenerator;
 import com.continuuity.logging.kafka.KafkaConsumer;
-import com.continuuity.logging.kafka.KafkaMessage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -26,7 +29,6 @@ import java.util.List;
 public final class LogTail {
   private static final Logger LOG = LoggerFactory.getLogger(LogTail.class);
 
-  private static final int MAX_RETURN_COUNT = 1000;
   private static final int WINDOW_SIZE = 1000;
   private final List<LoggingConfiguration.KafkaHost> seedBrokers;
   private final String topic;
@@ -49,7 +51,7 @@ public final class LogTail {
       this.topic = KafkaTopic.getTopic();
       Preconditions.checkArgument(!this.topic.isEmpty(), "Kafka topic is emtpty!");
 
-      this.numPartitions = configuration.getInt(LoggingConfiguration.NUM_PARTITONS, -1);
+      this.numPartitions = configuration.getInt(LoggingConfiguration.NUM_PARTITIONS, -1);
       Preconditions.checkArgument(this.numPartitions > 0,
                                   "numPartitions should be greater than 0. Got numPartitions=%s", this.numPartitions);
 
@@ -82,10 +84,9 @@ public final class LogTail {
    * @param callback Callback interface to receive logging event.
    * @throws OperationException
    */
-  private void tailLog(int partition, int sizeBytes, Filter logFilter,
-                       Callback callback) throws OperationException {
+  private void tailLog(int partition, int sizeBytes, final Filter logFilter,
+                       final Callback callback) throws OperationException {
     KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
-    List<KafkaMessage> kafkaMessages = Lists.newArrayListWithExpectedSize(MAX_RETURN_COUNT);
 
     try {
       final long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
@@ -102,20 +103,15 @@ public final class LogTail {
           break;
         }
 
-        kafkaMessages.clear();
-        int fetchedBytes = kafkaConsumer.fetchMessages(beginWindow, fetchSizeBytes, kafkaMessages);
-        fetchSizeBytes -= fetchedBytes;
-        if (kafkaMessages.isEmpty()) {
+        TailCallback tailCallback = new TailCallback(logFilter, serializer, callback);
+        int count = kafkaConsumer.fetchMessages(beginWindow, fetchSizeBytes, tailCallback);
+
+        if (count == 0) {
           break;
         }
 
-        endWindow = kafkaMessages.get(0).getOffset() - 1;
-        for (KafkaMessage message : kafkaMessages) {
-          ILoggingEvent event = serializer.fromBytes(message.getByteBuffer().array());
-          if (logFilter.match(event)) {
-            callback.handle(event);
-          }
-        }
+        fetchSizeBytes -= tailCallback.getFetchedBytes();
+        endWindow = tailCallback.getFirstOffset();
       }
     } finally {
       try {
@@ -124,6 +120,41 @@ public final class LogTail {
         LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
                                 topic, partition), e);
       }
+    }
+  }
+
+  private static class TailCallback implements com.continuuity.logging.kafka.Callback {
+    private final Filter logFilter;
+    private final LoggingEventSerializer serializer;
+    private final Callback callback;
+    private int fetchedBytes = 0;
+    private long firstOffset = -1;
+
+    private TailCallback(Filter logFilter, LoggingEventSerializer serializer, Callback callback) {
+      this.logFilter = logFilter;
+      this.serializer = serializer;
+      this.callback = callback;
+    }
+
+    @Override
+    public void handle(long offset, ByteBuffer msgBuffer) {
+      ILoggingEvent event = serializer.fromBytes(msgBuffer);
+      if (logFilter.match(event)) {
+        callback.handle(event);
+      }
+
+      fetchedBytes += msgBuffer.limit();
+      if (firstOffset == -1) {
+        firstOffset = offset;
+      }
+    }
+
+    public int getFetchedBytes() {
+      return fetchedBytes;
+    }
+
+    public long getFirstOffset() {
+      return firstOffset;
     }
   }
 }
