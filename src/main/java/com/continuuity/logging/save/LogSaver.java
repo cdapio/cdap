@@ -2,15 +2,17 @@ package com.continuuity.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.logging.logback.kafka.KafkaTopic;
 import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.logging.LoggingContextLookup;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
 import com.continuuity.logging.kafka.KafkaMessage;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,11 +25,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import static com.continuuity.common.logging.LoggingConfiguration.KafkaHost;
+import static com.continuuity.logging.save.CheckpointManager.CheckpointInfo;
 
 /**
  * Saves logs published through Kafka.
@@ -35,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 public final class LogSaver extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaver.class);
 
-  private final List<ImmutablePair<String, Integer>> seedBrokers;
+  private final List<KafkaHost> seedBrokers;
   private final String topic;
   private final int partition;
   private final LoggingEventSerializer serializer;
@@ -44,7 +49,7 @@ public final class LogSaver extends AbstractIdleService {
   private final OperationContext operationContext;
   private final CheckpointManager checkpointManager;
   private final FileManager fileManager;
-  private final QueueManager queueManager;
+  private final Table<Long, String, List<KafkaLogEvent>> messageTable;
   private final AvroFileWriter avroFileWriter;
   private final long kafkaErrorSleepMs;
   private final long kafkaEmptySleepMs;
@@ -53,6 +58,8 @@ public final class LogSaver extends AbstractIdleService {
   private final long maxLogFileSize = 100 * 1024 * 1024;
   private final long checkpointIntervalMs = 60 * 1000;
   private final long inactiveIntervalMs = 10 * 60 * 1000;
+  private final long eventProcessingDelayMs = 5 * 1000;
+  private final int fetchSizeBytes = 1024 * 1024;
 
   private final int numThreads = 2;
   private static final String TABLE_NAME = "__log_meta";
@@ -60,20 +67,20 @@ public final class LogSaver extends AbstractIdleService {
   private volatile ListeningExecutorService listeningExecutorService;
   private volatile Future<?> subTaskFutures;
 
-  public LogSaver(OperationExecutor opex, String account) throws IOException, URISyntaxException {
-    this.seedBrokers = Lists.newArrayList(new ImmutablePair<String, Integer>("localhost", 9094));
-    this.topic = "LOG_MESSAGES";
-    this.partition = 0;
+  public LogSaver(OperationExecutor opex, String account, int partition) throws IOException {
+    this.seedBrokers = Lists.newArrayList(new KafkaHost("localhost", 9094));
+    this.topic = KafkaTopic.getTopic();
+    this.partition = partition;
     this.serializer = new LoggingEventSerializer();
 
     this.opex = opex;
     this.operationContext = new OperationContext(account);
     this.checkpointManager = new CheckpointManager(this.opex, operationContext, topic, partition, TABLE_NAME);
     this.fileManager = new FileManager(opex, operationContext, TABLE_NAME);
-    this.queueManager = new QueueManager(3000);
+    this.messageTable = HashBasedTable.create();
     this.avroFileWriter = new AvroFileWriter(checkpointManager, fileManager,
                                              FileSystem.get(new Configuration()), "/tmp/logs",
-                                             serializer.getSchema(), maxLogFileSize, syncIntervalBytes,
+                                             serializer.getAvroSchema(), maxLogFileSize, syncIntervalBytes,
                                              checkpointIntervalMs, inactiveIntervalMs);
     this.kafkaErrorSleepMs = 2000;
     this.kafkaEmptySleepMs = 2000;
@@ -123,7 +130,8 @@ public final class LogSaver extends AbstractIdleService {
 
       KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaSaveFetchTimeoutMs);
       try {
-        long lastOffset = -1;
+        CheckpointInfo checkpointInfo = checkpointManager.getCheckpoint();
+        long lastOffset = checkpointInfo == null ? -1 : checkpointInfo.getOffset();
 
         List<KafkaMessage> messageList = Lists.newArrayListWithExpectedSize(1000);
         LOG.info(String.format("Starting LogCollector for topic %s, partition %d.", topic, partition));
@@ -131,7 +139,7 @@ public final class LogSaver extends AbstractIdleService {
         while (isRunning()) {
           try {
             messageList.clear();
-            kafkaConsumer.fetchMessages(lastOffset + 1, messageList);
+            kafkaConsumer.fetchMessages(lastOffset + 1, fetchSizeBytes, messageList);
             if (messageList.isEmpty()) {
               LOG.info(String.format("No more messages in topic %s, partition %d. Will sleep for %d ms",
                                      topic, partition, kafkaEmptySleepMs));
@@ -148,7 +156,15 @@ public final class LogSaver extends AbstractIdleService {
                 LOG.debug(String.format("Logging context is not set for event %s. Skipping it.", event));
                 continue;
               }
-              queueManager.addLogEvent(new KafkaLogEvent(genericRecord, event, message.getOffset(), loggingContext));
+              synchronized (messageTable) {
+                long key = event.getTimeStamp() / eventProcessingDelayMs;
+                List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
+                if (msgList == null) {
+                  msgList = Lists.newArrayList();
+                  messageTable.put(key, loggingContext.getLogPathFragment(), msgList);
+                }
+                msgList.add(new KafkaLogEvent(genericRecord, event, message.getOffset(), loggingContext));
+              }
             }
 
             if (!messageList.isEmpty()) {
@@ -168,6 +184,8 @@ public final class LogSaver extends AbstractIdleService {
         }
 
         LOG.info(String.format("Stopping LogCollector for topic %s, partition %d.", topic, partition));
+      } catch (Throwable e) {
+        LOG.error("Caught unexpected exception. Terminating...", e);
       } finally {
         try {
           kafkaConsumer.close();
@@ -184,25 +202,38 @@ public final class LogSaver extends AbstractIdleService {
     public void run() {
       waitForRun();
 
-      int batchSize = 1000;
-      List<KafkaLogEvent> events = Lists.newArrayListWithExpectedSize(batchSize);
       LOG.info(String.format("Starting LogWriter for topic %s, partition %d.", topic, partition));
 
+      List<List<KafkaLogEvent>> writeLists = Lists.newArrayList();
       try {
         while (isRunning()) {
+          int messages = 0;
+          writeLists.clear();
           try {
-            events.clear();
-            queueManager.drainLogEvents(events, batchSize);
-            if (events.isEmpty()) {
+            long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventProcessingDelayMs;
+            synchronized (messageTable) {
+              for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
+                   it.hasNext(); ) {
+                Table.Cell<Long, String, List<KafkaLogEvent>> cell = it.next();
+                // Process only messages older than eventProcessingDelayMs
+                if (cell.getRowKey() >= processKey) {
+                  continue;
+                }
+                writeLists.add(cell.getValue());
+                it.remove();
+                messages += cell.getValue().size();
+              }
+            }
+            if (writeLists.isEmpty()) {
               LOG.info(String.format("No more messages to save for topic %s, partition %d. Will sleep for %d ms",
                                      topic, partition, kafkaEmptySleepMs));
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
             }
 
             LOG.info(String.format("Got %d log messages to save for topic %s, partition %s",
-                                   events.size(), topic, partition));
-            for (KafkaLogEvent event : events) {
-              avroFileWriter.append(event);
+                                   messages, topic, partition));
+            for (List<KafkaLogEvent> list : writeLists) {
+              avroFileWriter.append(list);
             }
           } catch (Throwable e) {
             LOG.error(

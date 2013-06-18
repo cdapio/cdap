@@ -21,7 +21,7 @@ public class FileManager {
     this.table = table;
   }
 
-  public void write(LoggingContext loggingContext, long startTime, String fileName) throws OperationException {
+  public void writeMetaData(LoggingContext loggingContext, long startTime, String fileName) throws OperationException {
     Write writeOp = new Write(table,
                               Bytes.toBytes(loggingContext.getLogPartition()),
                               Bytes.toBytes(startTime),

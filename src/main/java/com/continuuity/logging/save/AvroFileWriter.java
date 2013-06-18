@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,7 +67,7 @@ public final class AvroFileWriter implements Closeable {
     this.schema = schema;
     this.syncIntervalBytes = syncIntervalBytes;
     this.pathRoot = pathRoot;
-    this.fileMap = Maps.newConcurrentMap();
+    this.fileMap = Maps.newHashMap();
     this.maxFileSize = maxFileSize;
     this.checkpointIntervalMs = checkpointIntervalMs;
     this.inactiveIntervalMs = inactiveIntervalMs;
@@ -75,21 +76,22 @@ public final class AvroFileWriter implements Closeable {
   /**
    * Appends a log event to an appropriate Avro file based on LoggingContext. If the log event does not contain
    * LoggingContext then the event will be dropped.
-   * @param event Log event
+   * @param events Log event
    * @throws IOException
    */
-  public void append(KafkaLogEvent event) throws IOException, OperationException {
-    String pathFragment = event.getLoggingContext().getLogPathFragment();
-    if (pathFragment == null) {
-      LOG.debug(String.format("path fragment is null for event %s. Skipping it.", event));
+  public void append(List<KafkaLogEvent> events) throws IOException, OperationException {
+    if (events.isEmpty()) {
       return;
     }
 
-    AvroFile avroFile = getAvroFile(event.getLoggingContext());
-    avroFile.append(event);
+    LoggingContext loggingContext = events.get(0).getLoggingContext();
+    AvroFile avroFile = getAvroFile(loggingContext);
+    for (KafkaLogEvent event : events) {
+      avroFile.append(event);
+    }
 
     checkPoint(false);
-    rotateFile(avroFile, event.getLoggingContext());
+    rotateFile(avroFile, loggingContext);
   }
 
   @Override
@@ -121,7 +123,7 @@ public final class AvroFileWriter implements Closeable {
     Path path = createPath(loggingContext.getLogPathFragment(), currentTs);
     LOG.info(String.format("Creating Avro file %s", path.toUri()));
     AvroFile avroFile = new AvroFile(path);
-    fileManager.write(loggingContext, currentTs, path.toUri().toString());
+    fileManager.writeMetaData(loggingContext, currentTs, path.toUri().toString());
     return avroFile;
   }
 

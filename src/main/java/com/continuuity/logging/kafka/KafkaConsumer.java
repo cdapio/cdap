@@ -2,7 +2,6 @@ package com.continuuity.logging.kafka;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
-import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import kafka.api.FetchRequest;
@@ -30,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.continuuity.common.logging.LoggingConfiguration.KafkaHost;
 import static kafka.api.OffsetRequest.CurrentVersion;
 
 /**
@@ -40,7 +40,7 @@ public final class KafkaConsumer implements Closeable {
 
   private static final int MAX_KAFKA_FETCH_RETRIES = 5;
 
-  private final List<ImmutablePair<String, Integer>> replicaBrokers;
+  private final List<KafkaHost> replicaBrokers;
   private final String topic;
   private final int partition;
   private final int fetchTimeoutMs;
@@ -75,7 +75,7 @@ public final class KafkaConsumer implements Closeable {
    * @param partition topic partition to subscribe to
    * @param fetchTimeoutMs timeout for a Kafka fetch call
    */
-  public KafkaConsumer(List<ImmutablePair<String, Integer>> seedBrokers, String topic, int partition,
+  public KafkaConsumer(List<KafkaHost> seedBrokers, String topic, int partition,
                        int fetchTimeoutMs) {
     this.replicaBrokers = Lists.newArrayList(seedBrokers);
     this.topic = topic;
@@ -90,12 +90,14 @@ public final class KafkaConsumer implements Closeable {
    * @param messageList a list to add the fetched messages into. The list will not be truncated by the method.
    * @throws OperationException
    */
-  public void fetchMessages(long offset, List<KafkaMessage> messageList) throws OperationException {
-    for (MessageAndOffset msg : fetchMessageSet(offset)) {
+  public int fetchMessages(long offset, int sizeBytes, List<KafkaMessage> messageList) throws OperationException {
+    ByteBufferMessageSet messageSet = fetchMessageSet(offset, sizeBytes);
+    for (MessageAndOffset msg : messageSet) {
       byte[] bytes = new byte[msg.message().payload().limit()];
       msg.message().payload().get(bytes);
       messageList.add(new KafkaMessage(ByteBuffer.wrap(bytes), msg.offset()));
     }
+    return messageSet.validBytes();
   }
 
   /**
@@ -137,7 +139,7 @@ public final class KafkaConsumer implements Closeable {
     }
   }
 
-  private ByteBufferMessageSet fetchMessageSet(long fetchOffset) throws OperationException {
+  private ByteBufferMessageSet fetchMessageSet(long fetchOffset, int sizeBytes) throws OperationException {
     short errorCode = 0;
     for (int i = 0; i < MAX_KAFKA_FETCH_RETRIES; ++i) {
       if (consumer == null) {
@@ -146,7 +148,7 @@ public final class KafkaConsumer implements Closeable {
       if (fetchOffset >= 0) {
         FetchRequest req = new FetchRequestBuilder()
           .clientId(clientName)
-          .addFetch(topic, partition, fetchOffset, 100000)
+          .addFetch(topic, partition, fetchOffset, sizeBytes)
           .maxWait(fetchTimeoutMs)
           .build();
         FetchResponse fetchResponse = consumer.fetch(req);
@@ -234,18 +236,18 @@ public final class KafkaConsumer implements Closeable {
     if (partitionMetadata != null) {
       replicaBrokers.clear();
       for (kafka.cluster.Broker replica : partitionMetadata.replicas()) {
-        replicaBrokers.add(new ImmutablePair<String, Integer>(replica.host(), replica.port()));
+        replicaBrokers.add(new KafkaHost(replica.host(), replica.port()));
       }
     }
   }
 
-  private static PartitionMetadata findLeader(List<ImmutablePair<String, Integer>> replicaBrokers, String topic,
+  private static PartitionMetadata findLeader(List<KafkaHost> replicaBrokers, String topic,
                                               int partition) throws OperationException {
     PartitionMetadata returnMetaData = null;
-    for (ImmutablePair<String, Integer> broker : replicaBrokers) {
+    for (KafkaHost broker : replicaBrokers) {
       SimpleConsumer consumer = null;
       try {
-        consumer = new SimpleConsumer(broker.getFirst(), broker.getSecond(), 100000, 64 * 1024, "leaderLookup");
+        consumer = new SimpleConsumer(broker.getHostname(), broker.getPort(), 100000, 64 * 1024, "leaderLookup");
         List<String> topics = new ArrayList<String>();
         topics.add(topic);
         TopicMetadataRequest req = new TopicMetadataRequest(topics);
@@ -263,7 +265,7 @@ public final class KafkaConsumer implements Closeable {
       } catch (Exception e) {
         LOG.error(
           String.format("Error commnicating with broker %s:%d to find leader for topic %s, partition %d",
-                        broker.getFirst(), broker.getSecond(), topic, partition), e);
+                        broker.getHostname(), broker.getPort(), topic, partition), e);
       } finally {
         if (consumer != null) {
           consumer.close();
