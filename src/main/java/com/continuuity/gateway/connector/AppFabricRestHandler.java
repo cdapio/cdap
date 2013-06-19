@@ -71,7 +71,9 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * a Post of http://<hostname>:<port>/app with the jar file of the to be deployed app in the content of the request
  * can be used to deploy a new app.
  * a Get http://<hostname>:<port>/app/status returns the current deployment status
- * a Post
+ * a Post /app/<app-id>/<entity-type>/<flow id>?op=<op> with <op> as start, stop to start a flow, procedure or mapreduce
+ * a Get  /app/<app-id>/<entity-type>/<flow id>?op=status to get the status of a flow, procedure or mapreduce
+ * a Put/Get /app/<app-id>/flow/<flow id>/<flowlet id>?op=instances to change or get the number of flowlet instances
  */
 public class AppFabricRestHandler extends NettyRestHandler {
 
@@ -221,7 +223,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
         // from here on, path is either
         // /app/status
         // or
-        // /app/<app-id>/<flow-type>/<flow id>?op=<op> with <op> as start, stop, status
+        // /app/<app-id>/<entity-type>/<flow id>?op=<op> with <op> as start, stop, status
         // or
         // /app/<app-id>/flow/<flow id>/<flowlet id>?op=instances
 
@@ -281,10 +283,10 @@ public class AppFabricRestHandler extends NettyRestHandler {
           flowIdent.setType(EntityType.MAPREDUCE);
         }
 
-        if (pathElements.length == 3) { //path is /app/<app-id>/<flow-type>/<flow id> ?
+        if (pathElements.length == 3) { //path is /app/<app-id>/<entity-type>/<flow id> ?
           handleFlowOperation(message, request, metricsHelper, client, token, flowIdent, decoder.getParameters());
 
-        } else if (pathElements.length == 4) { //path is /app/<app-id>/<flow-type>/<flow id>/<flowlet id> ?
+        } else if (pathElements.length == 4) { //path is /app/<app-id>/<entity-type>/<flow id>/<flowlet id> ?
           handleFlowletOperation(message, request, metricsHelper, client, token, flowIdent, pathElements[3],
                                  decoder.getParameters());
         }
