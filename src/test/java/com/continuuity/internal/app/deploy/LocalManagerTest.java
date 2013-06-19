@@ -41,7 +41,7 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
     try {
-      TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+      TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar).get();
     } finally {
       deployedJar.delete(true);
     }
