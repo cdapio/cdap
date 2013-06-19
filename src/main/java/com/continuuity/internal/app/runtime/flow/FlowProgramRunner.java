@@ -9,14 +9,16 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.weave.api.RunId;
+import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -24,6 +26,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,6 +49,8 @@ public final class FlowProgramRunner implements ProgramRunner {
 
   private final ProgramRunnerFactory programRunnerFactory;
 
+  private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
+
   @Inject
   public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory) {
     this.programRunnerFactory = programRunnerFactory;
@@ -65,7 +70,8 @@ public final class FlowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getProgramName());
 
     // Launch flowlet program runners
-    RunId runId = RunId.generate();
+    RunId runId = RunIds.generate();
+    programOptions.put(runId, options);
     final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId, flowSpec);
     return new FlowProgramController(flowlets, runId, program, flowSpec);
   }
@@ -86,7 +92,8 @@ public final class FlowProgramRunner implements ProgramRunner {
         int instanceCount = entry.getValue().getInstances();
         for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
           flowlets.put(entry.getKey(), instanceId,
-                       startFlowlet(program, createFlowletOptions(entry.getKey(), instanceId, instanceCount, runId)));
+                       startFlowlet(program, createFlowletOptions(entry.getKey(), instanceId,
+                                                                  instanceCount, runId)));
         }
       }
     } catch (Throwable t) {
@@ -113,12 +120,20 @@ public final class FlowProgramRunner implements ProgramRunner {
   }
 
   private ProgramOptions createFlowletOptions(String name, int instanceId, int instances, RunId runId) {
+
+    // Get the right user arguments.
+    Arguments userArguments = new BasicArguments();
+    if (programOptions.containsKey(runId)) {
+      userArguments = programOptions.get(runId).getUserArguments();
+    }
+
     return new SimpleProgramOptions(name,
                                     new BasicArguments(ImmutableMap.of(
                                       "instanceId", Integer.toString(instanceId),
                                       "instances", Integer.toString(instances),
                                       "runId", runId.getId())),
-                                    new BasicArguments());
+                                    userArguments
+                                    );
   }
 
   private final class FlowProgramController extends AbstractProgramController {
@@ -199,7 +214,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       if (!"instances".equals(name) || !(value instanceof Map)) {
         return;
       }
-      Map<String, Integer> command = (Map<String, Integer>)value;
+      Map<String, Integer> command = (Map<String, Integer>) value;
       lock.lock();
       try {
         for (Map.Entry<String, Integer> entry : command.entrySet()) {

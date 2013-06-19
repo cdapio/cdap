@@ -25,7 +25,6 @@ import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.app.services.ActiveFlow;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
@@ -67,6 +66,7 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
+import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -117,6 +117,9 @@ import java.util.concurrent.TimeUnit;
  * This is a concrete implementation of AppFabric thrift Interface.
  */
 public class DefaultAppFabricService implements AppFabricService.Iface {
+  /**
+   * Log handler.
+   */
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAppFabricService.class);
 
   /**
@@ -156,14 +159,24 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private final AuthorizationFactory authFactory;
 
+  /**
+   * Runtime program service for running and managing programs.
+   */
   private final ProgramRuntimeService runtimeService;
 
+  /**
+   * Store manages non-runtime lifecycle.
+   */
   private final Store store;
 
   /**
    * The directory where the uploaded files would be placed.
    */
   private final String archiveDir;
+
+  /**
+   * Timeout to upload to remote app fabric.
+   */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
   /**
@@ -224,12 +237,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param descriptor
    */
   @Override
-  public RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
+  public synchronized RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
     throws AppFabricServiceException, TException {
 
-    FlowIdentifier id = descriptor.getIdentifier();
-    Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
     try {
+      FlowIdentifier id = descriptor.getIdentifier();
+      ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
+      Preconditions.checkArgument(existingRuntimeInfo == null, "Flow is already running" );
+      Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+
       Program program;
       try {
         program = store.loadProgram(programId, entityTypeToType(id));
@@ -238,11 +254,16 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         id.setType(EntityType.MAPREDUCE);
         program = store.loadProgram(programId, entityTypeToType(id));
       }
-      // TODO: User arguments
+
+      BasicArguments userArguments = new BasicArguments();
+      if (descriptor.isSetArguments()) {
+        userArguments = new BasicArguments(descriptor.getArguments());
+      }
+
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getFlowId(),
                                                              new BasicArguments(),
-                                                             new BasicArguments()));
+                                                             userArguments));
       store.setStart(programId, runtimeInfo.getController().getRunId().getId(),
                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
       return new RunIdentifier(runtimeInfo.getController().getRunId().toString());

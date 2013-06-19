@@ -25,6 +25,7 @@ public class TestCountRandomApp implements Application {
       .withDataSets().add(new Table("counters"))
       .withFlows().add(new CountRandom())
       .noProcedure()
+      .noBatch()
       .build();
   }
 

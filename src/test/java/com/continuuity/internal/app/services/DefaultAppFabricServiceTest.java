@@ -5,7 +5,6 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.DumbProgrammerApp;
-import com.continuuity.TestHelper;
 import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
@@ -22,12 +21,14 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
+import com.continuuity.test.app.DefaultId;
+import com.continuuity.test.app.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
 import org.apache.thrift.TException;
@@ -76,7 +77,8 @@ public class DefaultAppFabricServiceTest {
     try {
       // Call init to get a session identifier - yes, the name needs to be changed.
       AuthToken token = new AuthToken("12345");
-      ResourceIdentifier id = server.init(token, new ResourceInfo("developer","",deployedJar.getName(), 123455, 45343));
+      ResourceIdentifier id = server.init(token, new ResourceInfo(DefaultId.ACCOUNT.getId(),"",deployedJar.getName(),
+                                                                  123455, 45343));
 
       // Upload the jar file to remote location.
       BufferFileInputStream is =
@@ -204,10 +206,10 @@ public class DefaultAppFabricServiceTest {
       });
       jServer.start();
 
-      ResourceIdentifier id = new ResourceIdentifier("developer", "ToyApp", "whatever", 1);
+      ResourceIdentifier id = new ResourceIdentifier(DefaultId.ACCOUNT.getId(), "ToyApp", "whatever", 1);
       // Now send in deploy request.
       try {
-        server.promote(new AuthToken("1234"), id, "localhost");
+        server.promote(new AuthToken(TestHelper.DUMMY_AUTH_TOKEN), id, "localhost");
       } catch (AppFabricServiceException e) {
         Assert.assertTrue(false);
       } catch (TException e) {

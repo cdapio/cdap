@@ -15,10 +15,11 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.DefaultApplicationSpecification;
-import com.continuuity.internal.Preconditions;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
+
+import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
 import java.util.Map;

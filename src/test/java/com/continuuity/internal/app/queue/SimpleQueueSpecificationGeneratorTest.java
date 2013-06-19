@@ -8,7 +8,8 @@ import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowletConnection;
-import com.continuuity.app.DefaultId;
+import com.continuuity.app.Id;
+import com.continuuity.test.app.DefaultId;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
@@ -30,6 +31,9 @@ import java.util.Set;
  * The <code>ToyApp</code> is to check for connectivity.
  */
 public class SimpleQueueSpecificationGeneratorTest {
+
+  private static final Id.Account TEST_ACCOUNT_ID = DefaultId.ACCOUNT;
+
   private static Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table
     = HashBasedTable.create();
 
@@ -58,15 +62,17 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(DefaultId.ACCOUNT);
+    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(TEST_ACCOUNT_ID);
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     dumpConnectionQueue(table);
 
     // Stream X
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"), "stream://default/X"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"),
+                                    "stream://"+TEST_ACCOUNT_ID.getId()+"/X"));
 
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"), "stream://default/Y"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"),
+                                    "stream://"+TEST_ACCOUNT_ID.getId()+"/Y"));
 
     // Node A
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue://ToyFlow/A/out1"));
@@ -95,13 +101,15 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(DefaultId.ACCOUNT);
+    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(TEST_ACCOUNT_ID);
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
-                        .iterator().next().getQueueName().toString().equals("stream://default/text"));
+                        .iterator().next().getQueueName().toString()
+                        .equals("stream://"+TEST_ACCOUNT_ID.getId()+"/text"));
     Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
-                        .iterator().next().getQueueName().toString().equals("queue://WordCountFlow/StreamSource/queue"));
+                        .iterator().next().getQueueName().toString()
+                        .equals("queue://WordCountFlow/StreamSource/queue"));
     Assert.assertEquals(1, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
   }
 
@@ -110,7 +118,8 @@ public class SimpleQueueSpecificationGeneratorTest {
       System.out.print(cell.getRowKey().getType() + ":" + cell.getRowKey().getName() + " -> " + cell.getColumnKey() +
                          " = ");
 
-      System.out.println(Joiner.on(" , ").join(Iterables.transform(cell.getValue(), new Function<QueueSpecification, String>() {
+      System.out.println(Joiner.on(" , ").join(Iterables.transform(cell.getValue(),
+                                                                   new Function<QueueSpecification, String>() {
         @Override
         public String apply(QueueSpecification input) {
           return input.getQueueName().toString();

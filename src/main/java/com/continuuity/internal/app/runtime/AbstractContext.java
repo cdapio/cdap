@@ -4,7 +4,9 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.RunId;
+import com.continuuity.app.runtime.Arguments;
+import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.weave.api.RunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -15,13 +17,15 @@ import java.util.Map;
 
 /**
  * Base class for program runtime context
+ * TODO: ENG-2702 opened to fix the deprecated AbstractContext and cleanup related to context overall.
  */
-public abstract class ProgramRuntimeContext {
+@Deprecated
+public abstract class AbstractContext {
   private final Program program;
   private final RunId runId;
   private final Map<String, DataSet> datasets;
 
-  public ProgramRuntimeContext(Program program, RunId runId, Map<String, DataSet> datasets) {
+  public AbstractContext(Program program, RunId runId, Map<String, DataSet> datasets) {
     this.program = program;
     this.runId = runId;
     this.datasets = ImmutableMap.copyOf(datasets);

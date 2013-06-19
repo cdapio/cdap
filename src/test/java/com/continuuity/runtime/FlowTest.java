@@ -1,11 +1,10 @@
 package com.continuuity.runtime;
 
+import com.continuuity.ArgumentCheckApp;
 import com.continuuity.CountAndFilterWord;
 import com.continuuity.TestCountRandomApp;
-import com.continuuity.TestHelper;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.DefaultId;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
@@ -24,6 +23,8 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
+import com.continuuity.test.app.DefaultId;
+import com.continuuity.test.app.TestHelper;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
@@ -31,6 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -55,11 +57,60 @@ public class FlowTest {
   private static final Logger LOG = LoggerFactory.getLogger(FlowTest.class);
 
   @Test
+  public void testAppWithArgs() throws Exception {
+   final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(ArgumentCheckApp.class);
+   ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+
+    // Only running flow is good. But, in case procedure, we need to send something to procedure as it's lazy
+    // load on procedure.
+    List<ProgramController> controllers = Lists.newArrayList();
+    for(final Program program : app.getPrograms()) {
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      controllers.add(runner.run(program, new ProgramOptions() {
+        @Override
+        public String getName() {
+          return program.getProgramName();
+        }
+
+        @Override
+        public Arguments getArguments() {
+          return new BasicArguments();
+        }
+
+        @Override
+        public Arguments getUserArguments() {
+          return new BasicArguments(ImmutableMap.<String, String>of("arg", "test"));
+        }
+      }));
+    }
+
+    TimeUnit.SECONDS.sleep(1);
+
+    Gson gson = new Gson();
+    DiscoveryServiceClient discoveryServiceClient = TestHelper.getInjector().getInstance(DiscoveryServiceClient.class);
+    Discoverable discoverable = discoveryServiceClient.discover(
+      String.format("procedure.%s.%s.%s",
+                    DefaultId.ACCOUNT.getId(), "ArgumentCheckApp", "SimpleProcedure")).iterator().next();
+
+    HttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/%s",
+                                               discoverable.getSocketAddress().getHostName(),
+                                               discoverable.getSocketAddress().getPort(),
+                                               "ArgumentCheckApp",
+                                               "SimpleProcedure",
+                                               "argtest"));
+    post.setEntity(new StringEntity(gson.toJson(ImmutableMap.of("word", "text:Testing"))));
+    HttpResponse response = client.execute(post);
+    Assert.assertTrue(response.getStatusLine().getStatusCode() == 200);
+  }
+
+  @Test
   public void testFlow() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(WordCountApp.class);
     ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     List<ProgramController> controllers = Lists.newArrayList();
+
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {

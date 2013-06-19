@@ -3,15 +3,18 @@ package com.continuuity.internal.app.runtime.batch;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.SimpleSplit;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.batch.distributed.DistributedMapReduceContextBuilder;
 import com.continuuity.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
 import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.MRConfig;
@@ -29,13 +32,15 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
+ * Provides access to MapReduceContext for mapreduce job tasks.
  */
-public class MapReduceContextProvider {
+public final class MapReduceContextProvider {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractMapReduceContextBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextProvider.class);
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
+  private static final String HCONF_ATTR_ARGS = "hconf.program.args";
+  private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
   private static final String HCONF_ATTR_INPUT_DATASET = "hconf.program.input.dataset";
   private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
@@ -62,6 +67,7 @@ public class MapReduceContextProvider {
       context = getBuilder(conf)
         .build(conf,
                getRunId(),
+               getAruments(),
                getTx(),
                jobContext.getConfiguration().getClassLoader(),
                getProgramLocation(),
@@ -72,12 +78,10 @@ public class MapReduceContextProvider {
     return context;
   }
 
-  private String getProgramLocation() {
-    return jobContext.getJar();
-  }
-
-  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx) {
+  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, String programJarName) {
     setRunId(context.getRunId().getId());
+    setArguments(context.getRuntimeArgs());
+    setProgramJarName(programJarName);
     setConf(conf);
     setTx(tx);
     if (context.getInputDataset() != null) {
@@ -91,12 +95,38 @@ public class MapReduceContextProvider {
     }
   }
 
+  private void setArguments(Arguments runtimeArgs) {
+    jobContext.getConfiguration().set(HCONF_ATTR_ARGS, new Gson().toJson(runtimeArgs));
+  }
+
+  private Arguments getAruments() {
+    return new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_ARGS), BasicArguments.class);
+  }
+
+  private String getProgramLocation() {
+    String programJarName = getProgramJarName();
+    for (Path file : jobContext.getFileClassPaths()) {
+      if (programJarName.equals(file.getName())) {
+        return file.toUri().getPath();
+      }
+    }
+    throw new IllegalStateException("Program jar " + programJarName + " not found in classpath files.");
+  }
+
   private void setRunId(String runId) {
     jobContext.getConfiguration().set(HCONF_ATTR_RUN_ID, runId);
   }
 
   private String getRunId() {
     return jobContext.getConfiguration().get(HCONF_ATTR_RUN_ID);
+  }
+
+  private void setProgramJarName(String programJarName) {
+    jobContext.getConfiguration().set(HCONF_ATTR_PROGRAM_JAR_NAME, programJarName);
+  }
+
+  private String getProgramJarName() {
+    return jobContext.getConfiguration().get(HCONF_ATTR_PROGRAM_JAR_NAME);
   }
 
   private void setInputDataSet(String dataSetName) {

@@ -27,8 +27,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
-*
-*/
+ * @param <T>
+ */
 public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubmitter {
 
   public static final Function<Object, Integer> PARTITION_MAP_TRANSFORMER = new PartitionMapTransformer();
@@ -81,7 +81,7 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
     flowletContext.getSystemMetrics().counter(queueName.getSimpleName() + FlowletDefinition.OUTPUT_ENDPOINT_POSTFIX +
                                                 ".stream.out", outputs.size());
 
-    if(outputs.isEmpty()) {
+    if (outputs.isEmpty()) {
       // Nothing to submit
       return;
     }
@@ -101,14 +101,14 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
         writer.encode(input.getData(), new BinaryEncoder(output));
         return new QueueEntry(Maps.transformValues(input.getPartitions(), PARTITION_MAP_TRANSFORMER),
                               output.toByteArray());
-      } catch(IOException e) {
+      } catch (IOException e) {
         // This should never happen.
         throw Throwables.propagate(e);
       }
     }
   }
 
-  private  final static class PartitionMapTransformer implements Function<Object, Integer> {
+  private static final class PartitionMapTransformer implements Function<Object, Integer> {
     @Nullable
     @Override
     public Integer apply(Object input) {

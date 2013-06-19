@@ -5,6 +5,7 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.program.Program;
 import com.continuuity.app.queue.QueueReader;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -34,6 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -46,6 +48,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,12 +126,15 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         throw Throwables.propagate(e);
       }
 
+      //
+      Arguments runtimeArguments
+        = new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.RUNTIME_ARGS), BasicArguments.class);
       programOpts =  new SimpleProgramOptions(name,
                                               new BasicArguments(ImmutableMap.of(
                                                 "instanceId", Integer.toString(context.getInstanceId()),
                                                 "instances", Integer.toString(context.getInstanceCount()),
-                                                "runId", cmdLine.getOptionValue(RunnableOptions.RUN_ID))),
-                                              new BasicArguments());
+                                                "runId", context.getApplicationRunId().getId())),
+                                              runtimeArguments);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
@@ -190,9 +196,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   private CommandLine parseArgs(String[] args) {
-    Options opts = new Options()
-      .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
-      .addOption(createOption(RunnableOptions.RUN_ID, "Run id for the running process."));
+    Options opts = new Options().addOption(createOption(RunnableOptions.JAR, "Program jar location"));
 
     try {
       return new PosixParser().parse(opts, args);

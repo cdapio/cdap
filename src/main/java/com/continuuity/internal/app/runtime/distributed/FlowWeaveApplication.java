@@ -6,10 +6,11 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.program.Program;
-import com.continuuity.weave.filesystem.Location;
+import com.continuuity.app.program.Type;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Preconditions;
 
 import java.io.File;
@@ -37,7 +38,8 @@ public final class FlowWeaveApplication implements WeaveApplication {
   @Override
   public WeaveSpecification configure() {
     WeaveSpecification.Builder.MoreRunnable moreRunnable = WeaveSpecification.Builder.with()
-      .setName(String.format("flow.%s.%s.%s", program.getAccountId(), program.getApplicationId(), spec.getName()))
+      .setName(String.format("%s.%s.%s.%s",
+                             Type.FLOW.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable();
 
     Location programLocation = program.getProgramJarLocation();

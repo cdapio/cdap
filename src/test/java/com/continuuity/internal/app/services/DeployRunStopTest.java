@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.services;
 
-import com.continuuity.TestHelper;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.Flow;
@@ -10,7 +9,6 @@ import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletException;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.FlowDescriptor;
@@ -18,8 +16,11 @@ import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.test.app.DefaultId;
+import com.continuuity.test.app.TestHelper;
+import com.continuuity.test.app.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -116,8 +117,8 @@ public class DeployRunStopTest {
     TestHelper.deployApplication(GenSinkApp.class);
 
     AuthToken token = new AuthToken("12345");
-    FlowIdentifier flowIdentifier = new FlowIdentifier("developer", "GenSinkApp", "GenSinkFlow", 1);
-    server.start(token, new FlowDescriptor(flowIdentifier, Lists.<String>newArrayList()));
+    FlowIdentifier flowIdentifier = new FlowIdentifier(DefaultId.ACCOUNT.getId(), "GenSinkApp", "GenSinkFlow", 1);
+    server.start(token, new FlowDescriptor(flowIdentifier, ImmutableMap.<String, String>of()));
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 
