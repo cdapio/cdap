@@ -15,7 +15,9 @@ import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +51,15 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
 
     LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + procedureSpec.getName());
 
+    String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
     // TODO (ENG-2526): deal with logging
-    WeavePreparer preparer = weaveRunner.prepare(new ProcedureWeaveApplication(program, procedureSpec,
-                                                                               hConfFile, cConfFile))
-            .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
-            .withArguments(procedureSpec.getName(),
-                           "--jar", program.getProgramJarLocation().getName());
+    WeavePreparer preparer
+      = weaveRunner.prepare(new ProcedureWeaveApplication(program, procedureSpec, hConfFile, cConfFile))
+          .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
+          .withArguments(procedureSpec.getName(),
+                         String.format("--%s", RunnableOptions.JAR), program.getProgramJarLocation().getName())
+          .withArguments(procedureSpec.getName(),
+                         String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
 
     final WeaveController controller = preparer.start();
 
