@@ -20,17 +20,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpDispatcher that routes HTTP requests to appropriate http handlers. The mapping between uri paths to methods
- * to handle the path is managed using jax-rs annotations. {@code HttpMethodHandler} routes to method whose @Path
- * annotation matches the http request uri.
+ * HttpDispatcher that routes HTTP requests to appropriate http handler methods. The mapping between uri paths to
+ * methods that handle particular path is managed using jax-rs annotations. {@code HttpMethodHandler} routes to method
+ * whose @Path annotation matches the http request uri.
  */
 public class HttpDispatcher extends SimpleChannelHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpDispatcher.class);
   private final HttpMethodHandler httpMethodHandler;
 
-  public HttpDispatcher(HttpMethodHandler dispatcher) {
-    this.httpMethodHandler = dispatcher;
+  public HttpDispatcher(HttpMethodHandler methodHandler) {
+    this.httpMethodHandler = methodHandler;
   }
 
   @Override

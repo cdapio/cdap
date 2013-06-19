@@ -10,8 +10,6 @@ import java.util.List;
  * and dispatches to appropriate method on receiving requests.
  */
 public class HttpMethodHandler {
-
-
   //TODO (ENG-2724): WIP. This needs to be implemented
   //Note: In the first cut the handlers needs to be passed in. Consider using guice to bind in later release.
   public HttpMethodHandler(List<Object> handlers){
