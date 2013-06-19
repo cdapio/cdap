@@ -612,7 +612,7 @@ public class TestUtil {
   /**
    * Send a Post request to the given URL and return the HTTP status
    *
-   * @param url the URL to put to
+   * @param url the URL to post to
    * @param content binary content
    * @param headers map with header data
    */
@@ -642,7 +642,7 @@ public class TestUtil {
   /**
    * Send a PUT request to the given URL and return the HTTP status
    *
-   * @param url the URL to post to
+   * @param url the URL to put to
    * @param headers map with header data
    */
   public static int sendPutRequest(String url, Map<String, String> headers) throws Exception {
