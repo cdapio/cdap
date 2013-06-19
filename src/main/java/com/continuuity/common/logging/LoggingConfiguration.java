@@ -17,6 +17,8 @@ public final class LoggingConfiguration {
   public static final String NUM_PARTITIONS = "log.publish.num.partitions";
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_PATTERN = "log.pattern";
+  public static final String LOG_BASE_DIR = "log.base.dir";
+  public static final String LOG_SAVER_RUN_ACCOUNT = "log.saver.run.account";
 
   private LoggingConfiguration() {}
 
