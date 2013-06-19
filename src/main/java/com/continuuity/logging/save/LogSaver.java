@@ -5,6 +5,8 @@
 package com.continuuity.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.logging.LoggingConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.logback.kafka.KafkaTopic;
 import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
@@ -14,6 +16,7 @@ import com.continuuity.logging.LoggingContextLookup;
 import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
@@ -42,6 +45,7 @@ import static com.continuuity.logging.save.CheckpointManager.CheckpointInfo;
 /**
  * Saves logs published through Kafka.
  */
+@SuppressWarnings("FieldCanBeLocal")
 public final class LogSaver extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaver.class);
 
@@ -56,8 +60,8 @@ public final class LogSaver extends AbstractIdleService {
   private final FileManager fileManager;
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
   private final AvroFileWriter avroFileWriter;
-  private final long kafkaErrorSleepMs;
-  private final long kafkaEmptySleepMs;
+  private final long kafkaErrorSleepMs = 2000;
+  private final long kafkaEmptySleepMs = 2000;
   private final int kafkaSaveFetchTimeoutMs = 1000;
   private final int syncIntervalBytes = 1024 * 1024;
   private final long maxLogFileSize = 100 * 1024 * 1024;
@@ -72,8 +76,21 @@ public final class LogSaver extends AbstractIdleService {
   private volatile ListeningExecutorService listeningExecutorService;
   private volatile Future<?> subTaskFutures;
 
-  public LogSaver(OperationExecutor opex, String account, int partition) throws IOException {
-    this.seedBrokers = Lists.newArrayList(new KafkaHost("localhost", 9094));
+  public LogSaver(OperationExecutor opex, int partition, Configuration hConfig, CConfiguration cConfig)
+    throws IOException {
+    LOG.info("Initializing LogSaver...");
+
+    Preconditions.checkNotNull(opex, "Opex cannot be null");
+
+    String kafkaSeedBrokers = cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS);
+    Preconditions.checkArgument(kafkaSeedBrokers != null && !kafkaSeedBrokers.isEmpty(),
+      "Kafka seed brokers config is not available");
+    this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(kafkaSeedBrokers);
+    Preconditions.checkNotNull(this.seedBrokers, "Not able to parse Kafka seed brokers");
+
+    String account = cConfig.get(LoggingConfiguration.LOG_SAVER_RUN_ACCOUNT);
+    Preconditions.checkNotNull(account, "Account cannot be null");
+
     this.topic = KafkaTopic.getTopic();
     this.partition = partition;
     this.serializer = new LoggingEventSerializer();
@@ -83,12 +100,13 @@ public final class LogSaver extends AbstractIdleService {
     this.checkpointManager = new CheckpointManager(this.opex, operationContext, topic, partition, TABLE_NAME);
     this.fileManager = new FileManager(opex, operationContext, TABLE_NAME);
     this.messageTable = HashBasedTable.create();
+
+    String logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
+    Preconditions.checkNotNull(logBaseDir, "Log base dir cannot be null");
     this.avroFileWriter = new AvroFileWriter(checkpointManager, fileManager,
-                                             FileSystem.get(new Configuration()), "/tmp/logs",
+                                             FileSystem.get(hConfig), logBaseDir,
                                              serializer.getAvroSchema(), maxLogFileSize, syncIntervalBytes,
                                              checkpointIntervalMs, inactiveIntervalMs);
-    this.kafkaErrorSleepMs = 2000;
-    this.kafkaEmptySleepMs = 2000;
   }
 
   @Override
