@@ -4,8 +4,8 @@
 
 package com.continuuity.logging.kafka;
 
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.StatusCode;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import kafka.api.FetchRequest;
@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -42,15 +41,14 @@ public final class KafkaConsumer implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaConsumer.class);
 
   private static final int MAX_KAFKA_FETCH_RETRIES = 5;
+  public static final int BUFFER_SIZE_BYTES = 1024 * 1024;
+  public static final int TIMEOUT_MS = 3000;
 
   private final List<KafkaHost> replicaBrokers;
   private final String topic;
   private final int partition;
   private final int fetchTimeoutMs;
   private final String clientName;
-
-  private String leaderHostName;
-  private int leaderPort;
 
   private SimpleConsumer consumer;
 
@@ -84,7 +82,7 @@ public final class KafkaConsumer implements Closeable {
     this.topic = topic;
     this.partition = partition;
     this.fetchTimeoutMs = fetchTimeoutMs;
-    clientName = String.format("%s_%s_%d", getClass().getName(), topic, partition);
+    this.clientName = String.format("%s_%s_%d", getClass().getName(), topic, partition);
   }
 
   /**
@@ -93,9 +91,8 @@ public final class KafkaConsumer implements Closeable {
    * @param sizeBytes max bytes to fetch from Kafka in this call.
    * @param callback callback to handle the messages fetched.
    * @return number of messages fetched.
-   * @throws OperationException
    */
-  public int fetchMessages(long offset, int sizeBytes, Callback callback) throws OperationException {
+  public int fetchMessages(long offset, int sizeBytes, Callback callback) {
     ByteBufferMessageSet messageSet = fetchMessageSet(offset, sizeBytes);
     int msgCount = 0;
     for (MessageAndOffset msg : messageSet) {
@@ -110,131 +107,80 @@ public final class KafkaConsumer implements Closeable {
    * @param offset offset to fetch.
    * @return Kafka message offset.
    */
-  public long fetchOffset(Offset offset) throws OperationException {
+  public long fetchOffset(Offset offset) {
     TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
     Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = Maps.newHashMap();
     requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(offset.getValue(), 1));
     OffsetRequest request = new OffsetRequest(requestInfo, CurrentVersion(), clientName);
 
     if (consumer == null) {
-      initialize();
+      findLeader();
     }
     OffsetResponse response = consumer.getOffsetsBefore(request);
 
     if (response.hasError()) {
-      throw new OperationException(
-        StatusCode.INTERNAL_ERROR,
+      closeConsumer();
+      throw new RuntimeException(
         String.format("Error fetching offset data from broker %s:%d for topic %s, partition %d. Error code: %d",
-                      leaderHostName, leaderPort, topic, partition, response.errorCode(topic, partition)));
+                      consumer.host(), consumer.port(), topic, partition, response.errorCode(topic, partition)));
     }
     long[] offsets = response.offsets(topic, partition);
     if (offsets.length == 0) {
-      LOG.warn(
+      closeConsumer();
+      throw new RuntimeException(
         String.format("Got zero offsets in offset response for time %s from broker %s:%d for topic %s, partiton %d",
-                      offset, leaderHostName, leaderPort, topic, partition));
-      return 0;
+                      offset, consumer.host(), consumer.port(), topic, partition));
     }
     return offsets[0];
   }
 
-  @Override
-  public void close() throws IOException {
+  private void closeConsumer() {
     if (consumer != null) {
       consumer.close();
+      consumer = null;
     }
   }
 
-  private ByteBufferMessageSet fetchMessageSet(long fetchOffset, int sizeBytes) throws OperationException {
+  @Override
+  public void close() throws IOException {
+    closeConsumer();
+  }
+
+  private ByteBufferMessageSet fetchMessageSet(long fetchOffset, int sizeBytes) {
+    Preconditions.checkArgument(fetchOffset >= 0, String.format("Illegal fetch offset %d", fetchOffset));
+
     short errorCode = 0;
     for (int i = 0; i < MAX_KAFKA_FETCH_RETRIES; ++i) {
       if (consumer == null) {
-          initialize();
+          findLeader();
       }
-      if (fetchOffset >= 0) {
-        FetchRequest req = new FetchRequestBuilder()
-          .clientId(clientName)
-          .addFetch(topic, partition, fetchOffset, sizeBytes)
-          .maxWait(fetchTimeoutMs)
-          .build();
-        FetchResponse fetchResponse = consumer.fetch(req);
 
-        if (fetchResponse.hasError()) {
-          // Something went wrong!
-          errorCode = fetchResponse.errorCode(topic, partition);
-          LOG.warn(
-            String.format("Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
-                          leaderHostName, leaderPort, topic, partition, errorCode));
-          if (errorCode == ErrorMapping.OffsetOutOfRangeCode())  {
-            // We asked for an invalid offset. For simple case ask for the last element to reset
-            throw new OperationException(
-              StatusCode.INTERNAL_ERROR,
-              String.format("Requested offset %d is out of range for topic %s partition %d",
-                            fetchOffset, topic, partition));
-          }
-          consumer.close();
-          consumer = null;
-          findNewLeader();
-          continue;
+      FetchRequest req = new FetchRequestBuilder()
+        .clientId(clientName)
+        .addFetch(topic, partition, fetchOffset, sizeBytes)
+        .maxWait(fetchTimeoutMs)
+        .build();
+      FetchResponse fetchResponse = consumer.fetch(req);
+
+      if (fetchResponse.hasError()) {
+        errorCode = fetchResponse.errorCode(topic, partition);
+        LOG.warn(
+          String.format("Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
+                        consumer.host(), consumer.port(), topic, partition, errorCode));
+        if (errorCode == ErrorMapping.OffsetOutOfRangeCode())  {
+          throw new RuntimeException(
+            String.format("Requested offset %d is out of range for topic %s partition %d",
+                          fetchOffset, topic, partition));
         }
-
-        return fetchResponse.messageSet(topic, partition);
+        findLeader();
+        continue;
       }
+
+      return fetchResponse.messageSet(topic, partition);
     }
-    throw new OperationException(
-      StatusCode.INTERNAL_ERROR,
+    throw new RuntimeException(
       String.format("Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
-                    leaderHostName, leaderPort, topic, partition, errorCode));
-  }
-
-  private void initialize() throws OperationException {
-    if (leaderHostName == null) {
-      PartitionMetadata metadata = findLeader(replicaBrokers, topic, partition);
-      if (metadata == null) {
-        String message = String.format("Can't find metadata for topic %s and partition %d with brokers %s.",
-                                       topic, partition, replicaBrokers.toString());
-        LOG.warn(message);
-        throw new OperationException(StatusCode.INTERNAL_ERROR, message);
-      }
-      if (metadata.leader() == null) {
-        String message = String.format("Can't find leader for topic %s and partition %d with brokers %s.",
-                                       topic, partition, replicaBrokers.toString());
-        LOG.warn(message);
-        throw new OperationException(StatusCode.INTERNAL_ERROR, message);
-      }
-      leaderHostName = metadata.leader().host();
-      leaderPort = metadata.leader().port();
-    }
-    consumer = new SimpleConsumer(leaderHostName, leaderPort, 100000, 64 * 1024, clientName);
-  }
-
-  private void findNewLeader() throws OperationException {
-    for (int i = 0; i < 3; i++) {
-      PartitionMetadata metadata = findLeader(replicaBrokers, topic, partition);
-      if (metadata == null || metadata.leader() == null) {
-        LOG.warn(String.format("Not able to fetch leader information for topic %s, partition %d", topic, partition));
-      } else if (leaderHostName.equalsIgnoreCase(metadata.leader().host()) &&
-        leaderPort == metadata.leader().port() && i == 0) {
-        // first time through if the leader hasn't changed give ZooKeeper a second to recover
-        // second time, assume the broker did recover before failover, or it was a non-Broker issue
-        //
-      } else {
-        leaderHostName = metadata.leader().host();
-        leaderPort = metadata.leader().port();
-        saveReplicaBrokers(metadata);
-        return;
-      }
-      try {
-        int sleepMs = 1000;
-        LOG.info(String.format("Sleeping for %d ms", sleepMs));
-        Thread.sleep(sleepMs);
-      } catch (InterruptedException e) {
-        LOG.warn("Caught InterruptedException while sleeping", e);
-      }
-    }
-    throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                 String.format(
-                                   "Unable to find new leader after broker %s:%d failure for topic %s, partition %d.",
-                                   leaderHostName, leaderPort, topic, partition));
+                    consumer.host(), consumer.port(), topic, partition, errorCode));
   }
 
   private void saveReplicaBrokers(PartitionMetadata partitionMetadata) {
@@ -246,15 +192,15 @@ public final class KafkaConsumer implements Closeable {
     }
   }
 
-  private static PartitionMetadata findLeader(List<KafkaHost> replicaBrokers, String topic,
-                                              int partition) throws OperationException {
-    PartitionMetadata returnMetaData = null;
+  private void findLeader() {
+    closeConsumer();
+
+    PartitionMetadata metadata = null;
     for (KafkaHost broker : replicaBrokers) {
-      SimpleConsumer consumer = null;
+      SimpleConsumer consumer = new SimpleConsumer(broker.getHostname(), broker.getPort(), TIMEOUT_MS,
+                                                   BUFFER_SIZE_BYTES, clientName);
       try {
-        consumer = new SimpleConsumer(broker.getHostname(), broker.getPort(), 100000, 64 * 1024, "leaderLookup");
-        List<String> topics = new ArrayList<String>();
-        topics.add(topic);
+        List<String> topics = ImmutableList.of(topic);
         TopicMetadataRequest req = new TopicMetadataRequest(topics);
         TopicMetadataResponse resp = consumer.send(req);
 
@@ -262,7 +208,7 @@ public final class KafkaConsumer implements Closeable {
         for (TopicMetadata item : metaData) {
           for (PartitionMetadata part : item.partitionsMetadata()) {
             if (part.partitionId() == partition) {
-              returnMetaData = part;
+              metadata = part;
               break;
             }
           }
@@ -277,11 +223,19 @@ public final class KafkaConsumer implements Closeable {
         }
       }
     }
-    if (returnMetaData == null) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                   String.format("Could not find leader for topic %s, partition %d",
-                                                 topic, partition));
+    if (metadata == null) {
+      throw new RuntimeException(String.format("Could not find leader for topic %s, partition %d",
+                                               topic, partition));
     }
-    return returnMetaData;
+
+    if (metadata.leader() == null) {
+      String message = String.format("Can't find leader for topic %s and partition %d with brokers %s.",
+                                     topic, partition, replicaBrokers.toString());
+      LOG.warn(message);
+      throw new RuntimeException(message);
+    }
+    consumer = new SimpleConsumer(metadata.leader().host(), metadata.leader().port(), TIMEOUT_MS, BUFFER_SIZE_BYTES,
+                                  clientName);
+    saveReplicaBrokers(metadata);
   }
 }
