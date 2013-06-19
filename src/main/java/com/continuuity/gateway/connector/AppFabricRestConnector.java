@@ -29,7 +29,7 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
   private static final HttpConfig defaultHttpConfig =
     new HttpConfig("app.rest")
       .setPort(10007)
-      .setPathMiddle("/app/");
+      .setPathMiddle("/app");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default.

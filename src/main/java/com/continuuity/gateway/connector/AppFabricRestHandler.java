@@ -68,14 +68,14 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * This is the Http request handler for the AppFabric rest connector. At this time it accepts GET, POST and PUT
  * requests. REST calls can be used to deploy an application, start or stop, or get the status of a flow, procedure
  * or a map reduce job. It also supports reading and changing the number of instances of a flowlet.
+ * a Post of http://<hostname>:<port>/app with the jar file of the to be deployed app in the content of the request
+ * can be used to deploy a new app.
+ * a Get http://<hostname>:<port>/app/status returns the current deployment status
+ * a Post
  */
 public class AppFabricRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
-
-  //the next two are additional, accepted paths beside the default '/app/' path prefix
-  private static final String ALLOW_APPS_STATUS = "/apps/status";
-  private static final String ALLOW_APP_DEPLOY = "/app";
 
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
   private static final String APPFABRIC_SERVICE_NAME = "app.fabric.service";
@@ -112,7 +112,6 @@ public class AppFabricRestHandler extends NettyRestHandler {
     this.connector = connector;
     metrics = connector.getMetricsClient();
     pathPrefix = connector.getHttpConfig().getPathPrefix() + connector.getHttpConfig().getPathMiddle();
-
   }
 
   @Override
@@ -150,12 +149,10 @@ public class AppFabricRestHandler extends NettyRestHandler {
         return;
       }
 
-      // check that path begins with pathPrefix or is one of the two additional accepted paths
-      if (!path.startsWith(pathPrefix)
-        && !ALLOW_APPS_STATUS.equals(path)
-        && !ALLOW_APP_DEPLOY.equals(path)) {
+      // check that path begins with pathPrefix, usually '/app' unless configured differently
+      if (!path.startsWith(pathPrefix)) {
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Received a request with unkown path prefix (must be '" + this.pathPrefix + "' but received '"
+          LOG.trace("Received a request with unkown path prefix (must be '" + pathPrefix + "' but received '"
                       + path + "'.");
         }
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
@@ -184,17 +181,13 @@ public class AppFabricRestHandler extends NettyRestHandler {
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
 
       try {
-        if (ALLOW_APPS_STATUS.equals(path)) {
-          ResourceIdentifier rIdentifier = new ResourceIdentifier(accountId, "no-app", "no-res", 1);
-          DeploymentStatus status = client.dstatus(token, rIdentifier);
-          byte[] response =
-            getJsonStatus(status.getOverall(), status.getMessage()).toString().getBytes(Charset.forName("UTF-8"));
-          respondJson(message.getChannel(), request, HttpResponseStatus.OK, response);
-          metricsHelper.finish(Success);
-          return;
-        }
-
-        if (ALLOW_APP_DEPLOY.equals(path)) {
+        if (pathPrefix.equals(path)) {  // Post with plain '/app' to deploy an app
+          if (request.getMethod() != HttpMethod.POST) {
+            LOG.trace("Only Http Post method is supported for this operation.");
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            metricsHelper.finish(BadRequest);
+            return;
+          }
           String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
           if (archiveName == null || archiveName.isEmpty()) {
             LOG.trace("Archive name was not available in the header");
@@ -225,11 +218,38 @@ public class AppFabricRestHandler extends NettyRestHandler {
           return;
         }
 
-        // from here on, path is either /app/<app-id>/<flow-type>/<flow id>?op=<op> with <op> as start, stop, status
-        // or /app/<app-id>/flow/<flow id>/<flowlet id>?op=instances
+        // from here on, path is either
+        // /app/status
+        // or
+        // /app/<app-id>/<flow-type>/<flow id>?op=<op> with <op> as start, stop, status
+        // or
+        // /app/<app-id>/flow/<flow id>/<flowlet id>?op=instances
 
-        // remove pathPrefix '/app/', then split path
-        String[] pathElements = path.substring(pathPrefix.length()).split("/");
+        // remove pathPrefix '/app' and separator '/', then split path into elements
+        String[] pathElements = path.substring(pathPrefix.length() + 1).split("/");
+
+        if (pathElements.length == 1) {
+          if ("status".equals(pathElements[0])) {
+            if (request.getMethod() != HttpMethod.GET) {
+              LOG.trace("Only Http Get method is supported for this operation.");
+              respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+              metricsHelper.finish(BadRequest);
+              return;
+            }
+            ResourceIdentifier rIdentifier = new ResourceIdentifier(accountId, "no-app", "no-res", 1);
+            DeploymentStatus status = client.dstatus(token, rIdentifier);
+            byte[] response =
+              getJsonStatus(status.getOverall(), status.getMessage()).toString().getBytes(Charset.forName("UTF-8"));
+            respondJson(message.getChannel(), request, HttpResponseStatus.OK, response);
+            metricsHelper.finish(Success);
+            return;
+          } else {
+            LOG.trace("Received unsupported request URL.");
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            metricsHelper.finish(BadRequest);
+            return;
+          }
+        }
 
         if (pathElements.length != 3 && pathElements.length != 4) {
           LOG.trace("Unsupported number of path elements in request URL.");
