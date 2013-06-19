@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.app.logging;
 
 import com.continuuity.common.logging.ApplicationLoggingContext;
@@ -7,7 +11,7 @@ import com.continuuity.common.logging.ApplicationLoggingContext;
  */
 public class ProcedureLoggingContext extends ApplicationLoggingContext {
 
-  public static final String TAG_PROCEDURE_ID = "procedureId";
+  public static final String TAG_PROCEDURE_ID = ".procedureId";
 
   /**
    * Constructs the ProcedureLoggingContext.
