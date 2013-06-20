@@ -2,7 +2,6 @@ package com.continuuity.performance.runner;
 
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
 import com.continuuity.performance.apps.simple.SimpleApp;
-import com.continuuity.performance.apps.trivial.TrivialApp;
 import com.continuuity.test.app.FlowManager;
 import com.continuuity.test.app.StreamWriter;
 
@@ -13,14 +12,14 @@ import java.util.concurrent.TimeoutException;
 /**
  *  Example of application-level performance test.
  */
-@RunWithApps({SimpleApp.class, TrivialApp.class})
+@RunWithApps({SimpleApp.class})
 public class SimplePerformanceTest {
 
   @PerformanceTest
   public void testApp() throws IOException, TimeoutException, InterruptedException {
     final int numStreamEvents = 100000;
 
-    FlowManager flowManager = PerformanceTestRunner.Context.startFlow("SimpleApp", "SimpleFlow");
+    FlowManager flowManager = PerformanceTestRunner.Context.startFlow("SimpleApp", "SimpleApp");
 
     flowManager.setFlowletInstances("source", 2);
 
@@ -31,7 +30,7 @@ public class SimplePerformanceTest {
     }
 
     BenchmarkRuntimeMetrics sourceFlowletMetrics =
-      PerformanceTestRunner.Context.getFlowletMetrics("SimpleApp", "SimpleFlow", "source");
+      PerformanceTestRunner.Context.getFlowletMetrics("SimpleApp", "SimpleApp", "source");
 
     System.out.println("Number of events processed by source flowlet = " + sourceFlowletMetrics.getProcessed());
 
@@ -40,7 +39,7 @@ public class SimplePerformanceTest {
     System.out.println("Number of events processed by source flowlet = " + sourceFlowletMetrics.getProcessed());
 
     BenchmarkRuntimeMetrics readerFlowletMetrics =
-      PerformanceTestRunner.Context.getFlowletMetrics("SimpleApp", "SimpleFlow", "reader");
+      PerformanceTestRunner.Context.getFlowletMetrics("SimpleApp", "SimpleApp", "reader");
 
     System.out.println("Number of events processed by reader flowlet = " + readerFlowletMetrics.getProcessed());
 

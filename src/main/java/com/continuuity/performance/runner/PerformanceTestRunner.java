@@ -6,26 +6,43 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.app.Id;
+import com.continuuity.app.authorization.AuthorizationFactory;
+import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.DeploymentStatus;
-import com.continuuity.app.services.ResourceIdentifier;
-import com.continuuity.app.services.ResourceInfo;
+import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.internal.app.BufferFileInputStream;
+import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
+import com.continuuity.internal.app.deploy.SyncManagerFactory;
+import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
+import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import com.continuuity.performance.application.BenchmarkManagerFactory;
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
+import com.continuuity.performance.application.BenchmarkStreamWriterFactory;
+import com.continuuity.performance.application.DefaultBenchmarkManager;
 import com.continuuity.performance.application.MensaMetricsReporter;
 import com.continuuity.performance.gateway.stream.MultiThreadedStreamWriter;
+import com.continuuity.pipeline.PipelineFactory;
 import com.continuuity.test.app.ApplicationManager;
+import com.continuuity.test.app.DefaultProcedureClient;
 import com.continuuity.test.app.FlowManager;
+import com.continuuity.test.app.ProcedureClient;
+import com.continuuity.test.app.ProcedureClientFactory;
 import com.continuuity.test.app.StreamWriter;
 import com.continuuity.test.app.TestHelper;
 import com.continuuity.test.app.internal.bytecode.FlowletRewriter;
@@ -40,8 +57,13 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -70,7 +92,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -252,84 +273,23 @@ public final class PerformanceTestRunner {
     }
   }
 
-//  public ApplicationManager deployApplication(Class<? extends Application> applicationClz) {
-//    Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
-//
-//    try {
-//
-//      ApplicationSpecification appSpec = applicationClz.newInstance().configure();
-//
-//      Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, DefaultId.ACCOUNT,
-//                                                          TestHelper.DUMMY_AUTH_TOKEN, "", appSpec.getName(),
-//                                                          applicationClz);
-//
-//      return
-//        injector.getInstance(BenchmarkManagerFactory.class).create(TestHelper.DUMMY_AUTH_TOKEN,
-//                                                                     DefaultId.ACCOUNT.getId(), appSpec.getName(),
-//                                                                     appFabricServer, deployedJar, appSpec);
-//
-//    } catch (Exception e) {
-//      throw Throwables.propagate(e);
-//    }
-//  }
-
   public ApplicationManager deployApplication(Class<? extends Application> applicationClz) {
-    Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
-
-    Application application;
-    try {
-      application = applicationClz.newInstance();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-    ApplicationSpecification appSpec = application.configure();
-    final String applicationId = appSpec.getName();
-
-    // Create the deployment jar
-    File jarFile = createDeploymentJar(applicationClz, appSpec);
-    LOG.debug("Created local deployment jar {} for application.", jarFile.getAbsolutePath());
-    Location deployedJar = locationFactory.create(jarFile.getAbsolutePath());
+    Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
     try {
-      // Call init to get a session identifier - yes, the name needs to be changed.
-      final AuthToken token = new AuthToken("appFabricTest");
-      ResourceIdentifier id = appFabricServer.init(
-        token, new ResourceInfo(accountId, "", applicationId, 0, System.currentTimeMillis()));
 
-      // Upload the jar file to remote location.
-      BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
-      try {
-        byte[] chunk = is.read();
-        while (chunk.length > 0) {
-          appFabricServer.chunk(token, id, ByteBuffer.wrap(chunk));
-          chunk = is.read();
-          DeploymentStatus status = appFabricServer.dstatus(token, id);
-          Preconditions.checkState(status.getOverall() == 2, "Fail to deploy app.");
-        }
-      } finally {
-        is.close();
-      }
+      ApplicationSpecification appSpec = applicationClz.newInstance().configure();
 
-      // RunWithApps the app
-      appFabricServer.deploy(token, id);
-      int status = appFabricServer.dstatus(token, id).getOverall();
-      while (status == 3) {
-        status = appFabricServer.dstatus(token, id).getOverall();
-        TimeUnit.MILLISECONDS.sleep(100);
-      }
-      Preconditions.checkState(status == 5, "Failed to deploy app.");
+      Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, new Id.Account(accountId),
+                                                          TestHelper.DUMMY_AUTH_TOKEN, "", appSpec.getName(),
+                                                          applicationClz);
 
-      ApplicationManager appManager
-        = (ApplicationManager) injector.getInstance(BenchmarkManagerFactory.class).create(token, accountId, applicationId,
-                                                                     appFabricServer,
-                                                                     deployedJar, appSpec);
-      Preconditions.checkNotNull(appManager, "Failed to deploy app.");
-      LOG.debug("Succesfully deployed jar file {} with application.", jarFile.getAbsolutePath());
-
-      return appManager;
+      return
+        injector.getInstance(BenchmarkManagerFactory.class).create(TestHelper.DUMMY_AUTH_TOKEN,
+                                                                   accountId, appSpec.getName(),
+                                                                     appFabricServer, deployedJar, appSpec);
 
     } catch (Exception e) {
-      LOG.error("Deployment of jar file {} with new application failed!", jarFile.getAbsolutePath());
       throw Throwables.propagate(e);
     }
   }
@@ -369,43 +329,43 @@ public final class PerformanceTestRunner {
       dataFabricModule = new DataFabricModules().getSingleNodeModules();
     }
 
-//    injector = Guice
-//      .createInjector(dataFabricModule,
-//                      new ConfigModule(configuration),
-//                      new IOModule(),
-//                      new LocationRuntimeModule().getInMemoryModules(),
-//                      new DiscoveryRuntimeModule().getInMemoryModules(),
-//                      new ProgramRunnerRuntimeModule().getInMemoryModules(),
-//                      new AbstractModule() {
-//                        @Override
-//                        protected void configure() {
-//                          install(new FactoryModuleBuilder()
-//                                    .implement(ApplicationManager.class, DefaultBenchmarkManager.class)
-//                                    .build(BenchmarkManagerFactory.class));
-//                          install(new FactoryModuleBuilder()
-//                                    .implement(StreamWriter.class, MultiThreadedStreamWriter.class)
-//                                    .build(BenchmarkStreamWriterFactory.class));
-//                          install(new FactoryModuleBuilder()
-//                                    .implement(ProcedureClient.class, DefaultProcedureClient.class)
-//                                    .build(ProcedureClientFactory.class));
-//                        }
-//                      },
-//                      new Module() {
-//                        @Override
-//                        public void configure(Binder binder) {
-//                          binder.bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
-//                          binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
-//
-//                          binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-//                          binder.bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-//                          binder.bind(AppFabricService.Iface.class).toInstance(appFabricServer);
-//                          binder.bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-//                          binder.bind(StoreFactory.class).to(MDSStoreFactory.class);
-//                        }
-//                      }
-//      );
-//
-//    locationFactory = injector.getInstance(LocationFactory.class);
+    injector = Guice
+      .createInjector(dataFabricModule,
+                      new ConfigModule(configuration),
+                      new IOModule(),
+                      new LocationRuntimeModule().getInMemoryModules(),
+                      new DiscoveryRuntimeModule().getInMemoryModules(),
+                      new ProgramRunnerRuntimeModule().getInMemoryModules(), new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                          install(new FactoryModuleBuilder().implement(ApplicationManager.class,
+                                                                       DefaultBenchmarkManager.class).build
+                            (BenchmarkManagerFactory.class));
+                          install(new FactoryModuleBuilder().implement(StreamWriter.class,
+                                                                       MultiThreadedStreamWriter.class).build
+                            (BenchmarkStreamWriterFactory.class));
+                          install(new FactoryModuleBuilder().implement(ProcedureClient.class,
+                                                                       DefaultProcedureClient.class).build
+                            (ProcedureClientFactory.class));
+                        }
+                      }, new Module() {
+                        @Override
+                        public void configure(Binder binder) {
+                          binder.bind(new TypeLiteral<PipelineFactory<?>>() {
+                          }).to(new TypeLiteral<SynchronousPipelineFactory<?>>() {
+                          });
+                          binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
+
+                          binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
+                          binder.bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
+                          binder.bind(AppFabricService.Iface.class).toInstance(appFabricServer);
+                          binder.bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
+                          binder.bind(StoreFactory.class).to(MDSStoreFactory.class);
+                        }
+                      }
+      );
+
+    locationFactory = injector.getInstance(LocationFactory.class);
   }
 
   private File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec) {
@@ -523,6 +483,10 @@ public final class PerformanceTestRunner {
 
   private static AppFabricService.Client getAppFabricClient() throws TTransportException  {
     CConfiguration config = CConfiguration.create();
+    String host = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
+                             Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
+    int port = config.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT,
+                             Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
     return new AppFabricService.Client(getThriftProtocol(config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
                                                                     Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS),
                                                          config.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT,
@@ -547,7 +511,7 @@ public final class PerformanceTestRunner {
     Context runManager = Context.getInstance(this);
     Class<? extends Application>[] apps = getApplications(testClass);
     if (apps != null && apps.length != 0) {
-//      clearAppFabric();
+      clearAppFabric();
       for (Class<? extends Application> each : apps) {
         appManager = deployApplication(each);
         runManager.addApplicationManager(each.getSimpleName(), appManager);
