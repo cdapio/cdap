@@ -5,7 +5,7 @@
 package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.exceptions.StaleNonceException;
-import com.continuuity.passport.core.service.DataManagementService;
+import com.continuuity.passport.core.service.SecurityService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -24,12 +24,12 @@ import javax.ws.rs.core.Response;
 @Singleton
 public class SessionNonceHandler extends PassportHandler {
 
-  private final DataManagementService dataManagementService;
+  private final SecurityService securityService;
   private static final Logger LOG = LoggerFactory.getLogger(SessionNonceHandler.class);
 
   @Inject
-  public SessionNonceHandler(DataManagementService dataManagementService) {
-    this.dataManagementService = dataManagementService;
+  public SessionNonceHandler(SecurityService securityService) {
+    this.securityService = securityService;
   }
 
 
@@ -40,7 +40,7 @@ public class SessionNonceHandler extends PassportHandler {
     requestReceived();
     int nonce = -1;
     try {
-      nonce = dataManagementService.getSessionNonce(id);
+      nonce = securityService.getSessionNonce(id);
       if (nonce != -1) {
         requestSuccess();
         return Response.ok(Utils.getNonceJson(null, nonce)).build();
@@ -68,7 +68,7 @@ public class SessionNonceHandler extends PassportHandler {
     requestReceived();
     String id = null;
     try {
-      id = dataManagementService.getSessionId(nonce);
+      id = securityService.getSessionId(nonce);
       if ((id != null) && (!id.isEmpty())) {
         requestSuccess();
         return Response.ok(Utils.getIdJson(null, id)).build();

@@ -7,7 +7,6 @@ package com.continuuity.passport.core.service;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
-import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.status.Status;
@@ -138,32 +137,6 @@ public interface DataManagementService {
    */
   public List<VPC> getVPC(String apiKey);
 
-
-  /**
-   * Generate a unique id to be used in activation email to enable secure (nonce based) registration process.
-   * @param id Id to be nonced
-   * @return random nonce
-   * TODO: (ENG-2215) - note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
-   */
-  public int getActivationNonce(String id);
-
-  /**
-   * Get id for nonce.
-   * @param nonce nonce that was generated.
-   * @return id
-   * @throws StaleNonceException on nonce that was generated expiring in the system
-   * TODO: (ENG-2215) - note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
-   */
-  public String getActivationId(int nonce) throws StaleNonceException;
-
-  /**
-   * Generate a nonce that will be used for sessions.
-   * @param id ID to be nonced
-   * @return random nonce
-   * TODO: (ENG-2215) - note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
-   */
-  public int getSessionNonce(String id);
-
   /**
    * Checks if the VPC is valid.
    * Validity is based on if vpc exists in the system and the vpc name is not in blacklist (profane) dictionary
@@ -171,23 +144,6 @@ public interface DataManagementService {
    * @return True if VPC name doesn't exist in the system and is not profane
    */
   public boolean isValidVPC(String vpcName);
-
-  /**
-   * Get id for nonce.
-   * @param nonce
-   * @return account id for nonce key
-   * @throws StaleNonceException on nonce that was generated expiring in the system
-   * TODO: (ENG-2215) - note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
-   */
-  public String getSessionId(int nonce) throws StaleNonceException;
-
-  /**
-   * Generate Reset Nonce.
-   * @param id Id
-   * @return random nonce
-   */
-  public int getResetNonce(String id);
-
 
   /**
    * Regenerate API Key.
