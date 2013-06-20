@@ -192,6 +192,9 @@ public class ConverterUtils {
    * wrap an list of byte arrays into a list of byte buffers.
    */
   List<ByteBuffer> wrap(List<byte[]> arrays) {
+    if (arrays == null) {
+      return null;
+    }
     List<ByteBuffer> buffers = new ArrayList<ByteBuffer>(arrays.size());
     for (byte[] array : arrays) {
       buffers.add(wrap(array));
@@ -203,6 +206,9 @@ public class ConverterUtils {
    * unwrap an array of byte arrays from a list of byte buffers.
    */
   byte[][] unwrap(List<ByteBuffer> buffers) {
+    if (buffers == null) {
+      return null;
+    }
     byte[][] arrays = new byte[buffers.size()][];
     int i = 0;
     for (ByteBuffer buffer : buffers) {
