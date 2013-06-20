@@ -581,7 +581,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
             continue;
           }
 
-          rowKey = kv.getKey();
+          rowKey = kv.getRow();
           byte[] column = kv.getQualifier();
           if (Bytes.equals(column, last)) {
             continue;

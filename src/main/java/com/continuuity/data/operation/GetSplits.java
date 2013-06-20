@@ -1,5 +1,7 @@
 package com.continuuity.data.operation;
 
+import com.google.common.base.Preconditions;
+
 /**
  * An operations to spit a table into ranges of row keys
  */
@@ -135,6 +137,7 @@ public class GetSplits extends ReadOperation {
    * @param columns the columns to read
    */
   public GetSplits(String table, int numSplits, byte[] start, byte[] stop, byte[][] columns) {
+    Preconditions.checkArgument(columns == null || columns.length > 0, "columns must not have size 0");
     this.numSplits = numSplits;
     this.columns = columns;
     this.stop = stop;
