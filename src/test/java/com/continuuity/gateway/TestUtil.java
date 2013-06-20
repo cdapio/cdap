@@ -606,6 +606,17 @@ public class TestUtil {
    * @param headers map with header data
    */
   public static int sendPostRequest(String url, Map<String, String> headers) throws Exception {
+    return sendPostRequest(url, new byte[0], headers);
+  }
+
+  /**
+   * Send a Post request to the given URL and return the HTTP status
+   *
+   * @param url the URL to post to
+   * @param content binary content
+   * @param headers map with header data
+   */
+  public static int sendPostRequest(String url, byte[] content, Map<String, String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(url);
     if (headers!=null) {
@@ -613,17 +624,37 @@ public class TestUtil {
         post.setHeader(header.getKey(), header.getValue());
       }
     }
-    post.setEntity(new ByteArrayEntity(new byte[0]));
+    post.setEntity(new ByteArrayEntity(content));
     HttpResponse response = client.execute(post);
     client.getConnectionManager().shutdown();
     return response.getStatusLine().getStatusCode();
   }
 
-
   /**
-   * Send a POST request to the given URL and return the HTTP status
+   * Send a Post request to the given URL and return the HTTP status
    *
    * @param url the URL to post to
+   * @param content String content
+   * @param headers map with header data
+   */
+  public static int sendPostRequest(String url, String content, Map<String, String> headers) throws Exception {
+    HttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost(url);
+    if (headers!=null) {
+      for(Map.Entry<String,String> header: headers.entrySet()) {
+        post.setHeader(header.getKey(), header.getValue());
+      }
+    }
+    post.setEntity(new StringEntity(content, "UTF-8"));
+    HttpResponse response = client.execute(post);
+    client.getConnectionManager().shutdown();
+    return response.getStatusLine().getStatusCode();
+  }
+
+  /**
+   * Send a PUT request to the given URL and return the HTTP status
+   *
+   * @param url the URL to put to
    */
   public static int sendPutRequest(String url) throws Exception {
     return sendPutRequest(url, new HashMap<String, String>());
@@ -632,7 +663,7 @@ public class TestUtil {
   /**
    * Send a PUT request to the given URL and return the HTTP status
    *
-   * @param url the URL to post to
+   * @param url the URL to put to
    * @param headers map with header data
    */
   public static int sendPutRequest(String url, Map<String, String> headers) throws Exception {

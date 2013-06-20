@@ -35,8 +35,8 @@ public class AppFabricConnectorTest {
 
   private static AppFabricServer server;
   private static Connector restConnector;
-  private static int port;
   private static String baseURL;
+  private static String pingURL;
   private static final String prefix = "";
 
   /**
@@ -67,12 +67,13 @@ public class AppFabricConnectorTest {
     restConnector.setName(name);
     restConnector.setAuthenticator(new NoAuthenticator());
 
-    port = PortDetector.findFreePort();
+    int port = PortDetector.findFreePort();
     // configure it
     configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
     configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-    String middle = "/app/";
+    String middle = "/app";
     baseURL = "http://localhost:" + port + middle;
+    pingURL = "http://localhost:" + port + "/ping";
     configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle);
     restConnector.configure(configuration);
     restConnector.start();
@@ -81,16 +82,53 @@ public class AppFabricConnectorTest {
 
   @Test
   public void testDeploy() throws Exception {
+    String deployStatusUrl = baseURL + "/status";
     Assert.assertEquals(200, deploy("WordCount.jar"));
+
+    Map<String,String> headers = Maps.newHashMap();
+    headers.put(CONTINUUITY_API_KEY, "api-key-example");
+    headers.put("Content-Type", "application/json");
+
+    HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testDeployStatus() throws Exception {
+    Assert.assertEquals(200, deploy("WordCount.jar"));
+
+    String deployStatusUrl = baseURL + "/status";
+
+    Map<String,String> headers = Maps.newHashMap();
+    headers.put(CONTINUUITY_API_KEY, "api-key-example");
+    headers.put("Content-Type", "application/json");
+
+    HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    Map<String, Object> map = new Gson().fromJson(reader, new TypeToken<Map<String, Object>>() {}.getType());
+
+    Assert.assertTrue((Double) map.get("status") == 5.0);
+  }
+
+  @Test
+  public void testPing() throws Exception {
+    Assert.assertEquals(200, deploy("WordCount.jar"));
+
+    Map<String,String> headers = Maps.newHashMap();
+
+    HttpResponse response = TestUtil.sendGetRequest(pingURL, headers);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   @Test
   public void testSetFlowletInstances() throws Exception {
     Assert.assertEquals(200, deploy("WordCount.jar"));
-    String startFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=start";
-    String stopFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=stop";
-    String queryInstancesUrl = baseURL + "WordCountApp/flow/WordCountFlow/Tokenizer?op=instances";
-    String setInstancesUrl = baseURL + "WordCountApp/flow/WordCountFlow/Tokenizer?op=instances";
+    String startFlowUrl = baseURL + "/WordCountApp/flow/WordCountFlow?op=start";
+    String stopFlowUrl = baseURL + "/WordCountApp/flow/WordCountFlow?op=stop";
+    String queryInstancesUrl = baseURL + "/WordCountApp/flow/WordCountFlow/Tokenizer?op=instances";
+    String setInstancesUrl = baseURL + "/WordCountApp/flow/WordCountFlow/Tokenizer?op=instances";
 
     Map<String,String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
@@ -113,11 +151,11 @@ public class AppFabricConnectorTest {
   @Test
   public void testStartAndStopFlow() throws Exception {
     Assert.assertEquals(200, deploy("WordCount.jar"));
-    String startFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=start";
-    String stopFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=stop";
-    String startProcedureUrl = baseURL + "WordCountApp/procedure/WordFrequency?op=start";
-    String stopProcedureUrl = baseURL + "WordCountApp/procedure/WordFrequency?op=stop";
-    String statusFlowUrl = baseURL + "WordCountApp/flow/WordCountFlow?op=status";
+    String startFlowUrl = baseURL + "/WordCountApp/flow/WordCountFlow?op=start";
+    String stopFlowUrl = baseURL + "/WordCountApp/flow/WordCountFlow?op=stop";
+    String startProcedureUrl = baseURL + "/WordCountApp/procedure/WordFrequency?op=start";
+    String stopProcedureUrl = baseURL + "/WordCountApp/procedure/WordFrequency?op=stop";
+    String statusFlowUrl = baseURL + "/WordCountApp/flow/WordCountFlow?op=status";
 
     Map<String,String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
@@ -131,6 +169,12 @@ public class AppFabricConnectorTest {
     Map<String, String> map = new Gson().fromJson(reader, new TypeToken<Map<String, String>>() {}.getType());
 
     Assert.assertEquals("RUNNING", map.get("status"));
+
+    Assert.assertEquals(200, TestUtil.sendPostRequest(stopFlowUrl, headers));
+
+    Assert.assertEquals(200, TestUtil.sendPostRequest(startFlowUrl, "{\"argument1\":\"value1\"}", headers));
+
+    Assert.assertEquals(400, TestUtil.sendPostRequest(startFlowUrl, "{\"argument1\"}", headers));
 
     Assert.assertEquals(200, TestUtil.sendPostRequest(stopFlowUrl, headers));
 
@@ -150,9 +194,6 @@ public class AppFabricConnectorTest {
   }
 
   private int deploy(String jarFileName) throws Exception {
-    // setup connector
-    String deployUrl = "http://localhost:" + port + "/app";
-
     // JAR file is stored in test/resource/WordCount.jar.
     File archive = FileUtils.toFile(getClass().getResource("/" + jarFileName));
 
@@ -166,6 +207,6 @@ public class AppFabricConnectorTest {
     } finally {
       bos.close();
     }
-    return TestUtil.sendPutRequest(deployUrl, bos.toByteArray(), headers);
+    return TestUtil.sendPostRequest(baseURL, bos.toByteArray(), headers);
   }
 }

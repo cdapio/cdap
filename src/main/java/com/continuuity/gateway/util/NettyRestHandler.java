@@ -2,6 +2,8 @@ package com.continuuity.gateway.util;
 
 import com.continuuity.common.metrics.MetricsHelper;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
@@ -51,6 +53,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param reason the reason for the error, will be returned in the body of the response.
    */
   protected void respondError(Channel channel, HttpResponseStatus status, String reason) {
+
     HttpResponse response = new DefaultHttpResponse(
       HttpVersion.HTTP_1_1, status);
     if (reason != null) {
@@ -72,10 +75,8 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param channel        the channel on which the request came
    * @param allowedMethods the HTTP methods that are accepted
    */
-  protected void respondNotAllowed(Channel channel,
-                                   Iterable<HttpMethod> allowedMethods) {
-    HttpResponse response = new DefaultHttpResponse(
-      HttpVersion.HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
+  protected void respondNotAllowed(Channel channel, Iterable<HttpMethod> allowedMethods) {
+    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
     StringBuilder allowed = new StringBuilder();
     String comma = "";
     for (HttpMethod method : allowedMethods) {
@@ -200,5 +201,16 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
     respondBadRequest(message, request, helper, reason, HttpResponseStatus.BAD_REQUEST, e);
   }
 
+  protected void respondJson(Channel channel, HttpRequest request, HttpResponseStatus status, byte[] jsonContent) {
+    Map<String, String> headers = Maps.newHashMap();
+    headers.put(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+    respond(channel, request, status, headers, jsonContent);
+  }
 
+  protected JsonObject getJsonStatus(int status, String message) {
+    JsonObject object = new JsonObject();
+    object.addProperty("status", status);
+    object.addProperty("message", message);
+    return object;
+  }
 }
