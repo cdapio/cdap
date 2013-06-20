@@ -196,7 +196,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   private CommandLine parseArgs(String[] args) {
-    Options opts = new Options().addOption(createOption(RunnableOptions.JAR, "Program jar location"));
+    Options opts = new Options()
+      .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
+      .addOption(createOption(RunnableOptions.RUNTIME_ARGS, "Runtime arguments"));
 
     try {
       return new PosixParser().parse(opts, args);
