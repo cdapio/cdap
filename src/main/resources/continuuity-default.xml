@@ -191,7 +191,7 @@
 
     <property>
         <name>app.rest.middle</name>
-        <value>/app/</value>
+        <value>/app</value>
     </property>
 
     <!-- Procedure Handler -->
