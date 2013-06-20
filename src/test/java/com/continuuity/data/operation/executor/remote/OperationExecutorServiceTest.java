@@ -805,7 +805,7 @@ public abstract class OperationExecutorServiceTest extends
 
   // this is a slight variation of the same test in TestOmidOpEx, the difference is that remote opex does not
   // support scans, so we have to get splits using remote opex, but verify them by scanning with local opex.
-  @Test(timeout=20000)
+  @Test(timeout=30000)
   public void testBatchReads() throws OperationException, InterruptedException {
     final String table = "tBRs";
 
@@ -815,7 +815,7 @@ public abstract class OperationExecutorServiceTest extends
     Random rand = new Random(451); // this will give us the same "random" sequence reproducibly. but random enough.
     for (int i = 0; i < 500; i++) {
       long keyLong = rand.nextLong();
-      byte[] key = org.apache.hadoop.hbase.util.Bytes.toBytes(keyLong);
+      byte[] key = Bytes.toBytes(keyLong);
       ops.add(new Write(table, key,  new byte[][] { c, key }, new byte[][] { key, v }));
       keysWritten.add(keyLong);
     }
@@ -831,8 +831,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // get specific number of splits for a subrange
     long start = 0x10000000L, stop = 0x40000000L;
-    result = remote.execute(context, new GetSplits(table, 5, org.apache.hadoop.hbase.util.Bytes.toBytes(start), org
-      .apache.hadoop.hbase.util.Bytes.toBytes(stop)));
+    result = remote.execute(context, new GetSplits(table, 5, Bytes.toBytes(start), Bytes.toBytes(stop)));
     Assert.assertFalse(result.isEmpty());
     splits = result.getValue();
     Assert.assertTrue(splits.size() <= 5);
