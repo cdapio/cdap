@@ -26,21 +26,22 @@ import org.slf4j.LoggerFactory;
  * Tokenizer Flowlet.
  */
 public class Tokenizer extends AbstractFlowlet {
-  private static Logger logger = LoggerFactory.getLogger(Tokenizer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Tokenizer
+                                                                 .class);
 
   private OutputEmitter<String> output;
 
   public void process(String line) {
-    logger.debug("Received line: " + line);
+    LOG.debug("Received line: " + line);
     if (line == null || line.isEmpty()) {
-      logger.warn("Received empty line");
+      LOG.warn("Received empty line");
       return;
     }
 
     String[] tokens = tokenize(line);
 
     for (String token : tokens) {
-      logger.debug("Emitting token: " + token);
+      LOG.debug("Emitting token: " + token);
       output.emit(token);
     }
   }

@@ -34,7 +34,8 @@ import java.util.regex.Pattern;
  * Dynamic Filter Flowlet.
  */
 public class DynamicFilterFlowlet extends AbstractFlowlet {
-  private static Logger logger = LoggerFactory.getLogger(DynamicFilterFlowlet.class);
+  private static final Logger LOG =
+    LoggerFactory.getLogger (DynamicFilterFlowlet.class);
 
   private String filterName;
   private String filterRegex;
@@ -73,11 +74,11 @@ public class DynamicFilterFlowlet extends AbstractFlowlet {
 
   @ProcessInput("tokens")
   public void process(String token) {
-    logger.debug("Processing token '" + token + "' against filter with name " +
+    LOG.debug("Processing token '" + token + "' against filter with name " +
                    filterName + " and regex " + filterRegex);
 
     if (Pattern.matches(filterRegex, token)) {
-      logger.debug("Matched token " + token + " against filter " + filterName);
+      LOG.debug("Matched token " + token + " against filter " + filterName);
       countOutput.emit(filterName);
     }
 

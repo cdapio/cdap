@@ -27,13 +27,14 @@ import org.slf4j.LoggerFactory;
  * Process and increment Count.
  */
 public class Incrementer extends AbstractFlowlet {
-  private static Logger logger = LoggerFactory.getLogger(Incrementer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Incrementer
+                                                               .class);
 
   @UseDataSet(CountCounts.TABLE_NAME)
   CountCounterTable counters;
 
   public void process(Counts counts) throws OperationException {
-    logger.debug(this.getContext().getName() + ": Received counts " + counts);
+    LOG.debug(this.getContext().getName() + ": Received counts " + counts);
 
     // increment the word count (and count counts)
     this.counters.incrementWordCount(counts.getWordCount());

@@ -17,8 +17,9 @@
 
 /**
  * Package for Simple write and Read sample application.
+ * DataFabricDemo application is a application with a single flow that demonstrates
+ * how to read and write from data fabric. It's attached to a single stream named "text".
  */
-
 package com.continuuity.examples.simplewriteandread;
 
 

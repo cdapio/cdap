@@ -17,8 +17,13 @@
 
 /**
  * Package for Hello World sample application.
+ * This is a simple HelloWorld example that uses one stream, on dataset, one flow and one procedure.
+ * <uL>
+ *   <li>A stream to send names to.</li>
+ *   <li>A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable</li>
+ *   <li>A procedure that reads the name from the KeyValueTable and prints Hello [Name]!</li>
+ * </uL>
  */
-
 package com.continuuity.examples.helloworld;
 
 

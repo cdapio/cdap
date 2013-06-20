@@ -21,7 +21,7 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 
 /**
- *
+ * Aggregates the purchase history of each customer.
  */
 public class PurchaseFlow implements Flow {
 

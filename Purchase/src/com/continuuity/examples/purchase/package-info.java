@@ -17,8 +17,9 @@
 
 /**
  * Package for Purchase sample application.
+ * Simple purchase app that demonstrate how to use object store and map
+ * reduce batch for tracking purchases
  */
-
 package com.continuuity.examples.purchase;
 
 

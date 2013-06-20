@@ -25,7 +25,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import java.util.ArrayList;
 
 /**
- *
+ * Collects buyer information.
  */
 public class PurchaseCollector extends AbstractFlowlet {
 

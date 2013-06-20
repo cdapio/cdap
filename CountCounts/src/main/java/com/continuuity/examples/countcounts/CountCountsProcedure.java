@@ -36,7 +36,8 @@ import java.util.Map;
  * Count Counts Procedure. Returns word count, line count and line Length.
  */
 public class CountCountsProcedure extends AbstractProcedure {
-  private static Logger logger = LoggerFactory.getLogger(CountCountsProcedure.class);
+  private static final Logger LOG = LoggerFactory.getLogger
+                                                  (CountCountsProcedure.class);
 
   @UseDataSet(CountCounts.TABLE_NAME)
   CountCounterTable counters;

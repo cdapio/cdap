@@ -22,7 +22,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 
 /**
- *
+ * Reads and process purchase history steam.
  */
 public class PurchaseStreamReader extends AbstractFlowlet {
 

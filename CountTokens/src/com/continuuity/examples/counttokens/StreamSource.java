@@ -29,17 +29,18 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class StreamSource extends AbstractFlowlet {
-  private static Logger logger = LoggerFactory.getLogger(StreamSource.class);
+  private static final Logger LOG = LoggerFactory.getLogger(StreamSource
+                                                              .class);
 
   private OutputEmitter<String> output;
 
   public void process(StreamEvent event) {
-    logger.debug(this.getContext().getName() + ": Received event " + event);
+    LOG.debug(this.getContext().getName() + ": Received event " + event);
 
     byte[] body = Bytes.toBytes(event.getBody());
     String text = Bytes.toString(body);
 
-    logger.debug(this.getContext().getName() + ": Emitting line: " + text);
+    LOG.debug(this.getContext().getName() + ": Emitting line: " + text);
 
     output.emit(text);
   }

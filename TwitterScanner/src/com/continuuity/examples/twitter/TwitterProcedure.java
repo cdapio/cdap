@@ -37,7 +37,8 @@ import java.util.Map;
  *
  */
 public class TwitterProcedure extends AbstractProcedure {
-  private static Logger logger = LoggerFactory.getLogger(TwitterProcedure.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TwitterProcedure
+                                                            .class);
   @UseDataSet(TwitterScanner.TOP_HASH_TAGS)
   private SortedCounterTable topHashTags;
   @UseDataSet(TwitterScanner.WORD_COUNTS)
@@ -54,7 +55,7 @@ public class TwitterProcedure extends AbstractProcedure {
 
     if (!method.equals("getTopTags")) {
       String msg = "Invalid method: " + method;
-      logger.error(msg);
+      LOG.error(msg);
       responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE));
       return;
     }
@@ -109,7 +110,7 @@ public class TwitterProcedure extends AbstractProcedure {
       }
     } catch (OperationException e) {
       String msg = "Read operation failed: " + e.getMessage();
-      logger.error(msg, e);
+      LOG.error(msg, e);
       responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE));
       return;
     }

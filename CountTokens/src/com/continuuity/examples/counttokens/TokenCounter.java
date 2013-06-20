@@ -30,13 +30,14 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class TokenCounter extends AbstractFlowlet {
-  private static Logger logger = LoggerFactory.getLogger(TokenCounter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TokenCounter
+                                                              .class);
 
   @UseDataSet(CountTokens.TABLE_NAME)
   private KeyValueTable counters;
 
   public void process(String token) throws OperationException {
-    logger.debug(this.getContext().getName() + ": Received and " +
+    LOG.debug(this.getContext().getName() + ": Received and " +
         "incrementing count for token " + token);
     this.counters.increment(Bytes.toBytes(token), 1);
   }

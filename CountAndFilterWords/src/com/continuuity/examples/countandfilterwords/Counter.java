@@ -26,19 +26,20 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
  * Counter Flowlet; increments word count.
  */
 public class Counter extends AbstractFlowlet {
 
-  private static Logger logger = LoggerFactory.getLogger(Counter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Counter.class);
 
   @UseDataSet(CountAndFilterWords.TABLE_NAME)
   KeyValueTable counters;
 
   @ProcessInput("counts")
   public void process(String counter) throws OperationException {
-    logger.debug("Incrementing counter " + counter);
+    LOG.debug("Incrementing counter " + counter);
     this.counters.increment(Bytes.toBytes(counter), 1L);
   }
 }

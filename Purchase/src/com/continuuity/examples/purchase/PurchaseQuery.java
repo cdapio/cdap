@@ -28,7 +28,7 @@ import com.continuuity.api.procedure.ProcedureResponse;
 import java.util.ArrayList;
 
 /**
- * Purchase Query.
+ * Query for purchase history.
  */
 public class PurchaseQuery extends AbstractProcedure {
 
