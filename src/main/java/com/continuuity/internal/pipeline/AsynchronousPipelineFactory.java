@@ -13,6 +13,6 @@ public class AsynchronousPipelineFactory<T> implements PipelineFactory<T> {
    */
   @Override
   public Pipeline<T> getPipeline() {
-    return new AsynchronousPipeline();
+    return new AsynchronousPipeline<T>();
   }
 }
