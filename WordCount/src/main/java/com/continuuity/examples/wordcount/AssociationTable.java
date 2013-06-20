@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2013, Continuuity Inc
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are not permitted
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.common.Bytes;
@@ -15,6 +32,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+/**
+ *
+ */
 public class AssociationTable extends DataSet {
 
   private Table table;
@@ -48,7 +68,10 @@ public class AssociationTable extends DataSet {
 
     // for sets of less than 2 words, there are no associations
     int n = words.size();
-    if (n < 2) return;
+
+    if (n < 2) {
+      return;
+    }
 
     // every word will get (n-1) increments (one for each of the other words)
     long[] values = new long[n - 1];
@@ -73,13 +96,13 @@ public class AssociationTable extends DataSet {
 
   /**
    * Returns the top words associated with the specified word and the number
-   * of times the words have appeared together
+   * of times the words have appeared together.
    * @param word the word of interest
    * @param limit the number of associations to return, at most
    * @return a map of the top associated words to their co-occurrence count
    * @throws OperationException
    */
-  public Map<String,Long> readWordAssocs(String word, int limit)
+  public Map<String, Long> readWordAssocs(String word, int limit)
     throws OperationException {
 
     // Retrieve all columns of the word’s row
@@ -88,7 +111,7 @@ public class AssociationTable extends DataSet {
     TopKCollector collector = new TopKCollector(limit);
     if (!result.isEmpty()) {
       // iterate over all columns
-      for (Map.Entry<byte[],byte[]> entry : result.getValue().entrySet()) {
+      for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
         collector.add(Bytes.toLong(entry.getValue()),
                       Bytes.toString(entry.getKey()));
       }
@@ -97,7 +120,7 @@ public class AssociationTable extends DataSet {
   }
 
   /**
-   * Returns how many times two words occur together
+   * Returns how many times two words occur together.
    * @param word1 the first word
    * @param word2 the other word
    * @return how many times word1 and word2 occurred together

@@ -4,6 +4,10 @@ task "build"
 //import our single master ant build.xml
 ant.importBuild 'build.xml'
 
+// Import Checkstyle build config from ant
+task "check"
+ant.importBuild 'build-checkstyle.xml'
+
 //tell ant where our api jar is
 ant.properties['appfabric.home'] = '../../singlenode/build/libs/'
 
@@ -15,4 +19,5 @@ examplesJar.dependsOn ':singlenode:createApiJar'
 build.dependsOn 'examplesJar'
 clean.dependsOn 'examplesClean'
 
-
+// Bind ant target to gradle
+check.dependsOn 'checkstyle'

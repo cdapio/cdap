@@ -66,7 +66,7 @@ public class ClusterFeedReader {
   public ActivityFeed getActivityFeed(String country, int clusterId, int limit,
       long maxStamp, long minStamp) throws OperationException {
     // Read cluster info
-    Map<String,Double> clusterInfo = this.clusterTable.readCluster(clusterId);
+    Map<String, Double> clusterInfo = this.clusterTable.readCluster(clusterId);
     if (clusterInfo == null || clusterInfo.isEmpty()) {
       String str = "Cluster not found (id=" + clusterId + ")";
       LOG.warn(str);
@@ -76,7 +76,7 @@ public class ClusterFeedReader {
     // starting from max_stamp to min_stamp (but each reversed)
     List<CachingActivityFeedScanner> scanners =
         new ArrayList<CachingActivityFeedScanner>(clusterInfo.size());
-    for (Map.Entry<String,Double> entry : clusterInfo.entrySet()) {
+    for (Map.Entry<String, Double> entry : clusterInfo.entrySet()) {
       String category = entry.getKey();
       Double weight = entry.getValue(); // TODO: Do something with weight
       CachingActivityFeedScanner scanner = new CachingActivityFeedScanner(
