@@ -13,6 +13,7 @@ import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -60,7 +61,6 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,8 +111,25 @@ public class AppFabricRestHandler extends NettyRestHandler {
   /**
    * The allowed URI and Http methods for this handler.
    */
-  private static final Map<String, List<HttpMethod>> ALLOWED_PATHS = generateAllowedURIs();
-
+//  private static final Map<String, List<HttpMethod>> ALLOWED_PATHS = generateAllowedURIs();
+  private static final Map<String, ImmutablePair<List<HttpMethod>, Pattern>> ALLOWED_PATHS =
+    ImmutableMap.of(
+      DEPLOY_PATH,
+        new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST),
+                                                     Pattern.compile(DEPLOY_PATH)),
+      DEPLOY_STATUS_PATH,
+        new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                     Pattern.compile(DEPLOY_STATUS_PATH)),
+      FLOW_START_STOP_PATH,
+        new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST),
+                                                     Pattern.compile(FLOW_START_STOP_PATH)),
+      FLOW_STATUS_PATH,
+        new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                     Pattern.compile(FLOW_STATUS_PATH)),
+      FLOWLET_INSTANCES_PATH,
+      new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
+                                                   Pattern.compile(FLOWLET_INSTANCES_PATH))
+    );
   /**
    * Will help validate URL paths, authenticate and get a metrics helper
    */
@@ -143,28 +160,18 @@ public class AppFabricRestHandler extends NettyRestHandler {
                                                     connector.getGatewayMetrics());
   }
 
-  private static Map<String, List<HttpMethod>> generateAllowedURIs() {
-    Map<String, List<HttpMethod>> map = new LinkedHashMap<String, List<HttpMethod>>();
-    map.put(DEPLOY_PATH, ImmutableList.of(HttpMethod.POST));
-    map.put(DEPLOY_STATUS_PATH, ImmutableList.of(HttpMethod.GET));
-    map.put(FLOW_START_STOP_PATH, ImmutableList.of(HttpMethod.POST));
-    map.put(FLOW_STATUS_PATH, ImmutableList.of(HttpMethod.GET));
-    map.put(FLOWLET_INSTANCES_PATH, ImmutableList.of(HttpMethod.GET, HttpMethod.PUT));
-    return map;
-  }
-
-  private String matchURI(String requestUri, HttpMethod method, MessageEvent message) {
+  String matchURI(String requestUri, HttpMethod method, MessageEvent message) {
     if (requestUri.startsWith(pathPrefix)) {
       String path = requestUri.substring(pathPrefix.length());
-      for (Map.Entry<String, List<HttpMethod>> uriPattern : ALLOWED_PATHS.entrySet()) {
+      for (Map.Entry<String, ImmutablePair<List<HttpMethod>, Pattern>> uriPattern : ALLOWED_PATHS.entrySet()) {
         if (path.matches(uriPattern.getKey())) {
-          if (uriPattern.getValue().contains(method)) {
+          if (uriPattern.getValue().getFirst().contains(method)) {
             return uriPattern.getKey();
           } else {
             if (LOG.isTraceEnabled()) {
               LOG.trace("Received a {} request, which is not supported by '{}'.", method, requestUri);
             }
-            respondNotAllowed(message.getChannel(), uriPattern.getValue());
+            respondNotAllowed(message.getChannel(), uriPattern.getValue().getFirst());
             metricsHelper.finish(BadRequest);
             return null;
           }
@@ -288,7 +295,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
         // /app/<app-id>/flow/<flow id>/<flowlet id>?op=instances
 
         if (opPath.equals(FLOW_START_STOP_PATH)) {
-          Pattern p = Pattern.compile(FLOW_START_STOP_PATH);
+          Pattern p = ALLOWED_PATHS.get(FLOW_START_STOP_PATH).getSecond();
           Matcher m = p.matcher(requestUri.substring(pathPrefix.length()));
           m.find();
           FlowIdentifier flowIdent = new FlowIdentifier(accountId, m.group(1), m.group(3), 1);
@@ -297,7 +304,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
         }
 
         if (opPath.equals(FLOW_STATUS_PATH)) {
-          Pattern p = Pattern.compile(FLOW_STATUS_PATH);
+          Pattern p = ALLOWED_PATHS.get(FLOW_STATUS_PATH).getSecond();
           Matcher m = p.matcher(requestUri.substring(pathPrefix.length()));
           m.find();
           FlowIdentifier flowIdent = new FlowIdentifier(accountId, m.group(1), m.group(3), 1);
@@ -306,7 +313,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
         }
 
         if (opPath.equals(FLOWLET_INSTANCES_PATH)) {
-          Pattern p = Pattern.compile(FLOWLET_INSTANCES_PATH);
+          Pattern p = ALLOWED_PATHS.get(FLOWLET_INSTANCES_PATH).getSecond();
           Matcher m = p.matcher(requestUri.substring(pathPrefix.length()));
           m.find();
           FlowIdentifier flowIdent = new FlowIdentifier(accountId, m.group(1), m.group(2), 1);
@@ -338,13 +345,27 @@ public class AppFabricRestHandler extends NettyRestHandler {
                                    String operation)
     throws TException, AppFabricServiceException {
 
-
     // ignoring that flow might be running already when starting flow; or has been stopped before trying to stop flow
     if ("start".equals(operation)) {
-      client.start(token, new FlowDescriptor(flowIdent, ImmutableMap.<String, String>of()));
-      // returning success, application needs to retrieve status of flow to verify that flow is actually running
-      respondSuccess(message.getChannel(), request);
-      metricsHelper.finish(Success);
+      try {
+        // looking for optional Map<String, String> in Json format in content of request body
+        InputStreamReader reader =
+          new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+        Map<String, String> arguments = new Gson().fromJson(reader, new TypeToken<Map<String, String>>() {}.getType());
+        if (arguments == null) {
+          arguments = ImmutableMap.of();
+        }
+        client.start(token, new FlowDescriptor(flowIdent, arguments));
+        // returning success, application needs to retrieve status of flow to verify that flow is actually running
+        respondSuccess(message.getChannel(), request);
+        metricsHelper.finish(Success);
+      }  catch (JsonParseException e) {
+        // failed to parse json, so respond with bad request
+        respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST,
+                     String.format("Failed to read arguments for flow as JSON from request: %s.", e.getMessage()), true);
+        metricsHelper.finish(BadRequest);
+        return;
+      }
 
     } else if ("stop".equals(operation)) {
       client.stop(token, flowIdent);

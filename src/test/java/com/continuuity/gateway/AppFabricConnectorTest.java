@@ -35,7 +35,6 @@ public class AppFabricConnectorTest {
 
   private static AppFabricServer server;
   private static Connector restConnector;
-  private static int port;
   private static String baseURL;
   private static String pingURL;
   private static final String prefix = "";
@@ -68,7 +67,7 @@ public class AppFabricConnectorTest {
     restConnector.setName(name);
     restConnector.setAuthenticator(new NoAuthenticator());
 
-    port = PortDetector.findFreePort();
+    int port = PortDetector.findFreePort();
     // configure it
     configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
     configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
@@ -170,6 +169,12 @@ public class AppFabricConnectorTest {
     Map<String, String> map = new Gson().fromJson(reader, new TypeToken<Map<String, String>>() {}.getType());
 
     Assert.assertEquals("RUNNING", map.get("status"));
+
+    Assert.assertEquals(200, TestUtil.sendPostRequest(stopFlowUrl, headers));
+
+    Assert.assertEquals(200, TestUtil.sendPostRequest(startFlowUrl, "{\"argument1\":\"value1\"}", headers));
+
+    Assert.assertEquals(400, TestUtil.sendPostRequest(startFlowUrl, "{\"argument1\"}", headers));
 
     Assert.assertEquals(200, TestUtil.sendPostRequest(stopFlowUrl, headers));
 
