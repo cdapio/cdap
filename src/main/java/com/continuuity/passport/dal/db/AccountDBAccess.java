@@ -11,7 +11,6 @@ import com.continuuity.passport.core.utils.ApiKey;
 import com.continuuity.passport.core.utils.PasswordUtils;
 import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.meta.Account;
-import com.continuuity.passport.meta.BillingInfo;
 import com.continuuity.passport.meta.Role;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -336,45 +335,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
     return account;
   }
-
-
-  @Override
-  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) {
-
-    Connection connection = null;
-    PreparedStatement ps = null;
-
-    try {
-      connection = this.poolManager.getValidConnection();
-
-
-      String sql = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)",
-        DBUtils.AccountPayment.TABLE_NAME,
-        DBUtils.AccountPayment.ACCOUNT_ID_COLUMN,
-        DBUtils.AccountPayment.CREDIT_CARD_NAME_COLUMN,
-        DBUtils.AccountPayment.CREDIT_CARD_NUMBER_COLUMN,
-        DBUtils.AccountPayment.CREDIT_CARD_CVV_COLUMN,
-        DBUtils.AccountPayment.CREDIT_CARD_EXPIRY_COLUMN);
-
-      ps = connection.prepareStatement(sql);
-
-      ps.setInt(1, accountId);
-      ps.setString(2, billingInfo.getCreditCardName());
-      ps.setString(3, billingInfo.getCreditCardNumber());
-      ps.setString(4, billingInfo.getCvv());
-      ps.setString(5, billingInfo.getExpirationDate());
-
-      ps.executeUpdate();
-
-    } catch (SQLException e) {
-      throw Throwables.propagate(e);
-    } finally {
-      close(connection, ps);
-    }
-
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
 
   @Override
   public boolean addRoleType(int accountId, Role role)  {
