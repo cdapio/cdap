@@ -80,7 +80,7 @@ public class MockGuiceBindings extends JerseyServletModule {
     bind(VPCHandler.class);
 
 
-    //Bind Services to default implementations
+    //Bind services to default implementations
     bind(DataManagementService.class).to(DataManagementServiceImpl.class);
     bind(AuthenticatorService.class).to(AuthenticatorServiceImpl.class);
     bind(SecurityService.class).to(SecuritySeviceImpl.class);
