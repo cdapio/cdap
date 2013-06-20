@@ -1,6 +1,6 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.internal.Preconditions;
+import com.google.common.base.Preconditions;
 
 /**
  * An operations to spit a table into ranges of row keys
