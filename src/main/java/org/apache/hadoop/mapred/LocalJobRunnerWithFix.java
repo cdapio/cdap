@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.mapred;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -53,6 +54,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -153,8 +155,33 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
       // Alternatively to doing it here, we could use job.addFileToClassPath(jobJar) before submitting job in client
       // code, but we don't want to mess with "correct" distributed execution (which adds job jar in classpath).
       DistributedCache.addFileToClassPath(new Path(conf.getJar()), conf, FileSystem.get(conf));
-      ClientDistributedCacheManager.determineTimestamps(conf);
-      ClientDistributedCacheManager.determineCacheVisibilities(conf);
+
+      // Use reflection to invoke the determineXXX method due to api change in hadoop API between 2.0.2-alpha
+      // and 2.0.4-alpha.
+      try {
+        try {
+          // Try with the 2.0.4-alpha method first
+          Method determineMethod = ClientDistributedCacheManager.class.getMethod(
+            "determineTimestampsAndCacheVisibilities", Configuration.class);
+          determineMethod.invoke(null, conf);
+
+        } catch (NoSuchMethodException e) {
+          // Assuming it's older hadoop
+          try {
+            Method determineTimestamps = ClientDistributedCacheManager.class.getMethod("determineTimestamps",
+                                                                                       Configuration.class);
+            Method determineCaches = ClientDistributedCacheManager.class.getMethod("determineCacheVisibilities",
+                                                                                   Configuration.class);
+
+            determineTimestamps.invoke(null, conf);
+            determineCaches.invoke(null, conf);
+          } catch (NoSuchMethodException ex) {
+            throw Throwables.propagate(ex);
+          }
+        }
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
 
       // Manage the distributed cache.  If there are files to be copied,
       // this will trigger localFile to be re-written again.
