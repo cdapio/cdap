@@ -432,8 +432,8 @@ task prepackager(overwrite: true) {
   def installDir = file("$stageDir/opt/continuuity")
   doLast {
     copy {
-      from "$rootProject.projectDir/distributions/src/conf.dist"
-      into "${stageDir}/etc/continuuity/conf.dist"
+      from "$rootProject.projectDir/distributions/src/etc"
+      into "${stageDir}/etc"
     }
   }
 }
