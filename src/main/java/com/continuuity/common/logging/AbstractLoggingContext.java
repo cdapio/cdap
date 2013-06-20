@@ -4,9 +4,11 @@
 
 package com.continuuity.common.logging;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -40,12 +42,20 @@ public abstract class AbstractLoggingContext implements LoggingContext {
    */
   @Override
   public Collection<SystemTag> getSystemTags() {
-    return systemTags.values();
+    return Collections.unmodifiableCollection(systemTags.values());
+  }
+
+  /**
+   * @see LoggingContext#getSystemTagsMap()
+   */
+  @Override
+  public Map<String, SystemTag> getSystemTagsMap() {
+    return Collections.unmodifiableMap(systemTags);
   }
 
   private static final class SystemTagImpl implements SystemTag {
-    private String name;
-    private String value;
+    private final String name;
+    private final String value;
 
     private SystemTagImpl(final String name, final String value) {
       this.name = name;
@@ -58,6 +68,14 @@ public abstract class AbstractLoggingContext implements LoggingContext {
 
     public String getValue() {
       return value;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("name", name)
+        .add("value", value)
+        .toString();
     }
   }
 }

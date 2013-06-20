@@ -7,8 +7,8 @@ package com.continuuity.common.logging;
 /**
  * Application logging context.
  */
-public class ApplicationLoggingContext extends AccountLoggingContext {
-  public static final String TAG_APPLICATION_ID = "applicationId";
+public abstract class ApplicationLoggingContext extends AccountLoggingContext {
+  public static final String TAG_APPLICATION_ID = ".applicationId";
 
   /**
    * Constructs ApplicationLoggingContext
@@ -23,5 +23,10 @@ public class ApplicationLoggingContext extends AccountLoggingContext {
   @Override
   public String getLogPartition() {
     return super.getLogPartition() + String.format(":%s", getSystemTag(TAG_APPLICATION_ID));
+  }
+
+  @Override
+  public String getLogPathFragment() {
+    return String.format("%s/%s", super.getLogPathFragment(), getSystemTag(TAG_APPLICATION_ID));
   }
 }
