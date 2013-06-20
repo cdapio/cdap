@@ -18,26 +18,33 @@
 package com.continuuity.examples.purchase;
 
 /**
- * Purchase container.
+ * This represents a purchase made by a customer. It is a very simple class and only contains
+ * the name of the customer, the name of the product, the quantity and the price paid.
  */
 public class Purchase {
 
-  private final String who, product;
+  private final String customer, product;
   private final int quantity, price;
+  private final long purchaseTime;
 
-  public Purchase(String who, String product, int quantity, int price) {
-    this.who = who;
+  public Purchase(String customer, String product, int quantity, int price, long purchaseTime) {
+    this.customer = customer;
     this.product = product;
     this.quantity = quantity;
     this.price = price;
+    this.purchaseTime = purchaseTime;
   }
 
-  public String getWho() {
-    return who;
+  public String getCustomer() {
+    return customer;
   }
 
   public String getProduct() {
     return product;
+  }
+
+  public long getPurchaseTime() {
+    return purchaseTime;
   }
 
   public int getQuantity() {

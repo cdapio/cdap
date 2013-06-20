@@ -25,23 +25,25 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 
-import java.util.ArrayList;
-
 /**
- * Query for purchase history.
+ * A procedure that allows to query a customer's purchase history.
  */
 public class PurchaseQuery extends AbstractProcedure {
 
-  @UseDataSet("purchases")
-  private ObjectStore<ArrayList<Purchase>> store;
+  @UseDataSet("history")
+  private ObjectStore<PurchaseHistory> store;
 
+  /**
+   * Given a customer name, return his purchases as a Json .
+   * @param request the request, must contain an argument named "customer"
+   */
   @Handle("history")
   @SuppressWarnings("unused")
   public void history(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-    String buyer = request.getArgument("buyer");
-    ArrayList<Purchase> history = store.read(buyer.getBytes());
+    String customer = request.getArgument("customer");
+    PurchaseHistory history = store.read(customer.getBytes());
     if (history == null) {
-      responder.error(ProcedureResponse.Code.NOT_FOUND, "No purchase history for " + buyer);
+      responder.error(ProcedureResponse.Code.NOT_FOUND, "No purchase history for " + customer);
     } else {
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), history);
     }

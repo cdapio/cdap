@@ -17,28 +17,35 @@
 
 package com.continuuity.examples.purchase;
 
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Collects buyer information.
+ * This class represents the purchase history for one customer.
  */
-public class PurchaseCollector extends AbstractFlowlet {
+public class PurchaseHistory {
 
-  @UseDataSet("purchases")
-  private ObjectStore<ArrayList<Purchase>> store;
+  private final String customer;
+  private final List<Purchase> purchases;
 
-  public void process(Purchase purchase) throws OperationException {
-    String buyer = purchase.getWho();
-    ArrayList<Purchase> history = store.read(buyer.getBytes());
-    if (history == null) {
-      history = new ArrayList<Purchase>();
-    }
-    history.add(purchase);
-    store.write(buyer.getBytes(), history);
+  public PurchaseHistory(String customer) {
+    this.customer = customer;
+    this.purchases = new ArrayList<Purchase>();
+  }
+
+  public String getCustomer() {
+    return customer;
+  }
+
+  public List<Purchase> getPurchases() {
+    return purchases;
+  }
+
+  /**
+   * Add a purchase to a customer's history.
+   * @param purchase the purchase
+   */
+  public void add(Purchase purchase) {
+    this.purchases.add(purchase);
   }
 }
