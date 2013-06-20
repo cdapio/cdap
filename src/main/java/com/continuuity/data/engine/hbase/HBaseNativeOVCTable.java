@@ -2,6 +2,7 @@ package com.continuuity.data.engine.hbase;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
@@ -36,10 +37,10 @@ import java.util.TreeMap;
  */
 public class HBaseNativeOVCTable extends HBaseOVCTable {
 
-  public HBaseNativeOVCTable(Configuration conf, final byte[] tableName, final byte[] family,
+  public HBaseNativeOVCTable(CConfiguration cConf, Configuration hConf, final byte[] tableName, final byte[] family,
                              IOExceptionHandler exceptionHandler)
     throws OperationException {
-    super(conf, tableName, family, exceptionHandler);
+    super(cConf, hConf, tableName, family, exceptionHandler);
   }
 
   private synchronized HTable getWriteTable() throws IOException {

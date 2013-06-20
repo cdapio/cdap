@@ -3,7 +3,7 @@ package com.continuuity.data.operation;
 /**
  * Delete a key or columns.
  */
-public class Delete extends WriteOperation {
+public class Delete extends WriteOperation implements TableOperation {
 
   // the name of the table
   private final String table;
@@ -92,6 +92,7 @@ public class Delete extends WriteOperation {
     this.columns = columns;
   }
 
+  @Override
   public String getTable() {
     return this.table;
   }

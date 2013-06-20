@@ -35,7 +35,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
 
   protected final IOExceptionHandler exceptionHandler = new HBaseIOExceptionHandler();
 
-  protected static final byte [] FAMILY = Bytes.toBytes("fam");
+  protected static final byte [] FAMILY = Bytes.toBytes("f");
 
   @Inject
   public HBaseOVCTableHandle(
@@ -47,8 +47,8 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
     this.admin = new HBaseAdmin(hConf);
   }
 
-  protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
-    return new HBaseOVCTable(this.hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
+  protected OrderedVersionedColumnarTable createOVCTable(byte[] tableName) throws OperationException {
+    return new HBaseOVCTable(conf, hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
   }
 
   @Override

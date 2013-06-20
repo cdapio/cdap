@@ -6,6 +6,7 @@ package com.continuuity.data.operation.executor.omid;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
@@ -25,6 +26,7 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.TableOperation;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.WriteOperationComparator;
@@ -55,6 +57,7 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -93,13 +96,11 @@ public class OmidTransactionalOperationExecutor
   /**
    * The Transaction Oracle used by this executor instance.
    */
-  @Inject
   TransactionOracle oracle;
 
   /**
    * The {@link OVCTableHandle} handle used to get references to tables.
    */
-  @Inject
   OVCTableHandle tableHandle;
 
   private OrderedVersionedColumnarTable metaTable;
@@ -127,6 +128,19 @@ public class OmidTransactionalOperationExecutor
   // Also runs all queue operations for a single consumer serially.
   private final QueueStateProxy queueStateProxy;
   public static final String QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES = "queue.state.proxy.max.cache.size.bytes";
+
+  /** Min table write ops to attempt to batch */
+  private final int minTableWriteOpsToBatch;
+
+  @Inject
+  public OmidTransactionalOperationExecutor(TransactionOracle oracle, OVCTableHandle tableHandle, CConfiguration conf) {
+    this.oracle = oracle;
+    this.tableHandle = tableHandle;
+    this.minTableWriteOpsToBatch = conf.getInt(Constants.CFG_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE,
+                                          Constants.DEFAULT_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE);
+    // Default cache size is 200 MB
+    queueStateProxy = new QueueStateProxy(conf.getLongBytes(QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 200 * 1024 * 1024));
+  }
 
   // Metrics
 
@@ -193,14 +207,12 @@ public class OmidTransactionalOperationExecutor
     METRIC_PREFIX + "QueueDropInflight" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_SCAN_LATENCY = METRIC_PREFIX + "Scan" + LATENCY_METRIC_SUFFIX;
 
-  @Inject
-  public OmidTransactionalOperationExecutor(@Named("DataFabricOperationExecutorConfig")CConfiguration config) {
-    // Default cache size is 200 MB
-    queueStateProxy = new QueueStateProxy(config.getLongBytes(QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 200 * 1024 * 1024));
-  }
-
   private void incMetric(String metric) {
     cmetric.meter(metric, 1);
+  }
+
+  private void incMetric(String metric, long delta) {
+    cmetric.meter(metric, delta);
   }
 
   private long begin() {
@@ -209,6 +221,10 @@ public class OmidTransactionalOperationExecutor
 
   private void end(String metric, long beginning) {
     cmetric.histogram(metric, System.currentTimeMillis() - beginning);
+  }
+
+  private void end(String metric, long beginning, int opsNum) {
+    cmetric.histogram(metric, (System.currentTimeMillis() - beginning) / opsNum);
   }
 
   /* -------------------  (interstitial) queue metrics ---------------- */
@@ -695,12 +711,23 @@ public class OmidTransactionalOperationExecutor
     List<WriteOperation> orderedWrites = new ArrayList<WriteOperation>(writes);
     Collections.sort(orderedWrites, new WriteOperationComparator());
 
-    // Execute operations
     List<Undo> undos = new ArrayList<Undo>(writes.size());
 
+    // Execute all operations
+    // First execute all non-table ops (like queue ops) and then table ops (to allow for optimizing them). It is OK
+    // to do this in different order form original as the ops are executed on different tables
     boolean abort = false;
+    int tableOps = 0;
     WriteTransactionResult writeTxReturn = null;
+    // buffer table write ops for later execution
+    Map<String, List<WriteOperation>> tableWriteOperations = Maps.newHashMap();
     for (WriteOperation write : orderedWrites) {
+      if (write instanceof TableOperation) {
+        add(tableWriteOperations, write);
+        tableOps++;
+        // we will do them later (it is ok to do them in out-of-order with non-table ops)
+        continue;
+      }
 
       writeTxReturn = dispatchWrite(context, write, transaction);
 
@@ -709,10 +736,26 @@ public class OmidTransactionalOperationExecutor
         cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
         abort = true;
         break;
-      } else {
-        // Write was successful.  Store undo if we need to abort and continue
-        undos.addAll(writeTxReturn.undos);
+        // todo: should we still add undos if there are any?
       }
+
+      // Write was successful.  Store undo if we need to abort and continue
+      undos.addAll(writeTxReturn.undos);
+    }
+
+    if (!abort) {
+      // Dispatching table write ops
+      if (tableOps < minTableWriteOpsToBatch) {
+        writeTxReturn = dispatchTableWritesInBatches(context, transaction, tableWriteOperations);
+      } else {
+        writeTxReturn = dispatchTableWrites(context, transaction, tableWriteOperations);
+      }
+      if (!writeTxReturn.success) {
+        // Write operations failed
+        abort = true;
+      }
+      // adding undos if there are any
+      undos.addAll(writeTxReturn.undos);
     }
 
     // whether success or not, we must notify the oracle of all operations
@@ -729,9 +772,107 @@ public class OmidTransactionalOperationExecutor
       }
       throw new OmidTransactionException(
         writeTxReturn.statusCode, writeTxReturn.message);
-      }
-    return transaction; // TODO auto generated body
     }
+    return transaction;
+  }
+
+  private WriteTransactionResult dispatchTableWrites(OperationContext context, Transaction transaction,
+                                                     Map<String, List<WriteOperation>> tableWriteOperations)
+    throws OperationException {
+    List<Undo> undos = new ArrayList<Undo>(tableWriteOperations.size());
+    for (Map.Entry<String, List<WriteOperation>> tableOps : tableWriteOperations.entrySet()) {
+      WriteTransactionResult writeTxReturn;
+      for (WriteOperation write : tableOps.getValue()) {
+        writeTxReturn = dispatchWrite(context, write, transaction);
+        if (!writeTxReturn.success) {
+          // Write operation failed
+          cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
+          return new WriteTransactionResult(false, writeTxReturn.statusCode, writeTxReturn.message, undos);
+        } else {
+          // Write was successful.  Store undo if we need to abort and continue
+          undos.addAll(writeTxReturn.undos);
+        }
+      }
+    }
+    return new WriteTransactionResult(undos);
+  }
+
+  private WriteTransactionResult dispatchTableWritesInBatches(OperationContext context, Transaction transaction,
+                                                     Map<String, List<WriteOperation>> tableWriteOperations)
+    throws OperationException {
+
+    List<Undo> undos = new ArrayList<Undo>(tableWriteOperations.size());
+    for (Map.Entry<String, List<WriteOperation>> tableOps : tableWriteOperations.entrySet()) {
+      // NOTE: Currently we batch only write ops. Potentially we should also batch at least no-read incs.
+      //       Ideally other ops too.
+      //       This is not the most efficient way to batch operations, but should be OK for now.
+      WriteTransactionResult writeTxReturn;
+      List<Write> writeOps = Lists.newArrayList();
+
+      for (WriteOperation write : tableOps.getValue()) {
+        if (write instanceof Write) {
+          writeOps.add((Write) write);
+          continue;
+        }
+
+        // Writing accumulated writeOps
+        if (writeOps.size() > 0) {
+          writeTxReturn = write(context, transaction, writeOps, undos);
+          if (!writeTxReturn.success) {
+            return writeTxReturn;
+          }
+          writeOps.clear();
+        }
+
+        // Writing other operations
+        writeTxReturn = dispatchWrite(context, write, transaction);
+
+        if (!writeTxReturn.success) {
+          // Write operation failed
+          cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
+          return new WriteTransactionResult(false, writeTxReturn.statusCode, writeTxReturn.message, undos);
+        } else {
+          // Write was successful.  Store undo if we need to abort and continue
+          undos.addAll(writeTxReturn.undos);
+        }
+      }
+
+      // Writing accumulated but not written writeOps
+      if (writeOps.size() > 0) {
+        writeTxReturn = write(context, transaction, writeOps, undos);
+        if (!writeTxReturn.success) {
+          return writeTxReturn;
+        }
+      }
+    }
+
+    return new WriteTransactionResult(undos);
+  }
+
+  private WriteTransactionResult write(OperationContext context, Transaction transaction,
+                                       List<Write> writeOps, List<Undo> undos) throws OperationException {
+    WriteTransactionResult writeTxReturn = writeWrites(context, writeOps, transaction);
+    if (!writeTxReturn.success) {
+      // write operation failed
+      cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", writeOps.size());
+      // stop on failure
+      return new WriteTransactionResult(false, writeTxReturn.statusCode, writeTxReturn.message, undos);
+    }
+    // Writes were successful.  Store undo if we need to abort and continue
+    undos.addAll(writeTxReturn.undos);
+    return writeTxReturn;
+  }
+
+  private void add(Map<String, List<WriteOperation>> tableWriteOperations,
+                   WriteOperation write) {
+    String table = ((TableOperation) write).getTable();
+    List<WriteOperation> tableOps = tableWriteOperations.get(table);
+    if (tableOps == null) {
+      tableOps = Lists.newArrayList();
+      tableWriteOperations.put(table, tableOps);
+    }
+    tableOps.add(write);
+  }
 
   @Override
   public void commit(OperationContext context,
@@ -862,6 +1003,11 @@ public class OmidTransactionalOperationExecutor
       this.undos = undos;
     }
 
+    // successful, multiple deletes to undo
+    WriteTransactionResult(List<Undo> undos) {
+      this(true, StatusCode.OK, null, undos);
+    }
+
     // successful, one delete to undo
     WriteTransactionResult(Undo undo) {
       this(true, StatusCode.OK, null, Collections.singletonList(undo));
@@ -913,6 +1059,67 @@ public class OmidTransactionalOperationExecutor
     dataSetMetric_write(write.getMetricName(), write.getSize());
 //    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
     return new WriteTransactionResult(new UndoWrite(write.getTable(), write.getKey(), write.getColumns()));
+  }
+
+  WriteTransactionResult writeWrites(OperationContext context, List<Write> writes, Transaction transaction)
+    throws OperationException {
+    initialize();
+    incMetric(REQ_TYPE_WRITE_NUM_OPS, writes.size());
+    long begin = begin();
+
+    // First, group ops by row key and reduce if needed (only latest write to the cell is kept)
+
+    // NOTE: all writes operate on same table.
+    String tableName = writes.get(0).getTable();
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, tableName);
+    Map<byte[], Map<byte[], byte[]>> opsByKey = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Write write : writes) {
+      Map<byte[], byte[]> colVals = opsByKey.get(write.getKey());
+      if (colVals == null) {
+        colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        opsByKey.put(write.getKey(), colVals);
+      }
+      for (int i = 0; i < write.getColumns().length; i++) {
+        // NOTE: as we walk thru ops in a order of their expected execution we don't care if we override
+        //       value originated in older write by newer one.
+        colVals.put(write.getColumns()[i], write.getValues()[i]);
+      }
+    }
+
+
+    // Second, write to the table
+
+    byte[][] keys = new byte[opsByKey.size()][];
+    byte[][][] cols = new byte[keys.length][][];
+    byte[][][] vals = new byte[keys.length][][];
+    List<Undo> undos = Lists.newArrayList();
+    int i = 0;
+    int dataSize = 0;
+    // NOTE: as ops on different rows don't affect each other we don't care about executing them in different order
+    for (Map.Entry<byte[], Map<byte[], byte[]>> ops4key : opsByKey.entrySet()) {
+      keys[i] = ops4key.getKey();
+      // todo: should we multiply by column count? For HBase we should.. but may be not for all OVCT implementations
+      //       consider returning datasize from table's method that performs ops?
+      dataSize += keys[i].length;
+      cols[i] = new byte[ops4key.getValue().size()][];
+      vals[i] = new byte[cols[i].length][];
+      int k = 0;
+      for (Map.Entry<byte[], byte[]> colVal : ops4key.getValue().entrySet()) {
+        cols[i][k] = colVal.getKey();
+        vals[i][k] = colVal.getValue();
+        dataSize += cols[i][k].length;
+        dataSize += vals[i][k].length;
+        k++;
+      }
+      // todo: consider returning ops that failed (e.g. rows set from the OVCT implementation)
+      undos.add(new UndoWrite(tableName, keys[i], cols[i]));
+      i++;
+    }
+    table.put(keys, cols, transaction.getWriteVersion(), vals);
+    end(REQ_TYPE_WRITE_LATENCY, begin, writes.size());
+    dataSetMetric_write(writes.get(0).getMetricName(), dataSize);
+
+    return new WriteTransactionResult(undos);
   }
 
   WriteTransactionResult write(OperationContext context, Delete delete,

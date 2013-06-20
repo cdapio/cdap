@@ -5,7 +5,7 @@ package com.continuuity.data.operation;
  * 
  * Supports both key-value and columnar operations.
  */
-public class Write extends WriteOperation {
+public class Write extends WriteOperation implements TableOperation {
 
   // the name of the table
   private final String table;
@@ -113,6 +113,7 @@ public class Write extends WriteOperation {
     this.values = values;
   }
 
+  @Override
   public String getTable() {
     return this.table;
   }
