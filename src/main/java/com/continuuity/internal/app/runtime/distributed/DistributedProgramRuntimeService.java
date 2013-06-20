@@ -81,7 +81,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
     Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
 
-    return createRuntimeInfo(type, programId, weaveRunner.lookup(appName, runId));
+    WeaveController weaveController = weaveRunner.lookup(appName, runId);
+    if (weaveController == null) {
+      LOG.info("No running instance found for RunId {}", runId);
+      return null;
+    }
+    return createRuntimeInfo(type, programId, weaveController);
   }
 
   @Override
@@ -106,7 +111,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           continue;
         }
         Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
-        result.put(runId, createRuntimeInfo(type, programId, weaveRunner.lookup(appName, runId)));
+        WeaveController weaveController = weaveRunner.lookup(appName, runId);
+        if (weaveController != null) {
+          result.put(runId, createRuntimeInfo(type, programId, weaveController));
+        }
       }
     }
     return ImmutableMap.copyOf(result);
