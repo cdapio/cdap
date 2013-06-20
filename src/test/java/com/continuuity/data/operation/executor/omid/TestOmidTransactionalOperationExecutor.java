@@ -5,15 +5,19 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
@@ -30,8 +34,10 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,6 +49,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.SortedSet;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -1290,4 +1298,62 @@ public abstract class TestOmidTransactionalOperationExecutor {
     incResult = executor.increment(context, new Increment(table, r1, c1, 1L));
     assertEquals(56L, (long) incResult.get(c1));
   }
+
+  static final byte[] c = { 'c' }, v = { 'v' };
+
+  @Test
+  public void testBatchReads() throws OperationException, InterruptedException {
+    final String table = "tBRs";
+
+    // write 1000 random values to the table and remember them in a set
+    SortedSet<Long> keysWritten = Sets.newTreeSet();
+    List<WriteOperation> ops = Lists.newArrayListWithCapacity(1000);
+    Random rand = new Random(451); // this will give us the same "random" sequence reproducibly. but random enough.
+    for (int i = 0; i < 1000; i++) {
+      long keyLong = rand.nextLong();
+      byte[] key = Bytes.toBytes(keyLong);
+      ops.add(new Write(table, key,  new byte[][] { c, key }, new byte[][] { key, v }));
+      keysWritten.add(keyLong);
+    }
+    executor.commit(context, ops);
+
+    // get the splits for the table
+    OperationResult<List<KeyRange>> result = executor.execute(context, new GetSplits(table));
+    Assert.assertFalse(result.isEmpty());
+    List<KeyRange> splits = result.getValue();
+    // read each split and verify the keys
+    SortedSet<Long> keysToVerify = Sets.newTreeSet(keysWritten);
+    verifySplits(table, splits, keysToVerify);
+
+    // get specific number of splits for a subrange
+    long start = 0x10000000L, stop = 0x40000000L;
+    result = executor.execute(context, new GetSplits(table, 5, Bytes.toBytes(start), Bytes.toBytes(stop)));
+    Assert.assertFalse(result.isEmpty());
+    splits = result.getValue();
+    Assert.assertTrue(splits.size() <= 5);
+    keysToVerify = Sets.newTreeSet(keysWritten.subSet(start, stop));
+    // read each split and verify the keys
+    verifySplits(table, splits, keysToVerify);
+  }
+
+  // helper to verify that the split readers for the given splits return exactly a set of keys
+  private void verifySplits(String t, List<KeyRange> splits, SortedSet<Long> keysToVerify)
+    throws OperationException, InterruptedException {
+    // read each split and verify the keys, remove all read keys from the set
+    for (KeyRange split : splits) {
+      Scanner scanner = executor.scan(context, null, new Scan(t, split.getStart(), split.getStop()));
+      for (ImmutablePair<byte[], Map<byte[], byte[]>> next = scanner.next(); next != null; next = scanner.next()) {
+        byte[] key = next.getFirst();
+        Map<byte[], byte[]> row = next.getSecond();
+        // verify each row has the two columns written
+        Assert.assertArrayEquals(key, row.get(c));
+        Assert.assertArrayEquals(v, row.get(key));
+        Assert.assertTrue(keysToVerify.remove(com.continuuity.api.common.Bytes.toLong(key)));
+      }
+      scanner.close();
+    }
+    // verify all keys have been read
+    Assert.assertTrue("Remaining keys: " + keysToVerify.size(), keysToVerify.isEmpty());
+  }
+
 }
