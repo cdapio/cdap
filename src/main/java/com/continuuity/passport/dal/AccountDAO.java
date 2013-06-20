@@ -7,7 +7,6 @@ package com.continuuity.passport.dal;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.meta.Account;
-import com.continuuity.passport.meta.BillingInfo;
 import com.continuuity.passport.meta.Role;
 
 import java.util.Map;
@@ -64,8 +63,6 @@ public interface AccountDAO {
    * @return Account
    */
   public Account getAccount(String emailId);
-
-  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo);
 
   public boolean addRoleType(int accountId, Role role);
 
