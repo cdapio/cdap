@@ -1,39 +1,58 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
 package com.continuuity.common.metrics;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.ServiceDiscoveryClient;
-import com.continuuity.common.discovery.ServiceDiscoveryClientException;
-import com.continuuity.common.discovery.ServicePayload;
-import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.common.metrics.codec.MetricCodecFactory;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.StickyEndpointStrategy;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.ZKDiscoveryService;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.netflix.curator.x.discovery.ServiceInstance;
-import com.netflix.curator.x.discovery.strategies.RandomStrategy;
-import org.apache.commons.lang.time.StopWatch;
-import org.apache.mina.core.future.ConnectFuture;
-import org.apache.mina.core.future.IoFutureListener;
-import org.apache.mina.core.future.WriteFuture;
-import org.apache.mina.core.session.IoSession;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.transport.socket.nio.NioSocketConnector;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.handler.codec.frame.FixedLengthFrameDecoder;
+import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
+import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * This client is similar to the NetCat client. It connects
- * to the specified end point and sends the command to be executed
- * on the server.
+ *
  */
-public class MetricsClient {
-  private static final Logger Log =
-    LoggerFactory.getLogger(MetricsClient.class);
+final class MetricsClient extends AbstractExecutionThreadService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsClient.class);
 
   /**
    * Connection timeout.
@@ -55,284 +74,117 @@ public class MetricsClient {
    */
   private static final int BACKOFF_EXPONENT = 2;
 
-  /**
-   * Hostname to connect to.
-   */
-  private String hostname;
+  private final CConfiguration configuration;
+  private final BlockingQueue<String> queue;
 
-  /**
-   * Port to connect to.
-   */
-  private int port;
+  private Thread runThread;
+  private ClientBootstrap bootstrap;
+  private ChannelGroup channelGroup;
 
-  /**
-   * Session associated with the current connection.
-   */
-  private IoSession session = null;
+  private ZKClientService zkClientService;
+  private EndpointStrategy endpointStrategy;
 
-  /**
-   * instance of dispatcher responsible for sending metrics
-   * to the overlord server.
-   */
-  private final MetricsDispatcher dispatcher =
-    new MetricsDispatcher();
+  MetricsClient(CConfiguration configuration) {
+    this.configuration = configuration;
+    this.queue = new LinkedBlockingQueue<String>();
+  }
 
-  /**
-   * Queue that
-   */
-  private final LinkedBlockingDeque<String> queue;
+  @Override
+  protected void startUp() throws Exception {
+    LOG.info("Starting MetricsClient");
+    runThread = Thread.currentThread();
 
-  /**
-   * TCP connector.
-   */
-  private NioSocketConnector connector;
+    ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("kafka-client-netty-%d")
+      .setDaemon(true)
+      .build();
+    channelGroup = new DefaultChannelGroup();
+    bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newSingleThreadExecutor(threadFactory),
+                                                                      Executors.newFixedThreadPool(4, threadFactory)));
+    bootstrap.setPipelineFactory(new MetricClientPipelineFactory());
+    bootstrap.setOption("connectTimeoutMillis", CONNECT_TIMEOUT);
 
-  /**
-   * Executor service for running the dispatcher thread.
-   * Overkill right now -- the idea is that in future if
-   * we find that we need to more threads to send then
-   * it can be extended.
-   */
-  private final ExecutorService executorService =
-    Executors.newCachedThreadPool();
+    // Note: The discovery service should be injected
+    zkClientService =
+      ZKClientServices.delegate(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE,
+                                                         Constants.DEFAULT_ZOOKEEPER_ENSEMBLE)).build(),
+            RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+          )
+      ));
+    zkClientService.start();
+    endpointStrategy = new StickyEndpointStrategy(new ZKDiscoveryService(zkClientService)
+                                                    .discover(Constants.SERVICE_METRICS_COLLECTION_SERVER));
+    LOG.info("MetricsClient started");
+  }
 
-  /**
-   * Client used for discoverying the metrics collector service.
-   */
-  private final ServiceDiscoveryClient serviceDiscovery;
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.info("Stopping MetricsClient");
+    zkClientService.stop();
+    channelGroup.close().await();
+    bootstrap.releaseExternalResources();
+    LOG.info("MetricsClient stopped");
+  }
 
-  /**
-   * Dispatcher for handling sending metrics to the overlord server.
-   * It runs in a seperate thread dequeuing the commands written by
-   * the client metric collector. If it's unable to connect to the
-   * server, it implements a exponential backoff to make sure we don't
-   * tax the server trying to connect.
-   */
-  private class MetricsDispatcher implements Runnable {
-    private volatile boolean keepRunning = true;
-    private final StopWatch watcher = new StopWatch();
+  @Override
+  protected void triggerShutdown() {
+    runThread.interrupt();
+  }
 
-    /**
-     * Stops the running thread.
-     */
-    public void stop() {
-      keepRunning = false;
-      watcher.stop(); // stop the watcher.
-    }
+  @Override
+  protected void run() throws Exception {
 
-    @Override
-    public void run() {
-      int interval = BACKOFF_MIN_TIME;
+    final AtomicReference<Channel> writeChannelRef = new AtomicReference<Channel>();
+    long nextConnectTime = 0;
+    long interval = BACKOFF_MIN_TIME;
 
-      watcher.start();  // Start the timer.
-
-      // While we are not asked to stop and queue
-      // is not empty, we keep on going.
-      while(keepRunning) {
-        // Try to get a session while session is not created
-        // or if created and is not connected.
-        while(session == null || !session.isConnected()){
+    while (isRunning()) {
+      Channel writeChannel = writeChannelRef.get();
+      // Try to establish connection to collection server if not yet connected/disconnected.
+      if (writeChannel == null || !writeChannel.isConnected()) {
+        // Calculate the sleepTime. It's for backing off reconnection attempt.
+        long nanoTime = System.nanoTime();
+        long sleepTime = nextConnectTime - nanoTime;
+        if (sleepTime > 0) {
           try {
-            // Make an attempt to connect, it does so by getting the
-            // latest endpoint from service disocvery and tries to
-            // connect to it.
-            connect();
-
-            if(session == null || (session != null && ! session.isConnected())){
-              // Sleep based on how much ever is interval set to.
-              try {
-                Log.warn("Backing off after unable to connect to metrics " +
-                           "collector host {}:{} for {}s.",
-                         new Object[] {hostname, port, interval});
-                Thread.sleep(interval * 1000L);
-              } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break; // Go back to check if we have asked to stop.
-              }
-
-              // Exponentially increase the amount of time to sleep,
-              // untill we reach 30 seconds sleep between reconnects.
-              interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT);
-            } else {
-              // we are conected and now need to send data.
-              break;
-            }
-            // If we are here means
-          } catch (ServiceDiscoveryClientException e) {
-            Log.warn("Issue with service discovery. Reason : {}.",
-              e.getMessage());
-            Log.debug(StackTraceUtil.toStringStackTrace(e));
+            TimeUnit.NANOSECONDS.sleep(sleepTime);
+          } catch (InterruptedException e) {
+            // Interrupted from shutdown. Ok to continue.
+            LOG.info("Metric client interrupted.");
           }
         }
+        connect(writeChannelRef);
 
-        // We pop the metric to be send from the queue and
-        // then attempt to send it over. If we fail and there
-        // is space available we write the metric back into
-        // the queue.
-        final String cmd;
-        String element = null;
+        // Regardless of connection result, always update the nextConnectTime and increase the interval.
+        // Assumption is that after connection is established, the connection will be used at least once,
+        // hence resetting the interval to BACKOFF_MIN_TIME (in the else part).
+        // Otherwise, the interval will be exponential increased until it reaches BACKOFF_MAX_TIME.
+        nextConnectTime = nanoTime + TimeUnit.NANOSECONDS.convert(interval, TimeUnit.SECONDS);
+        interval = Math.min(BACKOFF_MAX_TIME, interval * BACKOFF_EXPONENT);
+
+      } else {
+        interval = BACKOFF_MIN_TIME;
+
         try {
-          // blocking call will wait till there is an element in the queue.
-          element = queue.take();
-        } catch (InterruptedException e) {
-          Log.warn("Thread has been interrupted.");
-          continue;
-        }
-
-        // Make sure we have not received a null object. This is
-        // just a precaution.
-        if(element == null) {
-          continue;
-        }
-        cmd = element;
-
-        // Write the command to the session and attach a future for reporting
-        // any issues seen.
-        WriteFuture future = session.write(cmd);
-        if(future != null) {
-          future.addListener(new IoFutureListener<WriteFuture>() {
+          final String cmd = queue.take();
+          Channels.write(writeChannel, cmd).addListener(new ChannelFutureListener() {
             @Override
-            public void operationComplete(WriteFuture future) {
-              if(! future.isWritten()) {
-                Log.warn("Attempted to send metric to overlord, " +
-                           "failed " + "due to session failures. [ {} ]", cmd);
+            public void operationComplete(ChannelFuture future) throws Exception {
+              if (!future.isSuccess()) {
+                future.getChannel().close();
+                LOG.warn("Attempted to send metric to overlord, failed due to session failures. [ {} ]",
+                         cmd, future.getCause());
               }
             }
           });
+        } catch (InterruptedException e) {
+          // Interrupted from shutdown. Ok to continue.
+          LOG.info("Metric client interrupted.");
         }
       }
     }
-  }
-
-  /**
-   * Constructs and initializes {@link MetricsClient}.
-   *
-   * @param configuration object.
-   * @throws ServiceDiscoveryClientException thrown when the client is
-   * unable to discovery the service or unable to connect to zookeeper.
-   */
-  public MetricsClient(CConfiguration configuration)
-    throws ServiceDiscoveryClientException {
-
-    // Creates the queue that holds the metrics to be dispatched
-    // to the overlord.
-    this.queue = new LinkedBlockingDeque<String>(50000);
-
-    // Prepare the connection.
-    connector = new NioSocketConnector();
-
-    // Sets aggressive connection timeout.
-    connector.setConnectTimeoutMillis(CONNECT_TIMEOUT);
-
-    // add an IoFilter .  This class is responsible for converting the incoming and
-    // outgoing raw data to MetricRequest and MetricResponse objects
-    ProtocolCodecFilter protocolFilter
-      = new ProtocolCodecFilter(new MetricCodecFactory(true));
-
-    // Set the protocol filter to metric codec factory.
-    connector.getFilterChain().addLast("protocol", protocolFilter);
-
-    // Set Keep Alive.
-    connector.getSessionConfig().setKeepAlive(true);
-
-    // Set to send packets of any size. As our requests are small,
-    // we don't want them to be batched.
-    connector.getSessionConfig().setTcpNoDelay(true);
-
-    // Attach a handler.
-    connector.setHandler(new MetricsClientProtocolHandler());
-
-    // Register a shutdown hook.
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      public void run() {
-        // Shutdown the dispatcher thread.
-        if(dispatcher != null) {
-          dispatcher.stop();
-        }
-
-        // Dispose the connector.
-        if(connector != null) {
-          connector.dispose();
-          connector = null;
-        }
-
-        // Shutdown executor service.
-        executorService.shutdown();
-
-        // Close service discovery
-        if(serviceDiscovery != null) {
-          try {
-            serviceDiscovery.close();
-          } catch (IOException e) {
-            Log.warn("Failed closing service discovery client. Reason : {}.",
-              e.getMessage());
-            Log.debug(StackTraceUtil.toStringStackTrace(e));
-          }
-        }
-
-        // Close the session.
-        if(session != null) {
-          session.close(true).awaitUninterruptibly(CONNECT_TIMEOUT);
-          session = null;
-        }
-      }
-    });
-
-    // prepare service discovery client.
-    serviceDiscovery = new ServiceDiscoveryClient(
-      configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE,
-                        Constants.DEFAULT_ZOOKEEPER_ENSEMBLE)
-    );
-
-
-    // Start the dispatcher thread.
-    executorService.submit(dispatcher);
-  }
-
-  /**
-   * Discovers the endpoint using the service discovery.
-   */
-  private void getServiceEndpoint() throws ServiceDiscoveryClientException {
-    ServiceInstance<ServicePayload> instance =
-          serviceDiscovery.getInstance(Constants.SERVICE_METRICS_COLLECTION_SERVER,
-                                       new RandomStrategy<ServicePayload>());
-    this.hostname = instance.getAddress();
-    this.port = instance.getPort();
-    Log.info("Received service endpoint {}:{}.", this.hostname, this.port);
-  }
-
-  private boolean connect() throws ServiceDiscoveryClientException {
-    // On every reconnect attempt try to get the new service end point.
-    // If there are multiple instance of the service available then we
-    // would be able to connect to atleast one.
-    getServiceEndpoint();
-
-    // If we have a session and it's connected to the overlord metrics
-    // server, then we return true immediately, else we try connecting
-    // to the overlord metrics server.
-    if(session != null && session.isConnected()) {
-      return true;
-    }
-
-    // Connect to the server.
-    Log.info("Connecting to service endpoint {}:{}.", hostname, port);
-    ConnectFuture cf = connector.connect(
-      new InetSocketAddress(hostname, port)
-    );
-
-    // Wait till we are connected or 10 seconds are done.
-    cf.awaitUninterruptibly();
-
-    // Check if we are connected.
-    if(cf.isConnected()) {
-      Log.info("Successfully connected to endpoint {}:{}", hostname, port);
-      session = cf.getSession();
-      return true;
-    } else {
-      Log.warn("Unable to connect to endpoint {}:{}", hostname, port);
-    }
-
-    return false;
   }
 
   /**
@@ -346,4 +198,122 @@ public class MetricsClient {
     return queue.offer(buffer);
   }
 
+  /**
+   * Connects to metric collection server. If no endpoint exists, this method returns immediately
+   * without modifying the channelRef. Otherwise it blocks until connection is established (or failed).
+   * If connection is established successfully, the Channel object will be set to channelRef.
+   */
+  private void connect(final AtomicReference<Channel> channelRef) throws Exception {
+    InetSocketAddress endpoint = getEndpoint();
+    if (endpoint != null) {
+      LOG.info("Try to connect: " + endpoint);
+      final CountDownLatch latch = new CountDownLatch(1);
+
+      bootstrap.connect(endpoint).addListener(new ChannelFutureListener() {
+        @Override
+        public void operationComplete(ChannelFuture future) throws Exception {
+          if (future.isSuccess()) {
+            Channel channel = future.getChannel();
+            channelGroup.add(channel);
+            channelRef.set(channel);
+          }
+          latch.countDown();
+        }
+      });
+      latch.await();
+      LOG.info("Connected: " + endpoint);
+    } else {
+      LOG.info("No endpoint to connect.");
+    }
+  }
+
+  /**
+   * Returns metric collection server endpoint or {@code null} if no endpoint available.
+   */
+  private InetSocketAddress getEndpoint() {
+    Discoverable discoverable = endpointStrategy.pick();
+    return discoverable == null ? null : discoverable.getSocketAddress();
+  }
+
+  /**
+   * Pipeline factory for metric requests.
+   */
+  private static final class MetricClientPipelineFactory implements ChannelPipelineFactory {
+
+    @Override
+    public ChannelPipeline getPipeline() throws Exception {
+      ChannelPipeline pipeline = Channels.pipeline();
+      pipeline.addLast("frameDecoder", new FixedLengthFrameDecoder(Integer.SIZE / 8));
+      pipeline.addLast("requestEncoder", new MetricClientRequestEncoder());
+      pipeline.addLast("responseDecoder", new MetricClientResponseDecoder());
+      pipeline.addLast("responseHandler", new MetricResponseHandler());
+      return pipeline;
+    }
+  }
+
+  /**
+   * Encoder to write metrics command to server.
+   */
+  private static final class MetricClientRequestEncoder extends OneToOneEncoder {
+    @Override
+    protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
+      if (msg instanceof String) {
+        String cmd = (String) msg;
+        ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(cmd.length() + 1);
+        buffer.writeBytes(Charsets.UTF_8.encode(cmd));
+        buffer.writeByte('\n');
+        return buffer;
+      }
+      return msg;
+    }
+  }
+
+  /**
+   * Decoder to decode server response in MetricResponse.
+   */
+  private static final class MetricClientResponseDecoder extends OneToOneDecoder {
+    @Override
+    protected Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
+      if (msg instanceof ChannelBuffer) {
+        int code = ((ChannelBuffer) msg).readInt();
+
+        for (MetricResponse.Status status : MetricResponse.Status.values()) {
+          if (code == status.getCode()) {
+            return new MetricResponse(status);
+          }
+        }
+        return new MetricResponse(MetricResponse.Status.IGNORED);
+      }
+      return msg;
+    }
+  }
+
+  /**
+   * Handler for handling MetricResponse.
+   */
+  private static final class MetricResponseHandler extends SimpleChannelHandler {
+    @Override
+    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+      Object msg = e.getMessage();
+      if (msg instanceof MetricResponse) {
+        MetricResponse response = (MetricResponse) msg;
+        switch (response.getStatus()) {
+          case FAILED:
+            LOG.warn("Failed processing metric on the overlord server. Request server logs.");
+            break;
+          case IGNORED:
+            LOG.warn("Server ignored the data point due to capacity.");
+            break;
+          case INVALID:
+            LOG.warn("Invalid request was sent to the server.");
+            break;
+          case SERVER_ERROR:
+            LOG.warn("Internal server error.");
+            break;
+        }
+      } else {
+        LOG.warn("Invalid message received from the server. Message : {}", e.getMessage());
+      }
+    }
+  }
 }

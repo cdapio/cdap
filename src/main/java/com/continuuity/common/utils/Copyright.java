@@ -12,7 +12,7 @@ public class Copyright {
 
   private static final String[] lines = {
       StringUtils.repeat("=", 88),
-      "Continuuity AppFabric (tm) - Copyright 2012-2013 Continuuity, " +
+      "Continuuity Reactor (tm) - Copyright 2012-2013 Continuuity, " +
           "Inc. All Rights Reserved.",
       StringUtils.repeat("=", 88)
   };

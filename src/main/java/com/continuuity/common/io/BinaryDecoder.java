@@ -109,12 +109,10 @@ public final class BinaryDecoder implements Decoder {
   }
 
   private byte[] rawReadBytes() throws IOException {
-    int len = readInt();
-    byte[] bytes = new byte[len];
-    int readLen = 0;
-    readLen = input.read(bytes);
-    while (readLen != len) {
-      readLen += input.read(bytes, readLen, len - readLen);
+    int toRead = readInt();
+    byte[] bytes = new byte[toRead];
+    while (toRead > 0) {
+      toRead -= input.read(bytes, bytes.length - toRead, toRead);
     }
     return bytes;
   }
