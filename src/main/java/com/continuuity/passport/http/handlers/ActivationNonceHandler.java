@@ -7,6 +7,7 @@ package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.service.DataManagementService;
+import com.continuuity.passport.core.service.SecurityService;
 import com.continuuity.passport.meta.Account;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -33,10 +34,12 @@ public class ActivationNonceHandler extends PassportHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ActivationNonceHandler.class);
 
   private final DataManagementService dataManagementService;
+  private final SecurityService securityService;
 
   @Inject
-  public ActivationNonceHandler(DataManagementService dataManagementService) {
+  public ActivationNonceHandler(DataManagementService dataManagementService, SecurityService securityService) {
     this.dataManagementService = dataManagementService;
+    this.securityService = securityService;
   }
 
   @GET
@@ -52,7 +55,7 @@ public class ActivationNonceHandler extends PassportHandler {
     requestReceived();
     int nonce = -1;
     try {
-      nonce = dataManagementService.getActivationNonce(id);
+      nonce = securityService.getActivationNonce(id);
       if (nonce != -1) {
         requestSuccess();
         return Response.ok(Utils.getNonceJson(null, nonce)).build();
@@ -80,7 +83,7 @@ public class ActivationNonceHandler extends PassportHandler {
     requestReceived();
     String id = null;
     try {
-      id = dataManagementService.getActivationId(nonce);
+      id = securityService.getActivationId(nonce);
       if (id != null && !id.isEmpty()) {
         requestSuccess();
         return Response.ok(Utils.getIdJson(null, id)).build();
@@ -109,7 +112,7 @@ public class ActivationNonceHandler extends PassportHandler {
     requestReceived();
     int nonce = -1;
     try {
-      nonce = dataManagementService.getResetNonce(emailId);
+      nonce = securityService.getResetNonce(emailId);
       if (nonce != -1) {
         requestSuccess();
         return Response.ok(Utils.getNonceJson(null, nonce)).build();

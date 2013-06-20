@@ -6,20 +6,17 @@ package com.continuuity.passport.impl;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
-import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.dal.AccountDAO;
-import com.continuuity.passport.dal.NonceDAO;
 import com.continuuity.passport.dal.ProfanityFilter;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
 import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -31,15 +28,12 @@ import java.util.Map;
 public class DataManagementServiceImpl implements DataManagementService {
   private final AccountDAO accountDAO;
   private final VpcDAO vpcDao;
-  private final NonceDAO nonceDAO;
   private final ProfanityFilter profanityFilter;
 
   @Inject
-  public DataManagementServiceImpl(AccountDAO accountDAO, VpcDAO vpcDAO,
-                                   NonceDAO nonceDAO, ProfanityFilter profanityFilter) {
+  public DataManagementServiceImpl(AccountDAO accountDAO, VpcDAO vpcDAO, ProfanityFilter profanityFilter) {
     this.accountDAO = accountDAO;
     this.vpcDao = vpcDAO;
-    this.nonceDAO = nonceDAO;
     this.profanityFilter = profanityFilter;
   }
 
@@ -138,42 +132,8 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   @Override
-  public int getActivationNonce(String id) {
-    return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.ACTIVATION);
-  }
-
-  @Override
-  public int getSessionNonce(String id) {
-    return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.SESSION);
-  }
-
-  @Override
   public boolean isValidVPC(String vpcName) {
     return (!profanityFilter.isFiltered(vpcName) && vpcDao.getVPCCount(vpcName) == 0);
-  }
-
-  @Override
-  public String getActivationId(int nonce) {
-    try {
-      return nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.ACTIVATION);
-    } catch (StaleNonceException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public String getSessionId(int nonce) {
-
-    try {
-      return nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.SESSION);
-    } catch (StaleNonceException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public int getResetNonce(String id) {
-    return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.RESET);
   }
 
   @Override
