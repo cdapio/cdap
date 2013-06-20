@@ -633,7 +633,7 @@ public class TestUtil {
   /**
    * Send a PUT request to the given URL and return the HTTP status
    *
-   * @param url the URL to post to
+   * @param url the URL to put to
    */
   public static int sendPutRequest(String url) throws Exception {
     return sendPutRequest(url, new HashMap<String, String>());

@@ -37,6 +37,7 @@ public class AppFabricConnectorTest {
   private static Connector restConnector;
   private static int port;
   private static String baseURL;
+  private static String pingURL;
   private static final String prefix = "";
 
   /**
@@ -73,6 +74,7 @@ public class AppFabricConnectorTest {
     configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
     String middle = "/app";
     baseURL = "http://localhost:" + port + middle;
+    pingURL = "http://localhost:" + port + "/ping";
     configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle);
     restConnector.configure(configuration);
     restConnector.start();
@@ -111,6 +113,15 @@ public class AppFabricConnectorTest {
     Assert.assertTrue((Double) map.get("status") == 5.0);
   }
 
+  @Test
+  public void testPing() throws Exception {
+    Assert.assertEquals(200, deploy("WordCount.jar"));
+
+    Map<String,String> headers = Maps.newHashMap();
+
+    HttpResponse response = TestUtil.sendGetRequest(pingURL, headers);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
 
   @Test
   public void testSetFlowletInstances() throws Exception {
@@ -178,9 +189,6 @@ public class AppFabricConnectorTest {
   }
 
   private int deploy(String jarFileName) throws Exception {
-    // setup connector
-    String deployUrl = "http://localhost:" + port + "/app";
-
     // JAR file is stored in test/resource/WordCount.jar.
     File archive = FileUtils.toFile(getClass().getResource("/" + jarFileName));
 
@@ -194,6 +202,6 @@ public class AppFabricConnectorTest {
     } finally {
       bos.close();
     }
-    return TestUtil.sendPostRequest(deployUrl, bos.toByteArray(), headers);
+    return TestUtil.sendPostRequest(baseURL, bos.toByteArray(), headers);
   }
 }
