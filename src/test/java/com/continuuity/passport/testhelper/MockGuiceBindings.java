@@ -5,6 +5,7 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
+import com.continuuity.passport.core.service.SecurityService;
 import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.dal.NonceDAO;
 import com.continuuity.passport.dal.ProfanityFilter;
@@ -19,6 +20,7 @@ import com.continuuity.passport.http.handlers.SessionNonceHandler;
 import com.continuuity.passport.http.handlers.VPCHandler;
 import com.continuuity.passport.impl.AuthenticatorServiceImpl;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
+import com.continuuity.passport.impl.SecuritySeviceImpl;
 import com.google.common.base.Preconditions;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
@@ -78,9 +80,10 @@ public class MockGuiceBindings extends JerseyServletModule {
     bind(VPCHandler.class);
 
 
-    //Bind DataManagementService and AuthenticatorService to default implementations
+    //Bind services to default implementations
     bind(DataManagementService.class).to(DataManagementServiceImpl.class);
     bind(AuthenticatorService.class).to(AuthenticatorServiceImpl.class);
+    bind(SecurityService.class).to(SecuritySeviceImpl.class);
 
     //Bind Data Access objects
     bind(AccountDAO.class).to(AccountDBAccess.class);
