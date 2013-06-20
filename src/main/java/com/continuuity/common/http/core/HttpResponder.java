@@ -52,7 +52,6 @@ public class HttpResponder {
       response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, channelBuffer.readableBytes());
 
       ChannelFuture result = channel.write(response);
-      result.addListener(ChannelFutureListener.CLOSE);
       result.await();
     } catch (InterruptedException e) {
       throw Throwables.propagate(e);
