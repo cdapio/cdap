@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
 package com.continuuity.app.logging;
@@ -11,11 +11,11 @@ import com.continuuity.common.logging.ApplicationLoggingContext;
  */
 public class FlowletLoggingContext extends ApplicationLoggingContext {
 
-  public static final String TAG_FLOW_ID = "flowId";
-  public static final String TAG_FLOWLET_ID = "flowletId";
+  public static final String TAG_FLOW_ID = ".flowId";
+  public static final String TAG_FLOWLET_ID = ".flowletId";
 
   /**
-   * Constructs the FlowletLoggingContext
+   * Constructs the FlowletLoggingContext.
    * @param accountId account id
    * @param applicationId application id
    * @param flowId flow id

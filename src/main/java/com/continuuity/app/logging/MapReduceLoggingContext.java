@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.app.logging;
 
 import com.continuuity.common.logging.ApplicationLoggingContext;
@@ -7,10 +11,10 @@ import com.continuuity.common.logging.ApplicationLoggingContext;
  */
 public class MapReduceLoggingContext extends ApplicationLoggingContext {
 
-  public static final String TAG_MAP_REDUCE_JOB_ID = "mapReduceId";
+  public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
 
   /**
-   * Constructs the MapReduceLoggingContext
+   * Constructs the MapReduceLoggingContext.
    * @param accountId account id
    * @param applicationId application id
    * @param mapReduceId mapreduce job id
