@@ -29,16 +29,20 @@ public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
    * @param o argument to run the pipeline.
    */
   @Override
-  public ListenableFuture<T> execute(Object o) throws Exception {
-    Object input = o;
-    Object output = null;
-    for(Stage stage : getStages()) {
-      Context ctx = new StageContext(input);
-      stage.process(ctx);
-      output = ctx.getDownStream();
-      input = output;  // Output of previous stage is input to next stage.
+  public ListenableFuture<T> execute(Object o) {
+    try {
+      Object input = o;
+      Object output = null;
+      for(Stage stage : getStages()) {
+        Context ctx = new StageContext(input);
+        stage.process(ctx);
+        output = ctx.getDownStream();
+        input = output;  // Output of previous stage is input to next stage.
+      }
+      return (ListenableFuture<T>) Futures.immediateFuture(output);
+    } catch (Throwable th) {
+      return Futures.immediateFailedFuture(th);
     }
-    return (ListenableFuture<T>) Futures.immediateFuture(output);
   }
 
 }

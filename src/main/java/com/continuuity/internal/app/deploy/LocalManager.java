@@ -44,7 +44,7 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
    * @return A future of Application with Programs.
    */
   @Override
-  public ListenableFuture<ApplicationWithPrograms> deploy(Id.Account id, Location archive) throws Exception {
+  public ListenableFuture<ApplicationWithPrograms> deploy(Id.Account id, Location archive) {
     Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
