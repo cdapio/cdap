@@ -10,6 +10,7 @@ import com.continuuity.performance.benchmark.BenchmarkException;
 import com.continuuity.performance.benchmark.BenchmarkRunner;
 import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.continuuity.performance.benchmark.SimpleBenchmark;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -17,6 +18,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -27,21 +30,25 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * Benchmark for generating load by sending REST calls.
+ * Benchmark that generates stream events by sending REST calls to the Continuuity Gateway.
  */
 public class LoadGenerator extends SimpleBenchmark {
 
-  String apikey = null;
-  String hostname = null;
-  String baseUrl = null;
-  String destination = null;
-  String requestUrl = null;
-  String file = null;
-  int length = 100;
+  private static final Logger LOG = LoggerFactory.getLogger(LoadGenerator.class);
 
-  String [] wordList = shortList;
+  private String apikey = null;
+  private String hostname;
+  private String requestUrl = null;
 
-  Random seedRandom = new Random();
+  private int length = 100;
+
+  private String [] wordList = shortList;
+
+  private Random seedRandom = new Random();
+
+  public LoadGenerator() {
+    hostname = null;
+  }
 
   @Override
   public Map<String, String> usage() {
@@ -63,11 +70,11 @@ public class LoadGenerator extends SimpleBenchmark {
 
     super.configure(config);
 
-    apikey = config.get("apikey");
-    baseUrl = config.get("base");
+    String apikey = config.get("apikey");
+    String baseUrl = config.get("base");
     hostname = config.get("gateway");
-    destination = config.get("stream");
-    file = config.get("words");
+    String destination = config.get("stream");
+    String file = config.get("words");
     length = config.getInt("length", length);
     boolean ssl = apikey != null;
 
@@ -75,19 +82,21 @@ public class LoadGenerator extends SimpleBenchmark {
     if (baseUrl == null) {
       baseUrl = Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, ssl);
     }
-    if (baseUrl == null) {
-      throw new BenchmarkException(
-          "Can't figure out gateway URL. Please specify --base");
-    } else {
-      if (super.simpleConfig.verbose) {
+
+    Preconditions.checkNotNull(baseUrl, "Can't figure out gateway URL. Please specify --base");
+
+    LOG.info("Base Url = {}", baseUrl);
+
+    if (super.simpleConfig.verbose) {
         System.out.println("Using base URL: " + baseUrl);
-      }
     }
-    if (destination == null) {
-      throw new BenchmarkException("Destination stream must be specified via --stream");
-    } else {
-      requestUrl = baseUrl + destination;
-    }
+
+    Preconditions.checkNotNull(destination, "Destination stream must be specified via --stream");
+
+    requestUrl = baseUrl + destination;
+
+    LOG.info("Request Url = {}", requestUrl);
+
     if (file != null) {
       try {
         BufferedReader reader = new BufferedReader(new FileReader(file));
