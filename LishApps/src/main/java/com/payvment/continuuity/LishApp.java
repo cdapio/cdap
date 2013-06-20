@@ -26,7 +26,7 @@ import com.payvment.continuuity.data.CounterTable;
 import com.payvment.continuuity.data.SortedCounterTable;
 
 /**
- *
+ * Payvment Lish Feeds on the Continuuity reactor
  */
 public class LishApp implements Application {
 

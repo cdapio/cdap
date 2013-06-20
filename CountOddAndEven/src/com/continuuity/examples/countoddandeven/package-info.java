@@ -17,8 +17,8 @@
 
 /**
  * Package for count odd and even sample application.
+ * Consumes a stream of generated numbers and counts odds and even
  */
-
 package com.continuuity.examples.countoddandeven;
 
 

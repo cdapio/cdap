@@ -26,6 +26,7 @@ import com.continuuity.internal.io.UnsupportedTypeException;
 import java.util.List;
 
 /**
+ *
  * This implements a simple purchase history application. See the package info for more details.
  */
 public class PurchaseApp implements Application {

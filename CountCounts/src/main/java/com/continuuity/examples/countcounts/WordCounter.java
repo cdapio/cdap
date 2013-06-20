@@ -26,12 +26,13 @@ import org.slf4j.LoggerFactory;
  * Counts words.
  */
 public class WordCounter extends AbstractFlowlet {
-  private static Logger logger = LoggerFactory.getLogger(WordCounter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WordCounter
+                                                               .class);
 
   private OutputEmitter<Counts> output;
 
   public void process(String line) {
-    logger.debug(this.getContext().getName() + ": Received line " + line);
+    LOG.debug(this.getContext().getName() + ": Received line " + line);
 
     // Count the number of words
     final String delimiters = "[ .-]";
@@ -43,7 +44,7 @@ public class WordCounter extends AbstractFlowlet {
     // Count the total length
     int lineLength = line.length();
 
-    logger.debug(this.getContext().getName() + ": Emitting count " + wordCount +
+    LOG.debug(this.getContext().getName() + ": Emitting count " + wordCount +
                 " and length " + lineLength);
 
     output.emit(new Counts(wordCount, lineLength));

@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * KeyValue source.
  */
 public class KeyValueSource extends AbstractFlowlet {
-  private static Logger loger = LoggerFactory.getLogger(KeyValueSource.class);
+  private static final Logger loger = LoggerFactory.getLogger(KeyValueSource.class);
   private OutputEmitter<KeyAndValue> output;
 
   public KeyValueSource() {

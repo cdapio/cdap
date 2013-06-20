@@ -22,7 +22,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.common.Bytes;
 
 /**
- *
+ * A simple flow with a source flowlet that reads tweets.
  */
 public class TwitterScanner implements Application {
 

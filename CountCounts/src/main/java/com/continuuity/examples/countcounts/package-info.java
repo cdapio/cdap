@@ -16,9 +16,11 @@
  */
 
 /**
- * Package for Count Counts sample application.
+ * Package for CountCounts sample application.
+ * A very simple flow that counts counts.
+ * Reads input stream 'text' and tokenizes it. Instead of counting words, it
+ * counts the number of inputs with the same number of tokens.
  */
-
 package com.continuuity.examples.countcounts;
 
 

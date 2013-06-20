@@ -16,6 +16,7 @@
  */
 
 /**
+
  * This package contains a simple purchase history application. It illustrates how to use the ObjectStore dataset.
  * <ul>
  *   <li>

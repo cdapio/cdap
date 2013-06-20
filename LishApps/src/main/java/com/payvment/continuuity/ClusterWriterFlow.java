@@ -135,7 +135,7 @@ public class ClusterWriterFlow implements Flow {
    *
    */
   public static class ClusterSourceParser extends AbstractFlowlet {
-    private static Logger logger = LoggerFactory.getLogger(ClusterSourceParser.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClusterSourceParser.class);
 
     int numProcessed = 0;
     int numFailures = 0;
@@ -153,7 +153,7 @@ public class ClusterWriterFlow implements Flow {
       // Grab CSV string from event-stream tuple
       String csvEventString = new String(Bytes.toBytes(event.getBody()));
 
-      logger.debug("ClusterSource Received Event: " + csvEventString);
+      LOG.debug("ClusterSource Received Event: " + csvEventString);
 
       // Parse as CSV
       String[] parsed = null;
@@ -164,7 +164,7 @@ public class ClusterWriterFlow implements Flow {
           throw new IOException();
         }
       } catch (IOException e) {
-        logger.error("Error parsing cluster CSV line: " + csvEventString);
+        LOG.error("Error parsing cluster CSV line: " + csvEventString);
         throw new RuntimeException("Invalid input string: " + csvEventString);
       }
 
@@ -172,7 +172,7 @@ public class ClusterWriterFlow implements Flow {
       if (parsed[0].equals(LishApp.CLUSTER_RESET_FLAG)) {
         // CSV = reset_clusters,max_cluster_id,"msg"
 
-        logger.debug("Received Cluster RESET");
+        LOG.debug("Received Cluster RESET");
 
         this.resetOut.emit(
             new ClusterReset(Integer.valueOf(parsed[1]), parsed[2]));
@@ -188,7 +188,7 @@ public class ClusterWriterFlow implements Flow {
         this.clusterOut.emit(cluster);
 
       } catch (NumberFormatException nfe) {
-        logger.error("Error parsing numeric field in CSV line:" + csvEventString, nfe);
+        LOG.error("Error parsing numeric field in CSV line:" + csvEventString, nfe);
         throw nfe;
       } finally {
         this.numProcessed++;
@@ -200,7 +200,7 @@ public class ClusterWriterFlow implements Flow {
    * Flowlet that writes cluster entries to the cluster table in the data fabric.
    */
   public static class ClusterWriter extends AbstractFlowlet {
-    private static Logger logger = LoggerFactory.getLogger(ClusterWriter.class);
+    private static Logger LOG = LoggerFactory.getLogger(ClusterWriter.class);
 
     int numProcessed = 0;
 
@@ -211,11 +211,11 @@ public class ClusterWriterFlow implements Flow {
     public void writeCluster(Cluster cluster) throws OperationException {
       try {
         if (cluster == null) {
-          logger.error("Null cluster!");
+          LOG.error("Null cluster!");
           return;
         }
         this.clusterTable.writeCluster(cluster);
-        logger.debug("Writing cluster: " + cluster);
+        LOG.debug("Writing cluster: " + cluster);
       } finally {
         this.numProcessed++;
       }
@@ -226,7 +226,7 @@ public class ClusterWriterFlow implements Flow {
    * Flowlet that clears existing clusters from the data fabric.
    */
   public static class ClusterReseter extends AbstractFlowlet {
-    private static Logger logger = LoggerFactory.getLogger(ClusterReseter.class);
+    private static Logger LOG = LoggerFactory.getLogger(ClusterReseter.class);
 
     int numProcessed = 0;
 
@@ -237,13 +237,13 @@ public class ClusterWriterFlow implements Flow {
     public void reset(ClusterReset reset) {
       try {
         if (reset == null) {
-          logger.error("Null cluster reset!");
+          LOG.error("Null cluster reset!");
           return;
         }
-        logger.info("Resetting clusters: " + reset);
+        LOG.info("Resetting clusters: " + reset);
         this.clusterTable.resetClusters(reset.maxClusterId);
       } catch (OperationException e) {
-        logger.error("Error resetting clusters", e);
+        LOG.error("Error resetting clusters", e);
         return;
       } finally {
         this.numProcessed++;
