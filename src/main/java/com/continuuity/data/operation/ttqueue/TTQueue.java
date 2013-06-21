@@ -7,6 +7,7 @@ import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.List;
+
 /**
  * A Transactional Tabular Queue interface.
  *

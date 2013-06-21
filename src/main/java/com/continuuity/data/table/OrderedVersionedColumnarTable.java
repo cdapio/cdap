@@ -75,18 +75,4 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    */
   public List<KeyRange> getSplits(int numSplits, byte[] start, byte[] stop, byte[][] columns, ReadPointer pointer)
     throws OperationException;
-
-  /**
-   * Gets the value and version associated with the least key that is less than or equal to the given row.
-   * Returns null if there is no such key
-   * @param row
-   * @param column
-   * @param readPointer
-   * @return Value and version of the column that corresponds to the least key that is less than or equal to
-   * given row. Null if no such key
-   * @throws OperationException
-   */
-//  public OperationResult<ImmutablePair<byte[], Long>> getFloorValueWithVersion( byte[] row, byte[] column,
-//                                                              ReadPointer readPointer) throws OperationException;
-
 }
