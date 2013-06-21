@@ -10,7 +10,7 @@ import com.google.common.base.Objects;
  *
  * Supports key-value and columnar operations.
  */
-public class Increment extends WriteOperation {
+public class Increment extends WriteOperation implements TableOperation {
 
   // the name of the table
   private final String table;
@@ -121,6 +121,7 @@ public class Increment extends WriteOperation {
     this.amounts = amounts;
   }
 
+  @Override
   public String getTable() {
     return this.table;
   }

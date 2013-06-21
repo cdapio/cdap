@@ -4,6 +4,7 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
@@ -48,7 +49,7 @@ public class DataFabricModules extends RuntimeModule {
         bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
         // We don't need caching for in-memory
-        conf.setLong(OmidTransactionalOperationExecutor.QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
+        conf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
           .toInstance(conf);
       }

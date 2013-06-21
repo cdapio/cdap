@@ -2,11 +2,14 @@ package com.continuuity.data.engine.hbase;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.weave.common.Threads;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -39,6 +42,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This implements the OVCTable for HBase.
@@ -59,9 +69,15 @@ public class HBaseOVCTable extends AbstractOVCTable {
   protected final byte[] tableName;
   protected final byte[] family;
 
+  private final int maxPutsPerRpc;
+  private final ExecutorService executorService;
+
   protected final IOExceptionHandler exceptionHandler;
 
-  public HBaseOVCTable(Configuration conf, final byte[] tableName, final byte[] family,
+  public HBaseOVCTable(CConfiguration cConf,
+                       Configuration conf,
+                       final byte[] tableName,
+                       final byte[] family,
                        IOExceptionHandler exceptionHandler)
     throws OperationException {
     try {
@@ -73,6 +89,22 @@ public class HBaseOVCTable extends AbstractOVCTable {
       this.tableName = tableName;
       this.family = family;
       this.exceptionHandler = exceptionHandler;
+      this.maxPutsPerRpc = cConf.getInt(Constants.CFG_DATA_HBASE_PUTS_BATCH_MAX_SIZE,
+                                        Constants.DEFAULT_DATA_HBASE_PUTS_BATCH_MAX_SIZE);
+      int writeThreads = cConf.getInt(Constants.CFG_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT,
+                                      Constants.DEFAULT_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT);
+
+      // Thread pool of size max TX_EXECUTOR_POOL_SIZE.
+      // 60 seconds wait time before killing idle threads.
+      // Keep no idle threads more than 60 seconds.
+      // If max thread pool size reached, execute the task in the submitter thread
+      // (basically fallback to sync mode if things comes too fast
+      this.executorService = new ThreadPoolExecutor(0, writeThreads,
+                                                    60L, TimeUnit.SECONDS,
+                                                    new SynchronousQueue<Runnable>(),
+                                                    Threads.createDaemonThreadFactory("hbaseovct-async-write-executor"),
+                                                    new ThreadPoolExecutor.CallerRunsPolicy());
+
     } catch (IOException e) {
       exceptionHandler.handle(e);
       //Note: exceptionHandler.handle already throws a RuntimeException. However IntelliJ doesn't recognize it and
@@ -145,7 +177,53 @@ public class HBaseOVCTable extends AbstractOVCTable {
   }
 
   @Override
-  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow)
+  public void put(byte[][] rows, byte[][][] columnsPerRow, final long version, byte[][][] valuesPerRow)
+    throws OperationException {
+    if (rows.length < maxPutsPerRpc) {
+      putInternal(rows, columnsPerRow, version, valuesPerRow);
+      return;
+    }
+    List<Future<?>> results = Lists.newArrayList();
+    for (int j = 0; j < 1 + rows.length / maxPutsPerRpc; j++) {
+      int count = (j + 1) * maxPutsPerRpc > rows.length ? (rows.length - j * maxPutsPerRpc) : maxPutsPerRpc;
+
+      // TODO: avoid copying, see ENG-2826
+      final byte[][] rowPart = Arrays.copyOfRange(rows, j * maxPutsPerRpc, j * maxPutsPerRpc + count);
+      final byte[][][] columnsPart = Arrays.copyOfRange(columnsPerRow, j * maxPutsPerRpc, j * maxPutsPerRpc + count);
+      final byte[][][] valuesPart = Arrays.copyOfRange(valuesPerRow, j * maxPutsPerRpc, j * maxPutsPerRpc + count);
+
+      Future<?> result = executorService.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            putInternal(rowPart, columnsPart, version, valuesPart);
+          } catch (OperationException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+      results.add(result);
+    }
+
+    OperationException operationException = null;
+    for (Future<?> result : results) {
+      try {
+        result.get();
+      } catch (Exception e) {
+        // we do not re-throw it right away as we want to wait for all tasks to finish before we return from method,
+        // i.e. before there will be any action taken on that. Like in case of rollback attempt, we want to do deletes
+        // only after writes are finished, otherwise they may not have affect.
+        operationException = new OperationException(StatusCode.INTERNAL_ERROR, "Writing puts failed", e);
+        Log.warn("Writing puts failed", e);
+      }
+    }
+
+    if (operationException != null) {
+      throw operationException;
+    }
+  }
+
+  private void putInternal(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow)
     throws OperationException {
     assert (rows.length == columnsPerRow.length);
     assert (rows.length == valuesPerRow.length);
@@ -705,8 +783,8 @@ public class HBaseOVCTable extends AbstractOVCTable {
         }
       }
       writeTable = getWriteTable();
-      writeTable.put(new Put(row).add(this.family, column, writeVersion, prependWithTypePrefix(DATA,
-                                                                                               Bytes.toBytes(value))));
+      writeTable.put(
+        new Put(row).add(this.family, column, writeVersion, prependWithTypePrefix(DATA, Bytes.toBytes(value))));
       return value;
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -726,10 +804,11 @@ public class HBaseOVCTable extends AbstractOVCTable {
     HTable writeTable = null;
     List<Put> puts = new ArrayList<Put>(columns.length);
     try {
-      for (int i = 0; i < columns.length; i++) {
-        KeyValue kv = getLatestVisible(row, columns[i], readPointer);
+      KeyValue[] kvs = getLatestVisible(row, columns, readPointer);
+      for (int i = 0; i<columns.length; i++) {
+        KeyValue kv = kvs[i];
         long l = amounts[i];
-        if (kv != null) {
+        if (kv!=null) {
           l += Bytes.toLong(removeTypePrefix(kv.getValue()));
         }
         Put put = new Put(row);
@@ -1074,5 +1153,71 @@ public class HBaseOVCTable extends AbstractOVCTable {
     public void close() {
       scanner.close();
     }
+  }
+
+  /**
+   * Gets latest visible KeyValue for given row, qualifier, and readPointer. Accepts array of qualifiers and returns
+   * array of corresponded KeyValues. Length of the returned array equals to array of qualifiers, with the KeyValue at
+   * index i corresponded to qualifier at index i in passed parameter. If no visible KeyValue, the element of the
+   * returned array is null.
+   * <p>
+   *   Using this method for array of qualifiers is supposedly more efficient than using
+   *   {@link #getLatestVisible(byte[], byte[], com.continuuity.data.operation.executor.ReadPointer)} for every
+   *   qualifier separately.
+   * </p>
+   * @param row row value
+   * @param qualifiers array of qualifiers
+   * @param readPointer readPointer value
+   * @return an array of values according to description above
+   * @throws OperationException
+   */
+  private KeyValue[] getLatestVisible(final byte[] row, final byte[][] qualifiers, ReadPointer readPointer)
+    throws OperationException {
+    KeyValue[] keyVals = new KeyValue[qualifiers.length];
+    Set<Long> deleted = Sets.newHashSet();
+    try {
+      // Using one Get operation to fetch data for all qualifiers at once
+      Get get = new Get(row);
+      for (byte[] qualifier : qualifiers) {
+        get.addColumn(this.family, qualifier);
+      }
+      // read rows that were written up until the start of the current transaction (=getMaxStamp(readPointer))
+      get.setTimeRange(0, getMaxStamp(readPointer));
+      get.setMaxVersions();
+      Result result = this.readTable.get(get);
+      if (result.isEmpty()) {
+        return keyVals;
+      }
+      for (int i = 0; i < qualifiers.length; i++) {
+        for (KeyValue kv : result.getColumn(this.family, qualifiers[i])) {
+          long version = kv.getTimestamp();
+          if (!readPointer.isVisible(version) || deleted.contains(version)) {
+            continue;
+          }
+          byte[] value = kv.getValue();
+          byte typePrefix = value[0];
+          boolean found = false;
+          switch (typePrefix) {
+            case DATA:
+              keyVals[i] = kv;
+              found = true;
+              break;
+            case DELETE_VERSION:
+              deleted.add(version);
+              break;
+            case DELETE_ALL:
+              found = true;
+              // in this case return val = null
+              break;
+          }
+          if (found) {
+            break;
+          }
+        }
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return keyVals;
   }
 }

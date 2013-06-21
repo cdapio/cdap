@@ -19,7 +19,7 @@ import java.util.Arrays;
  *
  * Supports key-value and columnar operations.
  */
-public class CompareAndSwap extends ConditionalWriteOperation {
+public class CompareAndSwap extends ConditionalWriteOperation implements TableOperation {
 
   // the name of the table
   private final String table;
@@ -103,6 +103,7 @@ public class CompareAndSwap extends ConditionalWriteOperation {
     this.newValue = newValue;
   }
 
+  @Override
   public String getTable() {
     return this.table;
   }

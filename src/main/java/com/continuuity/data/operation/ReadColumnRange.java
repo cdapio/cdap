@@ -7,7 +7,7 @@ import com.google.common.base.Objects;
  *
  * Supports only columnar operations.
  */
-public class ReadColumnRange extends ReadOperation {
+public class ReadColumnRange extends ReadOperation implements TableOperation {
 
   // the name of the table
   private final String table;
@@ -164,6 +164,7 @@ public class ReadColumnRange extends ReadOperation {
     this.limit = limit;
   }
 
+  @Override
   public String getTable() {
     return this.table;
   }

@@ -7,7 +7,7 @@ import com.google.common.base.Objects;
  *
  * Supports both key-value and columnar operations.
  */
-public class ReadAllKeys extends ReadOperation {
+public class ReadAllKeys extends ReadOperation implements TableOperation {
 
   // the name of the table
   private final String table;
@@ -68,6 +68,7 @@ public class ReadAllKeys extends ReadOperation {
   /**
    * @return the table name
    */
+  @Override
   public String getTable() {
     return this.table;
   }

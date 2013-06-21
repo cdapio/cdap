@@ -41,7 +41,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
 
   @Override
   protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
-    return new HBaseNativeOVCTable(this.hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
+    return new HBaseNativeOVCTable(conf, hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
   }
 
   @Override
