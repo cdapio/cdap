@@ -1182,7 +1182,7 @@ public class ConverterUtils {
     }
     QueueConfigure queueConfigure =
       new QueueConfigure(tQueueConfigure.getQueueName(),
-                                    unwrap(tQueueConfigure.getNewConsumer()));
+                         unwrap(tQueueConfigure.getNewConsumer()));
     if (tQueueConfigure.getMetric() != null) {
       queueConfigure.setMetricName(tQueueConfigure.getMetric());
     }
