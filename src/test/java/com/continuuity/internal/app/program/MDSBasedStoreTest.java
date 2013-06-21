@@ -390,7 +390,6 @@ public class MDSBasedStoreTest {
     ApplicationSpecification spec = new WordCountApp().configure();
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
-//    final Id.Application appId = DefaultId.APPLICATION;
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Id.Program programId = new Id.Program(appId, "WordCountFlow");
