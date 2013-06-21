@@ -89,6 +89,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     // No-op
   }
 
+  protected synchronized void updateRuntimeInfo(Type type, RunId runId, RuntimeInfo runtimeInfo) {
+    if (!runtimeInfos.contains(type, runId)) {
+      runtimeInfos.put(type, runId, runtimeInfo);
+    }
+  }
+
   private synchronized void remove(RuntimeInfo info) {
     runtimeInfos.remove(info.getType(), info.getController().getRunId());
   }

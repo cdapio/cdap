@@ -86,7 +86,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       LOG.info("No running instance found for RunId {}", runId);
       return null;
     }
-    return createRuntimeInfo(type, programId, weaveController);
+    runtimeInfo = createRuntimeInfo(type, programId, weaveController);
+    updateRuntimeInfo(type, runId, runtimeInfo);
+    return runtimeInfo;
   }
 
   @Override
@@ -113,7 +115,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
         WeaveController weaveController = weaveRunner.lookup(appName, runId);
         if (weaveController != null) {
-          result.put(runId, createRuntimeInfo(type, programId, weaveController));
+          RuntimeInfo runtimeInfo = createRuntimeInfo(type, programId, weaveController);
+          result.put(runId, runtimeInfo);
+          updateRuntimeInfo(type, runId, runtimeInfo);
         }
       }
     }
