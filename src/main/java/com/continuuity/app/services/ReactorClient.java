@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Client for interacting with Local Reactor's app-fabric service to perform the following operations:
  * a) Deploy app
- * b) Start/Stop/Status of flow
+ * b) Start/Stop/Status of flow, procedure or map reduce job
  * c) Promote app to cloud
  * d) Scale number of flowlet instances
  * <p/>
