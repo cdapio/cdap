@@ -102,6 +102,10 @@ public class FlowTest {
     post.setEntity(new StringEntity(gson.toJson(ImmutableMap.of("word", "text:Testing"))));
     HttpResponse response = client.execute(post);
     Assert.assertTrue(response.getStatusLine().getStatusCode() == 200);
+
+    for (ProgramController controller : controllers) {
+      controller.stop().get();
+    }
   }
 
   @Test
