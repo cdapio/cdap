@@ -49,7 +49,7 @@ public class Main {
       LOG.error("No zookeeper quorum provided.");
       System.exit(1);
     }
-    ZKClientService zkClientService =
+    final ZKClientService zkClientService =
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
@@ -58,6 +58,13 @@ public class Main {
           )
         ));
     zkClientService.startAndWait();
+
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        zkClientService.stopAndWait();
+      }
+    });
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
@@ -95,8 +102,6 @@ public class Main {
     } catch (Exception e) {
       LOG.error(e.toString(), e);
       System.exit(-1);
-    } finally {
-      zkClientService.stopAndWait();
     }
   }
 
