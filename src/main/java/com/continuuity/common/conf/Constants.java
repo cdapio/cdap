@@ -87,7 +87,10 @@ public class Constants {
   /** Max puts to perform in one rpc */
   public static final String CFG_DATA_HBASE_PUTS_BATCH_MAX_SIZE = "data.dist.hbase.put.batch_size.max";
   /** Max threads to use to write into single HBase table */
-  public static final String CFG_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT = "data.dist.hbase.table.write_threads_count.max";
+  public static final String CFG_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT =
+    "data.dist.hbase.table.write_threads_count.max";
+  public static final String CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES =
+    "queue.state.proxy.max.cache.size.bytes";
 
   /**
    * Defaults for Data Fabric
@@ -105,6 +108,7 @@ public class Constants {
   public static final int DEFAULT_DATA_HBASE_PUTS_BATCH_MAX_SIZE = Integer.MAX_VALUE;
   /** Use 10 threads per table by default */
   public static final int DEFAULT_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT = 10;
+  public static final long DEAFULT_CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES = 200 * 1024 * 1024;
 
   // Disable logging
 
