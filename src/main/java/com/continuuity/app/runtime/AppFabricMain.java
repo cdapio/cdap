@@ -8,6 +8,7 @@ import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -59,8 +60,9 @@ public final class AppFabricMain extends DaemonMain {
       new ConfigModule(),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
-      new ProgramRunnerRuntimeModule(zkClientService).getDistributedModules(),
+      new ProgramRunnerRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
