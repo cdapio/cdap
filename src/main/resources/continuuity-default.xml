@@ -22,7 +22,7 @@
 
     <property>
         <name>thrift.max.read.buffer</name>
-        <value>1048576</value>
+        <value>16777216</value>
         <description>
             Specifies the max read buffer size used by
             thrift server. Value should be set to something greater
