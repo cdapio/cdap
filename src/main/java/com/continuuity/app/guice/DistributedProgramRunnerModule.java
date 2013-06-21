@@ -13,66 +13,30 @@ import com.continuuity.internal.app.runtime.distributed.DistributedProcedureProg
 import com.continuuity.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.WeaveRunnerService;
-import com.continuuity.weave.discovery.Discoverable;
-import com.continuuity.weave.discovery.DiscoveryService;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.continuuity.weave.discovery.ZKDiscoveryService;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
-import com.continuuity.weave.zookeeper.ZKClient;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed containers.
  */
 final class DistributedProgramRunnerModule extends PrivateModule {
 
-  private final ZKClient zkClient;
-
-  DistributedProgramRunnerModule(ZKClient zkClient) {
-    this.zkClient = zkClient;
-  }
-
   @Override
   protected void configure() {
-    // Bind ZKClient
-    bind(ZKClient.class).toInstance(zkClient);
-
     // Bind and expose WeaveRunner
-    bindConstant().annotatedWith(Names.named("config.weave.namespace")).to("/weave");
     bind(WeaveRunner.class).to(YarnWeaveRunnerService.class);
     bind(WeaveRunnerService.class).to(YarnWeaveRunnerService.class);
 
     expose(WeaveRunner.class);
     expose(WeaveRunnerService.class);
-
-    // Bind and expose DiscoveryService
-    bind(DiscoveryService.class).to(ZKDiscoveryService.class);
-    expose(DiscoveryService.class);
-
-    // Bind and expose DiscoveryServiceClient.
-    bind(DiscoveryServiceClient.class)
-      .annotatedWith(Names.named("local.discovery.client"))
-      .to(ZKDiscoveryService.class);
-    bind(DiscoveryServiceClient.class).to(ProcedureDiscoveryServiceClient.class);
-    expose(DiscoveryServiceClient.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
@@ -86,20 +50,11 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     expose(ProgramRuntimeService.class);
   }
 
-  /**
-   * Singleton provider for {@link ZKDiscoveryService}.
-   */
   @Singleton
   @Provides
-  private ZKDiscoveryService provideZKDiscoveryService(ZKClient zkClient) {
-    return new ZKDiscoveryService(zkClient);
-  }
-
-  @Singleton
-  @Provides
-  private YarnWeaveRunnerService provideYarnWeaveRunnerService(@Named("config.weave.namespace") String namespace,
-                                                               CConfiguration configuration,
+  private YarnWeaveRunnerService provideYarnWeaveRunnerService(CConfiguration configuration,
                                                                YarnConfiguration yarnConfiguration) {
+    String namespace = configuration.get("weave.zookeeper.namespace", "/weave");
     return new YarnWeaveRunnerService(yarnConfiguration, configuration.get("zookeeper.quorum") + namespace);
   }
 
@@ -116,54 +71,5 @@ final class DistributedProgramRunnerModule extends PrivateModule {
         return provider.get();
       }
     };
-  }
-
-  /**
-   * A DiscoveryServiceClient implementation that will namespace correctly for procedure service discovery.
-   * Otherwise it'll delegate to default one.
-   */
-  private static final class ProcedureDiscoveryServiceClient implements DiscoveryServiceClient {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ProcedureDiscoveryServiceClient.class);
-
-    private final ZKClient zkClient;
-    private final DiscoveryServiceClient delegate;
-    private final String weaveNamespace;
-    private final ConcurrentMap<String, DiscoveryServiceClient> clients;
-
-    @Inject
-    private ProcedureDiscoveryServiceClient(ZKClient zkClient,
-                                            @Named("local.discovery.client") DiscoveryServiceClient delegate,
-                                            @Named("config.weave.namespace") String namespace) {
-      this.zkClient = zkClient;
-      this.delegate = delegate;
-      this.weaveNamespace = namespace;
-      this.clients = Maps.newConcurrentMap();
-    }
-
-    @Override
-    public Iterable<Discoverable> discover(final String name) {
-      if (!name.startsWith("procedure.")) {
-        return delegate.discover(name);
-      }
-
-      String ns = weaveNamespace + "/" + name;
-      LOG.info("Discover: " + ns + ", " + name);
-      DiscoveryServiceClient client = new ZKDiscoveryService(ZKClients.namespace(zkClient, ns));
-      DiscoveryServiceClient oldClient = clients.putIfAbsent(name, client);
-      if (oldClient != null) {
-        client = oldClient;
-      }
-      final Iterable<Discoverable> result = client.discover(name);
-
-      return new Iterable<Discoverable>() {
-
-        @Override
-        public Iterator<Discoverable> iterator() {
-          LOG.info("Discovered: " + name + " " + Iterables.toString(result));
-          return result.iterator();
-        }
-      };
-    }
   }
 }
