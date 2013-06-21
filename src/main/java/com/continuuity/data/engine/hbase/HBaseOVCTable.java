@@ -166,6 +166,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
     throws OperationException {
     if (rows.length < maxPutsPerRpc) {
       putInternal(rows, columnsPerRow, version, valuesPerRow);
+      return;
     }
     List<Future<?>> results = Lists.newArrayList();
     for (int j = 0; j < 1 + rows.length / maxPutsPerRpc; j++) {
