@@ -370,7 +370,7 @@
 
     <property>
         <name>data.opex.server.address</name>
-        <value>0.0.0.0</value>
+        <value>localhost</value>
         <description>The inet address for the operation executor
             service</description>
     </property>
