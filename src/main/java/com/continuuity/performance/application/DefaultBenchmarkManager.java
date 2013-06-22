@@ -205,7 +205,7 @@ public class DefaultBenchmarkManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-//        appFabricServer.start(token, new FlowDescriptor(procedureId, arguments));
+        appFabricServer.start(token, new FlowDescriptor(procedureId, arguments));
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
