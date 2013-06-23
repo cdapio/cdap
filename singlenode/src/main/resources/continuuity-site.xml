@@ -1,0 +1,102 @@
+<!--
+    Copyright (c) to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+    <!--
+        Resource manager configurations.
+    -->
+
+    <property>
+        <name>resource.manager.cloud.hostname</name>
+        <value>demo.continuuity.com</value>
+        <description>Specifies the resource manager hostname in cloud.</description>
+    </property>
+
+    <property>
+        <name>resource.manager.server.address</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the address to which the resource managerment service should bind to.</description>
+    </property>
+
+    <!--
+        Flow Manager configuration.
+    -->
+    <property>
+        <name>flow.manager.server.address</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the address to which the flow manager service should bind to.</description>
+    </property>
+
+    <!--
+        Gateway configuration
+    -->
+    <property>
+        <name>gateway.hostname</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the hostname on which the Gateway will listen</description>
+    </property>
+
+    <!--
+        Overlord configuration
+    -->
+    <property>
+        <name>flow.monitor.server.address</name>
+        <value>127.0.0.1</value>
+    </property>
+
+    <property>
+        <name>overlord.metrics.processor.plugins.flowsystem</name>
+        <value>com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor</value>
+        <description>Specifies plugins to be used for processing flow system metrics. </description>
+    </property>
+
+    <property>
+        <name>overlord.metrics.processor.plugins.flowuser</name>
+        <value>com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor</value>
+        <description>Specifies plugins to be used for processing flow user metrics. </description>
+    </property>
+
+    <!--
+       Metadata configuration
+    -->
+    <property>
+        <name>metadata.server.address</name>
+        <value>127.0.0.1</value>
+    </property>
+
+    <!--
+        Data Fabric configuration
+    -->
+    <property>
+        <name>data.local.jdbc</name>
+        <value>jdbc:hsqldb:file:data/fabricdb;user=sa</value>
+        <description>Specifies local file system implementation</description>
+    </property>
+
+    <property>
+        <name>data.local.hsqldb.cache_rows</name>
+        <value>64000</value>
+        <description>Specifies maximum number of rows of cached
+            tables that are held in memory</description>
+    </property>
+
+    <property>
+        <name>data.local.hsqldb.cache_size</name>
+        <value>64000</value>
+        <description>Specifies total size (in kilobytes) of rows in
+            memory cache used with cached tables</description>
+    </property>   
+   
+    <property>
+        <name>data.local.leveldb.blocksize</name>
+        <value>1024</value>
+        <description>Specifies block size (in bytes)</description>
+    </property>
+
+    <property>
+        <name>data.local.leveldb.cachesize</name>
+        <value>104857600</value>
+        <description>Specifies cache size (in bytes)</description>
+    </property>
+</configuration>

@@ -1,0 +1,40 @@
+/**
+ * Specify all the dependencies
+ */
+apply plugin:'java'
+
+dependencies {
+     	compile elastic([ group: 'com.continuuity', name: 'common', version: "${version}" , changing: true], "common")
+       	compile elastic([ group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+       	compile elastic([ group: 'com.continuuity', name: 'data-fabric', version: "${version}" , changing: true], "data-fabric")
+       	compile elastic([ group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}" , changing: true], "data-fabric")
+
+        compile elastic([ group: 'com.continuuity', name: 'app-fabric', version: "${version}" , changing: true], "app-fabric")
+        compile elastic([ group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}" , changing: true], "app-fabric")
+
+        compile elastic([ group: 'com.continuuity', name: 'passport', classifier: 'api', version: "${version}" , changing: true], "passport")
+
+       	compile elastic([ group: 'com.continuuity', name: 'gateway', version: "${version}" , changing: true], "gateway")
+       	compile elastic([ group: 'com.continuuity', name: 'overlord', version: "${version}" , changing: true], "gateway")
+       	compile elastic([ group: 'com.continuuity', name: 'overlord', classifier: 'loggly', version: "${version}" , changing: true], "overlord")
+       	compile elastic([ group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}" , changing: true], "overlord")    
+
+        compile libraries.slf4j_api
+        compile libraries.logback_core
+        compile libraries.logback_classic
+        compile libraries.google_guice
+        compile libraries.weave_zookeeper
+
+        testCompile libraries.mockito_core
+        testCompile libraries.junit
+ 
+        // Add eclipse plugin dependency to package this with continuuity-developer edition
+        runtime libraries.continuuity_eclipse_plugin
+}
+
+/**
+ * Exclude any config xml from singlenode jar
+ */
+jar.exclude '*.xml'
+
+

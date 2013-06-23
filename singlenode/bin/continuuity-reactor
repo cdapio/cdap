@@ -1,0 +1,279 @@
+#!/usr/bin/env bash
+
+##############################################################################
+##
+##  continuuity-reactor start up script for UN*X
+##
+##############################################################################
+
+if [ -d /opt/continuuity ]; then
+ CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME
+ DEFAULT_JVM_OPTS="-Xmx3072m"
+else
+ DEFAULT_JVM_OPTS="-Xmx1024m"
+fi
+
+# Add default JVM options here. You can also use JAVA_OPTS and CONTINUUITY_REACTOR_OPTS to pass JVM options to this script.
+CONTINUUITY_REACTOR_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc="
+
+APP_NAME="continuuity-reactor"
+APP_BASE_NAME=`basename "$0"`
+
+warn ( ) {
+    echo "$*"
+}
+
+die ( ) {
+    echo
+    echo "$*"
+    echo
+    exit 1
+}
+
+# Attempt to set APP_HOME
+# Resolve links: $0 may be a link
+PRG="$0"
+# Need this for relative symlinks.
+while [ -h "$PRG" ] ; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '/.*' > /dev/null; then
+        PRG="$link"
+    else
+        PRG=`dirname "$PRG"`"/$link"
+    fi
+done
+SAVED="`pwd`"
+cd "`dirname \"$PRG\"`/.." >&-
+APP_HOME="`pwd -P`"
+
+CLASSPATH=$APP_HOME/lib/*:$APP_HOME/conf/
+
+# Determine the Java command to use to start the JVM.
+if [ -n "$JAVA_HOME" ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+        # IBM's JDK on AIX uses strange locations for the executables
+        JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+        JAVACMD="$JAVA_HOME/bin/java"
+    fi
+    if [ ! -x "$JAVACMD" ] ; then
+        die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+    fi
+else
+    JAVACMD="java"
+    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+fi
+
+
+# Split up the JVM_OPTS And CONTINUUITY_REACTOR_OPTS values into an array, following the shell quoting and substitution rules
+function splitJvmOpts() {
+    JVM_OPTS=("$@")
+}
+eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_REACTOR_OPTS
+
+if [ -d /opt/continuuity ]; then
+ CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME
+fi
+
+# PID Location
+PID_DIR=$APP_HOME/data
+BASENAME=${PRG##*/}
+pid=$PID_DIR/$BASENAME.pid
+
+# checks if there exists a PID that is already running. Alert user but still return success
+check_before_start() {
+  if [ ! -d "$PID_DIR" ]; then
+    mkdir -p "$PID_DIR"
+  fi
+  if [ -f $pid ]; then
+    if kill -0 `cat $pid` > /dev/null 2>&1; then
+      echo "$0 running as process `cat $pid`. Stop it first."
+      exit 0
+    fi
+  fi
+}
+
+# checks for any updates of singlenode
+check_for_updates() {
+  # check if connected to internet
+  l=`ping -c 3 205.186.175.189 | grep "64 bytes" | wc -l`  
+  if [ $l -eq 3 ]
+  then
+    new=`curl 'http://www.continuuity.com/version' 2>/dev/null`
+    if [[ "x${new}" != "x" ]]; then
+     current=`cat ${APP_HOME}/VERSION`
+     compare_versions $new $current   
+     case $? in 
+       0);;
+       1) echo ""
+          echo "UPDATE: There is a newer version of Continuuity Developer Suite available."
+          echo "        Download it from your account: https://accounts.continuuity.com."
+          echo "";;
+       2);;
+     esac
+    fi
+  fi
+}
+
+compare_versions () {
+  if [[ $1 == $2 ]]
+  then
+    return 0
+  fi
+  local IFS=.
+  local i ver1=($1) ver2=($2)
+  # fill empty fields in ver1 with zeros
+  for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
+  do
+    ver1[i]=0
+  done
+  for ((i=0; i<${#ver1[@]}; i++))
+  do
+    if [[ -z ${ver2[i]} ]]
+    then
+      # fill empty fields in ver2 with zeros
+      ver2[i]=0
+    fi
+    if ((10#${ver1[i]} > 10#${ver2[i]}))
+    then
+      return 1
+    fi
+    if ((10#${ver1[i]} < 10#${ver2[i]}))
+    then
+      return 2
+    fi
+  done
+  return 0
+}
+
+# Rotates the basic start/stop logs
+rotate_log () {
+    log=$1;
+    num=5;
+    if [ -n "$2" ]; then
+    num=$2
+    fi
+    if [ -f "$log" ]; then # rotate logs
+    while [ $num -gt 1 ]; do
+        prev=`expr $num - 1`
+        [ -f "$log.$prev" ] && mv -f "$log.$prev" "$log.$num"
+        num=$prev
+    done
+    mv -f "$log" "$log.$num";
+    fi
+}
+
+# Copyright message
+print_copyright() {
+    echo "======================================================================================"
+    echo "Continuuity Reactor (tm) - Copyright 2012-2013 Continuuity,Inc. All Rights Reserved."
+    echo "======================================================================================"
+}
+
+
+start() {
+    check_before_start
+    mkdir -p $APP_HOME/logs
+    rotate_log $APP_HOME/logs/reactor.log
+    rotate_log $APP_HOME/logs/reactor-debug.log
+
+    nohup "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@" >> $APP_HOME/logs/reactor.log 2>&1 < /dev/null &
+    echo $! > $pid
+
+    print_copyright
+    check_for_updates
+    echo -n "Starting Continuuity Reactor (tm)"
+    while kill -0 $! ; do
+      if grep 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
+        echo ""
+        grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
+        break
+      else
+        echo -n "."
+        sleep 1;
+      fi
+    done 
+}
+
+stop() {
+    if [ -f $pid ]; then
+      pidToKill=`cat $pid`
+      # kill -0 == see if the PID exists
+      if kill -0 $pidToKill > /dev/null 2>&1; then
+        print_copyright
+        echo -n "Stopping Continuuity Reactor (tm)"
+        kill $pidToKill > /dev/null 2>&1
+        while kill -0 $pidToKill > /dev/null 2>&1;
+        do
+          echo -n "."
+          sleep 1;
+        done
+        rm $pid
+        echo
+      else
+        retval=$?
+        echo nothing to stop because kill -0 of pid $pidToKill failed with status $retval
+      fi
+      rm -f $pid
+    else
+      echo nothing to stop because no pid file $pid
+    fi
+}
+
+restart() {
+    stop
+    start
+}
+
+status() {
+    if [ -f $pid ]; then
+      pidToCheck=`cat $pid`
+      # kill -0 == see if the PID exists
+      if kill -0 $pidToCheck > /dev/null 2>&1; then
+        echo "$0 running as process $pidToCheck"
+        exit 0
+      else
+        echo "pidfile exists, but process does not appear to be running"
+        exit 3
+      fi
+    else 
+      echo "$0 is not running"
+      exit 3
+    fi
+}
+    
+
+case "$1" in
+  start)
+    $1  
+  ;;
+  
+  stop)
+    $1
+  ;;
+
+  restart)
+    $1
+  ;;
+
+  status)
+    $1
+  ;;
+
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+  ;;
+
+
+esac
+exit $? 
+
+

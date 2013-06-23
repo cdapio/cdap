@@ -1,0 +1,7 @@
+public class CLASS
+ {
+   public String generate(Object argument1, Object argument2)
+   {
+     return "";
+   }
+ }

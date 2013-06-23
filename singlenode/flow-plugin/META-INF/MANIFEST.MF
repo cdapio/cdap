@@ -1,0 +1,27 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Continuuity Flow Plug-in
+Bundle-SymbolicName: com.continuuity.flow;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: com.continuuity.flow.devtools.eclipse.Activator
+Bundle-Vendor: Continuuity Inc.
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.core.resources,
+ org.eclipse.ui.ide,
+ org.eclipse.jdt.core,
+ org.eclipse.emf.codegen
+Eclipse-LazyStart: true
+Export-Package: com.continuuity.flow.devtools.eclipse;
+  uses:="org.eclipse.core.runtime,
+   org.eclipse.jface.resource,
+   org.eclipse.ui.plugin,
+   org.osgi.framework",
+ com.continuuity.flow.devtools.eclipse.ui;
+  uses:="org.eclipse.jface.wizard,
+   org.eclipse.core.runtime,
+   org.eclipse.ui,
+   org.eclipse.jface.viewers,
+   org.eclipse.ui.dialogs,
+   org.eclipse.swt.widgets"
+Bundle-ClassPath: gdataplugin.jar

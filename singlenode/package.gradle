@@ -1,0 +1,64 @@
+apply from: 'build.gradle'
+apply plugin: 'application'
+
+mainClassName = 'com.continuuity.SingleNodeMain'
+
+/**
+ * Exclude any config xml from singlenode jar
+ */
+jar.exclude '*.xml'
+
+evaluationDependsOn(":app-fabric")
+evaluationDependsOn(":gateway")
+evaluationDependsOn(":passport")
+
+// stage the singlenode conf dir
+task stageConfSingleNode (type: Copy) {
+    group 'Deployment'
+    description "Copies src/main/resources to \$buildDir/conf for singlenode"
+    from "${sourceSets.main.output.resourcesDir}"
+    include 'logback.xml'
+    include 'continuuity-site.xml'
+    into "${buildDir}/conf"
+}
+
+/**
+ * NOTE: This is needed solely for building API jar for examples
+ */
+task createApiJar(type: Jar) {
+    baseName "continuuity-api"
+    appendix ""
+    classifier ""
+    from project(':app-fabric').sourceSets.api.output
+    from project(':data-fabric').sourceSets.api.output
+    from project(':common').sourceSets.api.output
+}
+
+/**
+ * Hack the start script  - set application name, remain in $APP_HOME and add $APP_HOME/conf/ to classpath
+ *
+ * http://issues.gradle.org/browse/GRADLE-2207 may make this easier 
+ */
+startScripts {
+    applicationName = "continuuity-reactor"
+    doLast {
+        def scriptFile = file "${outputDir}/${applicationName}"
+        scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
+        scriptFile.text = scriptFile.text.replaceFirst('CLASSPATH=(.*)', 'CLASSPATH=\\$APP_HOME/lib/*:\\$APP_HOME/conf/')
+        //for windows .bat - yes, apparently backslash must be triple-escaped
+        def scriptFileWin = file "${outputDir}/${applicationName}.bat"
+        //scriptFileWin.delete()
+        scriptFileWin.text = scriptFileWin.text.replaceFirst('set CLASSPATH=(.*)', 'set CLASSPATH=%APP_HOME%\\\\conf\\\\;%APP_HOME%\\\\lib\\\\*')
+    }
+    ext.jvmOpts = "-Xmx1024m"
+    ext.hadoopOpts = "-Djava.security.krb5.realm= -Djava.security.krb5.kdc="
+    inputs.property("jvmOpts", { jvmOpts }) // for incremental build to work properly
+    doLast { 
+        def optsEnvVar = "DEFAULT_JVM_OPTS" 
+        unixScript.text = unixScript.text.replace("$optsEnvVar=${'""'}","""$optsEnvVar=${'"'}$jvmOpts${'"'}\nCONTINUUITY_REACTOR_OPTS=${'"'}$hadoopOpts${'"'}""")
+        windowsScript.text = windowsScript.text.replace("set $optsEnvVar=", "set $optsEnvVar=$jvmOpts") 
+        windowsScript.delete()
+    }
+}
+
+run.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', ':passport:compileJava'

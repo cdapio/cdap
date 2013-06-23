@@ -1,0 +1,35 @@
+<%@ jet
+    class = "TemporaryTemplateCreator" 
+	 imports="java.util.* com.continuuity.flow.devtools.eclipse.templates.FileTemplateConfig" 
+	 skeleton="TemplateSkeleton.skeleton"
+%>
+<% FileTemplateConfig templateConfig = (FileTemplateConfig)argument1; %>
+<%String errorMessage = (String)argument2;%>
+<% if(errorMessage.length()>0) { %>
+/*<%=errorMessage%>*/
+<% } %>
+
+<% List<String> argsList = templateConfig.getArgs(); %>
+<% String templateName = templateConfig.getName(); %>
+
+/**
+ * @author (Your Name Here)
+ *
+ */
+ 
+<% List<String> imports = templateConfig.getImports(); 
+	for(int i=0;i<imports.size();i++) { %>
+import <%=imports.get(i)%>;
+<%	} %>
+
+
+/**
+ * This is a test template
+ */
+
+  public class <%=templateName.replace(" ","")%> {
+    
+    public static void main(String[] args) {
+
+    }
+  }

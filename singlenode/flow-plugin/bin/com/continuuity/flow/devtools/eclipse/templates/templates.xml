@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Holds configuration data for all the templates -->
+
+<!DOCTYPE TEMPLATECOLLECTION [
+
+<!ELEMENT TEMPLATECOLLECTION (TEMPLATE)*>
+
+<!ELEMENT TEMPLATE (FILE_NAME, DEPENDENCIES, DEPENDENCY_COUNT, EXT_DEPENDENCIES, DESCRIPTION, IMPORTS)>
+
+<!ATTLIST TEMPLATE 
+
+NAME CDATA #REQUIRED
+
+>
+
+<!ELEMENT FILE_NAME (#PCDATA)>
+
+<!ELEMENT DEPENDENCIES (DEPENDENCY)*>
+
+<!ELEMENT DEPENDENCY (#PCDATA)>
+
+<!ELEMENT DEPENDENCY_COUNT (#PCDATA)>
+
+<!ELEMENT EXT_DEPENDENCIES (EXT_DEPENDENCY)*>
+
+<!ATTLIST EXT_DEPENDENCIES 
+
+ISREQUIRED CDATA #REQUIRED
+
+>
+
+<!ATTLIST EXT_DEPENDENCY 
+
+NAME CDATA #REQUIRED
+
+>
+
+<!ELEMENT DESCRIPTION (#PCDATA)>
+
+<!ELEMENT IMPORTS (IMPORT)*>
+
+<!ELEMENT IMPORT (#PCDATA)>
+
+]>
+
+<TEMPLATECOLLECTION>
+
+  <!--
+  	Specifies the template for creating a basic flow project. 
+  -->
+  <TEMPLATE NAME="Basic Flow">
+  	<FILE_NAME>BasicFlowTemplate.javajet</FILE_NAME>
+  	<DEPENDENCIES>
+  		<DEPENDENCY>^flow-0.1.0-SNAPSHOT-api.jar$</DEPENDENCY>
+  		<DEPENDENCY>^data-fabric-0.1.0-SNAPSHOT-api.jar$</DEPENDENCY>
+  	</DEPENDENCIES>
+  	<DEPENDENCY_COUNT>2</DEPENDENCY_COUNT>
+  	<EXT_DEPENDENCIES ISREQUIRED="False">
+  	</EXT_DEPENDENCIES>
+  	<DESCRIPTION>This template creates a Continuuity Simple Flow project </DESCRIPTION>
+  	<IMPORTS>
+		<IMPORT>com.continuuity.data.operation.Increment</IMPORT>
+		<IMPORT>com.continuuity.api.flow.Flow</IMPORT>
+		<IMPORT>com.continuuity.api.flow.FlowSpecifier</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.AbstractComputeFlowlet</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.AbstractSourceFlowlet</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.AbstractSinkFlowlet</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.Flowlet</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.FlowletContext</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.OutputCollector</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.FlowletSpecification</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.Tuple</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.TupleContext</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.TupleSchema</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.builders.TupleBuilder</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder</IMPORT>
+  	</IMPORTS>  	
+  </TEMPLATE>
+ 
+
+</TEMPLATECOLLECTION>
