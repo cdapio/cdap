@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+    Copyright (c) to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+    <property>
+        <name>passport.jdbc.connection.string</name>
+        <value>jdbc:mysql://localhost:3306/passport?user=root</value>
+        <description>Specifies the connection string where passport services are stored</description>
+    </property>
+
+
+    <property>
+        <name>passport.jdbc.type</name>
+        <value>mysql</value>
+        <description>JDBC type for passport service</description>
+    </property>
+
+
+    <property>
+        <name>passport.http.server.port</name>
+        <value>7777</value>
+        <description>Port where the http service runs</description>
+    </property>
+
+    <property>
+        <name>passport.http.graceful.shutdown.time</name>
+        <value>1000</value>
+        <description>Time before the service is down after issuing a shutdown signal</description>
+    </property>
+
+    <property>
+        <name>passport.http.max.threads</name>
+        <value>100</value>
+        <description>Time before the service is down after issuing a shutdown signal</description>
+    </property>
+
+
+</configuration>

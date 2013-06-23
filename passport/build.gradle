@@ -1,0 +1,59 @@
+apply plugin: 'java'
+
+/**
+ * Enabling building of other jar from common
+ */
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+}
+
+/**
+ * Specify all the dependencies
+ */
+dependencies {
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    // Self dependencies.
+    compile apiJar.outputs.files
+
+    apiCompile libraries.apache_http_client
+    apiCompile libraries.apache_commons_io
+    apiCompile libraries.slf4j_api
+
+    apiCompile libraries.google_gson
+    apiCompile libraries.google_guava
+
+    compile libraries.mysql
+
+    compile libraries.google_guice
+    compile libraries.google_guice_multibindings
+    compile libraries.google_guice_assistedinject
+
+    compile libraries.shiro_core
+    compile libraries.shiro_guice
+
+    compile libraries.yammer_metrics
+
+    compile libraries.jetty
+    compile libraries.jetty_management
+
+    compile libraries.slf4j_api
+
+    testCompile libraries.junit
+    testCompile libraries.hsql
+}
+
+sourceSets{
+    main{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+
+    test{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+}
+jar.exclude '*.xml'
