@@ -1,0 +1,31 @@
+!!! 5
+html(lang="en")
+  head
+    title= targetPath
+  meta(http-equiv="Content-Type", content="text/html; charset=utf-8")
+  meta(name="viewport", content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0")
+  meta(name="groc-relative-root", content=relativeRoot)
+  meta(name="groc-document-path", content=targetPath)
+  meta(name="groc-project-path", content=projectPath)
+  - if (project.githubURL)
+    meta(name="groc-github-url", content=project.githubURL)
+  link(rel="stylesheet", type="text/css", media="all", href=relativeRoot + "assets/style.css")
+  script(type="text/javascript", src=relativeRoot + "assets/behavior.js")
+
+  body
+    #meta
+      - if (project.githubURL)
+        .file-path
+          a(href=project.githubURL + '/blob/master/' + projectPath)= projectPath
+      - else
+        .file-path= projectPath
+    #document
+      - for (var i in segments)
+        .segment
+          - if (segments[i].markdownedComments != '')
+            .comments
+              .wrapper!= segments[i].markdownedComments
+
+          - if (segments[i].highlightedCode != '')
+            .code
+              .wrapper!= segments[i].highlightedCode

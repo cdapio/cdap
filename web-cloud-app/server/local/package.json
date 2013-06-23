@@ -1,0 +1,8 @@
+{
+	"name": "reactor-ui-developer",
+	"version": "0.0.2",
+	"main": "./main.js",
+	"dependencies": {
+    "xml2js": "0.2.7"
+	}
+}

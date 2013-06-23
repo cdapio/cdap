@@ -1,0 +1,4 @@
+{
+  "globs": ["src/**/*.coffee", "README.md"],
+  "github": true
+}

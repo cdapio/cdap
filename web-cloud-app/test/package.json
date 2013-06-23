@@ -1,0 +1,10 @@
+{
+  "name": "reactor-ui-tests",
+  "version": "0.0.1",
+  "dependencies": {
+    "chai": "1.6.0",
+    "mocha": "1.9.0",
+    "supertest": "0.6.0",
+    "webdriverjs": "0.7.8"
+  }
+}

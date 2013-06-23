@@ -1,0 +1,16 @@
+{
+	"name": "reactor-ui-cloud",
+	"version": "0.0.1",
+	"main": "./main.js",
+	"dependencies": {
+    "connect": "2.7.9",
+    "cookie": "0.1.0",
+    "diskspace": "0.1.5",
+    "express": "3.2.4",
+    "log4js": "0.6.5",
+    "node-int64": "0.3.0",
+    "socket.io": "0.9.14",
+    "thrift": "0.7.0",
+    "xml2js": "0.2.7"
+	}
+}

@@ -1,0 +1,12 @@
+
+<div class="modal-header">
+<a {{action "hide" on="click" target="view"}} class="close">&times;</a>
+<h2>{{view.title}}</h2>
+</div>
+<div class="modal-body">{{view.body}}</div>
+<div class="modal-footer">
+{{#unless view.nocancel}}
+	<button {{action "hide" target="view" on="click"}} class="btn">Cancel</button>
+{{/unless}}
+<button {{action "confirmed" target="view" on="click"}} class="btn">Okay</button>
+</div>

@@ -1,0 +1,5 @@
+{
+  "globs": ["src/spate.coffee"],
+  "index":  "src/spate.coffee",
+  "github":  true
+}

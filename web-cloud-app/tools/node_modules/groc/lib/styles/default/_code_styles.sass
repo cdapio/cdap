@@ -1,0 +1,133 @@
+$code-color-keyword:      #e0c090
+$code-color-attribute:    #a9c2ba
+$code-color-property:     #abd9cf
+$code-color-class:        #cee4dd
+$code-color-variable:     #b9d0af
+$code-color-string:       #e9baba
+$code-color-interpolated: #cba8d6
+$code-color-punctuation:  #ded3a1
+$code-color-comment:      #b1bac4
+
+=code-styles
+  .w   // Whitespace
+  .err // Error
+  .x   // Other
+
+  .k  // Keyword
+    color: $code-color-keyword
+  .kc // Keyword.Constant
+    color: $code-color-keyword
+  .kd // Keyword.Declaration
+    color: $code-color-keyword
+  .kp // Keyword.Pseudo
+    color: $code-color-keyword
+  .kr // Keyword.Reserved
+    color: $code-color-keyword
+  .kt // Keyword.Type
+    color: $code-color-keyword
+
+  .n  // Name
+  .na // Name.Attribute
+    color: $code-color-attribute
+  .nb // Name.Builtin
+  .bp // Name.Builtin.Pseudo
+  .nc // Name.Class
+    color: $code-color-class
+  .no // Name.Constant
+    color: $code-color-class
+  .nd // Name.Decorator
+    color: $code-color-class
+  .ni // Name.Entity
+  .ne // Name.Exception
+  .nf // Name.Function
+    color: $code-color-property
+  .py // Name.Property
+    color: $code-color-property
+  .nl // Name.Label
+  .nn // Name.Namespace
+  .nx // Name.Other
+  .nt // Name.Tag
+
+  .nv // Name.Variable
+    color: $code-color-variable
+  .vc // Name.Variable.Class
+    color: $code-color-variable
+  .vg // Name.Variable.Global
+    color: $code-color-variable
+  .vi // Name.Variable.Instance
+    color: $code-color-variable
+
+  // .l  // Literal
+  // .ld // Literal.Date
+
+  .s  // String
+    color: $code-color-string
+  .sb // String.Backtick
+    color: $code-color-string
+  .sc // String.Char
+    color: $code-color-string
+  .sd // String.Doc
+    color: $code-color-string
+  .s2 // String.Double
+    color: $code-color-string
+  .se // String.Escape
+    color: $code-color-string
+  .sh // String.Heredoc
+    color: $code-color-string
+  .si // String.Interpol
+    color: $code-color-string
+  .sx // String.Other
+    color: $code-color-string
+  .sr // String.Regex
+    color: $code-color-interpolated
+  .s1 // String.Single
+    color: $code-color-string
+  .ss // String.Symbol
+    color: $code-color-interpolated
+
+  .m  // Number
+    color: $code-color-interpolated
+  .mf // Number.Float
+    color: $code-color-interpolated
+  .mh // Number.Hex
+    color: $code-color-interpolated
+  .mi // Number.Integer
+    color: $code-color-interpolated
+  .il // Number.Integer.Long
+    color: $code-color-interpolated
+  .mo // Number.Oct
+    color: $code-color-interpolated
+
+  .o  // Operator
+    color: $code-color-punctuation
+  .ow // Operator.Word
+    color: $code-color-punctuation
+
+  .p // Punctuation
+    color: #ded3a1
+
+  .c, .cm, .cp, .c1, .cs  // Comment.*
+    font-style: italic
+
+  .c  // Comment
+    color: $code-color-comment
+  .cm // Comment.Multiline
+    color: $code-color-comment
+  .cp // Comment.Preproc
+    color: $code-color-comment
+  .c1 // Comment.Single
+    color: $code-color-comment
+  .cs // Comment.Special
+    color: $code-color-comment
+
+  .g  // Generic
+  .gd // Generic.Deleted
+  .ge // Generic.Emph
+  .gr // Generic.Error
+  .gh // Generic.Heading
+  .gi // Generic.Inserted
+  .go // Generic.Output
+  .gp // Generic.Prompt
+  .gs // Generic.Strong
+  .gu // Generic.Subheading
+  .gt // Generic.Traceback

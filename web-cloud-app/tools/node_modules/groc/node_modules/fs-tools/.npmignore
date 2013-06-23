@@ -1,0 +1,5 @@
+/doc/
+/node_modules/
+/tmp/
+*.swp
+*.log
