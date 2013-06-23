@@ -1,0 +1,73 @@
+apply plugin: 'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
+smartyFacts {
+    thrift
+}
+
+// Specify all the dependencies.
+dependencies {
+    /// Internal dependencies.
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+
+    clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+    clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
+
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+
+
+    // External dependencies.
+    compile libraries.akka_actor
+    compile libraries.google_guava
+    compile libraries.google_guice
+    compile libraries.google_guava
+    compile libraries.google_gson
+    compile libraries.apache_commons_math
+    compile libraries.mysql
+    compile libraries.hsql
+    compile libraries.mina_core
+    compile (libraries.mina_beans) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+    }
+    compile (libraries.mina_ognl) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+        exclude group: 'org.apache.mina', module: 'mina-integration-beans'
+    }
+    compile (libraries.mina_jmx) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+        exclude group: 'org.apache.mina', module: 'mina-integration-beans'
+        exclude group: 'org.apache.mina', module: 'mina-integration-ognl'
+    }
+    compile libraries.http_client
+    compile libraries.leveldb
+
+    // Possible removal.
+    compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.5'
+
+    // Needed for compiling thrift
+    thriftCompile libraries.thrift
+    thriftCompile libraries.slf4j_api
+}
+
+sourceSets {
+    main {
+        compileClasspath += thrift.output
+        runtimeClasspath += thrift.output
+    }
+    test {
+        compileClasspath += thrift.output
+        runtimeClasspath += thrift.output
+    }
+}
+
+javadoc {
+    classpath += sourceSets.thrift.output
+}
+
+jar.exclude '*.xml'
