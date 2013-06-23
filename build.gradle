@@ -1,0 +1,37 @@
+apply from: "gradle/apply-continuuity-plugin.gradle"
+apply from: 'gradle/versioning.gradle'
+apply from: "gradle/elastic.gradle"
+apply from: "gradle/init-repositories.gradle"
+apply from: "gradle/dependencies.gradle"
+apply from: "gradle/maven.gradle"
+apply from: "gradle/sonar.gradle"
+apply from: "gradle/checkstyle.gradle"
+
+buildscript {
+    repositories {
+        maven {
+            credentials {
+                username "gradle"
+                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+            }
+            url "https://repository.continuuity.com/content/groups/smartifacts"
+        }
+    }
+
+    // Changes the resolution strategy for snapshot
+    configurations.classpath {
+        resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    }
+    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+
+    dependencies {
+        classpath 'com.kenshoo:gradle-fpm:0.3'
+    }
+}
+
+subprojects {
+  version = rootProject.version
+}
+evaluationDependsOnChildren()
+

@@ -34,11 +34,12 @@ task jshint << {
     "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
   ]
 
-  print command.join(' ');
 
+/*
   if(executeCommand(command) != 0) {
     throw new GradleScriptException("JSHint reported errors while building command app", null)
   }
+*/
 
 }
 

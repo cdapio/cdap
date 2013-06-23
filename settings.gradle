@@ -1,0 +1,6 @@
+// Adds subprojects included in the master repository.
+
+include 'app-fabric', 'data-fabric', 'common', 'singlenode'
+include 'examples', 'gateway', 'web-cloud-app', 'distributions'
+include 'unit-test', 'performance', 'overlord', 'passport'
+project(':singlenode').buildFileName = 'package.gradle'

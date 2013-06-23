@@ -2,7 +2,6 @@ evaluationDependsOn(':singlenode')
 evaluationDependsOn(':unit-test')
 evaluationDependsOn(':performance')
 evaluationDependsOn(':passport')
-evaluationDependsOn(':loom')
 
 apply plugin:'maven'
 apply from: "$rootProject.projectDir/gradle/packaging.gradle"
@@ -18,7 +17,6 @@ task javadoc(type: Javadoc, overwrite: true) {
 
   exclude '**/internal/**'
   exclude '**/passport/**'
-  exclude '**/loom/**'
 
   doFirst{
     classpath = files(project.parent.subprojects.collect { project ->
@@ -53,13 +51,11 @@ task combinedApiSourceJar(type: Jar) {
     from (project(':app-fabric').sourceSets.api.allSource) {
       exclude "**/internal/"
       exclude "**/passport/"
-      exclude "**/loom/"
     }
     from project(':data-fabric').sourceSets.api.allSource
     from (project(':common').sourceSets.api.allSource) {
       exclude "**/internal/"
       exclude "**/passport/"
-      exclude "**/loom/"
     }
 }
 
@@ -70,7 +66,6 @@ task combinedApiJavadocJar(type: Jar, dependsOn: javadoc) {
     from (javadoc.destinationDir) {
       exclude "**/internal/"
       exclude "**/passport/"
-      exclude "**/loom/"
     }
 }
 
@@ -294,84 +289,9 @@ task sandbox_dist (type: Zip) {
 }
 
 
-task cloud_dist (type: Tar) {
-  dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
-  group = 'Continuuity'
-  compression = Compression.GZIP
-  baseName = "continuuity"
-  appendix = "cloud-edition"
-  into "${baseName}-${appendix}-${version}"
-  description = 'Generates the cloud distribution zip file'
-
-  //distribution
-  into("lib"){
-    from project(':singlenode').configurations.getByName('runtime')
-    from tasks.findByPath(':performance:jar')
-    from project(':passport').tasks.getByName('jar').outputs
-    from project(':passport').configurations.runtime.files 
-    from project(':loom').tasks.getByName('jar').outputs
-    from project(':loom').configurations.runtime.files 
-    exclude 'passport-*-sources.jar'
-    exclude 'loom-*-sources.jar'
-    exclude 'overlord-*-loggly.jar'
-  }
-
-  //
-  into("bin") {
-    from project.rootProject.subprojects.findAll { project -> project.name != 'wallboard' }.collect { project ->
-      project.file('bin')
-    }
-    exclude 'node'
-    def cp = "\$CONTINUUITY_HOME/lib/*:\$CONTINUUITY_HOME/conf/"
-    filter(ReplaceTokens, tokens: [classpath: cp])
-  }
-
-  into("conf") {
-    from project.rootProject.subprojects.collect { project ->
-      // include [service]-env.sh
-      project.file('conf')
-
-    }
-    include "*-env.sh"
-  }
-
-  into ("web-app/cloud/client"){
-    from project(':web-cloud-app').file('build/cloud/client')
-  }
-
-  into("web-app/cloud/server"){
-    from project(':web-cloud-app').file('build/cloud/server')
-    exclude "continuuity-local.xml"
-    exclude "certs/"
-  }
-
-  into("web-app/cloud/common"){
-    from project(':web-cloud-app').file('build/cloud/common')
-  }
-
-  // VERSION
-  from("VERSION"){
-    def versiontxt
-    if( project.hasProperty('teamcityBuildNumber')) {
-      versiontxt = version + "-" + teamcityBuildNumber
-    } else {
-      versiontxt = version
-    }
-    filter(ReplaceTokens, tokens: [cversion: versiontxt ])
-  }
-
-  if( project.hasProperty('teamcityBuildNumber')) {
-    classifier = teamcityBuildNumber
-  } else {
-    classifier = ""
-  }
-  ext.distName = "${baseName}-${appendix}"
-}
-
 artifacts{
   // Asigning the artifact to the configuration
   distributions developer_suite_dist
-  distributions cloud_dist
   distributions sandbox_dist
 }
 
@@ -387,14 +307,10 @@ uploadDistributions {
       addFilter('developer_suite') {artifact, file ->
         file.name == developer_suite_dist.archiveName
       }
-      addFilter('cloud') {artifact, file ->
-        file.name == cloud_dist.archiveName
-      }
       addFilter('sandbox') {artifact, file ->
         file.name == sandbox_dist.archiveName
       }
       pom('developer_suite').artifactId = developer_suite_dist.distName
-      pom('cloud').artifactId = cloud_dist.distName
       pom('sandbox').artifactId = sandbox_dist.distName
     }
   }
