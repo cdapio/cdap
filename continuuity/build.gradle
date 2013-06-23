@@ -1,0 +1,212 @@
+import com.continuuity.gradle.GitRepo;
+apply from: "gradle/apply-continuuity-plugin.gradle"
+apply from: 'gradle/versioning.gradle'
+apply from: "gradle/elastic.gradle"
+apply from: "gradle/init-repositories.gradle"
+apply from: "gradle/dependencies.gradle"
+apply from: "gradle/maven.gradle"
+apply from: "gradle/sonar.gradle"
+apply from: "gradle/checkstyle.gradle"
+
+buildscript {
+    repositories {
+        maven {
+            credentials {
+                username "gradle"
+                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+            }
+            url "https://repository.continuuity.com/content/groups/smartifacts"
+        }
+    }
+
+    // Changes the resolution strategy for snapshot
+    configurations.classpath {
+        resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    }
+    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+
+    dependencies {
+        classpath 'com.kenshoo:gradle-fpm:0.3'
+    }
+}
+
+subprojects {
+  version = rootProject.version
+}
+evaluationDependsOnChildren()
+
+
+if (!hasProperty("branch")) {
+    //if branch is not passed in using -P parameter - then use the branch of continuuity repo
+    //branch = "git rev-parse --abbrev-ref HEAD".execute().text
+    branch = "master"
+}
+
+ext.masterRepo = new GitRepo(name: "continuuity", dir: ".", branch: branch)
+
+
+task gitCheckout {
+    group = 'Git'
+    description = 'Checkout the specified branch.'
+    doLast {
+        for (g in gradle.gitRepos) {
+            g.checkout();
+        }
+    }
+}
+
+task gitPull {
+    group = 'Git'
+    description = 'Pulls the latest commits for all git repos.'
+    doLast {
+        //masterRepo.pull();
+        for (g in gradle.gitRepos) {
+            g.pull();
+        }
+
+    }
+}
+
+task gitUpdate {
+    group = 'Git'
+    description = 'Performs a clone, checkout, and pull on all repositories.'
+    doLast {
+        //masterRepo.pull();
+        for (g in gradle.gitRepos) {
+            g.load();
+            g.checkout();
+            g.pull();
+        }
+    }
+}
+
+task gitStatus {
+    group = 'Git'
+    description = 'Checks the status of all git repos'
+    doLast {
+        //masterRepo.status();
+        for (g in gradle.gitRepos) {
+            g.status();
+        }
+    }
+}
+
+
+task javadoc(type: Javadoc, overwrite: true) {
+    doFirst {
+        classpath = files(subprojects.collect { project ->
+            project.sourceSets.main.compileClasspath
+        })
+    }
+    group = 'Documentation'
+    description = 'Aggregates javadocs for all projects.'
+    doFirst {
+        source subprojects.collect { project ->
+            if (project.plugins.findPlugin("java")) {
+                project.sourceSets.main.allJava
+            }
+            []
+        }
+    }
+    destinationDir = new File(buildDir, 'javadoc')
+}
+
+task gitTagAll {
+    group = 'ReleaseAdmin'
+    description = 'Tags continuuity master and all subproject repos locally ' +
+            'with provided tag.  Must specify -PtagName=<tag>'
+    doLast {
+        if (!project.hasProperty('tagName')) {
+            throw new InvalidUserDataException("you are trying to tag all " +
+                    "subproject repos, but tagName property is null.  " +
+                    "You must supply argument \"-PtagName=<tag>\"")
+        }
+        masterRepo.tag(tagName)
+        for (g in gradle.gitRepos) {
+            g.tag(tagName)
+        }
+    }
+}
+
+
+task gitPushTagAll {
+    group = 'ReleaseAdmin'
+    description = 'Pushes a local tag to remote repo for all continuuity ' +
+            'master and subproject repos.  Must specify -PtagName=<tag>'
+    doLast {
+        if (!project.hasProperty('tagName')) {
+            throw new InvalidUserDataException("you are trying to push a " +
+                    "tag for all subproject repos, but tagName property " +
+                    "is null.  You must supply argument \"-PtagName=<tag>\"")
+        }
+        masterRepo.pushTag(tagName)
+        for (g in gradle.gitRepos) {
+            g.pushTag(tagName)
+        }
+    }
+}
+
+
+task gitBranchAll {
+    group = 'ReleaseAdmin'
+    description = 'Branch continuuity master and all subproject repos locally ' +
+            'with provided branch.  Must specify -Pbranch=<branch>'
+    doLast {
+        if (!project.hasProperty('branch')) {
+            throw new InvalidUserDataException("you are trying to branch all " +
+                    "subproject repos, but branch property is null.  " +
+                    "You must supply argument \"-Pbranch=<branch>\"")
+        }
+        masterRepo.branch(branch)
+        for (g in gradle.gitRepos) {
+            g.branch(branch)
+        }
+    }
+}
+
+task gitPushBranchAll {
+    group = 'ReleaseAdmin'
+    description = 'Pushes a local branch to remote repo for all continuuity ' +
+            'master and subproject repos.  Must specify -Pbranch=<branch>'
+    doLast {
+        if (!project.hasProperty('branch')) {
+            throw new InvalidUserDataException("you are trying to push a " +
+                    "branch for all subproject repos, but branch " +
+                    "property is null.  You must supply argument " +
+                    "\"-Pbranch=<branch>\"")
+            masterRepo.pushBranch(branch)
+            for (g in gradle.gitRepos) {
+                g.pushBranch(branch)
+            }
+        }
+    }
+}
+
+
+task gitCheckoutBranch {
+    group = 'ReleaseAdmin'
+    description = 'Checkouts specified branch on continuuity and all ' +
+            'subproject repos.  Must specify -Pbranch=<branch>'
+    doLast {
+        if (!project.hasProperty('branch')) {
+            throw new InvalidUserDataException("you are trying to " +
+                    "checkout a branch for all subproject repos, but " +
+                    "branch property is null.  You must supply " +
+                    "argument \"-Pbranch=<branch>\"")
+        }
+
+        ext.gitReposBranch = []
+        ext.masterRepoBranch = new GitRepo(name: "continuuity", dir: ".",
+                branch: branch)
+        subprojects.each { project ->
+            print project.name + "\n"
+            gitReposBranch << new GitRepo(name: project.name, branch: branch)
+        }
+        masterRepoBranch.checkout();
+        for (g in gitReposBranch) {
+            g.checkout();
+        }
+
+    }
+}

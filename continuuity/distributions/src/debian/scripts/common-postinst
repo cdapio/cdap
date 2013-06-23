@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#COMMON  post install script for <%= project %>
+set -e
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+case "$1" in
+  configure)
+    update-alternatives --install /etc/continuuity/conf continuuity-conf /etc/continuuity/conf.dist 10
+  ;;
+
+  abort-upgrade|abort-remove|abort-deconfigure)
+  ;;
+
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+esac

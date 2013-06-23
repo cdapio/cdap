@@ -1,0 +1,184 @@
+if(! has('epoch')) {
+ ext.epoch =  (int)System.currentTimeMillis()/1000
+}
+
+/**
+ * Prepackager stages the project files into a directory that is then 
+ * picked up by FPM packager to create debian or rpm packages. The 
+ * staging is important as we would like to have all the necessary 
+ * primary and tertiary dependencies to be pulled in. 
+ */
+task ('prepackager', dependsOn : ['build']) {
+  def stageDir = file("$buildDir/stage-packaging")
+  def installDir = file("$stageDir/opt/continuuity/$project.name")
+
+  doLast {
+    copy {
+      from 'bin'
+      into "${installDir}/bin"
+    }
+
+    copy {
+      from "$rootProject.projectDir/common/bin"
+      into "${installDir}/bin"
+    }
+
+    copy {
+      from 'conf'
+      into "${installDir}/conf"
+    }
+
+    copy {
+      from configurations.runtime
+      from configurations.archives.allArtifacts.files
+      from jar.outputs.files
+      exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
+      into "${installDir}/lib"
+    }
+  }
+}
+
+task ('debianPrepackager', dependsOn: ['prepackager']) {
+  def stageDir = file("$buildDir/stage-packaging")
+  def installDir = file("$stageDir/opt/continuuity/$project.name")
+
+  doLast {
+    copy {
+      from "$rootProject.projectDir/distributions/src/LICENSE.txt"
+      into "${installDir}"
+    }
+  }
+}
+
+task ('rpmPrepackager', dependsOn: ['prepackager']) {
+  def stageDir = file("$buildDir/stage-packaging")
+  def installDir = file("$stageDir/opt/continuuity/$project.name")
+
+  doLast {
+    copy {
+      from "$rootProject.projectDir/distributions/src/LICENSE.txt"
+      into "${installDir}"
+    }
+  }
+}
+
+/**
+ * Applies FPM packager to create debian or rpm packages. 
+ */
+apply plugin: 'fpm-packaging'
+
+/**
+ * Creates a sanitized version, if it's a SNAPSHOT, then it replaces
+ * it with unix timestamp or if teamcity build number is available then
+ * uses the teamcity build number.
+ */
+def getPomVersion = {
+  def v = rootProject.version
+  if(v =~ /-SNAPSHOT/) {
+    def replaceBy = ext.epoch
+    if( project.hasProperty('teamcityBuildNumber')) {
+      replaceBy = teamcityBuildNumber;
+    }
+    v = v.replaceAll('-SNAPSHOT', ".${replaceBy}")
+  }
+  v
+}
+
+
+/**
+ * Generates debian package.
+ */
+packaging {
+  baseDir = "$project.buildDir/stage-packaging"
+  dependencies = [
+                   'continuuity'
+                 ]
+  extraOptions = [
+                   '--name': "continuuity-$project.name",
+                   '--vendor': 'Continuuity Inc.',
+                   '--maintainer': 'support@continuuity.com',
+                   '--license': 'Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.',
+                   '--description': 'Component of Continuuity Enterprise Reactor',
+                   '--directories': "/opt/continuuity/$project.name",
+                   '--category': 'misc',
+                   '--url': 'http://www.continuuity.com/products',
+                   '--architecture': 'all',
+                   '--version': "${getPomVersion()}",
+                   '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
+                   '--before-remove': "$rootProject.projectDir/distributions/src/debian/scripts/prerm",
+                   '--after-remove': "$rootProject.projectDir/distributions/src/debian/scripts/postrm",
+                   '--template-value': "project=$project.name"
+  ]
+}
+
+/**
+ * Generates rpm package.
+ */
+rpm {
+  baseDir = "$project.buildDir/stage-packaging"
+  dependencies = [
+                   'continuuity'
+                 ]
+
+}
+
+
+// The packaging extra options do not allow for rpm-specific settings.  As a workaround,
+//   override them directly in the rpm task
+rpm.doFirst {
+  // we also override this for the common package
+  if(packaging.extraOptions['--after-install'] == "$rootProject.projectDir/distributions/src/debian/scripts/postinst") {
+    packaging.extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/postinst"
+  }
+  if(packaging.extraOptions['--before-remove'] == "$rootProject.projectDir/distributions/src/debian/scripts/prerm") {
+    packaging.extraOptions['--before-remove'] = "$rootProject.projectDir/distributions/src/rpm/scripts/prerm"
+  }
+  if(packaging.extraOptions['--after-remove'] == "$rootProject.projectDir/distributions/src/debian/scripts/postrm") {
+    packaging.extraOptions['--after-remove'] = "$rootProject.projectDir/distributions/src/rpm/scripts/postrm"
+  }
+}
+
+// Make the dependency on prepackager.
+debian.dependsOn debianPrepackager
+rpm.dependsOn rpmPrepackager
+
+/**
+ * Uploads packages.
+ */
+configurations{
+  packages
+}
+
+if(project.name == 'distributions') {
+  artifacts {
+    packages file: file("$buildDir/linux-package/continuuity_${getPomVersion()}_all.deb"), name: "continuuity"
+    packages file: file("$buildDir/linux-package/continuuity-${getPomVersion()}-1.noarch.rpm"), name: "continuuity"
+  }
+} else {
+  artifacts {
+    packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
+    packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
+  }
+}
+
+
+uploadPackages {
+  repositories {
+    repositories.mavenDeployer {
+      repository(url: finalRelease ? "https://repository.continuuity.com/service/local/staging/deploy/maven2" : "https://repository.continuuity.com/content/repositories/packages") {
+        authentication(userName: nexusUsername, password: nexusPassword)
+        pom.groupId = 'com.continuuity.distributions.release'
+        pom.version = getPomVersion()
+      }
+      pom.whenConfigured { pom ->
+        // Removes groovy dependency and test dependencies from generated pom file
+        pom.dependencies = pom.dependencies.findAll { dep ->
+          dep.artifactId != 'groovy-all' && (dep.scope != 'test' || dep.scope != 'integration' || dep.scope != 'sources')
+        }
+      }
+    }
+  }
+}
+
+uploadPackages.dependsOn debian
+uploadPackages.dependsOn rpm

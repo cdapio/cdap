@@ -1,0 +1,7 @@
+# post install script for <%= project %>
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+update-alternatives --install /etc/continuuity/conf continuuity-conf /etc/continuuity/conf.dist 10
+

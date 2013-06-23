@@ -1,0 +1,25 @@
+#!/bin/bash
+
+
+#COMMON  pre remove script for <%= project %>
+set -e
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+case "$1" in
+    remove|upgrade|deconfigure)
+      update-alternatives --remove continuuity-conf /etc/continuuity/conf.dist || :
+    ;;
+
+    failed-upgrade)
+    ;;
+
+    *)
+        echo "prerm called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0
+

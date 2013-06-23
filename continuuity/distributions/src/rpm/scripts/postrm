@@ -1,0 +1,6 @@
+# post uninstall script for <%= project %>
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+

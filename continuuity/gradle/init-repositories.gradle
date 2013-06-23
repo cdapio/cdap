@@ -1,0 +1,32 @@
+allprojects{
+	['nexusUsername':'gradle', 
+	 'nexusPassword':'{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy',
+	 'useMavenLocal':'true'].each{name, value ->
+			if(!project.hasProperty(name)){
+	        	project.ext.set(name, value);
+	    	}
+	}
+	
+	tasks.withType(Upload){ tsk ->
+		ext.nexusUsername = 'gradle'
+		tsk.ext.nexusUsername = 'gradle'
+		ext.nexusPassword = '{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy'
+		tsk.ext.nexusPassword = '{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy'
+	}	
+
+
+	configurations.all {
+	    resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+	}
+	
+	/// Define artifact repositories.
+	repositories {
+	    maven {
+	        credentials {
+	            username nexusUsername
+	            password nexusPassword
+	        }
+	        url "https://repository.continuuity.com/content/groups/smartifacts"
+	    }
+	}
+}

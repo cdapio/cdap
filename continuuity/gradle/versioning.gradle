@@ -1,0 +1,12 @@
+ext.versionBase = rootProject.file("version.txt").text.trim()
+version = versionBase
+
+ext.finalRelease = project.hasProperty("finalRelease")
+
+ext.isSnapshot = false
+if (finalRelease) {
+    // use version base
+} else {
+    //isSnapshot = true
+    version += "-SNAPSHOT"
+}

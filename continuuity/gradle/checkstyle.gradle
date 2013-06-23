@@ -1,0 +1,11 @@
+
+allprojects{
+	apply plugin: 'checkstyle'
+
+	def configDir = project.rootProject.file("gradle/config")
+
+	checkstyle {
+    	configFile = new File(configDir, "checkstyle.xml")
+	    configProperties.checkstyleConfigDir = configFile
+	}
+}

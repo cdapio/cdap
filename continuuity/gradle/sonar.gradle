@@ -1,0 +1,39 @@
+
+/// Configure sonar settings.
+allprojects{proj ->
+	// apply it on rootproject only
+	if(!proj.rootProject.plugins.findPlugin("sonar")){
+		configure(project.rootProject){
+			apply plugin: 'sonar'
+			sonar {
+			    server {
+			        url = "https://sonar.continuuity.com"
+			    }
+			    database {
+			        url = "jdbc:mysql://sonar.continuuity.com/sonar"
+			        driverClassName = "com.mysql.jdbc.Driver"
+			        username = "sonar"
+			        password = "09u0ru2039ur203r9u"
+			    }
+			    withGlobalProperties { props ->
+			        props["sonar.projectName"] = projectName
+			        props["sonar.projectKey"] = projectKey
+			    }
+			}
+
+			sonarAnalyze {
+			    group = 'Report'
+			    description = 'Uploads code metrics to https://sonar.continuuity.com'
+			}
+
+			/// Define common config and tasks.
+			subprojects{
+			    sonar {
+			        project {
+			            cloverReportPath = file("$buildDir/reports/clover/clover.xml")
+			        }
+			    }
+			}	
+		}
+	}
+}

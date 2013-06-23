@@ -1,0 +1,29 @@
+allprojects {
+    // The contents of this file applies to all sub-projects.
+    apply plugin: 'maven'
+    project.plugins.withType(org.gradle.api.plugins.JavaPlugin) {
+        uploadArchives {
+            repositories {
+                repositories.mavenDeployer {
+                    repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
+                        authentication(userName: nexusUsername, password: nexusPassword)
+                    }
+                    snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
+                        authentication(userName: nexusUsername, password: nexusPassword)
+                    }
+                    pom.whenConfigured { pom ->
+                        // Removes groovy dependency and test dependencies from generated pom file
+                        pom.dependencies = pom.dependencies.findAll { dep ->
+                            dep.artifactId != 'groovy-all' && dep.scope != 'test'
+                        }
+                    }
+                }
+            }
+        }
+
+        install {
+            group = 'Upload'
+        }
+
+    }
+}

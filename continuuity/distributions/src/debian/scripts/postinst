@@ -1,0 +1,34 @@
+#!/bin/bash
+
+
+# post install script for <%= project %>
+set -e
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+case "$1" in
+  configure)
+    mkdir -p /var/log/continuuity /var/run/continuuity /var/continuuity/run ||:
+    echo $version > /opt/continuuity/$package_name/version 
+    chown -R continuuity.continuuity /opt/continuuity/$package_name
+    chown -R continuuity.continuuity /var/log/continuuity
+    chown -R continuuity.continuuity /var/run/continuuity
+    chown -R continuuity.continuuity /var/continuuity/run
+    chmod +x /opt/continuuity/$package_name/bin/service
+    for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
+      if [ -h "/etc/init.d/svc-$svcname" ]; then
+        unlink /etc/init.d/svc-$svcname
+      fi
+      ln -s /opt/continuuity/$package_name/bin/service /etc/init.d/svc-$svcname
+    done
+  ;;
+
+  abort-upgrade|abort-remove|abort-deconfigure)
+  ;;
+
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+esac
+

@@ -1,0 +1,90 @@
+apply plugin:'java'
+/**
+ * Specify all the dependencies
+ */
+dependencies {
+
+    compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
+
+    // Workaround to include sub project dependencies
+    compile (project(":app-fabric")){
+        artifact { artifact ->
+            artifact.name = project(":app-fabric").name
+            artifact.type = 'jar'
+            artifact.classifier = 'api'
+        }
+        artifact { artifact ->
+            artifact.name = project(":app-fabric").name
+            artifact.type = 'jar'
+        }
+    }
+    compile (project(":data-fabric")){
+        artifact { artifact ->
+            artifact.name = project(":data-fabric").name
+            artifact.type = 'jar'
+            artifact.classifier = 'api'
+        }
+        artifact { artifact ->
+            artifact.name = project(":data-fabric").name
+            artifact.type = 'jar'
+        }
+    }
+    compile (project(":common")){
+        artifact { artifact ->
+            artifact.name = project(":common").name
+            artifact.type = 'jar'
+            artifact.classifier = 'api'
+        }
+        artifact { artifact ->
+            artifact.name = project(":common").name
+            artifact.type = 'jar'
+        }
+    }
+    compile (project(":overlord")){
+        artifact { artifact ->
+            artifact.name = project(":overlord").name
+            artifact.type = 'jar'
+            artifact.classifier = 'thrift'
+        }
+        artifact { artifact ->
+            artifact.name = project(":overlord").name
+            artifact.type = 'jar'
+        }
+    }
+
+    compile libraries.jetty
+    compile libraries.netflix_curator_framework
+    compile libraries.netflix_curator_client
+    compile libraries.netflix_curator_discovery_client
+    compile libraries.netflix_curator_discovery_server
+    compile libraries.netflix_curator_recipes
+    compile libraries.http_client
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+    testCompile libraries.cglib_no_dep
+}
+
+// skip the main java tasks - we only build the test jar in this module
+jar.onlyIf { }
+sourcesJar.onlyIf { }
+javadocJar.onlyIf { }
+
+/**
+ * Exclude any config xml from singlenode jar
+ */
+jar.exclude '*.xml'
+
+// ideally we would use a name of "continuuity" and classifier of "test"
+// unfortunately there is a known gradle bug that will prevent uploading of
+// the pom if the artifact has a classifier. Tried many ways to work around
+// that and finally gave up. Hence we use "continuuity-test" as the artifact
+// name. The gradle bugs is discussed here with links to the Jiras:
+// http://forums.gradle.org/gradle/topics/pom_doesnt_upload
+
+task testJar(type: Jar) {
+    baseName = "continuuity-test"
+    from sourceSets.test.output
+}

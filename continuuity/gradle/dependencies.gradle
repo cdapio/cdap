@@ -1,0 +1,145 @@
+ext {
+    versions = [:]
+    libraries = [:]
+}
+
+versions.avroVersion = '1.6.2'
+versions.flumeVersion = '1.2.0'
+versions.hadoopVersion = '2.0.2-alpha'
+versions.jerseyVersion = '1.13'
+versions.googleGuavaVersion = '13.0.1'
+versions.googleGuice = '3.0'
+versions.netflixCuratorVersion = '1.1.18'
+versions.minaVersion = '2.0.4'
+versions.leveldbVersion = '1.5'
+versions.weaveVersion = '0.0.1-rc7'
+versions.zookeeperVersion = '3.4.5'
+
+//--------------------------------------------------------------------------
+// Define all the global dependencies here. 
+// If you change the versions here - make sure you test 
+// all the aspects of continuuity products.
+//--------------------------------------------------------------------------
+
+libraries.slf4j_api = "org.slf4j:slf4j-api:1.6.4"
+libraries.logback_core = "ch.qos.logback:logback-core:1.0.9"
+libraries.logback_classic = "ch.qos.logback:logback-classic:1.0.9"
+libraries.jcl_over_slf4j = "org.slf4j:jcl-over-slf4j:1.6.4"
+
+libraries.mockito_core =  "org.mockito:mockito-core:1.9.5"
+libraries.junit = "junit:junit:4.11"
+
+// Google Libraries
+libraries.google_guava = "com.google.guava:guava:$versions.googleGuavaVersion"
+libraries.google_gson = "com.google.code.gson:gson:2.1"
+libraries.google_guice = "com.google.inject:guice:$versions.googleGuice"
+libraries.google_guice_assistedinject = "com.google.inject.extensions:guice-assistedinject:$versions.googleGuice"
+libraries.google_guice_multibindings = "com.google.inject.extensions:guice-multibindings:$versions.googleGuice"
+
+// Thrift
+libraries.thrift = "org.apache.thrift:libthrift:0.8.0"
+
+// ASM
+libraries.asm = "org.ow2.asm:asm-all:4.0"
+
+// AVRO
+libraries.avro = "org.apache.avro:avro:$versions.avroVersion"
+libraries.avro_ipc = "org.apache.avro:avro-ipc:$versions.avroVersion"
+
+// Zookeeper
+libraries.zookeeper = "org.apache.zookeeper:zookeeper:$versions.zookeeperVersion"
+
+// Flume NG
+libraries.flume_ng_sdk = "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
+libraries.flume_ng_core = "org.apache.flume:flume-ng-core:$versions.flumeVersion"
+
+// Akka
+libraries.akka_actor = "com.typesafe.akka:akka-actor:2.0.3"
+
+// Http Client
+libraries.http_client = "com.ning:async-http-client:1.7.5"
+
+// Apache Commons
+libraries.apache_commons_cli = "commons-cli:commons-cli:1.2"
+libraries.apache_commons_logging = "commons-logging:commons-logging:1.1.1"
+libraries.apache_commons_math = "org.apache.commons:commons-math:2.2"
+libraries.apache_commons_io = "org.apache.commons:commons-io:1.3.2"
+
+//Apache Http
+libraries.apache_http_client  = "org.apache.httpcomponents:httpclient:4.1.2"
+
+//Shiro
+libraries.shiro_core = "org.apache.shiro:shiro-core:1.2.1"
+libraries.shiro_guice = "org.apache.shiro:shiro-guice:1.2.1"
+
+// Netflix Curator
+libraries.netflix_curator_framework = "com.netflix.curator:curator-framework:$versions.netflixCuratorVersion"
+libraries.netflix_curator_client = "com.netflix.curator:curator-client:$versions.netflixCuratorVersion"
+libraries.netflix_curator_discovery_client = "com.netflix.curator:curator-x-discovery:$versions.netflixCuratorVersion"
+libraries.netflix_curator_discovery_server = "com.netflix.curator:curator-x-discovery-server:$versions.netflixCuratorVersion"
+libraries.netflix_curator_recipes = "com.netflix.curator:curator-recipes:$versions.netflixCuratorVersion"
+
+// Hadoop distributions
+libraries.hadoop_common = "org.apache.hadoop:hadoop-common:$versions.hadoopVersion"
+libraries.hadoop_annotations = "org.apache.hadoop:hadoop-annotations:$versions.hadoopVersion"
+libraries.hadoop_hdfs = "org.apache.hadoop:hadoop-hdfs:$versions.hadoopVersion"
+libraries.hadoop_yarn_common = "org.apache.hadoop:hadoop-yarn-common:$versions.hadoopVersion"
+libraries.hadoop_yarn_api = "org.apache.hadoop:hadoop-yarn-api:$versions.hadoopVersion"
+libraries.hadoop_yarn_client = "org.apache.hadoop:hadoop-yarn-client:$versions.hadoopVersion"
+libraries.hadoop_minicluster = "org.apache.hadoop:hadoop-minicluster:$versions.hadoopVersion"
+
+libraries.hadoop_auth = "org.apache.hadoop:hadoop-auth:$versions.hadoopVersion"
+libraries.hadoop_yarn = "org.apache.hadoop:hadoop-yarn:$versions.hadoopVersion"
+
+
+// Jetty
+libraries.jetty = "org.mortbay.jetty:jetty:6.1.22"
+libraries.jetty_management = "jetty:jetty-management:6.0.0"
+
+//Yammer
+libraries.yammer_metrics = "com.yammer.metrics:metrics-core:2.1.5"
+
+// Netty
+libraries.netty = "org.jboss.netty:netty:3.2.4.Final"
+
+// Jersey Server
+libraries.jersey_server = "com.sun.jersey:jersey-server:$versions.jerseyVersion"
+libraries.jersey_servlet = "com.sun.jersey:jersey-servlet:$versions.jerseyVersion"
+libraries.jersey_client = "com.sun.jersey:jersey-client:$versions.jerseyVersion"
+libraries.jersey_core = "com.sun.jersey:jersey-core:$versions.jerseyVersion"
+
+// Mina
+libraries.mina_core = "org.apache.mina:mina-core:$versions.minaVersion"
+libraries.mina_beans = "org.apache.mina:mina-integration-beans:$versions.minaVersion"
+libraries.mina_ognl = "org.apache.mina:mina-integration-ognl:$versions.minaVersion"
+libraries.mina_jmx = "org.apache.mina:mina-integration-jmx:$versions.minaVersion"
+
+// FindBugs / JSR-311
+libraries.findbugs_jsr311 = "javax.ws.rs:jsr311-api:1.1.1"
+libraries.jsr_305 = "com.google.code.findbugs:jsr305:2.0.1"
+
+// MySQL & HSQL
+libraries.mysql = "mysql:mysql-connector-java:5.1.21"
+libraries.hsql = "org.hsqldb:hsqldb:2.2.4"
+
+// Serialization 
+libraries.kryo = "kryo:kryo:2.12"
+
+// CGlib
+libraries.cglib_no_dep = "cglib:cglib-nodep:2.2.2"
+
+libraries.continuuity_eclipse_plugin  = "com.continuuity:continuuity-eclipse-plugin:1.5.0"
+
+// LevelDB
+libraries.leveldb = "org.fusesource.leveldbjni:leveldbjni-all:$versions.leveldbVersion"
+
+// Weave
+libraries.weave_api = "com.continuuity.weave:weave-api:$versions.weaveVersion"
+libraries.weave_common = "com.continuuity.weave:weave-common:$versions.weaveVersion"
+libraries.weave_core = "com.continuuity.weave:weave-core:$versions.weaveVersion"
+libraries.weave_discovery_api = "com.continuuity.weave:weave-discovery-api:$versions.weaveVersion"
+libraries.weave_discovery_core = "com.continuuity.weave:weave-discovery-core:$versions.weaveVersion"
+libraries.weave_yarn = "com.continuuity.weave:weave-yarn:$versions.weaveVersion"
+libraries.weave_zookeeper = "com.continuuity.weave:weave-zookeeper:$versions.weaveVersion"
+
+//--------------------------------------------------------------------------
