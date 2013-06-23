@@ -1,0 +1,77 @@
+apply plugin:'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+    testbase {
+      enableJavadoc()
+    }
+}
+
+dependencies {
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+    apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    compile libraries.google_guice
+    compile libraries.leveldb
+    compile libraries.jsr_305
+
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+
+    apiCompile libraries.google_guava
+    apiCompile libraries.netty
+    apiCompile libraries.jsr_305
+
+    compile libraries.kryo
+    compile libraries.hsql
+    compile libraries.jcl_over_slf4j
+    compile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity') {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+    }
+
+    testCompile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity:tests') {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+    }
+    testCompile libraries.hadoop_minicluster
+}
+
+sourceSets{
+    main{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+
+    test{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+}
+
+javadoc {
+    classpath += sourceSets.api.output
+}
+
+test {
+    jvmArgs '-Xmx3048m'
+}
+
+checkstyleMain {
+    source = sourceSets.main.allJava.matching {
+        exclude '**/stubs/**/*'
+    }
+}
+
+/**
+ * Exclude any config xml from jar task
+ */
+jar.exclude '*.xml'

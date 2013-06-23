@@ -1,0 +1,21 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+#
+.gradle
+build/
+
+#eclipse stuff
+.classpath
+.project
+.settings/
+
+#intlj stuff
+*.iml
+.idea/
+/data/
+

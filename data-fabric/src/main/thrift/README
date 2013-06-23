@@ -1,0 +1,2 @@
+To generate thrift classes:
+	thrift --gen java --out ../java/ opex.thrift
