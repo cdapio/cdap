@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+    Copyright (c) to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+    <property>
+        <name>continuuity.test.A</name>
+        <value>A</value>
+        <description>
+            A
+        </description>
+    </property>
+
+    <property>
+        <name>continuuity.test.B</name>
+        <value>B</value>
+        <description>
+            B
+        </description>
+    </property>
+
+</configuration>

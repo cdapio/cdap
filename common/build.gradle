@@ -1,0 +1,96 @@
+apply plugin: 'java'
+
+/**
+ * Test Runners for different environments specifying testsuites
+ */
+testrunner {
+    integration {
+        setup {
+            environment(os: "mac os x")
+        }
+    }
+}
+
+/**
+ * Enabling building of other jar from common
+ */
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+}
+
+/**
+ * Specify all the dependencies
+ */
+dependencies {
+    // Integration depends on apiJar
+    integrationCompile apiJar.outputs.files
+
+    apiCompile libraries.google_guava
+    apiCompile libraries.google_gson
+    apiCompile libraries.jsr_305
+
+    // Self dependencies.
+    compile apiJar.outputs.files
+
+    // Other dependencies
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    compile libraries.google_guice
+
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+
+    compile libraries.asm
+    compile libraries.jsr_305
+    compile libraries.slf4j_api
+    compile libraries.google_guava
+    compile libraries.google_gson
+    compile libraries.google_guice
+    compile libraries.netflix_curator_framework
+    compile libraries.netflix_curator_client
+    compile libraries.netflix_curator_discovery_client
+    compile libraries.netflix_curator_discovery_server
+    compile libraries.netflix_curator_recipes
+    compile (libraries.hadoop_common) {
+        exclude group: 'commons-logging'
+        exclude group: 'junit'
+    }
+    compile libraries.hadoop_annotations
+    compile (libraries.hadoop_hdfs) {
+        exclude group: 'commons-logging'
+    }
+    compile libraries.hadoop_yarn_common
+    compile libraries.hadoop_yarn_api
+    compile (libraries.thrift) {
+        exclude group: 'commons-logging'
+    }
+    compile libraries.jcl_over_slf4j
+    compile libraries.avro
+    compile libraries.avro_ipc
+    compile libraries.flume_ng_sdk
+    compile libraries.flume_ng_core
+    compile libraries.jetty
+    compile libraries.mina_core
+    compile libraries.findbugs_jsr311
+    compile libraries.weave_discovery_api
+    compile libraries.weave_discovery_core
+    compile libraries.weave_zookeeper
+
+    testCompile libraries.hadoop_minicluster
+    testCompile libraries.jersey_server
+    testCompile libraries.jersey_servlet
+    testCompile libraries.jersey_client
+    testCompile libraries.jersey_core
+
+    // For metrics
+    compile "com.yammer.metrics:metrics-core:2.1.5"
+
+    // Kafka dependencies
+    compile group: 'kafka', name: 'kafka', version: '0.8.0'
+    compile group: 'org.scala-lang', name: 'scala-library', version: '2.8.0'
+    compile group: 'com.101tec', name: 'zkclient', version: '0.2'
+}

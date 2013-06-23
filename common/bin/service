@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+
+# Copyright (c) to Continuuity Inc. All rights reserved.
+
+# Source function library. used for "status" use case
+if [ -f "/etc/rc.d/init.d/functions" ]; then
+  PLATFORM="RHEL"
+  . /etc/rc.d/init.d/functions
+elif [ -f /lib/lsb/init-functions ] ; then
+  PLATFORM="UBUNTU"
+  . /lib/lsb/init-functions
+else
+  echo "Platform is unsupported."
+  exit 0
+fi
+
+# Determine service name from the name of the symlink being run
+SVCNAME=`basename $0`
+
+if [[ "X$SVCNAME" == "Xsvc" ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
+  exit 1
+fi
+
+# APP is shortened SVCNAME
+APP=`echo $SVCNAME | cut -d'-' -f2-`; export APP
+
+# Determine symlink target (full path)
+TARGET=`readlink $0`
+if [[ $? -ne 0 ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
+  exit 1
+fi
+
+# Determine package name by applying regex to the target of the symlink being run
+PKGNAME=`echo $TARGET | sed -e 's:/opt/continuuity/\([^/]*\)/.*:\1:'`
+if [[ "X$PKGNAME" == "X" ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
+  exit 1
+fi
+
+# Default CONTINUUITY_HOME to /opt/continuuity (package default)
+if [ ! -n "$CONTINUUITY_HOME" ]; then
+  CONTINUUITY_HOME="/opt/continuuity"
+fi
+
+# Default CONTINUUITY_CONF to /etc/continuuity (package default)
+if [ ! -n "$CONTINUUITY_CONF" ]; then
+  CONTINUUITY_CONF="/etc/continuuity/conf"
+fi
+
+# construct COMPONENT_HOME and COMPONENT_BIN
+COMPONENT_HOME="$CONTINUUITY_HOME"/"$PKGNAME"
+COMPONENT_BIN="$COMPONENT_HOME"/bin
+
+# Load component comman.sh 
+source $COMPONENT_BIN/common.sh
+
+# Load component common environment file too
+source $COMPONENT_BIN/common-env.sh
+
+# Load app specific configuration.
+SERVICE_ENVIRONMENT_FILE="$COMPONENT_HOME"/conf/"$APP"-env.sh
+if [ -f "$SERVICE_ENVIRONMENT_FILE" ]; then 
+ . "$SERVICE_ENVIRONMENT_FILE"
+fi
+
+# Set Log location
+export LOG_PREFIX=$APP-$IDENT_STRING-$HOSTNAME
+export LOGFILE=$LOG_PREFIX.log
+loglog="${LOG_DIR}/${LOGFILE}"
+
+# Set PID location
+pid=$PID_DIR/$APP-${IDENT_STRING}.pid
+loggc=$LOG_DIR/$LOG_PREFIX.gc
+
+# Set Niceness
+if [ "$NICENESS" = "" ]; then
+ export NICENESS=0
+fi
+
+start() {
+    if [ $MAIN_CMD ]; then
+      # This app is configured as a NON-JAVA app
+
+      rotate_log $loglog
+      check_before_start
+
+      echo "`date` Starting $APP service on `hostname`"
+      echo "`date` Starting $APP service on `hostname`" >> $loglog
+      echo "`ulimit -a`" >> $loglog 2>&1
+
+      nice -n $NICENESS $MAIN_CMD $MAIN_CMD_ARGS </dev/null >$loglog 2>&1 &
+
+      echo $! >$pid
+    elif [ $MAIN_CLASS ]; then
+      # This app is configured as a JAVA app (default)
+
+      # Check and set classpath if in development environment. 
+      check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
+
+      # Setup classpaths.
+      if [ "$CLASSPATH" = "" ]; then
+        CLASSPATH=$COMPONENT_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
+      else
+        CLASSPATH=$CLASSPATH:$COMPONENT_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
+      fi
+
+      # sets the JAVA variable.
+      set_java
+
+      rotate_log $loggc
+      check_before_start
+
+      echo "`date` Starting Java $APP service on `hostname`"
+      echo "`date` Starting Java $APP service on `hostname`" >> $loglog
+      echo "`ulimit -a`" >> $loglog 2>&1
+
+      nice -n $NICENESS "$JAVA" "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >$loglog 2>&1 &
+      echo $! >$pid
+
+    else
+      echo "Error: Neither MAIN_CLASS or MAIN_CMD are set.  Please set one in $SERVICE_ENVIRONMENT_FILE"
+      exit -1
+    fi
+}
+
+stop() {
+    if [ -f $pid ]; then
+      pidToKill=`cat $pid`
+      # kill -0 == see if the PID exists
+      if kill -0 $pidToKill > /dev/null 2>&1; then
+        echo -n stopping $command
+        echo "`date` Terminating $command" >> $loglog
+        kill $pidToKill > /dev/null 2>&1
+        while kill -0 $pidToKill > /dev/null 2>&1;
+        do
+          echo -n "."
+          sleep 1;
+        done
+        rm $pid
+        echo
+      else
+        retval=$?
+        echo nothing to stop because kill -0 of pid $pidToKill failed with status $retval
+      fi
+      rm -f $pid
+    else
+      echo nothing to stop because no pid file $pid
+    fi
+}
+
+restart() {
+    stop
+    start
+}
+
+rh_status() {
+    echo "checking status"
+    # call sourced status function
+    status -p $pid 
+}
+
+ub_status() {
+    echo "checking status"
+    # call sourced status function
+    status_of_proc -p $pid "$0" "$APP"
+}
+
+case "$1" in
+  start)
+    $1  
+  ;;
+  
+  stop)
+    $1
+  ;;
+
+  restart)
+    $1
+  ;;
+
+  status)
+    case "$PLATFORM" in
+      "RHEL")
+        rh_status
+      ;;
+      "UBUNTU")
+        ub_status
+      ;;
+    esac 
+  ;;
+
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+  ;;
+
+
+esac
+exit $? 
+
