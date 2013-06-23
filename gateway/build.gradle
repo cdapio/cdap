@@ -1,0 +1,49 @@
+// Set up the application plugin so we can launch the Gateway from gradle
+apply plugin: 'java'
+apply plugin: 'application'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
+tasks.withType(Compile) { 
+    options.compilerArgs << "-Xlint:unchecked"
+} 
+
+dependencies {
+  compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
+  compile elastic([group: 'com.continuuity', name: 'passport', version: "${version}", changing: true], "passport")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+  testCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'test', version: "${version}", changing: true], "data-fabric")
+
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true], "app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'thrift', version: "${version}", changing: true], "app-fabric")
+
+  clover elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true], "app-fabric")
+  clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+
+  compile libraries.slf4j_api
+  compile libraries.logback_core
+  compile libraries.logback_classic
+  compile libraries.google_guice
+
+  testCompile libraries.mockito_core
+  testCompile libraries.junit
+
+  compile libraries.avro
+  compile libraries.avro_ipc
+  compile libraries.flume_ng_core
+  compile libraries.flume_ng_sdk
+
+  compile libraries.weave_discovery_api
+}
+
+test {
+    jvmArgs '-Xmx2048m'
+}
+
+/**
+ * Exclude any config xml from jar task
+ */
+jar.exclude '*.xml'
+
+
