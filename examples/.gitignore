@@ -1,0 +1,21 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# IDEA output
+out/
+.idea/
+.gradle/
+.clover/
+*.iml
+
+# build output
+build/
+classes/
+target/
+
+#MacOS files
+.DS_Store

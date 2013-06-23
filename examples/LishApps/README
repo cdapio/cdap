@@ -1,0 +1,125 @@
+---
+Payvment Lish Feeds on the Continuuity AppFabric
+---
+
+This project contains all of the code, build files, dependencies,
+documentation, and command-line tools for the implementation of processing
+Lish activity and generating activity and popular feeds.
+
+
+DIRECTORY LAYOUT
+----------------
+
+README   What you are reading now
+bin/	 Command-line clients for sending clusters/actions and reading feeds
+distro/  Zip distribution of the Continuuity Developer Suite
+doc/     Javadoc for the app
+lib/     Continuuity Libraries and other dependencies
+pom.xml  Maven project file (see below for some pointers)
+src/     The source code for the entire project and tests
+
+
+GETTING STARTED
+---------------
+
+To use the command-line tools, just set the environment variable
+CONTINUUITY_HOME to point to the root directory of your Continuuity Developer
+Suite.
+
+	export CONTINUUITY_HOME=~/continuuity-developer-suite/
+
+
+BUILDING PROJECT JARS
+---------------------
+
+Currently jars of the flows and queries must include all dependencies and a
+jar can only specify a single flow or query at one time.  In the future,
+these limitations should go away and only the gson/opencsv/guava jars will
+be needed as they are the only ones used outside of tests.
+
+In maven, profiles have been setup for each of the three types.
+
+To generate the uber jar for one flow, do the following:
+
+	mvn compile assembly:single -Pcluster-writer
+
+To generate all jars:
+
+	mvn compile
+	mvn assembly:single -Pcluster-writer
+	mvn assembly:single -Psocial-action
+	mvn assembly:single -Pfeed-reader
+
+This will generate three jars in the target/ directory.
+
+
+END-TO-END RUN STEP-BY-STEP
+---------------------------
+
+The following are step-by-step instructions for deploying the Lish
+application to single node, running it, sending sample data, and retrieving
+sample queries.
+
+1. Unpack and point to the Continuuity Developer Edition
+
+	unzip continuuity-developer-edition-1.2.1-beta.zip
+	export CONTINUUITY_HOME=`pwd`/continuuity-developer-edition-1.2.1-beta
+
+2. Start Single Node AppFabric
+
+	cd $CONTINUUITY_HOME
+	./bin/continuuity-app-fabric
+
+3. Build the Lish Flow and Query jars
+
+	cd $LISH_APP_HOME
+	mvn compile assembly:single -Pcluster-writer ; mvn assembly:single -Psocial-action ; mvn assembly:single -Pfeed-reader
+
+4. Load AppFabric UI and Deploy jars
+
+	Open URL:  http://localhost:9999
+	On dashboard, empty app list, click + to create an app (name it whatever you want)
+	Click newly created app name in list to open app page
+	Drag-and-drop each of the three generated jars, one at a time
+	After they all finish, you should have two flows and one query in your app
+
+5. Start flows and query
+
+	Open cluster writer flow, start it
+	Open social action flow, start it
+	On app page, scroll down to Queries, start feedreader
+
+6. Write clusters to stream
+
+	$LISH_APP_HOME/bin/write_clusters_to_stream.sh $LISH_APP_HOME/src/test/resources/sample-clusters.csv
+
+	or, use the REST endpoint directly, for example:
+
+	curl -v "http://localhost:10000/rest-stream/clusters" --data '1,"Sports",0.001'
+
+7. Write social actions to stream
+
+	$LISH_APP_HOME/bin/write_actions_to_stream.sh $LISH_APP_HOME/src/test/resources/sample-actions.csv
+
+	or, use the REST endpoint directly, for example:
+
+	curl -v "http://localhost:10000/rest-stream/social-actions" --data '{"@id":"1","product_id":"1","store_id":"201","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125210000","@view":"SIMPLE","score":"1.0"}'
+
+8. Perform activity feed read
+
+	curl -v "http://localhost:10003/rest-query/feedreader/readactivity?clusterid=1&limit=10"
+
+9. Perform popular feed read
+
+	curl -v "http://localhost:10003/rest-query/feedreader/readpopular?clusterid=1&starttime=1349132400000&numhours=3&limit=10"
+
+
+OTHER NOTES
+-----------
+
+There is also a tool to randomly generate social actions that can be used
+after injecting clusters.  Right now it uses only one category but can be
+extended as required.
+
+	$LISH_APP_HOME/bin/send_random_actions.sh 1000
+

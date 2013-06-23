@@ -1,0 +1,23 @@
+check_continuuity_flow is a Nagios-style plugin to check status of a Continuuity Flow or Query.  Returns OK only if the given flow/query is in RUNNING state.
+Performance metrics are also returned for the running flow/query.
+
+Requirements:
+  curl
+
+Usage: check_continuuity_flow [OPTIONS] -H <host> -a <application> [ -f <flow> | -q <query> ]
+
+Options:
+  -h                    Usage info
+  -H <host>             Continuuity api host to check
+  -a <application>      Continuuity Application within which the target flow is running
+  -f <flow>             Continuuity target Flow to check (only one of -f or -q may be specified)
+  -q <query>            Continuuity target Query to check (only one of -f or -q may be specified)
+  -v                    verbose (debug) output
+  -t <timeout>          override default timeout (seconds)
+  -p <port>             override default port
+  -r <rest-endpoint>    override default rest-endpoint
+
+Examples:
+check_continuuity_flow -H payvment.continuuity.com -a lish-app -f SocialActionProcessor
+
+

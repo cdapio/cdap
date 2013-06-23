@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<project name="LishApp" default="jar">
+
+     <target name="locate_mvn">
+     <exec executable="which"
+           outputproperty="mvn.path"
+           failonerror="true">
+           <arg line="mvn"/>
+    </exec>
+     <echo message="maven location: ${mvn.path}" />
+	</target>
+
+    <target name="jar" description="Building LishApps" depends="locate_mvn">
+        <exec dir="." executable="${mvn.path}">
+            <arg line="assembly:assembly -Dmaven.test.skip=true"/>
+        </exec>
+    </target>
+
+    <target name="clean" description="clean" depends="locate_mvn">
+        <exec dir="." executable="${mvn.path}">
+            <arg line="clean"/>
+        </exec>
+    </target>
+
+  <target name="init">  
+  </target>
+
+  <target name="manifest">
+  </target>
+
+   <target name="compile" depends="locate_mvn">
+      <exec dir="." executable="${mvn.path}">
+            <arg line="compile"/>
+        </exec>
+   </target>
+</project>

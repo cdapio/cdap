@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+  <classpathentry kind="src" path="src/test/java" output="target/test-classes" including="**/*.java"/>
+  <classpathentry kind="src" path="src/test/resources" output="target/test-classes" excluding="**/*.java"/>
+  <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
+  <classpathentry kind="output" path="target/classes"/>
+  <classpathentry kind="var" path="M2_REPO/javax/inject/javax.inject/1/javax.inject-1.jar"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+  <classpathentry kind="lib" path="lib/continuuity-test-1.2.1-SNAPSHOT.jar"/>
+  <classpathentry kind="lib" path="lib/flow-1.2.1-SNAPSHOT.jar"/>
+  <classpathentry kind="lib" path="lib/flow-1.2.1-SNAPSHOT-api.jar"/>
+  <classpathentry kind="lib" path="lib/gateway-1.2.1-SNAPSHOT.jar"/>
+  <classpathentry kind="lib" path="lib/data-fabric-1.2.1-SNAPSHOT.jar"/>
+  <classpathentry kind="lib" path="lib/data-fabric-1.2.1-SNAPSHOT-api.jar"/>
+  <classpathentry kind="lib" path="lib/common-1.2.1-SNAPSHOT.jar"/>
+  <classpathentry kind="lib" path="lib/common-1.2.1-SNAPSHOT-api.jar"/>
+  <classpathentry kind="lib" path="lib/overlord-1.2.1-SNAPSHOT.jar"/>
+  <classpathentry kind="lib" path="lib/overlord-1.2.1-SNAPSHOT-thrift.jar"/>
+  <classpathentry kind="lib" path="lib/hadoop-common-2.0.0-alpha.jar"/>
+  <classpathentry kind="lib" path="lib/hadoop-auth-2.0.0-alpha.jar"/>
+  <classpathentry kind="lib" path="lib/hbase-0.94.2.1.4.1.continuuity.jar"/>
+  <classpathentry kind="lib" path="lib/kryo-2.12.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/ow2/asm/asm/4.0/asm-4.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/google/code/gson/gson/2.2.2/gson-2.2.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/net/sf/opencsv/opencsv/2.1/opencsv-2.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/google/inject/guice/3.0/guice-3.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/aopalliance/aopalliance/1.0/aopalliance-1.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/google/guava/guava/11.0.2/guava-11.0.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar"/>
+  <classpathentry kind="var" path="M2_REPO/junit/junit/4.8.2/junit-4.8.2.jar"/>
+  <classpathentry kind="lib" path="lib/akka-actor-2.0.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-configuration/commons-configuration/1.6/commons-configuration-1.6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-lang/commons-lang/2.4/commons-lang-2.4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-digester/commons-digester/1.8/commons-digester-1.8.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-beanutils/commons-beanutils-core/1.8.0/commons-beanutils-core-1.8.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/typesafe/config/0.4.0/config-0.4.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.8.0/libthrift-0.8.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/httpcomponents/httpclient/4.1.2/httpclient-4.1.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/httpcomponents/httpcore/4.1.3/httpcore-4.1.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-codec/commons-codec/1.4/commons-codec-1.4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.16/log4j-1.2.16.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-simple/1.6.1/slf4j-simple-1.6.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-log4j12/1.6.1/slf4j-log4j12-1.6.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/yammer/metrics/metrics-core/2.1.2/metrics-core-2.1.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/esotericsoftware/minlog/minlog/1.2/minlog-1.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/objenesis/objenesis/1.2/objenesis-1.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/esotericsoftware/reflectasm/reflectasm/1.03/reflectasm-1.03.jar"/>
+  <classpathentry kind="lib" path="lib/scala-library-2.9.1-1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/jboss/netty/netty/3.2.7.Final/netty-3.2.7.Final.jar"/>
+</classpath>

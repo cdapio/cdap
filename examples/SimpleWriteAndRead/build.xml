@@ -1,0 +1,5 @@
+<?xml version="1.0" ?> 
+<project name="SimpleWriteAndRead" default="jar">
+    <property name="example.package" value="com.continuuity.examples.simplewriteandread"/>
+    <import file="../ant-common.xml"/>
+</project>

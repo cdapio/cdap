@@ -1,0 +1,5 @@
+<?xml version="1.0" ?> 
+<project name="CountCounts" default="jar">
+    <property name="example.package" value="com.continuuity.examples.countcounts"/>
+    <import file="../ant-common.xml"/>
+</project>
