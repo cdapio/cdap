@@ -1,0 +1,54 @@
+#
+# Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+#
+
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+lib="$bin"/../lib
+conf="$bin"/../conf
+script=`basename $0`
+
+# Determine the Java command to use to start the JVM.
+if [ -n "$JAVA_HOME" ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+        # IBM's JDK on AIX uses strange locations for the executables
+        JAVA="$JAVA_HOME/jre/sh/java"
+    else
+        JAVA="$JAVA_HOME/bin/java"
+    fi
+    if [ ! -x "$JAVA" ] ; then
+        die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+    fi
+else
+    JAVA="java"
+    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+fi
+
+if [ "$JAVA_HEAPMAX" = "" ]; then
+  JAVA_HEAP_MAX=-Xmx512m
+fi
+
+# In other environment, the jars are expected to be in <HOME>/lib directory.
+# Load all the jar files. Not ideal, but we need to load only the things that 
+# is needed by this script.
+CLASSPATH=$CLASSPATH:${lib}/*
+
+# Load the configuration too.
+if [ -d "$conf" ]; then
+  CLASSPATH=$CLASSPATH:"$conf"/
+fi
+
+ARG_COUNT=$#
+if [[ "X${ARG_COUNT}" != "X0" ]]; then
+ $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script com.continuuity.app.services.ReactorClient "$@" 2>/dev/null
+else
+ $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script com.continuuity.app.services.ReactorClient help 2>/dev/null
+fi

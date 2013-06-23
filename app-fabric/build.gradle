@@ -1,0 +1,154 @@
+apply plugin: 'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
+/**
+ * Building of API archive
+ */
+smartyFacts {
+  api {
+    enableJavadoc()
+    enableSourceJar()
+  }
+  thrift
+  testbase {
+    enableJavadoc()
+  }
+}
+
+/**
+ * Test Runners for different environments specifying testsuites
+ */
+testrunner {
+    integration {
+        setup {
+            environment(os: "mac os x")
+        }
+    }
+}
+
+/**
+ * Specify all the dependencies for smartyFacts & main.
+ */
+dependencies {
+  // Dependencies for smartyFacts & main
+  apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+//  testbaseCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+//  testbaseCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  testbaseCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
+
+  // Dependencies required by api.
+
+  // Dependencies required by main.
+  compile libraries.slf4j_api
+  compile libraries.apache_commons_cli
+  compile libraries.google_gson
+  compile libraries.google_guice
+  compile libraries.google_guice_assistedinject
+  compile libraries.google_guice_multibindings
+  compile libraries.google_guava
+  compile libraries.jcl_over_slf4j
+  compile libraries.jsr_305
+  compile libraries.netty
+  compile (libraries.hadoop_minicluster) {
+    exclude group: 'commons-logging'
+  }
+  compile libraries.weave_api
+  compile libraries.weave_common
+  compile (libraries.weave_yarn) {
+    exclude group: 'org.apache.hadoop'
+  }
+
+  compile libraries.hadoop_annotations
+  compile libraries.hadoop_auth
+  compile libraries.hadoop_common
+  compile libraries.hadoop_yarn_api
+  compile libraries.hadoop_yarn_client
+  compile libraries.hadoop_yarn_common
+
+  // Thrift related stuff.
+  thriftCompile libraries.thrift
+  thriftCompile libraries.slf4j_api
+
+  // Test dependencies
+  testCompile libraries.junit
+
+  // Dependencies required by testbase
+  testbaseCompile libraries.asm
+  testbaseCompile libraries.jsr_305  
+  testbaseCompile libraries.slf4j_api
+  testbaseCompile libraries.google_guice
+  testbaseCompile libraries.google_guice_assistedinject
+  testbaseCompile libraries.google_guice_multibindings
+  testbaseCompile libraries.google_guava
+  testbaseCompile libraries.junit
+  testbaseCompile libraries.weave_api
+  testbaseCompile libraries.weave_common
+  testbaseCompile (libraries.weave_yarn) {
+    exclude group: 'org.apache.hadoop'
+  }
+}
+
+/**
+ * Includes API output to main and test source sets.
+ */
+sourceSets {
+  main {
+    compileClasspath += api.output
+    compileClasspath += thrift.output
+    runtimeClasspath += api.output 
+    runtimeClasspath += thrift.output
+  }
+  test {
+    compileClasspath += api.output
+    compileClasspath += thrift.output
+    compileClasspath += testbase.output
+    runtimeClasspath += api.output
+    runtimeClasspath += thrift.output
+    runtimeClasspath += testbase.output
+  }
+  testbase {
+    compileClasspath += api.output
+    compileClasspath += thrift.output
+    compileClasspath += main.output
+    runtimeClasspath += api.output
+    runtimeClasspath += thrift.output
+    runtimeClasspath += main.output
+  }
+}
+
+test {
+    jvmArgs '-Xmx1536m'
+}
+
+task testJar(type: Jar, dependsOn: testbaseClasses) {
+    baseName = "${project.archivesBaseName}"
+    from sourceSets.testbase.output
+    classifier = 'testbase'
+    include('com/continuuity/test/app/*')
+}
+
+/**
+ * Generates API javadoc.
+ */
+javadoc {
+  classpath += (sourceSets.api.output + sourceSets.thrift.output + sourceSets.testbase.output)
+}
+
+/**
+ * Excludes stubs from clover.
+ */
+clover {
+  excludes << '**/manager/stubs/*'
+}
+
+/**
+ * Excludes stubs from sonar report exclusion.
+ */
+sonar {
+  project {
+    sourceExclusions = '**/manager/stubs/*'
+  }
+}

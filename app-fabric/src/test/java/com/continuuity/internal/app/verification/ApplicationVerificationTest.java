@@ -1,0 +1,61 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
+package com.continuuity.internal.app.verification;
+
+import com.continuuity.WebCrawlApp;
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.verification.VerifyResult;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import org.junit.Assert;
+import org.junit.Test;
+
+/**
+ * Tests the verification of Application
+ */
+public class ApplicationVerificationTest {
+
+  /**
+   * Good test
+   */
+  @Test
+  public void testGoodApplication() throws Exception {
+    ApplicationSpecification appSpec = new WebCrawlApp().configure();
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
+    ApplicationVerification app = new ApplicationVerification();
+    VerifyResult result = app.verify(newSpec);
+    Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.SUCCESS);
+  }
+
+  private static class ApplicationWithBadId implements Application {
+    @Override
+    public ApplicationSpecification configure() {
+      return ApplicationSpecification.Builder.with()
+        .setName("Bad App Name")
+        .setDescription("Bad Application Name Test")
+        .noStream()
+        .noDataSet()
+        .noFlow()
+        .noProcedure()
+        .build();
+    }
+  }
+
+  /**
+   * This test that verification of application id fails.
+   */
+  @Test
+  public void testApplicationWithBadId() throws Exception {
+    ApplicationSpecification appSpec = new ApplicationWithBadId().configure();
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
+    ApplicationVerification app = new ApplicationVerification();
+    VerifyResult result = app.verify(newSpec);
+    Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.FAILED);
+  }
+
+}
