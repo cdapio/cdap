@@ -1,0 +1,87 @@
+apply plugin: 'java'
+
+archivesBaseName = 'continuuity-test'
+
+/**
+ * Specify all the dependencies for smartyFacts & main.
+ */
+dependencies {
+  // Dependencies for smartyFacts & main
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true],"app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
+
+  // Test framework dependencies
+  compile libraries.junit
+  compile libraries.asm
+  compile libraries.google_gson
+  compile libraries.google_guice
+  compile libraries.google_guice_assistedinject
+  compile libraries.google_guice_multibindings
+  compile libraries.google_guava
+  compile libraries.jsr_305
+
+  // Test dependencies
+  testCompile libraries.junit
+}
+
+/**
+ * Includes API output to main and test source sets.
+ */
+sourceSets {
+}
+
+/**
+ * Generates API javadoc.
+ */
+javadoc {
+}
+
+/**
+ * Excludes stubs from clover.
+ */
+clover {
+  excludes << '**/manager/stubs/*'
+}
+
+/**
+ * Excludes stubs from sonar report exclusion.
+ */
+sonar {
+  project {
+    sourceExclusions = '**/manager/stubs/*'
+  }
+}
+
+uploadArchives {
+    repositories {
+        repositories.mavenDeployer {
+            repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+            snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+            pom.whenConfigured { pom ->
+                // Removes groovy dependency and test dependencies from generated pom file
+                pom.dependencies = pom.dependencies.findAll { dep ->
+                    dep.artifactId != 'groovy-all' && dep.scope != 'test'
+                }
+                def dep = pom.dependencies.get(0).getClass().newInstance()
+                dep.groupId = 'com.continuuity'
+                dep.artifactId = 'app-fabric'
+                dep.version = "${version}"
+                dep.classifier = 'thrift'
+                pom.dependencies.add(dep)
+
+                dep = pom.dependencies.get(0).getClass().newInstance()
+                dep.groupId = 'com.continuuity'
+                dep.artifactId = 'overlord'
+                dep.version = "${version}"
+                dep.classifier = 'thrift'
+                pom.dependencies.add(dep)
+            }
+        }
+    }
+}
