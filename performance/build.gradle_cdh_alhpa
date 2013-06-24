@@ -1,0 +1,28 @@
+apply plugin:'java'
+
+dependencies {
+
+   compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+   compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
+   compile elastic([group: 'com.continuuity', name: 'gateway', classifier: 'api', version: "${version}", changing: true], "gateway")
+   clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}"], "data-fabric")
+   testCompile('org.apache.hbase:hbase:0.92.1-cdh4.1.3:tests') { exclude module: 'junit' }
+   testCompile libraries.hadoop_minicluster
+   testCompile('org.apache.hadoop:hadoop-hdfs:2.0.2.1-alpha:tests') { exclude module: 'junit' }
+   testCompile('org.apache.hadoop:hadoop-yarn-server-tests:2.0.2.1-alpha:tests') { exclude module: 'junit' }
+   compile libraries.slf4j_api
+   compile libraries.logback_core
+   compile libraries.logback_classic
+   compile libraries.google_guice
+
+   testCompile libraries.mockito_core
+   testCompile libraries.junit
+
+}
+
+/**
+ * Exclude any config xml from jar
+ */
+jar.exclude '*.xml'

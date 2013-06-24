@@ -1,0 +1,32 @@
+// The purpose of this script is to bootstrap the continuuity build system.
+// This script is maintained in the continuuity repo and is copied to each
+// submodule to allow them to be developed independent of the continuuity repo.
+// This script should only contain the bare essentials to load the
+// continuuity plugin.
+project.buildscript {
+    if (!ext.has("com.continuuity.gradle.ContinuuityPlugin"))
+    {
+        repositories {
+            maven {
+                credentials {
+                    username "gradle"
+                    password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+                }
+                url "http://nexus.continuuity.com:8081/nexus/content/groups/public"
+            }
+        }
+        configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+        configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+        if(!ext.has('buildSrcVersion'))
+        {
+            ext.buildSrcVersion = '1.0.0-SNAPSHOT'
+        }
+        dependencies {
+            classpath "com.continuuity:buildSrc:$buildSrcVersion"
+        }
+    }
+}
+
+
+
+
