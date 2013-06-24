@@ -20,9 +20,10 @@ import java.util.Properties;
  * A Kafka producer that publishes log messages to Kafka brokers.
  */
 public final class SimpleKafkaProducer {
-  public static final String IGNORE_LOG = ".IGNORE_LOG";
+  public static final String IGNORE_LOG = ".IGNORE_LOG_KAFKA_PRODUCER";
   private final String kafkaTopic;
-  private Producer<String, ILoggingEvent> producer;
+  // Kafka producer is thread safe
+  private final Producer<String, ILoggingEvent> producer;
 
   public SimpleKafkaProducer(CConfiguration configuration) {
     Properties props = new Properties();

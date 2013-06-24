@@ -23,11 +23,13 @@ import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
+import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.common.logging.LoggingConfiguration.KafkaHost;
@@ -53,28 +56,30 @@ public final class LogSaver extends AbstractIdleService {
   private final String topic;
   private final int partition;
   private final LoggingEventSerializer serializer;
+  private final Path logBaseDir;
 
+  private final Configuration hConfig;
   private final OperationExecutor opex;
   private final OperationContext operationContext;
   private final CheckpointManager checkpointManager;
-  private final FileManager fileManager;
+  private final FileMetaDataManager fileMetaDataManager;
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
-  private final AvroFileWriter avroFileWriter;
   private final long kafkaErrorSleepMs = 2000;
   private final long kafkaEmptySleepMs = 2000;
   private final int kafkaSaveFetchTimeoutMs = 1000;
-  private final int syncIntervalBytes = 1024 * 1024;
-  private final long maxLogFileSize = 100 * 1024 * 1024;
+  private final int syncIntervalBytes;
   private final long checkpointIntervalMs = 60 * 1000;
   private final long inactiveIntervalMs = 10 * 60 * 1000;
   private final long eventProcessingDelayMs = 5 * 1000;
-  private final int fetchSizeBytes = 1024 * 1024;
+  private final long retentionDurationMs;
+  private final long maxLogFileSizeBytes;
 
   private final int numThreads = 2;
   private static final String TABLE_NAME = "__log_meta";
 
-  private volatile ListeningExecutorService listeningExecutorService;
+  private volatile ListeningScheduledExecutorService listeningScheduledExecutorService;
   private volatile Future<?> subTaskFutures;
+  private volatile ScheduledFuture<?> scheduledFutures;
 
   public LogSaver(OperationExecutor opex, int partition, Configuration hConfig, CConfiguration cConfig)
     throws IOException {
@@ -95,45 +100,61 @@ public final class LogSaver extends AbstractIdleService {
     this.partition = partition;
     this.serializer = new LoggingEventSerializer();
 
+    this.hConfig = hConfig;
     this.opex = opex;
     this.operationContext = new OperationContext(account);
     this.checkpointManager = new CheckpointManager(this.opex, operationContext, topic, partition, TABLE_NAME);
-    this.fileManager = new FileManager(opex, operationContext, TABLE_NAME);
+    this.fileMetaDataManager = new FileMetaDataManager(opex, operationContext, TABLE_NAME);
     this.messageTable = HashBasedTable.create();
 
-    String logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
-    Preconditions.checkNotNull(logBaseDir, "Log base dir cannot be null");
-    this.avroFileWriter = new AvroFileWriter(checkpointManager, fileManager,
-                                             FileSystem.get(hConfig), logBaseDir,
-                                             serializer.getAvroSchema(), maxLogFileSize, syncIntervalBytes,
-                                             checkpointIntervalMs, inactiveIntervalMs);
+    String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
+    Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
+    this.logBaseDir = new Path(baseDir);
+
+    this.retentionDurationMs = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_MS, -1);
+    Preconditions.checkArgument(retentionDurationMs > 0,
+                                "Log retention duration not specified, or is invalid: %s", retentionDurationMs);
+
+    this.maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 100 * 1024 * 1024);
+    Preconditions.checkArgument(maxLogFileSizeBytes > 0,
+                                "Max log file size is invalid: %s", maxLogFileSizeBytes);
+
+    this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 5 * 1024 * 1024);
+    Preconditions.checkArgument(this.syncIntervalBytes > 0,
+                                "Log file sync interval is invalid: %s", this.syncIntervalBytes);
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting LogSaver...");
 
-    listeningExecutorService =
-      MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numThreads));
+    listeningScheduledExecutorService =
+      MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(numThreads));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
 
-    ListenableFuture<?> future = listeningExecutorService.submit(new LogCollector());
+    ListenableFuture<?> future = listeningScheduledExecutorService.submit(new LogCollector());
     futures.add(future);
 
-    future = listeningExecutorService.submit(new LogWriter());
+    future = listeningScheduledExecutorService.submit(new LogWriter(hConfig));
     futures.add(future);
 
     subTaskFutures = Futures.allAsList(futures);
+
+    scheduledFutures =
+      listeningScheduledExecutorService.scheduleAtFixedRate(
+        new LogCleanup(getFileSystem(hConfig), fileMetaDataManager, logBaseDir, retentionDurationMs),
+        10, 24 * 60, TimeUnit.MINUTES);
   }
 
   @Override
   protected void shutDown() throws Exception {
     // Wait for sub tasks to complete
     subTaskFutures.get();
+    scheduledFutures.cancel(false);
 
     LOG.info("Stopping LogSaver...");
 
-    listeningExecutorService.shutdownNow();
+    listeningScheduledExecutorService.shutdownNow();
   }
 
   private void waitForRun() {
@@ -161,7 +182,7 @@ public final class LogSaver extends AbstractIdleService {
 
         while (isRunning()) {
           try {
-            int msgCount = kafkaConsumer.fetchMessages(lastOffset + 1, fetchSizeBytes, this);
+            int msgCount = kafkaConsumer.fetchMessages(lastOffset + 1, this);
             if (msgCount == 0) {
               LOG.info(String.format("No more messages in topic %s, partition %d. Will sleep for %d ms",
                                      topic, partition, kafkaEmptySleepMs));
@@ -220,12 +241,23 @@ public final class LogSaver extends AbstractIdleService {
   }
 
   private final class LogWriter implements Runnable {
+    private final FileSystem fileSystem;
+
+    private LogWriter(Configuration hConfig) throws IOException {
+      this.fileSystem = getFileSystem(hConfig);
+    }
+
     @Override
     public void run() {
       waitForRun();
 
       LOG.info(String.format("Starting LogWriter for topic %s, partition %d.", topic, partition));
 
+      AvroFileWriter avroFileWriter = new AvroFileWriter(checkpointManager, fileMetaDataManager,
+                                                         fileSystem, logBaseDir,
+                                                         serializer.getAvroSchema(),
+                                                         maxLogFileSizeBytes, syncIntervalBytes,
+                                                         checkpointIntervalMs, inactiveIntervalMs);
       List<List<KafkaLogEvent>> writeLists = Lists.newArrayList();
       try {
         while (isRunning()) {
@@ -274,11 +306,22 @@ public final class LogSaver extends AbstractIdleService {
       } finally {
         try {
           avroFileWriter.close();
+          fileSystem.close();
         } catch (IOException e) {
-          LOG.error(String.format("Caught exception while closing AvroFileWriter for topic %s, partition %d:",
+          LOG.error(String.format("Caught exception while closing objects for topic %s, partition %d:",
                                   topic, partition), e);
         }
       }
     }
+  }
+
+  private static FileSystem getFileSystem(Configuration hConfig) throws IOException {
+    FileSystem fileSystem = FileSystem.get(hConfig);
+    // local file system's hflush() does not work. Using the raw local file system fixes it.
+    // https://issues.apache.org/jira/browse/HADOOP-7844
+    if (fileSystem instanceof LocalFileSystem) {
+      fileSystem = ((LocalFileSystem) fileSystem).getRawFileSystem();
+    }
+    return fileSystem;
   }
 }

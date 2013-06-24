@@ -14,11 +14,21 @@ import java.util.List;
  * Logging configuration helper.
  */
 public final class LoggingConfiguration {
-  public static final String NUM_PARTITIONS = "log.publish.num.partitions";
-  public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
+  // Common between Distributed and Single Node
   public static final String LOG_PATTERN = "log.pattern";
   public static final String LOG_BASE_DIR = "log.base.dir";
+  public static final String LOG_FILE_SYNC_INTERVAL_BYTES = "log.file.sync.interval.bytes";
+
+  // Used only in Distributed mode
+  public static final String NUM_PARTITIONS = "log.publish.num.partitions";
+  public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_SAVER_RUN_ACCOUNT = "log.saver.run.account";
+  public static final String LOG_SAVER_RUN_MEMORY_MB = "log.saver.run.memory.megs";
+  public static final String LOG_RETENTION_DURATION_MS = "log.retention.duration.ms";
+  public static final String LOG_MAX_FILE_SIZE_BYTES = "log.max.file.size.bytes";
+
+  // Used only in Single Node mode
+  public static final String LOG_FILE_ROTATION_INTERVAL_MINS = "log.file.rotation.interval.mins";
 
   private LoggingConfiguration() {}
 

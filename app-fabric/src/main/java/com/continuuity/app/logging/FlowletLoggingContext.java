@@ -34,4 +34,9 @@ public class FlowletLoggingContext extends ApplicationLoggingContext {
   public String getLogPartition() {
     return super.getLogPartition() + String.format(":%s", getSystemTag(TAG_FLOW_ID));
   }
+
+  @Override
+  public String getLogPathFragment() {
+    return String.format("%s/flow-%s", super.getLogPathFragment(), getSystemTag(TAG_FLOW_ID));
+  }
 }

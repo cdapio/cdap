@@ -38,11 +38,11 @@ public final class AvroFileWriter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(AvroFileWriter.class);
 
   private final CheckpointManager checkpointManager;
-  private final FileManager fileManager;
+  private final FileMetaDataManager fileMetaDataManager;
   private final FileSystem fileSystem;
   private final Schema schema;
   private final int syncIntervalBytes;
-  private final String pathRoot;
+  private final Path pathRoot;
   private final Map<String, AvroFile> fileMap;
   private final long maxFileSize;
   private final long checkpointIntervalMs;
@@ -53,7 +53,7 @@ public final class AvroFileWriter implements Closeable {
   /**
    * Constructs an AvroFileWriter object.
    * @param checkpointManager used to store checkpoint meta data.
-   * @param fileManager used to store file meta data.
+   * @param fileMetaDataManager used to store file meta data.
    * @param fileSystem fileSystem where the Avro files are to be created.
    * @param pathRoot Root path for the files to be created.
    * @param schema schema of the Avro data to be written.
@@ -62,11 +62,11 @@ public final class AvroFileWriter implements Closeable {
    * @param checkpointIntervalMs interval to save checkpoint.
    * @param inactiveIntervalMs files that have no data written for more than inactiveIntervalMs will be closed.
    */
-  public AvroFileWriter(CheckpointManager checkpointManager, FileManager fileManager, FileSystem fileSystem,
-                        String pathRoot, Schema schema,
+  public AvroFileWriter(CheckpointManager checkpointManager, FileMetaDataManager fileMetaDataManager,
+                        FileSystem fileSystem, Path pathRoot, Schema schema,
                         long maxFileSize, int syncIntervalBytes, long checkpointIntervalMs, long inactiveIntervalMs) {
     this.checkpointManager = checkpointManager;
-    this.fileManager = fileManager;
+    this.fileMetaDataManager = fileMetaDataManager;
     this.fileSystem = fileSystem;
     this.schema = schema;
     this.syncIntervalBytes = syncIntervalBytes;
@@ -133,13 +133,13 @@ public final class AvroFileWriter implements Closeable {
       avroFile.close();
       throw e;
     }
-    fileManager.writeMetaData(loggingContext, currentTs, path.toUri().toString());
+    fileMetaDataManager.writeMetaData(loggingContext, currentTs, path);
     return avroFile;
   }
 
   private Path createPath(String pathFragment, long currentTs) {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-    return new Path(String.format("%s/%s/%s/%s.avro", pathRoot, pathFragment, date, currentTs));
+    return new Path(pathRoot, String.format("%s/%s/%s.avro", pathFragment, date, currentTs));
   }
 
   private void rotateFile(AvroFile avroFile, LoggingContext loggingContext) throws IOException, OperationException {
@@ -233,7 +233,7 @@ public final class AvroFileWriter implements Closeable {
 
     public void flush() throws IOException {
       dataFileWriter.flush();
-      outputStream.flush();
+      outputStream.hflush();
     }
 
     @Override

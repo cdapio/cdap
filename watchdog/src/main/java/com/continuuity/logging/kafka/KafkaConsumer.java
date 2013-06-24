@@ -88,12 +88,11 @@ public final class KafkaConsumer implements Closeable {
   /**
    * Fetches Kafka messages from an offset.
    * @param offset message offset to start.
-   * @param sizeBytes max bytes to fetch from Kafka in this call.
    * @param callback callback to handle the messages fetched.
    * @return number of messages fetched.
    */
-  public int fetchMessages(long offset, int sizeBytes, Callback callback) {
-    ByteBufferMessageSet messageSet = fetchMessageSet(offset, sizeBytes);
+  public int fetchMessages(long offset, Callback callback) {
+    ByteBufferMessageSet messageSet = fetchMessageSet(offset);
     int msgCount = 0;
     for (MessageAndOffset msg : messageSet) {
       ++msgCount;
@@ -146,7 +145,7 @@ public final class KafkaConsumer implements Closeable {
     closeConsumer();
   }
 
-  private ByteBufferMessageSet fetchMessageSet(long fetchOffset, int sizeBytes) {
+  private ByteBufferMessageSet fetchMessageSet(long fetchOffset) {
     Preconditions.checkArgument(fetchOffset >= 0, String.format("Illegal fetch offset %d", fetchOffset));
 
     short errorCode = 0;
@@ -157,7 +156,7 @@ public final class KafkaConsumer implements Closeable {
 
       FetchRequest req = new FetchRequestBuilder()
         .clientId(clientName)
-        .addFetch(topic, partition, fetchOffset, sizeBytes)
+        .addFetch(topic, partition, fetchOffset, BUFFER_SIZE_BYTES)
         .maxWait(fetchTimeoutMs)
         .build();
       FetchResponse fetchResponse = consumer.fetch(req);

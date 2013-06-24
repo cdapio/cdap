@@ -16,6 +16,7 @@ import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
@@ -25,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.URISyntaxException;
 
 /**
  * Wrapper class to run LogSaver as a process.
@@ -65,9 +65,10 @@ public final class LogSaverMain extends DaemonMain {
 
   static WeavePreparer doInit(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
     int partitions = cConf.getInt(LoggingConfiguration.NUM_PARTITIONS,  -1);
-    if (partitions < 1) {
-      throw new IllegalArgumentException("log.publish.partitions should be at least 1");
-    }
+    Preconditions.checkArgument(partitions > 0, "log.publish.partitions should be at least 1, got %s", partitions);
+
+    int memory = cConf.getInt(LoggingConfiguration.LOG_SAVER_RUN_MEMORY_MB, 1024);
+    Preconditions.checkArgument(memory > 0, "Got invalid memory value for log saver %s", memory);
 
     File hConfFile;
     File cConfFile;
@@ -76,16 +77,12 @@ public final class LogSaverMain extends DaemonMain {
       hConfFile.deleteOnExit();
       cConfFile = saveCConf(cConf, File.createTempFile("cConf", ".xml"));
       cConfFile.deleteOnExit();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
 
-    try {
-      return weaveRunner.prepare(new LogSaverWeaveApplication(partitions, hConfFile, cConfFile))
+      return weaveRunner.prepare(new LogSaverWeaveApplication(partitions, memory, hConfFile, cConfFile))
         // TODO: write logs to file
         .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
         .withResources(LogSchema.getSchemaURL().toURI());
-    } catch (URISyntaxException e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }

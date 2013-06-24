@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
  */
 @SuppressWarnings("UnusedDeclaration")
 public final class LoggingEventSerializer implements Encoder<ILoggingEvent> {
-  private LogSchema logSchema;
+  private final LogSchema logSchema;
 
   public LoggingEventSerializer() throws IOException {
     this.logSchema = new LogSchema();
