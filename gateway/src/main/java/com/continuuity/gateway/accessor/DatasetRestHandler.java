@@ -1,5 +1,6 @@
 package com.continuuity.gateway.accessor;
 
+import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
@@ -11,8 +12,10 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.metadata.thrift.Account;
@@ -38,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -173,11 +177,17 @@ public class DatasetRestHandler extends NettyRestHandler {
         handleGlobalOperation(message, request, helper, parameters, opContext);
         return;
       }
+
       String datasetType = pathComponents.removeFirst();
       if ("Table".equals(datasetType)) {
         handleTableOperation(message, request, helper, pathComponents, parameters, opContext);
       } else if ("KeyValueTable".equals(datasetType)) {
         // handleKeyValueTableOperation(message, pathComponents, parameters);
+      } else if ("DataSet".equals(datasetType)) {
+        // This looks ugly: it is not a DataSet type. At the same time it is safe: noone will create DataSet of type
+        // DataSet. We put it here because we don't want to break the API. And we are going to refactor it before next
+        // release (otherwise this will be hidden from user)
+        handleDataSetManagementOperation(message, request, helper, pathComponents, opContext);
       } else {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Received request for unsupported Dataset type '" + datasetType +
@@ -194,6 +204,68 @@ public class DatasetRestHandler extends NettyRestHandler {
         message.getChannel().close();
       }
     }
+  }
+
+  private void handleDataSetManagementOperation(MessageEvent message, HttpRequest request,
+                                                MetricsHelper helper, LinkedList<String> pathComponents,
+                                                OperationContext opContext) {
+
+    // all operations must have table name
+    if (pathComponents.isEmpty()) {
+      respondBadRequest(message, request, helper, "table name missing");
+      return;
+    }
+    String tableName = pathComponents.removeFirst();
+
+    HttpMethod method = request.getMethod();
+    if (HttpMethod.POST.equals(method)) {
+      try {
+        truncateTable(tableName, opContext);
+      } catch (OperationException e) {
+        String errorMessage = "could not truncate table " + tableName + "\n" + StackTraceUtil.toStringStackTrace(e);
+        LOG.error(errorMessage);
+        respondBadRequest(message, request, helper, errorMessage, HttpResponseStatus.CONFLICT);
+        return;
+      }
+      respondSuccess(message.getChannel(), request);
+      helper.finish(Success);
+    } else if (HttpMethod.PUT.equals(method)) {
+      // todo: create dataset
+    } else if (HttpMethod.DELETE.equals(method)) {
+      // todo: drop dataset
+    }
+  }
+
+  private void truncateTable(String tableName, OperationContext opContext) throws OperationException {
+    // NOTE: for now we just try to do the best we can: find all used DataSets of type Table and truncate them. This
+    //       should be done better, when we refactor DataSet API (towards separating user API and management parts)
+    DataSet dataSet = this.accessor.getInstantiator().getDataSet(tableName, opContext);
+    DataSetSpecification config = dataSet.configure();
+    List<DataSetSpecification> allDataSets = getAllUsedDataSets(config);
+    for (DataSetSpecification spec : allDataSets) {
+      DataSet ds = this.accessor.getInstantiator().getDataSet(spec.getName(), opContext);
+      if (ds instanceof Table) {
+        this.accessor.getExecutor().execute(opContext, new TruncateTable(ds.getName()));
+      }
+    }
+  }
+
+  private List<DataSetSpecification> getAllUsedDataSets(DataSetSpecification config) {
+    List<DataSetSpecification> all = new ArrayList<DataSetSpecification>();
+    LinkedList<DataSetSpecification> stack = Lists.newLinkedList();
+    stack.add(config);
+    while (stack.size() > 0) {
+      DataSetSpecification current = stack.removeLast();
+      all.add(current);
+      Iterable<DataSetSpecification> children = current.getSpecifications();
+      if (children != null) {
+        for (DataSetSpecification child : children) {
+          stack.addLast(child);
+        }
+      }
+    }
+
+    return all;
   }
 
   private enum TableOp {List, Increment, Read, Write, Create, Delete}

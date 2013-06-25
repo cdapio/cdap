@@ -14,6 +14,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
@@ -38,6 +39,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
+import com.continuuity.data.operation.executor.remote.stubs.TTruncateTable;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
@@ -450,6 +452,35 @@ public class OperationExecutorClient extends ConverterUtils {
       client.openTable(tContext, tOpenTable);
       if (Log.isTraceEnabled()) {
         Log.trace("OpenTable successful.");
+      }
+      helper.success();
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public void execute(OperationContext context, TruncateTable truncateTable) throws TException, OperationException {
+
+    MetricsHelper helper = newHelper("truncate", truncateTable.getTableName());
+
+    try {
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + truncateTable);
+      }
+      TOperationContext tContext = wrap(context);
+      TTruncateTable tTruncateTable = wrap(truncateTable);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tTruncateTable);
+      }
+      client.truncateTable(tContext, tTruncateTable);
+      if (Log.isTraceEnabled()) {
+        Log.trace("TruncateTable successful.");
       }
       helper.success();
 

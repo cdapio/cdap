@@ -386,6 +386,37 @@ public class DatasetRestAccessorTest {
     assertCreate(urlPrefix, HttpStatus.SC_BAD_REQUEST, "" + "?op=create"); // empty table name
   }
 
+  @Test
+  public void testTruncateTable() throws Exception {
+    String urlPrefix = setupAccessor("data", "", "/data/");
+    String tablePrefix = urlPrefix + "Table/";
+    String table = "tCTbl";
+    assertCreate(tablePrefix, HttpStatus.SC_OK, table);
+    assertWrite(tablePrefix, HttpStatus.SC_OK, table + "/abc", "{ \"c1\":\"v1\"}");
+    // make sure both columns are there
+    assertRead(tablePrefix, 1, 1, table + "/abc");
+
+    String dataSetManagementOpsPrefix = urlPrefix + "DataSet/";
+    assertTruncate(dataSetManagementOpsPrefix, HttpStatus.SC_OK, table);
+
+    // make sure data was removed: 404 on read
+    assertReadFails(tablePrefix, table + "/abc", HttpStatus.SC_NOT_FOUND);
+
+    // but table is there: we can write into it again
+    assertCreate(tablePrefix, HttpStatus.SC_OK, table);
+    assertWrite(tablePrefix, HttpStatus.SC_OK, table + "/abc", "{ \"c3\":\"v3\"}");
+    // make sure both columns are there
+    assertRead(tablePrefix, 3, 3, table + "/abc");
+  }
+
+  void assertTruncate(String prefix, int expected, String query) throws IOException {
+    HttpPost post = new HttpPost(prefix + query);
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(post);
+    client.getConnectionManager().shutdown();
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
+
   final static QueueEntry streamEntry = new QueueEntry("x".getBytes());
   static WriteOperation addToStream(String name) {
     return new QueueEnqueue(("stream:" + name).getBytes(), streamEntry);

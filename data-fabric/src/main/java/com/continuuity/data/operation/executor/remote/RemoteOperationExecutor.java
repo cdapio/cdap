@@ -14,6 +14,7 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.Transaction;
@@ -395,6 +396,20 @@ public class RemoteOperationExecutor
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(context, openTable);
+            return true;
+          }
+        });
+  }
+
+  @Override
+  public void execute(final OperationContext context,
+                      final TruncateTable truncateTable) throws OperationException {
+    this.execute(
+        new Operation<Boolean>("TruncateTable") {
+          @Override
+          public Boolean execute(OperationExecutorClient client)
+              throws TException, OperationException {
+            client.execute(context, truncateTable);
             return true;
           }
         });
