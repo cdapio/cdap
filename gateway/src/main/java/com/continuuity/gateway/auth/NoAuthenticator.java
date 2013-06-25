@@ -1,6 +1,6 @@
 package com.continuuity.gateway.auth;
 
-import com.continuuity.gateway.Constants;
+import com.continuuity.data.Constants;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
