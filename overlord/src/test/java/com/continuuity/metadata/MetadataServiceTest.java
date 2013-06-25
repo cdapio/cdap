@@ -9,6 +9,7 @@ import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
@@ -130,7 +131,7 @@ public class MetadataServiceTest {
     // Delete the stream now.
     Assert.assertTrue(mds.deleteStream(account, stream));
     int afterDeleteCount = mds.getStreams(account).size();
-    Assert.assertTrue(count == afterAddCount-1);
+    Assert.assertTrue(count == afterAddCount - 1);
     Assert.assertTrue((afterAddCount - 1) == afterDeleteCount);
   }
 
@@ -202,6 +203,29 @@ public class MetadataServiceTest {
     List<Query> qlist = mds.getQueries(account);
     Assert.assertTrue(qlist.size() == 0);
     Query query1 = mds.getQuery(account, query);
+    Assert.assertNotNull(query1);
+  }
+
+  @Test
+  public void testCreateMapreduce() throws Exception {
+    Mapreduce query = new Mapreduce("query1", "appX");
+    query.setName("Mapreduce 1");
+    query.setDescription("test dataset");
+    Assert.assertTrue(mds.createMapreduce(account, query));
+    List<Mapreduce> dlist = mds.getMapreduces(account);
+    Assert.assertNotNull(dlist);
+    Assert.assertTrue(dlist.size() > 0);
+  }
+
+  @Test
+  public void testCreateDeleteListMapreduce() throws Exception {
+    testCreateMapreduce(); // creates a dataset.
+    // Now delete it.
+    Mapreduce query = new Mapreduce("query1", "appX");
+    Assert.assertNotNull(mds.deleteMapreduce(account, query));
+    List<Mapreduce> qlist = mds.getMapreduces(account);
+    Assert.assertTrue(qlist.size() == 0);
+    Mapreduce query1 = mds.getMapreduce(account, query);
     Assert.assertNotNull(query1);
   }
 
