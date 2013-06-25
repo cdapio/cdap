@@ -284,24 +284,21 @@ WebAppServer.prototype.bindRoutes = function(io) {
       'Content-Type': 'application-json'
     });
 
-    http.request(options, function(response) {
+    var request = http.request(options, function(response) {
       var data = '';
       response.on('data', function (chunk) {
         data += chunk;
       });
 
       response.on('end', function () {
-
         data = data.replace(/\n/g, '');
-
         res.send(JSON.stringify({
           current: self.VERSION,
           newest: data
         }));
-        res.end();
       });
-    }).end();
-
+    });
+    request.end();
   });
 
   /**
