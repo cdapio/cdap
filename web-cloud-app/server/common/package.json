@@ -7,6 +7,9 @@
     "node-int64": "0.3.0",
     "thrift": "0.8.0-dev",
     "express": "3.2.4",
-    "socket.io": "0.9.14"
+    "socket.io": "0.9.14",
+    "cookie": "0.1.0",
+    "connect": "2.7.11",
+    "crypto": "0.0.3"
   }
 }
