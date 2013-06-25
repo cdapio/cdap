@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# chkconfig: 345 96 15
+# description: Starts and stops the @servicename@ service
+# processname: java
+
+# drop permissions to continuuity user and run service script
+
+if [[ $UID -eq 0 ]]; then
+    su continuuity -l -c "cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*"
+else
+    cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*
+fi
+
