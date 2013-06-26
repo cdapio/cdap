@@ -65,7 +65,7 @@ public abstract class OpexServiceTestBase {
     remote = new RemoteOperationExecutor(config);
     local = opex;
     // clear data fabric, since it is a singleton now, old tests may have left data there
-    //local.execute(OperationUtil.DEFAULT, new ClearFabric(ClearFabric.ToClear.ALL));
+    local.execute(OperationUtil.DEFAULT, new ClearFabric(ClearFabric.ToClear.ALL));
   }
 
   @AfterClass
