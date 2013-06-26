@@ -3,8 +3,8 @@
  */
 
 /**
- * HTTP dispatchers and handlers libraries designed to be used with netty.
- * Sample code for Handler. Uses Jax-RS annotations to get the Paths and HttpMethods.
+ * HTTP dispatchers and handlers libraries designed to be used with netty. Uses Jax-RS annotations to get the
+ * Paths and HttpMethods.
  * Note: Only supports the following annotations: Path, GET, PUT, POST, DELETE.
  * Note: Doesn't support getting Annotations used in base class.
  *

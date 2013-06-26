@@ -1,3 +1,6 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
 package com.continuuity.common.http.core;
 
 import com.google.common.base.Preconditions;
@@ -8,7 +11,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -18,7 +20,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
-//TODO: lifecycle methods
+
+// TODO: lifecycle methods
 /**
  * HttpResourceHandler handles the http request. HttpResourceHandler looks up all Jax-rs annotations in classes
  * and dispatches to appropriate method on receiving requests.
@@ -26,12 +29,8 @@ import java.util.Map;
 public class HttpResourceHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpResourceHandler.class);
-  private PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
-    new PatternPathRouterWithGroups<HttpResourceModel>();
+  private PatternPathRouterWithGroups<HttpResourceModel> patternRouter = new PatternPathRouterWithGroups<HttpResourceModel>();
 
-  private HttpResourceHandler(){
-
-  }
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
    * patternPathRouter which is routable by path to {@code HttpResourceModel} as destination of the route.
@@ -40,34 +39,31 @@ public class HttpResourceHandler {
   private HttpResourceHandler(List<Object> handlers){
 
     for (Object handler : handlers){
-
       if (!handler.getClass().getSuperclass().equals(Object.class)){
         LOG.warn("{} is inherited. The annotations from base case will not be inherited",
                  handler.getClass().getCanonicalName());
       }
 
+      String basePath = "";
       if (handler.getClass().isAnnotationPresent(Path.class)){
-        String basePath =  handler.getClass().getAnnotation(Path.class).value();
+        basePath =  handler.getClass().getAnnotation(Path.class).value();
+      }
 
-        for (Method method:  handler.getClass().getDeclaredMethods()){
-          if (method.isAnnotationPresent(Path.class)){
-            Preconditions.checkArgument(method.getParameterTypes().length >= 1,
-                                        "No HttpResponder parameter in the http handler signature");
-            Preconditions.checkArgument(method.getParameterTypes()[0].isAssignableFrom(HttpResponder.class),
-                                        "HttpResponder should be the first argument in the http handler");
+      for (Method method:  handler.getClass().getDeclaredMethods()){
+        if (method.isAnnotationPresent(Path.class)){
+          Preconditions.checkArgument(method.getParameterTypes().length >= 1,
+                                      "No HttpResponder parameter in the http handler signature");
+          Preconditions.checkArgument(method.getParameterTypes()[0].isAssignableFrom(HttpResponder.class),
+                                      "HttpResponder should be the first argument in the http handler");
 
-            String relativePath = method.getAnnotation(Path.class).value();
-            String absolutePath = String.format("%s/%s", basePath, relativePath);
-            patternRouter.add(absolutePath, new HttpResourceModel(getHttpMethod(method), method, handler));
+          String relativePath = method.getAnnotation(Path.class).value();
+          String absolutePath = String.format("%s/%s", basePath, relativePath);
+          patternRouter.add(absolutePath, new HttpResourceModel(getHttpMethod(method), method, handler));
 
-          } else {
-            LOG.warn("No Path annotation for method {}. HTTP calls will not be routed to this method",
-                     method.getName());
-          }
+        } else {
+          LOG.warn("No Path annotation for method {}. HTTP calls will not be routed to this method",
+                   method.getName());
         }
-      } else {
-        LOG.warn("No Path annotation for method {}. HTTP calls will not be routed to handlers in this class",
-                 handler.getClass().getCanonicalName());
       }
     }
   }
@@ -197,5 +193,4 @@ public class HttpResourceHandler {
   public static Builder builder(){
     return new Builder();
   }
-
 }
