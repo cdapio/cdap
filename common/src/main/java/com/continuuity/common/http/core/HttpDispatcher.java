@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 public class HttpDispatcher extends SimpleChannelHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpDispatcher.class);
-  private final HttpMethodHandler httpMethodHandler;
+  private final HttpResourceHandler httpMethodHandler;
 
-  public HttpDispatcher(HttpMethodHandler methodHandler) {
+  public HttpDispatcher(HttpResourceHandler methodHandler) {
     this.httpMethodHandler = methodHandler;
   }
 
