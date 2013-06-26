@@ -28,6 +28,8 @@ public class PatternPathRouterWithGroups<T> {
    * Initialize PatternPathRouterWithGroups.
    */
   public PatternPathRouterWithGroups(){
+    //groupPattern is used for named wild card pattern in paths which is specified within braces.
+    //Example: {id}
     this.groupPattern = Pattern.compile("\\{(.*?)\\}");
     this.patternRouteList = Lists.newArrayList();
   }
