@@ -3,9 +3,11 @@
  */
 package com.continuuity.common.http.core;
 
+import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import org.apache.http.protocol.UriPatternMatcher;
 
 import java.util.List;
 import java.util.Map;
@@ -19,15 +21,15 @@ import java.util.regex.Pattern;
  */
 public class PatternPathRouterWithGroups<T> {
 
-  private final Multimap<Pattern, RouteDestinationWithGroups<T>> patternMap;
+  private final List<ImmutablePair<Pattern, RouteDestinationWithGroups<T>>> patternRouteList;
   private final Pattern groupPattern;
 
   /**
    * Initialize PatternPathRouterWithGroups.
    */
   public PatternPathRouterWithGroups(){
-    this.patternMap = ArrayListMultimap.create();
     this.groupPattern = Pattern.compile("\\{(.*?)\\}");
+    this.patternRouteList = Lists.newArrayList();
   }
 
   /**
@@ -54,11 +56,12 @@ public class PatternPathRouterWithGroups<T> {
       sb.append("/");
     }
 
-    //Removes the last "/"
-    sb.deleteCharAt(sb.length() - 1);
+    //Ignore the last "/"
+    sb.setLength(sb.length() - 1);
 
     Pattern pattern = Pattern.compile(sb.toString());
-    patternMap.put(pattern, new RouteDestinationWithGroups<T>(destination, groupNames));
+    patternRouteList.add(new ImmutablePair<Pattern,
+      RouteDestinationWithGroups<T>>(pattern, new RouteDestinationWithGroups<T>(destination, groupNames)));
   }
 
   /**
@@ -72,16 +75,16 @@ public class PatternPathRouterWithGroups<T> {
   public List<T> getDestinations(final String path, final Map<String, String> groupNameValues){
 
     List<T> result = Lists.newArrayList();
-    for (Map.Entry<Pattern, RouteDestinationWithGroups<T>> entry : patternMap.entries()){
-      Matcher matcher = entry.getKey().matcher(path);
+    for (ImmutablePair<Pattern, RouteDestinationWithGroups<T>> patternRoute : patternRouteList) {
+      Matcher matcher =  patternRoute.getFirst().matcher(path);
       if (matcher.matches()){
         int matchIndex = 1;
-        for (String name : entry.getValue().getGroupNames()){
+        for (String name : patternRoute.getSecond().getGroupNames()){
           String value = matcher.group(matchIndex);
           groupNameValues.put(name, value);
           matchIndex++;
         }
-        result.add(entry.getValue().getDestination());
+        result.add(patternRoute.getSecond().getDestination());
       }
     }
     return result;
