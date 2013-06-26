@@ -412,7 +412,7 @@ public class RemoteOperationExecutor
             client.execute(context, truncateTable);
             return true;
           }
-        });
+        }, this.longClientProvider);
   }
 
   @Override

@@ -71,7 +71,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * Get all specifications for all embedded data sets.
+   * Get specifications for all directly embedded data sets.
    * @return the iterable of specifications
    */
   public Iterable<DataSetSpecification> getSpecifications() {

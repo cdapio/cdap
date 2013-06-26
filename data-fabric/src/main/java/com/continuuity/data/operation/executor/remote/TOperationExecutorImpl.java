@@ -844,8 +844,8 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
 
     try {
       OperationContext context = unwrap(tcontext);
-      TruncateTable openTable = unwrap(tTruncateTable);
-      this.opex.execute(context, openTable);
+      TruncateTable truncateTable = unwrap(tTruncateTable);
+      this.opex.execute(context, truncateTable);
       if (Log.isTraceEnabled()) {
         Log.trace("Truncate table successful.");
       }

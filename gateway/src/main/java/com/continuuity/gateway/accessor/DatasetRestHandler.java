@@ -187,7 +187,7 @@ public class DatasetRestHandler extends NettyRestHandler {
         // This looks ugly: it is not a DataSet type. At the same time it is safe: noone will create DataSet of type
         // DataSet. We put it here because we don't want to break the API. And we are going to refactor it before next
         // release (otherwise this will be hidden from user)
-        handleDataSetManagementOperation(message, request, helper, pathComponents, opContext);
+        handleDataSetManagementOperation(message, request, helper, pathComponents, parameters, opContext);
       } else {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Received request for unsupported Dataset type '" + datasetType +
@@ -208,31 +208,48 @@ public class DatasetRestHandler extends NettyRestHandler {
 
   private void handleDataSetManagementOperation(MessageEvent message, HttpRequest request,
                                                 MetricsHelper helper, LinkedList<String> pathComponents,
-                                                OperationContext opContext) {
+                                                Map<String, List<String>> parameters, OperationContext opContext) {
 
-    // all operations must have table name
+    // all operations must have dataset name
     if (pathComponents.isEmpty()) {
       respondBadRequest(message, request, helper, "table name missing");
       return;
     }
+
+    if (!HttpMethod.PUT.equals(request.getMethod()) && !HttpMethod.DELETE.equals(request.getMethod())) {
+      respondBadRequest(message, request, helper, "Only PUT or DELETE methods supported");
+      return;
+    }
+
     String tableName = pathComponents.removeFirst();
 
     HttpMethod method = request.getMethod();
-    if (HttpMethod.POST.equals(method)) {
-      try {
-        truncateTable(tableName, opContext);
-      } catch (OperationException e) {
-        String errorMessage = "could not truncate table " + tableName + "\n" + StackTraceUtil.toStringStackTrace(e);
-        LOG.error(errorMessage);
-        respondBadRequest(message, request, helper, errorMessage, HttpResponseStatus.CONFLICT);
-        return;
-      }
-      respondSuccess(message.getChannel(), request);
-      helper.finish(Success);
-    } else if (HttpMethod.PUT.equals(method)) {
+    if (HttpMethod.PUT.equals(method)) {
+
       // todo: create dataset
+      respondBadRequest(message, request, helper, "creating dataset is not supported", HttpResponseStatus.CONFLICT);
+
     } else if (HttpMethod.DELETE.equals(method)) {
-      // todo: drop dataset
+
+      // if there's param op=truncate then we do truncate, otherwise we drop dataset
+      List<String> opParam = parameters.get("op");
+      boolean isTruncate = opParam != null && opParam.size() > 0 && "truncate".equals(opParam.get(0));
+      if (isTruncate) {
+        try {
+          truncateTable(tableName, opContext);
+        } catch (OperationException e) {
+          String errorMessage = "could not truncate dataset " + tableName + "\n" + StackTraceUtil.toStringStackTrace(e);
+          LOG.error(errorMessage);
+          respondBadRequest(message, request, helper, errorMessage, HttpResponseStatus.CONFLICT);
+          return;
+        }
+        respondSuccess(message.getChannel(), request);
+        helper.finish(Success);
+      } else {
+        // todo: drop dataset
+        respondBadRequest(message, request, helper, "drop of dataset is not supported", HttpResponseStatus.CONFLICT);
+        helper.finish(BadRequest);
+      }
     }
   }
 

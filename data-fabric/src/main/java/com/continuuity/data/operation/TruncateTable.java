@@ -1,5 +1,7 @@
 package com.continuuity.data.operation;
 
+import com.google.common.base.Preconditions;
+
 /**
  * Clears table data
  */
@@ -13,6 +15,7 @@ public class TruncateTable extends Operation {
    * @param tableName the name of the table to truncate
    */
   public TruncateTable(String tableName) {
+    Preconditions.checkNotNull(tableName, "tableName must be not null");
     this.table = tableName;
   }
 
@@ -23,6 +26,7 @@ public class TruncateTable extends Operation {
    */
   public TruncateTable(long id, String tableName) {
     super(id);
+    Preconditions.checkNotNull(tableName, "tableName must be not null");
     this.table = tableName;
   }
 

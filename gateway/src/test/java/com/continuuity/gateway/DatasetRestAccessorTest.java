@@ -409,10 +409,10 @@ public class DatasetRestAccessorTest {
     assertRead(tablePrefix, 3, 3, table + "/abc");
   }
 
-  void assertTruncate(String prefix, int expected, String query) throws IOException {
-    HttpPost post = new HttpPost(prefix + query);
+  void assertTruncate(String prefix, int expected, String table) throws IOException {
+    HttpDelete delete = new HttpDelete(prefix + table + "?op=truncate");
     HttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(post);
+    HttpResponse response = client.execute(delete);
     client.getConnectionManager().shutdown();
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
