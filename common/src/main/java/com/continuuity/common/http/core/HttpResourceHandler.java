@@ -118,20 +118,11 @@ public class HttpResourceHandler {
         }
 
         method.invoke(object, args);
-      } catch (IllegalAccessException e) {
-        LOG.error("Error processing path {} {}", request.getUri(), e);
-        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                            String.format("Error in executing path: %s", request.getUri()));
-      } catch (InvocationTargetException e) {
-        LOG.error("Error processing path {} {}", request.getUri(), e);
-        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                            String.format("Error in executing path: %s", request.getUri()));
-      } catch (Exception e){
+      } catch (Throwable e) {
         LOG.error("Error processing path {} {}", request.getUri(), e);
         responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                             String.format("Error in executing path: %s", request.getUri()));
       }
-
     } else if (resourceModels.size() > 0)  {
       //Found a matching resource but could not find the right HttpMethod so return 405
       responder.sendError(HttpResponseStatus.METHOD_NOT_ALLOWED,
