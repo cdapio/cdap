@@ -3,9 +3,11 @@ package com.continuuity.data.operation.executor.remote;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
+import com.continuuity.data.util.OperationUtil;
 import org.apache.commons.lang.time.StopWatch;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -62,6 +64,8 @@ public abstract class OpexServiceTestBase {
     // now create a remote opex that connects to the service
     remote = new RemoteOperationExecutor(config);
     local = opex;
+    // clear data fabric, since it is a singleton now, old tests may have left data there
+    //local.execute(OperationUtil.DEFAULT, new ClearFabric(ClearFabric.ToClear.ALL));
   }
 
   @AfterClass
