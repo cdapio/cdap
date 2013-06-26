@@ -110,11 +110,11 @@ public class HttpResourceHandler {
         //Setup args for reflection call
         Object [] args = new Object[groupValues.size() + 1];
         int index = 0;
-        args[index] = (Object) responder;
+        args[index] = responder;
         //TODO: Fix reflection call to work with Generic types other than String.
         for (Map.Entry<String, String> entry : groupValues.entrySet()){
           index++;
-          args[index] = (Object) entry.getValue();
+          args[index] = entry.getValue();
         }
 
         method.invoke(object, args);
