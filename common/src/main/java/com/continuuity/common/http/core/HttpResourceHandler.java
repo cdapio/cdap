@@ -41,7 +41,7 @@ public class HttpResourceHandler {
     for (Object handler : handlers){
       if (!handler.getClass().getSuperclass().equals(Object.class)){
         LOG.warn("{} is inherited. The annotations from base case will not be inherited",
-                 handler.getClass().getCanonicalName());
+                 handler.getClass().getName());
       }
 
       String basePath = "";
