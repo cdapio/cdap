@@ -53,7 +53,7 @@ public class TestUtil {
 
   private static String apiKey = null;
 
-  private static final String DEFAULT_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
+  public static final String DEFAULT_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
 
   /** defaults to be used everywhere where we don't have authenticated accounts */
   public static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEFAULT_ACCOUNT_ID);
