@@ -254,9 +254,7 @@ define(['lib/date'], function (Datejs) {
       //   });
 
       // });
-      console.log('got here');
-      console.log(app_id);
-      console.log(batch_id);
+
       C.get('metadata', {
         method: 'getMapreduce',
         params: ['Mapreduce', {
@@ -264,7 +262,7 @@ define(['lib/date'], function (Datejs) {
           application: app_id
         }]
       }, function (error, response) {
-        console.log(response);
+
         if (error || !response.params) {
           promise.reject(error);
           return;
@@ -281,7 +279,7 @@ define(['lib/date'], function (Datejs) {
           method: 'status',
           params: [app_id, batch_id, -1]
         }, function (error, response) {
-          console.log(response);
+
           if (response.params) {
             model.set('currentState', response.params.status);
           }
