@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+<!--
+  Disabling some chatty loggers.
+-->
+    <logger name="org.apache.mina.core.filterchain" level="WARN"/>
+    <logger name="org.apache.mina.filter.codec" level="WARN"/>
+    <logger name="org.apache.zookeeper.server" level="ERROR"/>
+    <logger name="org.apache.zookeeper" level="ERROR"/>
+    <logger name="com.netflix.curator" level="ERROR"/>
+
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+      </encoder>
+    </appender>
+
+    <root level="INFO">
+      <appender-ref ref="Console"/>
+    </root>
+
+</configuration>
+
