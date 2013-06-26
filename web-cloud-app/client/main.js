@@ -155,6 +155,8 @@ define (['core/application'], function (Application) {
 
 		});
 
+		this.route('Analyze', {path: '/analyze'});
+
 		this.route("PageNotFound", { path: "*:"});
 
 	});
@@ -167,6 +169,7 @@ define (['core/application'], function (Application) {
 		 * Override to load the Controller once the Route has been activated.
 		 */
 		setupController: function(controller, model) {
+			console.log(controller);
 			controller.set('model', model);
 			controller.load();
 		},
@@ -302,6 +305,8 @@ define (['core/application'], function (Application) {
 				this.render('Runnable/Config');
 			}
 		}),
+
+		AnalyzeRoute: basicRouter.extend(),
 
 		PageNotFoundRoute: Ember.Route.extend()
 
