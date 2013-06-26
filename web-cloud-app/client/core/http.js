@@ -101,6 +101,7 @@ define([], function () {
 		__methodNames: {
 			'App': 'getApplications',
 			'Flow': 'getFlows',
+			'Batch': 'getMapreduces',
 			'Stream': 'getStreams',
 			'Procedure': 'getQueries',
 			'Dataset': 'getDatasets'
@@ -114,8 +115,9 @@ define([], function () {
 				method: this.__methodNames[type] + (appId ? 'ByApplication' : ''),
 				params: appId ? [appId] : []
 			}, function (error, response, params) {
-
+				console.log(response);
 				if (error) {
+					console.log(error);
 					if (typeof callback === 'function') {
 						callback([], arg);
 					} else {
