@@ -35,7 +35,6 @@ import org.apache.hadoop.fs.RemoteIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,14 +48,13 @@ import java.util.TreeMap;
 /**
  * Tails log events from a file.
  */
-public class FileLogTail implements LogTail, Closeable {
+public class FileLogTail implements LogTail {
   private static final Logger LOG = LoggerFactory.getLogger(FileLogTail.class);
 
   private final Configuration hConf;
   private final Path logBaseDir;
 
   private final Schema schema;
-  private final FileContext fileContext;
 
   @Inject
   public FileLogTail(@Assisted CConfiguration cConf, @Assisted Configuration hConf) {
@@ -67,7 +65,6 @@ public class FileLogTail implements LogTail, Closeable {
 
     try {
       schema = new LogSchema().getAvroSchema();
-      fileContext = FileContext.getFileContext(hConf);
     } catch (IOException e) {
       LOG.error("Cannot get LogSchema", e);
       throw Throwables.propagate(e);
@@ -141,8 +138,8 @@ public class FileLogTail implements LogTail, Closeable {
       if (dataFileReader.hasNext()) {
         datum = dataFileReader.next();
         loggingEvent = LoggingEvent.decode(datum);
-        long prevSyncPos = dataFileReader.previousSync();
-        long prevPrevSyncPos = prevSyncPos;
+        long prevPrevSyncPos = 0;
+        long prevSyncPos;
         // Seek to time fromTimeMs
         while (loggingEvent.getTimeStamp() < fromTimeMs && dataFileReader.hasNext()) {
           // Seek to the next sync point
@@ -286,13 +283,9 @@ public class FileLogTail implements LogTail, Closeable {
     }
   }
 
-  @Override
-  public void close() throws IOException {
-    // Nothing to close
-  }
-
   private TreeMap<Long, FileStatus> getTailFiles(Comparator<Long> comparator) throws IOException {
     TreeMap<Long, FileStatus> sortedFiles = Maps.newTreeMap(comparator);
+    FileContext fileContext = FileContext.getFileContext(hConf);
     RemoteIterator<FileStatus> filesIt = fileContext.listStatus(logBaseDir);
 
     while (filesIt.hasNext()) {

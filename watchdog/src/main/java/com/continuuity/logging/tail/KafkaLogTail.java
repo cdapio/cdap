@@ -229,9 +229,4 @@ public final class KafkaLogTail implements LogTail {
       return "";
     }
   }
-
-  @Override
-  public void close() throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
 }

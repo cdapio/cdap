@@ -4,13 +4,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
 import com.google.common.base.Objects;
 
-import java.io.Closeable;
 import java.util.List;
 
 /**
  * Interface to tail logs.
  */
-public interface LogTail extends Closeable {
+public interface LogTail {
   /**
    * Returns log events of a Flow, Procedure or Map Reduce program after given position.
    * @param loggingContext context to look up log events.
