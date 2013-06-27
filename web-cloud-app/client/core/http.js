@@ -101,6 +101,7 @@ define([], function () {
 		__methodNames: {
 			'App': 'getApplications',
 			'Flow': 'getFlows',
+			'Batch': 'getMapreduces',
 			'Stream': 'getStreams',
 			'Procedure': 'getQueries',
 			'Dataset': 'getDatasets'

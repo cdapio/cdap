@@ -10,11 +10,11 @@ define(['../../helpers/plumber'], function (Plumber) {
     load: function () {
 
       var self = this;
-      self.updateAlerts();
+      //self.updateAlerts();
       this.interval = setInterval(function () {
         self.updateStats();
-        self.updateMetrics();
-        self.updateAlerts();
+        // self.updateMetrics();
+        // self.updateAlerts();
       }, C.POLLING_INTERVAL);
 
       /*
@@ -23,7 +23,7 @@ define(['../../helpers/plumber'], function (Plumber) {
        */
       setTimeout(function () {
         self.updateStats();
-        self.updateMetrics();
+        // self.updateMetrics();
         self.connectEntities();
       }, C.EMBEDDABLE_DELAY);
     },
@@ -36,13 +36,13 @@ define(['../../helpers/plumber'], function (Plumber) {
 
     },
 
-    updateMetrics: function() {
-      C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
-    },
+    // updateMetrics: function() {
+    //   C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
+    // },
 
-    updateAlerts: function() {
-      C.HTTP.get.apply(C, this.get('model').getAlertsRequest());
-    },
+    // updateAlerts: function() {
+    //   C.HTTP.get.apply(C, this.get('model').getAlertsRequest());
+    // },
 
     connectEntities: function() {
       Plumber.connect("batch-start", "batch-map");
