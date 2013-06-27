@@ -201,7 +201,6 @@ public interface DataManagementService {
    */
   public Status updateComponent(String accountId, Credentials credentials, Component component);
 
-
   /**
    * Create Organization in the system.
    * @param id OrgId.
