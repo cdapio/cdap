@@ -31,6 +31,7 @@ public class FileLogAppender extends AppenderBase<ILoggingEvent> {
   private final Path logBaseDir;
   private final long logFileRotationIntervalMs;
   private final int syncIntervalBytes;
+  private final long retentionDurationMs;
 
   private LogFileWriter logFileWriter;
   private FileSystem fileSystem;
@@ -52,6 +53,10 @@ public class FileLogAppender extends AppenderBase<ILoggingEvent> {
     this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 5 * 1024 * 1024);
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
                                 "Log file sync interval is invalid: %s", this.syncIntervalBytes);
+
+    this.retentionDurationMs = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_MS, -1);
+    Preconditions.checkArgument(this.retentionDurationMs > 0,
+                                "Log file retention duration is invalid: %s", this.retentionDurationMs);
   }
 
   @Override
@@ -65,7 +70,7 @@ public class FileLogAppender extends AppenderBase<ILoggingEvent> {
         fileSystem = ((LocalFileSystem) fileSystem).getRawFileSystem();
       }
       logFileWriter = new LogFileWriter(fileSystem, logBaseDir, new LogSchema().getAvroSchema(),
-                                        syncIntervalBytes, logFileRotationIntervalMs);
+                                        syncIntervalBytes, logFileRotationIntervalMs, retentionDurationMs);
     } catch (IOException e) {
       close();
       throw Throwables.propagate(e);

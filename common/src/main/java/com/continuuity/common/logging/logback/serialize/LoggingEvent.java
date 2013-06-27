@@ -258,7 +258,9 @@ public final class LoggingEvent implements ILoggingEvent {
   @Override
   public String toString() {
     return "LoggingEvent{" +
-      "threadName='" + threadName + '\'' +
+      "timestamp=" + timestamp +
+      ", formattedMessage='" + formattedMessage + '\'' +
+      ", threadName='" + threadName + '\'' +
       ", level=" + Level.toLevel(level) +
       ", message='" + message + '\'' +
       ", argumentArray=" + (argumentArray == null ? null : Arrays.asList(argumentArray)) +
@@ -270,7 +272,6 @@ public final class LoggingEvent implements ILoggingEvent {
       ", hasCallerData=" + hasCallerData +
       ", marker=" + marker +
       ", mdc=" + mdc +
-      ", timestamp=" + timestamp +
       '}';
   }
 }

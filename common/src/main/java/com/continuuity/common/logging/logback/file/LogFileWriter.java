@@ -12,7 +12,9 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -28,18 +30,22 @@ public class LogFileWriter implements Closeable {
   private final Schema schema;
   private final int syncIntervalBytes;
   private final long fileRotateIntervalMs;
+  private final long retentionDurationMs;
 
   private FSDataOutputStream outputStream;
   private DataFileWriter<GenericRecord> dataFileWriter;
   private long currentTimeInterval = -1;
 
+  private static final String FILE_SUFFIX = ".avro";
+
   public LogFileWriter(FileSystem fileSystem, Path logBaseDir, Schema schema, int syncIntervalBytes,
-                       long fileRotateIntervalMs) {
+                       long fileRotateIntervalMs, long retentionDurationMs) {
     this.fileSystem = fileSystem;
     this.logBaseDir = logBaseDir;
     this.schema = schema;
     this.syncIntervalBytes = syncIntervalBytes;
     this.fileRotateIntervalMs = fileRotateIntervalMs;
+    this.retentionDurationMs = retentionDurationMs;
   }
 
   public void append(ILoggingEvent event) throws IOException {
@@ -64,19 +70,32 @@ public class LogFileWriter implements Closeable {
 
   private void rotate(long ts) throws IOException {
     long timeInterval = getMinuteInterval(ts);
-    if (currentTimeInterval != timeInterval && timeInterval % fileRotateIntervalMs == 0 || dataFileWriter == null) {
+    if ((currentTimeInterval != timeInterval && timeInterval % fileRotateIntervalMs == 0) || dataFileWriter == null) {
       close();
       create(timeInterval);
       currentTimeInterval = timeInterval;
+
+      cleanUp();
     }
   }
 
   private void create(long timeInterval) throws IOException {
-    Path file = new Path(logBaseDir, String.format("%d.avro", timeInterval));
+    Path file = new Path(logBaseDir, String.format("%d.%s", timeInterval, FILE_SUFFIX));
     this.outputStream = fileSystem.create(file, false);
     this.dataFileWriter = new DataFileWriter<GenericRecord>(new GenericDatumWriter<GenericRecord>(schema));
     this.dataFileWriter.create(schema, this.outputStream);
     this.dataFileWriter.setSyncInterval(syncIntervalBytes);
+  }
+
+  private void cleanUp() throws IOException {
+    long retentionTs = System.currentTimeMillis() - retentionDurationMs;
+    RemoteIterator<LocatedFileStatus> filesIt = fileSystem.listFiles(logBaseDir, false);
+    while (filesIt.hasNext()) {
+      LocatedFileStatus status = filesIt.next();
+      if (status.getModificationTime() < retentionTs && status.getPath().getName().endsWith(FILE_SUFFIX)) {
+        fileSystem.delete(status.getPath(), false);
+      }
+    }
   }
 
   private static long getMinuteInterval(long ts) {
