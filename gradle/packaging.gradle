@@ -172,6 +172,17 @@ rpm.doFirst {
   }
 }
 
+/**
+ * Generates a tarball distribution.
+ */
+task tgz(type: Tar, dependsOn : ['prepackager']) {
+  compression = Compression.GZIP
+  includeEmptyDirs false
+  from "$project.buildDir/stage-packaging"
+  eachFile { it.setPath(it.getPath().replaceFirst("^opt/continuuity/$project.name/", "continuuity-$project.name-$version/")) }
+}
+
+
 // Make the dependency on prepackager.
 debian.dependsOn debianPrepackager
 rpm.dependsOn rpmPrepackager
