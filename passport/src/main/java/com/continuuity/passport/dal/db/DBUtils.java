@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 public class DBUtils {
 
   public static final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
+  public static final String DB_INTEGRITY_CONSTRAINT_VIOLATION_DUP_KEY = "23505";
 
   /**
    * Represents schema corresponding to 'account' table in the db.

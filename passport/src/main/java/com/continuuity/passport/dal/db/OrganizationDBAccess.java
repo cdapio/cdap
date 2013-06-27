@@ -47,7 +47,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
         close(ps);
       }
     } catch (SQLException e) {
-      if (DBUtils.DB_INTEGRITY_CONSTRAINT_VIOLATION.equals(e.getSQLState())) {
+      if (DBUtils.DB_INTEGRITY_CONSTRAINT_VIOLATION_DUP_KEY.equals(e.getSQLState())) {
         throw new OrganizationAlreadyExistsException(e.getMessage());
       } else {
         throw Throwables.propagate(e);
@@ -70,7 +70,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
                                  DBUtils.Organization.NAME,
                                  DBUtils.Organization.TABLE_NAME,
                                  DBUtils.Organization.ID
-                                 );
+      );
       PreparedStatement ps = connection.prepareStatement(sql);
       try {
         ps.setString(1, id);
@@ -80,7 +80,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
           while (rs.next()) {
             count++;
             organization = new Organization(rs.getString(DBUtils.Organization.ID),
-                                  rs.getString(DBUtils.Organization.NAME));
+                                            rs.getString(DBUtils.Organization.NAME));
             if (count > 1) {
               // Note: This condition should never occur since ids have unique constraint. Adding this as a safety net.
               throw new RuntimeException("Multiple organization with same ID");
@@ -93,7 +93,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
         ps.close();
       }
     } catch (SQLException e) {
-        throw Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     finally {
       close(connection);

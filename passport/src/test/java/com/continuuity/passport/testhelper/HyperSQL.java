@@ -39,7 +39,8 @@ public class HyperSQL {
     "account_id INTEGER, role_type INTEGER, role_overrides VARCHAR(100) )";
 
 
-  private static final String CREATE_ORG_TABLE = "CREATE TABLE organization (id VARCHAR(100) , name VARCHAR(100))";
+  private static final String CREATE_ORG_TABLE = "CREATE TABLE organization (id VARCHAR(100) PRIMARY KEY, " +
+                                                 "name VARCHAR(100))";
 
   private static final String CREATE_NONCE_TABLE = "CREATE TABLE nonce (nonce_id INTEGER IDENTITY," +
                                                    "id VARCHAR(100), nonce_expires_at TIMESTAMP, UNIQUE (id)" +
