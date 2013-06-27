@@ -31,8 +31,6 @@ import java.util.Map;
  */
 public class AccountDBAccess extends DBAccess implements AccountDAO {
   private final DBConnectionPoolManager poolManager;
-  private final HashFunction hashFunction = Hashing.sha1();
-
   /**
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */

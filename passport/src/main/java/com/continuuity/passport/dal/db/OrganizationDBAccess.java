@@ -30,13 +30,12 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
 
   @Override
   public Organization createOrganization(String id, String name) throws OrganizationAlreadyExistsException {
-    Connection connection = null;
+    Connection connection = this.poolManager.getValidConnection();
+    String sql = String.format("INSERT INTO %s (%s, %s) VALUES (?,?)",
+                               DBUtils.Organization.TABLE_NAME,
+                               DBUtils.Organization.ID,
+                               DBUtils.Organization.NAME);
     try {
-      connection = this.poolManager.getValidConnection();
-      String sql = String.format("INSERT INTO %s (%s, %s) VALUES (?,?)",
-                                 DBUtils.Organization.TABLE_NAME,
-                                 DBUtils.Organization.ID,
-                                 DBUtils.Organization.NAME);
       PreparedStatement ps = connection.prepareStatement(sql);
       try {
         ps.setString(1, id);
@@ -51,8 +50,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
       } else {
         throw Throwables.propagate(e);
       }
-    }
-    finally {
+    } finally {
       close(connection);
     }
     return new Organization(id, name);
@@ -60,16 +58,15 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
 
   @Override
   public Organization getOrganization(String id) {
-    Connection connection = null;
+    Connection connection = this.poolManager.getValidConnection();
+    String sql = String.format("SELECT %s, %s from %s WHERE %s = ?",
+                               DBUtils.Organization.ID,
+                               DBUtils.Organization.NAME,
+                               DBUtils.Organization.TABLE_NAME,
+                               DBUtils.Organization.ID
+    );
     Organization organization = null;
     try {
-      connection = this.poolManager.getValidConnection();
-      String sql = String.format("SELECT %s, %s from %s WHERE %s = ?",
-                                 DBUtils.Organization.ID,
-                                 DBUtils.Organization.NAME,
-                                 DBUtils.Organization.TABLE_NAME,
-                                 DBUtils.Organization.ID
-      );
       PreparedStatement ps = connection.prepareStatement(sql);
       try {
         ps.setString(1, id);
@@ -102,14 +99,13 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
 
   @Override
   public Organization updateOrganization(String id, String name) throws OrganizationNotFoundException{
-    Connection connection = null;
+    Connection connection = this.poolManager.getValidConnection();
+    String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?",
+                               DBUtils.Organization.TABLE_NAME,
+                               DBUtils.Organization.NAME,
+                               DBUtils.Organization.ID
+    );
     try {
-      connection = this.poolManager.getValidConnection();
-      String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?",
-                                 DBUtils.Organization.TABLE_NAME,
-                                 DBUtils.Organization.NAME,
-                                 DBUtils.Organization.ID
-      );
       PreparedStatement ps = connection.prepareStatement(sql);
       try {
         ps.setString(1, name);
@@ -132,13 +128,12 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
 
   @Override
   public void deleteOrganization(String id) throws OrganizationNotFoundException{
-    Connection connection = null;
+    Connection connection = this.poolManager.getValidConnection();
+    String sql = String.format("DELETE FROM %s WHERE %s = ?",
+                               DBUtils.Organization.TABLE_NAME,
+                               DBUtils.Organization.ID
+    );
     try {
-      connection = this.poolManager.getValidConnection();
-      String sql = String.format("DELETE FROM %s WHERE %s = ?",
-                                 DBUtils.Organization.TABLE_NAME,
-                                 DBUtils.Organization.ID
-      );
       PreparedStatement ps = connection.prepareStatement(sql);
       try {
         ps.setString(1, id);

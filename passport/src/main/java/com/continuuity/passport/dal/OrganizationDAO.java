@@ -11,7 +11,7 @@ public interface OrganizationDAO {
 
   /**
    * Create an Organization in the system.
-   * @param id Id of the organization
+   * @param id id of the organization.
    * @param name name of the organization.
    * @return instance of {@code Organization}
    * @throws OrganizationAlreadyExistsException when Organization to be created already exists in the system.
@@ -20,23 +20,23 @@ public interface OrganizationDAO {
 
   /**
    * Read Organization based on id.
-   * @param id Id of the organization
+   * @param id Id of the organization.
    * @return instance of {@code Organization}
    */
   public Organization getOrganization(String id);
 
   /**
    * Update the organization name.
-   * @param id Id of the organization
+   * @param id id of the organization.
    * @param name name of the organization.
-   * @return instance of updated {@code Organization}
+   * @return instance of updated {@code Organization}.
    * @throws OrganizationNotFoundException when Organization to be updated doesn't exists.
    */
   public Organization updateOrganization(String id, String name) throws OrganizationNotFoundException;
 
   /**
    * Delete the organization.
-   * @param id Id of the organization
+   * @param id id of the organization.
    * @throws OrganizationNotFoundException when Organization to be updated doesn't exists.
    */
   public void deleteOrganization(String id) throws OrganizationNotFoundException;
