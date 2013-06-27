@@ -31,7 +31,6 @@ import java.util.Map;
  */
 public class AccountDBAccess extends DBAccess implements AccountDAO {
   private final DBConnectionPoolManager poolManager;
-  private static final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
   private final HashFunction hashFunction = Hashing.sha1();
 
   /**
@@ -77,7 +76,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         account.getCompany(), account.getEmailId(), result.getInt(1));
       return createdAccount;
     } catch (SQLException e) {
-      if (DB_INTEGRITY_CONSTRAINT_VIOLATION.equals(e.getSQLState())) {
+      if (DBUtils.DB_INTEGRITY_CONSTRAINT_VIOLATION.equals(e.getSQLState())) {
         throw new AccountAlreadyExistsException(e.getMessage());
       }
 

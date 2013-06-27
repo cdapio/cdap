@@ -7,11 +7,13 @@ package com.continuuity.passport.core.service;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
+import com.continuuity.passport.core.exceptions.OrganizationAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
+import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 
@@ -200,4 +202,12 @@ public interface DataManagementService {
   public Status updateComponent(String accountId, Credentials credentials, Component component);
 
 
+  /**
+   * Create Organization in the system.
+   * @param id OrgId.
+   * @param name OrgName.
+   * @return instance of {@code Organization}
+   * @throws OrganizationAlreadyExistsException when Organization to be created already exists.
+   */
+  public Organization createOrganization(String id, String name) throws OrganizationAlreadyExistsException;
 }
