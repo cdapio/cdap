@@ -2,7 +2,6 @@ package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.exceptions.OrganizationAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
-import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.meta.Organization;
 import com.google.gson.JsonElement;

@@ -1,7 +1,6 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.OrganizationAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
 import com.continuuity.passport.dal.OrganizationDAO;

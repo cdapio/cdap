@@ -3,7 +3,6 @@ package com.continuuity.passport.httpendpoints;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.passport.Constants;
-import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.testhelper.HyperSQL;
 import com.continuuity.passport.testhelper.TestPassportServer;
