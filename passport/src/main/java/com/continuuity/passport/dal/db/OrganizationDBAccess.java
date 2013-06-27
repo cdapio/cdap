@@ -71,9 +71,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
         ps.setString(1, id);
         ResultSet rs = ps.executeQuery();
         try {
-          int count = 0;
-          while (rs.next()) {
-            count++;
+          if (rs.next()) {
             return new Organization(rs.getString(DBUtils.Organization.ID),
                                             rs.getString(DBUtils.Organization.NAME));
           }
