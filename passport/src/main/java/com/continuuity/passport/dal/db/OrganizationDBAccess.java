@@ -57,7 +57,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
   }
 
   @Override
-  public Organization getOrganization(String id) {
+  public Organization getOrganization(String id) throws OrganizationNotFoundException{
     Connection connection = this.poolManager.getValidConnection();
     String sql = String.format("SELECT %s, %s from %s WHERE %s = ?",
                                DBUtils.Organization.ID,
@@ -65,7 +65,6 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
                                DBUtils.Organization.TABLE_NAME,
                                DBUtils.Organization.ID
     );
-    Organization organization = null;
     try {
       PreparedStatement ps = connection.prepareStatement(sql);
       try {
@@ -75,12 +74,8 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
           int count = 0;
           while (rs.next()) {
             count++;
-            organization = new Organization(rs.getString(DBUtils.Organization.ID),
+            return new Organization(rs.getString(DBUtils.Organization.ID),
                                             rs.getString(DBUtils.Organization.NAME));
-            if (count > 1) {
-              // Note: This condition should never occur since ids have unique constraint. Adding this as a safety net.
-              throw new RuntimeException("Multiple organization with same ID");
-            }
           }
         } finally {
           close(rs);
@@ -90,11 +85,11 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
       }
     } catch (SQLException e) {
       throw Throwables.propagate(e);
-    }
-    finally {
+    } finally {
       close(connection);
     }
-    return organization;
+    //reached the end and no record. So throw an Organization not found exception
+    throw new OrganizationNotFoundException(String.format("Organization with id %s not found ", id));
   }
 
   @Override

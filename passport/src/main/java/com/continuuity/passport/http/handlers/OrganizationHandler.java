@@ -143,12 +143,15 @@ public class OrganizationHandler extends PassportHandler {
 
   @GET
   @Path("{id}")
-  public Response updateOrganization(@PathParam("id") String id) {
+  public Response getOrganization(@PathParam("id") String id) {
     requestReceived();
     try {
       Organization org = this.dataManagementService.getOrganization(id);
       requestSuccess();
       return Response.ok(org.toString()).build();
+    } catch (OrganizationNotFoundException e){
+      return Response.status(Response.Status.NOT_FOUND)
+        .entity(Utils.getJsonError("Organization not found")).build();
     } catch (Exception e) {
       requestFailed();
       LOG.error("Internal server error while processing endpoint: GET /passport/v1/organization/{} {}",

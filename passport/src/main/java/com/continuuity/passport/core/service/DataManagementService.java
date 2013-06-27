@@ -216,8 +216,9 @@ public interface DataManagementService {
    * Look up Organization based on id.
    * @param id Org id for lookup.
    * @return instance of {@code Organization}
+   * @throws OrganizationNotFoundException when Organization to be fetched does not already exist.
    */
-  public Organization getOrganization(String id);
+  public Organization getOrganization(String id) throws OrganizationNotFoundException;
 
   /**
    * Update Organization.

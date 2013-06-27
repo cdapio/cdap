@@ -173,7 +173,7 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   @Override
-  public Organization getOrganization(String id) {
+  public Organization getOrganization(String id) throws OrganizationNotFoundException {
     return organizationDAO.getOrganization(id);
   }
 

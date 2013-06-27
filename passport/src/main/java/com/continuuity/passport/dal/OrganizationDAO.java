@@ -22,8 +22,9 @@ public interface OrganizationDAO {
    * Read Organization based on id.
    * @param id Id of the organization.
    * @return instance of {@code Organization}
+   * @throws OrganizationNotFoundException when Organization to be updated doesn't exists.
    */
-  public Organization getOrganization(String id);
+  public Organization getOrganization(String id) throws OrganizationNotFoundException;
 
   /**
    * Update the organization name.
@@ -37,7 +38,7 @@ public interface OrganizationDAO {
   /**
    * Delete the organization.
    * @param id id of the organization.
-   * @throws OrganizationNotFoundException when Organization to be updated doesn't exists.
+   * @throws OrganizationNotFoundException when Organization to be fetched doesn't exist.
    */
   public void deleteOrganization(String id) throws OrganizationNotFoundException;
 }

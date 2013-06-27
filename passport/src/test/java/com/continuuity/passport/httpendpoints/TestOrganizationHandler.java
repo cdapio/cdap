@@ -142,6 +142,7 @@ public class TestOrganizationHandler {
     HttpResponse response =  client.execute(put);
     assertEquals(404, response.getStatusLine().getStatusCode());
 
+
     endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "F123");
     HttpGet get = new HttpGet(endPoint);
     result = TestPassportServer.request(get);
@@ -149,6 +150,17 @@ public class TestOrganizationHandler {
     assertTrue("F123".equals(org.getId()));
     assertTrue("Facebook".equals(org.getName()));
   }
+
+  @Test
+  public void getInvalid() throws IOException {
+    //Get non existing org and check for 404
+    String endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "B123");
+    HttpGet get = new HttpGet(endPoint);
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(get);
+    assertEquals(404, response.getStatusLine().getStatusCode());
+  }
+
 
   private String getCompany(String id, String name){
     JsonObject object = new JsonObject();
