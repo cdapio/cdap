@@ -46,6 +46,10 @@ sourceSets {
 javadoc {
 }
 
+test {
+    jvmArgs '-Xmx3048m'
+}
+
 /**
  * Excludes stubs from clover.
  */
