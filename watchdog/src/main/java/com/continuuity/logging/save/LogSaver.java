@@ -12,7 +12,7 @@ import com.continuuity.common.logging.logback.kafka.KafkaTopic;
 import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.logging.LoggingContextLookup;
+import com.continuuity.logging.LoggingContextHelper;
 import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
@@ -221,7 +221,7 @@ public final class LogSaver extends AbstractIdleService {
     public void handle(long offset, ByteBuffer msgBuffer) {
       GenericRecord genericRecord = serializer.toGenericRecord(msgBuffer);
       ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
-      LoggingContext loggingContext = LoggingContextLookup.getLoggingContext(event.getMDCPropertyMap());
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
       if (loggingContext == null) {
         LOG.debug(String.format("Logging context is not set for event %s. Skipping it.", event));
         return;

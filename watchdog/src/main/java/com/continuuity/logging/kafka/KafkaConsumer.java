@@ -35,7 +35,7 @@ import static com.continuuity.common.logging.LoggingConfiguration.KafkaHost;
 import static kafka.api.OffsetRequest.CurrentVersion;
 
 /**
- * Kafka consumer that listens on a topic/partition and retrieves messages.
+ * Kafka consumer that listens on a topic/partition and retrieves messages. This class is thread-safe.
  */
 public final class KafkaConsumer implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaConsumer.class);
@@ -50,7 +50,8 @@ public final class KafkaConsumer implements Closeable {
   private final int fetchTimeoutMs;
   private final String clientName;
 
-  private SimpleConsumer consumer;
+  // Simple consumer is thread safe
+  private volatile SimpleConsumer consumer;
 
   /**
    * Represents the Kafka offsets that can be fetched by KafkaConsumer. Only earliest and latest offset are supported.

@@ -5,18 +5,22 @@
 package com.continuuity.logging.tail;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingConfiguration;
+import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.logback.kafka.KafkaTopic;
 import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
+import com.continuuity.logging.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;
-import com.continuuity.logging.filter.LogFilterGenerator;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.hadoop.io.MD5Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +35,6 @@ import java.util.List;
 public final class KafkaLogTail implements LogTail {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLogTail.class);
 
-  private static final int WINDOW_SIZE = 1000;
   private final List<LoggingConfiguration.KafkaHost> seedBrokers;
   private final String topic;
   private final int numPartitions;
@@ -65,50 +68,18 @@ public final class KafkaLogTail implements LogTail {
   }
 
   @Override
-  public void tailFlowLog(String accountId, String applicationId, String flowId, long fromTimeMs, int maxEvents,
-                          Callback callback) {
-    FlowletLoggingContext flowletLoggingContext = new FlowletLoggingContext(accountId, applicationId, flowId, "");
-    Filter logFilter = LogFilterGenerator.createTailFilter(accountId, applicationId, flowId);
-    tailLog(flowletLoggingContext.getLogPartition().hashCode() % numPartitions,
-            fromTimeMs, maxEvents, logFilter, callback);
-  }
+  public Result getLogNext(LoggingContext loggingContext, String positionHintString, int maxEvents) {
+    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+    PositionHint positionHint = new PositionHint(positionHintString);
+    int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
 
-  /**
-   * Internal method to tail log events from a partition.
-   * @param partition partition to read.
-   * @param maxEvents max number of log events to return.
-   * @param callback Callback interface to receive logging event.
-   */
-  private void tailLog(int partition, long fromTimeMs, int maxEvents, final Filter logFilter,
-                       final Callback callback) {
     KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
 
     try {
-      final long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
-      long endWindow = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-      int numEvents = 0;
+      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
+      long startOffset = positionHint.isValid() ? positionHint.getNextOffset() : latestOffset - maxEvents;
 
-      while (numEvents < maxEvents) {
-        int currentSize = maxEvents - numEvents > WINDOW_SIZE ? WINDOW_SIZE : maxEvents - numEvents;
-        long beginWindow = endWindow - currentSize;
-        if (beginWindow < earliestOffset) {
-          beginWindow = earliestOffset;
-        }
-
-        if (beginWindow >= endWindow) {
-          break;
-        }
-
-        TailCallback tailCallback = new TailCallback(logFilter, fromTimeMs, serializer, callback);
-        int count = kafkaConsumer.fetchMessages(beginWindow, tailCallback);
-
-        if (count == 0) {
-          break;
-        }
-
-        numEvents += tailCallback.getNumEvents();
-        endWindow = tailCallback.getFirstOffset();
-      }
+      return fetchLogEvents(kafkaConsumer, logFilter, positionHint, startOffset, latestOffset, maxEvents);
     } finally {
       try {
         kafkaConsumer.close();
@@ -120,44 +91,147 @@ public final class KafkaLogTail implements LogTail {
   }
 
   @Override
-  public void close() throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public Result getLogPrev(LoggingContext loggingContext, String positionHintString, int maxEvents) {
+    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+    PositionHint positionHint = new PositionHint(positionHintString);
+    int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
+
+    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
+
+    try {
+      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
+      long startOffset = positionHint.isValid() ? positionHint.getPrevOffset() - maxEvents : latestOffset - maxEvents;
+
+      return fetchLogEvents(kafkaConsumer, logFilter, positionHint, startOffset, latestOffset, maxEvents);
+    } finally {
+      try {
+        kafkaConsumer.close();
+      } catch (IOException e) {
+        LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
+                                topic, partition), e);
+      }
+    }
   }
 
-  private static class TailCallback implements com.continuuity.logging.kafka.Callback {
-    private final Filter logFilter;
-    private final long fromTimeMs;
-    private final LoggingEventSerializer serializer;
-    private final Callback callback;
-    private int numEvents = 0;
-    private long firstOffset = -1;
+  private Result fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, PositionHint positionHint,
+                                long startOffset, long latestOffset, int maxEvents) {
+    Callback callback = new Callback(logFilter, serializer, maxEvents);
 
-    private TailCallback(Filter logFilter, long fromTimeMs, LoggingEventSerializer serializer, Callback callback) {
+    long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
+    if (startOffset < earliestOffset) {
+      startOffset = earliestOffset;
+    }
+
+    while (callback.getEvents().size() < maxEvents && startOffset < latestOffset) {
+      kafkaConsumer.fetchMessages(startOffset, callback);
+      long lastOffset = callback.getLastOffset();
+
+      // No more Kafka messages
+      if (lastOffset == -1) {
+        break;
+      }
+      startOffset = callback.getLastOffset() + 1;
+    }
+
+    if (callback.getEvents().isEmpty()) {
+      return new Result(callback.getEvents(), positionHint.getPositionHintString(), positionHint.isValid());
+    } else {
+      return new Result(callback.getEvents(),
+                        PositionHint.genPositionHint(startOffset - 1, startOffset + callback.getEvents().size()),
+                        positionHint.isValid());
+    }
+  }
+
+  private static class Callback implements com.continuuity.logging.kafka.Callback {
+    private final Filter logFilter;
+    private final LoggingEventSerializer serializer;
+    private final int maxEvents;
+    private final List<ILoggingEvent> events;
+    private long lastOffset;
+
+    private Callback(Filter logFilter, LoggingEventSerializer serializer, int maxEvents) {
       this.logFilter = logFilter;
-      this.fromTimeMs = fromTimeMs;
       this.serializer = serializer;
-      this.callback = callback;
+      this.maxEvents = maxEvents;
+      this.events = Lists.newArrayListWithExpectedSize(this.maxEvents);
     }
 
     @Override
     public void handle(long offset, ByteBuffer msgBuffer) {
       ILoggingEvent event = serializer.fromBytes(msgBuffer);
-      if (event.getTimeStamp() >= fromTimeMs && logFilter.match(event)) {
-        callback.handle(event);
-        ++numEvents;
+      if (events.size() <= maxEvents && logFilter.match(event)) {
+        events.add(event);
+      }
+      lastOffset = offset;
+    }
+
+    public List<ILoggingEvent> getEvents() {
+      return events;
+    }
+
+    public long getLastOffset() {
+      return lastOffset;
+    }
+  }
+
+  static class PositionHint {
+    private static final String POS_HINT_PREFIX = "KAFKA";
+    private static final int POS_HINT_NUM_FILEDS = 3;
+
+    private String positionHintString;
+    private long prevOffset = -1;
+    private long nextOffset = -1;
+
+    private static final Splitter SPLITTER = Splitter.on(':').limit(POS_HINT_NUM_FILEDS);
+
+    public PositionHint(String positionHint) {
+      this.positionHintString = positionHint;
+
+      if (positionHint == null || positionHint.isEmpty()) {
+        return;
       }
 
-      if (firstOffset == -1) {
-        firstOffset = offset;
+      List<String> splits = ImmutableList.copyOf(SPLITTER.split(positionHint));
+      if (splits.size() != POS_HINT_NUM_FILEDS || !splits.get(0).equals(POS_HINT_PREFIX)) {
+        return;
+      }
+
+      try {
+        this.prevOffset = Long.parseLong(splits.get(1));
+        this.nextOffset = Long.parseLong(splits.get(2));
+      } catch (NumberFormatException e) {
+        // Cannot parse position hint
+        this.prevOffset = -1;
+        this.nextOffset = -1;
       }
     }
 
-    public int getNumEvents() {
-      return numEvents;
+    public String getPositionHintString() {
+      return positionHintString;
     }
 
-    public long getFirstOffset() {
-      return firstOffset;
+    public long getPrevOffset() {
+      return prevOffset;
     }
+
+    public long getNextOffset() {
+      return nextOffset;
+    }
+
+    public boolean isValid() {
+      return prevOffset > -1 && nextOffset > -1;
+    }
+
+    public static String genPositionHint(long prevOffset, long nextOffset) {
+      if (prevOffset > -1 && nextOffset > -1) {
+        return String.format("%s:%d:%d", POS_HINT_PREFIX, prevOffset, nextOffset);
+      }
+      return "";
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 }
