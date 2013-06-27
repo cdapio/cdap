@@ -142,11 +142,13 @@ public class FileLogTail implements LogTail, Closeable {
         datum = dataFileReader.next();
         loggingEvent = LoggingEvent.decode(datum);
         long prevSyncPos = dataFileReader.previousSync();
+        long prevPrevSyncPos = prevSyncPos;
         // Seek to time fromTimeMs
         while (loggingEvent.getTimeStamp() < fromTimeMs && dataFileReader.hasNext()) {
           // Seek to the next sync point
           long curPos = dataFileReader.tell();
           prevSyncPos = dataFileReader.previousSync();
+          prevPrevSyncPos = prevSyncPos;
           dataFileReader.sync(curPos);
           if (dataFileReader.hasNext()) {
             loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
@@ -154,7 +156,7 @@ public class FileLogTail implements LogTail, Closeable {
         }
 
         // We're now likely past the record with fromTimeMs, rewind to the previous sync point
-        dataFileReader.seek(prevSyncPos);
+        dataFileReader.sync(prevPrevSyncPos);
 
         // Start reading events from file
         long prevTimestamp = -1;
