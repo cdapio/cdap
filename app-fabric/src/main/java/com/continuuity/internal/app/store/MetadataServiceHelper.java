@@ -28,6 +28,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +44,7 @@ import java.util.Set;
  * new App Fabric since old UI still relies on it.
  */
 class MetadataServiceHelper {
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataServiceHelper.class);
   /**
    * We re-use metadataService to store configuration type data
    */
@@ -263,6 +266,7 @@ class MetadataServiceHelper {
                                        "account %s: %s", id.getId(), id.getAccountId(),
                                      e.getMessage());
 
+      LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
 
@@ -276,6 +280,7 @@ class MetadataServiceHelper {
                                        "account %s: %s", id.getId(), id.getAccountId(),
                                      e.getMessage());
 
+      LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
 
@@ -290,6 +295,7 @@ class MetadataServiceHelper {
                                        "account %s: %s", id.getId(), id.getAccountId(),
                                      e.getMessage());
 
+      LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
   }

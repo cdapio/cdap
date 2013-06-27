@@ -549,25 +549,31 @@ public class MetadataHelper {
 
     @Override
     public void validate(Mapreduce mapreduce) throws MetadataServiceException {
-      if (mapreduce.getId() == null || mapreduce.getId().isEmpty())
+      if (mapreduce.getId() == null || mapreduce.getId().isEmpty()) {
         throw new MetadataServiceException("mapreduce id is empty or null.");
-      if (mapreduce.getName() == null || mapreduce.getName().isEmpty())
+      }
+      if (mapreduce.getName() == null || mapreduce.getName().isEmpty()) {
         throw new MetadataServiceException("Mapreduce name is empty or null.");
-      if(mapreduce.getApplication() == null || mapreduce.getApplication().isEmpty())
+      }
+      if(mapreduce.getApplication() == null || mapreduce.getApplication().isEmpty()) {
         throw new MetadataServiceException("Mapreduce's app name is empty or null.");
+      }
     }
 
     @Override
     public MetaDataEntry makeEntry(Account account, Mapreduce mapreduce) {
       MetaDataEntry entry = new MetaDataEntry(account.getId(),
           mapreduce.getApplication(), FieldTypes.Mapreduce.ID, mapreduce.getId());
-      if (mapreduce.getName() != null)
+      if (mapreduce.getName() != null) {
         entry.addField(FieldTypes.Mapreduce.NAME, mapreduce.getName());
-      if (mapreduce.getDescription() != null)
+      }
+      if (mapreduce.getDescription() != null) {
         entry.addField(FieldTypes.Mapreduce.DESCRIPTION, mapreduce.getDescription());
-      if (mapreduce.isSetDatasets())
+      }
+      if (mapreduce.isSetDatasets()) {
         entry.addField(FieldTypes.Mapreduce.DATASETS,
             ListToString(mapreduce.getDatasets()));
+      }
       return entry;
     }
 
@@ -575,11 +581,17 @@ public class MetadataHelper {
     public Mapreduce makeFromEntry(MetaDataEntry entry) {
       Mapreduce mapreduce = new Mapreduce(entry.getId(), entry.getApplication());
       String name = entry.getTextField(FieldTypes.Mapreduce.NAME);
-      if (name != null) mapreduce.setName(name);
+      if (name != null) {
+        mapreduce.setName(name);
+      }
       String description = entry.getTextField(FieldTypes.Mapreduce.DESCRIPTION);
-      if (description != null) mapreduce.setDescription(description);
+      if (description != null) {
+        mapreduce.setDescription(description);
+      }
       String datasets = entry.getTextField(FieldTypes.Mapreduce.DATASETS);
-      if (datasets != null) mapreduce.setDatasets(StringToList(datasets));
+      if (datasets != null) {
+        mapreduce.setDatasets(StringToList(datasets));
+      }
       return mapreduce;
     }
 
@@ -595,12 +607,18 @@ public class MetadataHelper {
       Mapreduce existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
       status = compareAlso(status, mapreduce.getId(), existing.getId());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
       status = compareAlso(status, mapreduce.getName(), existing.getName());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
       status = compareAlso(
           status, mapreduce.getDescription(), existing.getDescription());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
       status = compareAlso(status, mapreduce.getDatasets(), existing.getDatasets());
       return status;
     }

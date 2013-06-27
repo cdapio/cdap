@@ -890,6 +890,12 @@ public class MetadataService extends MetadataHelper
     }
     LOG.info("Query meta data for account '" + accountId + "' deleted.");
 
+    // list all mapreduces for the account and delete them
+    for (Mapreduce mapreduce : getMapreduces(account)) {
+      deleteMapreduce(account, mapreduce);
+    }
+    LOG.info("Mapreduce meta data for account '" + accountId + "' deleted.");
+
     // list all flows for the account and delete them
     for (Flow flow : getFlows(accountId)) {
       deleteFlow(accountId, flow.getApplication(), flow.getId());

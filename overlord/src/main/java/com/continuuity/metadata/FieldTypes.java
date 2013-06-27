@@ -57,7 +57,7 @@ public class FieldTypes {
   }
 
   /**
-   * Class representing constants for fields stored for Query
+   * Class representing constants for fields stored for Mapreduce
    */
   public static class Mapreduce {
     public static final String ID = "mapreduce";
