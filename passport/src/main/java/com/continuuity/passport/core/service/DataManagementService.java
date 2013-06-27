@@ -8,6 +8,7 @@ package com.continuuity.passport.core.service;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.OrganizationAlreadyExistsException;
+import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.status.Status;
@@ -209,4 +210,28 @@ public interface DataManagementService {
    * @throws OrganizationAlreadyExistsException when Organization to be created already exists.
    */
   public Organization createOrganization(String id, String name) throws OrganizationAlreadyExistsException;
+
+
+  /**
+   * Look up Organization based on id.
+   * @param id Org id for lookup.
+   * @return instance of {@code Organization}
+   */
+  public Organization getOrganization(String id);
+
+  /**
+   * Update Organization.
+   * @param id org id.
+   * @param name org name to be updated.
+   * @return instance of updated organization.
+   * @throws OrganizationNotFoundException when Organization to be updated does not already exists.
+   */
+  public Organization updateOrganization(String id, String name) throws OrganizationNotFoundException;
+
+  /**
+   * Delete organization.
+   * @param id Id of the org to be deleted.
+   * @throws OrganizationNotFoundException when Organization to be deleted does not exist.
+   */
+  public void deleteOrganization(String id) throws OrganizationNotFoundException;
 }

@@ -7,6 +7,7 @@ package com.continuuity.passport.impl;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.OrganizationAlreadyExistsException;
+import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.service.DataManagementService;
@@ -169,5 +170,20 @@ public class DataManagementServiceImpl implements DataManagementService {
   @Override
   public Organization createOrganization(String id, String name) throws OrganizationAlreadyExistsException {
     return organizationDAO.createOrganization(id, name);
+  }
+
+  @Override
+  public Organization getOrganization(String id) {
+    return organizationDAO.getOrganization(id);
+  }
+
+  @Override
+  public Organization updateOrganization(String id, String name)  throws OrganizationNotFoundException {
+    return organizationDAO.updateOrganization(id, name);
+  }
+
+  @Override
+  public void deleteOrganization(String id) throws OrganizationNotFoundException {
+    organizationDAO.deleteOrganization(id);
   }
 }

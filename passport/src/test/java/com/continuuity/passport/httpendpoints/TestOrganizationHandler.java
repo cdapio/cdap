@@ -8,14 +8,19 @@ import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.testhelper.HyperSQL;
 import com.continuuity.passport.testhelper.TestPassportServer;
 import com.google.gson.JsonObject;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -70,6 +75,32 @@ public class TestOrganizationHandler {
     Organization org =  Organization.fromString(result);
     assertTrue("C123".equals(org.getId()));
     assertTrue("Continuuity".equals(org.getName()));
+  }
+
+  @Test
+  public void orgDelete() throws IOException {
+    //Create Org and delete later.
+    String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
+    HttpPost post = new HttpPost(endPoint);
+    post.setEntity(new StringEntity(getCompany("G123", "Google")));
+    post.addHeader("Content-Type", "application/json");
+
+    String result = TestPassportServer.request(post);
+    assertTrue(result != null);
+    Organization org =  Organization.fromString(result);
+    assertTrue("G123".equals(org.getId()));
+    assertTrue("Google".equals(org.getName()));
+
+    endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "G123");
+    HttpDelete delete = new HttpDelete(endPoint);
+    result = TestPassportServer.request(delete);
+    assertTrue(result != null);
+
+    //Try deleting a non-existing org. Should return 404.
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response =  client.execute(delete);
+    assertEquals(404, response.getStatusLine().getStatusCode());
+
   }
 
   private String getCompany(String id, String name){
