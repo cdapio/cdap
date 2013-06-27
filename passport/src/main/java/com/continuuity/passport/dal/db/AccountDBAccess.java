@@ -14,8 +14,6 @@ import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Role;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 
 import java.security.NoSuchAlgorithmException;
