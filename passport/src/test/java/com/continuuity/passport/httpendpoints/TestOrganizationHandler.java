@@ -145,8 +145,8 @@ public class TestOrganizationHandler {
 
     endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "F123");
     HttpGet get = new HttpGet(endPoint);
-    result = TestPassportServer.request(put);
-    org =  Organization.fromString(result);
+    result = TestPassportServer.request(get);
+    org = Organization.fromString(result);
     assertTrue("F123".equals(org.getId()));
     assertTrue("Facebook".equals(org.getName()));
   }
