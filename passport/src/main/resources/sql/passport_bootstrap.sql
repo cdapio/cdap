@@ -176,6 +176,15 @@ CREATE  TABLE IF NOT EXISTS `passport`.`nonce` (
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) ,
   UNIQUE INDEX `nonce_id_UNIQUE` (`nonce_id` ASC) )
 
+-- -----------------------------------------------------
+-- Table `passport`.`organization`
+-- Entity to store organization info
+-- -----------------------------------------------------
+CREATE  TABLE IF NOT EXISTS `passport`.`organization` (
+  `id` VARCHAR(100) NOT NULL,
+  `name` VARCHAR(100) NOT NULL ,
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC)
+
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 

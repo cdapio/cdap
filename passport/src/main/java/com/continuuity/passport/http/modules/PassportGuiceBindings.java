@@ -12,14 +12,17 @@ import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.service.SecurityService;
 import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.dal.NonceDAO;
+import com.continuuity.passport.dal.OrganizationDAO;
 import com.continuuity.passport.dal.ProfanityFilter;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.dal.db.AccountDBAccess;
 import com.continuuity.passport.dal.db.NonceDBAccess;
+import com.continuuity.passport.dal.db.OrganizationDBAccess;
 import com.continuuity.passport.dal.db.ProfanityFilterFileAccess;
 import com.continuuity.passport.dal.db.VpcDBAccess;
 import com.continuuity.passport.http.handlers.AccountHandler;
 import com.continuuity.passport.http.handlers.ActivationNonceHandler;
+import com.continuuity.passport.http.handlers.OrganizationHandler;
 import com.continuuity.passport.http.handlers.SessionNonceHandler;
 import com.continuuity.passport.http.handlers.VPCHandler;
 import com.continuuity.passport.impl.AuthenticatorServiceImpl;
@@ -80,6 +83,7 @@ public class PassportGuiceBindings extends JerseyServletModule {
     bind(ActivationNonceHandler.class);
     bind(SessionNonceHandler.class);
     bind(VPCHandler.class);
+    bind(OrganizationHandler.class);
 
 
     //Bind Services to default implementations
@@ -91,6 +95,7 @@ public class PassportGuiceBindings extends JerseyServletModule {
     bind(AccountDAO.class).to(AccountDBAccess.class);
     bind(VpcDAO.class).to(VpcDBAccess.class);
     bind(NonceDAO.class).to(NonceDBAccess.class);
+    bind(OrganizationDAO.class).to(OrganizationDBAccess.class);
     bind(ProfanityFilter.class).to(ProfanityFilterFileAccess.class);
     bind(DBConnectionPoolManager.class)
       .toInstance(connectionPoolManager);
