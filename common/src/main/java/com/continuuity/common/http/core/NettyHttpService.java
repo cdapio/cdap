@@ -6,6 +6,7 @@ package com.continuuity.common.http.core;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -102,8 +104,17 @@ public final class NettyHttpService extends AbstractIdleService {
 
     ExecutionHandler executionHandler = createExecutionHandler(threadPoolSize, threadKeepAliveSecs);
 
-    bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
-                                                                      Executors.newCachedThreadPool()));
+    Executor bossExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+                                                                    .setDaemon(true)
+                                                                    .setNameFormat("service-boss")
+                                                                    .build());
+
+    Executor workerExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+                                                                    .setDaemon(true)
+                                                                    .setNameFormat("service-worker")
+                                                                    .build());
+
+    bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
 
     resourceHandler = new HttpResourceHandler(httpHandlers);
     resourceHandler.init();
