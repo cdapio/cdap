@@ -260,6 +260,175 @@ WebAppServer.prototype.bindRoutes = function(io) {
     this.logger.info("Configuration file not set ", this.config);
     return false;
   }
+
+
+var singularREST = {
+    'apps': 'getApplication',
+    'streams': 'getStream',
+    'flows': 'getFlow',
+    'mapreduce': 'getMapReduceJob',
+    'datasets': 'getDataset',
+    'procedures': 'getQuery'
+  };
+
+  var pluralREST = {
+    'apps': 'getApplications',
+    'streams': 'getStreams',
+    'flows': 'getFlows',
+    'mapreduce': 'getMapReduceJobs',
+    'datasets': 'getDatasets',
+    'procedures': 'getQueries'
+  };
+
+  var typesREST = {
+    'apps': 'Application',
+    'streams': 'Stream',
+    'flows': 'Flow',
+    'mapreduce': 'MapReduceJob',
+    'datasets': 'Dataset',
+    'procedures': 'Query'
+  };
+
+  /*
+   * REST handler
+   */
+
+  this.app.get('/rest/*', function (req, res) {
+
+    var path = req.url.slice(6).split('/');
+    var hierarchy = {};
+
+    self.logger.trace('GET ' + req.url);
+
+    if (!path[path.length - 1]) {
+      path = path.slice(0, path.length - 1);
+    }
+
+    var methods = [], ids = [];
+    for (var i = 0; i < path.length; i ++) {
+      if (i % 2) {
+        ids.push(path[i]);
+      } else {
+        methods.push(path[i]);
+      }
+    }
+
+    var method = null, params = [];
+
+    if (methods[0] === 'apps' && methods[1]) {
+
+      if (ids[1]) {
+        method = singularREST[methods[1]];
+        params = [typesREST[methods[1]], { id: ids[1] }];
+      } else {
+        method = pluralREST[methods[1]] + 'ByApplication';
+        params = [ids[0]];
+      }
+
+    } else {
+
+      if (ids[0]) {
+        method = singularREST[methods[0]];
+        params = [typesREST[methods[0]], { id: ids[0] } ];
+      } else {
+        method = pluralREST[methods[0]];
+        params = [];
+      }
+
+    }
+
+    var accountID = 'developer';
+
+    if (method === 'getQuery') {
+      params[1].application = ids[0];
+    }
+
+    if (method === 'getFlow') {
+
+      self.Api.manager(accountID, 'getFlowDefinition', [ids[0], ids[1]],
+        function (error, response) {
+
+          if (error) {
+            self.logger.error(error);
+            res.status(500);
+            res.send(error);
+          } else {
+            res.send(response);
+          }
+
+      });
+
+    } else {
+
+      self.Api.metadata(accountID, method, params, function (error, response) {
+
+          if (error) {
+            self.logger.error(error);
+            res.status(500);
+            res.send(error);
+          } else {
+            res.send(response);
+          }
+
+      });
+
+    }
+
+
+  });
+
+  /*
+   * RPC Handler
+   */
+  this.app.post('/rpc/:type/:method', function (req, res) {
+
+    var type = req.params.type;
+    var method = req.params.method;
+    var params = JSON.parse(req.body.params);
+    var accountID = 'developer';
+
+    self.logger.trace('RPC ' + type + ':' + method, params);
+
+    switch (type) {
+
+      case 'runnable':
+        self.Api.manager(accountID, method, params, function (error, result) {
+
+          if (error) {
+            self.logger.error(error);
+          }
+
+          res.send({ result: result, error: error });
+
+        });
+        break;
+
+      case 'fabric':
+        self.Api.far(accountID, method, params, function (error, result) {
+
+          if (error) {
+            self.logger.error(error);
+          }
+
+          res.send({ result: result, error: error });
+
+        });
+    }
+
+  });
+
+  /*
+   * Metrics Handler
+   */
+  this.app.post('/metrics', function (req, res) {
+
+    var params = req.body.params;
+    var accountID = 'developer';
+
+    self.logger.trace('Metrics ', params);
+
+  });
+
   /**
    * Upload an Application archive.
    */
@@ -291,14 +460,19 @@ WebAppServer.prototype.bindRoutes = function(io) {
       });
 
       response.on('end', function () {
+
         data = data.replace(/\n/g, '');
-        res.send(JSON.stringify({
+
+        res.send({
           current: self.VERSION,
           newest: data
-        }));
+        });
+
       });
     });
+
     request.end();
+
   });
 
   /**
@@ -424,6 +598,5 @@ WebAppServer.prototype.getLocalHost = function() {
  * Export app.
  */
 module.exports = WebAppServer;
-
 
 

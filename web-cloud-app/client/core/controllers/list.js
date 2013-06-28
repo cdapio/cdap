@@ -8,7 +8,7 @@ define([], function () {
 
 		elements: Em.Object.create(),
 
-		__plurals: {
+		__titles: {
 			'App': 'Applications',
 			'Flow': 'Process',
 			'Batch': 'Process',
@@ -16,9 +16,17 @@ define([], function () {
 			'Procedure': 'Query',
 			'Dataset': 'Store'
 		},
+		__plurals: {
+			'App': 'apps',
+			'Flow': 'flows',
+			'Batch': 'mapreduce',
+			'Stream': 'streams',
+			'Procedure': 'procedures',
+			'Dataset': 'datasets'
+		},
 		entityTypes: new Em.Set(),
 		title: function () {
-			return this.__plurals[this.get('entityType')];
+			return this.__titles[this.get('entityType')];
 		}.property('entityType'),
 		load: function (type) {
 
@@ -27,17 +35,11 @@ define([], function () {
 
 			this.entityTypes.add(type);
 
-			this.HTTP.getElements(type, function (objects) {
-
-				//** Hax: Remove special case for Flow when ready **//
+			this.HTTP.get('rest', this.__plurals[type], function (objects) {
 
 				var i = objects.length;
 				while (i--) {
-					if (type === 'Query' && objects[i].type === 0) {
-						objects.splice(i, 1);
-					} else if (type === 'Flow' && objects[i].type === 1) {
-						objects.splice(i, 1);
-					}
+					objects[i] = C[type].create(objects[i]);
 				}
 
 				self.set('elements.' + type, Em.ArrayProxy.create({content: objects}));
@@ -70,7 +72,7 @@ define([], function () {
 
 					for (var i = 0; i < content.length; i ++) {
 						if (typeof content[i].getUpdateRequest === 'function') {
-							C.get.apply(C, content[i].getUpdateRequest());
+							C.get.apply(C, content[i].getUpdateRequest(this.HTTP));
 						}
 					}
 

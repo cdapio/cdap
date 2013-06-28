@@ -13,6 +13,8 @@ define([], function () {
 		metricNames: null,
 		__loadingData: false,
 		instances: 0,
+		version: -1,
+		currentState: '',
 		type: 'Flow',
 		plural: 'Flows',
 		init: function() {
@@ -23,7 +25,7 @@ define([], function () {
 
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
-			this.set('app', this.get('applicationId') || this.get('application'));
+			this.set('app', this.get('applicationId') || this.get('application') || this.get('meta').app);
 			this.set('id', this.get('app') + ':' +
 				(this.get('flowId') || this.get('id') || this.get('meta').name));
 
@@ -33,7 +35,7 @@ define([], function () {
 			this.get('metricNames')[name] = 1;
 
 		},
-		getUpdateRequest: function () {
+		getUpdateRequest: function (http) {
 
 			var self = this;
 
@@ -53,14 +55,12 @@ define([], function () {
 				return;
 			}
 
-			C.get('manager', {
-				method: 'status',
-				params: [app_id, flow_id, -1]
-			}, function (error, response) {
+			http.rpc('runnable', 'status', [app_id, flow_id, -1],
+				function (response) {
 
-				if (response.params) {
-					self.set('currentState', response.params.status);
-				}
+					if (response.result) {
+						self.set('currentState', response.result.status);
+					}
 
 			});
 
@@ -178,33 +178,20 @@ define([], function () {
 			var app_id = model_id[0];
 			var flow_id = model_id[1];
 
-			C.get('manager', {
-				method: 'getFlowDefinition',
-				params: [app_id, flow_id]
-			}, function (error, response) {
+			http.rest('apps', app_id, 'flows', flow_id, function (model, error) {
 
-				if (error || !response.params) {
-					promise.reject(error);
-					return;
-				}
+				model.applicationId = app_id;
+				model = C.Flow.create(model);
 
-				response.params.currentState = 'UNKNOWN';
-				response.params.version = -1;
-				response.params.type = 'Flow';
-				response.params.applicationId = app_id;
+				http.rpc('runnable', 'status', [app_id, flow_id, -1],
+					function (response) {
 
-				var model = C.Flow.create(response.params);
-
-				C.get('manager', {
-					method: 'status',
-					params: [app_id, flow_id, -1]
-				}, function (error, response) {
-
-					if (response.params) {
-						model.set('currentState', response.params.status);
-					}
-
-					promise.resolve(model);
+						if (response.error) {
+							promise.reject(response.error);
+						} else {
+							model.set('currentState', response.result.status);
+							promise.resolve(model);
+						}
 
 				});
 
@@ -213,6 +200,7 @@ define([], function () {
 			return promise;
 
 		}
+
 	});
 
 	return Model;
