@@ -5,9 +5,10 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
-import com.continuuity.weave.api.ListenerAdapter;
 import com.continuuity.weave.api.WeaveController;
+import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.common.Threads;
+import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,15 +55,22 @@ abstract class AbstractWeaveProgramController extends AbstractProgramController 
   }
 
   private WeaveController.Listener createWeaveListener() {
-    return new ListenerAdapter() {
+    return new ServiceListenerAdapter() {
+
       @Override
-      public void terminated() {
+      public void running() {
+        LOG.info("Weave program running: {} {}", programName, weaveController.getRunId());
+        started();
+      }
+
+      @Override
+      public void terminated(Service.State from) {
         LOG.info("Weave program terminated: {} {}", programName, weaveController.getRunId());
         stop();
       }
 
       @Override
-      public void failed(StackTraceElement[] stackTraces) {
+      public void failed(Service.State from, Throwable failure) {
         LOG.info("Weave program failed: {} {}", programName, weaveController.getRunId());
         stop();
       }
