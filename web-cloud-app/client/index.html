@@ -135,8 +135,8 @@
       <div class="info-box" style="float: right;border: 0;padding-right: 0;">
         {{view C.Embed.DropZone uploadType="Update"}}
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="processed.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="busyness" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/bytes/{id}"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/busyness/{id}" unit="percent"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top: 19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
@@ -924,8 +924,8 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
             </td>
             <td class="app-list-count">{{instances}}</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="processed.count"}}</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="busyness" unit="percent"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/process/events/{parent}/flows/{id}"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/process/busyness/{parent}/flows/{id}" unit="percent"}}</td>
           </tr>
         {{/each}}
         </tbody>
@@ -984,7 +984,7 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{type}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="dataset.write.{id}.count"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/store/bytes/datasets/{id}"}}</td>
           </tr>
         {{/each}}
         </tbody>
@@ -1015,8 +1015,8 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
             </td>
             <td class="app-list-count">1</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="query.success.count"}}</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="query.failed.count"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/requests/procedures/{id}"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/failures/procedures/{id}"}}</td>
           </tr>
         {{/each}}
       </tbody>

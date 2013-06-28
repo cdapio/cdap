@@ -16,8 +16,8 @@ define([], function () {
 		init: function() {
 			this._super();
 
-			this.set('metricData', Em.Object.create());
-			this.set('metricNames', {});
+			this.set('timeseries', Em.Object.create());
+			this.set('metrics', []);
 
 			if (!this.get('id')) {
 				this.set('id', this.get('name'));
@@ -32,9 +32,19 @@ define([], function () {
 		unconsumed: 0,
 		addMetricName: function (name) {
 
-			this.get('metricNames')[name] = 1;
+			name = name.replace(/{id}/, this.get('id'));
+			this.get('metrics').push(name);
+			return name;
 
 		},
+
+		update: function (http) {
+
+			return this.get('metrics').slice(0);
+
+		}
+		/*
+
 		getUpdateRequest: function (http) {
 
 			var metrics = [];
@@ -101,6 +111,7 @@ define([], function () {
 			}];
 
 		}
+		*/
 	});
 
 	Model.reopenClass({

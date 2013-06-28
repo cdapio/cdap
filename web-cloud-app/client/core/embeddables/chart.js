@@ -13,10 +13,10 @@ define([], function () {
 			for (var i = 0; i < metrics.length; i ++) {
 				var metric = metrics[i];
 
-				if (this.get('model') && this.get('model').metricData) {
+				if (this.get('model') && this.get('model').timeseries) {
 
 					metric = metric.replace(/\./g, '');
-					var data = this.get('model').metricData[metric];
+					var data = this.get('model').timeseries[metric];
 
 					if (data && data.length) {
 						if ((typeof redraw === 'boolean' && redraw) || !this.get('sparkline')) {
@@ -109,9 +109,13 @@ define([], function () {
 				while (i--) {
 
 					metric = metrics[i];
-					this.get('model').addMetricName(metric);
+					metric = this.get('model').addMetricName(metric) || metric;
 					metric = metric.replace(/\./g, '');
-					this.addObserver('model.metricData.' + metric, this, this.updateData);
+
+					metrics[i] = metric;
+
+					this.addObserver('model.timeseries.' + metric, this, this.updateData);
+
 				}
 
 			}

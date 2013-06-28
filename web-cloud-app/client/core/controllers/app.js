@@ -118,18 +118,13 @@ define([], function () {
 
 			if (this.get('model')) {
 
-				C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
+				var models = [this.get('model')];
 
 				for (var i = 0; i < types.length; i ++) {
-
-					var content = this.get('elements').get(types[i]).get('content');
-					for (var j = 0; j < content.length; j ++) {
-						if (typeof content[j].getUpdateRequest === 'function') {
-							C.get.apply(C, content[j].getUpdateRequest(this.HTTP));
-						}
-					}
+					models = models.concat(this.get('elements').get(types[i]).get('content'));
 				}
 
+				C.Util.updateTimeSeries(this.HTTP, models, 60);
 
 				var storage = 0;
 				var streams = this.get('elements.Stream').content;

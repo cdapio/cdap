@@ -50,7 +50,7 @@ define (['core/application'], function (Application) {
 				 */
 				require(mocks, function () {
 
-					mocks = Array.prototype.slice.call(arguments, 0);
+					mocks = [].slice.call(arguments, 0);
 
 					var i = mocks.length, type, resource;
 					while (i--) {

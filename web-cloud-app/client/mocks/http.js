@@ -2,9 +2,10 @@
  * HTTP Mock
  */
 
-define(['mocks/results/elements', 'mocks/results/metrics/counters',
+define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
+	'mocks/results/metrics/counters', 'mocks/results/metrics/samples',
 	'mocks/results/rpc', 'mocks/http-router'],
-	function (Elements, Counters, RPC, HttpRouter) {
+	function (Elements, TimeSeries, Counters, Samples, RPC, HttpRouter) {
 
 	Em.debug('Loading HTTP Mock');
 

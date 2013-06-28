@@ -10,7 +10,7 @@ define([], function () {
 			return '#/flows/' + this.get('id');
 		}.property('id'),
 		metricData: null,
-		metricNames: null,
+		metrics: null,
 		__loadingData: false,
 		instances: 0,
 		version: -1,
@@ -20,8 +20,8 @@ define([], function () {
 		init: function() {
 			this._super();
 
-			this.set('metricData', Em.Object.create());
-			this.set('metricNames', {});
+			this.set('timeseries', Em.Object.create());
+			this.set('metrics', []);
 
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
@@ -32,28 +32,20 @@ define([], function () {
 		},
 		addMetricName: function (name) {
 
-			this.get('metricNames')[name] = 1;
+			name = name.replace(/{parent}/, this.get('app'));
+			name = name.replace(/{id}/, this.get('name'));
+
+			this.get('metrics').push(name);
+
+			return name;
 
 		},
-		getUpdateRequest: function (http) {
+		update: function (http) {
 
 			var self = this;
 
 			var app_id = this.get('app'),
-				flow_id = this.get('name'),
-				start = C.__timeRange * -1;
-
-			var metrics = [];
-			var metricNames = this.get('metricNames');
-			for (var name in metricNames) {
-				if (metricNames[name] === 1) {
-					metrics.push(name);
-				}
-			}
-			if (!metrics.length) {
-				this.set('__loadingData', false);
-				return;
-			}
+				flow_id = this.get('name');
 
 			http.rpc('runnable', 'status', [app_id, flow_id, -1],
 				function (response) {
@@ -64,6 +56,9 @@ define([], function () {
 
 			});
 
+			return this.get('metrics').slice(0);
+
+			/*
 			return ['monitor', {
 				method: 'getTimeSeries',
 				params: [app_id, flow_id, metrics, start, undefined, 'FLOW_LEVEL']
@@ -92,6 +87,7 @@ define([], function () {
 				}
 
 			}];
+			*/
 
 		},
 		getMeta: function () {

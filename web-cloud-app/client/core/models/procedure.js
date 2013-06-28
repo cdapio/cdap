@@ -25,8 +25,8 @@ define([], function () {
 		init: function() {
 			this._super();
 
-			this.set('metricData', Em.Object.create());
-			this.set('metricNames', {});
+			this.set('timeseries', Em.Object.create());
+			this.set('metrics', []);
 
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
@@ -44,11 +44,40 @@ define([], function () {
 			}
 
 		}.property('currentState').cacheable(false),
+
 		addMetricName: function (name) {
 
-			this.get('metricNames')[name] = 1;
+			name = name.replace(/{parent}/, this.get('app'));
+			name = name.replace(/{id}/, this.get('name'));
+
+			this.get('metrics').push(name);
+
+			return name;
 
 		},
+
+		update: function (http) {
+
+			var self = this;
+
+			var app_id = this.get('app'),
+				procedure_id = this.get('name');
+
+			http.rpc('runnable', 'status', [app_id, procedure_id, -1],
+				function (response) {
+
+					if (response.result) {
+						self.set('currentState', response.result.status);
+					}
+
+			});
+
+			return this.get('metrics').slice(0);
+
+		},
+
+		/*
+
 		getUpdateRequest: function (http) {
 
 			var self = this;
@@ -106,6 +135,7 @@ define([], function () {
 			}];
 
 		},
+		*/
 		getMeta: function () {
 			var arr = [];
 			for (var m in this.meta) {

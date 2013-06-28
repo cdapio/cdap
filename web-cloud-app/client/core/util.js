@@ -139,6 +139,65 @@ define([], function () {
 			}
 		}),
 
+		updateTimeSeries: function (http, models, max) {
+
+			var i, j, models, paths = [], metrics, map = {};
+
+			var queries = [];
+
+			for (j = 0; j < models.length; j ++) {
+				if (typeof models[j].update === 'function') {
+
+					metrics = models[j].update(http);
+
+					if (metrics) {
+
+						for (var k = 0; k < metrics.length; k ++) {
+
+							if (models[j].get('timeseries').get(metrics[k])) {
+
+								count = max - models[j].get('timeseries').get(metrics[k]).length;
+								count = count || 1;
+
+							} else {
+
+								models[j].get('timeseries').set(metrics[k], []);
+								count = max;
+
+							}
+
+							map[metrics[k]] = models[j];
+
+							paths.push(metrics[k]);
+							metrics[k] += '?count=' + count;
+							queries.push(metrics[k]);
+
+						}
+
+					}
+				}
+			}
+
+			http.post('metrics', queries, function (result, error) {
+
+				for (var i = 0; i < result.length; i ++) {
+
+					var data = result[i];
+
+					var k = data.length;
+
+					while(k --) {
+						data[k] = data[k].value;
+					}
+
+					map[paths[i]].get('timeseries').set(paths[i], data);
+
+				}
+
+			});
+
+		},
+
 		sparkline: function (widget, data, w, h, percent) {
 
 			var allData = [], length = 0;
