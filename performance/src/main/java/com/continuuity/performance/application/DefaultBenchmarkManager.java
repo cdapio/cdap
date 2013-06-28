@@ -12,12 +12,12 @@ import com.continuuity.test.app.DefaultApplicationManager;
 import com.continuuity.test.app.ProcedureClientFactory;
 import com.continuuity.test.app.StreamWriter;
 import com.continuuity.weave.filesystem.Location;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -45,7 +45,7 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
           deployedJar, appSpec);
     benchmarkStreamWriterFactory = streamWriterFactory;
     idAccount = Id.Account.from(accountId);
-    streamWriters = new HashSet<MultiThreadedStreamWriter>();
+    streamWriters = Sets.newHashSet();
   }
 
   @Override

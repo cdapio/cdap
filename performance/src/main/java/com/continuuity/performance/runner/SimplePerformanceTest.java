@@ -36,20 +36,24 @@ public class SimplePerformanceTest {
       BenchmarkRuntimeMetrics sourceFlowletMetrics = BenchmarkRuntimeStats.getFlowletMetrics("SimpleApp", "SimpleFlow",
                                                                                              "source");
 
-      System.out.println("Number of events processed by source flowlet = " + sourceFlowletMetrics.getProcessed());
+      System.out.println(String.format("Number of events processed by source flowlet = %d",
+                                       sourceFlowletMetrics.getProcessed()));
 
       sourceFlowletMetrics.waitForProcessed(numStreamEvents, 120, TimeUnit.SECONDS);
 
-      System.out.println("Number of events processed by source flowlet = " + sourceFlowletMetrics.getProcessed());
+      System.out.println(String.format("Number of events processed by source flowlet = %d",
+                                       sourceFlowletMetrics.getProcessed()));
 
       BenchmarkRuntimeMetrics readerFlowletMetrics = BenchmarkRuntimeStats.getFlowletMetrics("SimpleApp", "SimpleFlow",
                                                                                              "reader");
 
-      System.out.println("Number of events processed by reader flowlet = " + readerFlowletMetrics.getProcessed());
+      System.out.println(String.format("Number of events processed by reader flowlet = %d",
+                                       readerFlowletMetrics.getProcessed()));
 
       readerFlowletMetrics.waitForProcessed(numStreamEvents, 120, TimeUnit.SECONDS);
 
-      System.out.println("Number of events processed by reader flowlet = " + readerFlowletMetrics.getProcessed());
+      System.out.println(String.format("Number of events processed by reader flowlet = %d",
+                                       readerFlowletMetrics.getProcessed()));
 
     } finally {
       applicationManager.stopAll();

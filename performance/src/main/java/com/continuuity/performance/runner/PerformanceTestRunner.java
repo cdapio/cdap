@@ -259,6 +259,7 @@ public final class PerformanceTestRunner {
 
     File outputDir = new File(testAppDir, "app");
     File tmpDir = new File(testAppDir, "tmp");
+    tmpDir.deleteOnExit();
     outputDir.mkdirs();
     tmpDir.mkdirs();
 
