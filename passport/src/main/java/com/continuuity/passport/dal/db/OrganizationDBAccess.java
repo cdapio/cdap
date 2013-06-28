@@ -41,6 +41,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
         ps.setString(1, id);
         ps.setString(2, name);
         ps.execute();
+        connection.commit();
       } finally {
         close(ps);
       }
@@ -104,6 +105,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
         ps.setString(1, name);
         ps.setString(2, id);
         int affectedRows = ps.executeUpdate();
+        connection.commit();
         if (affectedRows == 0) {
           throw new OrganizationNotFoundException("Organization doesn't exists");
         }
@@ -112,8 +114,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
       }
     } catch (SQLException e) {
       throw Throwables.propagate(e);
-    }
-    finally {
+    } finally {
       close(connection);
     }
     return new Organization(id, name);
@@ -131,6 +132,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
       try {
         ps.setString(1, id);
         int affectedRows = ps.executeUpdate();
+        connection.commit();
         if (affectedRows == 0) {
           throw new OrganizationNotFoundException("Organization doesn't exists");
         }
