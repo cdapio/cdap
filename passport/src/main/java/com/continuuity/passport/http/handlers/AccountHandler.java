@@ -676,7 +676,7 @@ public class AccountHandler extends PassportHandler {
     requestReceived();
     try {
       dataManagementService.updateAccountOrganization(accountId, orgId);
-      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // Contract for the api is to return updated account to avoid a second call from the caller to get the
       // updated account
       Account accountFetched = dataManagementService.getAccount(accountId);
       if (accountFetched != null) {
