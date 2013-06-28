@@ -4,6 +4,7 @@
 package com.continuuity.common.http.core;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -35,6 +37,11 @@ public final class NettyHttpService extends AbstractIdleService {
   private ServerBootstrap bootstrap;
   private Channel channel;
   private int port;
+
+  private final int threadPoolSize;
+  private final long threadKeepAliveSecs;
+  private final Set<HttpHandler> httpHandlers;
+
   private HttpResourceHandler resourceHandler;
 
 
@@ -47,7 +54,9 @@ public final class NettyHttpService extends AbstractIdleService {
    */
   public NettyHttpService(int port, int threadPoolSize, long threadKeepAliveSecs, Iterable<HttpHandler> httpHandlers){
     this.port = port;
-    bootStrap(threadPoolSize, threadKeepAliveSecs, httpHandlers);
+    this.threadPoolSize = threadPoolSize;
+    this.threadKeepAliveSecs = threadKeepAliveSecs;
+    this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
   }
 
   /**
@@ -114,6 +123,7 @@ public final class NettyHttpService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting service on port {}", port);
+    bootStrap(threadPoolSize, threadKeepAliveSecs, httpHandlers);
     InetSocketAddress address = new InetSocketAddress(port);
     channel = bootstrap.bind(address);
   }
