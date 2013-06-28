@@ -11,6 +11,9 @@ import java.sql.Timestamp;
  */
 public class DBUtils {
 
+  public static final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
+  public static final String DB_INTEGRITY_CONSTRAINT_VIOLATION_DUP_KEY = "23505";
+
   /**
    * Represents schema corresponding to 'account' table in the db.
    */
@@ -92,6 +95,15 @@ public class DBUtils {
     public static final String ID_COLUMN = "id";
     public static final String NONCE_EXPIRES_AT_COLUMN = "nonce_expires_at";
 
+  }
+
+  /**
+   * Represents schema corresponding to organization table.
+   */
+  public static class Organization{
+    public static final String TABLE_NAME = "organization";
+    public static final String ID = "id";
+    public static final String NAME = "name";
   }
 
   public static long timestampToLong(Timestamp time) {

@@ -23,9 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimeoutTest extends OpexServiceTestBase {
 
-  static OperationContext context = OperationUtil.DEFAULT;
+  static final OperationContext context = OperationUtil.DEFAULT;
   static final AtomicInteger clearCount = new AtomicInteger(0);
-
 
   @BeforeClass
   public static void startService() throws Exception {
@@ -95,8 +94,6 @@ public class TimeoutTest extends OpexServiceTestBase {
             }
             super.execute(context, clear);
           }
-
-
         });
   }
 
@@ -137,10 +134,11 @@ public class TimeoutTest extends OpexServiceTestBase {
    */
   @Test(timeout = 10000)
   public void testLongTimeout() throws OperationException {
-    ClearFabric clearFabric = new ClearFabric(ClearFabric.ToClear.ALL);
-    remote.execute(context, clearFabric);
+    // resetting clearCount because it might have been incremented already
+    // in case clear fabric gets executed during BeforeClass initialization
+    clearCount.set(0);
+    remote.execute(context, new ClearFabric(ClearFabric.ToClear.ALL));
     // ensure that no retry was needed
     Assert.assertEquals(1, clearCount.get());
   }
-
 }

@@ -169,7 +169,7 @@ define([], function () {
 			this.get('metricNames')[name] = 1;
 
 		},
-		getUpdateRequest: function () {
+		getUpdateRequest: function (http) {
 
 			var metrics = [];
 			for (var name in this.get('metricNames')) {
@@ -178,7 +178,7 @@ define([], function () {
 
 			var flows = this.get('types.StreamFlow').content;
 			for (var i = 0; i < flows.length; i ++) {
-				C.get.apply(flows[i], flows[i].getUpdateRequest());
+				C.get.apply(flows[i], flows[i].getUpdateRequest(http));
 			}
 
 			var app = '-';
@@ -304,15 +304,9 @@ define([], function () {
 
 			var promise = Ember.Deferred.create();
 
-			C.get('metadata', {
-				method: 'getStream',
-				params: ['Stream', {
-					id: stream_id
-				}]
-			}, function (error, response) {
+			http.rest('streams', stream_id, function (model, error) {
 
-				var model = C.Stream.create(response.params);
-
+				model = C.Stream.create(model);
 				promise.resolve(model);
 
 			});

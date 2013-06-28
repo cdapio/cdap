@@ -14,8 +14,6 @@ import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Role;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 
 import java.security.NoSuchAlgorithmException;
@@ -31,9 +29,6 @@ import java.util.Map;
  */
 public class AccountDBAccess extends DBAccess implements AccountDAO {
   private final DBConnectionPoolManager poolManager;
-  private static final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
-  private final HashFunction hashFunction = Hashing.sha1();
-
   /**
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
@@ -77,7 +72,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         account.getCompany(), account.getEmailId(), result.getInt(1));
       return createdAccount;
     } catch (SQLException e) {
-      if (DB_INTEGRITY_CONSTRAINT_VIOLATION.equals(e.getSQLState())) {
+      if (DBUtils.DB_INTEGRITY_CONSTRAINT_VIOLATION.equals(e.getSQLState())) {
         throw new AccountAlreadyExistsException(e.getMessage());
       }
 

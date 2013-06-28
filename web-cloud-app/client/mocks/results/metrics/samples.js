@@ -30,6 +30,12 @@ define([], function() {
       "runId": null,
       "status": "STOPPED"
     },
+    "applicationSample": {
+      "id": "CountAndFilterWords",
+      "name": "CountAndFilterWords",
+      "description": "Example word filter and count application",
+      "exists": true
+    },
     "applicationsSample": [
       {
         "id": "CountAndFilterWords",
@@ -62,6 +68,22 @@ define([], function() {
         "exists": true
      }
     ],
+    "flowSample": {
+          "meta": {
+            "name": "CountAndFilterWords",
+            "app": "CountAndFilterWords"
+          },
+          "id": "CountAndFilterWords",
+          "application": "CountAndFilterWords",
+          "name": "CountAndFilterWords",
+          "streams": [
+              "text"
+          ],
+          "datasets": [
+              "filterTable"
+          ],
+          "exists": true
+      },
     "flowsSample": [
       {
           "id": "CountAndFilterWords",
@@ -101,10 +123,10 @@ define([], function() {
           "exists": true
       }
     ],
-    "batchSample": [
+    "batchesSample": [
       {
           "id": "batchsampleid1",
-          "application": "SampleApplication1",
+          "application": "CountAndFilterWords",
           "name": "batchsamplename1",
           "streams": [
               "text"
@@ -113,34 +135,18 @@ define([], function() {
               "filterTable"
           ],
           "exists": true
-      },
-      {
-          "id": "batchsampleid2",
-          "application": "SampleApplication2",
-          "name": "batchsamplename2",
-          "streams": [],
-          "datasets": [
-              "randomTable"
-          ],
-          "exists": true
-      },
-      {
-          "id": "batchsampleid3",
-          "application": "SampleApplication3",
-          "name": "batchsamplename3",
-          "streams": [
-              "wordStream"
-          ],
-          "datasets": [
-              "wordCounts",
-              "wordStats",
-              "wordAssocs",
-              "uniqueCount"
-          ],
-          "exists": true
       }
     ],
-    "queriesSample": [
+    "procedureSample": {
+        "id": "RetrieveCounts",
+        "application": "WordCount",
+        "name": "RetrieveCounts",
+        "description": null,
+        "serviceName": "RetrieveCounts",
+        "datasets": [],
+        "exists": true
+    },
+    "proceduresSample": [
       {
           "id": "RetrieveCounts",
           "application": "WordCount",
@@ -541,11 +547,11 @@ define([], function() {
       "batchSample": {
         "meta": {
           "name": "BatchJobName1",
-          "app": "SampleApplication1",
+          "app": "CountAndFilterWords",
           "startTime": "1371248384775"
         },
         "id": "batchid1",
-        "application": "SampleApplication1",
+        "application": "CountAndFilterWords",
         "name": "BatchJobName1",
         "streams": [
             "text"

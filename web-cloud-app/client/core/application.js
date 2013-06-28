@@ -59,7 +59,7 @@ function(Components, Embeddables, HTTP, Socket, Util){
 				/*
 				 * Do version check.
 				 */
-				this.HTTP.get('/version', function (version) {
+				this.HTTP.get('version', function (version) {
 
 					if (version && version.current !== 'UNKNOWN') {
 

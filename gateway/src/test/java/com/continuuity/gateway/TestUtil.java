@@ -53,8 +53,9 @@ public class TestUtil {
 
   private static String apiKey = null;
 
+  public static final String DEFAULT_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
+
   /** defaults to be used everywhere where we don't have authenticated accounts */
-  public static final String DEFAULT_ACCOUNT_ID = "developer";
   public static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEFAULT_ACCOUNT_ID);
 
   static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
@@ -289,7 +290,7 @@ public class TestUtil {
                                    String collectorName,
                                    int eventsExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), destination)
+    byte[] queueURI = QueueName.fromStream(new Id.Account(DEFAULT_ACCOUNT_ID), destination)
                                .toString().getBytes();
     // one deserializer to reuse
     StreamEventCodec deserializer = new StreamEventCodec();

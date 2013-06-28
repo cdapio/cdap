@@ -23,8 +23,12 @@ var logLevel = 'INFO';
 var DevServer = function() {
   DevServer.super_.call(this, __dirname, logLevel);
 
+  this.cookieName = 'continuuity-local-edition';
+  this.secret = 'local-edition-secret';
+
   this.logger = this.getLogger();
   this.setVersion();
+  this.setCookieSession(this.cookieName, this.secret);
   this.configureExpress();
 
 };
@@ -47,7 +51,6 @@ DevServer.prototype.getConfig = function(opt_callback) {
       }
     });
     fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
-      self.logger.trace('Configuring with', self.config);
       self.Api.configure(self.config, apiKey || null);
       self.configSet = true;
       if (opt_callback && typeof opt_callback === "function") {
@@ -64,8 +67,8 @@ DevServer.prototype.start = function() {
   this.getConfig(function() {
     this.server = this.getServerInstance(this.app);
     this.io = this.getSocketIo(this.server);
-    this.configureIoHandlers(this.io, 'Local', 'developer');
-    this.bindRoutes();
+    this.configureIoHandlers(this.io, 'Local', 'developer', this.cookieName, this.secret);
+    this.bindRoutes(this.io);
     this.server.listen(this.config['node-port']);
     this.logger.info('Listening on port', this.config['node-port']);
     this.logger.info(this.config);
