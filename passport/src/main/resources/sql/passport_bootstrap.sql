@@ -30,7 +30,7 @@ CREATE  TABLE IF NOT EXISTS `passport`.`account` (
   INDEX `org_id_idx` (`org_id` ASC),
   CONSTRAINT `org_id`
     FOREIGN KEY (`org_id` )
-    REFERENCES `continuuity`.`organization` (`id` ))
+    REFERENCES `passport`.`organization` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
