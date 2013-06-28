@@ -34,6 +34,8 @@ public class NettyHttpService extends AbstractIdleService {
   private Channel channel;
   private int port;
   private static final Logger LOG  = LoggerFactory.getLogger(NettyHttpService.class);
+  private HttpResourceHandler resourceHandler;
+
 
   /**
    * Initialize NettyHttpService.
@@ -90,7 +92,8 @@ public class NettyHttpService extends AbstractIdleService {
     bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
                                                                       Executors.newCachedThreadPool()));
 
-    HttpResourceHandler resourceHandler = new HttpResourceHandler(httpHandlers);
+    resourceHandler = new HttpResourceHandler(httpHandlers);
+    resourceHandler.init();
 
     ChannelPipeline pipeline = bootstrap.getPipeline();
     pipeline.addLast("decoder", new HttpRequestDecoder());
@@ -114,6 +117,7 @@ public class NettyHttpService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    resourceHandler.destroy();
     LOG.info("Stopping service on port {}", port);
     channel.close();
   }

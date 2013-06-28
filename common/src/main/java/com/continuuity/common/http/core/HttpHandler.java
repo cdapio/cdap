@@ -29,7 +29,14 @@ package com.continuuity.common.http.core;
  */
 public interface HttpHandler {
 
+  /**
+   * init method will be called before the netty pipeline is setup. Any initialization operation can be performed
+   * in this method.
+   */
   public void init();
 
+  /**
+   * destroy method will be called before shutdown. Any teardown task can be performed in this method.
+   */
   public void destroy();
 }

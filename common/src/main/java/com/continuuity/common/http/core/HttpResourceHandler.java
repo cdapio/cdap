@@ -4,6 +4,8 @@
 package com.continuuity.common.http.core;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.beanutils.ConvertUtils;
@@ -28,10 +30,11 @@ import java.util.Set;
  * HttpResourceHandler handles the http request. HttpResourceHandler looks up all Jax-rs annotations in classes
  * and dispatches to appropriate method on receiving requests.
  */
-public class HttpResourceHandler {
+public class HttpResourceHandler implements HttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpResourceHandler.class);
   private PatternPathRouterWithGroups<HttpResourceModel> patternRouter = new PatternPathRouterWithGroups<HttpResourceModel>();
+  private List<HttpHandler> handlers;
 
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
@@ -39,6 +42,8 @@ public class HttpResourceHandler {
    * @param handlers Iterable of HttpHandler.
    */
   public HttpResourceHandler(Iterable<HttpHandler> handlers){
+    //Store the handlers to call init and destroy on all handlers.
+    handlers = Lists.newArrayList(handlers);
     for (HttpHandler handler : handlers){
       if (!handler.getClass().getSuperclass().equals(Object.class)){
         LOG.warn("{} is inherited. The annotations from base case will not be inherited",
@@ -160,5 +165,19 @@ public class HttpResourceHandler {
       }
     }
     return null;
+  }
+
+  @Override
+  public void init() {
+    for (HttpHandler handler : handlers){
+      handler.init();
+    }
+  }
+
+  @Override
+  public void destroy() {
+   for (HttpHandler handler : handlers){
+      handler.destroy();
+    }
   }
 }
