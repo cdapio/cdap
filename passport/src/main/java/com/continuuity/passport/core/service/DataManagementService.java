@@ -238,7 +238,7 @@ public interface DataManagementService {
 
   /**
    * Updates organization id for the given account id.
-   * @param accountId account id to be updated.
+   * @param accountId account id for the update.
    * @param orgId organization id to be update.
    * @throws AccountNotFoundException when account to be updated does not exist in the system.
    * @throws OrganizationNotFoundException when organization to be updated does not exist in the system.
