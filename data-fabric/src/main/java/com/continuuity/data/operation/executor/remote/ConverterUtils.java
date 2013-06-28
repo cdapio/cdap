@@ -14,6 +14,7 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.ReadPointer;
@@ -54,6 +55,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TReadPointer;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
+import com.continuuity.data.operation.executor.remote.stubs.TTruncateTable;
 import com.continuuity.data.operation.executor.remote.stubs.TWrite;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
@@ -439,6 +441,28 @@ public class ConverterUtils {
       openTable.setMetricName(tOpenTable.getMetric());
     }
     return openTable;
+  }
+
+  /**
+   * wrap an TruncateTable operation.
+   */
+  public TTruncateTable wrap(TruncateTable truncateTable) {
+    TTruncateTable tTruncateTable = new TTruncateTable(truncateTable.getTableName(), truncateTable.getId());
+    if (truncateTable.getMetricName() != null) {
+      tTruncateTable.setMetric(truncateTable.getMetricName());
+    }
+    return tTruncateTable;
+  }
+
+  /**
+   * unwrap an TruncateTable operation.
+   */
+  public TruncateTable unwrap(TTruncateTable tTruncateTable) {
+    TruncateTable truncateTable = new TruncateTable(tTruncateTable.getId(), tTruncateTable.getTable());
+    if (tTruncateTable.isSetMetric()) {
+      truncateTable.setMetricName(tTruncateTable.getMetric());
+    }
+    return truncateTable;
   }
 
   /**
