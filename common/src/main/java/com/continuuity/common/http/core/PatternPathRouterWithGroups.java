@@ -4,10 +4,7 @@
 package com.continuuity.common.http.core;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import org.apache.http.protocol.UriPatternMatcher;
 
 import java.util.List;
 import java.util.Map;
@@ -75,7 +72,7 @@ public class PatternPathRouterWithGroups<T> {
    * @return List of Destinations matching the given route.
    */
   public List<T> getDestinations(final String path, final Map<String, String> groupNameValues){
-
+    // TODO: Clean up the return type.
     List<T> result = Lists.newArrayList();
     for (ImmutablePair<Pattern, RouteDestinationWithGroups<T>> patternRoute : patternRouteList) {
       Matcher matcher =  patternRoute.getFirst().matcher(path);

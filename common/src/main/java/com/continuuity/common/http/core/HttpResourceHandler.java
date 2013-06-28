@@ -4,24 +4,26 @@
 package com.continuuity.common.http.core;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import org.apache.commons.beanutils.ConvertUtils;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-// TODO: lifecycle methods
+// TODO: Check path collision
 /**
  * HttpResourceHandler handles the http request. HttpResourceHandler looks up all Jax-rs annotations in classes
  * and dispatches to appropriate method on receiving requests.
@@ -34,11 +36,10 @@ public class HttpResourceHandler {
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
    * patternPathRouter which is routable by path to {@code HttpResourceModel} as destination of the route.
-   * @param handlers list of HttpHandlers.
+   * @param handlers Iterable of HttpHandler.
    */
-  private HttpResourceHandler(List<Object> handlers){
-
-    for (Object handler : handlers){
+  public HttpResourceHandler(Iterable<HttpHandler> handlers){
+    for (HttpHandler handler : handlers){
       if (!handler.getClass().getSuperclass().equals(Object.class)){
         LOG.warn("{} is inherited. The annotations from base case will not be inherited",
                  handler.getClass().getName());
@@ -51,14 +52,19 @@ public class HttpResourceHandler {
 
       for (Method method:  handler.getClass().getDeclaredMethods()){
         if (method.isAnnotationPresent(Path.class)){
-          Preconditions.checkArgument(method.getParameterTypes().length >= 1,
-                                      "No HttpResponder parameter in the http handler signature");
-          Preconditions.checkArgument(method.getParameterTypes()[0].isAssignableFrom(HttpResponder.class),
-                                      "HttpResponder should be the first argument in the http handler");
+          Preconditions.checkArgument(method.getParameterTypes().length >= 2,
+                                     "No HttpRequest and HttpResponder parameter in the http handler signature");
+          Preconditions.checkArgument(method.getParameterTypes()[0].isAssignableFrom(HttpRequest.class),
+                                     "HttpRequest should be the first argument in the http handler");
+          Preconditions.checkArgument(method.getParameterTypes()[1].isAssignableFrom(HttpResponder.class),
+                                     "HttpResponder should be the first argument in the http handler");
 
           String relativePath = method.getAnnotation(Path.class).value();
           String absolutePath = String.format("%s/%s", basePath, relativePath);
-          patternRouter.add(absolutePath, new HttpResourceModel(getHttpMethod(method), method, handler));
+          Set<HttpMethod> httpMethods = getHttpMethods(method);
+          Preconditions.checkArgument(httpMethods.size() >= 1,
+                                      String.format("No HttpMethod found for method: %s", method.getName()));
+          patternRouter.add(absolutePath, new HttpResourceModel(httpMethods, method, handler));
 
         } else {
           LOG.warn("No Path annotation for method {}. HTTP calls will not be routed to this method",
@@ -74,18 +80,20 @@ public class HttpResourceHandler {
    * @param method Method handling the http request.
    * @return String representation of HttpMethod from annotations or emptyString as a default.
    */
-  private String getHttpMethod(Method method){
+  private Set<HttpMethod> getHttpMethods(Method method){
+    Set<HttpMethod> httpMethods = Sets.newHashSet();
+
     if (method.isAnnotationPresent(GET.class)){
-      return HttpMethod.GET.getName();
+      httpMethods.add(HttpMethod.GET);
     } else if (method.isAnnotationPresent(PUT.class)){
-      return HttpMethod.PUT.getName();
+      httpMethods.add(HttpMethod.PUT);
     } else if (method.isAnnotationPresent(POST.class)){
-      return HttpMethod.POST.getName();
+      httpMethods.add(HttpMethod.POST);
     } else if (method.isAnnotationPresent(DELETE.class)){
-      return HttpMethod.DELETE.getName();
-    } else {
-      return "";
+      httpMethods.add(HttpMethod.DELETE);
     }
+
+    return httpMethods;
   }
 
   /**
@@ -99,7 +107,7 @@ public class HttpResourceHandler {
     Map<String, String> groupValues = Maps.newHashMap();
     List<HttpResourceModel> resourceModels = patternRouter.getDestinations(request.getUri(), groupValues);
 
-    HttpResourceModel httpResourceModel = filterResults(resourceModels, request.getMethod());
+    HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
 
     if (httpResourceModel != null){
       //Found a httpresource route to it.
@@ -108,13 +116,16 @@ public class HttpResourceHandler {
         Object object = httpResourceModel.getObject();
 
         //Setup args for reflection call
-        Object [] args = new Object[groupValues.size() + 1];
+        Object [] args = new Object[groupValues.size() + 2];
         int index = 0;
+        args[index] = request;
+        index++;
         args[index] = responder;
-        //TODO: Fix reflection call to work with Generic types other than String.
+
+        Class<?>[] parameterTypes = method.getParameterTypes();
         for (Map.Entry<String, String> entry : groupValues.entrySet()){
           index++;
-          args[index] = entry.getValue();
+          args[index] = ConvertUtils.convert(entry.getValue(), parameterTypes[index]);
         }
 
         method.invoke(object, args);
@@ -134,54 +145,20 @@ public class HttpResourceHandler {
   }
 
   /**
-   * Filter results by HttpMethod that is requested to be handled.
+   * Get HttpResourceModel which matches the HttpMethod of the request.
    * @param resourceModels List of ResourceModels
-   * @param method HttpMethod
-   * @return HttpResourceModel filtered by httpMethod that needs to be handled. null if there are no matches.
+   * @param targetHttpMethod HttpMethod
+   * @return HttpResourceModel that matches httpMethod that needs to be handled. null if there are no matches.
    */
-  private HttpResourceModel filterResults(List<HttpResourceModel> resourceModels, HttpMethod method){
+  private HttpResourceModel getMatchedResourceModel(List<HttpResourceModel> resourceModels,
+                                                    HttpMethod targetHttpMethod){
     for (HttpResourceModel resourceModel : resourceModels){
-      if (method.getName().toLowerCase().equals(resourceModel.getHttpMethod().toLowerCase())){
-        return resourceModel;
+      for (HttpMethod httpMethod : resourceModel.getHttpMethod()) {
+        if (targetHttpMethod.equals(httpMethod)){
+          return resourceModel;
+        }
       }
     }
     return null;
-  }
-
-  /**
-   * Builder for HttpResourceHandler.
-   */
-  public static final class Builder {
-    private List<Object> handlers;
-
-    public Builder(){
-      handlers = Lists.newArrayList();
-    }
-
-    /**
-     * Add HttpHandler - HttpHandler consists of methods that handle http requests with jersey annotations.
-     * @param handler instance of Handler.
-     * @return instance of Builder
-     */
-    public Builder addHandler(Object handler){
-      handlers.add(handler);
-      return this;
-    }
-
-    /**
-     * Build HttpResourceHandler.
-     * @return instance of {@code HttpResourceHandler}
-     */
-    public HttpResourceHandler build(){
-      //TODO: Check for path collision
-      return new HttpResourceHandler(handlers);
-    }
-  }
-
-  /**
-   * @return instance of {@code Builder}
-   */
-  public static Builder builder(){
-    return new Builder();
   }
 }

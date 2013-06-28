@@ -4,21 +4,30 @@ import com.continuuity.common.http.core.HttpDispatcher;
 import com.continuuity.common.http.core.HttpResourceHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.utils.PortDetector;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.HttpContentCompressor;
+import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -28,48 +37,52 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
- *
+ * Test the HttpServer
  */
 public class HttpServerTest {
 
   static int port;
-  static Channel serverChannel;
+  static NettyHttpService service;
 
   //TODO: Add more tests.
   @BeforeClass
-  public static void setup() throws IOException {
+  public static void setup() throws Exception {
     port = PortDetector.findFreePort();
-    ServerBootstrap bootstrap = new ServerBootstrap( new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
-                                                                                     Executors.newCachedThreadPool()));
 
-    HttpResourceHandler.Builder builder = HttpResourceHandler.builder();
-    builder.addHandler(new Handler());
-    HttpResourceHandler resourceHandler = builder.build();
+    List<HttpHandler> handlers = Lists.newArrayList();
+    handlers.add(new Handler());
 
+    NettyHttpService.Builder builder = NettyHttpService.builder();
+    builder.addHttpHandlers(handlers);
+    builder.setPort(port);
 
-    ChannelPipeline pipeline = bootstrap.getPipeline();
-    pipeline.addLast("decoder", new HttpRequestDecoder());
-    pipeline.addLast("encoder", new HttpResponseEncoder());
-    pipeline.addLast("compressor", new HttpContentCompressor());
-    pipeline.addLast("executor", new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(16, 1048576, 1048576)));
-    pipeline.addLast("dispatcher", new HttpDispatcher(resourceHandler));
+    service = builder.build();
+    service.startAndWait();
+    Service.State state = service.state();
+    assertEquals(Service.State.RUNNING, state);
+  }
 
-    InetSocketAddress address = new InetSocketAddress(port);
-    serverChannel = bootstrap.bind(address);
+  @AfterClass
+  public static void teardown() throws Exception {
+    service.shutDown();
   }
 
   @Test
@@ -94,7 +107,6 @@ public class HttpServerTest {
     map = gson.fromJson(content, Map.class);
     assertEquals(1, map.size());
     assertEquals("Handled get in tweets end-point, id: 1", map.get("status"));
-
   }
 
   @Test
@@ -113,6 +125,33 @@ public class HttpServerTest {
     assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testPutWithData() throws IOException {
+    String endPoint = String.format("http://localhost:%d/test/v1/facebook/1/message", port);
+    HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity("Hello, World"));
+    HttpResponse response = request(put);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    String content = getResponseContent(response);
+    Gson gson = new Gson();
+    Map<String, String> map = gson.fromJson(content, Map.class);
+    assertEquals(1, map.size());
+    assertEquals("Handled put in tweets end-point, id: 1. Content: Hello, World", map.get("result"));
+  }
+
+  @Test
+  public void testPostWithData() throws IOException {
+    String endPoint = String.format("http://localhost:%d/test/v1/facebook/1/message", port);
+    HttpPost post = new HttpPost(endPoint);
+    post.setEntity(new StringEntity("Hello, World"));
+    HttpResponse response = request(post);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    String content = getResponseContent(response);
+    Gson gson = new Gson();
+    Map<String, String> map = gson.fromJson(content, Map.class);
+    assertEquals(1, map.size());
+    assertEquals("Handled post in tweets end-point, id: 1. Content: Hello, World", map.get("result"));
+  }
 
   @Test
   public void testNonExistingMethods() throws IOException {
@@ -122,19 +161,11 @@ public class HttpServerTest {
     assertEquals(405, response.getStatusLine().getStatusCode());
   }
 
-
-  @AfterClass
-  public static void teardown(){
-    if(serverChannel != null){
-      serverChannel.close();
-    }
-  }
-
   @Path("/test/v1")
-  public static class Handler{
+  public static class Handler implements HttpHandler {
     @Path("resource")
     @GET
-    public void testGet(HttpResponder responder){
+    public void testGet(HttpRequest request, HttpResponder responder){
       JsonObject object = new JsonObject();
       object.addProperty("status", "Handled get in resource end-point");
       responder.sendJson(HttpResponseStatus.OK, object);
@@ -142,7 +173,7 @@ public class HttpServerTest {
 
     @Path("tweets/{id}")
     @GET
-    public void testGetTweet(HttpResponder responder, @PathParam("id") String id){
+    public void testGetTweet(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
       JsonObject object = new JsonObject();
       object.addProperty("status", String.format("Handled get in tweets end-point, id: %s", id));
       responder.sendJson(HttpResponseStatus.OK, object);
@@ -150,16 +181,59 @@ public class HttpServerTest {
 
     @Path("tweets/{id}")
     @PUT
-    public void testPutTweet(HttpResponder responder, @PathParam("id") String id){
+    public void testPutTweet(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
       JsonObject object = new JsonObject();
-      object.addProperty("status", String.format("Handled put in tweets end-point, id: %s", id));
+      object.addProperty("status", String.format("Handled get in tweets end-point, id: %s", id));
       responder.sendJson(HttpResponseStatus.OK, object);
     }
 
     @Path("facebook/{id}/message")
-    public void testNoMethodRoute(HttpResponder responder){
+    @DELETE
+    public void testNoMethodRoute(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
 
     }
+
+    @Path("facebook/{id}/message")
+    @PUT
+    public void testPutMessage(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
+      String message = String.format("Handled put in tweets end-point, id: %s. ", id);
+      try {
+        String data = getStringContent(request);
+        message = message.concat(String.format("Content: %s", data));
+      } catch (IOException e) {
+        //This condition should never occur
+        assertTrue(false);
+      }
+      JsonObject object = new JsonObject();
+      object.addProperty("result", message);
+      responder.sendJson(HttpResponseStatus.OK, object);
+    }
+
+    @Path("facebook/{id}/message")
+    @POST
+    public void testPostMessage(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
+      String message = String.format("Handled post in tweets end-point, id: %s. ", id);
+      try {
+        String data = getStringContent(request);
+        message = message.concat(String.format("Content: %s", data));
+      } catch (IOException e) {
+        //This condition should never occur
+        assertTrue(false);
+      }
+      JsonObject object = new JsonObject();
+      object.addProperty("result", message);
+      responder.sendJson(HttpResponseStatus.OK, object);
+    }
+
+    private String getStringContent(HttpRequest request) throws IOException {
+      return IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
+    }
+
+    @Override
+    public void init() {}
+
+    @Override
+    public void destroy() {}
   }
 
   private HttpResponse request(HttpUriRequest uri) throws IOException {
@@ -175,5 +249,4 @@ public class HttpServerTest {
     bos.close();
     return result;
   }
-
 }

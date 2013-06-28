@@ -28,7 +28,6 @@ import java.io.OutputStreamWriter;
  * back to the client in json format.
  */
 public class HttpResponder {
-
   private final Channel channel;
 
   public HttpResponder(Channel channel) {

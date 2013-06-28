@@ -3,47 +3,44 @@
  */
 
 /**
- * HTTP dispatchers and handlers libraries designed to be used with netty. Uses Jax-RS annotations to get the
- * Paths and HttpMethods.
- * Note: Only supports the following annotations: Path, GET, PUT, POST, DELETE.
- * Note: Doesn't support getting Annotations used in base class.
+ * Service and components to build Netty based Http web service.
+ * {@code NettyHttpService} sets up the necessary pipeline and manages starting, stopping,
+ * state-management of the web service.
+ *
+ * In-order to handle http requests, {@code HttpHandler} must be implemented. The methods
+ * in the classes implemented from {@code HttpHandler} must be annotated with Jersey annotations to
+ * specify http uri paths and http methods.
+ * Note: Only supports the following annotations: Path, PathParams, GET, PUT, POST, DELETE.
+ * Note: Doesn't support getting Annotations from base class if the HttpHandler implements also extends
+ * a class with annotation.
  *
  * Sample usage Handlers and Netty service setup.
  *
- * Handler code:
+ * //Setup Handlers
  *
  * @Path("/common/v1/")
- * public class ApiHandler{
+ * public class ApiHandler implements HttpHandler{
  *   @Path("widgets")
  *   @GET
- *   public void widgetHandler(HttpResponder responder){
+ *   public void widgetHandler(HttpRequest request, HttpResponder responder){
  *      responder.sendJson(HttpResponseStatus.OK, "{\"key\": \"value\"}");
  *   }
  * }
  *
- * Netty Services:
+ * //Set up and build Netty pipeline
  *
- * //Instantiate ServerBootstrap
- * ServerBootstrap bootstrap = new ServerBootstrap( new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
- *                                                                                  Executors.newCachedThreadPool()));
+ * List<ApiHandler> handlers = Lists.newArrayList();
+ * handlers.add(new Handler());
  *
- * //Setup Resource handlers
- * HttpResourceHandler.Builder builder = HttpResourceHandler.builder();
- * builder.addHandler(new ApiHandler());
- * HttpResourceHandler resourceHandler = builder.build();
+ * NettyHttpService.Builder builder = NettyHttpService.builder();
+ * builder.addHttpHandlers(handlers);
+ * builder.setPort(8989);
  *
- * //Setup pipeline
- * ChannelPipeline pipeline = bootstrap.getPipeline();
- * pipeline.addLast("decoder", new HttpRequestDecoder());
- * pipeline.addLast("encoder", new HttpResponseEncoder());
- * pipeline.addLast("compressor", new HttpContentCompressor());
- * pipeline.addLast("executor", new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(16, 1048576, 1048576)));
- * pipeline.addLast("dispatcher", new HttpDispatcher(resourceHandler));
+ * Channel service = builder.build();
+ * service.startAndWait();
  *
- * //bind to address
- * InetSocketAddress address = new InetSocketAddress(9090);
- * Channel serverChannel = bootstrap.bind(address);
- *
+ * //Stop the web-service
+ * service.shutdown();
  */
 package com.continuuity.common.http.core;
 
