@@ -28,12 +28,11 @@ public final class MensaMetricsReporter  {
   private Future futureDispatcher;
 
   public MensaMetricsReporter(CConfiguration config, List<String> metricNames, String tags, int interval) {
-//    if (StringUtils.isNotEmpty(config.get("opentsdb.server.address"))) {
-//      tsdbHostName = config.get("opentsdb.server.address");
-//    } else {
-//      tsdbHostName = "localhost";
-//    }
-    tsdbHostName = "mon101.ops.sl";
+    if (StringUtils.isNotEmpty(config.get("opentsdb.server.address"))) {
+      tsdbHostName = config.get("opentsdb.server.address");
+    } else {
+      tsdbHostName = "localhost";
+    }
     if (StringUtils.isNotEmpty(config.get("opentsdb.server.port"))) {
       tsdbPort = Integer.valueOf(config.get("opentsdb.server.port"));
     } else {
