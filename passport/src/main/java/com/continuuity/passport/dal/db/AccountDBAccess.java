@@ -596,7 +596,4 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       close(connection, ps);
     }
   }
-
-
-
 }
