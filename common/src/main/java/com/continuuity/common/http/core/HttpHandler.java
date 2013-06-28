@@ -15,7 +15,8 @@ package com.continuuity.common.http.core;
  *    public void init(){
  *      //Do some startup time stuff
  *    }
- *    @Override void destroy(){
+ *    @Override
+ *    public void destroy(){
  *     //Do some shutdown stuff
  *    }
  *

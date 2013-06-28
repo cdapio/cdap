@@ -43,7 +43,7 @@ public class HttpResourceHandler implements HttpHandler {
    */
   public HttpResourceHandler(Iterable<HttpHandler> handlers){
     //Store the handlers to call init and destroy on all handlers.
-    handlers = Lists.newArrayList(handlers);
+    this.handlers = Lists.newArrayList(handlers);
     for (HttpHandler handler : handlers){
       if (!handler.getClass().getSuperclass().equals(Object.class)){
         LOG.warn("{} is inherited. The annotations from base case will not be inherited",
@@ -169,6 +169,7 @@ public class HttpResourceHandler implements HttpHandler {
 
   @Override
   public void init() {
+    Preconditions.checkNotNull(handlers, "Http Handlers is not initialized");
     for (HttpHandler handler : handlers){
       handler.init();
     }
@@ -176,6 +177,7 @@ public class HttpResourceHandler implements HttpHandler {
 
   @Override
   public void destroy() {
+   Preconditions.checkNotNull(handlers, "Http Handlers is not initialized");
    for (HttpHandler handler : handlers){
       handler.destroy();
     }
