@@ -778,6 +778,45 @@
 
   </script>
 
+  <script type="text/x-handlebars" data-template-name="AnalyzeEmbeddable">
+    <div class="chart-controls">
+      <div class="dropdown">
+      <!-- Link or button to toggle dropdown -->
+        <a id="drop1" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+      <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+        <li><a tabindex="-1" href="#">Action</a></li>
+        <li><a tabindex="-1" href="#">Another action</a></li>
+        <li><a tabindex="-1" href="#">Something else here</a></li>
+        <li class="divider"></li>
+        <li><a tabindex="-1" href="#">Separated link</a></li>
+      </ul>
+    </div>
+      <span>
+      <button class="btn dropdown-toggle" data-toggle="dropdown">
+        {{controller.format}}
+        <span class="caret"></span>
+      </button>   
+      <ul class="dropdown-menu">
+        <li><a {{action "changeMetricFormat" "rate"}}>Rate</a></li>
+        <li><a {{action "changeMetricFormat" "count"}}>Count</a></li>
+      </ul>
+      </span>
+      <span>
+      <button class="btn dropdown-toggle" data-toggle="dropdown">
+        {{controller.duration}} Days
+        <span class="caret"></span>
+      </button>   
+      <ul class="dropdown-menu">
+        <li><a {{action "changeMetricDuration" "7"}}>7 Days</a></li>
+        <li><a {{action "changeMetricDuration" "14"}}>14 Days</a></li>
+        <li><a {{action "changeMetricDuration" "30"}}>30 Days</a></li>
+      </ul>
+      </span>
+      <br />
+    </div>
+    <div id="metrics-explorer-widget"></div>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="Analyze">
     <div id="panels">
 
@@ -788,12 +827,12 @@
         </div>
 
         <div class="panel-body">
-            {{view C.Embed.Analyze}}
         </div>
-
+          {{view C.Embed.Analyze}}
       </div>
     </div>
   </script>
+
 
   <script type="text/x-handlebars" data-template-name="PageNotFound">
 

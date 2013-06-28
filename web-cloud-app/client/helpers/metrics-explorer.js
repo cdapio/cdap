@@ -103,9 +103,8 @@ define(['d3', 'nvd3'], function () {
   };
 
   chartHelper.Chart = function(data, divId) {
-    console.log(data);
-    console.log(divId);
-    var margin = {top: 20, right: 80, bottom: 30, left: 50},
+
+    var margin = {top: 20, right: 80, bottom: 30, left: 80},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -121,14 +120,16 @@ define(['d3', 'nvd3'], function () {
 
     var xAxis = d3.svg.axis()
         .scale(x)
-        .orient("bottom");
+        .orient("bottom")
+        .ticks(10);
 
     var yAxis = d3.svg.axis()
         .scale(y)
-        .orient("left");
+        .orient("left")
+        .ticks(10);
 
     var line = d3.svg.line()
-        .interpolate("basis")
+        .interpolate("cardinal")
         .x(function(d) { return x(d.date); })
         .y(function(d) { return y(d.temperature); });
 
@@ -173,6 +174,23 @@ define(['d3', 'nvd3'], function () {
         .style("text-anchor", "end")
         .text("Events");
 
+    svg.append("g")         
+        .attr("class", "grid")
+        .style("stroke-dasharray", ("3, 3"))
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis
+            .tickSize(-height, 0, 0)
+            .tickFormat("")
+        )
+
+    svg.append("g")         
+        .attr("class", "grid")
+        .style("stroke-dasharray", ("3, 3"))
+        .call(yAxis
+            .tickSize(-width, 0, 0)
+            .tickFormat("")
+        )
+
     var city = svg.selectAll(".city")
         .data(cities)
       .enter().append("g")
@@ -189,13 +207,14 @@ define(['d3', 'nvd3'], function () {
         .attr("x", 3)
         .attr("dy", ".35em")
         .text(function(d) { return d.name; });
-    g.selectAll("scatter-dots")
-  .data(data)  // using the values in the ydata array
-  .enter().append("svg:circle")  // create a new circle for each value
-      .attr("cy", function (d) { return d.timestamp; } ) // translate y value to a pixel
-      .attr("cx", function (d,i) { return d.value; } ) // translate x value
-      .attr("r", 10) // radius of circle
-      .style("opacity", 0.6);
+
+    svg.selectAll("dot")
+        .data(data)
+    .enter().append("circle")
+        .attr("r", 3.5)
+        .attr("cx", function(d) { return x(d.timestamp); })
+        .attr("cy", function(d) { return y(d.value); });
+
   };
 
   return chartHelper;
