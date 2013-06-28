@@ -28,12 +28,13 @@ import java.util.concurrent.atomic.AtomicLong;
  * Webservice implemented using the netty framework. Implements Guava's Service interface to manage the states
  * of the webservice.
  */
-public class NettyHttpService extends AbstractIdleService {
+public final class NettyHttpService extends AbstractIdleService {
+
+  private static final Logger LOG  = LoggerFactory.getLogger(NettyHttpService.class);
 
   private ServerBootstrap bootstrap;
   private Channel channel;
   private int port;
-  private static final Logger LOG  = LoggerFactory.getLogger(NettyHttpService.class);
   private HttpResourceHandler resourceHandler;
 
 
@@ -78,9 +79,11 @@ public class NettyHttpService extends AbstractIdleService {
 
   /**
    * Bootstrap the pipeline.
-   * 1) Create Execution handler
-   * 2) Setup HttpResourceHandler
-   * 3) Setup the netty pipeline.
+   * <ul>
+   *   <li>Create Execution handler</li>
+   *   <li>Setup Http resource handler</li>
+   *   <li>Setup the netty pipeline</li>
+   * </ul>
    * @param threadPoolSize Size of threadpool in threadpoolExecutor
    * @param threadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
    * @param httpHandlers Handlers for httpRequests.

@@ -4,8 +4,8 @@
 package com.continuuity.common.http.core;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.beanutils.ConvertUtils;
@@ -21,6 +21,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +31,7 @@ import java.util.Set;
  * HttpResourceHandler handles the http request. HttpResourceHandler looks up all Jax-rs annotations in classes
  * and dispatches to appropriate method on receiving requests.
  */
-public class HttpResourceHandler implements HttpHandler {
+public final class HttpResourceHandler implements HttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpResourceHandler.class);
   private PatternPathRouterWithGroups<HttpResourceModel> patternRouter = new PatternPathRouterWithGroups<HttpResourceModel>();
@@ -43,7 +44,7 @@ public class HttpResourceHandler implements HttpHandler {
    */
   public HttpResourceHandler(Iterable<HttpHandler> handlers){
     //Store the handlers to call init and destroy on all handlers.
-    this.handlers = Lists.newArrayList(handlers);
+    this.handlers = ImmutableList.copyOf(handlers);
     for (HttpHandler handler : handlers){
       if (!handler.getClass().getSuperclass().equals(Object.class)){
         LOG.warn("{} is inherited. The annotations from base case will not be inherited",
@@ -57,12 +58,13 @@ public class HttpResourceHandler implements HttpHandler {
 
       for (Method method:  handler.getClass().getDeclaredMethods()){
         if (method.isAnnotationPresent(Path.class)){
+
           Preconditions.checkArgument(method.getParameterTypes().length >= 2,
-                                     "No HttpRequest and HttpResponder parameter in the http handler signature");
+                                      "No HttpRequest and HttpResponder parameter in the http handler signature");
           Preconditions.checkArgument(method.getParameterTypes()[0].isAssignableFrom(HttpRequest.class),
-                                     "HttpRequest should be the first argument in the http handler");
+                                      "HttpRequest should be the first argument in the http handler");
           Preconditions.checkArgument(method.getParameterTypes()[1].isAssignableFrom(HttpResponder.class),
-                                     "HttpResponder should be the first argument in the http handler");
+                                      "HttpResponder should be the first argument in the http handler");
 
           String relativePath = method.getAnnotation(Path.class).value();
           String absolutePath = String.format("%s/%s", basePath, relativePath);
@@ -90,15 +92,18 @@ public class HttpResourceHandler implements HttpHandler {
 
     if (method.isAnnotationPresent(GET.class)){
       httpMethods.add(HttpMethod.GET);
-    } else if (method.isAnnotationPresent(PUT.class)){
+    }
+    if (method.isAnnotationPresent(PUT.class)){
       httpMethods.add(HttpMethod.PUT);
-    } else if (method.isAnnotationPresent(POST.class)){
+    }
+    if (method.isAnnotationPresent(POST.class)){
       httpMethods.add(HttpMethod.POST);
-    } else if (method.isAnnotationPresent(DELETE.class)){
+    }
+    if (method.isAnnotationPresent(DELETE.class)){
       httpMethods.add(HttpMethod.DELETE);
     }
 
-    return httpMethods;
+    return ImmutableSet.copyOf(httpMethods);
   }
 
   /**
@@ -118,7 +123,7 @@ public class HttpResourceHandler implements HttpHandler {
       //Found a httpresource route to it.
       try {
         Method method = httpResourceModel.getMethod();
-        Object object = httpResourceModel.getObject();
+        Object object = httpResourceModel.getHttpHandler();
 
         //Setup args for reflection call
         Object [] args = new Object[groupValues.size() + 2];
@@ -169,7 +174,6 @@ public class HttpResourceHandler implements HttpHandler {
 
   @Override
   public void init() {
-    Preconditions.checkNotNull(handlers, "Http Handlers is not initialized");
     for (HttpHandler handler : handlers){
       handler.init();
     }
@@ -177,7 +181,6 @@ public class HttpResourceHandler implements HttpHandler {
 
   @Override
   public void destroy() {
-   Preconditions.checkNotNull(handlers, "Http Handlers is not initialized");
    for (HttpHandler handler : handlers){
       handler.destroy();
     }

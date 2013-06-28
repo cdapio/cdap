@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Parameters within braces "{}" are treated as template parameter (a named wild-card pattern).
  * @param <T> represents the destination of the routes.
  */
-public class PatternPathRouterWithGroups<T> {
+public final class PatternPathRouterWithGroups<T> {
 
   private final List<ImmutablePair<Pattern, RouteDestinationWithGroups<T>>> patternRouteList;
   private final Pattern groupPattern;
@@ -37,8 +37,12 @@ public class PatternPathRouterWithGroups<T> {
    * @param destination Destination of the path.
    */
   public void add(final String source, final T destination){
-    String path = (source.endsWith("/")) ? source.substring(0, source.length() - 1) :
-                                           source;
+
+    // replace multiple slashes with a single slash.
+    String cleanSource = source.replaceAll("(/)+", "/");
+
+    String path = (source.endsWith("/")) ? cleanSource.substring(0, cleanSource.length() - 1) :
+                                           cleanSource;
 
     String [] parts = path.split("/");
     StringBuilder sb =  new StringBuilder();
@@ -72,10 +76,14 @@ public class PatternPathRouterWithGroups<T> {
    * @return List of Destinations matching the given route.
    */
   public List<T> getDestinations(final String path, final Map<String, String> groupNameValues){
+
+    // replace multiple slashes with a single slash.
+    String cleanPath = path.replaceAll("(/)+", "/");
+
     // TODO: Clean up the return type.
     List<T> result = Lists.newArrayList();
     for (ImmutablePair<Pattern, RouteDestinationWithGroups<T>> patternRoute : patternRouteList) {
-      Matcher matcher =  patternRoute.getFirst().matcher(path);
+      Matcher matcher =  patternRoute.getFirst().matcher(cleanPath);
       if (matcher.matches()){
         int matchIndex = 1;
         for (String name : patternRoute.getSecond().getGroupNames()){
@@ -93,7 +101,7 @@ public class PatternPathRouterWithGroups<T> {
    * Helper class to store the groupNames and Destination.
    * @param <T> Destination.
    */
-  private class RouteDestinationWithGroups<T> {
+  private final class RouteDestinationWithGroups<T> {
 
     private final T destination;
     private final List<String> groupNames;

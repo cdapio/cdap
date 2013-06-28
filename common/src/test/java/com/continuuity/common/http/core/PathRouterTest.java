@@ -23,6 +23,7 @@ public class PathRouterTest {
     pathRouter.add("/baz/bar", "bazbar" );
     pathRouter.add("/bar", "bar" );
     pathRouter.add("/foo/bar", "foobar");
+    pathRouter.add("//multiple/slash//route", "multipleslashroute");
 
     Map<String, String> emptyGroupValues = Maps.newHashMap();
     Map<String, String> groupValues = Maps.newHashMap();
@@ -53,6 +54,11 @@ public class PathRouterTest {
     routes = pathRouter.getDestinations("/foo/bar", emptyGroupValues);
     assertEquals(1, routes.size());
     assertEquals("foobar", routes.get(0));
+
+    routes = pathRouter.getDestinations("/multiple/slash/route", emptyGroupValues);
+    assertEquals(1, routes.size());
+    assertEquals("multipleslashroute", routes.get(0));
+
 
     routes = pathRouter.getDestinations("/foo/bar/bazooka", emptyGroupValues);
     assertEquals(0, routes.size());
