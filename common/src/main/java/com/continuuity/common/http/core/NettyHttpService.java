@@ -114,6 +114,7 @@ public final class NettyHttpService extends AbstractIdleService {
                                                                     .setNameFormat("service-worker")
                                                                     .build());
 
+    //Server bootstrap with default worker threads (2 * number of cores)
     bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
 
     resourceHandler = new HttpResourceHandler(httpHandlers);
