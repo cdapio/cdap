@@ -18,7 +18,7 @@ process.env.NODE_ENV = 'development';
 /**
  * Log level.
  */
-var logLevel = 'TRACE';
+var logLevel = 'INFO';
 
 var DevServer = function() {
   DevServer.super_.call(this, __dirname, logLevel);
