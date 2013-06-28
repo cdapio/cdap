@@ -177,6 +177,8 @@ rpm.doFirst {
  */
 task tgz(type: Tar, dependsOn : ['prepackager']) {
   compression = Compression.GZIP
+  baseName = "continuuity-$baseName"
+  version = getPomVersion()
   includeEmptyDirs false
   from "$project.buildDir/stage-packaging"
   eachFile { it.setPath(it.getPath().replaceFirst("^opt/continuuity/$project.name/", "continuuity-$project.name-$version/")) }
@@ -203,6 +205,7 @@ if(project.name == 'distributions') {
   artifacts {
     packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
     packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
+    packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.name}"
   }
 }
 
@@ -227,3 +230,5 @@ uploadPackages {
 
 uploadPackages.dependsOn debian
 uploadPackages.dependsOn rpm
+uploadPackages.dependsOn tgz
+
