@@ -38,6 +38,7 @@ public final class NettyHttpService extends AbstractIdleService {
   private Channel channel;
   private int port;
 
+  private int servicePort;
   private final int threadPoolSize;
   private final long threadKeepAliveSecs;
   private final Set<HttpHandler> httpHandlers;
@@ -126,6 +127,15 @@ public final class NettyHttpService extends AbstractIdleService {
     bootStrap(threadPoolSize, threadKeepAliveSecs, httpHandlers);
     InetSocketAddress address = new InetSocketAddress(port);
     channel = bootstrap.bind(address);
+    servicePort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
+
+  }
+
+  /**
+   * @return port where the service is running.
+   */
+  public int getServicePort() {
+    return servicePort;
   }
 
   @Override
@@ -147,7 +157,7 @@ public final class NettyHttpService extends AbstractIdleService {
     private Builder(){
       threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
       threadKeepAliveSecs = DEFAULT_THREAD_KEEP_ALIVE_TIME_SECS;
-      port = -1;
+      port = 0;
     }
 
     private Iterable<HttpHandler> handlers;
@@ -155,6 +165,11 @@ public final class NettyHttpService extends AbstractIdleService {
     private int port;
     private long threadKeepAliveSecs;
 
+    /**
+     * Add HttpHandlers that service the request.
+     * @param handlers Iterable of HttpHandlers.
+     * @return instance of {@code Builder}.
+     */
     public Builder addHttpHandlers(Iterable<HttpHandler> handlers){
       this.handlers = handlers;
       return this;
@@ -170,15 +185,21 @@ public final class NettyHttpService extends AbstractIdleService {
       return this;
     }
 
-    public NettyHttpService build(){
-      Preconditions.checkArgument(port != -1, "Port must be specified in the builder for the netty web service");
-      return new NettyHttpService(port, threadPoolSize, threadKeepAliveSecs, handlers);
-    }
-
+    /**
+     * Set the port on which the service should listen to.
+     * By default the service will run on a random port.
+     * @param port port on which the service should listen to.
+     * @return instance of {@code Builder}.
+     */
     public Builder setPort(int port){
       this.port = port;
       return this;
     }
+
+    public NettyHttpService build(){
+      return new NettyHttpService(port, threadPoolSize, threadKeepAliveSecs, handlers);
+    }
+
 
   }
 }

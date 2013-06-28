@@ -65,19 +65,18 @@ public class HttpServerTest {
   //TODO: Add more tests.
   @BeforeClass
   public static void setup() throws Exception {
-    port = PortDetector.findFreePort();
 
     List<HttpHandler> handlers = Lists.newArrayList();
     handlers.add(new Handler());
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
-    builder.setPort(port);
 
     service = builder.build();
     service.startAndWait();
     Service.State state = service.state();
     assertEquals(Service.State.RUNNING, state);
+    port = service.getServicePort();
   }
 
   @AfterClass
