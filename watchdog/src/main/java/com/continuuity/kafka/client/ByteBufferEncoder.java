@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.metrics.kafka;
+package com.continuuity.kafka.client;
 
 import kafka.serializer.Encoder;
 import kafka.utils.VerifiableProperties;
