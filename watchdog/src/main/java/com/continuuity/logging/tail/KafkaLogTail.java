@@ -5,21 +5,28 @@
 package com.continuuity.logging.tail;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.logback.kafka.KafkaTopic;
 import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
+import com.continuuity.common.logging.logback.serialize.LogSchema;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.logging.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
+import com.continuuity.logging.save.FileMetaDataManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
+import org.apache.avro.Schema;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MD5Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +34,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * Tails logs by reading the log messages from Kafka.
@@ -39,29 +48,38 @@ public final class KafkaLogTail implements LogTail {
   private final String topic;
   private final int numPartitions;
   private final LoggingEventSerializer serializer;
+  private final FileMetaDataManager fileMetaDataManager;
+  private final Configuration hConfig;
+  private final Schema schema;
 
   private final int kafkaTailFetchTimeoutMs = 300;
 
   /**
    * Creates a KafkaLogTail object.
-   * @param configuration configuration object containing Kafka seed brokers and number of Kafka partitions for log
-   *                      topic.
+   * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public KafkaLogTail(@Assisted CConfiguration configuration) {
+  public KafkaLogTail(OperationExecutor opex, OperationContext operationContext, CConfiguration cConfig,
+                      Configuration hConfig) {
     try {
       this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(
-        configuration.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
+        cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
       Preconditions.checkArgument(!this.seedBrokers.isEmpty(), "Kafka seed brokers list is empty!");
 
       this.topic = KafkaTopic.getTopic();
       Preconditions.checkArgument(!this.topic.isEmpty(), "Kafka topic is emtpty!");
 
-      this.numPartitions = configuration.getInt(LoggingConfiguration.NUM_PARTITIONS, -1);
+      this.numPartitions = cConfig.getInt(LoggingConfiguration.NUM_PARTITIONS, -1);
       Preconditions.checkArgument(this.numPartitions > 0,
                                   "numPartitions should be greater than 0. Got numPartitions=%s", this.numPartitions);
 
       this.serializer = new LoggingEventSerializer();
+
+      this.fileMetaDataManager = new FileMetaDataManager(opex, operationContext,
+                                                         LoggingConfiguration.LOG_META_DATA_TABLE);
+
+      this.hConfig = hConfig;
+      this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -110,6 +128,35 @@ public final class KafkaLogTail implements LogTail {
         LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
                                 topic, partition), e);
       }
+    }
+  }
+
+  @Override
+  public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
+                     com.continuuity.logging.tail.Callback callback) {
+    try {
+      Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+
+      SortedMap<Long, Path> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
+      Path prevFile = null;
+      List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+      for (Map.Entry<Long, Path> entry : sortedFiles.entrySet()) {
+        if (entry.getKey() >= fromTimeMs && entry.getKey() < toTimeMs && prevFile != null) {
+          files.add(prevFile);
+        }
+        prevFile = entry.getValue();
+      }
+
+      if (prevFile != null) {
+        files.add(prevFile);
+      }
+
+      AvroFileLogReader logReader = new AvroFileLogReader(hConfig, schema);
+      for (Path file : files) {
+        logReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+      }
+    } catch (OperationException e) {
+      throw  Throwables.propagate(e);
     }
   }
 

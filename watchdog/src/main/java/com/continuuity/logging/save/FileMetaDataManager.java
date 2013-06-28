@@ -6,21 +6,26 @@ package com.continuuity.logging.save;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.table.Scanner;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * Handles reading/writing of file metadata.
@@ -39,15 +44,53 @@ public final class FileMetaDataManager {
     this.table = table;
   }
 
-  public void writeMetaData(LoggingContext loggingContext, long startTime, Path path) throws OperationException {
+  /**
+   * Persistes meta data associated with a log file.
+   * @param loggingContext logging context containing the meta data.
+   * @param startTimeMs start log time associated with the file.
+   * @param path log file.
+   * @throws OperationException
+   */
+  public void writeMetaData(LoggingContext loggingContext, long startTimeMs, Path path) throws OperationException {
     Write writeOp = new Write(table,
                               Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition())),
-                              Bytes.toBytes(startTime),
+                              Bytes.toBytes(startTimeMs),
                               Bytes.toBytes(path.toUri().toString())
                               );
     opex.commit(operationContext, writeOp);
   }
 
+  /**
+   * Returns a list of log files for a logging context.
+   * @param loggingContext logging context.
+   * @return Sorted map containing key as start time, and value as log file.
+   * @throws OperationException
+   */
+  public SortedMap<Long, Path> listFiles(LoggingContext loggingContext)
+    throws OperationException {
+    OperationResult<Map<byte[], byte[]>> cols =
+      opex.execute(operationContext,
+                   new ReadColumnRange(Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition())),
+                                       Bytes.toBytes(0)));
+
+    if (cols.isEmpty() || cols.getValue() != null) {
+      return ImmutableSortedMap.of();
+    }
+
+    SortedMap<Long, Path> files = Maps.newTreeMap();
+    for (Map.Entry<byte[], byte[]> entry : cols.getValue().entrySet()) {
+      files.put(Bytes.toLong(entry.getKey()), new Path(Bytes.toString(entry.getValue())));
+    }
+    return files;
+  }
+
+  /**
+   * Deletes metat data until a given time.
+   * @param tillTime time till the meta data will be deleted.
+   * @param callback callback called before deleting a meta data column.
+   * @return total number of columns deleted.
+   * @throws OperationException
+   */
   public int cleanMetaData(long tillTime, DeleteCallback callback) throws OperationException {
     byte [] tillTimeBytes = Bytes.toBytes(tillTime);
 

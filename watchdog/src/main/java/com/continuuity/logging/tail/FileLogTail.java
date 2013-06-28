@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.generic.GenericData;
@@ -43,6 +42,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -57,7 +57,7 @@ public class FileLogTail implements LogTail {
   private final Schema schema;
 
   @Inject
-  public FileLogTail(@Assisted CConfiguration cConf, @Assisted Configuration hConf) {
+  public FileLogTail(CConfiguration cConf, Configuration hConf) {
     this.hConf = hConf;
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
@@ -76,7 +76,7 @@ public class FileLogTail implements LogTail {
     Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
     PositionHint positionHint = new PositionHint(positionHintString);
     try {
-      TreeMap<Long, FileStatus> sortedFiles = getTailFiles(null);
+      SortedMap<Long, FileStatus> sortedFiles = getTailFiles(null);
       if (sortedFiles.isEmpty()) {
         return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
       }
@@ -90,7 +90,7 @@ public class FileLogTail implements LogTail {
       Path prevPath = null;
       List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
       for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-        if (entry.getKey() >= fromTimeMs) {
+        if (entry.getKey() >= fromTimeMs && prevPath != null) {
           tailFiles.add(prevPath);
         }
         prevInterval = entry.getKey();
@@ -101,11 +101,17 @@ public class FileLogTail implements LogTail {
         tailFiles.add(prevPath);
       }
 
-      List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+      final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
       for (Path file : tailFiles) {
-        Collection<ILoggingEvent> events = readLogNext(file, logFilter, fromTimeMs, maxEvents - loggingEvents.size());
-        loggingEvents.addAll(events);
-        if (events.size() >= maxEvents) {
+        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(),
+                          new Callback() {
+                            @Override
+                            public void handle(ILoggingEvent event) {
+                              loggingEvents.add(event);
+                            }
+                          });
+        if (loggingEvents.size() >= maxEvents) {
           break;
         }
       }
@@ -121,84 +127,18 @@ public class FileLogTail implements LogTail {
     }
   }
 
-  private Collection<ILoggingEvent> readLogNext(Path file, Filter logFilter, long fromTimeMs, int maxEvents) {
-    int count = 0;
-    FSDataInputStream inputStream = null;
-    DataFileReader<GenericRecord> dataFileReader = null;
-    List<ILoggingEvent> loggingEvents = Lists.newArrayListWithExpectedSize(maxEvents);
-    try {
-      FileContext fileContext = FileContext.getFileContext(hConf);
-      FileStatus fileStatus = fileContext.getFileStatus(file);
-      inputStream = fileContext.open(file);
-      dataFileReader = new DataFileReader<GenericRecord>(new AvroFSInput(inputStream, fileStatus.getLen()),
-                                                         new GenericDatumReader<GenericRecord>(schema));
-
-      ILoggingEvent loggingEvent;
-      GenericRecord datum;
-      if (dataFileReader.hasNext()) {
-        datum = dataFileReader.next();
-        loggingEvent = LoggingEvent.decode(datum);
-        long prevPrevSyncPos = 0;
-        long prevSyncPos;
-        // Seek to time fromTimeMs
-        while (loggingEvent.getTimeStamp() < fromTimeMs && dataFileReader.hasNext()) {
-          // Seek to the next sync point
-          long curPos = dataFileReader.tell();
-          prevSyncPos = dataFileReader.previousSync();
-          prevPrevSyncPos = prevSyncPos;
-          dataFileReader.sync(curPos);
-          if (dataFileReader.hasNext()) {
-            loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
-          }
-        }
-
-        // We're now likely past the record with fromTimeMs, rewind to the previous sync point
-        dataFileReader.sync(prevPrevSyncPos);
-
-        // Start reading events from file
-        long prevTimestamp = -1;
-        while (dataFileReader.hasNext()) {
-          loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
-          if (loggingEvent.getTimeStamp() >= fromTimeMs && logFilter.match(loggingEvent)) {
-            ++count;
-            if (count > maxEvents && loggingEvent.getTimeStamp() != prevTimestamp) {
-              break;
-            }
-            loggingEvents.add(loggingEvent);
-          }
-          prevTimestamp = loggingEvent.getTimeStamp();
-        }
-      }
-      return loggingEvents;
-    } catch (Exception e) {
-      LOG.error(String.format("Got exception while reading log file %s", file.toUri()), e);
-      throw Throwables.propagate(e);
-    } finally {
-      try {
-        if (dataFileReader != null) {
-          dataFileReader.close();
-        }
-        if (inputStream != null) {
-          inputStream.close();
-        }
-      } catch (IOException e) {
-        LOG.error(String.format("Got exception while closing log file %s", file.toUri()), e);
-      }
-    }
-  }
-
   @Override
   public Result getLogPrev(LoggingContext loggingContext, String positionHintString, int maxEvents) {
     Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
     PositionHint positionHint = new PositionHint(positionHintString);
     try {
-      TreeMap<Long, FileStatus> sortedFiles = getTailFiles(Collections.<Long>reverseOrder());
+      SortedMap<Long, FileStatus> sortedFiles = getTailFiles(Collections.<Long>reverseOrder());
       if (sortedFiles.isEmpty()) {
         return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
       }
 
       long fromTimeMs = positionHint.isValid() ? positionHint.getPrevTimestamp() :
-        sortedFiles.firstEntry().getValue().getModificationTime();
+        sortedFiles.get(sortedFiles.firstKey()).getModificationTime();
 
       List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
       for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
@@ -221,6 +161,39 @@ public class FileLogTail implements LogTail {
         return new Result(loggingEvents,
                           PositionHint.genPositionHint(loggingEvents.get(0).getTimeStamp() - 1,
                             loggingEvents.get(loggingEvents.size() - 1).getTimeStamp() + 1), positionHint.isValid());
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Callback callback) {
+    try {
+      Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+      SortedMap<Long, FileStatus> sortedFiles = getTailFiles(null);
+      if (sortedFiles.isEmpty()) {
+        return;
+      }
+
+      long prevInterval = -1;
+      Path prevPath = null;
+      List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+      for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
+        if (entry.getKey() >= fromTimeMs && entry.getKey() < toTimeMs) {
+          files.add(prevPath);
+        }
+        prevInterval = entry.getKey();
+        prevPath = entry.getValue().getPath();
+      }
+
+      if (prevInterval != -1) {
+        files.add(prevPath);
+      }
+
+      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+      for (Path file : files) {
+        logReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -283,7 +256,7 @@ public class FileLogTail implements LogTail {
     }
   }
 
-  private TreeMap<Long, FileStatus> getTailFiles(Comparator<Long> comparator) throws IOException {
+  private SortedMap<Long, FileStatus> getTailFiles(Comparator<Long> comparator) throws IOException {
     TreeMap<Long, FileStatus> sortedFiles = Maps.newTreeMap(comparator);
     FileContext fileContext = FileContext.getFileContext(hConf);
     RemoteIterator<FileStatus> filesIt = fileContext.listStatus(logBaseDir);

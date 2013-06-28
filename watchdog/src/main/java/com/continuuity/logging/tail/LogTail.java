@@ -29,6 +29,15 @@ public interface LogTail {
   Result getLogPrev(LoggingContext loggingContext, String positionHint, int maxEvents);
 
   /**
+   * Returns log events of a Flow, Procedure or Map between given times.
+   * @param loggingContext context to look up log events.
+   * @param fromTimeMs start time.
+   * @param toTimeMs end time.
+   * @param callback Callback to handle the log events.
+   */
+  void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Callback callback);
+
+  /**
    * Result of reading logs. Contains list of log events, position hint and a flag that indicates if the events are
    * incremental to the given position hint.
    */

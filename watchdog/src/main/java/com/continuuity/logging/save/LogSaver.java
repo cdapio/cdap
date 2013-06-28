@@ -75,7 +75,7 @@ public final class LogSaver extends AbstractIdleService {
   private final long maxLogFileSizeBytes;
 
   private final int numThreads = 2;
-  private static final String TABLE_NAME = "__log_meta";
+  private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
 
   private volatile ListeningScheduledExecutorService listeningScheduledExecutorService;
   private volatile Future<?> subTaskFutures;

@@ -89,13 +89,14 @@ public final class AvroFileWriter implements Closeable {
     }
 
     LoggingContext loggingContext = events.get(0).getLoggingContext();
-    AvroFile avroFile = getAvroFile(loggingContext);
+    long timestamp = events.get(0).getLogEvent().getTimeStamp();
+    AvroFile avroFile = getAvroFile(loggingContext, timestamp);
     for (KafkaLogEvent event : events) {
       avroFile.append(event);
     }
 
     checkPoint(false);
-    rotateFile(avroFile, loggingContext);
+    rotateFile(avroFile, loggingContext, timestamp);
   }
 
   @Override
@@ -113,16 +114,17 @@ public final class AvroFileWriter implements Closeable {
     }
   }
 
-  private AvroFile getAvroFile(LoggingContext loggingContext) throws IOException, OperationException {
+  private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws IOException, OperationException {
     AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment());
     if (avroFile == null) {
-      avroFile = createAvroFile(loggingContext);
+      avroFile = createAvroFile(loggingContext, timestamp);
       fileMap.put(loggingContext.getLogPathFragment(), avroFile);
     }
     return avroFile;
   }
 
-  private AvroFile createAvroFile(LoggingContext loggingContext) throws IOException, OperationException {
+  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws IOException,
+    OperationException {
     long currentTs = System.currentTimeMillis();
     Path path = createPath(loggingContext.getLogPathFragment(), currentTs);
     LOG.info(String.format("Creating Avro file %s", path.toUri()));
@@ -133,19 +135,20 @@ public final class AvroFileWriter implements Closeable {
       avroFile.close();
       throw e;
     }
-    fileMetaDataManager.writeMetaData(loggingContext, currentTs, path);
+    fileMetaDataManager.writeMetaData(loggingContext, timestamp, path);
     return avroFile;
   }
 
-  private Path createPath(String pathFragment, long currentTs) {
+  private Path createPath(String pathFragment, long timestamp) {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-    return new Path(pathRoot, String.format("%s/%s/%s.avro", pathFragment, date, currentTs));
+    return new Path(pathRoot, String.format("%s/%s/%s.avro", pathFragment, date, timestamp));
   }
 
-  private void rotateFile(AvroFile avroFile, LoggingContext loggingContext) throws IOException, OperationException {
+  private void rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws IOException,
+    OperationException {
     if (avroFile.getPos() > maxFileSize) {
       avroFile.close();
-      createAvroFile(loggingContext);
+      createAvroFile(loggingContext, timestamp);
       checkPoint(true);
     }
   }
