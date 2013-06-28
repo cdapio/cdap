@@ -2,7 +2,7 @@ package com.continuuity.performance.application;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics2.thrift.Counter;
-import com.continuuity.performance.runner.PerformanceTestRunner;
+import com.continuuity.performance.runner.BenchmarkRuntimeStats;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import org.apache.commons.lang.StringUtils;
@@ -102,13 +102,11 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
   public void  enqueueMetric(CounterName counterName, long unixTime) {
     final Counter counter;
     if (counterName.getLevel() == CounterLevel.Account) {
-      counter = PerformanceTestRunner.BenchmarkRuntimeStats.getCounter(counterName.getName());
+      counter = BenchmarkRuntimeStats.getCounter(counterName.getName());
     } else {
-      counter = PerformanceTestRunner.BenchmarkRuntimeStats.getCounter(counterName.getAccountId(),
-                                                                       counterName.getApplicationId(),
-                                                                       counterName.getFlowId(),
-                                                                       counterName.getFlowletId(),
-                                                                       counterName.getName());
+      counter = BenchmarkRuntimeStats.getCounter(counterName.getApplicationId(),
+                                                 counterName.getFlowId(), counterName.getFlowletId(),
+                                                 counterName.getName());
     }
     if (counter != null) {
       StringBuilder metricTags = new StringBuilder(tags);

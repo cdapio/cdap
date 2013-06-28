@@ -1,4 +1,4 @@
-package com.continuuity.performance.apps.fun;
+package com.continuuity.performance.apps.testing;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * This is a Continuuity App that is used for performance testing the new distributed logging.
+ */
 public class LoggingApp implements Application {
   private static final Logger LOG = LoggerFactory.getLogger(LoggingApp.class);
 

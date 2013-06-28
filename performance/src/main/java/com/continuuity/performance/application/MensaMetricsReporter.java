@@ -86,6 +86,4 @@ public final class MensaMetricsReporter  {
     LOG.debug("Shutting down executor service of metrics collector and dispatcher.");
     executorService.shutdown();
   }
-
-
 }

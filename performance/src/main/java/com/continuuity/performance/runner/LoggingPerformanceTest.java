@@ -1,7 +1,7 @@
 package com.continuuity.performance.runner;
 
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
-import com.continuuity.performance.apps.fun.LoggingApp;
+import com.continuuity.performance.apps.testing.LoggingApp;
 import com.continuuity.test.app.ApplicationManager;
 import com.continuuity.test.app.FlowManager;
 
