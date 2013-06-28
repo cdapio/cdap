@@ -343,12 +343,20 @@ public class OmidTransactionalOperationExecutor
     };
 
   private void dataSetMetric_read(String dataSetName) {
-    dataSetReadMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
+    // note: we intentionally do not provide table name for some system operations (like talking to MDS) so that
+    //       we can skip writing metrics here. Yes, this looks like a hack. Should be fixed with new metrics system.
+    if (dataSetName != null) {
+      dataSetReadMetric.meter(dataSetName, 1);
+    }
   }
 
   private void dataSetMetric_write(String dataSetName, int dataSize) {
-    dataSetWriteMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
-    dataSetStorageMetric.meter(dataSetName == null ? "null" : dataSetName, dataSize);
+    // note: we intentionally do not provide table name for some system operations (like talking to MDS) so that
+    //       we can skip writing metrics here. Yes, this looks like a hack. Should be fixed with new metrics system.
+    if (dataSetName != null) {
+      dataSetWriteMetric.meter(dataSetName, 1);
+      dataSetStorageMetric.meter(dataSetName, dataSize);
+    }
   }
   
   /* -------------------  end metrics ---------------- */
