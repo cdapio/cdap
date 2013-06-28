@@ -268,3 +268,4 @@ public final class BenchmarkRuntimeStats {
     return new TBinaryProtocol(transport);
   }
 }
+
