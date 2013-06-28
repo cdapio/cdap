@@ -6,6 +6,7 @@ package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
+import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.AuthenticatorService;
@@ -669,4 +670,40 @@ public class AccountHandler extends PassportHandler {
     }
   }
 
+  @Path("{accountId}/organization/{orgId}")
+  @PUT
+  public Response updateOrganization(@PathParam("accountId") int accountId, @PathParam("orgId") String orgId){
+    requestReceived();
+    try {
+      dataManagementService.updateAccountOrganization(accountId, orgId);
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account accountFetched = dataManagementService.getAccount(accountId);
+      if (accountFetched != null) {
+        requestSuccess();
+        return Response.ok(accountFetched.toString()).build();
+      } else {
+        requestFailed(); // Request failed
+        LOG.error("Internal server error endpoint: {} {} ", "PUT /passport/v1/account/{id}/organization/{orgId}",
+                  "could not fetch updated account");
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get updated account"))
+          .build();
+      }
+    } catch (AccountNotFoundException e) {
+      requestFailed(); //Failed request
+      return Response.status(Response.Status.NOT_FOUND)
+        .entity(Utils.getJsonError("Account to be updated not found"))
+        .build();
+    } catch (OrganizationNotFoundException e) {
+      requestFailed(); //Failed request
+      return Response.status(Response.Status.CONFLICT)
+        .entity(Utils.getJsonError("Organization not found in the system"))
+        .build();
+    } catch (Throwable e){
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJsonError("Error while updating the org.", e.getMessage()))
+        .build();
+    }
+  }
 }

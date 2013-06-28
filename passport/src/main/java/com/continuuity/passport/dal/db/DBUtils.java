@@ -13,6 +13,7 @@ public class DBUtils {
 
   public static final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
   public static final String DB_INTEGRITY_CONSTRAINT_VIOLATION_DUP_KEY = "23505";
+  public static final String DB_INTEGRITY_CONSTRAINT_VIOLATION_FOR_KEY = "23503";
 
   /**
    * Represents schema corresponding to 'account' table in the db.
@@ -32,6 +33,7 @@ public class DBUtils {
     public static final String DEV_SUITE_DOWNLOADED_AT = "dev_suite_downloaded_at";
     public static final String PAYMENT_INFO_PROVIDED_AT = "payment_info_provided_at";
     public static final String PAYMENT_ACCOUNT_ID = "payment_account_id";
+    public static final String ORG_ID = "org_id";
     public static final int ACCOUNT_UNCONFIRMED = 0;
     public static final int ACCOUNT_CONFIRMED = 1;
   }

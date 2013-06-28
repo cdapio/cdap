@@ -235,4 +235,14 @@ public interface DataManagementService {
    * @throws OrganizationNotFoundException when Organization to be deleted does not exist.
    */
   public void deleteOrganization(String id) throws OrganizationNotFoundException;
+
+  /**
+   * Update organization id for account.
+   * @param accountId account id to be updated.
+   * @param orgId organization id to be update.
+   * @throws AccountNotFoundException when account to be updated does not exist in the system.
+   * @throws OrganizationNotFoundException when organization to be updated does not exist in the system.
+   */
+  public void updateAccountOrganization(int accountId, String orgId)
+    throws AccountNotFoundException, OrganizationNotFoundException;
 }

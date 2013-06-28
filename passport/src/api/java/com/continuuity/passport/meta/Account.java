@@ -35,6 +35,8 @@ public class Account {
 
   private final String paymentAccountId;
 
+  private final String orgId;
+
   /**
    * Deserialize Account from jsonString.
    * @param jsonString json string containing account info
@@ -81,7 +83,7 @@ public class Account {
    */
   public Account(String firstName, String lastName, String company, String emailId,
                  int accountId, String apiKey, boolean confirmed, long devSuiteDownloadTime) {
-    this(firstName, lastName, company, emailId, accountId, apiKey, confirmed, devSuiteDownloadTime, -1, "");
+    this(firstName, lastName, company, emailId, accountId, apiKey, confirmed, devSuiteDownloadTime, -1, "", null);
 
   }
 
@@ -98,9 +100,11 @@ public class Account {
    * @param devSuiteDownloadTime DevSuite downloaded time
    * @param paymentInfoProvidedAt time when payment info was provided
    * @param paymentAccountId external payment id
+   * @param orgId organization id of the account
    */
   public Account(String firstName, String lastName, String company, String emailId, int accountId,  String apiKey,
-                 boolean confirmed, long devSuiteDownloadTime, long paymentInfoProvidedAt, String paymentAccountId) {
+                 boolean confirmed, long devSuiteDownloadTime, long paymentInfoProvidedAt, String paymentAccountId,
+                 String orgId) {
     this.firstName = firstName;
     this.lastName = lastName;
     this.company = company;
@@ -111,6 +115,7 @@ public class Account {
     this.devsuiteDownloadTime = devSuiteDownloadTime;
     this.paymentInfoProvidedAt = paymentInfoProvidedAt;
     this.paymentAccountId = paymentAccountId;
+    this.orgId = orgId;
   }
 
   /**
@@ -189,6 +194,13 @@ public class Account {
    */
   public String getPaymentAccountId() {
     return paymentAccountId;
+  }
+
+  /**
+   * @return organization id of the account.
+   */
+  public String getOrgId() {
+    return orgId;
   }
 
   /**

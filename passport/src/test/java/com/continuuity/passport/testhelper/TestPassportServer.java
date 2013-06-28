@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.http.modules.ShiroGuiceModule;
 import com.google.common.io.ByteStreams;
+import com.google.gson.JsonObject;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceFilter;
@@ -92,12 +93,20 @@ public class TestPassportServer {
   public static String request(HttpUriRequest uri) throws IOException {
     HttpClient client = new DefaultHttpClient();
     HttpResponse response = client.execute(uri);
+    System.out.println(response.toString());
     assertTrue(response.getStatusLine().getStatusCode() == 200);
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     ByteStreams.copy(response.getEntity().getContent(), bos);
     String result = bos.toString("UTF-8");
     bos.close();
     return result;
+  }
+
+  public static String getCompany(String id, String name){
+    JsonObject object = new JsonObject();
+    object.addProperty("id", id);
+    object.addProperty("name", name);
+    return object.toString();
   }
 }
 

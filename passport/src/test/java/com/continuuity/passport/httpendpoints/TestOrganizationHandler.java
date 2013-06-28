@@ -68,7 +68,7 @@ public class TestOrganizationHandler {
   public void orgCreate() throws IOException {
     String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity(new StringEntity(getCompany("C123", "Continuuity")));
+    post.setEntity(new StringEntity(TestPassportServer.getCompany("C123", "Continuuity")));
     post.addHeader("Content-Type", "application/json");
 
     String result = TestPassportServer.request(post);
@@ -89,7 +89,7 @@ public class TestOrganizationHandler {
     //Create Org and delete later.
     String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity(new StringEntity(getCompany("G123", "Google")));
+    post.setEntity(new StringEntity(TestPassportServer.getCompany("G123", "Google")));
     post.addHeader("Content-Type", "application/json");
 
     String result = TestPassportServer.request(post);
@@ -115,7 +115,7 @@ public class TestOrganizationHandler {
     //Create Org
     String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity(new StringEntity(getCompany("F123", "Facebok")));
+    post.setEntity(new StringEntity(TestPassportServer.getCompany("F123", "Facebok")));
     post.addHeader("Content-Type", "application/json");
 
     String result = TestPassportServer.request(post);
@@ -162,11 +162,6 @@ public class TestOrganizationHandler {
   }
 
 
-  private String getCompany(String id, String name){
-    JsonObject object = new JsonObject();
-    object.addProperty("id", id);
-    object.addProperty("name", name);
-    return object.toString();
-  }
+ 
 
 }
