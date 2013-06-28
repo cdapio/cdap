@@ -35,7 +35,7 @@ define([], function () {
 			this.get('metricNames')[name] = 1;
 
 		},
-		getUpdateRequest: function () {
+		getUpdateRequest: function (http) {
 
 			var metrics = [];
 			for (var name in this.get('metricNames')) {
@@ -109,15 +109,9 @@ define([], function () {
 		find: function (dataset_id, http) {
 			var promise = Ember.Deferred.create();
 
-			C.get('metadata', {
-				method: 'getDataset',
-				params: ['Dataset', {
-					id: dataset_id
-				}]
-			}, function (error, response) {
+			http.rest('datasets', dataset_id, function (model, error) {
 
-				var model = C.Dataset.create(response.params);
-
+				model = C.Dataset.create(model);
 				promise.resolve(model);
 
 			});

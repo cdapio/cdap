@@ -13,6 +13,8 @@ define([], function () {
 		metricNames: null,
 		__loadingData: false,
 		instances: 0,
+		version: -1,
+		currentState: '',
 		type: 'Procedure',
 		plural: 'Procedures',
 		isRunning: function () {
@@ -47,7 +49,7 @@ define([], function () {
 			this.get('metricNames')[name] = 1;
 
 		},
-		getUpdateRequest: function () {
+		getUpdateRequest: function (http) {
 
 			var self = this;
 
@@ -67,14 +69,12 @@ define([], function () {
 				return;
 			}
 
-			C.get('manager', {
-				method: 'status',
-				params: [app_id, procedure_id, -1, 'QUERY']
-			}, function (error, response) {
+			http.rpc('runnable', 'status', [app_id, procedure_id, -1, 'QUERY'],
+				function (response) {
 
-				if (response.params) {
-					self.set('currentState', response.params.status);
-				}
+					if (response.result) {
+						self.set('currentState', response.result.status);
+					}
 
 			});
 
@@ -176,31 +176,20 @@ define([], function () {
 			var app_id = model_id[0];
 			var procedure_id = model_id[1];
 
-			C.get('metadata', {
-				method: 'getQuery',
-				params: ['Query', {
-					application: app_id,
-					id: procedure_id
-				}]
-			}, function (error, response) {
+			http.rest('apps', app_id, 'procedures', procedure_id, function (model, error) {
 
-				response.params.currentState = 'UNKNOWN';
-				response.params.version = -1;
-				response.params.type = 'Procedure';
-				response.params.applicationId = app_id;
+				model.applicationId = app_id;
+				model = C.Procedure.create(model);
 
-				var model = C.Procedure.create(response.params);
+				http.rpc('runnable', 'status', [app_id, procedure_id, -1, 'QUERY'],
+					function (response) {
 
-				C.get('manager', {
-					method: 'status',
-					params: [app_id, procedure_id, -1, 'QUERY']
-				}, function (error, response) {
-
-					if (response.params) {
-						model.set('currentState', response.params.status);
-					}
-
-					promise.resolve(model);
+						if (response.error) {
+							promise.reject(response.error);
+						} else {
+							model.set('currentState', response.result.status);
+							promise.resolve(model);
+						}
 
 				});
 

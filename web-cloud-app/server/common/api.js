@@ -135,14 +135,14 @@ logger.setLevel(LOG_LEVEL);
 			switch (method) {
 				case 'start':
 					identifier = new appfabricservice_types.FlowDescriptor({
-						identifier: new appfabricservice_types.FlowIdentifier({
+						"identifier": new appfabricservice_types.FlowIdentifier({
 							applicationId: params[1],
 							flowId: params[2],
 							version: parseInt(params[3], 10),
 							accountId: params[0],
 							type: appfabricservice_types.EntityType[params[4] || 'FLOW']
 						}),
-						"arguments": []
+						"arguments": params[5] || []
 					});
 					Manager.start(auth_token, identifier, done);
 				break;

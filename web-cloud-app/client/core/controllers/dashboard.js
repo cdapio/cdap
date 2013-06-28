@@ -16,7 +16,7 @@ define([], function () {
 			 * This is decremented to know when loading is complete.
 			 * There are 6 things to load. See __loaded below.
 			 */
-			this.__remaining = 5;
+			this.__remaining = 4;
 
 			this.set('elements.App', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
@@ -36,26 +36,31 @@ define([], function () {
 			 * Load Apps
 			 * Also load all Elements for each App to calculate per-App totals
 			 */
-			this.HTTP.getElements('App', function (objects) {
+			this.HTTP.get('rest', 'apps', function (objects) {
 				var i = objects.length;
+
 				while (i--) {
 					objects[i] = C.App.create(objects[i]);
 
-					self.HTTP.getElements('Stream', function (obj, arg) {
-						objects[arg].set('counts.Stream', obj.length);
-					}, objects[i].id, i);
-					self.HTTP.getElements('Flow', function (obj, arg) {
-						objects[arg].set('counts.Flow', obj.length);
-					}, objects[i].id, i);
-					self.HTTP.getElements('Batch', function (obj, arg) {
-						objects[arg].set('counts.Batch', obj.length);
-					}, objects[i].id, i);
-					self.HTTP.getElements('Dataset', function (obj, arg) {
-						objects[arg].set('counts.Dataset', obj.length);
-					}, objects[i].id, i);
-					self.HTTP.getElements('Procedure', function (obj, arg) {
-						objects[arg].set('counts.Procedure', obj.length);
-					}, objects[i].id, i);
+					(function (id, index) {
+
+						self.HTTP.get('rest', 'apps', id, 'streams', function (items) {
+							objects[index].set('counts.Stream', items.length);
+						});
+
+						self.HTTP.get('rest', 'apps', id, 'flows', function (items) {
+							objects[index].set('counts.Flow', items.length);
+						});
+
+						self.HTTP.get('rest', 'apps', id, 'datasets', function (items) {
+							objects[index].set('counts.Dataset', items.length);
+						});
+
+						self.HTTP.get('rest', 'apps', id, 'procedures', function (items) {
+							objects[index].set('counts.Procedure', items.length);
+						});
+
+					})(objects[i].id, i);
 
 				}
 				self.get('elements.App').pushObjects(objects);
@@ -68,7 +73,7 @@ define([], function () {
 			/*
 			 * Load all Streams to calculate counts and storage
 			 */
-			this.HTTP.getElements('Stream', function (objects) {
+			this.HTTP.get('rest', 'streams', function (objects) {
 
 				self.get('elements.Stream').pushObjects(objects);
 				self.get('counts').set('Stream', objects.length);
@@ -79,7 +84,7 @@ define([], function () {
 			/*
 			 * Load all Flows to calculate counts
 			 */
-			this.HTTP.getElements('Flow', function (objects) {
+			this.HTTP.get('rest', 'flows', function (objects) {
 
 				self.get('counts').set('Flow', objects.length);
 				self.__loaded();
@@ -87,19 +92,9 @@ define([], function () {
 			});
 
 			/*
-			 * Load all Batches to calculate counts
-			 */
-			this.HTTP.getElements('Batch', function (objects) {
-
-				self.get('counts').set('Batch', objects.length);
-				self.__loaded();
-
-			});
-
-			/*
 			 * Load all Datasets to calculate counts and storage
 			 */
-			this.HTTP.getElements('Dataset', function (objects) {
+			this.HTTP.get('rest', 'datasets', function (objects) {
 
 				self.get('elements.Dataset').pushObjects(objects);
 				self.get('counts').set('Dataset', objects.length);
@@ -110,7 +105,7 @@ define([], function () {
 			/*
 			 * Load all Procedures to calculate counts
 			 */
-			this.HTTP.getElements('Procedure', function (objects) {
+			this.HTTP.get('rest', 'procedures', function (objects) {
 
 				self.get('counts').set('Procedure', objects.length);
 				self.__loaded();
@@ -122,7 +117,7 @@ define([], function () {
 			 */
 			if (C.Env.cluster) {
 
-				this.HTTP.get('/disk', function (disk) {
+				this.HTTP.get('disk', function (disk) {
 					if (disk) {
 						var bytes = C.Util.bytes(disk.free);
 						$('#diskspace').find('.sparkline-box-title').html(
@@ -153,12 +148,13 @@ define([], function () {
 
 				/*
 				 * Count hack to add Batch to Flows (Process)
-				 */
+				 *
 
 				var batchCount = this.get('counts').get('Batch');
 				var flowCount = this.get('counts').get('Flow');
 
 				this.get('counts').set('Flow', batchCount + flowCount);
+				*/
 
 			}
 
@@ -289,7 +285,7 @@ define([], function () {
 
 				for (var i = 0; i < content.length; i ++) {
 					if (typeof content[i].getUpdateRequest === 'function') {
-						C.get.apply(C, content[i].getUpdateRequest());
+						C.get.apply(C, content[i].getUpdateRequest(this.HTTP));
 					}
 				}
 

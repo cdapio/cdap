@@ -113,7 +113,7 @@ define([], function () {
 			var self = this;
 
 			// Update timeseries data for current flow.
-			C.get.apply(C, this.get('model').getUpdateRequest());
+			C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
 
 			var app = this.get('model').applicationId;
 			var id = this.get('model').get('meta').name;
@@ -372,16 +372,14 @@ define([], function () {
 
 			model.set('currentState', 'STARTING');
 
-			C.get('manager', {
-				method: 'start',
-				params: [app, id, version, 'FLOW', config]
-			}, function (error, response) {
+			this.HTTP.rpc('runnable', 'start', [app, id, version, 'FLOW', config],
+				function (response) {
 
-				if (error) {
-					C.Modal.show(error.name, error.message);
-				} else {
-					model.set('lastStarted', new Date().getTime() / 1000);
-				}
+					if (response.error) {
+						C.Modal.show(response.error.name, response.error.message);
+					} else {
+						model.set('lastStarted', new Date().getTime() / 1000);
+					}
 
 			});
 
@@ -393,14 +391,12 @@ define([], function () {
 
 			model.set('currentState', 'STOPPING');
 
-			C.get('manager', {
-				method: 'stop',
-				params: [app, id, version]
-			}, function (error, response) {
+			this.HTTP.rpc('runnable', 'stop', [app, id, version, 'FLOW'],
+				function (response) {
 
-				if (error) {
-					C.Modal.show(error.name, error.message);
-				}
+					if (response.error) {
+						C.Modal.show(response.error.name, response.error.message);
+					}
 
 			});
 
@@ -436,6 +432,8 @@ define([], function () {
 		},
 		"delete": function () {
 
+			var self = this;
+
 			if (this.get('model').get('currentState') !== 'STOPPED' &&
 				this.get('model').get('currentState') !== 'DEPLOYED') {
 				C.Modal.show('Cannot Delete', 'Please stop the Flow before deleting.');
@@ -447,15 +445,13 @@ define([], function () {
 
 						var flow = this.get('model');
 
-						C.get('far', {
-							method: 'remove',
-							params: [flow.app, flow.name, flow.version]
-						}, function (error, response) {
+						self.HTTP.rpc('runnable', 'remove', [flow.app, flow.name, flow.version],
+							function (response) {
 
 							C.Modal.hide(function () {
 
-								if (error) {
-									C.Modal.show('Delete Error', error.message || 'No reason given. Please check the logs.');
+								if (response.error) {
+									C.Modal.show('Delete Error', response.error.message || 'No reason given. Please check the logs.');
 								} else {
 									window.history.go(-1);
 								}

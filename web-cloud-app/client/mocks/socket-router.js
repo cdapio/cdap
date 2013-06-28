@@ -20,7 +20,8 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
       };
       if (request.params[2]) {
         for (var i = 0, len = request.params[2].length; i < len; i++) {
-          TimeSeries('', { start: 0, end: 0, count: 60 }, function (status, result) {
+          path = request.params[0] + request.params[2][i];
+          TimeSeries(path, { start: 0, end: 0, count: 60 }, function (status, result) {
             response.params.points[request.params[2][i]] = result;
           });
         }

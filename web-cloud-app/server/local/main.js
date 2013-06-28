@@ -18,7 +18,7 @@ process.env.NODE_ENV = 'development';
 /**
  * Log level.
  */
-var logLevel = 'INFO';
+var logLevel = 'TRACE';
 
 var DevServer = function() {
   DevServer.super_.call(this, __dirname, logLevel);
@@ -51,7 +51,6 @@ DevServer.prototype.getConfig = function(opt_callback) {
       }
     });
     fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
-      self.logger.trace('Configuring with', self.config);
       self.Api.configure(self.config, apiKey || null);
       self.configSet = true;
       if (opt_callback && typeof opt_callback === "function") {
