@@ -2,31 +2,47 @@
  * Analyze Controller
  */
 
-define([], function () {
+define([], function (chartHelper) {
 
-  var Controller = Em.Controller.extend({
+  var Controller = Em.Controller.extend(Em.Evented, {
     typesBinding: 'model.types',
 
     load: function (id) {
+      this.set('items', 'asdfsaf');
+      this.trigger('loginFailed');
+      this.updateData();
+    },
 
-      console.log('load called');
+    updateData: function () {
+      var self = this;
+      C.HTTP.get('metrics/events_in?format=rate', function(status, result) {
+        self.set('data', result);
+        self.set('type', "rate");
+      });
 
     },
 
-    updateStats: function () {
+    changeChart: function() {
       var self = this;
-
-      // Update timeseries data for current flow.
-      C.get.apply(C, this.get('model').getUpdateRequest());
-
+      if(self.get('type') == 'rate') {
+        C.HTTP.get('metrics/events_in?format=count', function(status, result) {
+          self.set('data', result);
+          self.set('type', 'count');
+        });  
+      } else {
+        this.updateData();
+      }
+            
     },
 
     unload: function () {
 
 
+
     },
 
     delete: function () {
+
 
     }
 

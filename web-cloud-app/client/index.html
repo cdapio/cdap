@@ -19,9 +19,18 @@
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
   <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
+  <script type="text/javascript">
+    requirejs.config({
+      "paths": {
+        "d3": "/core/lib/d3.v3",
+        "nvd3": "/core/lib/nvd3/js/nv.d3.min"
+      }
+    });
+  </script>
 
   <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
   <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/core/lib/nvd3/css/nv.d3.css">
 
 </head>
 <body>
@@ -767,6 +776,23 @@
 
     {{outlet}}
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Analyze">
+    <div id="panels">
+
+      <div class="panel">
+
+        <div class="panel-head">
+          <div class="panel-title">Analyze</div>
+        </div>
+
+        <div class="panel-body">
+            {{view C.Embed.Analyze}}
+        </div>
+
+      </div>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="PageNotFound">

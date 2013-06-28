@@ -18,7 +18,9 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
 
     '/batch/SampleApplicationId:batchid1': Samples.batchSample,
     '/batch/SampleApplicationId:batchid1?data=metrics': Counters.batchMetrics,
-    '/batch/SampleApplicationId:batchid1?data=alerts': Counters.batchAlerts
+    '/batch/SampleApplicationId:batchid1?data=alerts': Counters.batchAlerts,
+    '/metrics/events_in?format=rate': TimeSeries.eventsInRate,
+    '/metrics/events_in?format=count': TimeSeries.eventsInCount
   };
 
   /*

@@ -7,7 +7,7 @@ define(['core/controllers/app', 'core/controllers/batch-config', 'core/controlle
 	'core/controllers/flow-flowlet', 'core/controllers/list', 'core/controllers/stream', 'core/controllers/dataset',
 	'core/controllers/dashboard', 'core/controllers/flow-history', 'core/controllers/flow-stream',
 	'core/controllers/flow-config', 'core/controllers/procedure-status', 'core/controllers/procedure-config',
-	'core/controllers/flow-log', 'core/controllers/procedure-log'],
+	'core/controllers/flow-log', 'core/controllers/procedure-log', 'core/controllers/analyze'],
 
 	function () {
 

@@ -155,9 +155,9 @@ define (['core/application'], function (Application) {
 
 		});
 
-		this.route('Analyze', {path: '/analyze'});
+		this.route('Analyze', { path: '/analyze' });
 
-		this.route("PageNotFound", { path: "*:"});
+		this.route("PageNotFound", { path: "*:" });
 
 	});
 
@@ -169,7 +169,6 @@ define (['core/application'], function (Application) {
 		 * Override to load the Controller once the Route has been activated.
 		 */
 		setupController: function(controller, model) {
-			console.log(controller);
 			controller.set('model', model);
 			controller.load();
 		},
@@ -183,6 +182,7 @@ define (['core/application'], function (Application) {
 		 * Override to load a model based on parameter name and inject HTTP resource.
 		 */
 		model: function (params) {
+
 			for (var key in params) {
 				/*
 				 * Converts e.g. 'app_id' into 'App', 'flow_id' into 'Flow'

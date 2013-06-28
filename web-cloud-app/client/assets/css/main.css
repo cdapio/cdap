@@ -1948,3 +1948,34 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	margin-top: 20px;
 	margin-left: -4px;
 }
+
+/** Analyze CSS **/
+#metrics-explorer-widget svg {
+	height: 500px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.grid .tick {
+    stroke: lightgrey;
+    opacity: 0.7;
+}
+
+.grid .tick line {
+	stroke: lightgrey;
+}
+
+.grid path {
+      stroke-width: 0;
+}
