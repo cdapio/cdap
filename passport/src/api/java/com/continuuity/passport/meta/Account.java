@@ -70,7 +70,7 @@ public class Account {
   }
 
   /**
-   * Construct account object with firstName, lastName, emailId, company, accountId, apiKey, confirmedflag
+   * Construct account object with first name, last name, email id, company, account id, api key, confirmed flag
    * and dev suite downloaded time.
    * @param firstName firstName
    * @param lastName lastName
@@ -88,7 +88,7 @@ public class Account {
   }
 
   /**
-   * Construct account object with firstName, lastName, emailId, company, accountId, apiKey, confirmedflag,
+   * Construct account object with first name, last name, email id, company, account id, api key, confirmed flag,
    * dev suite downloaded time, external payment Id and payment info provided time.
    * @param firstName firstName
    * @param lastName lastName
@@ -119,7 +119,7 @@ public class Account {
   }
 
   /**
-   * Construct account object with firstName, lastName, emailId, company, accountId.
+   * Construct account object with first name, last name, email id, company, account id.
    * @param firstName firstName
    * @param lastName lastName
    * @param company Company
@@ -130,7 +130,7 @@ public class Account {
   }
 
   /**
-   * Construct account object with firstName, lastName, emailId, company.
+   * Construct account object with first name, last name, email id, company.
    * @param firstName firstName
    * @param lastName lastName
    * @param emailId  EmailId

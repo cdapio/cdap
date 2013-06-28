@@ -204,8 +204,8 @@ public interface DataManagementService {
 
   /**
    * Create Organization in the system.
-   * @param id OrgId.
-   * @param name OrgName.
+   * @param id Organization id.
+   * @param name Organization name.
    * @return instance of {@code Organization}
    * @throws OrganizationAlreadyExistsException when Organization to be created already exists.
    */
@@ -237,7 +237,7 @@ public interface DataManagementService {
   public void deleteOrganization(String id) throws OrganizationNotFoundException;
 
   /**
-   * Update organization id for account.
+   * Updates organization id for the given account id.
    * @param accountId account id to be updated.
    * @param orgId organization id to be update.
    * @throws AccountNotFoundException when account to be updated does not exist in the system.
