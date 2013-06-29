@@ -121,30 +121,9 @@ public final class HttpResourceHandler implements HttpHandler {
 
     if (httpResourceModel != null){
       //Found a httpresource route to it.
-      try {
-        Method method = httpResourceModel.getMethod();
-        Object object = httpResourceModel.getHttpHandler();
-
-        //Setup args for reflection call
-        Object [] args = new Object[groupValues.size() + 2];
-        int index = 0;
-        args[index] = request;
-        index++;
-        args[index] = responder;
-
-        Class<?>[] parameterTypes = method.getParameterTypes();
-        for (Map.Entry<String, String> entry : groupValues.entrySet()){
-          index++;
-          args[index] = ConvertUtils.convert(entry.getValue(), parameterTypes[index]);
-        }
-
-        method.invoke(object, args);
-      } catch (Throwable e) {
-        LOG.error("Error processing path {} {}", request.getUri(), e);
-        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                            String.format("Error in executing path: %s", request.getUri()));
-      }
-    } else if (resourceModels.size() > 0)  {
+      httpResourceModel.handle(request, responder, groupValues);
+    }
+      else if (resourceModels.size() > 0)  {
       //Found a matching resource but could not find the right HttpMethod so return 405
       responder.sendError(HttpResponseStatus.METHOD_NOT_ALLOWED,
                           String.format("Problem accessing: %s. Reason: Method Not Allowed", request.getUri()));
