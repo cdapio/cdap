@@ -9,12 +9,14 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
 import com.continuuity.weave.api.RunId;
+import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.MoreExecutors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -22,6 +24,8 @@ import java.util.Map;
  * A ProgramRuntimeService that keeps an in memory map for all running programs.
  */
 public abstract class AbstractProgramRuntimeService extends AbstractIdleService implements ProgramRuntimeService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
 
   private final Table<Type, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
@@ -49,17 +53,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getProcessorType());
     final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(program, options), program);
-    runtimeInfo.getController().addListener(new AbstractListener() {
-      @Override
-      public void stopped() {
-        remove(runtimeInfo);
-      }
-
-      @Override
-      public void error() {
-        remove(runtimeInfo);
-      }
-    }, MoreExecutors.sameThreadExecutor());
+    addRemover(runtimeInfo);
     runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
     return runtimeInfo;
   }
@@ -91,11 +85,29 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   protected synchronized void updateRuntimeInfo(Type type, RunId runId, RuntimeInfo runtimeInfo) {
     if (!runtimeInfos.contains(type, runId)) {
-      runtimeInfos.put(type, runId, runtimeInfo);
+      runtimeInfos.put(type, runId, addRemover(runtimeInfo));
     }
   }
 
+  private RuntimeInfo addRemover(final RuntimeInfo runtimeInfo) {
+    runtimeInfo.getController().addListener(new AbstractListener() {
+      @Override
+      public void stopped() {
+        remove(runtimeInfo);
+      }
+
+      @Override
+      public void error() {
+        remove(runtimeInfo);
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+    return runtimeInfo;
+  }
+
   private synchronized void remove(RuntimeInfo info) {
-    runtimeInfos.remove(info.getType(), info.getController().getRunId());
+    LOG.debug("Removing RuntimeInfo: {} {} {}",
+              info.getType(), info.getProgramId().getId(), info.getController().getRunId());
+    RuntimeInfo removed = runtimeInfos.remove(info.getType(), info.getController().getRunId());
+    LOG.debug("RuntimeInfo removed: {}", removed);
   }
 }
