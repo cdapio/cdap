@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.meta.Account;
+import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.testhelper.HyperSQL;
 import com.continuuity.passport.testhelper.TestPassportServer;
@@ -19,6 +20,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -173,6 +175,46 @@ public class TestAccountHandler {
     assertTrue("MyVPC".equals(vpc.getVpcLabel()));
     assertTrue("sandbox".equals(vpc.getVpcType()));
  }
+
+  @Test
+  public void testOrganizationUpdate() throws IOException {
+
+    //Create Org
+    String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
+    HttpPost post = new HttpPost(endPoint);
+    post.setEntity(new StringEntity(TestPassportServer.getCompany("A123", "Amazon")));
+    post.addHeader("Content-Type", "application/json");
+
+    String result = TestPassportServer.request(post);
+    assertTrue(result != null);
+    Organization org =  Organization.fromString(result);
+    assertTrue("A123".equals(org.getId()));
+    assertTrue("Amazon".equals(org.getName()));
+
+    //Create account
+    endPoint = String.format("http://localhost:%d/passport/v1/account", port);
+    post = new HttpPost(endPoint);
+    post.setEntity(new StringEntity(getAccountJson("joe.curry@continuuity.com")));
+    post.addHeader("Content-Type", "application/json");
+
+    result = TestPassportServer.request(post);
+    assertTrue(result != null);
+    Account account =  Account.fromString(result);
+    assertTrue("joe.curry@continuuity.com".equals(account.getEmailId()));
+    int id = account.getAccountId();
+
+    endPoint = String.format("http://localhost:%d/passport/v1/account/%d/confirmed", port, id);
+    HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity(getAccountJson("joe.curry@continuuity.com", "joe", "currry")));
+    put.setHeader("Content-Type", "application/json");
+    result = TestPassportServer.request(put);
+
+    endPoint = String.format("http://localhost:%d/passport/v1/account/%d/organization/%s", port, id, "A123");
+    put = new HttpPut(endPoint);
+    result = TestPassportServer.request(put);
+    account =  Account.fromString(result);
+    assertEquals(account.getOrgId(), "A123");
+  }
 
   private String getAccountJson(String emailId){
     JsonObject object = new JsonObject();

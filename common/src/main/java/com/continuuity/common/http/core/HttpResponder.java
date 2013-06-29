@@ -1,3 +1,6 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
 package com.continuuity.common.http.core;
 
 import com.google.common.base.Charsets;
@@ -25,7 +28,6 @@ import java.io.OutputStreamWriter;
  * back to the client in json format.
  */
 public class HttpResponder {
-
   private final Channel channel;
 
   public HttpResponder(Channel channel) {
@@ -62,6 +64,7 @@ public class HttpResponder {
 
   /**
    * Sends error message back to the client.
+   *
    * @param status Status of the response.
    * @param errorMessage Error message sent back to the client.
    */

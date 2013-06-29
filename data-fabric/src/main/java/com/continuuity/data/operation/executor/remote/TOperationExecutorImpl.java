@@ -15,6 +15,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
@@ -39,6 +40,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
+import com.continuuity.data.operation.executor.remote.stubs.TTruncateTable;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -824,6 +826,34 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
     } catch (OperationException e) {
       helper.failure();
       Log.warn("Open table failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public void truncateTable(TOperationContext tcontext,
+                            TTruncateTable tTruncateTable)
+    throws TException, TOperationException {
+
+    MetricsHelper helper = newHelper("truncate", tTruncateTable.getTable());
+
+    if (Log.isTraceEnabled()) {
+      Log.trace("Received TTruncateTable: " + tTruncateTable);
+    }
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      TruncateTable truncateTable = unwrap(tTruncateTable);
+      this.opex.execute(context, truncateTable);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Truncate table successful.");
+      }
+      helper.success();
+
+    } catch (OperationException e) {
+      helper.failure();
+      Log.warn("Truncate table failed: " + e.getMessage());
       Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }

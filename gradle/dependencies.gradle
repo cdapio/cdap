@@ -64,6 +64,7 @@ libraries.apache_commons_cli = "commons-cli:commons-cli:1.2"
 libraries.apache_commons_logging = "commons-logging:commons-logging:1.1.1"
 libraries.apache_commons_math = "org.apache.commons:commons-math:2.2"
 libraries.apache_commons_io = "org.apache.commons:commons-io:1.3.2"
+libraries.commons_beanutils_core = "commons-beanutils:commons-beanutils-core:1.8.3"
 
 //Apache Http
 libraries.apache_http_client  = "org.apache.httpcomponents:httpclient:4.1.2"

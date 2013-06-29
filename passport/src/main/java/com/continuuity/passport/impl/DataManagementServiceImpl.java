@@ -186,4 +186,10 @@ public class DataManagementServiceImpl implements DataManagementService {
   public void deleteOrganization(String id) throws OrganizationNotFoundException {
     organizationDAO.deleteOrganization(id);
   }
+
+  @Override
+  public void updateAccountOrganization(int accountId, String orgId)
+      throws AccountNotFoundException, OrganizationNotFoundException {
+    accountDAO.updateOrganizationId(accountId, orgId);
+  }
 }
