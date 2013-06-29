@@ -41,7 +41,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   private int updateRandomNonce(String id, int expiration) {
     int nonce = NonceUtils.getNonce();
     try {
-      updateNonce(id, expiration, nonce);
+      insertOrUpdateNonce(id, expiration, nonce);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -56,14 +56,82 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
    */
   private int updateHashedNonce(String id, int expiration) {
     int nonce = NonceUtils.getNonce(id);
-    System.out.println(nonce);
-
     try {
-      updateNonce(id, expiration, nonce);
+      insertOrUpdateNonce(id, expiration, nonce);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
     return nonce;
+  }
+
+  /**
+   * Insert or update Nonce in DB.
+   * @param id id
+   * @param expiration expiration time in seconds
+   * @return integer random nonce
+   */
+  private void insertOrUpdateNonce(String id, int expiration, int nonce) {
+    Connection connection = this.poolManager.getValidConnection();;
+    String sql = String.format("SELECT COUNT(*) FROM %s where %s = ?",
+                               DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.ID_COLUMN);
+    try {
+      PreparedStatement ps = connection.prepareStatement(sql);
+      try {
+        ps.setString(1, id);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()){
+          int count = rs.getInt(1);
+          if (count == 0) {
+            insertNonce(id, expiration, nonce);
+          } else {
+            updateNonce(id, expiration, nonce);
+          }
+        } else {
+          //result set does not have any items for count query.
+          throw new RuntimeException("Error in accessing nonce table");
+        }
+      } catch (SQLException e){
+        throw Throwables.propagate(e);
+      } finally {
+        close(ps);
+      }
+    }  catch (SQLException e){
+      throw Throwables.propagate(e);
+    } finally {
+      close(connection);
+    }
+  }
+
+  /**
+   * Insert Nonce in DB.
+   * @param id id
+   * @param expiration expiration time in seconds
+   * @return integer random nonce
+   */
+  private void insertNonce(String id, int expiration, int nonce){
+
+    Connection connection = this.poolManager.getValidConnection();
+    String sql = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?,?,?)",
+                               DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN,
+                               DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.NONCE_EXPIRES_AT_COLUMN);
+    try {
+      PreparedStatement ps = connection.prepareStatement(sql);
+      Timestamp expirationTime = new Timestamp(System.currentTimeMillis() + expiration);
+      try {
+        ps.setInt(1, nonce);
+        ps.setString(2, id);
+        ps.setTimestamp(3, expirationTime);
+        ps.executeUpdate();
+      } catch (SQLException e){
+        throw Throwables.propagate(e);
+      } finally {
+        close(ps);
+      }
+    } catch (SQLException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      close(connection);
+    }
   }
 
   /**
@@ -72,23 +140,29 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
    * @param expiration expiration time in seconds
    * @return integer random nonce
    */
-  private void updateNonce(String id, int expiration, int nonce) {
-    Connection connection = null;
-    PreparedStatement ps = null;
+  private void updateNonce(String id, int expiration, int nonce){
+
+    Connection connection = this.poolManager.getValidConnection();
+    String sql = String.format("UPDATE %s SET %s = ?, %s = ? WHERE %s = ?",
+                               DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN,
+                               DBUtils.Nonce.NONCE_EXPIRES_AT_COLUMN, DBUtils.Nonce.ID_COLUMN);
     try {
-      connection = this.poolManager.getValidConnection();
-      String sql = String.format("REPLACE INTO %s (%s, %s, %s) VALUES (?,?,?)",
-        DBUtils.Nonce.TABLE_NAME,
-        DBUtils.Nonce.NONCE_ID_COLUMN, DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.NONCE_EXPIRES_AT_COLUMN);
-      ps = connection.prepareStatement(sql);
-      ps.setInt(1, nonce);
-      ps.setString(2, id);
-      ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + expiration));
-      ps.executeUpdate();
+      PreparedStatement ps = connection.prepareStatement(sql);
+      Timestamp expirationTime = new Timestamp(System.currentTimeMillis() + expiration);
+      try {
+        ps.setInt(1, nonce);
+        ps.setString(2, id);
+        ps.setTimestamp(3, expirationTime);
+        ps.executeUpdate();
+      } catch (SQLException e){
+        throw Throwables.propagate(e);
+      } finally {
+        close(ps);
+      }
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
-      close(connection, ps);
+      close(connection);
     }
   }
 
