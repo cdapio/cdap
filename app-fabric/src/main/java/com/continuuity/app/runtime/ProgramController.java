@@ -36,6 +36,12 @@ public interface ProgramController {
    * </p>
    */
   enum State {
+
+    /**
+     * Program is starting
+     */
+    STARTING,
+
     /**
      * Program is alive
      */

@@ -31,7 +31,7 @@ public abstract class AbstractProgramController implements ProgramController {
   private final Listener caller;
 
   protected AbstractProgramController(String programName, RunId runId) {
-    this.state = new AtomicReference<State>(State.ALIVE);
+    this.state = new AtomicReference<State>(State.STARTING);
     this.programName = programName;
     this.runId = runId;
     this.listeners = Maps.newConcurrentMap();
@@ -49,7 +49,7 @@ public abstract class AbstractProgramController implements ProgramController {
       return Futures.immediateFailedFuture(new IllegalStateException("Suspension not allowed").fillInStackTrace());
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(state.get()).execute(new Runnable() {
+    executor(State.SUSPENDING).execute(new Runnable() {
       @Override
       public void run() {
         try {
@@ -73,7 +73,7 @@ public abstract class AbstractProgramController implements ProgramController {
       return Futures.immediateFailedFuture(new IllegalStateException("Resumption not allowed").fillInStackTrace());
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(state.get()).execute(new Runnable() {
+    executor(State.RESUMING).execute(new Runnable() {
       @Override
       public void run() {
         try {
@@ -92,11 +92,13 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final ListenableFuture<ProgramController> stop() {
-    if (!state.compareAndSet(State.ALIVE, State.STOPPING) && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
+    if (!state.compareAndSet(State.STARTING, State.STOPPING)
+            && !state.compareAndSet(State.ALIVE, State.STOPPING)
+            && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
       return Futures.immediateFailedFuture(new IllegalStateException("Resumption not allowed").fillInStackTrace());
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(state.get()).execute(new Runnable() {
+    executor(State.STOPPING).execute(new Runnable() {
       @Override
       public void run() {
         try {
@@ -171,6 +173,24 @@ public abstract class AbstractProgramController implements ProgramController {
       future.setException(t);
     }
     caller.error();
+  }
+
+  /**
+   * Children call this method to signal the program is started.
+   */
+  protected final void started() {
+    if (!state.compareAndSet(State.STARTING, State.ALIVE)) {
+      LOG.info("Program already started {} {}", programName, runId);
+      return;
+    }
+    LOG.info("Program started: {} {}", programName, runId);
+    executor(State.ALIVE).execute(new Runnable() {
+      @Override
+      public void run() {
+        state.set(State.ALIVE);
+        caller.alive();
+      }
+    });
   }
 
   /**
