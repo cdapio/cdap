@@ -243,6 +243,5 @@ public final class NettyHttpService extends AbstractIdleService {
       return new NettyHttpService(port, threadPoolSize, threadKeepAliveSecs, handlers);
     }
 
-
   }
 }
