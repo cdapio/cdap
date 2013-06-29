@@ -133,7 +133,7 @@ define(['d3', 'nvd3'], function () {
         .x(function(d) { return x(d.timestamp); })
         .y(function(d) { return y(d.value); });
 
-    var svg = d3.select('#'+divId).append("svg")
+    var svg = d3.select('#'+divId).append("svg") 
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
       .append("g")
