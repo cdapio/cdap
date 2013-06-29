@@ -122,6 +122,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
         ps.setString(2, id);
         ps.setTimestamp(3, expirationTime);
         ps.executeUpdate();
+        connection.commit();
       } catch (SQLException e){
         throw Throwables.propagate(e);
       } finally {
@@ -154,6 +155,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
         ps.setString(2, id);
         ps.setTimestamp(3, expirationTime);
         ps.executeUpdate();
+        connection.commit();
       } catch (SQLException e){
         throw Throwables.propagate(e);
       } finally {
