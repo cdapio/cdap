@@ -4,6 +4,7 @@
 package com.continuuity.metrics.data;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseOVCTable;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.Scanner;
@@ -20,9 +21,9 @@ import java.io.IOException;
  */
 public class HBaseFilterableOVCTable extends HBaseOVCTable implements FilterableOVCTable {
 
-  public HBaseFilterableOVCTable(Configuration conf, byte[] tableName, byte[] family,
+  public HBaseFilterableOVCTable(CConfiguration cConf, Configuration conf, byte[] tableName, byte[] family,
                                  IOExceptionHandler exceptionHandler) throws OperationException {
-    super(conf, tableName, family, exceptionHandler);
+    super(cConf, conf, tableName, family, exceptionHandler);
   }
 
   @Override

@@ -29,6 +29,6 @@ public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle {
 
   @Override
   protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
-    return new HBaseFilterableOVCTable(this.hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
+    return new HBaseFilterableOVCTable(conf, hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
   }
 }
