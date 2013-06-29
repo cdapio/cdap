@@ -9,7 +9,13 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelUpstreamHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.HttpContentCompressor;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
@@ -45,6 +51,8 @@ public final class NettyHttpService extends AbstractIdleService {
   private final long threadKeepAliveSecs;
   private final Set<HttpHandler> httpHandlers;
   private final HandlerContext handlerContext;
+  private final ChannelGroup channelGroup;
+  private static final int CLOSE_CHANNEL_TIMEOUT = 5;
 
   private HttpResourceHandler resourceHandler;
 
@@ -62,6 +70,7 @@ public final class NettyHttpService extends AbstractIdleService {
     this.threadKeepAliveSecs = threadKeepAliveSecs;
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
     this.handlerContext = new DummyHandlerContext();
+    this.channelGroup = new DefaultChannelGroup();
   }
 
   /**
@@ -122,7 +131,17 @@ public final class NettyHttpService extends AbstractIdleService {
     resourceHandler = new HttpResourceHandler(httpHandlers);
     resourceHandler.init(handlerContext);
 
+    ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
+                                                  @Override
+                                                  public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
+                                                    throws Exception {
+                                                    channelGroup.add(e.getChannel());
+                                                    super.handleUpstream(ctx, e);
+                                                  }
+                                                };
+
     ChannelPipeline pipeline = bootstrap.getPipeline();
+    pipeline.addLast("tracker", connectionTracker);
     pipeline.addLast("decoder", new HttpRequestDecoder());
     pipeline.addLast("encoder", new HttpResponseEncoder());
     pipeline.addLast("compressor", new HttpContentCompressor());
@@ -141,6 +160,7 @@ public final class NettyHttpService extends AbstractIdleService {
     bootStrap(threadPoolSize, threadKeepAliveSecs, httpHandlers);
     InetSocketAddress address = new InetSocketAddress(port);
     channel = bootstrap.bind(address);
+    channelGroup.add(channel);
     servicePort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
 
   }
@@ -154,9 +174,15 @@ public final class NettyHttpService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    resourceHandler.destroy(handlerContext);
     LOG.info("Stopping service on port {}", port);
-    channel.close();
+    try {
+      if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT, TimeUnit.SECONDS)) {
+        LOG.warn("Timeout when closing all channels.");
+      }
+    } finally {
+      resourceHandler.destroy(handlerContext);
+      bootstrap.releaseExternalResources();
+    }
   }
 
   /**
