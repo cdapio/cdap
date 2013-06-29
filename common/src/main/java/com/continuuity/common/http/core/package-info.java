@@ -3,34 +3,53 @@
  */
 
 /**
- * HTTP dispatchers and handlers libraries designed to be used with netty.
- * Sample code for Handler.
+ * Service and components to build Netty based Http web service.
+ * {@code NettyHttpService} sets up the necessary pipeline and manages starting, stopping,
+ * state-management of the web service.
+ *
+ * In-order to handle http requests, {@code HttpHandler} must be implemented. The methods
+ * in the classes implemented from {@code HttpHandler} must be annotated with Jersey annotations to
+ * specify http uri paths and http methods.
+ * Note: Only supports the following annotations: Path, PathParams, GET, PUT, POST, DELETE.
+ * Note: Doesn't support getting Annotations from base class if the HttpHandler implements also extends
+ * a class with annotation.
+ *
+ * Sample usage Handlers and Netty service setup.
+ *
+ * //Setup Handlers
  *
  * @Path("/common/v1/")
- * @Singleton
- * public class FooHandler{
- *   @Path("foo")
+ * public class ApiHandler implements HttpHandler{
+ *   @Path("widgets")
  *   @GET
- *   public void MethodFoo(HttpRequest request, HttpResponder responder){
- *      responder.sendJson(HttpResponseStatus.OK, "{\"set\": \"foo\"}");
+ *   public void widgetHandler(HttpRequest request, HttpResponder responder){
+ *      responder.sendJson(HttpResponseStatus.OK, "{\"key\": \"value\"}");
  *   }
- * }
  *
- * Sample code for netty pipeline using dispatcher.
+ *   @Override
+ *   public void init(HandlerContext context){
+ *    //Perform bootstrap operations before any of the handlers in this class gets called.
+ *   }
  *
- * public ChannelPipeline setPipeline(ExecutionHandler handler) {
- *   List<Object> handlers = Lists.newArrayList();
- *   handlers.add(new FooHandler());
+ *   @Override
+ *   public void destroy(HandlerContext context){
+ *    //Perform teardown operations the server shuts down.
+ *  }
+ *}
+ * //Set up and build Netty pipeline
  *
- *   ChannelPipeline pipeline = Channels.pipeline();
- *   pipeline.addLast("decoder", new HttpRequestDecoder());
- *   pipeline.addLast("encoder", new HttpResponseEncoder());
- *   pipeline.addLast("compressor", new HttpContentCompressor());
- *   pipeline.addLast("executor", executionHandler);
- *   pipeline.addLast("dispatcher", new HttpDispatcher(new HttpMethodHandler()));
- *   return pipeline;
- * }
+ * List<ApiHandler> handlers = Lists.newArrayList();
+ * handlers.add(new Handler());
  *
+ * NettyHttpService.Builder builder = NettyHttpService.builder();
+ * builder.addHttpHandlers(handlers);
+ * builder.setPort(8989);
+ *
+ * Channel service = builder.build();
+ * service.startAndWait();
+ *
+ * //Stop the web-service
+ * service.shutdown();
  */
 package com.continuuity.common.http.core;
 
