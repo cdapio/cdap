@@ -15,12 +15,12 @@ package com.continuuity.common.http.core;
  *  Example:
  *  public class ApiHandler implements HttpHandler{
  *    @Override
- *    public void init(){
- *      //Do some startup time stuff
+ *    public void init(HandlerContext context){
+ *      //Perform bootstrap operations before any of the handlers in this class gets called.
  *    }
  *    @Override
- *    public void destroy(){
- *     //Do some shutdown stuff
+ *    public void destroy(HandlerContext context){
+ *      //Perform teardown operations before the server shuts down.
  *    }
  *
  *    @Path("/common/v1/widgets")

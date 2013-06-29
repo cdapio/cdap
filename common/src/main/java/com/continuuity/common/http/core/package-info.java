@@ -25,8 +25,17 @@
  *   public void widgetHandler(HttpRequest request, HttpResponder responder){
  *      responder.sendJson(HttpResponseStatus.OK, "{\"key\": \"value\"}");
  *   }
- * }
  *
+ *   @Override
+ *   public void init(HandlerContext context){
+ *    //Perform bootstrap operations before any of the handlers in this class gets called.
+ *   }
+ *
+ *   @Override
+ *   public void destroy(HandlerContext context){
+ *    //Perform teardown operations the server shuts down.
+ *  }
+ *}
  * //Set up and build Netty pipeline
  *
  * List<ApiHandler> handlers = Lists.newArrayList();
