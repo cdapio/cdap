@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.transport;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -49,5 +50,16 @@ public final class MetricRecord {
 
   public int getValue() {
     return value;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(MetricRecord.class)
+      .add("context", context)
+      .add("name", name)
+      .add("tags", tags)
+      .add("timestamp", timestamp)
+      .add("value", value)
+      .toString();
   }
 }

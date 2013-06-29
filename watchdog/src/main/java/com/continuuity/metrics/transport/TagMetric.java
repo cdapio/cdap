@@ -3,6 +3,8 @@
  */
 package com.continuuity.metrics.transport;
 
+import com.google.common.base.Objects;
+
 /**
  *
  */
@@ -22,5 +24,13 @@ public final class TagMetric {
 
   public int getValue() {
     return value;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(TagMetric.class)
+      .add("tag", tag)
+      .add("value", value)
+      .toString();
   }
 }
