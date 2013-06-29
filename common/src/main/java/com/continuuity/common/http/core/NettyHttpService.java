@@ -49,10 +49,13 @@ public final class NettyHttpService extends AbstractIdleService {
   private int servicePort;
   private final int threadPoolSize;
   private final long threadKeepAliveSecs;
+
   private final Set<HttpHandler> httpHandlers;
   private final HandlerContext handlerContext;
   private final ChannelGroup channelGroup;
+
   private static final int CLOSE_CHANNEL_TIMEOUT = 5;
+  private static final int WORKER_THREAD_POOL_SIZE = 10;
 
   private HttpResourceHandler resourceHandler;
 
@@ -120,10 +123,10 @@ public final class NettyHttpService extends AbstractIdleService {
                                                                 .setNameFormat("boss-thread")
                                                                 .build());
 
-    Executor workerExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-                                                              .setDaemon(true)
-                                                              .setNameFormat("worker-thread")
-                                                              .build());
+    Executor workerExecutor = Executors.newFixedThreadPool(WORKER_THREAD_POOL_SIZE, new ThreadFactoryBuilder()
+                                                                                        .setDaemon(true)
+                                                                                        .setNameFormat("worker-thread")
+                                                                                        .build());
 
     //Server bootstrap with default worker threads (2 * number of cores)
     bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
