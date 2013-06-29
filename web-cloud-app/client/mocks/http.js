@@ -47,9 +47,7 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 			var path = getPath(arguments);
 			var callback = getCallback(arguments);
 			var status = 200;
-			console.log(path);
 			var result = HttpRouter.getResult(path);
-			console.log(result);
 
 			callback(status, result);
 

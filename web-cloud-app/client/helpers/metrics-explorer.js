@@ -130,8 +130,8 @@ define(['d3', 'nvd3'], function () {
 
     var line = d3.svg.line()
         .interpolate("cardinal")
-        .x(function(d) { return x(d.date); })
-        .y(function(d) { return y(d.temperature); });
+        .x(function(d) { return x(d.timestamp); })
+        .y(function(d) { return y(d.value); });
 
     var svg = d3.select('#'+divId).append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -139,13 +139,13 @@ define(['d3', 'nvd3'], function () {
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    color.domain(d3.keys(data[0]).filter(function(key) { return key !== "date"; }));
+    color.domain(d3.keys(data[0]).filter(function(key) { return key !== "timestamp"; }));
 
     var cities = color.domain().map(function(name) {
       return {
         name: name,
         values: data.map(function(d) {
-          return {date: d.timestamp, temperature: d.value};
+          return {timestamp: d.timestamp, value: d.value};
         })
       };
     });
@@ -203,9 +203,9 @@ define(['d3', 'nvd3'], function () {
 
     city.append("text")
         .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
-        .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
+        .attr("transform", function(d) { return "translate(" + x(d.value.timestamp) + "," + y(d.value.value) + ")"; })
         .attr("x", 3)
-        .attr("dy", ".35em")
+        .attr("dy", ".8em")
         .text(function(d) { return d.name; });
 
     svg.selectAll("dot")

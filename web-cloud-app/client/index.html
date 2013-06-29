@@ -781,54 +781,77 @@
   <script type="text/x-handlebars" data-template-name="AnalyzeEmbeddable">
     <div class="chart-controls">
       <div class="dropdown">
-      <!-- Link or button to toggle dropdown -->
-        <a id="drop1" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
-      <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-        <li><a tabindex="-1" href="#">Action</a></li>
-        <li><a tabindex="-1" href="#">Another action</a></li>
-        <li><a tabindex="-1" href="#">Something else here</a></li>
-        <li class="divider"></li>
-        <li><a tabindex="-1" href="#">Separated link</a></li>
-      </ul>
-    </div>
-      <span>
-      <button class="btn dropdown-toggle" data-toggle="dropdown">
-        {{controller.format}}
-        <span class="caret"></span>
-      </button>   
-      <ul class="dropdown-menu">
-        <li><a {{action "changeMetricFormat" "rate"}}>Rate</a></li>
-        <li><a {{action "changeMetricFormat" "count"}}>Count</a></li>
-      </ul>
-      </span>
-      <span>
-      <button class="btn dropdown-toggle" data-toggle="dropdown">
-        {{controller.duration}} Days
-        <span class="caret"></span>
-      </button>   
-      <ul class="dropdown-menu">
-        <li><a {{action "changeMetricDuration" "7"}}>7 Days</a></li>
-        <li><a {{action "changeMetricDuration" "14"}}>14 Days</a></li>
-        <li><a {{action "changeMetricDuration" "30"}}>30 Days</a></li>
-      </ul>
-      </span>
+        <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown">{{controller.format}} <b class="caret"></b></button>
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+          <li><a {{action "changeMetricFormat" "rate"}}>Rate</a></li>
+          <li><a {{action "changeMetricFormat" "count"}}>Count</a></li>
+        </ul>
+      </div>
+      <div class="dropdown">
+        <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown">Last {{controller.duration}} Days<b class="caret"></b></button>
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+          <li><a {{action "changeMetricDuration" "7"}}>7 Days</a></li>
+          <li><a {{action "changeMetricDuration" "14"}}>14 Days</a></li>
+          <li><a {{action "changeMetricDuration" "30"}}>30 Days</a></li>
+        </ul>
+      </div>
       <br />
     </div>
     <div id="metrics-explorer-widget"></div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Analyze">
+    <div id="title">
+      <h1>Analyze<span>Metrics</span></h1>
+    </div>
     <div id="panels">
 
       <div class="panel">
 
-        <div class="panel-head">
-          <div class="panel-title">Analyze</div>
-        </div>
-
         <div class="panel-body">
+        <table class="analyze-table clearfix">
+          <tr>
+            <td style="width: 20%; vertical-align: top"> 
+              <ul>
+                {{#each metric in controller.metrics}}
+                  <li>
+                    <div class="analyze-metric-display">
+                      <div class="analyze-app-label">
+                      <a {{action "setDefaultView" }}>{{metric.app}}</a></div>
+                      <div class="analyze-metric-name">{{metric.name}}</div>
+                    </div>
+                  </li>
+                {{/each}}
+                  <li>
+                    <div class="analyze-app-label"><a {{action "toggleAddMetricDialog" }}>Add Metric</a></div>
+                    <div id="analyze-add-metric-widget">
+                      <div class="dropdown">
+                        <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown"> {{controller.metricsRequest.appName}}<b class="caret"></b></button>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                          {{#each controller.apps}}
+                          <li {{action setAppRequest this}}><a>{{this}}</a></li>
+                          {{/each}}
+                        </ul>
+                      </div>
+                      <div class="dropdown">
+                        <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown"> {{controller.metricsRequest.metricType}}<b class="caret"></b></button>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                          {{#each controller.metricTypes}}
+                          <li {{action setMetricTypeRequest this}}><a>{{this}}</a></li>
+                          {{/each}}
+                        </ul>
+                      </div>
+                      <button role="button" class="analyze-blue-btn" {{action addMetric}}>Add Metric</button>
+                    </div>
+                  </li>
+              </ul>
+            </td>
+            <td style="width: 80%; vertical-align: top">
+              {{view C.Embed.Analyze}}
+            </td>
+          </tr>
+        </table>
         </div>
-          {{view C.Embed.Analyze}}
       </div>
     </div>
   </script>

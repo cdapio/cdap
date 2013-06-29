@@ -1981,6 +1981,74 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .chart-controls {
-	float: right;
-	margin-right: 100px;
+	float: left;
+	margin-left: 100px;
+}
+
+.chart-controls>.dropdown {
+	float: left;
+	margin-left: 10px;
+}
+
+.analyze-table {
+	width: 100%;
+	padding: 10px;
+}
+
+.analyze-table td {
+	vertical-align: top;
+}
+
+.analyze-table td ul {
+	list-style-type: none;
+}
+
+.analyze-table td>ul>li{
+	padding: 5px;
+	margin-left: 10px;
+	border-bottom: 1px #CCC dotted;
+	text-align: left;
+}
+
+.analyze-app-label {
+	font-family: "HelveticaNeueW01-75Bold";
+	color: #505050;
+}
+
+.analyze-app-label a {
+	font-size: 16px;
+}
+
+.analyze-metric-name {
+	font-family: "HelveticaNeueW01-57Cn";
+	font-size: 12px;
+	color: #77878B;
+	text-transform: uppercase;
+	padding: 2px 4px;
+	font-weight: normal;
+	letter-spacing: 0.1em;
+}
+
+.analyze-blue-btn {
+	background: #5FAECC;
+	border: 0;
+	color: white;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: "HelveticaNeueW01-57Cn";
+	text-transform: uppercase;
+	width: 100%;
+	max-width: 200px;
+	padding: 8px;
+	margin-top: 10px;
+}
+
+#analyze-add-metric-widget {
+	border: 1px solid #ccc;
+	box-shadow: 3px 3px 1px #ccc;
+	padding: 10px;
+	background: white;
+}
+
+#analyze-add-metric-widget .dropdown {
+	margin-top: 3px;
 }

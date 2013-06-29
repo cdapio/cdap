@@ -19,12 +19,13 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/batch/SampleApplicationId:batchid1': Samples.batchSample,
     '/batch/SampleApplicationId:batchid1?data=metrics': Counters.batchMetrics,
     '/batch/SampleApplicationId:batchid1?data=alerts': Counters.batchAlerts,
-    '/metrics/events_in?format=rate&duration=7': TimeSeries.eventsInRateSmall,
-    '/metrics/events_in?format=count&duration=7': TimeSeries.eventsInCountSmall,
-    '/metrics/events_in?format=rate&duration=14':  TimeSeries.eventsInRateMedium,
-    '/metrics/events_in?format=count&duration=14': TimeSeries.eventsInCountMedium,
-    '/metrics/events_in?format=rate&duration=30': TimeSeries.eventsInRateLarge,
-    '/metrics/events_in?format=count&duration=30': TimeSeries.eventsInCountLarge
+    '/metrics/twitter_scanner/events_in?format=rate&duration=7': TimeSeries.eventsInRateSmall,
+    '/metrics/twitter_scanner/events_in?format=count&duration=7': TimeSeries.eventsInCountSmall,
+    '/metrics/twitter_scanner/events_in?format=rate&duration=14':  TimeSeries.eventsInRateMedium,
+    '/metrics/twitter_scanner/events_in?format=count&duration=14': TimeSeries.eventsInCountMedium,
+    '/metrics/twitter_scanner/events_in?format=rate&duration=30': TimeSeries.eventsInRateLarge,
+    '/metrics/twitter_scanner/events_in?format=count&duration=30': TimeSeries.eventsInCountLarge,
+    '/metrics/twitter_scanner/events_out?format=rate&duration=7': TimeSeries.eventsOutRateSmall
   };
 
   /*

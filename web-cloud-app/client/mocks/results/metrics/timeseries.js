@@ -230,6 +230,65 @@ define([], function () {
     },
   ];
 
+  data.eventsOutRateSmall = [
+    {
+        'timestamp': 1372402246933,
+        'value': 55662
+    },
+    {
+        'timestamp': 1372402252281,
+        'value': 99885
+    },
+    {
+        'timestamp': 1372402259642,
+        'value': 11223
+    },
+    {
+        'timestamp': 1372402261353,
+        'value': 66995
+    },
+    {
+        'timestamp': 1372402265483,
+        'value': 33665
+    },
+    {
+        'timestamp': 1372402270620,
+        'value': 77885
+    },
+    {
+        'timestamp': 1372402272737,
+        'value': 11225
+    },
+    {
+        'timestamp': 1372402275053,
+        'value': 10000
+    },
+    {
+        'timestamp': 1372402276766,
+        'value': 40000
+    },
+    {
+        'timestamp': 1372402279489,
+        'value': 66995
+    },
+    {
+        'timestamp': 1372402281606,
+        'value': 45000
+    },
+    {
+        'timestamp': 1372402283924,
+        'value': 44223
+    },
+    {
+        'timestamp': 1372402288464,
+        'value': 60000
+    },  
+    {
+        'timestamp': 1372402295250,
+        'value': 66598
+    },
+  ];
+
   data.eventsInCountSmall = [
     {
         'timestamp': 1372402246933,
