@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.commons.beanutils.ConvertUtils;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -21,7 +20,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +38,7 @@ public final class HttpResourceHandler implements HttpHandler {
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
    * patternPathRouter which is routable by path to {@code HttpResourceModel} as destination of the route.
+   *
    * @param handlers Iterable of HttpHandler.
    */
   public HttpResourceHandler(Iterable<HttpHandler> handlers){
@@ -84,6 +83,7 @@ public final class HttpResourceHandler implements HttpHandler {
   /**
    * Fetches the HttpMethod from annotations and returns String representation of HttpMethod.
    * Return emptyString if not present.
+   *
    * @param method Method handling the http request.
    * @return String representation of HttpMethod from annotations or emptyString as a default.
    */
@@ -109,6 +109,7 @@ public final class HttpResourceHandler implements HttpHandler {
   /**
    * Call the appropriate handler for handling the httprequest. 404 if path is not found. 405 if path is found but
    * httpMethod does not match what's configured.
+   *
    * @param request instance of {@code HttpRequest}
    * @param responder instance of {@code HttpResponder} to handle the request.
    */
@@ -122,8 +123,7 @@ public final class HttpResourceHandler implements HttpHandler {
     if (httpResourceModel != null){
       //Found a httpresource route to it.
       httpResourceModel.handle(request, responder, groupValues);
-    }
-      else if (resourceModels.size() > 0)  {
+    } else if (resourceModels.size() > 0)  {
       //Found a matching resource but could not find the right HttpMethod so return 405
       responder.sendError(HttpResponseStatus.METHOD_NOT_ALLOWED,
                           String.format("Problem accessing: %s. Reason: Method Not Allowed", request.getUri()));
@@ -135,6 +135,7 @@ public final class HttpResourceHandler implements HttpHandler {
 
   /**
    * Get HttpResourceModel which matches the HttpMethod of the request.
+   *
    * @param resourceModels List of ResourceModels
    * @param targetHttpMethod HttpMethod
    * @return HttpResourceModel that matches httpMethod that needs to be handled. null if there are no matches.

@@ -27,6 +27,7 @@ public final class HttpResourceModel {
 
   /**
    * Construct a resource model with HttpMethod, method that handles httprequest, Object that contains the method.
+   *
    * @param httpMethods Set of http methods that is handled by the resource.
    * @param method handler that handles the http request.
    * @param handler instance {@code HttpHandler}.
@@ -60,6 +61,7 @@ public final class HttpResourceModel {
 
   /**
    * Handle http Request.
+   *
    * @param request  HttpRequest to be handled.
    * @param responder HttpResponder to write the response.
    * @param groupValues Values needed for the invocation.

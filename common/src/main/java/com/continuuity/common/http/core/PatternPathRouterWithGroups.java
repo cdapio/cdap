@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 /**
  * Matches incoming un-matched paths to destinations. Designed to be used for routing URI paths to http resources.
  * Parameters within braces "{}" are treated as template parameter (a named wild-card pattern).
+ *
  * @param <T> represents the destination of the routes.
  */
 public final class PatternPathRouterWithGroups<T> {
@@ -33,6 +34,7 @@ public final class PatternPathRouterWithGroups<T> {
 
   /**
    * Add a source and destination.
+   *
    * @param source  Source path to be routed. Routed path can have named wild-card pattern with braces "{}".
    * @param destination Destination of the path.
    */
@@ -70,6 +72,7 @@ public final class PatternPathRouterWithGroups<T> {
   /**
    * Get a list of destinations and the values matching templated parameter for the given path.
    * Returns an empty list when there are no destinations that are matched.
+   *
    * @param path path to be routed.
    * @param groupNameValues Map of templated parameter and string representation group value matching the
    *                        templated parameter as the value.
@@ -99,6 +102,7 @@ public final class PatternPathRouterWithGroups<T> {
 
   /**
    * Helper class to store the groupNames and Destination.
+   *
    * @param <T> Destination.
    */
   private final class RouteDestinationWithGroups<T> {

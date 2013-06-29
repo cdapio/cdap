@@ -64,6 +64,7 @@ public class HttpResponder {
 
   /**
    * Sends error message back to the client.
+   *
    * @param status Status of the response.
    * @param errorMessage Error message sent back to the client.
    */

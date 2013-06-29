@@ -62,6 +62,7 @@ public final class NettyHttpService extends AbstractIdleService {
 
   /**
    * Initialize NettyHttpService.
+   *
    * @param port port to run the service on.
    * @param threadPoolSize Size of the thread pool for the executor.
    * @param threadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
@@ -78,6 +79,7 @@ public final class NettyHttpService extends AbstractIdleService {
 
   /**
    * Create Execution handlers with threadPoolExecutor.
+   *
    * @param threadPoolSize size of threadPool
    * @param threadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
    * @return instance of {@code ExecutionHandler}.
@@ -110,6 +112,7 @@ public final class NettyHttpService extends AbstractIdleService {
    *   <li>Setup Http resource handler</li>
    *   <li>Setup the netty pipeline</li>
    * </ul>
+   *
    * @param threadPoolSize Size of threadpool in threadpoolExecutor
    * @param threadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
    * @param httpHandlers Handlers for httpRequests.
