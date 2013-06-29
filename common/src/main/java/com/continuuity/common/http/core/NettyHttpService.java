@@ -44,6 +44,7 @@ public final class NettyHttpService extends AbstractIdleService {
   private final int threadPoolSize;
   private final long threadKeepAliveSecs;
   private final Set<HttpHandler> httpHandlers;
+  private final HandlerContext handlerContext;
 
   private HttpResourceHandler resourceHandler;
 
@@ -60,6 +61,7 @@ public final class NettyHttpService extends AbstractIdleService {
     this.threadPoolSize = threadPoolSize;
     this.threadKeepAliveSecs = threadKeepAliveSecs;
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
+    this.handlerContext = new DummyHandlerContext();
   }
 
   /**
@@ -105,20 +107,20 @@ public final class NettyHttpService extends AbstractIdleService {
     ExecutionHandler executionHandler = createExecutionHandler(threadPoolSize, threadKeepAliveSecs);
 
     Executor bossExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-                                                                    .setDaemon(true)
-                                                                    .setNameFormat("service-boss")
-                                                                    .build());
+                                                                .setDaemon(true)
+                                                                .setNameFormat("boss-thread")
+                                                                .build());
 
     Executor workerExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-                                                                    .setDaemon(true)
-                                                                    .setNameFormat("service-worker")
-                                                                    .build());
+                                                              .setDaemon(true)
+                                                              .setNameFormat("worker-thread")
+                                                              .build());
 
     //Server bootstrap with default worker threads (2 * number of cores)
     bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
 
     resourceHandler = new HttpResourceHandler(httpHandlers);
-    resourceHandler.init();
+    resourceHandler.init(handlerContext);
 
     ChannelPipeline pipeline = bootstrap.getPipeline();
     pipeline.addLast("decoder", new HttpRequestDecoder());
@@ -152,7 +154,7 @@ public final class NettyHttpService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    resourceHandler.destroy();
+    resourceHandler.destroy(handlerContext);
     LOG.info("Stopping service on port {}", port);
     channel.close();
   }

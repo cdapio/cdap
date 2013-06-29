@@ -229,10 +229,10 @@ public class HttpServerTest {
     }
 
     @Override
-    public void init() {}
+    public void init(HandlerContext context) {}
 
     @Override
-    public void destroy() {}
+    public void destroy(HandlerContext context) {}
   }
 
   private HttpResponse request(HttpUriRequest uri) throws IOException {

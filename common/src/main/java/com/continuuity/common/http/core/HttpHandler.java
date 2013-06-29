@@ -36,11 +36,13 @@ public interface HttpHandler {
   /**
    * init method will be called before the netty pipeline is setup. Any initialization operation can be performed
    * in this method.
+   * @param context instance of HandlerContext.
    */
-  public void init();
+  public void init(HandlerContext context);
 
   /**
    * destroy method will be called before shutdown. Any teardown task can be performed in this method.
-   */
-  public void destroy();
+   * @param context instance of HandlerContext.
+  */
+  public void destroy(HandlerContext context);
 }

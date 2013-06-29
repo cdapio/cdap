@@ -173,16 +173,16 @@ public final class HttpResourceHandler implements HttpHandler {
   }
 
   @Override
-  public void init() {
+  public void init(HandlerContext context) {
     for (HttpHandler handler : handlers){
-      handler.init();
+      handler.init(context);
     }
   }
 
   @Override
-  public void destroy() {
+  public void destroy(HandlerContext context) {
    for (HttpHandler handler : handlers){
-      handler.destroy();
+      handler.destroy(context);
     }
   }
 }
