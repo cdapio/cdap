@@ -9,14 +9,15 @@ import com.continuuity.metadata.thrift.Flow;
 
 import java.util.List;
 
-// this is an ad-hoc tool to inspect the meta data (we do not have another
-// command line client as of now for the meta data. This should be developed
-// into a full-flexed command client for meta data. -Andreas
+/**
+ this is an ad-hoc tool to inspect the meta data (we do not have another
+ command line client as of now for the meta data. This should be developed
+ into a full-flexed command client for meta data. -Andreas
 
-// at this point it takes ZK quorum to find Opex and starts a MetadataService
-// also takes an app and a flow name, and runs various methods against them
-// usage: <MetadataTool <zkquorum> <app> <flow>
-
+ at this point it takes ZK quorum to find Opex and starts a MetadataService
+ also takes an app and a flow name, and runs various methods against them
+ usage: <MetadataTool <zkquorum> <app> <flow>
+ */
 public class MetadataTool {
 
   public static void main(String[] args) throws Exception {

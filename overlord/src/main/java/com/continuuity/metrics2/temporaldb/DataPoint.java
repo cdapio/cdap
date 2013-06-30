@@ -20,7 +20,7 @@ public final class DataPoint {
   /** Specifies tags associated with metric. */
   private final Map<String, String> tags;
 
-  /** Private constructor called only from builder */
+  /** Private constructor called only from builder. */
   private DataPoint(final String metric, final long timestamp,
                     final double value, final Map<String, String> tags) {
     this.metric = metric;
@@ -64,7 +64,7 @@ public final class DataPoint {
 
   @Override
   public boolean equals(Object o) {
-    if(o == null) {
+    if (o == null || !(o instanceof DataPoint)) {
       return false;
     }
     DataPoint other = (DataPoint) o;
@@ -133,8 +133,7 @@ public final class DataPoint {
      * @return Immutable instance of {@link DataPoint}
      */
     public DataPoint create() {
-      DataPoint dp = new DataPoint(metric, timestamp, value, tags);
-      return dp;
+      return new DataPoint(metric, timestamp, value, tags);
     }
   }
 }

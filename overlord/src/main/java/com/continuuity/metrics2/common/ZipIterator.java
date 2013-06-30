@@ -3,6 +3,9 @@ package com.continuuity.metrics2.common;
 /**
  * ZipIterator interface that is invoked by passing ith elements
  * from two list that are being iterated upon.
+ *
+ * @param <T> Defines the first iterator
+ * @param <U> Defines the second iterator.
  */
 public interface ZipIterator<T, U> {
 
