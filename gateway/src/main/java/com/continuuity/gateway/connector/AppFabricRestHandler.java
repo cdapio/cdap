@@ -130,8 +130,9 @@ public class AppFabricRestHandler extends NettyRestHandler {
       new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
                                                    Pattern.compile(FLOWLET_INSTANCES_PATH))
     );
+
   /**
-   * Will help validate URL paths, authenticate and get a metrics helper
+   * Will help validate URL paths, authenticate and get a metrics helper.
    */
   private AppFabricRestConnector connector;
 
@@ -260,7 +261,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
           ChannelBuffer content = request.getContent();
           if (content == null) {
-            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST, "No http body passed from client.", true);
+            respondError(message.getChannel(),
+                         HttpResponseStatus.BAD_REQUEST, "No http body passed from client.", true);
             metricsHelper.finish(BadRequest);
             return;
           }
@@ -362,7 +364,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
       }  catch (JsonParseException e) {
         // failed to parse json, so respond with bad request
         respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST,
-                     String.format("Failed to read arguments for flow as JSON from request: %s.", e.getMessage()), true);
+                     String.format("Failed to read arguments for flow as JSON from request: %s.",
+                                   e.getMessage()), true);
         metricsHelper.finish(BadRequest);
         return;
       }

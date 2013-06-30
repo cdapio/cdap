@@ -9,6 +9,9 @@ import com.continuuity.gateway.util.Util;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Utility for managing configurations.
+ */
 public class ConfigUtilTest {
 
   @Test

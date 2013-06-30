@@ -47,17 +47,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ *
+ */
 public class TestUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestUtil.class);
 
   private static String apiKey = null;
 
+<<<<<<< Updated upstream
   /** defaults to be used everywhere where we don't have authenticated accounts */
   public static final String DEFAULT_ACCOUNT_ID = "developer";
+=======
+  public static final String DEFAULT_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
+
+  /** defaults to be used everywhere where we don't have authenticated accounts. */
+>>>>>>> Stashed changes
   public static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEFAULT_ACCOUNT_ID);
 
-  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
+  static final OperationContext CONTEXT = TestUtil.DEFAULT_CONTEXT;
 
   static void enableAuth(String apiKey) {
     TestUtil.apiKey = apiKey;
@@ -68,7 +77,7 @@ public class TestUtil {
   }
 
   /**
-   * Creates a string containing a number
+   * Creates a string containing a number.
    *
    * @param i The number to use
    * @return a message as a byte a array
@@ -78,7 +87,7 @@ public class TestUtil {
   }
 
   /**
-   * Creates a flume event that has
+   * Creates a flume event that has.
    * <ul>
    * <li>a header named "messageNumber" with the string value of a number i</li>
    * <li>a header named "HEADER_DESTINATION_STREAM" with the name of a
@@ -139,7 +148,7 @@ public class TestUtil {
   }
 
   /**
-   * Uses Flume's RPC client to send a single event to a port
+   * Uses Flume's RPC client to send a single event to a port.
    *
    * @param port  The port to use
    * @param event The event
@@ -159,7 +168,7 @@ public class TestUtil {
   }
 
   /**
-   * Creates an HTTP post that has
+   * Creates an HTTP post that has.
    * <ul>
    * <li>a header named "messageNumber" with the string value of a number i</li>
    * <li>a body with the text "This is message number i.</li>
@@ -178,7 +187,7 @@ public class TestUtil {
   }
 
   /**
-   * Send an event to rest collector
+   * Send an event to rest collector.
    *
    * @param post The event as an Http post (see createHttpPost)
    * @throws IOException if sending fails
@@ -194,7 +203,7 @@ public class TestUtil {
   }
 
   /**
-   * Creates an HTTP post for an event and sends it to the rest collector
+   * Creates an HTTP post for an event and sends it to the rest collector.
    *
    * @param port   The port as configured for the collector
    * @param prefix The path prefix as configured for the collector
@@ -212,7 +221,7 @@ public class TestUtil {
 
   /**
    * Verify that an event corresponds to the form as created by
-   * createFlumeEvent or createHttpPost
+   * createFlumeEvent or createHttpPost.
    *
    * @param event         The event to verify
    * @param collectorName The name of the collector that the event was sent to
@@ -227,19 +236,22 @@ public class TestUtil {
                           String destination, Integer expectedNo) {
     Assert.assertNotNull(event.getHeaders().get("messageNumber"));
     int messageNumber = Integer.valueOf(event.getHeaders().get("messageNumber"));
-    if (expectedNo != null)
+    if (expectedNo != null) {
       Assert.assertEquals(messageNumber, expectedNo.intValue());
-    if (collectorName != null)
+    }
+    if (collectorName != null) {
       Assert.assertEquals(collectorName,
           event.getHeaders().get(Constants.HEADER_FROM_COLLECTOR));
-    if (destination != null)
+    }
+    if (destination != null) {
       Assert.assertEquals(destination,
           event.getHeaders().get(Constants.HEADER_DESTINATION_STREAM));
+    }
     Assert.assertArrayEquals(createMessage(messageNumber), Bytes.toBytes(event.getBody()));
   }
 
   /**
-   * A consumer that does nothing
+   * A consumer that does nothing.
    */
   static class NoopConsumer extends Consumer {
     @Override
@@ -275,7 +287,7 @@ public class TestUtil {
 
   /**
    * Consume the events in a queue and verify that they correspond to the
-   * format as created by createHttpPost() or createFlumeEvent()
+   * format as created by createHttpPost() or createFlumeEvent().
    *
    * @param executor       The executor to use for access to the data fabric
    * @param destination    The name of the flow (destination) that the events
@@ -296,11 +308,11 @@ public class TestUtil {
     // prepare the queue consumer
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    executor.execute(context, new QueueConfigure(queueURI, consumer));
+    executor.execute(CONTEXT, new QueueConfigure(queueURI, consumer));
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = eventsExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
-      DequeueResult result = executor.execute(context, dequeue);
+      DequeueResult result = executor.execute(CONTEXT, dequeue);
       Assert.assertTrue(result.isSuccess());
       QueueEntryPointer ackPointer = result.getEntryPointer();
       // deserialize and verify the event
@@ -313,13 +325,13 @@ public class TestUtil {
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
       operations.add(ack);
-      executor.commit(context, operations);
+      executor.commit(CONTEXT, operations);
     }
   }
 
   /**
    * Verify that a given value can be retrieved for a given key via http GET
-   * request
+   * request.
    *
    * @param executor the operation executor to use for access to data fabric
    * @param table    the name of the table to test on
@@ -335,7 +347,7 @@ public class TestUtil {
     Write write = new Write(table, key, Operation.KV_COL, value);
     List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
     operations.add(write);
-    executor.commit(context, operations);
+    executor.commit(CONTEXT, operations);
 
     // make a get URL
     String getUrl = baseUri + (table == null ? "default" : table) + "/" +
@@ -353,8 +365,9 @@ public class TestUtil {
     client.getConnectionManager().shutdown();
 
     // verify the response is ok, throw exception if 403
-    if (HttpStatus.SC_FORBIDDEN == response.getStatusLine().getStatusCode())
+    if (HttpStatus.SC_FORBIDDEN == response.getStatusLine().getStatusCode()) {
       throw new SecurityException("Authentication failed, access denied");
+    }
     Assert.assertEquals(HttpStatus.SC_OK,
         response.getStatusLine().getStatusCode());
 
@@ -412,7 +425,7 @@ public class TestUtil {
 
   /**
    * Verify that a given value can be stored for a given key via http PUT
-   * request
+   * request.
    *
    * @param executor the operation executor to use for access to data fabric
    * @param baseUri  The URI for PUT request, without the key
@@ -443,14 +456,15 @@ public class TestUtil {
     client.getConnectionManager().shutdown();
 
     // verify the response is ok, throw exception if 403
-    if (HttpStatus.SC_FORBIDDEN == response.getStatusLine().getStatusCode())
+    if (HttpStatus.SC_FORBIDDEN == response.getStatusLine().getStatusCode()) {
       throw new SecurityException("Authentication failed, access denied");
-    Assert.assertEquals(HttpStatus.SC_OK,
-        response.getStatusLine().getStatusCode());
+    }
+
+    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
     // read the key/value back from the data fabric
     Read read = new Read(key, Operation.KV_COL);
-    OperationResult<Map<byte[],byte[]>> result = executor.execute(context, read);
+    OperationResult<Map<byte[], byte[]>> result = executor.execute(CONTEXT, read);
 
     // verify the read value is the same as the original value
     Assert.assertFalse(result.isEmpty());
@@ -494,7 +508,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a GET request to the given URL and return the HTTP status
+   * Send a GET request to the given URL and return the HTTP status.
    *
    * @param url the URL to get
    */
@@ -506,7 +520,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a GET request to the given URL and return the HTTP status
+   * Send a GET request to the given URL and return the HTTP status.
    *
    * @param baseUrl the baseURL
    * @param table    the name of the table to test on
@@ -532,7 +546,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a DELETE request to the given URL and return the HTTP status
+   * Send a DELETE request to the given URL and return the HTTP status.
    *
    * @param url the URL to delete
    */
@@ -545,7 +559,7 @@ public class TestUtil {
 
   /**
    * Send a DELETE request to the given URL for the given key and return the
-   * HTTP status
+   * HTTP status.
    *
    * @param baseUrl the baseURL
    * @param table    the name of the table to test on
@@ -571,7 +585,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a GET request to the given URL and return the Http response
+   * Send a GET request to the given URL and return the Http response.
    *
    * @param url the URL to get
    * @param headers map with header data
@@ -579,8 +593,8 @@ public class TestUtil {
   public static HttpResponse sendGetRequest(String url, Map<String, String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(url);
-    if (headers!=null) {
-      for(Map.Entry<String,String> header: headers.entrySet()) {
+    if (headers != null) {
+      for (Map.Entry<String, String> header: headers.entrySet()) {
         get.setHeader(header.getKey(), header.getValue());
       }
     }
@@ -591,7 +605,7 @@ public class TestUtil {
 
 
   /**
-   * Send a POST request to the given URL and return the HTTP status
+   * Send a POST request to the given URL and return the HTTP status.
    *
    * @param url the URL to post to
    */
@@ -600,7 +614,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a POST request to the given URL and return the HTTP status
+   * Send a POST request to the given URL and return the HTTP status.
    *
    * @param url the URL to post to
    * @param headers map with header data
@@ -610,7 +624,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a Post request to the given URL and return the HTTP status
+   * Send a Post request to the given URL and return the HTTP status.
    *
    * @param url the URL to post to
    * @param content binary content
@@ -619,8 +633,8 @@ public class TestUtil {
   public static int sendPostRequest(String url, byte[] content, Map<String, String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(url);
-    if (headers!=null) {
-      for(Map.Entry<String,String> header: headers.entrySet()) {
+    if (headers != null) {
+      for (Map.Entry<String, String> header: headers.entrySet()) {
         post.setHeader(header.getKey(), header.getValue());
       }
     }
@@ -631,7 +645,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a Post request to the given URL and return the HTTP status
+   * Send a Post request to the given URL and return the HTTP status.
    *
    * @param url the URL to post to
    * @param content String content
@@ -640,8 +654,8 @@ public class TestUtil {
   public static int sendPostRequest(String url, String content, Map<String, String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(url);
-    if (headers!=null) {
-      for(Map.Entry<String,String> header: headers.entrySet()) {
+    if (headers != null) {
+      for (Map.Entry<String, String> header: headers.entrySet()) {
         post.setHeader(header.getKey(), header.getValue());
       }
     }
@@ -652,7 +666,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a PUT request to the given URL and return the HTTP status
+   * Send a PUT request to the given URL and return the HTTP status.
    *
    * @param url the URL to put to
    */
@@ -661,7 +675,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a PUT request to the given URL and return the HTTP status
+   * Send a PUT request to the given URL and return the HTTP status.
    *
    * @param url the URL to put to
    * @param headers map with header data
@@ -671,7 +685,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a PUT request to the given URL and return the HTTP status
+   * Send a PUT request to the given URL and return the HTTP status.
    *
    * @param url the URL to put to
    * @param content binary content
@@ -680,8 +694,8 @@ public class TestUtil {
   public static int sendPutRequest(String url, byte[] content, Map<String, String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(url);
-    if (headers!=null) {
-      for(Map.Entry<String,String> header: headers.entrySet()) {
+    if (headers != null) {
+      for (Map.Entry<String, String> header: headers.entrySet()) {
         put.setHeader(header.getKey(), header.getValue());
       }
     }
@@ -692,7 +706,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a PUT request to the given URL and return the HTTP status
+   * Send a PUT request to the given URL and return the HTTP status.
    *
    * @param url the URL to put to
    * @param content String content
@@ -701,8 +715,8 @@ public class TestUtil {
   public static int sendPutRequest(String url, String content, Map<String, String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(url);
-    if (headers!=null) {
-      for(Map.Entry<String,String> header: headers.entrySet()) {
+    if (headers != null) {
+      for (Map.Entry<String, String> header: headers.entrySet()) {
         put.setHeader(header.getKey(), header.getValue());
       }
     }

@@ -3,7 +3,7 @@
  */
 
 /**
- * Gateway util.
+ * Gateway Test package.
  */
-package com.continuuity.gateway.util;
+package com.continuuity.gateway;
 
