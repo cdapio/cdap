@@ -62,7 +62,6 @@ import static org.junit.Assert.assertTrue;
  */
 public class TestPassportServer {
 
- // private final Server server;
   private final NettyHttpService server;
   private final int port;
   private final String jdbcType;
