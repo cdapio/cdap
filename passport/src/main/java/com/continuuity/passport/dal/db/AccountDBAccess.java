@@ -506,18 +506,19 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     );
 
     //Update is successful. now return the account information
-    String selectSql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
+    String selectSql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
       "(SELECT %s FROM %s where %s = ?)",
       DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
       DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
       DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
       DBUtils.AccountTable.CONFIRMED_COLUMN,
       DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
-      DBUtils.AccountTable.TABLE_NAME,
       DBUtils.AccountTable.EMAIL_COLUMN,
       DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT,
       DBUtils.AccountTable.PAYMENT_ACCOUNT_ID,
       DBUtils.AccountTable.ORG_ID,
+      DBUtils.AccountTable.TABLE_NAME,
+      DBUtils.AccountTable.EMAIL_COLUMN,
       DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME,
       DBUtils.Nonce.NONCE_ID_COLUMN
     );
@@ -533,8 +534,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       update.setString(1, PasswordUtils.generateHashedPassword(newPassword));
       update.setInt(2, nonce);
       update.executeUpdate();
-
-
 
       select = connection.prepareStatement(selectSql);
 

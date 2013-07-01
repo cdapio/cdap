@@ -48,8 +48,8 @@ public class ActivationNonceHandler extends PassportHandler {
     return Response.ok("OK").build();
   }
 
-  @Path("generateActivationKey/{id}")
-  @GET
+  @Path("accountRegistration/getNonce/{id}")
+  @POST
   @Produces("application/json")
   public Response getActivationNonce(@PathParam("id") String id) {
     requestReceived();
@@ -61,7 +61,7 @@ public class ActivationNonceHandler extends PassportHandler {
         return Response.ok(Utils.getNonceJson(null, nonce)).build();
       } else {
         requestFailed();
-        LOG.error(String.format("Could not generate Nonce. Endpoint %s", "GET /passport/v1/generateActivationKey"));
+        LOG.error(String.format("Could not generate Nonce. Endpoint %s", "POST /passport/v1/generateActivationKey"));
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate nonce", nonce))
           .build();
@@ -69,14 +69,14 @@ public class ActivationNonceHandler extends PassportHandler {
     } catch (RuntimeException e) {
       requestFailed();
       LOG.error(String.format("Could not generate Nonce. Endpoint %s .%s",
-                              "GET /passport/v1/generateActivationKey", e.getMessage()));
-      return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
+                              "POST /passport/v1/generateActivationKey", e.getMessage()));
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getNonceJson("Couldn't generate nonce", nonce))
         .build();
     }
   }
 
-  @Path("getActivationId/{nonce}")
+  @Path("accountRegistration/getId/{nonce}")
   @GET
   @Produces("application/json")
   public Response getActivationId(@PathParam("nonce") int nonce) {
@@ -105,8 +105,8 @@ public class ActivationNonceHandler extends PassportHandler {
     }
   }
 
-  @Path("generateResetKey/{email_id}")
-  @GET
+  @Path("accountReset/generateKey/{email_id}")
+  @POST
   @Produces("application/json")
   public Response getRegenerateResetKey(@PathParam("email_id") String emailId) {
     requestReceived();
@@ -134,7 +134,7 @@ public class ActivationNonceHandler extends PassportHandler {
     }
   }
 
-  @Path("resetPassword/{nonce}")
+  @Path("accountReset/password/{nonce}")
   @POST
   @Produces("application/json")
   @Consumes("application/json")
