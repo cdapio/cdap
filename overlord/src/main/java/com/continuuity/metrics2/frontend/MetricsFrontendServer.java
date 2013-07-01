@@ -6,6 +6,7 @@ import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import com.continuuity.weave.common.Threads;
+import com.google.inject.Inject;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -15,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -38,17 +38,18 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
    * Keep no idle threads more than 60 seconds.
    * If max thread pool size reached, reject the new coming
    */
-  private final ExecutorService executorService =
-    new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
-                           60L, TimeUnit.SECONDS,
-                           new SynchronousQueue<Runnable>(),
-                           Threads.createDaemonThreadFactory("metrics-frontend-%d"),
-                           new ThreadPoolExecutor.DiscardPolicy());
+  private volatile ExecutorService executorService;
 
   /**
    * Half-Sync, Half-Async Thrift server.
    */
-  private THsHaServer server;
+  private volatile THsHaServer server;
+
+  /**
+   * Handler to the metrics frontend service thrift interface.
+   */
+  @Inject
+  private MetricsFrontendServiceImpl serviceImpl;
 
   /**
    * @return an instance of thread within which the server would run blocked.
@@ -109,10 +110,12 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
                           Constants.DEFAULT_METRICS_FRONTEND_SERVER_THREADS
       );
 
-      // Attach and handler to the metrics frontend service thrift interface.
-      MetricsFrontendServiceImpl serviceImpl
-        = new MetricsFrontendServiceImpl(conf);
-
+      executorService =
+        new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
+                               60L, TimeUnit.SECONDS,
+                               new SynchronousQueue<Runnable>(),
+                               Threads.createDaemonThreadFactory("metrics-frontend-%d"),
+                               new ThreadPoolExecutor.DiscardPolicy());
       // configure the server
       THsHaServer.Args serverArgs =
         new THsHaServer
@@ -148,14 +151,6 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
       stop();
     } catch (TTransportException e) {
       Log.error("Non-blocking server error. Reason : {}", e.getMessage());
-      stop();
-    } catch (ClassNotFoundException e) {
-      Log.error("Server failed to load appropriate SQL driver. Reason : {}",
-                e.getMessage());
-      stop();
-    } catch (SQLException e) {
-      Log.error("Server failed initializing database connection. Reason : {}",
-                e.getMessage());
       stop();
     }
     return null;

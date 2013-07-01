@@ -36,7 +36,7 @@ public class LogFileWriter implements Closeable {
   private DataFileWriter<GenericRecord> dataFileWriter;
   private long currentTimeInterval = -1;
 
-  private static final String FILE_SUFFIX = ".avro";
+  private static final String FILE_SUFFIX = "avro";
 
   public LogFileWriter(FileSystem fileSystem, Path logBaseDir, Schema schema, int syncIntervalBytes,
                        long fileRotateIntervalMs, long retentionDurationMs) {

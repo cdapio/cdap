@@ -9,10 +9,12 @@ import com.continuuity.app.logging.MapReduceLoggingContext;
 import com.continuuity.app.logging.ProcedureLoggingContext;
 import com.continuuity.common.logging.AccountLoggingContext;
 import com.continuuity.common.logging.ApplicationLoggingContext;
+import com.continuuity.common.logging.GenericLoggingContext;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.filter.MdcExpression;
+import com.continuuity.logging.filter.OrFilter;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Map;
@@ -86,6 +88,9 @@ public final class LoggingContextHelper {
       entityId = loggingContext.getSystemTagsMap().get(ProcedureLoggingContext.TAG_PROCEDURE_ID).getValue();
     } else if (loggingContext instanceof MapReduceLoggingContext) {
       entityId = loggingContext.getSystemTagsMap().get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID).getValue();
+    } else if (loggingContext instanceof GenericLoggingContext) {
+      entityId = loggingContext.getSystemTagsMap().get(GenericLoggingContext.TAG_ENTITY_ID).getValue();
+      return createGenericFilter(accountId, applId, entityId);
     } else {
       throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
     }
@@ -93,6 +98,20 @@ public final class LoggingContextHelper {
       ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_ACCOUNT_ID, accountId),
                        new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
                        new MdcExpression(FlowletLoggingContext.TAG_FLOW_ID, entityId)
-      ));
+      )
+    );
+  }
+
+  private static Filter createGenericFilter(String accountId, String applicationId, String entityId) {
+    FlowletLoggingContext flowletLoggingContext = new FlowletLoggingContext(accountId, applicationId, entityId, "");
+    ProcedureLoggingContext procedureLoggingContext = new ProcedureLoggingContext(accountId, applicationId, entityId);
+    MapReduceLoggingContext mapReduceLoggingContext = new MapReduceLoggingContext(accountId, applicationId, entityId);
+
+    return new OrFilter(
+      ImmutableList.of(createFilter(flowletLoggingContext),
+                       createFilter(procedureLoggingContext),
+                       createFilter(mapReduceLoggingContext)
+      )
+    );
   }
 }

@@ -22,16 +22,19 @@ public final class LoggingConfiguration {
   // Used only in Distributed mode
   public static final String NUM_PARTITIONS = "log.publish.num.partitions";
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
-  public static final String LOG_SAVER_RUN_ACCOUNT = "log.saver.run.account";
+  public static final String LOGGING_RUN_ACCOUNT = "log.run.account";
   public static final String LOG_SAVER_RUN_MEMORY_MB = "log.saver.run.memory.megs";
-  public static final String LOG_RETENTION_DURATION_MS = "log.retention.duration.ms";
+  public static final String LOG_RETENTION_DURATION_DAYS = "log.retention.duration.days";
   public static final String LOG_MAX_FILE_SIZE_BYTES = "log.max.file.size.bytes";
-
-  // Table used to store log metadata
-  public static final String LOG_META_DATA_TABLE = "__log_meta";
 
   // Used only in Single Node mode
   public static final String LOG_FILE_ROTATION_INTERVAL_MINS = "log.file.rotation.interval.mins";
+
+  // Constants
+  // Table used to store log metadata
+  public static final String LOG_META_DATA_TABLE = "__log_meta";
+  // Default log pattern
+  public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n";
 
   private LoggingConfiguration() {}
 

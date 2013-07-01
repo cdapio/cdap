@@ -5,12 +5,13 @@
 package com.continuuity.common.logging.logback.file;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingConfiguration;
+import com.continuuity.common.logging.logback.LogAppender;
 import com.continuuity.common.logging.logback.serialize.LogSchema;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Logback appender that writes log events to files.
  */
-public class FileLogAppender extends AppenderBase<ILoggingEvent> {
+public class FileLogAppender extends LogAppender {
   public static final String APPENDER_NAME = "FileLogAppender";
   public static final String IGNORE_LOG = ".IGNORE_LOG_FILE_APPENDER";
 
@@ -36,6 +37,7 @@ public class FileLogAppender extends AppenderBase<ILoggingEvent> {
   private LogFileWriter logFileWriter;
   private FileSystem fileSystem;
 
+  @Inject
   public FileLogAppender(CConfiguration cConfig, Configuration hConfig) {
     setName(APPENDER_NAME);
 
@@ -54,9 +56,10 @@ public class FileLogAppender extends AppenderBase<ILoggingEvent> {
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
                                 "Log file sync interval is invalid: %s", this.syncIntervalBytes);
 
-    this.retentionDurationMs = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_MS, -1);
-    Preconditions.checkArgument(this.retentionDurationMs > 0,
-                                "Log file retention duration is invalid: %s", this.retentionDurationMs);
+    long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, -1);
+    Preconditions.checkArgument(retentionDurationDays > 0,
+                                "Log file retention duration is invalid: %s", retentionDurationDays);
+    this.retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
   }
 
   @Override

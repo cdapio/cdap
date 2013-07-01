@@ -69,6 +69,21 @@ struct TimeseriesRequest {
    6: optional bool summary = 1,
 }
 
+enum TEntityType {
+  FLOW = 1,
+  PROCEDURE = 2,
+  MAP_REDUCE = 3,
+}
+
+/**
+ * Log result
+ */
+struct TLogResult {
+   1: required list<string> logEvents,
+   2: required string positionHint,
+   3: required bool incremental,
+}
+
 /**
  * Metrics Service is a frontend service for retreiving metrics.
  */
@@ -105,6 +120,20 @@ service MetricsFrontendService {
    */
   list<string> getLog(1: string accountId, 2: string applicationId,
                       3: string flowId, 4: i32 size)
+    throws (1: MetricsServiceException e),
+
+  /**
+   * Returns log lines after given position.
+   */
+  TLogResult getLogNext(1: string accountId, 2: string applicationId, 3: string entityId,
+                        4: TEntityType entityType, 5: string positionHint, 6: i32 maxEvents)
+    throws (1: MetricsServiceException e),
+
+  /**
+   * Returns log lines before given position.
+   */
+  TLogResult getLogPrev(1: string accountId, 2: string applicationId, 3: string entityId,
+                        4: TEntityType entityType, 5: string positionHint, 6: i32 maxEvents)
     throws (1: MetricsServiceException e),
 
 }

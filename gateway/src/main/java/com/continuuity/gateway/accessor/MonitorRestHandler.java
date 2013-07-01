@@ -1,5 +1,9 @@
 package com.continuuity.gateway.accessor;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.PatternLayout;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.app.services.ActiveFlow;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
@@ -7,38 +11,52 @@ import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowStatus;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.logging.GenericLoggingContext;
+import com.continuuity.common.logging.LoggingConfiguration;
+import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.logging.read.Callback;
+import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import com.continuuity.weave.discovery.Discoverable;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.jboss.netty.handler.stream.ChunkedStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
@@ -54,6 +72,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * <PRE>
  * http://gateway:port/rest-status/app-id/flow-id/status
  * http://gateway:port/rest-status/app-id/flow-id/metrics?counter=cntA,cntB
+ * http://gateway:port/rest-status/app-id/flow-id/logs&fromTime=1372194720&toTime=1372204720
  * </PRE>
  */
 public class MonitorRestHandler extends NettyRestHandler {
@@ -320,7 +339,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         return;
       }
       // is the query supported (only status or metrics right now)
-      if (!("status".equals(query) || "metrics".equals(query))) {
+      if (!("status".equals(query) || "metrics".equals(query) || "logs".equals(query))) {
         helper.finish(BadRequest);
         LOG.trace("Received a request with unsupported query " + query);
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
@@ -360,6 +379,50 @@ public class MonitorRestHandler extends NettyRestHandler {
         respondSuccess(message.getChannel(), request, str.toString().getBytes());
         helper.finish(Success);
 
+      } else if ("logs".equals(query)) {
+        long fromTimeMs = parseLong(parameters.get("fromTime"));
+        long toTimeMs = parseLong(parameters.get("toTime"));
+
+        if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
+          respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+          return;
+        }
+
+        LoggingContext loggingContext = new GenericLoggingContext(accountId, appid, flowid);
+        LogReader logReader = accessor.getLogReader();
+        String logPattern = accessor.getConfiguration().get(
+          LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
+        ch.qos.logback.classic.Logger rootLogger =
+          (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        LoggerContext loggerContext = rootLogger.getLoggerContext();
+
+        final PatternLayout patternLayout = new PatternLayout();
+        patternLayout.setContext(loggerContext);
+        patternLayout.setPattern(logPattern);
+        patternLayout.start();
+
+        final PipedInputStream in = new PipedInputStream();
+        final PipedOutputStream out = new PipedOutputStream(in);
+
+        ChannelFuture future = respond(message.getChannel(), request, HttpResponseStatus.OK,
+                ImmutableMap.of(HttpHeaders.Names.CONTENT_TYPE, "text/plain"),
+                new ChunkedStream(in));
+
+        logReader.getLog(loggingContext, fromTimeMs, toTimeMs,
+                         new Callback() {
+                           @Override
+                           public void handle(ILoggingEvent event) {
+                             try {
+                               out.write(Bytes.toBytes(patternLayout.doLayout(event)));
+                             } catch (IOException e) {
+                               throw Throwables.propagate(e);
+                             }
+                           }
+                         });
+        out.close();
+        future.await();
+        in.close();
+        patternLayout.stop();
       } else {
         // this should not happen because we checked above -> internal error
         helper.finish(Error);
@@ -386,6 +449,17 @@ public class MonitorRestHandler extends NettyRestHandler {
     if (e.getChannel().isOpen()) {
       respondError(e.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       e.getChannel().close();
+    }
+  }
+
+  private static long parseLong(List<String> parameter) {
+    if (parameter == null || parameter.isEmpty()) {
+      return -1;
+    }
+    try {
+      return TimeUnit.MILLISECONDS.convert(Long.parseLong(parameter.get(0)), TimeUnit.SECONDS);
+    } catch (NumberFormatException e) {
+      return -1;
     }
   }
 }

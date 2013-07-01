@@ -1,4 +1,4 @@
-package com.continuuity.logging.tail;
+package com.continuuity.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.logback.serialize.LoggingEvent;

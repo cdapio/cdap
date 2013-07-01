@@ -5,4 +5,4 @@
 /**
  * Contains classes for tailing log events.
  */
-package com.continuuity.logging.tail;
+package com.continuuity.logging.read;

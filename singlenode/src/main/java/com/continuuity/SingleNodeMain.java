@@ -11,6 +11,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.logging.logback.LogAppenderInitializer;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.StackTraceUtil;
@@ -19,6 +20,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
@@ -56,6 +58,7 @@ public class SingleNodeMain {
   private final MetricsFrontendServerInterface overloadFrontend;
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
+  private final LogAppenderInitializer logAppenderInitializer;
 
   private InMemoryZKServer zookeeper;
 
@@ -69,6 +72,7 @@ public class SingleNodeMain {
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
+    logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -87,6 +91,8 @@ public class SingleNodeMain {
    * Start the service.
    */
   protected void startUp(String[] args) throws Exception {
+    logAppenderInitializer.intialize();
+
     File zkDir = new File(ZOOKEEPER_DATA_DIR);
     zkDir.mkdir();
     zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
@@ -232,8 +238,9 @@ public class SingleNodeMain {
     try {
       main.startUp(args);
     } catch (Exception e) {
-      main.shutDown();
       System.err.println("Failed to start server. " + e.getMessage());
+      LOG.error("Failed to start server", e);
+      main.shutDown();
       System.exit(-2);
     }
   }
@@ -252,7 +259,8 @@ public class SingleNodeMain {
       new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules()
+      new MetadataModules().getInMemoryModules(),
+      new LoggingModules().getInMemoryModules()
     );
   }
 
@@ -290,7 +298,8 @@ public class SingleNodeMain {
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
           useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules()
+      new MetadataModules().getSingleNodeModules(),
+      new LoggingModules().getSingleNodeModules()
     );
   }
 }

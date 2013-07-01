@@ -18,12 +18,15 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Values;
 
 /**
  * This is a base class for the gateway's Netty-based Http request handlers.
@@ -58,10 +61,10 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
       HttpVersion.HTTP_1_1, status);
     if (reason != null) {
       ChannelBuffer body = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(reason));
-      response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, body.readableBytes());
+      response.addHeader(Names.CONTENT_LENGTH, body.readableBytes());
       response.setContent(body);
     } else {
-      response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+      response.addHeader(Names.CONTENT_LENGTH, 0);
     }
     ChannelFuture future = channel.write(response);
     future.addListener(ChannelFutureListener.CLOSE);
@@ -84,8 +87,8 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
       allowed.append(comma);
       comma = ", ";
     }
-    response.addHeader(HttpHeaders.Names.ALLOW, allowed.toString());
-    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+    response.addHeader(Names.ALLOW, allowed.toString());
+    response.addHeader(Names.CONTENT_LENGTH, 0);
     ChannelFuture future = channel.write(response);
     future.addListener(ChannelFutureListener.CLOSE);
   }
@@ -163,13 +166,46 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
         response.addHeader(entry.getKey(), entry.getValue());
       }
     }
-    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content == null ? 0 : content.readableBytes());
+    response.addHeader(Names.CONTENT_LENGTH, content == null ? 0 : content.readableBytes());
     response.setContent(content);
 
     ChannelFuture future = channel.write(response);
     if (!keepAlive) {
       future.addListener(ChannelFutureListener.CLOSE);
     }
+  }
+
+  /**
+   * Respond to the client with success. This keeps the connection alive
+   * unless specified otherwise in the original request.
+   *
+   * @param channel the channel on which the request came
+   * @param request the original request (to determine whether to keep the
+   *                connection alive)
+   * @param status  the status code to respond with. Defaults to 200-OK if null
+   * @param headers additional headers to send with the response. May be null.
+   * @param chunkedInput a chunk of content of the response to send
+   */
+  protected ChannelFuture respond(Channel channel, HttpRequest request,
+                         HttpResponseStatus status,
+                         Map<String, String> headers, ChunkedInput chunkedInput) {
+    HttpResponse response = new DefaultHttpResponse(
+      HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
+    boolean keepAlive = HttpHeaders.isKeepAlive(request);
+    if (headers != null) {
+      for (Map.Entry<String, String> entry : headers.entrySet()) {
+        response.addHeader(entry.getKey(), entry.getValue());
+      }
+    }
+
+    response.setChunked(true);
+    response.setHeader(Names.TRANSFER_ENCODING, Values.CHUNKED);
+    channel.write(response);
+    ChannelFuture future = channel.write(chunkedInput);
+    if (!keepAlive) {
+      future.addListener(ChannelFutureListener.CLOSE);
+    }
+    return future;
   }
 
   protected void respondToPing(Channel channel, HttpRequest request) {
@@ -203,7 +239,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
 
   protected void respondJson(Channel channel, HttpRequest request, HttpResponseStatus status, byte[] jsonContent) {
     Map<String, String> headers = Maps.newHashMap();
-    headers.put(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+    headers.put(Names.CONTENT_TYPE, "application/json");
     respond(channel, request, status, headers, jsonContent);
   }
 

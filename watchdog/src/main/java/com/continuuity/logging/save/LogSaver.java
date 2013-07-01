@@ -93,7 +93,7 @@ public final class LogSaver extends AbstractIdleService {
     this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(kafkaSeedBrokers);
     Preconditions.checkNotNull(this.seedBrokers, "Not able to parse Kafka seed brokers");
 
-    String account = cConfig.get(LoggingConfiguration.LOG_SAVER_RUN_ACCOUNT);
+    String account = cConfig.get(LoggingConfiguration.LOGGING_RUN_ACCOUNT);
     Preconditions.checkNotNull(account, "Account cannot be null");
 
     this.topic = KafkaTopic.getTopic();
@@ -111,9 +111,10 @@ public final class LogSaver extends AbstractIdleService {
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
     this.logBaseDir = new Path(baseDir);
 
-    this.retentionDurationMs = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_MS, -1);
-    Preconditions.checkArgument(retentionDurationMs > 0,
-                                "Log retention duration not specified, or is invalid: %s", retentionDurationMs);
+    long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, -1);
+    Preconditions.checkArgument(retentionDurationDays > 0,
+                                "Log file retention duration is invalid: %s", retentionDurationDays);
+    this.retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
 
     this.maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 100 * 1024 * 1024);
     Preconditions.checkArgument(maxLogFileSizeBytes > 0,

@@ -5,16 +5,16 @@
 package com.continuuity.common.logging.logback.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.logback.LogAppender;
 import com.google.inject.Inject;
 
 /**
  * Log appender that publishes log messages to Kafka.
  */
-public final class KafkaLogAppender extends AppenderBase<ILoggingEvent> {
+public final class KafkaLogAppender extends LogAppender {
   public static final String APPENDER_NAME = "KafkaLogAppender";
   private final SimpleKafkaProducer producer;
 

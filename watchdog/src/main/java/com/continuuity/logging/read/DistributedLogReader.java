@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.logging.tail;
+package com.continuuity.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.api.data.OperationException;
@@ -38,11 +38,11 @@ import java.util.Map;
 import java.util.SortedMap;
 
 /**
- * Tails logs by reading the log messages from Kafka.
+ * Reads logs in a distributed setup.
  */
 @SuppressWarnings("FieldCanBeLocal")
-public final class KafkaLogTail implements LogTail {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaLogTail.class);
+public final class DistributedLogReader implements LogReader {
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedLogReader.class);
 
   private final List<LoggingConfiguration.KafkaHost> seedBrokers;
   private final String topic;
@@ -55,12 +55,11 @@ public final class KafkaLogTail implements LogTail {
   private final int kafkaTailFetchTimeoutMs = 300;
 
   /**
-   * Creates a KafkaLogTail object.
+   * Creates a DistributedLogReader object.
    * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public KafkaLogTail(OperationExecutor opex, OperationContext operationContext, CConfiguration cConfig,
-                      Configuration hConfig) {
+  public DistributedLogReader(OperationExecutor opex, CConfiguration cConfig, Configuration hConfig) {
     try {
       this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(
         cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
@@ -75,7 +74,9 @@ public final class KafkaLogTail implements LogTail {
 
       this.serializer = new LoggingEventSerializer();
 
-      this.fileMetaDataManager = new FileMetaDataManager(opex, operationContext,
+      String account = cConfig.get(LoggingConfiguration.LOGGING_RUN_ACCOUNT);
+      Preconditions.checkNotNull(account, "Account cannot be null");
+      this.fileMetaDataManager = new FileMetaDataManager(opex, new OperationContext(account),
                                                          LoggingConfiguration.LOG_META_DATA_TABLE);
 
       this.hConfig = hConfig;
@@ -133,7 +134,7 @@ public final class KafkaLogTail implements LogTail {
 
   @Override
   public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
-                     com.continuuity.logging.tail.Callback callback) {
+                     com.continuuity.logging.read.Callback callback) {
     try {
       Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
 
