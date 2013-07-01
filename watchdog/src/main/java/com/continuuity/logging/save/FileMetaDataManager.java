@@ -85,7 +85,7 @@ public final class FileMetaDataManager {
   }
 
   /**
-   * Deletes metat data until a given time.
+   * Deletes meta data until a given time.
    * @param tillTime time till the meta data will be deleted.
    * @param callback callback called before deleting a meta data column.
    * @return total number of columns deleted.
