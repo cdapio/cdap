@@ -56,11 +56,11 @@ public final class QueueInputDatum implements InputDatum {
 
   @Override
   public Iterator<ByteBuffer> getData() {
-    if(!needProcess()) {
+    if (!needProcess()) {
       return Iterators.singletonIterator(EMPTY_BUFFER);
     }
 
-    if(dequeueResult.getEntries().length == 1) {
+    if (dequeueResult.getEntries().length == 1) {
       return Iterators.singletonIterator(ByteBuffer.wrap(dequeueResult.getEntries()[0].getData()));
     }
 

@@ -30,15 +30,15 @@ public class ApplicationVerification extends AbstractVerifier implements Verifie
   @Override
   public VerifyResult verify(final ApplicationSpecification input) {
     // Check if Application name is an ID or no.
-    if(!isId(input.getName())) {
-      return VerifyResult.FAILURE(Err.NOT_AN_ID, "Application");
+    if (!isId(input.getName())) {
+      return VerifyResult.failure(Err.NOT_AN_ID, "Application");
     }
 
     // Check if there is at least one of the following : Flow & Procedure or MapReduce for now.
-    if(input.getProcedures().size() == 0 && input.getFlows().size() == 0 && input.getMapReduces().size() == 0) {
-      return VerifyResult.FAILURE(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
+    if (input.getProcedures().size() == 0 && input.getFlows().size() == 0 && input.getMapReduces().size() == 0) {
+      return VerifyResult.failure(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
     }
 
-    return VerifyResult.SUCCESS();
+    return VerifyResult.success();
   }
 }

@@ -16,6 +16,11 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
+/**
+ * An {@link OutputFormat} for writing into dataset.
+ * @param <KEY> Type of key.
+ * @param <VALUE> Type of value.
+ */
 public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
   public static final String OUTPUT_DATASET_SPEC = "output.dataset.spec";
 

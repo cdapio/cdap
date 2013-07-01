@@ -152,8 +152,8 @@ public interface FlowletSpecification {
       }
 
       /**
-       * Creates an instance of {@link FlowletSpecification}
-       * @return An instance of {@link FlowletSpecification}
+       * Creates an instance of {@link FlowletSpecification}.
+       * @return An instance of {@link FlowletSpecification}.
        */
       public FlowletSpecification build() {
         return new DefaultFlowletSpecification(name, description, failurePolicy, dataSets.build(), arguments);

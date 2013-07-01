@@ -12,6 +12,8 @@ import com.google.common.util.concurrent.ListenableFuture;
  * <p/>
  * This class also allows all stages in the {@link Pipeline} to be managed collectively
  * with methods to run and get results of processing.
+ *
+ * @param <T> Type of object produced by this Pipeline.
  */
 public interface Pipeline<T> {
   /**

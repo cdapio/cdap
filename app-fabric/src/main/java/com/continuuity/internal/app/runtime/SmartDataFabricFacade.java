@@ -21,8 +21,8 @@ import com.google.inject.assistedinject.Assisted;
 
 /**
  * A {@link DataFabricFacade} that will create a new {@link SmartTransactionAgent} every time
- * when the {@link #createAndUpdateTransactionAgentProxy} method is called. Also the newly created {@link TransactionAgent} would be set
- * into the given {@link TransactionProxy} instance.
+ * when the {@link #createAndUpdateTransactionAgentProxy} method is called.
+ * Also the newly created {@link TransactionAgent} would be set into the given {@link TransactionProxy} instance.
  */
 public final class SmartDataFabricFacade implements DataFabricFacade {
 

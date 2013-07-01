@@ -4,8 +4,8 @@
 
 package com.continuuity.internal.app;
 
-import com.continuuity.internal.io.Schema;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.internal.io.Schema;
 
 import javax.annotation.Nullable;
 import java.util.Set;
@@ -43,9 +43,9 @@ public final class SchemaFinder {
   public static ImmutablePair<Schema, Schema> findSchema(Set<Schema> output, Set<Schema> input) {
     ImmutablePair<Schema, Schema> compatibleSchema = null;
 
-    for(Schema outputSchema : output) {
-      for(Schema inputSchema : input) {
-        if(outputSchema.equals(inputSchema)) {
+    for (Schema outputSchema : output) {
+      for (Schema inputSchema : input) {
+        if (outputSchema.equals(inputSchema)) {
           return new ImmutablePair<Schema, Schema>(inputSchema, outputSchema);
         }
 

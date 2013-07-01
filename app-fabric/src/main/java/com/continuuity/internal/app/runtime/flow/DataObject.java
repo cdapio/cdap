@@ -14,7 +14,7 @@ public class DataObject<T> {
   private final Map<String, Object> partitions;
 
   /**
-   * Simple constructor with only event and no partition hashes
+   * Simple constructor with only event and no partition hashes.
    * @param data event
    */
   public DataObject(T data) {
@@ -23,7 +23,7 @@ public class DataObject<T> {
   }
 
   /**
-   * Constructor with an event and a set of partition hashes
+   * Constructor with an event and a set of partition hashes.
    * @param data event
    * @param partitions mapping from partition key to object, which the {@link Object#hashCode()}
    *                   of the object value would be triggered to compute the actual partition value.
@@ -34,7 +34,7 @@ public class DataObject<T> {
   }
 
   /**
-   * Constructor with an event and a single partition hash
+   * Constructor with an event and a single partition hash.
    * @param data event
    * @param partitionKey partition key
    * @param partitionValue an object, whose {@link Object#hashCode()} would be triggered
@@ -46,7 +46,7 @@ public class DataObject<T> {
   }
 
   /**
-   * Returns event
+   * Returns event.
    * @return event
    */
   public T getData() {
@@ -54,7 +54,7 @@ public class DataObject<T> {
   }
 
   /**
-   * Returns partition map
+   * Returns partition map.
    * @return partition map
    */
   public Map<String, Object> getPartitions() {
