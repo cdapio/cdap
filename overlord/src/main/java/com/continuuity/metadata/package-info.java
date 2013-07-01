@@ -3,7 +3,6 @@
  */
 
 /**
- * Gateway util.
+ * Metadata service classes.
  */
-package com.continuuity.gateway.util;
-
+package com.continuuity.metadata;

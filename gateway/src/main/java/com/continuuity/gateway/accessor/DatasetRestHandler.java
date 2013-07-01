@@ -66,7 +66,7 @@ public class DatasetRestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler.
    */
-  static final Set<HttpMethod> allowedMethods = Sets.newHashSet(
+  static final Set<HttpMethod> ALLOWED_METHODS = Sets.newHashSet(
     HttpMethod.GET,
     HttpMethod.DELETE,
     HttpMethod.PUT,
@@ -126,11 +126,11 @@ public class DatasetRestHandler extends NettyRestHandler {
     // validate method
     try {
       // check whether the request's HTTP method is supported
-      if (!allowedMethods.contains(method)) {
+      if (!ALLOWED_METHODS.contains(method)) {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Received a " + method + " request, which is not supported (path is + '" + path + "')");
         }
-        respondNotAllowed(message.getChannel(), allowedMethods);
+        respondNotAllowed(message.getChannel(), ALLOWED_METHODS);
         helper.finish(BadRequest);
         return;
       }

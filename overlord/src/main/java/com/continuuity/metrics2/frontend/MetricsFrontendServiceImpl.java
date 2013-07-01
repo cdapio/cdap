@@ -62,16 +62,6 @@ public class MetricsFrontendServiceImpl
 
   private static int MAX_THREAD_POOL_SIZE = 50;
 
-  /**
-   * Connection string to connect to database.
-   */
-  private String connectionUrl;
-
-  /**
-   * Type of Database we are configured with.
-   */
-  private DBUtils.DBType type;
-
   private LogCollector collector;
 
   // Thread pool of size max MAX_THREAD_POOL_SIZE.
@@ -93,40 +83,33 @@ public class MetricsFrontendServiceImpl
 
   public MetricsFrontendServiceImpl(CConfiguration configuration)
     throws ClassNotFoundException, SQLException {
-    this.connectionUrl
-      = configuration.get(Constants.CFG_METRICS_CONNECTION_URL,
-                          Constants.DEFAULT_METIRCS_CONNECTION_URL);
-    this.type = DBUtils.loadDriver(connectionUrl);
+    /*
+    Connection string to connect to database.
+   */
+    String connectionUrl = configuration.get(Constants.CFG_METRICS_CONNECTION_URL,
+                                             Constants.DEFAULT_METIRCS_CONNECTION_URL);
+    /*
+    Type of Database we are configured with.
+   */
+    DBUtils.DBType type = DBUtils.loadDriver(connectionUrl);
 
     // Creates a pooled data source.
-    if(this.type == DBUtils.DBType.MYSQL) {
+    if(type == DBUtils.DBType.MYSQL) {
       MysqlConnectionPoolDataSource mysqlDataSource =
         new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionUrl);
       poolManager = new DBConnectionPoolManager(mysqlDataSource, 1000);
-    } else if(this.type == DBUtils.DBType.HSQLDB) {
+    } else if(type == DBUtils.DBType.HSQLDB) {
       JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
       jdbcDataSource.setUrl(connectionUrl);
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 1000);
     }
-    DBUtils.createMetricsTables(getConnection(), this.type);
+    DBUtils.createMetricsTables(getConnection(), type);
     // It seems like not a good idea to pass hadoop config that way.
     // But using log collector here is bad anyways: overlord should not use logCollector
     // as a library, but rather should talk to it thru remote API.
     // This is going to be extracted anyways
     collector = new LogCollector(configuration, new Configuration());
-  }
-
-  private ExecutorService createExecutor() {
-    // Thread pool of size max TX_EXECUTOR_POOL_SIZE.
-    // 60 seconds wait time before killing idle threads.
-    // Keep no idle threads more than 60 seconds.
-    // If max thread pool size reached, reject the new coming
-    return new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
-                                  60L, TimeUnit.SECONDS,
-                                  new SynchronousQueue<Runnable>(),
-                                  Threads.createDaemonThreadFactory("metrics-service-%d"),
-                                  new ThreadPoolExecutor.DiscardPolicy());
   }
 
   /**

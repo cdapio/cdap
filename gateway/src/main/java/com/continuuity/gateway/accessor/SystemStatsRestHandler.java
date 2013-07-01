@@ -178,7 +178,8 @@ public class SystemStatsRestHandler extends NettyRestHandler {
 
   private void collectRunHistory(String accountId, Map<String, Long> stats) throws OperationException {
     // note: this could be quite expensive to collect
-    Table<Type, Id.Program, List<RunRecord>> runHistory = accessor.getStore().getAllRunHistory(new Id.Account(accountId));
+    Table<Type, Id.Program, List<RunRecord>> runHistory
+      = accessor.getStore().getAllRunHistory(new Id.Account(accountId));
     for (Table.Cell<Type, Id.Program, List<RunRecord>> run : runHistory.cellSet()) {
       for (RunRecord runRecord : run.getValue()) {
         Type programType = run.getRowKey();

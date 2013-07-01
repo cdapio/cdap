@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Cache for Stream meta data lookups.
+ */
 public class StreamCache {
 
   private static final Logger LOG = LoggerFactory
@@ -31,8 +34,9 @@ public class StreamCache {
     // check cache, if there, then we are good
     ImmutablePair<String, String> key =
       new ImmutablePair<String, String>(account, name);
-    if (this.knownStreams.containsKey(key))
+    if (this.knownStreams.containsKey(key)) {
       return true;
+    }
 
     // it is not in cache, refresh from mds
     Stream stream;
@@ -44,9 +48,9 @@ public class StreamCache {
       LOG.error(message);
       throw new OperationException(StatusCode.INTERNAL_ERROR, message, e);
     }
-    if (stream == null || !stream.isExists())
+    if (stream == null || !stream.isExists()) {
       return false;
-    else {
+    } else {
       this.knownStreams.putIfAbsent(key, stream);
       return true;
     }
@@ -67,9 +71,9 @@ public class StreamCache {
     // depending on existence, add to or remove from cache
     ImmutablePair<String, String> key =
       new ImmutablePair<String, String>(account, name);
-    if (stream == null || !stream.isExists())
+    if (stream == null || !stream.isExists()) {
       this.knownStreams.remove(key);
-    else {
+    } else {
       this.knownStreams.put(key, stream);
     }
   }
