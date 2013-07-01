@@ -27,7 +27,9 @@ public class QueueInfo {
 
   @Override
   public boolean equals(Object other) {
-    if (other == this) return true;
+    if (other == this) {
+      return true;
+    }
     if (other instanceof QueueInfo) {
       return Objects.equal(this.jsonString, ((QueueInfo) other).jsonString);
     }

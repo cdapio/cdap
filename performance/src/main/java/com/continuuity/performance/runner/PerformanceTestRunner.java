@@ -225,6 +225,18 @@ public final class PerformanceTestRunner {
     }
   }
 
+  // Deploys a provided Continuuity Reactor App by the name of its class.
+  public static ApplicationManager deployApplication(String applicationClass) {
+    Preconditions.checkArgument(StringUtils.isNotEmpty(applicationClass),
+                                "Application cannot be null or empty String.");
+    try {
+      return deployApplication((Class<? extends Application>) Class.forName(applicationClass));
+    } catch (ClassNotFoundException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+
   // Deploys a provided Continuuity Reactor App.
   public static ApplicationManager deployApplication(Class<? extends Application> applicationClz) {
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
@@ -271,8 +283,7 @@ public final class PerformanceTestRunner {
     config.set("app.tmp.dir", tmpDir.getAbsolutePath());
 
     try {
-      LOG.debug("Connecting with remote AppFabric server");
-      appFabricServer = getAppFabricClient();
+      appFabricServer = getAppFabricClient(config);
     } catch (TTransportException e) {
       LOG.error("Error when trying to open connection with remote AppFabric.");
       Throwables.propagate(e);
@@ -327,12 +338,13 @@ public final class PerformanceTestRunner {
   }
 
   // Get an AppFabricClient for communication with the AppFabric of a local or remote Reactor.
-  private static AppFabricService.Client getAppFabricClient() throws TTransportException  {
-    CConfiguration config = CConfiguration.create();
-    return new AppFabricService.Client(getThriftProtocol(config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
-                                                                    Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS),
-                                                         config.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT,
-                                                                       Constants.DEFAULT_APP_FABRIC_SERVER_PORT)));
+  private static AppFabricService.Client getAppFabricClient(CConfiguration config) throws TTransportException  {
+    String  appFabricServerHost = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
+                                       Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
+    int  appFabricServerPort = config.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT,
+                                             Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+    LOG.debug("Connecting with AppFabric Server at {}:{}", appFabricServerHost, appFabricServerPort);
+    return new AppFabricService.Client(getThriftProtocol(appFabricServerHost, appFabricServerPort));
   }
 
   private static TProtocol getThriftProtocol(String serviceHost, int servicePort) throws TTransportException {

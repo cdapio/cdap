@@ -68,8 +68,9 @@ public class QueueMeta {
   }
 
   public String toJSON() throws JSONException {
-    if (jsonString != null)
+    if (jsonString != null) {
       return jsonString;
+    }
     return getJSONObject().toString();
   }
 
@@ -78,7 +79,7 @@ public class QueueMeta {
     outer.put("global", this.globalHeadPointer);
     outer.put("current", this.currentWritePointer);
     JSONArray groupArray = new JSONArray();
-    if (this.groups != null && this.groups.length !=0 ) {
+    if (this.groups != null && this.groups.length != 0) {
       for (GroupState group : this.groups) {
         JSONObject inner = new JSONObject();
         inner.put("groupsize", group.getGroupSize());
@@ -109,9 +110,10 @@ public class QueueMeta {
 
   @Override
   public boolean equals(Object object) {
-    if (object == null || !(object instanceof QueueMeta))
+    if (object == null || !(object instanceof QueueMeta)) {
       return false;
-    QueueMeta other = (QueueMeta)object;
+    }
+    QueueMeta other = (QueueMeta) object;
     if (this.jsonString != null) {
       return this.jsonString.equals(other.jsonString);
     }

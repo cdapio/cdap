@@ -19,7 +19,9 @@ public class TTQueueTableOnVCTable extends TTQueueAbstractTableOnVCTable {
 
   protected TTQueue getQueue(byte [] queueName) {
     TTQueue queue = this.queues.get(queueName);
-    if (queue != null) return queue;
+    if (queue != null) {
+      return queue;
+    }
     queue = new TTQueueOnVCTable(this.table, queueName, this.oracle,
         this.conf);
     TTQueue existing = this.queues.putIfAbsent(queueName, queue);

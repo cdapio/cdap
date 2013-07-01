@@ -237,7 +237,13 @@ public class TestHelper {
             tmpDir);
           return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec);
         } else if (uri.getScheme().equals("jar")) {
-          return new File(uri.getPath());
+          String rawSchemeSpecificPart = uri.getRawSchemeSpecificPart();
+          if (rawSchemeSpecificPart.startsWith("file:") && rawSchemeSpecificPart.contains("!")) {
+            String[] parts = rawSchemeSpecificPart.substring("file:".length()).split("!");
+            return new File(parts[0]);
+          } else {
+            return new File(uri.getPath());
+          }
         }
       }
     } catch (Exception e) {
