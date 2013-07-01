@@ -3,7 +3,6 @@
  */
 
 /**
- * Metadata service classes.
+ * Gateway Test package.
  */
-package com.continuuity.metadata;
-
+package com.continuuity.metrics2.collector;

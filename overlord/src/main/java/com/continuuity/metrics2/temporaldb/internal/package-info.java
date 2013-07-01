@@ -3,7 +3,7 @@
  */
 
 /**
- * Metadata service classes.
+ * Temporal DB internals
  */
-package com.continuuity.metadata;
+package com.continuuity.metrics2.temporaldb.internal;
 

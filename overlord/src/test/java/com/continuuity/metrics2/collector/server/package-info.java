@@ -3,7 +3,7 @@
  */
 
 /**
- * Metadata service classes.
+ * Metrics2 Server Tests.
  */
-package com.continuuity.metadata;
+package com.continuuity.metrics2.collector.server;
 

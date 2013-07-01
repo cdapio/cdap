@@ -3,7 +3,7 @@
  */
 
 /**
- * Metadata service classes.
+ * Overlord server components.
  */
-package com.continuuity.metadata;
+package com.continuuity.overlord;
 

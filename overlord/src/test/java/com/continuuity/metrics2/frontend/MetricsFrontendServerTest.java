@@ -57,7 +57,7 @@ public class MetricsFrontendServerTest {
   @AfterClass
   public static void afterClass() throws Exception {
     // Stop the server.
-    if(server != null) {
+    if (server != null) {
       server.stop(true);
     }
   }

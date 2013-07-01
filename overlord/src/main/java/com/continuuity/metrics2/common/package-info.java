@@ -3,7 +3,8 @@
  */
 
 /**
- * Metadata service classes.
+ * Metrics common.
  */
-package com.continuuity.metadata;
+package com.continuuity.metrics2.common;
+
 

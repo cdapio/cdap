@@ -3,8 +3,6 @@ package com.continuuity.metrics2.collector.plugins;
 import com.continuuity.common.builder.BuilderException;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 
@@ -19,9 +17,6 @@ import java.util.Iterator;
  * </p>
  */
 final class FlowMetricElements {
-  private final static Logger Log
-    = LoggerFactory.getLogger(FlowMetricElements.class);
-
   private static final Splitter FLOW_ELEMENTS_SPLITTER
     = Splitter.on(".").trimResults().omitEmptyStrings();
 
@@ -56,7 +51,7 @@ final class FlowMetricElements {
   private int instanceId;
 
   /**
-   * Metric name
+   * Metric name.
    */
   private String metric;
 
@@ -159,9 +154,9 @@ final class FlowMetricElements {
       }
 
       String metric = "";
-      while(constituents.hasNext()) {
+      while (constituents.hasNext()) {
         String name = constituents.next();
-        if(!constituents.hasNext()){
+        if (!constituents.hasNext()){
           metric = metric + name;
         } else {
           metric = metric + name + ".";
@@ -173,7 +168,7 @@ final class FlowMetricElements {
 
     private String get(Iterator<String> constituents)
       throws BuilderException {
-      if(! constituents.hasNext()) {
+      if (!constituents.hasNext()) {
         throw new BuilderException("Improper metric name " + metricName);
       }
       return constituents.next();

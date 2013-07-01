@@ -3,7 +3,7 @@
  */
 
 /**
- * Metadata service classes.
+ * Metrics2 Runtime Tests.
  */
-package com.continuuity.metadata;
+package com.continuuity.runtime;
 

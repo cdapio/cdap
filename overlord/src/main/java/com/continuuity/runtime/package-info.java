@@ -3,7 +3,7 @@
  */
 
 /**
- * Metadata service classes.
+ * Runtime modules.
  */
-package com.continuuity.metadata;
+package com.continuuity.runtime;
 

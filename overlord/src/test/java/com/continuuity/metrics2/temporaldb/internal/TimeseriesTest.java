@@ -49,7 +49,7 @@ public class TimeseriesTest {
     Assert.assertNotNull(div);
     Assert.assertTrue(div.size() == 7);
 
-    for(DataPoint d : div) {
+    for (DataPoint d : div) {
       Assert.assertTrue(d.getValue() == 0.5f);
     }
   }
@@ -81,7 +81,7 @@ public class TimeseriesTest {
     Assert.assertNotNull(div);
     Assert.assertTrue(div.size() == 7);
 
-    for(DataPoint d : div) {
+    for (DataPoint d : div) {
       Assert.assertTrue(d.getValue() == 0.5f);
     }
   }
@@ -110,7 +110,7 @@ public class TimeseriesTest {
     Assert.assertNotNull(div);
     Assert.assertTrue(div.size() == 7);
 
-    for(DataPoint d : div) {
+    for (DataPoint d : div) {
       Assert.assertTrue(d.getValue() == 0.5f);
     }
   }
@@ -144,7 +144,7 @@ public class TimeseriesTest {
     Assert.assertNotNull(div);
     Assert.assertTrue(div.size() == 5);
 
-    for(DataPoint d : div) {
+    for (DataPoint d : div) {
       Assert.assertTrue(d.getValue() == 50f);
     }
   }

@@ -3,7 +3,7 @@
  */
 
 /**
- * Metadata service classes.
+ * Metadata Tests.
  */
 package com.continuuity.metadata;
 

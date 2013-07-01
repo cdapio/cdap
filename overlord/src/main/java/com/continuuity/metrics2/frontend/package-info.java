@@ -3,7 +3,7 @@
  */
 
 /**
- * Metadata service classes.
+ * Metrics Frontend.
  */
-package com.continuuity.metadata;
+package com.continuuity.metrics2.frontend;
 
