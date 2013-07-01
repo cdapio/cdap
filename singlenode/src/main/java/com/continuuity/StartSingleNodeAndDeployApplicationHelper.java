@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-// TODO: looks like very generic: rename?
+/**
+ * Class for deploying to singlenode.
+ */
 public final class StartSingleNodeAndDeployApplicationHelper {
 
   public static final String ARG_APPFABRIC_SINGLENODE_DEPLOY_COMMAND =
