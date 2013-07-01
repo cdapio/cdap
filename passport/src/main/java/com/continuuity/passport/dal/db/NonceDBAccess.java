@@ -69,7 +69,6 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
    * @param id id
    * @param expiration expiration time in seconds
    * @param nonce nonce value to be updated
-   * @return integer random nonce
    */
   private void insertOrUpdateNonce(String id, int expiration, int nonce) {
     Connection connection = this.poolManager.getValidConnection();;
