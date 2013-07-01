@@ -129,7 +129,7 @@ public class OmidTransactionalOperationExecutor
   // Also runs all queue operations for a single consumer serially.
   private final QueueStateProxy queueStateProxy;
 
-  /** Min table write ops to attempt to batch */
+  // Min table write ops to attempt to batch.
   private final int minTableWriteOpsToBatch;
 
   @Inject

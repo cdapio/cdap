@@ -8,5 +8,5 @@ public class Constants {
    * Corresponds to account id used when running in local mode.
    * NOTE: value should be in sync with the one used by UI.
    */
-  public final static String DEVELOPER_ACCOUNT_ID = "developer";
+  public static final String DEVELOPER_ACCOUNT_ID = "developer";
 } // end of Constants class

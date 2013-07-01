@@ -48,7 +48,7 @@ public final class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
   }
 
   /**
-   * Moves the begin of this range to the given entry id
+   * Moves the begin of this range to the given entry id.
    * @param entryId the begin entry id for the new range
    */
   public void move(long entryId) {

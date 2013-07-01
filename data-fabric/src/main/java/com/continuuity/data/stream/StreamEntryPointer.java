@@ -16,8 +16,8 @@ public class StreamEntryPointer extends QueueEntryPointer {
     super(queueName, entryId);
   }
 
-  public static StreamEntryPointer fromQueueEntryPointer( QueueEntryPointer queueEntryPointer) {
+  public static StreamEntryPointer fromQueueEntryPointer(QueueEntryPointer queueEntryPointer) {
     return new StreamEntryPointer(queueEntryPointer.getQueueName(),
-                                   queueEntryPointer.getEntryId(),queueEntryPointer.getShardId());
+                                   queueEntryPointer.getEntryId(), queueEntryPointer.getShardId());
   }
 }
