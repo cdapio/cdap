@@ -27,7 +27,6 @@ import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import com.continuuity.weave.discovery.Discoverable;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -35,7 +34,7 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -44,13 +43,10 @@ import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
-import org.jboss.netty.handler.stream.ChunkedStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -199,7 +195,7 @@ public class MonitorRestHandler extends NettyRestHandler {
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
-                              MessageEvent message) throws Exception {
+                              final MessageEvent message) throws Exception {
 
     HttpRequest request = (HttpRequest) message.getMessage();
     HttpMethod method = request.getMethod();
@@ -380,6 +376,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         helper.finish(Success);
 
       } else if ("logs".equals(query)) {
+        // Parse fromTime and toTime
         long fromTimeMs = parseLong(parameters.get("fromTime"));
         long toTimeMs = parseLong(parameters.get("toTime"));
 
@@ -388,6 +385,7 @@ public class MonitorRestHandler extends NettyRestHandler {
           return;
         }
 
+        // Setup pattern layout to format log messages
         LoggingContext loggingContext = new GenericLoggingContext(accountId, appid, flowid);
         LogReader logReader = accessor.getLogReader();
         String logPattern = accessor.getConfiguration().get(
@@ -401,27 +399,31 @@ public class MonitorRestHandler extends NettyRestHandler {
         patternLayout.setPattern(logPattern);
         patternLayout.start();
 
-        final PipedInputStream in = new PipedInputStream();
-        final PipedOutputStream out = new PipedOutputStream(in);
+        // Read log messages and send them as chunks.
+        respondChunkStart(message.getChannel(), HttpResponseStatus.OK,
+                          ImmutableMap.of(HttpHeaders.Names.CONTENT_TYPE, "text/plain"));
 
-        ChannelFuture future = respond(message.getChannel(), request, HttpResponseStatus.OK,
-                ImmutableMap.of(HttpHeaders.Names.CONTENT_TYPE, "text/plain"),
-                new ChunkedStream(in));
-
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
         logReader.getLog(loggingContext, fromTimeMs, toTimeMs,
                          new Callback() {
                            @Override
                            public void handle(ILoggingEvent event) {
-                             try {
-                               out.write(Bytes.toBytes(patternLayout.doLayout(event)));
-                             } catch (IOException e) {
-                               throw Throwables.propagate(e);
+                             byte [] bytes = Bytes.toBytes(patternLayout.doLayout(event));
+                             // if reached byteBuffer capacity then flush chunk
+                             if (bytes.length + byteBuffer.position() >= byteBuffer.capacity()) {
+                               byteBuffer.limit(byteBuffer.position());
+                               byteBuffer.rewind();
+                               respondChunk(message.getChannel(), ChannelBuffers.wrappedBuffer(byteBuffer));
+                               byteBuffer.clear();
                              }
+                             byteBuffer.put(bytes);
                            }
                          });
-        out.close();
-        future.await();
-        in.close();
+        // Write the last chunk
+        byteBuffer.limit(byteBuffer.position());
+        byteBuffer.rewind();
+        respondChunk(message.getChannel(), ChannelBuffers.wrappedBuffer(byteBuffer));
+        respondChunkEnd(message.getChannel(), request);
         patternLayout.stop();
       } else {
         // this should not happen because we checked above -> internal error

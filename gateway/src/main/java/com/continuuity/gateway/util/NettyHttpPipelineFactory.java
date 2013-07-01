@@ -6,7 +6,6 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
-import org.jboss.netty.handler.stream.ChunkedWriteHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,8 +76,6 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
       pipeline.addLast("aggregator",
                        new HttpChunkAggregator(this.config.getMaxContentSize()));
     }
-    // Chunk the response when response is a ChunkedInput
-    pipeline.addLast("chunker", new ChunkedWriteHandler());
     // use the default HTTP encoder from netty
     pipeline.addLast("encoder", new HttpResponseEncoder());
     // use our own request handler

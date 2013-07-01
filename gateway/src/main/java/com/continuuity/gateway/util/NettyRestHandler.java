@@ -11,6 +11,8 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.handler.codec.http.DefaultHttpChunk;
+import org.jboss.netty.handler.codec.http.DefaultHttpChunkTrailer;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -18,7 +20,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
-import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,22 +177,17 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
   }
 
   /**
-   * Respond to the client with success. This keeps the connection alive
-   * unless specified otherwise in the original request.
-   *
+   * Respond to the client saying the response will be in chunks. Add chunks to response using @{link respondChunk}
+   * and @{link respondChunkEnd}.
    * @param channel the channel on which the request came
-   * @param request the original request (to determine whether to keep the
-   *                connection alive)
    * @param status  the status code to respond with. Defaults to 200-OK if null
    * @param headers additional headers to send with the response. May be null.
-   * @param chunkedInput a chunk of content of the response to send
    */
-  protected ChannelFuture respond(Channel channel, HttpRequest request,
+  protected void respondChunkStart(Channel channel,
                          HttpResponseStatus status,
-                         Map<String, String> headers, ChunkedInput chunkedInput) {
+                         Map<String, String> headers) {
     HttpResponse response = new DefaultHttpResponse(
       HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
-    boolean keepAlive = HttpHeaders.isKeepAlive(request);
     if (headers != null) {
       for (Map.Entry<String, String> entry : headers.entrySet()) {
         response.addHeader(entry.getKey(), entry.getValue());
@@ -201,11 +197,31 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
     response.setChunked(true);
     response.setHeader(Names.TRANSFER_ENCODING, Values.CHUNKED);
     channel.write(response);
-    ChannelFuture future = channel.write(chunkedInput);
+  }
+
+  /**
+   * Add a chunk of data to the response. @{link respondChunkStart} should be called before calling this method.
+   * @{link respondChunkEnd} should be called after all chunks are done.
+   * @param channel the channel on which the request came
+   * @param content the chunk of content to send
+   */
+  protected void respondChunk(Channel channel, ChannelBuffer content) {
+    channel.write(new DefaultHttpChunk(content));
+  }
+
+  /**
+   * Called after all chunks are done. This keeps the connection alive
+   * unless specified otherwise in the original request.
+   * @param channel the channel on which the request came
+   * @param request the original request (to determine whether to keep the
+   *                connection alive)
+   */
+  protected void respondChunkEnd(Channel channel, HttpRequest request) {
+    boolean keepAlive = HttpHeaders.isKeepAlive(request);
+    ChannelFuture future = channel.write(new DefaultHttpChunkTrailer());
     if (!keepAlive) {
       future.addListener(ChannelFutureListener.CLOSE);
     }
-    return future;
   }
 
   protected void respondToPing(Channel channel, HttpRequest request) {
