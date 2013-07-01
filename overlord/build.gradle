@@ -24,7 +24,9 @@ dependencies {
 
 
     // External dependencies.
-    compile libraries.akka_actor
+    compile (libraries.akka_actor) {
+        exclude group: 'org.scala-lang', module: 'scala-library'
+    }
     compile libraries.google_guava
     compile libraries.google_guice
     compile libraries.google_guava

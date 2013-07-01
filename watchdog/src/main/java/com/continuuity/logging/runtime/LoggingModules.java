@@ -1,9 +1,9 @@
 package com.continuuity.logging.runtime;
 
-import com.continuuity.common.logging.logback.LogAppender;
-import com.continuuity.common.logging.logback.file.FileLogAppender;
-import com.continuuity.common.logging.logback.kafka.KafkaLogAppender;
 import com.continuuity.common.runtime.RuntimeModule;
+import com.continuuity.logging.appender.LogAppender;
+import com.continuuity.logging.appender.file.FileLogAppender;
+import com.continuuity.logging.appender.kafka.KafkaLogAppender;
 import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.logging.read.SingleNodeLogReader;

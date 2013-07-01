@@ -1,8 +1,8 @@
 package com.continuuity.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.continuuity.common.logging.logback.serialize.LoggingEvent;
 import com.continuuity.logging.filter.Filter;
+import com.continuuity.logging.serialize.LoggingEvent;
 import com.google.common.base.Throwables;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;

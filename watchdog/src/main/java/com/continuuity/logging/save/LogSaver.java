@@ -6,13 +6,13 @@ package com.continuuity.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.logging.LoggingConfiguration;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.common.logging.logback.kafka.KafkaTopic;
-import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.LoggingContextHelper;
+import com.continuuity.logging.appender.kafka.KafkaTopic;
+import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
@@ -42,7 +42,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.continuuity.common.logging.LoggingConfiguration.KafkaHost;
+import static com.continuuity.logging.LoggingConfiguration.KafkaHost;
 import static com.continuuity.logging.save.CheckpointManager.CheckpointInfo;
 
 /**

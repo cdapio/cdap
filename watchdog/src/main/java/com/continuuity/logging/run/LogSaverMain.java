@@ -6,9 +6,9 @@ package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.logging.LoggingConfiguration;
-import com.continuuity.common.logging.logback.serialize.LogSchema;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
