@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Same as {@link SmartTransactionAgent} but that operates on a single given transaction. It will never attempt to start new
- * transaction or commit the given one. All operations are guaranteed to be executed using given transaction.
+ * Same as {@link SmartTransactionAgent} but that operates on a single given transaction. It will never attempt to
+ * start new transaction or commit the given one. All operations are guaranteed to be executed using given transaction.
  */
 public class DetachedSmartTransactionAgent extends SmartTransactionAgent {
   private static final Logger LOG =

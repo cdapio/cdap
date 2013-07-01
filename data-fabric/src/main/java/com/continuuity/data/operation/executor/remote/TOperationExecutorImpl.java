@@ -760,14 +760,17 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
 
     MetricsHelper helper = newHelper("configureQueueGroups", tQueueConfigure.getQueueName());
 
-    if (Log.isTraceEnabled())
+    if (Log.isTraceEnabled()) {
       Log.trace("Received TQueueConfigureGroups: " + tQueueConfigure);
+    }
 
     try {
       OperationContext context = unwrap(tcontext);
       QueueConfigureGroups queueConfigure = unwrap(tQueueConfigure);
       this.opex.execute(context, queueConfigure);
-      if (Log.isTraceEnabled()) Log.trace("Queue configure groups successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Queue configure groups successful.");
+      }
       helper.success();
 
     } catch (OperationException e) {
@@ -787,14 +790,17 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
 
     MetricsHelper helper = newHelper("queueDropInflight", tOp.getQueueName());
 
-    if (Log.isTraceEnabled())
+    if (Log.isTraceEnabled()) {
       Log.trace("Received TQueueDropInflight: " + tOp);
+    }
 
     try {
       OperationContext context = unwrap(tcontext);
       QueueDropInflight op = unwrap(tOp);
       this.opex.execute(context, op);
-      if (Log.isTraceEnabled()) Log.trace("Queue drop inflight is successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Queue drop inflight is successful.");
+      }
       helper.success();
 
     } catch (OperationException e) {

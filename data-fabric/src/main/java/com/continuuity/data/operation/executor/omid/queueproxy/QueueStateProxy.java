@@ -43,7 +43,7 @@ public class QueueStateProxy {
   }
 
   /**
-   * Used to run a queue operation that returns a value
+   * Used to run a queue operation that returns a value.
    * @param queueName Queue name on which to run the operation
    * @param queueConsumer Queue consumer for queueName (without state)
    * @param op Queue operation that needs to be run
@@ -57,7 +57,7 @@ public class QueueStateProxy {
   }
 
   /**
-   * Used to run a queue operation that does not return anything
+   * Used to run a queue operation that does not return anything.
    * @param queueName Queue name on which to run the operation
    * @param queueConsumer Queue consumer for queueName (without state)
    * @param op Queue operation that needs to be run
@@ -81,7 +81,7 @@ public class QueueStateProxy {
       // If the operation sends an update to statefulQueueConsumer,  use it in preference to the one we have
       // op is already asserted to be not null!
       //noinspection ConstantConditions
-      if(op.statefulQueueConsumer != null) {
+      if (op.statefulQueueConsumer != null) {
         consumerHolder.statefulQueueConsumer = op.statefulQueueConsumer;
       }
       release(consumerHolder);
@@ -124,7 +124,7 @@ public class QueueStateProxy {
       RowLockTable.Row row = rowIterator.next();
 
       // If row belongs to group groupId, remove
-      if(ofGroup(row, queueName, groupId)) {
+      if (ofGroup(row, queueName, groupId)) {
         this.locks.validLock(row);
         rowIterator.remove();
         // Lock is no longer needed, we can remove it
@@ -142,7 +142,7 @@ public class QueueStateProxy {
     this.locks.validLock(row);
 
     // We now have the lock, get the state
-    if(queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
+    if (queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
       // This consumer has state
       // We remove the consumer from pool rather than get, this will reduce state corruption due to exceptions, etc.
       // It is safer to return an empty state rather than a stale one.
@@ -153,7 +153,7 @@ public class QueueStateProxy {
       // not returned properly.
       // Create a fresh state object and return it in such cases too.
     }
-    if(statefulQueueConsumer == null) {
+    if (statefulQueueConsumer == null) {
       // New consumer, or consumer crashed
       // Create a new stateful consumer
       statefulQueueConsumer = new StatefulQueueConsumer(queueConsumer.getInstanceId(),
@@ -163,7 +163,7 @@ public class QueueStateProxy {
                                                         queueConsumer.getPartitioningKey(),
                                                         queueConsumer.getQueueConfig());
       // If consumer says state was initialized, then it might have been evicted from cache
-      if(queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
+      if (queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
         statefulQueueConsumer.setStateType(QueueConsumer.StateType.NOT_FOUND);
       }
     }
@@ -173,7 +173,7 @@ public class QueueStateProxy {
   }
 
   private void release(ConsumerHolder consumerHolder) {
-    if(consumerHolder == null) {
+    if (consumerHolder == null) {
       return;
     }
 
@@ -190,7 +190,7 @@ public class QueueStateProxy {
   
   private boolean ofGroup(RowLockTable.Row row, byte[] queueName, long groupId) {
     // If length of queueName does not match return false
-    if(row.getValue().length != queueName.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT) {
+    if (row.getValue().length != queueName.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT) {
       return false;
     }
     // Since length matches, now just seeing whether the row starts with groupId, queueName is sufficient

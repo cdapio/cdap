@@ -20,6 +20,9 @@ public interface QueuePartitioner {
    */
   public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash);
 
+  /**
+   * Defines queue partition type.
+   */
   public static enum PartitionerType {
     HASH, FIFO, ROUND_ROBIN;
 
@@ -75,6 +78,9 @@ public interface QueuePartitioner {
     }
   }
 
+  /**
+   * Implementation of hash partion for queues.
+   */
   public static class HashPartitioner implements QueuePartitioner {
 
     @Override
@@ -89,6 +95,9 @@ public interface QueuePartitioner {
     }
   }
 
+  /**
+   * Implementation of Fifo partition for queues.
+   */
   public static class FifoPartitioner implements QueuePartitioner {
 
     @Override
@@ -102,6 +111,9 @@ public interface QueuePartitioner {
     }
   }
 
+  /**
+   * Implementation of round robin partition for queues.
+   */
   public static class RoundRobinPartitioner implements QueuePartitioner {
 
     @Override

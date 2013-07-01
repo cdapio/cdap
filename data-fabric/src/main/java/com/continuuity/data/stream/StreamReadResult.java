@@ -29,7 +29,7 @@ public class StreamReadResult extends DequeueResult {
   }
 
   public static StreamReadResult fromDequeueResult(DequeueResult result){
-    return new StreamReadResult(result.getStatus(),result.getEntryPointer(),result.getEntry());
+    return new StreamReadResult(result.getStatus(), result.getEntryPointer(), result.getEntry());
   }
 
 }

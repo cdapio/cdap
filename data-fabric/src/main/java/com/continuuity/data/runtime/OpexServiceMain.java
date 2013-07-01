@@ -1,16 +1,23 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
-import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Driver class to start and stop opex in distributed mode.
+ */
 public class OpexServiceMain {
+
+  private static final int NOOP = 0;
+  private static final int START = 1;
+  private static final int STOP = 2;
 
   static void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
@@ -31,10 +38,6 @@ public class OpexServiceMain {
       usage(false);
       return;
     }
-
-    final int NOOP = 0;
-    final int START = 1;
-    final int STOP = 2;
 
     int command = NOOP;
 
@@ -69,8 +72,7 @@ public class OpexServiceMain {
         System.err.println("Failed to start service: " + e.getMessage());
         return;
       }
-    }
-    else if (STOP == command) {
+    } else if (STOP == command) {
       Copyright.print(System.out);
       System.out.println("Stopping Operation Executor Service...");
       opexService.stop(true);
