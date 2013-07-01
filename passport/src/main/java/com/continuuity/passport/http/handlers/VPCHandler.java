@@ -33,7 +33,7 @@ import java.util.List;
  * Defines End point for vpc related functions.
  */
 
-@Path("passport/v1/vpc")
+@Path("/passport/v1/vpc")
 @Singleton
 public class VPCHandler extends PassportHandler implements HttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(VPCHandler.class);

@@ -5,6 +5,7 @@ import com.continuuity.common.utils.PortDetector;
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.testhelper.HyperSQL;
+import com.continuuity.passport.testhelper.TestNettyServer;
 import com.continuuity.passport.testhelper.TestPassportServer;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
@@ -35,11 +36,10 @@ public class TestOrganizationHandler {
   @BeforeClass
   public static void setup() throws Exception {
 
-    port = PortDetector.findFreePort();
-
     //Startup HSQL instance
     HyperSQL.startHsqlDB();
 
+    port = PortDetector.findFreePort();
     CConfiguration configuration = CConfiguration.create();
     configuration.setInt(Constants.CFG_SERVER_PORT, port);
 
@@ -51,11 +51,7 @@ public class TestOrganizationHandler {
 
     configuration.set(Constants.CFG_PROFANE_WORDS_FILE_PATH, profanePath);
     server = new TestPassportServer(configuration);
-
-    System.out.println("Starting server");
     server.start();
-    Thread.sleep(1000);
-    assertTrue(server.isStarted());
   }
 
   @AfterClass
@@ -160,8 +156,4 @@ public class TestOrganizationHandler {
     HttpResponse response = client.execute(get);
     assertEquals(404, response.getStatusLine().getStatusCode());
   }
-
-
- 
-
 }

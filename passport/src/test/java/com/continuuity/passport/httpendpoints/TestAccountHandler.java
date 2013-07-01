@@ -73,7 +73,7 @@ public class TestAccountHandler {
 
     String result = TestPassportServer.request(post);
     assertTrue(result != null);
-    Account account =  Account.fromString(result);
+    Account account = Account.fromString(result);
     assertTrue("sree@continuuity.com".equals(account.getEmailId()));
   }
 
@@ -205,7 +205,7 @@ public class TestAccountHandler {
 
     endPoint = String.format("http://localhost:%d/passport/v1/account/%d/confirmed", port, id);
     HttpPut put = new HttpPut(endPoint);
-    put.setEntity(new StringEntity(getAccountJson("joe.curry@continuuity.com", "joe", "currry")));
+    put.setEntity(new StringEntity(getAccountJson("joe.curry@continuuity.com", "joe", "curry")));
     put.setHeader("Content-Type", "application/json");
     result = TestPassportServer.request(put);
 

@@ -1,8 +1,4 @@
-/*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
- */
-
-package com.continuuity.passport.http.modules;
+package com.continuuity.passport.testhelper;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.db.DBConnectionPoolManager;
@@ -30,29 +26,30 @@ import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.continuuity.passport.impl.SecuritySeviceImpl;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.name.Names;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
+
+import javax.sql.ConnectionPoolDataSource;
 
 /**
- * Guice bindings for passport services.
- * Glue together
- * 1) Service to implementations
- * 2) DAO to Implementations
- * 3) ReST  Handlers
+ *
  */
-public class PassportGuiceBindings extends AbstractModule {
+public class MockGuiceModule extends AbstractModule {
 
   private final String jdbcType;
   private final String connectionString;
   private final String profaneWordsPath;
+  private final int port;
 
 
-  public PassportGuiceBindings(CConfiguration configuration) {
-    jdbcType =  configuration.get(Constants.CFG_JDBC_TYPE, Constants.DEFAULT_JDBC_TYPE);
+  public MockGuiceModule(CConfiguration configuration) {
+    jdbcType = configuration.get(Constants.CFG_JDBC_TYPE, Constants.DEFAULT_JDBC_TYPE);
     connectionString = configuration.get(Constants.CFG_JDBC_CONNECTION_STRING,
                                          Constants.DEFAULT_JDBC_CONNECTION_STRING);
     profaneWordsPath = configuration.get(Constants.CFG_PROFANE_WORDS_FILE_PATH,
                                          Constants.DEFAULT_PROFANE_WORDS_FILE_PATH);
+    port = configuration.getInt(Constants.CFG_SERVER_PORT, 7777);
   }
 
 
@@ -64,10 +61,12 @@ public class PassportGuiceBindings extends AbstractModule {
     Preconditions.checkNotNull(connectionString, "Connection String cannot be null");
     Preconditions.checkNotNull(profaneWordsPath, "Profane words path cannot be null"); //TODO: Remove this constraint
 
-    MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
-    mysqlDataSource.setUrl(connectionString);
-    DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(mysqlDataSource,
-                                                                                Constants.CONNECTION_POOL_SIZE);
+    JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
+    System.out.println(connectionString);
+    jdbcDataSource.setUrl(connectionString);
+
+    DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(jdbcDataSource, 10);
+
     bind(DBConnectionPoolManager.class)
       .toInstance(connectionPoolManager);
 

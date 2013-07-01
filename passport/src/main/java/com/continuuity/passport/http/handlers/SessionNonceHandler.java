@@ -24,7 +24,7 @@ import javax.ws.rs.Produces;
 /**
  * Handle Nonce operation for Session nonce.
  */
-@Path("passport/v1/sso/")
+@Path("/passport/v1/sso/")
 @Singleton
 public class SessionNonceHandler extends PassportHandler implements HttpHandler {
 

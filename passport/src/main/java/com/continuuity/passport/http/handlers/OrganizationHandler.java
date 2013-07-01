@@ -88,9 +88,11 @@ public class OrganizationHandler extends PassportHandler implements HttpHandler 
   @PUT
   @Path("{id}")
   public void updateOrganization(HttpRequest request, HttpResponder responder,
-                                 @PathParam("id") String id, String data){
+                                 @PathParam("id") String id){
     requestReceived();
     try {
+      String data = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
+
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
