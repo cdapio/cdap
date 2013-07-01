@@ -8,7 +8,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.LoggingConfiguration;
-import com.continuuity.logging.LoggingContextHelper;
+import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.serialize.LogSchema;
 import com.google.common.base.Preconditions;

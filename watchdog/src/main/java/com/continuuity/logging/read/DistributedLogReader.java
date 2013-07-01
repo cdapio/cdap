@@ -11,9 +11,9 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.logging.LoggingConfiguration;
-import com.continuuity.logging.LoggingContextHelper;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
+import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.save.FileMetaDataManager;
@@ -74,7 +74,7 @@ public final class DistributedLogReader implements LogReader {
 
       this.serializer = new LoggingEventSerializer();
 
-      String account = cConfig.get(LoggingConfiguration.LOGGING_RUN_ACCOUNT);
+      String account = cConfig.get(LoggingConfiguration.LOG_RUN_ACCOUNT);
       Preconditions.checkNotNull(account, "Account cannot be null");
       this.fileMetaDataManager = new FileMetaDataManager(opex, new OperationContext(account),
                                                          LoggingConfiguration.LOG_META_DATA_TABLE);

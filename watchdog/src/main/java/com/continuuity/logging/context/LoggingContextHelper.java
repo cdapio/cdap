@@ -2,14 +2,10 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.logging;
+package com.continuuity.logging.context;
 
-import com.continuuity.app.logging.FlowletLoggingContext;
-import com.continuuity.app.logging.MapReduceLoggingContext;
-import com.continuuity.app.logging.ProcedureLoggingContext;
 import com.continuuity.common.logging.AccountLoggingContext;
 import com.continuuity.common.logging.ApplicationLoggingContext;
-import com.continuuity.common.logging.GenericLoggingContext;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;

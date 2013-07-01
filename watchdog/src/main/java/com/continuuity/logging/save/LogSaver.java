@@ -10,9 +10,9 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.logging.LoggingConfiguration;
-import com.continuuity.logging.LoggingContextHelper;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
+import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
@@ -93,7 +93,7 @@ public final class LogSaver extends AbstractIdleService {
     this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(kafkaSeedBrokers);
     Preconditions.checkNotNull(this.seedBrokers, "Not able to parse Kafka seed brokers");
 
-    String account = cConfig.get(LoggingConfiguration.LOGGING_RUN_ACCOUNT);
+    String account = cConfig.get(LoggingConfiguration.LOG_RUN_ACCOUNT);
     Preconditions.checkNotNull(account, "Account cannot be null");
 
     this.topic = KafkaTopic.getTopic();

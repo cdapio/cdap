@@ -1,4 +1,6 @@
-package com.continuuity.common.logging;
+package com.continuuity.logging.context;
+
+import com.continuuity.common.logging.ApplicationLoggingContext;
 
 /**
  * A logging context when the type of entity is not known. This logging context has limited functionality.

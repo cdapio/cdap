@@ -9,7 +9,7 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.logging.LoggingConfiguration;
-import com.continuuity.logging.LoggingContextHelper;
+import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics2.common.DBUtils;
 import com.continuuity.metrics2.temporaldb.DataPoint;
@@ -54,7 +54,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.continuuity.logging.LoggingContextHelper.EntityType;
+import static com.continuuity.logging.context.LoggingContextHelper.EntityType;
 import static com.continuuity.logging.read.LogReader.Result;
 
 /**
