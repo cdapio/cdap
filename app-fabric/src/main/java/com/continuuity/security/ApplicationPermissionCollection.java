@@ -46,7 +46,7 @@ class ApplicationPermissionCollection extends PermissionCollection {
    * @param p the {@link Permission} object to be added.
    */
   public void add(Permission p) {
-    synchronized(perms) {
+    synchronized (perms) {
       perms.add(p);
     }
   }
@@ -60,9 +60,9 @@ class ApplicationPermissionCollection extends PermissionCollection {
    */
   public boolean implies(Permission p) {
     Iterator<Permission> i = perms.iterator();
-    while(i.hasNext()) {
-      Permission p1 = ( (Permission) i.next() );
-      if(p.getClass().isAssignableFrom(p1.getClass()) && p1.implies(p)) {
+    while (i.hasNext()) {
+      Permission p1 = ((Permission) i.next());
+      if (p.getClass().isAssignableFrom(p1.getClass()) && p1.implies(p)) {
         return true;
       }
     }

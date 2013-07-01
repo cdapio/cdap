@@ -5,7 +5,6 @@
 package com.continuuity.performance.runner;
 
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
-import com.continuuity.performance.apps.simple.SimpleApp;
 import com.continuuity.test.app.ApplicationManager;
 import com.continuuity.test.app.FlowManager;
 import com.continuuity.test.app.StreamWriter;
@@ -23,7 +22,8 @@ public class SimplePerformanceTest {
   public void testApp() throws IOException, TimeoutException, InterruptedException {
     final int numStreamEvents = 10000;
 
-    ApplicationManager applicationManager = PerformanceTestRunner.deployApplication(SimpleApp.class);
+    ApplicationManager applicationManager = PerformanceTestRunner.deployApplication(
+      "com.continuuity.performance.apps.simple.SimpleApp");
 
     try {
 
@@ -31,19 +31,24 @@ public class SimplePerformanceTest {
 
       flowManager.setFlowletInstances("source", 2);
 
+      BenchmarkRuntimeMetrics sourceFlowletMetrics = BenchmarkRuntimeStats.getFlowletMetrics("SimpleApp", "SimpleFlow",
+                                                                                             "source");
+      final long initialSourceFlowletMetric = sourceFlowletMetrics.getProcessed();
+
+      System.out.println(String.format("Number of events previously processed by source flowlet = %d",
+                                       sourceFlowletMetrics.getProcessed()));
+
       StreamWriter kvStream = applicationManager.getStreamWriter("SimpleStream");
 
       for (int i = 0; i < numStreamEvents; i++) {
-        kvStream.send("key" + i + "=" + "val" + i);
+        kvStream.send(String.format("key%d=val%d", i, i));
       }
 
-      BenchmarkRuntimeMetrics sourceFlowletMetrics = BenchmarkRuntimeStats.getFlowletMetrics("SimpleApp", "SimpleFlow",
-                                                                                             "source");
 
       System.out.println(String.format("Number of events processed by source flowlet = %d",
                                        sourceFlowletMetrics.getProcessed()));
 
-      sourceFlowletMetrics.waitForProcessed(numStreamEvents, 120, TimeUnit.SECONDS);
+      sourceFlowletMetrics.waitForProcessed(initialSourceFlowletMetric + numStreamEvents, 180, TimeUnit.SECONDS);
 
       System.out.println(String.format("Number of events processed by source flowlet = %d",
                                        sourceFlowletMetrics.getProcessed()));
@@ -54,10 +59,12 @@ public class SimplePerformanceTest {
       System.out.println(String.format("Number of events processed by reader flowlet = %d",
                                        readerFlowletMetrics.getProcessed()));
 
-      readerFlowletMetrics.waitForProcessed(numStreamEvents, 120, TimeUnit.SECONDS);
+      readerFlowletMetrics.waitForProcessed(numStreamEvents, 180, TimeUnit.SECONDS);
 
       System.out.println(String.format("Number of events processed by reader flowlet = %d",
                                        readerFlowletMetrics.getProcessed()));
+
+      flowManager.stop();
 
     } finally {
       applicationManager.stopAll();

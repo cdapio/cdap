@@ -19,8 +19,12 @@ public enum ExecutionMode {
   
   public static ExecutionMode fromBytes(byte [] bytes) {
     if (bytes.length == 1) {
-      if (bytes[0] == SINGLE_BYTES[0]) return SINGLE_ENTRY;
-      if (bytes[0] == MULTI_BYTES[0]) return MULTI_ENTRY;
+      if (bytes[0] == SINGLE_BYTES[0]) {
+        return SINGLE_ENTRY;
+      }
+      if (bytes[0] == MULTI_BYTES[0]) {
+        return MULTI_ENTRY;
+      }
     }
     throw new RuntimeException("Invalid deserialization of ExecutionMode");
   }

@@ -30,13 +30,13 @@ public class EvictionHelper {
   }
 
   /**
-   * Saves the min ack entry of an uncommitted transaction
+   * Saves the min ack entry of an uncommitted transaction.
    * @param txnPtr Transaction write pointer
    * @param minAckEntry the min ack entry
    */
   public void addMinAckEntry(long txnPtr, long minAckEntry) {
     Long current = txnMinAckEntryMap.get(txnPtr);
-    if(current == null || current > minAckEntry) {
+    if (current == null || current > minAckEntry) {
       txnMinAckEntryMap.put(txnPtr, minAckEntry);
     }
   }
@@ -59,28 +59,28 @@ public class EvictionHelper {
     long maxMinCommittedAckEntry = maxCommittedCleanedUpEntry > minLegalEvictEntry ?
       TTQueueNewConstants.FIRST_ENTRY_ID - 1 : maxCommittedCleanedUpEntry;
 
-    for(Map.Entry<Long, Long> entry : txnMinAckEntryMap.entrySet()) {
-      if(entry.getValue() > minLegalEvictEntry) {
+    for (Map.Entry<Long, Long> entry : txnMinAckEntryMap.entrySet()) {
+      if (entry.getValue() > minLegalEvictEntry) {
         // This entry is greater than min legal evict entry, ignore it.
         continue;
       }
       // Finalize runs after a commit, so it is safe to consider ack list from current transaction too
-      if(readPointer.isVisible(entry.getKey())) {
+      if (readPointer.isVisible(entry.getKey())) {
         // Transaction is committed
-        if(maxMinCommittedAckEntry < entry.getValue()) {
+        if (maxMinCommittedAckEntry < entry.getValue()) {
           maxMinCommittedAckEntry = entry.getValue();
         }
       } else {
         // Transaction is not yet committed
-        if(minUnCommittedAckEntry > entry.getValue()) {
+        if (minUnCommittedAckEntry > entry.getValue()) {
           minUnCommittedAckEntry = entry.getValue();
         }
       }
     }
 
-    if(minUnCommittedAckEntry != Long.MAX_VALUE) {
+    if (minUnCommittedAckEntry != Long.MAX_VALUE) {
       return minUnCommittedAckEntry - 1;
-    } else if(maxMinCommittedAckEntry >= TTQueueNewConstants.FIRST_ENTRY_ID) {
+    } else if (maxMinCommittedAckEntry >= TTQueueNewConstants.FIRST_ENTRY_ID) {
       return maxMinCommittedAckEntry;
     } else {
       return TTQueueNewConstants.INVALID_ENTRY_ID;
@@ -88,7 +88,7 @@ public class EvictionHelper {
   }
 
   /**
-   * Cleans-up the min ack entries from the transactions that are now committed
+   * Cleans-up the min ack entries from the transactions that are now committed.
    * @param transaction Current transaction
    */
   public void cleanup(Transaction transaction) {
@@ -97,12 +97,12 @@ public class EvictionHelper {
     long maxMinCommittedAckEntry = TTQueueNewConstants.FIRST_ENTRY_ID - 1;
 
     Iterator<Map.Entry<Long, Long>> iterator = txnMinAckEntryMap.entrySet().iterator();
-    while(iterator.hasNext()) {
+    while (iterator.hasNext()) {
       Map.Entry<Long, Long> entry = iterator.next();
       // Cleanup happens within a transaction, so need to exclude current transaction from getting cleaned up
-      if(entry.getKey() != transaction.getWriteVersion() && readPointer.isVisible(entry.getKey())) {
+      if (entry.getKey() != transaction.getWriteVersion() && readPointer.isVisible(entry.getKey())) {
         // Save the maxMinCommittedAckEntry
-        if(maxMinCommittedAckEntry < entry.getValue()) {
+        if (maxMinCommittedAckEntry < entry.getValue()) {
           maxMinCommittedAckEntry = entry.getValue();
         }
         // Transaction is committed, we can remove the ack list safely
@@ -111,13 +111,13 @@ public class EvictionHelper {
     }
 
     // Compute the maxCommittedCleanedUpEntry
-    if(this.maxCommittedCleanedUpEntry < maxMinCommittedAckEntry) {
+    if (this.maxCommittedCleanedUpEntry < maxMinCommittedAckEntry) {
       this.maxCommittedCleanedUpEntry = maxMinCommittedAckEntry;
     }
   }
 
   /**
-   * Returns the number of transactions present in EvictionHelper
+   * Returns the number of transactions present in EvictionHelper.
    * @return number of transactions present in EvictionHelper
    */
   public int size() {
@@ -133,9 +133,9 @@ public class EvictionHelper {
 
   public void encode(Encoder encoder) throws IOException {
     // Encode the txnMinAckEntryMap
-    if(!txnMinAckEntryMap.isEmpty()) {
+    if (!txnMinAckEntryMap.isEmpty()) {
       encoder.writeInt(txnMinAckEntryMap.size());
-      for(Map.Entry<Long, Long> entry : txnMinAckEntryMap.entrySet()) {
+      for (Map.Entry<Long, Long> entry : txnMinAckEntryMap.entrySet()) {
         encoder.writeLong(entry.getKey());
         encoder.writeLong(entry.getValue());
       }
@@ -150,8 +150,8 @@ public class EvictionHelper {
     // Decode the txnMinAckEntryMap
     int mapSize = decoder.readInt();
     Map<Long, Long> txnMinAckEntryMap = Maps.newHashMapWithExpectedSize(mapSize);
-    while(mapSize > 0) {
-      for(int i= 0; i < mapSize; ++i) {
+    while (mapSize > 0) {
+      for (int i = 0; i < mapSize; ++i) {
         txnMinAckEntryMap.put(decoder.readLong(), decoder.readLong());
       }
       mapSize = decoder.readInt();

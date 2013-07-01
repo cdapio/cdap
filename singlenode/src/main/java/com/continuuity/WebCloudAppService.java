@@ -22,10 +22,10 @@ import java.io.InputStreamReader;
  */
 public class WebCloudAppService {
   private static final Logger logger = LoggerFactory.getLogger(WebCloudAppService.class);
-  private static final String NODE_JS_EXECUTABLE="node";
+  private static final String NODE_JS_EXECUTABLE = "node";
 
   /**
-   * This is the external process that will wrap the web app
+   * This is the external process that will wrap the web app.
    */
   Process webAppProcess;
 
@@ -90,11 +90,11 @@ public class WebCloudAppService {
       String message;
       if (StringUtils.contains(e.getCause().getMessage(),
                                "No such file or directory")) {
-        message="Could not find executable "+"\""+NODE_JS_EXECUTABLE+"\""+" "
-                  +"for Node.js in executable search path "
-                  +System.getenv("PATH")+".";
+        message = "Could not find executable " + "\"" + NODE_JS_EXECUTABLE + "\"" + " "
+                  + "for Node.js in executable search path "
+                  + System.getenv("PATH") + ".";
       } else {
-        message=e.getMessage();
+        message = e.getMessage();
       }
       logger.error(message);
       throw new ServerException(message);
@@ -110,7 +110,7 @@ public class WebCloudAppService {
    * @throws ServerException
    */
   public void stop(boolean now) throws ServerException {
-    if(webAppProcess != null) {
+    if (webAppProcess != null) {
       webAppProcess.destroy();
     }
   }

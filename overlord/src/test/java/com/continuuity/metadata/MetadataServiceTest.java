@@ -131,7 +131,7 @@ public class MetadataServiceTest {
     // Delete the stream now.
     Assert.assertTrue(mds.deleteStream(account, stream));
     int afterDeleteCount = mds.getStreams(account).size();
-    Assert.assertTrue(count == afterAddCount-1);
+    Assert.assertTrue(count == afterAddCount - 1);
     Assert.assertTrue((afterAddCount - 1) == afterDeleteCount);
   }
 
@@ -150,8 +150,8 @@ public class MetadataServiceTest {
       = mds.getStreams(account);
     int after = streams.size();
     Assert.assertTrue(after == before + 1);
-    for(Stream s : streams) {
-      if(s.getId().equals("id3")) {
+    for (Stream s : streams) {
+      if (s.getId().equals("id3")) {
         Assert.assertTrue("Serious stream".equals(s.getName()));
         Assert.assertTrue("Serious stream. Shutup".equals(s.getDescription()));
       }
@@ -284,8 +284,8 @@ public class MetadataServiceTest {
     Collection<Application> applications = mds.getApplications(account);
     int after = applications.size();
     Assert.assertTrue(after == before + 1);
-    for(Application a : applications) {
-      if(a.getId().equals("tapp1")) {
+    for (Application a : applications) {
+      if (a.getId().equals("tapp1")) {
         Assert.assertTrue("Serious App".equals(a.getName()));
         Assert.assertTrue("Serious App. Shutup".equals(a.getDescription()));
       }

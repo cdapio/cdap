@@ -1,8 +1,7 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A pointer to an entry in the queue.
@@ -29,7 +28,7 @@ public class EntryPointer extends QueueEntryPointer {
 
   @Override
   public boolean equals(Object o) {
-    return entryId == ((EntryPointer)o).entryId &&
-        shardId == ((EntryPointer)o).shardId;
+    return entryId == ((EntryPointer) o).entryId &&
+        shardId == ((EntryPointer) o).shardId;
   }
 }

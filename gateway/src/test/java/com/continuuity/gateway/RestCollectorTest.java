@@ -19,6 +19,9 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Tests Rest Collector.
+ */
 public class RestCollectorTest {
 
   static Collector newCollector(String name) {
@@ -29,7 +32,7 @@ public class RestCollectorTest {
   }
 
   static Collector newCollectorWithRealOpexAndMDS(String name) {
-    Injector injector = Guice.createInjector(new MetadataModules() .getInMemoryModules(),
+    Injector injector = Guice.createInjector(new MetadataModules().getInMemoryModules(),
                                              new DataFabricModules().getInMemoryModules());
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     Collector collector = new RestCollector();
@@ -39,7 +42,7 @@ public class RestCollectorTest {
   }
 
   /**
-   * verify that collector does not bind to port until start()
+   * verify that collector does not bind to port until start().
    */
   @Test
   public void testStartStop() throws Exception {
@@ -83,7 +86,7 @@ public class RestCollectorTest {
   }
 
   /**
-   * verify that rest events get transformed and annotated correctly
+   * verify that rest events get transformed and annotated correctly.
    */
   @Test
   public void testTransformEvent() throws Exception {
@@ -121,7 +124,7 @@ public class RestCollectorTest {
 
   /**
    * This tests that the collector returns the correct HTTP codes for
-   * invalid requests
+   * invalid requests.
    */
   @Test
   public void testBadRequests() throws Exception {
@@ -177,7 +180,7 @@ public class RestCollectorTest {
     Assert.assertEquals(404, TestUtil.sendPostRequest(
         baseUrl + "xyz")); // incorrect, not registered
     // make mds return exists=true for all streams, try again, should succeed
-    ((DummyMDS)collector.getMetadataService()).allowAll();
+    ((DummyMDS) collector.getMetadataService()).allowAll();
     Assert.assertEquals(200, TestUtil.sendPostRequest(
         baseUrl + "xyz")); // incorrect, not registered
 
@@ -195,13 +198,13 @@ public class RestCollectorTest {
     collector.stop();
   }
   /**
-   * verify that a new stream gets created
+   * verify that a new stream gets created.
    */
   @Test
   public void testCreateStream() throws Exception {
     String name = "other";
     String prefix = "/stream/";
-    String middle_path = "";
+    String middlePath = "";
     String streamId = "firststream";
 
     int port = PortDetector.findFreePort();
@@ -218,7 +221,7 @@ public class RestCollectorTest {
     configuration.set(Constants.
       buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
     configuration.set(Constants.
-      buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle_path);
+      buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middlePath);
 
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.VerifyConsumer(15, name, streamId));
@@ -259,13 +262,13 @@ public class RestCollectorTest {
     collector.stop();
   }
   /**
-   * verify that a new stream gets created
+   * verify that a new stream gets created.
    */
   @Test
   public void testBadCreateStreamRequest() throws Exception {
     String name = "other";
     String prefix = "/stream/";
-    String middle_path = "";
+    String middlePath = "";
     String badStreamId = "my&stream";
 
     int port = PortDetector.findFreePort();
@@ -282,7 +285,7 @@ public class RestCollectorTest {
     configuration.set(Constants.
       buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
     configuration.set(Constants.
-      buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle_path);
+      buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middlePath);
 
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.VerifyConsumer(15, name, badStreamId));

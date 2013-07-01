@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface UseDataSet {
   /**
-   * @return Name of the {@link com.continuuity.api.data.DataSet}
+   * Returns name of the {@link com.continuuity.api.data.DataSet}.
    */
   String value();
 }

@@ -27,7 +27,7 @@ public final class QueueEntrySerializer {
   }
 
   /**
-   * Serialize a queue entry
+   * Serialize a queue entry.
    * @param entry the queue entry to be serialized
    * @return the serialized queue entry as a byte array
    * @throws IOException if serialization fails
@@ -43,11 +43,11 @@ public final class QueueEntrySerializer {
 
       //writing version number which might be needed in the future if we change the schema
       encoder.writeInt(version);
-      if (map==null || map.size()==0)
+      if (map == null || map.size() == 0){
         encoder.writeInt(0);
-      else {
+      } else {
         encoder.writeInt(map.size());
-        for(Map.Entry<String, Integer> e: map.entrySet()) {
+        for (Map.Entry<String, Integer> e: map.entrySet()) {
           encoder.writeString(e.getKey());
           encoder.writeInt(e.getValue());
         }
@@ -63,7 +63,7 @@ public final class QueueEntrySerializer {
   }
 
   /**
-   * Deserialize a queue entry
+   * Deserialize a queue entry.
    * @param bytes the serialized representation of the queue entry
    * @return the deserialized queue entry
    * @throws IOException if deserialization fails
@@ -73,26 +73,26 @@ public final class QueueEntrySerializer {
       return null;
     }
     try {
-      ByteArrayInputStream bis=new ByteArrayInputStream(bytes);
-      Decoder decoder=new BinaryDecoder(bis);
+      ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+      Decoder decoder = new BinaryDecoder(bis);
 
       //Making sure versions of code and queue entry data are compatible
-      int versionFound=decoder.readInt();
-      if (versionFound!=version) {
+      int versionFound = decoder.readInt();
+      if (versionFound != version) {
         throw new IOException("Version of queue entry data incompatible!");
       }
-      int headerSize=decoder.readInt();
-      Map<String,Integer> map=null;
-      if (headerSize>0) {
-        map=Maps.newHashMap();
-        for(int i=0; i<headerSize; i++) {
-          map.put(decoder.readString(),decoder.readInt());
+      int headerSize = decoder.readInt();
+      Map<String, Integer> map = null;
+      if (headerSize > 0) {
+        map = Maps.newHashMap();
+        for (int i = 0; i < headerSize; i++) {
+          map.put(decoder.readString(), decoder.readInt());
         }
       }
-      byte[] data=Bytes.toBytes(decoder.readBytes());
+      byte[] data = Bytes.toBytes(decoder.readBytes());
       QueueEntry queueEntry = new QueueEntry(data);
-      if (map!=null) {
-        for(Map.Entry<String, Integer> e: map.entrySet()) {
+      if (map != null) {
+        for (Map.Entry<String, Integer> e: map.entrySet()) {
           queueEntry.addHashKey(e.getKey(), e.getValue());
         }
       }

@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * concrete implementations.
  */
 public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
-  private static Logger LOG = LoggerFactory.getLogger(VerificationStage.class);
+  private static final Logger LOG = LoggerFactory.getLogger(VerificationStage.class);
   public VerificationStage() {
     super(TypeToken.of(ApplicationSpecLocation.class));
   }
@@ -48,16 +48,16 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
     {
       ApplicationVerification verifier = new ApplicationVerification();
       VerifyResult result = verifier.verify(specification);
-      if(result.getStatus() != VerifyResult.Status.SUCCESS) {
+      if (result.getStatus() != VerifyResult.Status.SUCCESS) {
         throw new RuntimeException(result.getMessage());
       }
     }
 
     {
       DataSetVerification verifier = new DataSetVerification();
-      for(DataSetSpecification spec : specification.getDataSets().values()) {
+      for (DataSetSpecification spec : specification.getDataSets().values()) {
         VerifyResult result = verifier.verify(spec);
-        if(result.getStatus() != VerifyResult.Status.SUCCESS) {
+        if (result.getStatus() != VerifyResult.Status.SUCCESS) {
           throw new RuntimeException(result.getMessage());
         }
       }
@@ -65,9 +65,9 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
 
     {
       StreamVerification verifier = new StreamVerification();
-      for(StreamSpecification spec : specification.getStreams().values()) {
+      for (StreamSpecification spec : specification.getStreams().values()) {
         VerifyResult result = verifier.verify(spec);
-        if(result.getStatus() != VerifyResult.Status.SUCCESS) {
+        if (result.getStatus() != VerifyResult.Status.SUCCESS) {
           throw new RuntimeException(result.getMessage());
         }
       }
@@ -75,9 +75,9 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
 
     {
       FlowVerification verifier = new FlowVerification();
-      for(FlowSpecification spec : specification.getFlows().values()) {
+      for (FlowSpecification spec : specification.getFlows().values()) {
         VerifyResult result = verifier.verify(spec);
-        if(result.getStatus() != VerifyResult.Status.SUCCESS) {
+        if (result.getStatus() != VerifyResult.Status.SUCCESS) {
           throw new RuntimeException(result.getMessage());
         }
       }
@@ -85,9 +85,9 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
 
     {
       ProcedureVerification verifier = new ProcedureVerification();
-      for(ProcedureSpecification spec : specification.getProcedures().values()) {
+      for (ProcedureSpecification spec : specification.getProcedures().values()) {
         VerifyResult result = verifier.verify(spec);
-        if(result.getStatus() != VerifyResult.Status.SUCCESS) {
+        if (result.getStatus() != VerifyResult.Status.SUCCESS) {
           throw new RuntimeException(result.getMessage());
         }
       }

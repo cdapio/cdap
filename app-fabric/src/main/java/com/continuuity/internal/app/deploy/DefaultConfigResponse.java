@@ -35,7 +35,7 @@ public final class DefaultConfigResponse implements ConfigResponse {
   @Override
   @Nullable
   public Reader get() throws IOException {
-    if(input != null) {
+    if (input != null) {
       return input.getInput();
     }
     return null;

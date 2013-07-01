@@ -926,7 +926,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         public boolean apply(Id.Program programId) {
           return programId.equals(programId);
         }
-      }, Type.values()), "Program still running for application " + programId.getApplication() + "," + programId.getId());
+      }, Type.values()), "Program still running for application %s, %s.",
+                               programId.getApplication(), programId.getId());
 
 
       Type programType = entityTypeToType(identifier);

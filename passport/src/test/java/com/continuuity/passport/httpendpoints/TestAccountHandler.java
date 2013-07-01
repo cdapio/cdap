@@ -8,6 +8,8 @@ import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.testhelper.HyperSQL;
 import com.continuuity.passport.testhelper.TestPassportServer;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -19,6 +21,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -216,6 +219,117 @@ public class TestAccountHandler {
     assertEquals(account.getOrgId(), "A123");
   }
 
+  @Test
+  public void testAccountRegistrationFlow() throws IOException {
+    //Endpoints involved in account registration flow
+    // POST accountRegistration/getNonce (get nonce for email_id)
+    // GET accountRegistration/getId
+    // POST account
+    String emailId = "richard@dawkins.com";
+    String firstName = "richard";
+    String lastName = "dawkins";
+
+    String endPoint = String.format("http://localhost:%d/passport/v1/accountRegistration/getNonce/%s", port, emailId);
+    HttpPost post = new HttpPost(endPoint);
+
+    String result = TestPassportServer.request(post);
+
+    assertTrue(result != null);
+    Gson gson = new GsonBuilder().create();
+    NonceResult nonceResult = gson.fromJson(result, NonceResult.class);
+
+    assertTrue(nonceResult.error == null);
+
+    long nonce = nonceResult.result;
+
+    endPoint = String.format("http://localhost:%d/passport/v1/accountRegistration/getId/%d", port, nonce);
+    HttpGet get = new HttpGet(endPoint);
+    result = TestPassportServer.request(get);
+    IdResult idResult = gson.fromJson(result, IdResult.class);
+
+    assertTrue(idResult.error == null);
+    assertEquals(emailId, idResult.result);
+
+    endPoint = String.format("http://localhost:%d/passport/v1/account", port);
+    post = new HttpPost(endPoint);
+    post.setEntity(new StringEntity(getAccountJson(emailId)));
+    post.addHeader("Content-Type", "application/json");
+
+    result = TestPassportServer.request(post);
+    assertTrue(result != null);
+    Account account =  Account.fromString(result);
+
+    assertEquals(emailId, account.getEmailId());
+
+    int id = account.getAccountId();
+
+    endPoint = String.format("http://localhost:%d/passport/v1/account/%d/confirmed", port, id);
+    HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity(getAccountJson(emailId, firstName, lastName)));
+    put.setHeader("Content-Type", "application/json");
+    result = TestPassportServer.request(put);
+    account =  Account.fromString(result);
+
+    assertEquals(emailId, account.getEmailId());
+    assertEquals(firstName, account.getFirstName());
+    assertEquals(lastName, account.getLastName());
+    assertEquals(id, account.getAccountId());
+  }
+
+  @Test
+  public void testPasswordResetFlow() throws Exception {
+    //-> POST accountReset/generateKey/{email_id}  (returns Nonceid)
+    //-> PUT  accountReset/password/{nonce} (change password)
+    //-> POST account/authenticate  (authenticate with new password)
+    String emailId = "douglas.adams@continuuity.com";
+    String endPoint = String.format("http://localhost:%d/passport/v1/account", port);
+    HttpPost post = new HttpPost(endPoint);
+    post.setEntity(new StringEntity(getAccountJson(emailId)));
+    post.addHeader("Content-Type", "application/json");
+
+    String result = TestPassportServer.request(post);
+    assertTrue(result != null);
+    Account account =  Account.fromString(result);
+    assertTrue("douglas.adams@continuuity.com".equals(account.getEmailId()));
+    int id = account.getAccountId();
+
+    endPoint = String.format("http://localhost:%d/passport/v1/account/%d/confirmed", port, id);
+    HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity(getAccountJson(emailId, "douglas", "adams")));
+    put.setHeader("Content-Type", "application/json");
+    result = TestPassportServer.request(put);
+
+    endPoint = String.format("http://localhost:%d/passport/v1/accountReset/generateKey/%s", port, emailId);
+    post = new HttpPost(endPoint);
+    result = TestPassportServer.request(post);
+
+    Gson gson = new Gson();
+    NonceResult nonceResult = gson.fromJson(result, NonceResult.class);
+
+    assertTrue(nonceResult.error == null);
+    long nonce = nonceResult.result;
+
+    JsonObject object = new JsonObject();
+    object.addProperty("password", "!@#");
+    endPoint = String.format("http://localhost:%d/passport/v1/accountReset/password/%d", port, nonce);
+    post  = new HttpPost(endPoint);
+    post.setEntity(new StringEntity(object.toString()));
+    post.setHeader("Content-Type", "application/json");
+    result = TestPassportServer.request(post);
+
+    assertTrue(result != null);
+
+    //Authenticate with new password.
+    endPoint = String.format("http://localhost:%d/passport/v1/account/authenticate", port);
+    post = new HttpPost(endPoint);
+    JsonObject auth  = new JsonObject();
+    auth.addProperty("email_id", emailId);
+    auth.addProperty("password", "!@#");
+    post.setEntity(new StringEntity(auth.toString()));
+    post.setHeader("Content-Type", "application/json");
+    result = TestPassportServer.request(post);
+  }
+
   private String getAccountJson(String emailId){
     JsonObject object = new JsonObject();
     object.addProperty("email_id", emailId);
@@ -241,8 +355,14 @@ public class TestAccountHandler {
     return object.toString();
   }
 
+  private class NonceResult {
+    private String error;
+    private Long result;
+  }
 
-
+  private class IdResult {
+    private String error;
+    private String result;
+  }
 
 }
-

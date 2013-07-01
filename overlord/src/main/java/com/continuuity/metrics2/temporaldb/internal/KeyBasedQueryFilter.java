@@ -4,11 +4,7 @@ package com.continuuity.metrics2.temporaldb.internal;
 import com.continuuity.metrics2.temporaldb.Query;
 
 /**
- * Created with IntelliJ IDEA.
- * User: nmotgi
- * Date: 10/7/12
- * Time: 5:45 PM
- * To change this template use File | Settings | File Templates.
+ * Key based filter.
  */
 class KeyBasedQueryFilter {
   private final int metricID;
@@ -73,5 +69,4 @@ class KeyBasedQueryFilter {
       return false;
     }
   }
-
 }

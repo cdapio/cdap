@@ -43,7 +43,7 @@ public final class Archive {
   }
 
   private void check(boolean condition, String fmt, Object... objs) throws IOException {
-    if(!condition) {
+    if (!condition) {
       throw new IOException(String.format(fmt, objs));
     }
   }

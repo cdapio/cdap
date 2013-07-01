@@ -587,7 +587,7 @@ public class AccountHandler extends PassportHandler {
   }
 
   @Path("{id}/regenerateApiKey")
-  @GET
+  @POST
   @Produces("application/json")
   public Response regenerateApiKey(@PathParam("id") int accountId) {
     try {

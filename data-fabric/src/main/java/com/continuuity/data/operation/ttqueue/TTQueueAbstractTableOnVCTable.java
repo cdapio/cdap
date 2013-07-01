@@ -20,7 +20,7 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
   protected final CConfiguration conf;
 
   protected final ConcurrentSkipListMap<byte[], TTQueue> queues =
-      new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
+      new ConcurrentSkipListMap<byte[], TTQueue>(Bytes.BYTES_COMPARATOR);
 
   public TTQueueAbstractTableOnVCTable(TransactionOracle oracle, CConfiguration conf) {
     this.oracle = oracle;
@@ -89,7 +89,8 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public void dropInflightState(byte[] queueName, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+  public void dropInflightState(byte[] queueName, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException {
     getQueue(queueName).dropInflightState(consumer, readPointer);
   }
 
@@ -97,8 +98,9 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
   public String getGroupInfo(byte[] queueName, int groupId)
       throws OperationException {
     TTQueue queue = getQueue(queueName);
-    if (queue instanceof TTQueueOnVCTable)
-      return ((TTQueueOnVCTable)queue).getInfo(groupId);
+    if (queue instanceof TTQueueOnVCTable) {
+      return ((TTQueueOnVCTable) queue).getInfo(groupId);
+    }
     return "GroupInfo not supported";
   }
 
@@ -106,8 +108,9 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
   public String getEntryInfo(byte[] queueName, long entryId)
       throws OperationException {
     TTQueue queue = getQueue(queueName);
-    if (queue instanceof TTQueueOnVCTable)
-      return ((TTQueueOnVCTable)queue).getEntryInfo(entryId);
+    if (queue instanceof TTQueueOnVCTable) {
+      return ((TTQueueOnVCTable) queue).getEntryInfo(entryId);
+    }
     return "EntryInfo not supported";
   }
 

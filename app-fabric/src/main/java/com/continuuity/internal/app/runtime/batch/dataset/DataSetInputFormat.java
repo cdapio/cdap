@@ -20,6 +20,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An {@link InputFormat} that reads from dataset.
+ * @param <KEY> Type of key.
+ * @param <VALUE> Type of value.
+ */
 public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
   public static final String INPUT_DATASET_SPEC = "input.dataset.spec";
 

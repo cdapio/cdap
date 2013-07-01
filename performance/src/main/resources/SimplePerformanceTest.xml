@@ -39,4 +39,10 @@
         <description>Specifies the reporting interval in seconds</description>
     </property>
 
+    <property>
+        <name>opentsdb.server.address</name>
+        <value>mon101.ops.sl.continuuity.com</value>
+        <description>Specifies metrics server</description>
+    </property>
+
 </configuration>

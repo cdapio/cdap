@@ -31,7 +31,7 @@ import java.util.concurrent.TimeoutException;
  * Runtime statistics of Reactor App during a performance test.
  */
 public final class BenchmarkRuntimeStats {
-  private static String ACCOUNT_ID = "developer";
+  private static String accountId = "developer";
 
   private static final MetricsFrontendService.Client metricsClient = getMetricsClient();
 
@@ -103,10 +103,10 @@ public final class BenchmarkRuntimeStats {
    * @param counterName Counter name
    * @param count Count to wait for
    * @param timeout Maximum time to wait for
-   * @param timeoutUnit {@link java.util.concurrent.TimeUnit} for the timeout time.
-   * @throws {@link java.util.concurrent.TimeoutException} if the timeout time passed and still not seeing that many counts.
+   * @param timeoutUnit {@link TimeUnit} for the timeout time.
+   * @throws TimeoutException if the timeout time passed and still not seeing that many counts.
    */
-  @SuppressWarnings("unused")
+  @SuppressWarnings(value = "unused")
   public static void waitForCounter(String applicationId, String flowName, String flowletName,
                                     String counterName, long count, long timeout, TimeUnit timeoutUnit)
     throws TimeoutException, InterruptedException {
@@ -132,10 +132,10 @@ public final class BenchmarkRuntimeStats {
    * @param counterName Counter name
    * @param count Count to wait for
    * @param timeout Maximum time to wait for
-   * @param timeoutUnit {@link java.util.concurrent.TimeUnit} for the timeout time.
-   * @throws {@link java.util.concurrent.TimeoutException} if the timeout time passed and still not seeing that many count.
+   * @param timeoutUnit {@link TimeUnit} for the timeout time.
+   * @throws TimeoutException if the timeout time passed and still not seeing that many count.
    */
-  @SuppressWarnings("unused")
+  @SuppressWarnings(value = "unused")
   public static void waitForCounter(String counterName, long count, long timeout, TimeUnit timeoutUnit)
     throws TimeoutException, InterruptedException {
 
@@ -162,17 +162,9 @@ public final class BenchmarkRuntimeStats {
    * @param counterName Counter name
    * @return Counter
    */
-  /**
-   *
-   * @param applicationId
-   * @param flowName
-   * @param flowletName
-   * @param counterName
-   * @return Counter
-   */
   public static Counter getCounter(String applicationId, String flowName, String flowletName,
                                    String counterName) {
-    FlowArgument arg = new FlowArgument(ACCOUNT_ID, applicationId, flowName);
+    FlowArgument arg = new FlowArgument(accountId, applicationId, flowName);
     try {
       List<Counter> counters = metricsClient.getCounters(new CounterRequest(arg));
       for (Counter counter : counters) {
@@ -222,7 +214,7 @@ public final class BenchmarkRuntimeStats {
   // is null or an empty String.
   private static Map<String, Double> getCounters(String applicationId, String flowName,
                                                  String flowletName) {
-    FlowArgument arg = new FlowArgument(ACCOUNT_ID, applicationId, flowName);
+    FlowArgument arg = new FlowArgument(accountId, applicationId, flowName);
     try {
       List<Counter> counters = metricsClient.getCounters(new CounterRequest(arg));
       Map<String, Double> counterMap = new HashMap<String, Double>(counters.size());

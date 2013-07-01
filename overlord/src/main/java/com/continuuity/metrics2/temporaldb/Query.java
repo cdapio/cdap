@@ -9,7 +9,7 @@ import java.util.Map;
  * Query.Builder(metricName).from(startTime).to(endTime).filterByTag(A,B).filterByTags(
  */
 public final class Query {
-  /** Start time, all points will be greater than or equal */
+  /** Start time, all points will be greater than or equal. */
   private long startTime;
 
   /** End time, all points will be less than or equal. */
@@ -52,8 +52,8 @@ public final class Query {
    * @return A strictly positive integer.
    */
   public long getEndTime() {
-    if(endTime == Long.MIN_VALUE) {
-      endTime = System.currentTimeMillis()/1000;
+    if (endTime == Long.MIN_VALUE) {
+      endTime = System.currentTimeMillis() / 1000;
     }
     return endTime;
   }
@@ -77,11 +77,11 @@ public final class Query {
    *                .from(ts)
    *                .to(ts)
    *                .has("A", "B")
-   *                .create();
+   *                .create();.
    */
   public static class select {
     private final String metricName;
-    private long endTime = System.currentTimeMillis()/1000;
+    private long endTime = System.currentTimeMillis() / 1000;
     private long startTime = endTime - 5; // 5 seconds behind.
     private Map<String, String> tags = null;
 
@@ -100,7 +100,7 @@ public final class Query {
     }
 
     public select and() {
-      if(tags == null) {
+      if (tags == null) {
         tags = Maps.newHashMap();
       }
       return this;
@@ -117,8 +117,7 @@ public final class Query {
     }
 
     public Query create() {
-      Query q = new Query(metricName, startTime, endTime, tags);
-      return q;
+      return new Query(metricName, startTime, endTime, tags);
     }
 
   }

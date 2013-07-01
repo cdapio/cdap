@@ -18,8 +18,6 @@ public @interface HashPartition {
   /**
    * Declare the name of the partition key for data partitioning to the process methods
    * across multiple instances of {@link com.continuuity.api.flow.flowlet.Flowlet}.
-   *
-   * @return Name of the partition key.
    */
   String value();
 
