@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Configuration classes.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.conf;

@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Serializer helper classes.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.serializer;

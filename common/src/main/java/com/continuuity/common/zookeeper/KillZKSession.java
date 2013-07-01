@@ -45,13 +45,13 @@ public final class KillZKSession {
 
     try {
       try {
-        while((System.currentTimeMillis() - start) < maxMs) {
+        while ((System.currentTimeMillis() - start) < maxMs) {
           client.exists("/continuuity", false);
           Thread.sleep(sleep);
         }
-      } catch(InterruptedException e) {
+      } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-      } catch(Exception expected) {
+      } catch (Exception expected) {
 
       }
     } finally {

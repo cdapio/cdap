@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Metrics client classes.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.metrics;

@@ -1,5 +1,8 @@
 package com.continuuity.common.utils;
 
+/**
+ * Detects type of OS.
+ */
 public class OSDetector {
 
   public static boolean isWindows() {

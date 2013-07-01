@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Database related classes.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.db;

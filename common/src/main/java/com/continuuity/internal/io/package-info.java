@@ -3,7 +3,7 @@
  */
 
 /**
- * Service discovery classes.
+ * Common IO classes.
  */
-package com.continuuity.common.discovery;
+package com.continuuity.internal.io;
 

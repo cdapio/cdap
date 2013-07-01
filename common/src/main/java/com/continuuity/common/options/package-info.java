@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Command line options.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.options;

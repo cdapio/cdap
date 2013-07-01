@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * StreamEvent classes.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.streamevent;

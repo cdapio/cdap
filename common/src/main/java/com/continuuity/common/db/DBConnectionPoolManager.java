@@ -107,7 +107,7 @@ public class DBConnectionPoolManager {
       throw new IllegalArgumentException("Invalid maxConnections value.");
     }
 
-    semaphore = new Semaphore(maxConnections,true);
+    semaphore = new Semaphore(maxConnections, true);
     recycledConnections = new LinkedList<PooledConnection>();
     poolConnectionEventListener = new PoolConnectionEventListener();
   }
@@ -171,7 +171,7 @@ public class DBConnectionPoolManager {
       }
     } catch (InterruptedException e) {
       throw new RuntimeException("Interrupted while waiting for a " +
-                                   "database connection.",e);
+                                   "database connection.", e);
     }
 
     boolean ok = false;
@@ -251,8 +251,7 @@ public class DBConnectionPoolManager {
         triesWithoutDelay = 0;
         try {
           Thread.sleep(250);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
           throw new RuntimeException("Interrupted while waiting " +
                                        "for a valid database connection.", e);
         }
@@ -276,7 +275,7 @@ public class DBConnectionPoolManager {
     }
 
     rtime = timeoutTime - System.currentTimeMillis();
-    int rtimeSecs = Math.max(1, (int)((rtime+999)/1000));
+    int rtimeSecs = Math.max(1, (int) ((rtime + 999) / 1000));
     try {
       if (conn.isValid(rtimeSecs)) {
         return conn;
@@ -348,7 +347,7 @@ public class DBConnectionPoolManager {
     try {
       pconn.close();
     } catch (SQLException e) {
-      log("Error while closing database connection: "+e.toString());
+      log("Error while closing database connection: " + e.toString());
     }
   }
 
@@ -373,12 +372,12 @@ public class DBConnectionPoolManager {
   private class PoolConnectionEventListener implements ConnectionEventListener {
 
     public void connectionClosed (ConnectionEvent event) {
-      PooledConnection pconn = (PooledConnection)event.getSource();
+      PooledConnection pconn = (PooledConnection) event.getSource();
       recycleConnection(pconn);
     }
 
     public void connectionErrorOccurred (ConnectionEvent event) {
-      PooledConnection pconn = (PooledConnection)event.getSource();
+      PooledConnection pconn = (PooledConnection) event.getSource();
       disposeConnection(pconn);
     }
   }

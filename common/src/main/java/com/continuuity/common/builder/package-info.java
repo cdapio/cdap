@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Classes related to builder.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.builder;

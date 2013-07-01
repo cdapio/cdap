@@ -1,4 +1,8 @@
 /**
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
+/**
  * <h3>Schema definition</h3>
  *
  * The schema definition is adopted from <a href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro Schema</a>, with
@@ -183,3 +187,4 @@
  *
  */
 package com.continuuity.internal.io;
+

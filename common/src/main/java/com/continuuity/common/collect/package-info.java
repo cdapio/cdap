@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Classes for managing collections.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.collect;

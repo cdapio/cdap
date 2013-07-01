@@ -40,10 +40,10 @@ class InstanceSpecification {
     } catch (IOException e) {
       LOG.error("Failed to find a local port " + e.getMessage());
     } finally {
-      if ( server != null ) {
+      if (server != null) {
         try {
           server.close();
-        } catch ( IOException ignore ) {}
+        } catch (IOException ignore) {}
       }
     }
     return -1;

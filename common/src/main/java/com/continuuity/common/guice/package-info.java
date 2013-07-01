@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Injection modules.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.guice;

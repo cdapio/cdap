@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Reflect classes.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.internal.reflect;

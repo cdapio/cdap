@@ -45,7 +45,7 @@ public final class StreamEventCodec {
    * @return Encoded {@code byte[]}.
    */
   public byte[] encodePayload(StreamEvent event) {
-    // FIXME: This is a bit hacky to do it directly for now, for performance reason.
+    // TODO: This is a bit hacky to do it directly for now, for performance reason.
     ByteBuffer body = event.getBody();
     Map<String, String> headers = event.getHeaders();
 

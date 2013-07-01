@@ -56,7 +56,7 @@ class InMemoryZookeeperMain extends ZooKeeperServerMain implements InMemoryZooke
 
       Field ssField = cnxnFactory.getClass().getDeclaredField("ss");
       ssField.setAccessible(true);
-      ServerSocketChannel ss = (ServerSocketChannel)ssField.get(cnxnFactory);
+      ServerSocketChannel ss = (ServerSocketChannel) ssField.get(cnxnFactory);
       ss.close();
     } catch (Exception e) {
       LOG.error("Failed to kill InMemoryZookeeper " + e.getMessage());

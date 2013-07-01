@@ -3,7 +3,7 @@
  */
 
 /**
- * Service discovery classes.
+ * Classes for managing archives.
  */
-package com.continuuity.common.discovery;
+package com.continuuity.archive;
 

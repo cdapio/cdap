@@ -47,7 +47,7 @@ class QuorumConfigBuilder {
     boolean       isCluster = (instanceSpecs.size() > 1);
     InstanceSpecification  spec = instanceSpecs.get(instanceIndex);
 
-    if ( isCluster ) {
+    if (isCluster) {
       Files.write(Integer.toString(spec.getServerId()).getBytes(), new File(spec.getDataDirectory(), "myid"));
     }
 
@@ -56,8 +56,8 @@ class QuorumConfigBuilder {
     properties.setProperty("syncLimit", "5");
     properties.setProperty("dataDir", spec.getDataDirectory().getCanonicalPath());
     properties.setProperty("clientPort", Integer.toString(spec.getPort()));
-    if ( isCluster ) {
-      for ( InstanceSpecification thisSpec : instanceSpecs ) {
+    if (isCluster) {
+      for (InstanceSpecification thisSpec : instanceSpecs) {
         properties.setProperty("server." + thisSpec.getServerId(), String.format("localhost:%d:%d", thisSpec.getQuorumPort(), thisSpec.getElectionPort()));
       }
     }

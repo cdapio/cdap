@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * Multiplexed Thrift service classes.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.thrift;

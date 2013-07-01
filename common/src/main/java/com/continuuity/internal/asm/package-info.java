@@ -3,7 +3,7 @@
  */
 
 /**
- * Service discovery classes.
+ * ASM related common classes.
  */
-package com.continuuity.common.discovery;
+package com.continuuity.internal.asm;
 

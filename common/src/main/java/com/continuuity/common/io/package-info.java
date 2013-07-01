@@ -3,7 +3,6 @@
  */
 
 /**
- * Service discovery classes.
+ * IO Codec.
  */
-package com.continuuity.common.discovery;
-
+package com.continuuity.common.io;
