@@ -68,6 +68,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
    * Insert or update Nonce in DB.
    * @param id id
    * @param expiration expiration time in seconds
+   * @param nonce nonce value to be updated
    * @return integer random nonce
    */
   private void insertOrUpdateNonce(String id, int expiration, int nonce) {
@@ -106,6 +107,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
    * Insert Nonce in DB.
    * @param id id
    * @param expiration expiration time in seconds
+   * @param nonce nonce value to be updated
    * @return integer random nonce
    */
   private void insertNonce(String id, int expiration, int nonce){
@@ -139,6 +141,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
    * Update Nonce in DB.
    * @param id id
    * @param expiration expiration time in seconds
+   * @param nonce nonce value to be updated
    * @return integer random nonce
    */
   private void updateNonce(String id, int expiration, int nonce){
