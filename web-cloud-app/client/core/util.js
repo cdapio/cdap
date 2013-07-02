@@ -139,62 +139,113 @@ define([], function () {
 			}
 		}),
 
-		updateTimeSeries: function (http, models, max) {
+		updateAggregates: function (models, http) {
 
-			var i, j, models, paths = [], metrics, map = {};
-
+			var j, k, paths = [], metrics, map = {};
 			var queries = [];
 
+			var max = 60;
+
 			for (j = 0; j < models.length; j ++) {
-				if (typeof models[j].update === 'function') {
 
-					metrics = models[j].update(http);
+				metrics = Em.keys(models[j].get('aggregates') || {});
 
-					if (metrics) {
+				for (var k = 0; k < metrics.length; k ++) {
 
-						for (var k = 0; k < metrics.length; k ++) {
+						map[metrics[k]] = models[j];
 
-							if (models[j].get('timeseries').get(metrics[k])) {
+						paths.push(metrics[k]);
+						metrics[k] += '?aggregate=true';
+						queries.push(metrics[k]);
 
-								count = max - models[j].get('timeseries').get(metrics[k]).length;
-								count = count || 1;
+				}
 
-							} else {
+			}
 
-								models[j].get('timeseries').set(metrics[k], []);
-								count = max;
+			if (queries.length) {
+				http.post('metrics', queries, function (result, error) {
 
+					var i, k, data, path, label;
+					for (i = 0; i < result.length; i ++) {
+
+						path = result[i].path;
+						label = map[path].get('aggregates')[path];
+						map[path].setMetric(label, result[i].result);
+
+					}
+
+				});
+			}
+
+		},
+
+		updateTimeSeries: function (models, http) {
+
+			var j, k, paths = [], metrics, map = {};
+			var queries = [];
+
+			var max = 60;
+
+			for (j = 0; j < models.length; j ++) {
+
+				metrics = Em.keys(models[j].get('timeseries') || {});
+
+				for (var k = 0; k < metrics.length; k ++) {
+
+					if (models[j].get('timeseries').get(metrics[k])) {
+
+						count = max - models[j].get('timeseries').get(metrics[k]).length;
+						count = count || 1;
+
+					} else {
+
+						models[j].get('timeseries').set(metrics[k], []);
+						count = max;
+
+					}
+
+					map[metrics[k]] = models[j];
+
+					paths.push(metrics[k]);
+					metrics[k] += '?count=' + count;
+					queries.push(metrics[k]);
+
+				}
+
+			}
+
+			if (queries.length) {
+
+				http.post('metrics', queries, function (result, error) {
+
+					var i, k, data, path;
+					for (i = 0; i < result.length; i ++) {
+
+						path = result[i].path;
+
+						if (result[i].error) {
+
+							console.error('TimeSeries', result[i].error);
+
+						} else {
+
+							data = result[i].result, k = data.length;
+							while(k --) {
+								data[k] = data[k].value;
 							}
 
-							map[metrics[k]] = models[j];
+							var ts = map[path].get('timeseries').get(path);
+							ts.shift(data.length);
+							ts = ts.concat(data);
 
-							paths.push(metrics[k]);
-							metrics[k] += '?count=' + count;
-							queries.push(metrics[k]);
+							map[path].get('timeseries').set(path, ts);
 
 						}
 
 					}
-				}
+
+				});
 			}
-
-			http.post('metrics', queries, function (result, error) {
-
-				for (var i = 0; i < result.length; i ++) {
-
-					var data = result[i];
-
-					var k = data.length;
-
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-					map[paths[i]].get('timeseries').set(paths[i], data);
-
-				}
-
-			});
 
 		},
 
@@ -324,27 +375,30 @@ define([], function () {
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000000000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'B';
+				return [rounded, 'B'];
+
 			} else if (value > 1000000) {
 				var digits = 3 - (Math.round(value / 1000000) + '').length;
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'M';
+				return [rounded, 'M'];
+
 			} else if (value > 1000) {
 				var digits = 3 - (Math.round(value / 1000) + '').length;
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'K';
-			} else {
-				var digits = 3 - (value + '').length;
-				digits = digits < 0 ? 2 : digits;
-				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded;
+				return [rounded, 'K'];
+
 			}
 
-			return value;
+			var digits = 3 - (value + '').length;
+			digits = digits < 0 ? 2 : digits;
+			var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
+
+			return [rounded, ''];
+
 		},
 		bytes: function (value) {
 

@@ -21,8 +21,8 @@ define(['lib/date'], function (Datejs) {
     init: function() {
       this._super();
 
-      this.set('metricData', Em.Object.create());
-      this.set('metricNames', {});
+      this.set('timeseries', Em.Object.create());
+      this.set('aggregates', Em.Object.create());
 
       this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
@@ -44,37 +44,42 @@ define(['lib/date'], function (Datejs) {
       return new Date(time).toString('hh:mm tt');
     }.property('startTime'),
 
-    addMetricName: function (name) {
+    units: {
+      'mapperRecords': 'number',
+      'mapperBytes': 'bytes',
+      'reducerRecords': 'number',
+      'reducerBytes': 'bytes'
+    },
 
-      this.get('metricNames')[name] = 1;
+    trackMetric: function (name, type, label) {
+
+      name = name.replace(/{parent}/, this.get('app'));
+      name = name.replace(/{id}/, this.get('name'));
+
+      this.get(type)[name] = label;
+
+      return name;
 
     },
-    setMetricData: function(name, value) {
 
-      this.get('metricData').set(name, value);
+    setMetric: function (label, value) {
+
+      var unit = this.get('units')[label];
+      value = C.Util[unit](value);
+
+      this.set(label + 'Label', value[0]);
+      this.set(label + 'Units', value[1]);
 
     },
-    getUpdateRequest: function (http) {
+
+    updateState: function (http) {
 
       var self = this;
 
       var app_id = this.get('app'),
-        batch_id = this.get('name'),
-        start = C.__timeRange * -1;
+        flow_id = this.get('name');
 
-      var metrics = [];
-      var metricNames = this.get('metricNames');
-      for (var name in metricNames) {
-        if (metricNames[name] === 1) {
-          metrics.push(name);
-        }
-      }
-      if (!metrics.length) {
-        this.set('__loadingData', false);
-        return;
-      }
-
-      http.rpc('runnable', 'status', [app_id, batch_id, -1],
+      http.rpc('runnable', 'status', [app_id, flow_id, -1],
         function (response) {
 
           if (response.result) {
@@ -83,35 +88,9 @@ define(['lib/date'], function (Datejs) {
 
       });
 
-      return ['monitor', {
-        method: 'getTimeSeries',
-        params: [app_id, batch_id, metrics, start, undefined, 'FLOW_LEVEL']
-      }, function (error, response) {
-
-        if (!response.params) {
-          return;
-        }
-
-        var data, points = response.params.points,
-          latest = response.params.latest;
-
-        for (var metric in points) {
-          data = points[metric];
-
-          var k = data.length;
-
-          while(k --) {
-            data[k] = data[k].value;
-          }
-
-          metric = metric.replace(/\./g, '');
-          self.get('metricData').set(metric, data);
-          self.set('__loadingData', false);
-        }
-
-      }];
-
     },
+
+    /*
     getMetricsRequest: function() {
 
       // These placeholders names are for Handlebars to render the associated metrics.
@@ -164,6 +143,7 @@ define(['lib/date'], function (Datejs) {
       }];
 
     },
+    */
 
     getMeta: function () {
       var arr = [];

@@ -7,13 +7,30 @@ define(['../../helpers/plumber'], function (Plumber) {
   var Controller = Em.Controller.extend({
     typesBinding: 'model.types',
 
+    elements: Em.Object.create(),
+
     load: function () {
 
       var self = this;
+      var model = this.get('model');
+
+      model.trackMetric('/process/events/jobs/mappers/{id}', 'aggregates', 'mapperRecords');
+      model.trackMetric('/process/bytes/jobs/mappers/{id}', 'aggregates', 'mapperBytes');
+      model.trackMetric('/process/events/jobs/reducers/{id}', 'aggregates', 'reducerRecords');
+      model.trackMetric('/process/bytes/jobs/reducers/{id}', 'aggregates', 'reducerBytes');
+
+      var input = model.get('streams')[0];
+      input = C.Stream.create({ id: input });
+      input.trackMetric('/collect/bytes/streams/{id}', 'aggregates', 'storage');
+      this.set('input', input);
+
+      var output = model.get('datasets')[0];
+      output = C.Stream.create({ id: output });
+      output.trackMetric('/store/bytes/datasets/{id}', 'aggregates', 'storage');
+      this.set('output', output);
 
       this.interval = setInterval(function () {
         self.updateStats();
-        self.updateMetrics();
       }, C.POLLING_INTERVAL);
 
       /*
@@ -22,21 +39,18 @@ define(['../../helpers/plumber'], function (Plumber) {
        */
       setTimeout(function () {
         self.updateStats();
-        self.updateMetrics();
         self.connectEntities();
       }, C.EMBEDDABLE_DELAY);
     },
 
     updateStats: function () {
-      var self = this;
 
-      // Update timeseries data for current batch.
-      C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
+      this.get('model').updateState(this.HTTP);
 
-    },
+      C.Util.updateTimeSeries([this.get('model')], this.HTTP);
+      C.Util.updateAggregates([this.get('model'),
+        this.get('input'), this.get('output')], this.HTTP);
 
-    updateMetrics: function() {
-      C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
     },
 
     connectEntities: function() {

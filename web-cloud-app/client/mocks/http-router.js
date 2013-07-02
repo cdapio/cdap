@@ -12,6 +12,8 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
 
   httpRouter.getResult = function(path) {
 
+    console.log(path);
+
     if (path in this.pathRouter) {
 
       var sample = this.pathRouter[path];
@@ -42,6 +44,14 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rest/datasets': Samples.datasetsSample,
     '/rest/procedures': Samples.proceduresSample,
 
+    '/rest/streams/text': Samples.streamSample,
+
+    '/rest/streams/wordStream': Samples.streamSample,
+    '/rest/datasets/wordAssocs': Samples.datasetSample,
+
+    '/rest/streams/wordStream/flows': Samples.flowsSample,
+    '/rest/datasets/filterTable/flows': Samples.flowsSample,
+
     '/rest/apps/WordCount': Samples.applicationSample,
     '/rest/apps/WordCount/streams': Samples.streamsSample,
     '/rest/apps/WordCount/flows': Samples.flowsSample,
@@ -51,6 +61,8 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rest/apps/WordCount/flows/CountAndFilterWords': Samples.flowDefinitionSample,
     '/rest/apps/WordCount/flows/WordCounter': Samples.flowDefinitionSample,
     '/rest/apps/WordCount/procedures/RetrieveCounts': Samples.procedureSample,
+
+    '/rest/apps/CountRandom/flows/CountAndFilterWords': Samples.flowDefinitionSample,
 
     '/rest/apps/CountRandom': Samples.applicationSample,
     '/rest/apps/CountRandom/flows/CountRandom': Samples.flowDefinitionSample,
@@ -62,7 +74,7 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rest/apps/CountAndFilterWords/procedures': Samples.proceduresSample,
     '/rest/apps/CountAndFilterWords/flows/CountAndFilterWords': Samples.flowDefinitionSample,
     '/rest/apps/CountAndFilterWords/flows/CountRandom': Samples.flowDefinitionSample,
-
+    '/rest/apps/CountAndFilterWords/mapreduce/batchid1': Samples.batchSample,
     '/rest/apps/CountAndFilterWords/mapreduce/batchsampleid1': Samples.batchSample,
 
     // RPC

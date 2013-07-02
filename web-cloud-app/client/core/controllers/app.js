@@ -26,6 +26,8 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
+			model.trackMetric('/store/bytes/{id}', 'aggregates', 'storage');
+
 			/*
 			 * Load Streams
 			 */
@@ -33,7 +35,9 @@ define([], function () {
 
 				var i = objects.length;
 				while (i--) {
+
 					objects[i] = C.Stream.create(objects[i]);
+
 				}
 				self.get('elements.Stream').pushObjects(objects);
 				self.__loaded();
@@ -114,30 +118,37 @@ define([], function () {
 
 		updateStats: function () {
 
+			if (C.currentPath !== 'App') {
+				return;
+			}
+
 			var self = this, types = ['Flow', 'Batch', 'Stream', 'Procedure', 'Dataset'];
 
 			if (this.get('model')) {
 
-				var models = [this.get('model')];
-
-				for (var i = 0; i < types.length; i ++) {
+				var i; models = [this.get('model')];
+				for (i = 0; i < types.length; i ++) {
 					models = models.concat(this.get('elements').get(types[i]).get('content'));
 				}
 
-				C.Util.updateTimeSeries(this.HTTP, models, 60);
-
-				var storage = 0;
-				var streams = this.get('elements.Stream').content;
-				for (var i = 0; i < streams.length; i ++) {
-					storage += streams[i].get('storage');
+				/*
+				 * Hax until we have a pub/sub system for state.
+				 */
+				i = models.length;
+				while (i--) {
+					if (typeof models.updateState === 'function') {
+						models.updateState(this.HTTP);
+					}
 				}
-				var datasets = this.get('elements.Dataset').content;
-				for (var i = 0; i < datasets.length; i ++) {
-					storage += datasets[i].get('storage');
-				}
+				/*
+				 * End hax
+				 */
 
-				self.get('model').set('storageLabel', C.Util.bytes(storage)[0]);
-				self.get('model').set('storageUnits', C.Util.bytes(storage)[1]);
+				// Scans models for timeseries metrics and updates them.
+				C.Util.updateTimeSeries(models, this.HTTP);
+
+				// Scans models for aggregate metrics and udpates them.
+				C.Util.updateAggregates(models, this.HTTP);
 
 			}
 

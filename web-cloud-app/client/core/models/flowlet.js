@@ -14,65 +14,40 @@ define([], function () {
 
 		}.property().cacheable(),
 		init: function() {
+
 			this._super();
 
-			this.set('metricData', Em.Object.create());
-			this.set('metricNames', {});
+			this.set('timeseries', Em.Object.create());
+			this.set('aggregates', Em.Object.create());
 
 			this.set('id', this.get('name'));
 
 		},
-		addMetricName: function (name) {
 
-			this.get('metricNames')[name] = 1;
+		trackMetric: function (name, type, label) {
 
-		},
-		getUpdateRequest: function (flow) {
+			name = name.replace(/{parent}/, this.get('flow'));
+			name = name.replace(/{id}/, this.get('id'));
+			this.get(type)[name] = label;
 
-			var id = flow.name;
-			var app = flow.app;
-
-			var self = this;
-			var pointCount = 30;
-
-			var metrics = [];
-			for (var name in this.get('metricNames')) {
-				metrics.push(name);
-			}
-
-			var start = C.__timeRange * -1;
-
-			return ['monitor', {
-				method: 'getTimeSeries',
-				params: [app, id, metrics, start, undefined, 'FLOWLET_LEVEL', this.get('id')]
-			}, function (error, response, id) {
-
-				if (!response.params) {
-					return;
-				}
-
-				var data, points = response.params.points,
-					latest = response.params.latest;
-
-				for (var metric in points) {
-					data = points[metric];
-
-					var k = data.length;
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-					metric = metric.replace(/\./g, '');
-
-					self.get('metricData').set(metric, data);
-					self.set('__loadingData', false);
-
-				}
-
-			}];
+			return name;
 
 		},
-		label: 0,
+
+		units: {
+			'events': 'number'
+		},
+
+		setMetric: function (label, value) {
+
+			var unit = this.get('units')[label];
+			value = C.Util[unit](value);
+
+			this.set(label + 'Label', value[0]);
+			this.set(label + 'Units', value[1]);
+
+		},
+
 		plural: function () {
 			return this.instances === 1 ? '' : 's';
 		}.property('instances'),

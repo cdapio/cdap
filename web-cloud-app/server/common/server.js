@@ -289,6 +289,12 @@ var singularREST = {
     'procedures': 'Query'
   };
 
+  var selectiveREST = {
+    'apps': 'ByApplication',
+    'streams': 'ByStream',
+    'datasets': 'ByDataset'
+  };
+
   /*
    * REST handler
    */
@@ -315,13 +321,14 @@ var singularREST = {
 
     var method = null, params = [];
 
-    if (methods[0] === 'apps' && methods[1]) {
+    if ((methods[0] === 'apps' || methods[0] === 'streams' ||
+      methods[0] === 'datasets') && methods[1]) {
 
       if (ids[1]) {
         method = singularREST[methods[1]];
         params = [typesREST[methods[1]], { id: ids[1] }];
       } else {
-        method = pluralREST[methods[1]] + 'ByApplication';
+        method = pluralREST[methods[1]] + selectiveREST[methods[0]];
         params = [ids[0]];
       }
 
@@ -351,7 +358,9 @@ var singularREST = {
           if (error) {
             self.logger.error(error);
             res.status(500);
-            res.send(error);
+            res.send({
+              error: error
+            });
           } else {
             res.send(response);
           }
@@ -365,7 +374,9 @@ var singularREST = {
           if (error) {
             self.logger.error(error);
             res.status(500);
-            res.send(error);
+            res.send({
+              error: error
+            });
           } else {
             res.send(response);
           }
@@ -382,10 +393,21 @@ var singularREST = {
    */
   this.app.post('/rpc/:type/:method', function (req, res) {
 
-    var type = req.params.type;
-    var method = req.params.method;
-    var params = JSON.parse(req.body.params);
-    var accountID = 'developer';
+    try {
+
+      var type = req.params.type;
+      var method = req.params.method;
+      var params = req.body
+      var accountID = 'developer';
+
+    } catch (e) {
+
+      self.logger.error(e, req.body);
+      res.send({ result: null, error: 'Malformed request' });
+
+      return;
+
+    }
 
     self.logger.trace('RPC ' + type + ':' + method, params);
 
@@ -393,25 +415,28 @@ var singularREST = {
 
       case 'runnable':
         self.Api.manager(accountID, method, params, function (error, result) {
-
           if (error) {
             self.logger.error(error);
           }
-
           res.send({ result: result, error: error });
-
         });
         break;
 
       case 'fabric':
         self.Api.far(accountID, method, params, function (error, result) {
-
           if (error) {
             self.logger.error(error);
           }
-
           res.send({ result: result, error: error });
+        });
+        break;
 
+      case 'gateway':
+        self.Api.gateway(accountID, method, params, function (error, result) {
+          if (error) {
+            self.logger.error(error);
+          }
+          res.send({ result: result, error: error });
         });
     }
 
@@ -422,10 +447,41 @@ var singularREST = {
    */
   this.app.post('/metrics', function (req, res) {
 
-    var params = req.body.params;
+    var pathList = req.body;
     var accountID = 'developer';
 
-    self.logger.trace('Metrics ', params);
+    self.logger.trace('Metrics ', pathList);
+
+    var options = {
+      host: self.config['metrics-service-host'],
+      port: self.config['metrics-service-port'],
+      path: '/metrics',
+      method: 'POST'
+    };
+
+    var request = http.request(options, function(response) {
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
+      });
+
+      response.on('end', function () {
+
+        res.send({ result: JSON.parse(data), error: null });
+
+      });
+    });
+
+    request.on('error', function(e) {
+
+      res.send({ result: null, error: {
+        fatal: 'MetricsService: ' + e.code
+      } });
+
+    });
+
+    request.write(JSON.stringify(pathList));
+    request.end();
 
   });
 
@@ -448,10 +504,6 @@ var singularREST = {
       path: '/version',
       port: '80'
     };
-
-    res.set({
-      'Content-Type': 'application-json'
-    });
 
     var request = http.request(options, function(response) {
       var data = '';

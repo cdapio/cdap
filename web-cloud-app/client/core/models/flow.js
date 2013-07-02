@@ -5,24 +5,21 @@
 define([], function () {
 
 	var Model = Em.Object.extend({
+		type: 'Flow',
+		plural: 'Flows',
 
 		href: function () {
 			return '#/flows/' + this.get('id');
 		}.property('id'),
-		metricData: null,
-		metrics: null,
-		__loadingData: false,
+
 		instances: 0,
 		version: -1,
 		currentState: '',
-		type: 'Flow',
-		plural: 'Flows',
+
 		init: function() {
 			this._super();
 
 			this.set('timeseries', Em.Object.create());
-			this.set('metrics', []);
-
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
 			this.set('app', this.get('applicationId') || this.get('application') || this.get('meta').app);
@@ -30,17 +27,19 @@ define([], function () {
 				(this.get('flowId') || this.get('id') || this.get('meta').name));
 
 		},
-		addMetricName: function (name) {
+
+		trackMetric: function (name, type) {
 
 			name = name.replace(/{parent}/, this.get('app'));
 			name = name.replace(/{id}/, this.get('name'));
 
-			this.get('metrics').push(name);
+			this.get(type)[name] = [];
 
 			return name;
 
 		},
-		update: function (http) {
+
+		updateState: function (http) {
 
 			var self = this;
 
@@ -56,40 +55,8 @@ define([], function () {
 
 			});
 
-			return this.get('metrics').slice(0);
-
-			/*
-			return ['monitor', {
-				method: 'getTimeSeries',
-				params: [app_id, flow_id, metrics, start, undefined, 'FLOW_LEVEL']
-			}, function (error, response) {
-
-				if (!response.params) {
-					return;
-				}
-
-				var data, points = response.params.points,
-					latest = response.params.latest;
-
-				for (var metric in points) {
-					data = points[metric];
-
-					var k = data.length;
-
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-
-					metric = metric.replace(/\./g, '');
-					self.get('metricData').set(metric, data);
-					self.set('__loadingData', false);
-				}
-
-			}];
-			*/
-
 		},
+
 		getMeta: function () {
 			var arr = [];
 			for (var m in this.meta) {
@@ -100,6 +67,7 @@ define([], function () {
 			}
 			return arr;
 		}.property('meta'),
+
 		isRunning: function() {
 
 			if (this.currentState !== 'RUNNING') {
@@ -180,12 +148,12 @@ define([], function () {
 				model = C.Flow.create(model);
 
 				http.rpc('runnable', 'status', [app_id, flow_id, -1],
-					function (response) {
+					function (result, error) {
 
-						if (response.error) {
-							promise.reject(response.error);
+						if (error) {
+							promise.reject(error);
 						} else {
-							model.set('currentState', response.result.status);
+							model.set('currentState', result.status);
 							promise.resolve(model);
 						}
 

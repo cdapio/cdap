@@ -5,18 +5,18 @@
 define([], function () {
 
 	var Model = Em.Object.extend({
+		type: 'App',
+		plural: 'Apps',
 
 		href: function () {
 			return '#/apps/' + this.get('id');
 		}.property(),
-		metricData: null,
-		metricNames: null,
-		__loadingData: false,
+
 		init: function() {
 			this._super();
 
 			this.set('timeseries', Em.Object.create());
-			this.set('metrics', []);
+			this.set('aggregates', Em.Object.create());
 
 			this.set('counts', {
 				Stream: 0,
@@ -27,78 +27,32 @@ define([], function () {
 			});
 
 		},
-		addMetricName: function (name) {
 
-			name = name.replace(/{id}/, this.get('id'));
-			this.get('metrics').push(name);
+		units: {
+			'storage': 'bytes'
+		},
+
+		trackMetric: function (name, type, label) {
+
+			name = name.replace(/{parent}/, this.get('app'));
+			name = name.replace(/{id}/, this.get('name'));
+
+			this.get(type)[name] = label;
 
 			return name;
 
 		},
-		update: function (http) {
 
-			return this.get('metrics').slice(0);
+		setMetric: function (label, value) {
+
+			var unit = this.get('units')[label];
+			value = C.Util[unit](value);
+
+			this.set(label + 'Label', value[0]);
+			this.set(label + 'Units', value[1])
 
 		}
 
-			/*
-
-			var self = this;
-
-			var id = this.get('id'),
-				start = C.__timeRange * -1;
-
-			var metrics = [];
-			var metricNames = this.get('metricNames');
-
-			for (var name in metricNames) {
-				if (metricNames[name] === 1) {
-					metrics.push(name);
-				}
-			}
-			if (!metrics.length) {
-
-				//C.debug('Not tracking any metrics for Application ' + id);
-
-				this.set('__loadingData', false);
-				return;
-			}
-
-			return ['monitor', {
-				method: 'getTimeSeries',
-				params: [id, null, metrics, start, undefined, 'APPLICATION_LEVEL']
-			}, function (error, response, params) {
-
-				if (self.get('isDestroyed')) {
-					return;
-				}
-				if (!response.params) {
-					return;
-				}
-
-				var data, points = response.params.points,
-					latest = response.params.latest;
-
-				for (var metric in points) {
-					data = points[metric];
-
-					var k = data.length;
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-					metric = metric.replace(/\./g, '');
-					self.get('metricData').set(metric, data);
-
-				}
-
-				if (typeof done === 'function') {
-					done();
-				}
-
-			}];
-		}
-		*/
 	});
 
 	Model.reopenClass({
