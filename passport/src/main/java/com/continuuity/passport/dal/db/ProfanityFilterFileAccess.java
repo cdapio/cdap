@@ -27,7 +27,8 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
 
   private final Set<String> profanityDictionary;
 
-  private Pattern p = Pattern.compile("^[a-zA-Z0-9]+$");
+  //Pattern to look for valid vpc name letters a-z, A-Z, numbers 0-9 and hypen are supported.
+  private Pattern p = Pattern.compile("^[a-zA-Z0-9^][a-zA-Z0-9-]+[a-zA-Z0-9]$");
 
   @Inject
   public ProfanityFilterFileAccess(@Named(Constants.CFG_PROFANE_WORDS_FILE_PATH)String profaneFilePath) {
