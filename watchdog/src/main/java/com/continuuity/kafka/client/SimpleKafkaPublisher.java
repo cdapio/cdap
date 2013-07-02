@@ -42,6 +42,7 @@ public final class SimpleKafkaPublisher extends AbstractIdleService implements K
     props.put("key.serializer.class", IntegerEncoder.class.getName());
     props.put("partitioner.class", IntegerPartitioner.class.getName());
     props.put("request.required.acks", Integer.toString(ack.getAck()));
+    props.put("compression.codec", "snappy");
 
     producer = new Producer<Integer, ByteBuffer>(new ProducerConfig(props));
   }
@@ -69,13 +70,6 @@ public final class SimpleKafkaPublisher extends AbstractIdleService implements K
 
     @Override
     public ListenableFuture<Integer> send() {
-      Properties props = new Properties();
-      props.put("metadata.broker.list", kafkaBrokers);
-      props.put("serializer.class", ByteBufferEncoder.class.getName());
-      props.put("key.serializer.class", IntegerEncoder.class.getName());
-      props.put("partitioner.class", IntegerPartitioner.class.getName());
-      props.put("request.required.acks", Integer.toString(ack.getAck()));
-
       int size = messages.size();
       producer.send(messages);
 

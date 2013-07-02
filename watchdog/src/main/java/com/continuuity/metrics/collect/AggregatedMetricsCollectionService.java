@@ -46,10 +46,12 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    * Publishes the given collection of {@link MetricRecord}. When this method returns, the
    * given {@link Iterator} will no longer be valid. This method should process the input
    * iterator and returns quickly. Any long operations should be run in a separated thread.
+   * This method is guaranteed not to get concurrent calls.
    *
    * @param metrics collection of {@link MetricRecord} to publish.
+   * @throws Exception if there is error raised during publish.
    */
-  protected abstract void publish(Iterator<MetricRecord> metrics);
+  protected abstract void publish(Iterator<MetricRecord> metrics) throws Exception;
 
   @Override
   protected final void runOneIteration() throws Exception {
@@ -57,7 +59,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     LOG.debug("Start log collection for timestamp {}", timestamp);
     Iterator<MetricRecord> metricsItor = getMetrics(timestamp);
 
-    publish(metricsItor);
+    try {
+      publish(metricsItor);
+    } catch (Throwable t) {
+      LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
+    }
 
     // Consume the whole iterator if it is not yet consumed inside publish. This is to make sure metrics are reset.
     while (metricsItor.hasNext()) {
