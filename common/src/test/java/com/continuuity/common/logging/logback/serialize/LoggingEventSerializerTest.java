@@ -4,12 +4,12 @@
 
 package com.continuuity.common.logging.logback.serialize;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.ThrowableProxy;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.logback.TestLoggingContext;
 import com.continuuity.common.logging.logback.kafka.LoggingEventSerializer;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxy;
 import kafka.utils.VerifiableProperties;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -17,6 +17,9 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Test for LoggingEventSerializer.
+ */
 public class LoggingEventSerializerTest {
 
   @BeforeClass
