@@ -25,6 +25,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * DataSet Test.
+ */
 public class DataSetTest extends DataSetTestBase {
 
   @BeforeClass
@@ -103,7 +106,8 @@ public class DataSetTest extends DataSetTestBase {
     // setup a dummy opex, transaction proxy and instantiator
     OperationExecutor opex = new DummyOpex();
     TransactionProxy proxy = new TransactionProxy();
-    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, OperationUtil.DEFAULT), proxy, this.getClass().getClassLoader());
+    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, OperationUtil.DEFAULT),
+                                                       proxy, this.getClass().getClassLoader());
 
     // test with a single nested table (KeyValueTable embeds a Table with a modifeied name)
     DataSetSpecification spec = new KeyValueTable("testtest").configure();

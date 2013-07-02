@@ -25,31 +25,34 @@ import java.util.Map;
 import java.util.Random;
 import java.util.SortedSet;
 
+/**
+ * Data set table test.
+ */
 public class TableTest extends DataSetTestBase {
 
   static Table table;
 
-  static final byte[] key1 = Bytes.toBytes("key1");
-  static final byte[] key2 = Bytes.toBytes("key2");
-  static final byte[] key3 = Bytes.toBytes("key3");
-  static final byte[] key4 = Bytes.toBytes("key4");
-  static final byte[] col1 = Bytes.toBytes("col1");
-  static final byte[] col2 = Bytes.toBytes("col2");
-  static final byte[] col3 = Bytes.toBytes("col3");
-  static final byte[] val1 = Bytes.toBytes("val1");
-  static final byte[] val2 = Bytes.toBytes("val2");
-  static final byte[] val3 = Bytes.toBytes("val3");
+  private static final byte[] key1 = Bytes.toBytes("KEY1");
+  private static final byte[] key2 = Bytes.toBytes("KEY2");
+  private static final byte[] key3 = Bytes.toBytes("KEY3");
+  private static final byte[] key4 = Bytes.toBytes("key4");
+  private static final byte[] col1 = Bytes.toBytes("col1");
+  private static final byte[] col2 = Bytes.toBytes("col2");
+  private static final byte[] col3 = Bytes.toBytes("col3");
+  private static final byte[] val1 = Bytes.toBytes("VAL1");
+  private static final byte[] val2 = Bytes.toBytes("VAL2");
+  private static final byte[] val3 = Bytes.toBytes("VAL3");
 
-  static final byte[][] col12 = { col1, col2 };
-  static final byte[][] val12 = { val1, val2 };
-  static final byte[][] val13 = { val1, val3 };
-  static final byte[][] col23 = { col2, col3 };
-  static final byte[][] val22 = { val2, val2 };
-  static final byte[][] val23 = { val2, val3 };
-  static final byte[][] col123 = { col1, col2, col3 };
-  static final byte[][] val123 = { val1, val2, val3 };
+  private static final byte[][] col12 = { col1, col2 };
+  private static final byte[][] val12 = { val1, val2 };
+  private static final byte[][] val13 = { val1, val3 };
+  private static final byte[][] col23 = { col2, col3 };
+  private static final byte[][] val22 = { val2, val2 };
+  private static final byte[][] val23 = { val2, val3 };
+  private static final byte[][] col123 = { col1, col2, col3 };
+  private static final byte[][] val123 = { val1, val2, val3 };
 
-  static final byte[] c = { 'c' }, v = { 'v' };
+  private static final byte[] c = { 'c' }, v = { 'v' };
 
   @BeforeClass
   public static void configure() throws Exception {
@@ -175,7 +178,7 @@ public class TableTest extends DataSetTestBase {
     result = table.read(new Read(key1, null, null));
     verifyColumns(result, col23, val23);
 
-    // attempt to compare and swap, should fail because col2==val3
+    // attempt to compare and swap, should fail because col2==VAL3
     attemptSwap(table, new Swap(key1, col2, val3, val1));
     // attempt to compare and swap, should fail because col1 is deleted
     attemptSwap(table, new Swap(key1, col1, val3, val1));
@@ -228,7 +231,7 @@ public class TableTest extends DataSetTestBase {
     table.write(new Write(key2, col3, val3));
     try {
       table.write(new Increment(key2, col3, 1L));
-      Assert.fail("increment of 'val3' should have failed (not a long)" );
+      Assert.fail("increment of 'VAL3' should have failed (not a long)");
     } catch (OperationException e) {
       Assert.assertEquals(StatusCode.ILLEGAL_INCREMENT, e.getStatus());
     }

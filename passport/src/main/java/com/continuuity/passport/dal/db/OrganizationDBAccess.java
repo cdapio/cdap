@@ -141,8 +141,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
       }
     } catch (SQLException e) {
       throw Throwables.propagate(e);
-    }
-    finally {
+    } finally {
       close(connection);
     }
   }

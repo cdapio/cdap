@@ -1,11 +1,13 @@
 package com.continuuity.data.engine.memory.oracle;
 
-import static org.junit.Assert.assertTrue;
-
+import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import org.junit.Test;
 
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class TestMemoryOracles {
 
   @Test
@@ -23,7 +25,7 @@ public class TestMemoryOracles {
     // 1000 iterations, each should be less than one millisecond
     long last = -1;
     long start = System.currentTimeMillis();
-    for (int i=0;i<1000;i++) {
+    for (int i = 0; i < 1000; i++) {
       long next = oracle.getTimestamp();
       assertTrue("Returned duplicate timestamps", last != next);
       assertTrue("Returned non-strictly-monotonic timestamps", last < next);

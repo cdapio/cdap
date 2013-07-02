@@ -7,9 +7,12 @@ import org.apache.hadoop.fs.Path;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+/**
+ * A LogWriter that writes to file.
+ */
 public class LogFileWriter implements LogWriter {
 
-  static final Charset charsetUtf8 = Charset.forName("UTF-8");
+  static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
   LogConfiguration config;
   FileSystem fileSystem;
@@ -29,7 +32,7 @@ public class LogFileWriter implements LogWriter {
 
   @Override
   public void log(LogEvent event) throws IOException {
-    synchronized(this) {
+    synchronized (this) {
       // append message to current file
       persistMessage(formatMessage(event));
       // if necessary, rotate the log
@@ -88,7 +91,7 @@ public class LogFileWriter implements LogWriter {
   }
 
   void closeFile() throws IOException {
-    synchronized(this) {
+    synchronized (this) {
       if (out != null) {
         out.close();
         out = null;
@@ -97,8 +100,8 @@ public class LogFileWriter implements LogWriter {
   }
 
   void persistMessage(String message) throws IOException {
-    synchronized(this) {
-      out.write(message.getBytes(charsetUtf8));
+    synchronized (this) {
+      out.write(message.getBytes(CHARSET_UTF8));
       out.write('\n');
       out.hflush();
     }
@@ -114,14 +117,17 @@ public class LogFileWriter implements LogWriter {
   }
 
   void deleteFile(String path, String name) throws IOException {
-    if (fileSystem.exists(new Path(path, name)))
+    if (fileSystem.exists(new Path(path, name))) {
       fileSystem.delete(new Path(path, name), false);
+    }
   }
 
   void renameFile(String path, String oldName, String newName)
       throws IOException {
     Path oldPath = new Path(path, oldName);
-    if (!fileSystem.exists(oldPath)) return;
+    if (!fileSystem.exists(oldPath)) {
+      return;
+    }
     Path newPath = new Path(path, newName);
     fileSystem.rename(oldPath, newPath);
   }

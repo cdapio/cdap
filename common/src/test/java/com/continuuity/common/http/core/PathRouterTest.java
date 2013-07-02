@@ -20,8 +20,8 @@ public class PathRouterTest {
     PatternPathRouterWithGroups<String> pathRouter = new PatternPathRouterWithGroups();
     pathRouter.add("/foo/{baz}/b", "foobarb");
     pathRouter.add("/foo/bar/baz", "foobarbaz");
-    pathRouter.add("/baz/bar", "bazbar" );
-    pathRouter.add("/bar", "bar" );
+    pathRouter.add("/baz/bar", "bazbar");
+    pathRouter.add("/bar", "bar");
     pathRouter.add("/foo/bar", "foobar");
     pathRouter.add("//multiple/slash//route", "multipleslashroute");
 

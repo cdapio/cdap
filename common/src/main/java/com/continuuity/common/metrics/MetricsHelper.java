@@ -5,11 +5,17 @@ import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
 
+/**
+ * Helper class for metrics.
+ */
 public class MetricsHelper {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(MetricsHelper.class);
 
+  /**
+   * Status returned from metrics collection service.
+   */
   public enum Status {
     Received, Success, BadRequest, NotFound, NoData, Error
   }
@@ -92,7 +98,7 @@ public class MetricsHelper {
     setScope(new String(scope));
   }
 
-  static final Pattern pattern = Pattern.compile("[:/]+");
+  static final Pattern PATTERN = Pattern.compile("[:/]+");
 
   public void setScope(String scope) {
     if (scope == null) {
@@ -106,7 +112,7 @@ public class MetricsHelper {
               "(old scope is %s)", classe.getName(), this.scope, scope));
     }
     // if (scope.contains(":"))
-    scope = pattern.matcher(scope).replaceAll(".");
+    scope = PATTERN.matcher(scope).replaceAll(".");
 
     // set the scope
     this.scope = scope;
@@ -124,7 +130,9 @@ public class MetricsHelper {
     String metricWithStatus = appendToMetric(metric, status.name());
     // increment qualifier[.method[.scope]].status
     count(metricWithStatus, 1L);
-    if (millis == null) return;
+    if (millis == null) {
+      return;
+    }
     // record qualifier[.method[.scope]].latency
     this.metrics.histogram(
         appendToMetric(metric, METRIC_LATENCY), millis);

@@ -26,7 +26,7 @@ public class BatchTransactionAgentTest {
   static OperationExecutor opex;
 
   /**
-   * Sets up the in-memory operation executor and the data fabric
+   * Sets up the in-memory operation executor and the data fabric.
    */
   @BeforeClass
   public static void setupDataFabric() {
@@ -42,15 +42,15 @@ public class BatchTransactionAgentTest {
     return agent;
   }
 
-  static final byte[] a = { 'a' };
-  static final byte[] b = { 'b' };
-  static final byte[] c = { 'c' };
-  static final byte[] x = { 'x' };
-  static final byte[] y = { 'y' };
-  static final byte[] one = Bytes.toBytes(1L);
-  static final byte[] two = Bytes.toBytes(2L);
-  static final byte[] three = Bytes.toBytes(3L);
-  static final byte[] four = Bytes.toBytes(4L);
+  private static final byte[] a = { 'a' };
+  private static final byte[] b = { 'b' };
+  private static final byte[] c = { 'c' };
+  private static final byte[] x = { 'x' };
+  private static final byte[] y = { 'y' };
+  private static final byte[] one = Bytes.toBytes(1L);
+  private static final byte[] two = Bytes.toBytes(2L);
+  private static final byte[] three = Bytes.toBytes(3L);
+  private static final byte[] four = Bytes.toBytes(4L);
 
   // test that writes are deferred but reads go through
   @Test
@@ -63,16 +63,16 @@ public class BatchTransactionAgentTest {
     TransactionAgent agent = newAgent();
 
     // sync read one row
-    OperationResult<Map<byte[],byte[]>> result = agent.execute(new Read(table, a, x));
+    OperationResult<Map<byte[], byte[]>> result = agent.execute(new Read(table, a, x));
     Assert.assertEquals(1, agent.getSucceededCount());
     Assert.assertFalse(result.isEmpty());
     Assert.assertArrayEquals(one, result.getValue().get(x));
 
     // sync increment the other row
-    Map<byte[],Long> incr = agent.execute(new Increment(table, b, y, 1L));
+    Map<byte[], Long> incr = agent.execute(new Increment(table, b, y, 1L));
     Assert.assertEquals(2, agent.getSucceededCount());
     Assert.assertFalse(incr.isEmpty());
-    Assert.assertEquals((Long)3L, incr.get(y));
+    Assert.assertEquals((Long) 3L, incr.get(y));
 
     // add a row with the xaction agent
     agent.submit(new Write(table, c, x, y));

@@ -48,11 +48,11 @@ public final class BinaryDecoder implements Decoder {
     int shift = 0;
     int b = input.read();
     while (b > 0x7f) {
-      val ^= (long)(b & 0x7f) << shift;
+      val ^= (long) (b & 0x7f) << shift;
       shift += 7;
       b = input.read();
     }
-    val ^= (long)b << shift;
+    val ^= (long) b << shift;
     return (val >>> 1) ^ -(val & 1);
   }
 
@@ -66,7 +66,7 @@ public final class BinaryDecoder implements Decoder {
   public double readDouble() throws IOException {
     int low = input.read() ^ (input.read() << 8) ^ (input.read() << 16) ^ (input.read() << 24);
     int high = input.read() ^ (input.read() << 8) ^ (input.read() << 16) ^ (input.read() << 24);
-    return Double.longBitsToDouble(((long)high << 32) | (low & 0xffffffffL));
+    return Double.longBitsToDouble(((long) high << 32) | (low & 0xffffffffL));
   }
 
   @Override

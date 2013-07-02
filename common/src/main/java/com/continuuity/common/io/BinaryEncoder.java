@@ -53,14 +53,14 @@ public final class BinaryEncoder implements Encoder {
     long val = (l << 1) ^ (l >> 63);
 
     if ((val & ~0x7f) != 0) {
-      output.write((int)(0x80 | val & 0x7f));
+      output.write((int) (0x80 | val & 0x7f));
       val >>>= 7;
       while (val > 0x7f) {
-        output.write((int)(0x80 | val & 0x7f));
+        output.write((int) (0x80 | val & 0x7f));
         val >>>= 7;
       }
     }
-    output.write((int)val);
+    output.write((int) val);
 
     return this;
   }
@@ -78,18 +78,18 @@ public final class BinaryEncoder implements Encoder {
   @Override
   public Encoder writeDouble(double d) throws IOException {
     long bits = Double.doubleToLongBits(d);
-    int low = (int)bits;
-    int high = (int)(bits >> 32);
+    int low = (int) bits;
+    int high = (int) (bits >> 32);
 
     output.write(low & 0xff);
-    output.write((low >> 8)& 0xff);
-    output.write((low >> 16)& 0xff);
-    output.write((low >> 24)& 0xff);
+    output.write((low >> 8) & 0xff);
+    output.write((low >> 16) & 0xff);
+    output.write((low >> 24) & 0xff);
 
     output.write(high & 0xff);
-    output.write((high >> 8)& 0xff);
-    output.write((high >> 16)& 0xff);
-    output.write((high >> 24)& 0xff);
+    output.write((high >> 8) & 0xff);
+    output.write((high >> 16) & 0xff);
+    output.write((high >> 24) & 0xff);
 
     return this;
   }

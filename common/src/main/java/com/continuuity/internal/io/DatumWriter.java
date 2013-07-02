@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- *
+ * @param <T> type T to serialized.
  */
 public interface DatumWriter<T> {
 

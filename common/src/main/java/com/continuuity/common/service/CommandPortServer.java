@@ -122,7 +122,7 @@ public class CommandPortServer {
     try {
       port = serverSocket.getLocalPort();
       serverSocket.setSoTimeout(SERVERSOCKET_TIMEOUT);
-      while(running) {
+      while (running) {
         Socket socket = null;
         try {
           socket = serverSocket.accept(); /** wait for connection */
@@ -132,10 +132,10 @@ public class CommandPortServer {
         BufferedReader fromClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         DataOutputStream toClient = new DataOutputStream(socket.getOutputStream());
         String command = fromClient.readLine();
-        if(command != null) {
-          if("help".equals(command)) {
+        if (command != null) {
+          if ("help".equals(command)) {
             toClient.writeBytes(helpString);
-          } else if(listeners.containsKey(command)) {
+          } else if (listeners.containsKey(command)) {
             String message = listeners.get(command).act();
             toClient.writeBytes(message + "\n");
           }

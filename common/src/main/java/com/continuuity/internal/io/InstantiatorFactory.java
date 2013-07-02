@@ -41,7 +41,7 @@ public final class InstantiatorFactory {
       Field f = unsafeClass.getDeclaredField("theUnsafe");
       f.setAccessible(true);
       unsafe = (Unsafe) f.get(null);
-    } catch(Exception e) {
+    } catch (Exception e) {
       unsafe = null;
     }
     UNSAFE = unsafe;
@@ -52,13 +52,13 @@ public final class InstantiatorFactory {
       @Override
       public Instantiator<?> load(TypeToken<?> type) throws Exception {
         Instantiator<?> creator = getByDefaultConstructor(type);
-        if(creator != null) {
+        if (creator != null) {
           return creator;
         }
 
         if (useKnownType) {
           creator = getByKnownType(type);
-          if(creator != null) {
+          if (creator != null) {
             return creator;
           }
         }
@@ -69,7 +69,7 @@ public final class InstantiatorFactory {
   }
 
   public <T> Instantiator<T> get(TypeToken<T> type) {
-    return (Instantiator<T>)instantiatorCache.getUnchecked(type);
+    return (Instantiator<T>) instantiatorCache.getUnchecked(type);
   }
 
   /**
@@ -89,20 +89,20 @@ public final class InstantiatorFactory {
         public T create() {
           try {
             return (T) defaultCons.newInstance();
-          } catch(Exception e) {
+          } catch (Exception e) {
             throw Throwables.propagate(e);
           }
         }
       };
 
-    } catch(NoSuchMethodException e) {
+    } catch (NoSuchMethodException e) {
       return null;
     }
   }
 
   private <T> Instantiator<T> getByKnownType(TypeToken<T> type) {
     Class<? super T> rawType = type.getRawType();
-    if(rawType.isArray()) {
+    if (rawType.isArray()) {
       return new Instantiator<T>() {
         @Override
         public T create() {
@@ -110,8 +110,8 @@ public final class InstantiatorFactory {
         }
       };
     }
-    if(Collection.class.isAssignableFrom(rawType)) {
-      if(SortedSet.class.isAssignableFrom(rawType)) {
+    if (Collection.class.isAssignableFrom(rawType)) {
+      if (SortedSet.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
           @Override
           public T create() {
@@ -119,7 +119,7 @@ public final class InstantiatorFactory {
           }
         };
       }
-      if(Set.class.isAssignableFrom(rawType)) {
+      if (Set.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
           @Override
           public T create() {
@@ -127,7 +127,7 @@ public final class InstantiatorFactory {
           }
         };
       }
-      if(Queue.class.isAssignableFrom(rawType)) {
+      if (Queue.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
           @Override
           public T create() {
@@ -143,8 +143,8 @@ public final class InstantiatorFactory {
       };
     }
 
-    if(Map.class.isAssignableFrom(rawType)) {
-      if(SortedMap.class.isAssignableFrom(rawType)) {
+    if (Map.class.isAssignableFrom(rawType)) {
+      if (SortedMap.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
           @Override
           public T create() {
@@ -159,7 +159,7 @@ public final class InstantiatorFactory {
         }
       };
     }
-    if(StreamEvent.class.isAssignableFrom(rawType)) {
+    if (StreamEvent.class.isAssignableFrom(rawType)) {
       return new Instantiator<T>() {
         @Override
         public T create() {
@@ -177,7 +177,7 @@ public final class InstantiatorFactory {
       public T create() {
         try {
           return (T) UNSAFE.allocateInstance(rawType);
-        } catch(InstantiationException e) {
+        } catch (InstantiationException e) {
           throw Throwables.propagate(e);
         }
       }

@@ -29,11 +29,9 @@ import com.continuuity.passport.impl.AuthenticatorServiceImpl;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.continuuity.passport.impl.SecuritySeviceImpl;
 import com.google.common.base.Preconditions;
+import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
-import org.mortbay.jetty.servlet.DefaultServlet;
 
 /**
  * Guice bindings for passport services.
@@ -42,7 +40,7 @@ import org.mortbay.jetty.servlet.DefaultServlet;
  * 2) DAO to Implementations
  * 3) ReST  Handlers
  */
-public class PassportGuiceBindings extends JerseyServletModule {
+public class PassportGuiceBindings extends AbstractModule {
 
   private final String jdbcType;
   private final String connectionString;
@@ -57,36 +55,31 @@ public class PassportGuiceBindings extends JerseyServletModule {
                                          Constants.DEFAULT_PROFANE_WORDS_FILE_PATH);
   }
 
-  @Override
-  protected void configureServlets() {
-    bindings();
-    filters();
-  }
 
-  private void bindings() {
+  @Override
+  protected void configure() {
     Preconditions.checkNotNull(jdbcType, "JDBC type cannot be null");
     Preconditions.checkArgument(jdbcType.equals(Constants.DEFAULT_JDBC_TYPE), "Unsupported JDBC type");
 
     Preconditions.checkNotNull(connectionString, "Connection String cannot be null");
-    Preconditions.checkNotNull(profaneWordsPath, "Profane words path cannot be null");
+    Preconditions.checkNotNull(profaneWordsPath, "Profane words path cannot be null"); //TODO: Remove this constraint
 
     MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
     mysqlDataSource.setUrl(connectionString);
     DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(mysqlDataSource,
                                                                                 Constants.CONNECTION_POOL_SIZE);
+    bind(DBConnectionPoolManager.class)
+      .toInstance(connectionPoolManager);
 
     bindConstant().annotatedWith(Names.named(Constants.CFG_PROFANE_WORDS_FILE_PATH))
-                  .to(profaneWordsPath);
+      .to(profaneWordsPath);
 
-    //Bind ReST resources
     bind(AccountHandler.class);
-    bind(ActivationNonceHandler.class);
-    bind(SessionNonceHandler.class);
     bind(VPCHandler.class);
+    bind(SessionNonceHandler.class);
+    bind(ActivationNonceHandler.class);
     bind(OrganizationHandler.class);
 
-
-    //Bind Services to default implementations
     bind(DataManagementService.class).to(DataManagementServiceImpl.class);
     bind(AuthenticatorService.class).to(AuthenticatorServiceImpl.class);
     bind(SecurityService.class).to(SecuritySeviceImpl.class);
@@ -97,15 +90,5 @@ public class PassportGuiceBindings extends JerseyServletModule {
     bind(NonceDAO.class).to(NonceDBAccess.class);
     bind(OrganizationDAO.class).to(OrganizationDBAccess.class);
     bind(ProfanityFilter.class).to(ProfanityFilterFileAccess.class);
-    bind(DBConnectionPoolManager.class)
-      .toInstance(connectionPoolManager);
-    bind(GuiceContainer.class).asEagerSingleton();
-    bind(DefaultServlet.class).asEagerSingleton();
-    serve("/*").with(DefaultServlet.class);
-
-  }
-
-  private void filters() {
-    filter("/passport/*").through(GuiceContainer.class);
   }
 }

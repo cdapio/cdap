@@ -14,24 +14,41 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Test for schema generation.
+ */
 public class SchemaTest {
 
+  /**
+   * Test node.
+   */
   public final class Node {
     private int data;
     private List<Node> children;
   }
 
+  /**
+   * Test parent.
+   * @param <T> Parameter
+   */
   public class Parent<T> {
     private T data;
     private ByteBuffer buffer;
   }
 
+  /**
+   * Test child.
+   * @param <T> Paramter.
+   */
   public class Child<T> extends Parent<Map<String, T>> {
     private int height;
     private Node rootNode;
     private State state;
   }
 
+  /**
+   * Test enum.
+   */
   public enum State {
     OK, ERROR
   }
@@ -48,6 +65,9 @@ public class SchemaTest {
     Assert.assertEquals(schema, gson.fromJson(gson.toJson(schema), Schema.class));
   }
 
+  /**
+   * Testing more node.
+   */
   public final class Node2 {
     private int data;
     private List<Node2> children;
@@ -65,12 +85,18 @@ public class SchemaTest {
     Assert.assertNotEquals(s1.getSchemaHash(), schema.getSchemaHash());
   }
 
+  /**
+   * Yet more node.
+   */
   public final class Node3 {
     private long data;
     private String tag;
     private List<Node3> children;
   }
 
+  /**
+   * More and more node.
+   */
   public final class Node4 {
     private String data;
   }

@@ -41,7 +41,7 @@ public class MuxProtocol extends ProtocolDelegation {
   /** Used to delimit the service name from the function name */
   public static final String SEPARATOR = ".";
 
-  private final String SERVICE_NAME;
+  private final String serviceName;
 
   /**
    * Wrap the specified protocol, allowing it to be used to communicate with a
@@ -56,7 +56,7 @@ public class MuxProtocol extends ProtocolDelegation {
    */
   public MuxProtocol(TProtocol protocol, String serviceName) {
     super(protocol);
-    SERVICE_NAME = serviceName;
+    this.serviceName = serviceName;
   }
 
   /**
@@ -72,7 +72,7 @@ public class MuxProtocol extends ProtocolDelegation {
     if (tMessage.type == TMessageType.CALL
         || tMessage.type == TMessageType.ONEWAY) {
       super.writeMessageBegin(new TMessage(
-        SERVICE_NAME + SEPARATOR + tMessage.name,
+        serviceName + SEPARATOR + tMessage.name,
         tMessage.type,
         tMessage.seqid
       ));

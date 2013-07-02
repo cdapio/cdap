@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * General reflection utils
+ * General reflection utils.
  */
 public class ReflectionUtils {
 
@@ -38,7 +38,7 @@ public class ReflectionUtils {
     }
   }
 
-  /** Create an object for the given class and initialize it from conf
+  /** Create an object for the given class and initialize it from conf.
    *
    * @param theClass class of which an object is created
    * @param conf Configuration
@@ -70,7 +70,7 @@ public class ReflectionUtils {
    */
   @SuppressWarnings("unchecked")
   public static <T> Class<T> getClass(T o) {
-    return (Class<T>)o.getClass();
+    return (Class<T>) o.getClass();
   }
 
   // methods to support testing

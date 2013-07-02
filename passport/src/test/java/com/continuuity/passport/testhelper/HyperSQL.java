@@ -26,10 +26,10 @@ public class HyperSQL {
                                                      "dev_suite_downloaded_at TIMESTAMP DEFAULT null," +
                                                      "payment_account_id VARCHAR(30) DEFAULT null,"   +
                                                      "payment_info_provided_at TIMESTAMP DEFAULT null," +
-                                                     "org_id VARCHAR(100) DEFAULT null, "+
+                                                     "org_id VARCHAR(100) DEFAULT null, " +
                                                      "UNIQUE (email_id), " +
                                                      "FOREIGN KEY(org_id) " +
-                                                     "REFERENCES organization(id)"+
+                                                     "REFERENCES organization(id)" +
                                                      ")";
 
   private static final String CREATE_VPC_ACCOUNT_TABLE = "CREATE TABLE vpc_account ( id INTEGER IDENTITY, " +

@@ -40,10 +40,10 @@ class InstanceSpecification {
     } catch (IOException e) {
       LOG.error("Failed to find a local port " + e.getMessage());
     } finally {
-      if ( server != null ) {
+      if (server != null) {
         try {
           server.close();
-        } catch ( IOException ignore ) {}
+        } catch (IOException ignore) {}
       }
     }
     return -1;
@@ -54,10 +54,12 @@ class InstanceSpecification {
    * @param port the port to listen on - each server in the ensemble must use a unique port
    * @param electionPort the electionPort to listen on - each server in the ensemble must use a unique electionPort
    * @param quorumPort the quorumPort to listen on - each server in the ensemble must use a unique quorumPort
-   * @param deleteDataDirectoryOnClose if true, the data directory will be deleted when {@link InMemoryZookeeper#close()} is called
+   * @param deleteDataDirectoryOnClose if true, the data directory will be deleted when
+   *                                   {@link InMemoryZookeeper#close()} is called
    * @param serverId the server ID for the instance
    */
-  public InstanceSpecification(File dataDirectory, int port, int electionPort, int quorumPort, boolean deleteDataDirectoryOnClose, int serverId) {
+  public InstanceSpecification(File dataDirectory, int port, int electionPort,
+                               int quorumPort, boolean deleteDataDirectoryOnClose, int serverId) {
     this.dataDirectory = (dataDirectory != null) ? dataDirectory : Files.createTempDir();
     this.port = (port >= 0) ? port : getRandomPort();
     this.electionPort = (electionPort >= 0) ? electionPort : getRandomPort();

@@ -5,6 +5,9 @@ import org.apache.hadoop.fs.FileSystem;
 
 import java.io.IOException;
 
+/**
+ * Configuration for logging.
+ */
 public class LogConfiguration {
 
   private final String account;
@@ -29,8 +32,9 @@ public class LogConfiguration {
                           String tag) throws IOException {
     // parse the log tag
     String[] splits = tag.split(":");
-    if (splits.length < 3)
+    if (splits.length < 3) {
       throw new IOException("Invalid log tag '" + tag + "'");
+    }
     String account = splits[0], app = splits[1], flow = splits[2];
 
     this.fs = fs;
@@ -63,5 +67,4 @@ public class LogConfiguration {
   public int getMaxInstances() {
     return this.instances;
   }
-
 }

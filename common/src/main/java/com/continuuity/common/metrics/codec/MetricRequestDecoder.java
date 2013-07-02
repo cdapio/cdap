@@ -56,9 +56,9 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
 
     // Now find the first CRLF in the buffer.
     byte previous = 0;
-    while(in.hasRemaining()) {
+    while (in.hasRemaining()) {
       byte current = in.get();
-      if(current == '\n') {
+      if (current == '\n') {
         // remember the current position and limit.
         int position = in.position();
         int limit = in.limit();
@@ -116,7 +116,7 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     String cmd = null, metric = null, timestampStr = null,
       valueStr = null, tagsStr = "";
     int idx = 0;
-    for(String constituent : constituents) {
+    for (String constituent : constituents) {
       switch(idx) {
         case 0:
             cmd = constituent.toLowerCase();
@@ -139,14 +139,14 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     // if any of the fields needed are not populated, then we term the
     // metric as invalid metric. We still pass it along with an indicator
     // set that it's a invalid metric request.
-    if(cmd == null || metric == null || timestampStr == null
+    if (cmd == null || metric == null || timestampStr == null
       || valueStr == null) {
       Log.warn("Request has empty field(s). Command {}", command);
       return invalidMetric;
     }
 
     // We make more checks to make sure the request is well formed.
-    if(! "put".equals(cmd)) {
+    if (!"put".equals(cmd)) {
       Log.warn("Request is not a put metric operation");
       return invalidMetric;
     }
@@ -156,12 +156,12 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     // If not extract the type and name of metric.
     String type, name;
     idx = metric.indexOf(":");
-    if(idx == -1) {
+    if (idx == -1) {
       type = "system";
       name = metric;
     } else {
-      type = metric.substring(0,idx);
-      name = metric.substring(idx+1);
+      type = metric.substring(0, idx);
+      name = metric.substring(idx + 1);
     }
 
     // Convert timestamp to log.
@@ -194,13 +194,13 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
 
     // Extract tags.
     String rawTags = "";
-    if(! tagsStr.isEmpty()) {
+    if (!tagsStr.isEmpty()) {
       Iterable<String> tags = TAG_SPLITTER.split(tagsStr);
       rawTags = TAG_JOINER.join(tags);
-      for(String tag : tags) {
+      for (String tag : tags) {
         idx = tag.indexOf("=");
-        if(idx != -1) {
-          requestBuilder.addTag(tag.substring(0, idx), tag.substring(idx+1));
+        if (idx != -1) {
+          requestBuilder.addTag(tag.substring(0, idx), tag.substring(idx + 1));
         }
       }
     }

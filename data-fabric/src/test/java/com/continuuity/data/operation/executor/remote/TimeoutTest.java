@@ -21,10 +21,13 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ *
+ */
 public class TimeoutTest extends OpexServiceTestBase {
 
-  static final OperationContext context = OperationUtil.DEFAULT;
-  static final AtomicInteger clearCount = new AtomicInteger(0);
+  private static final OperationContext context = OperationUtil.DEFAULT;
+  private static final AtomicInteger clearCount = new AtomicInteger(0);
 
   @BeforeClass
   public static void startService() throws Exception {
@@ -108,8 +111,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   }
 
   /**
-   * This tests that the thrift client times out and returns an error or
-   * non-success in some other way.
+   * This tests that the thrift client times out and returns an error or non-success in some other way.
    */
   @Test(expected = OperationException.class, timeout = 10000)
   public void testThriftTimeoutBatch() throws OperationException {
@@ -130,7 +132,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   }
 
   /**
-   * This tests that clear fabric has a longer timeout
+   * This tests that clear fabric has a longer timeout.
    */
   @Test(timeout = 10000)
   public void testLongTimeout() throws OperationException {

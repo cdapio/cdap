@@ -62,17 +62,19 @@ public final class OptionsParser {
     Map<String, String> parsedOptions = parseArgs(args, nonOptionArgs);
     Map<String, OptionSpec> declaredOptions = extractDeclarations(object);
 
-    if(parsedOptions.containsKey("help") && !declaredOptions.containsKey("help")) {
+    if (parsedOptions.containsKey("help") && !declaredOptions.containsKey("help")) {
       printUsage(declaredOptions, appName, appVersion, out);
       return null;
     }
 
-    for(String name : parsedOptions.keySet()) {
-      if(declaredOptions.containsKey(name)) continue;
-        throw new UnrecognizedOptionException(name);
+    for (String name : parsedOptions.keySet()) {
+      if (declaredOptions.containsKey(name)) {
+        continue;
+      }
+      throw new UnrecognizedOptionException(name);
     }
 
-    for(Map.Entry<String, String> option : parsedOptions.entrySet()) {
+    for (Map.Entry<String, String> option : parsedOptions.entrySet()) {
       try {
         declaredOptions.get(option.getKey()).setValue(option.getValue());
       } catch (IllegalAccessException e) {
@@ -80,11 +82,11 @@ public final class OptionsParser {
       }
     }
 
-    for(Map.Entry<String, OptionSpec> declOption : declaredOptions.entrySet()) {
+    for (Map.Entry<String, OptionSpec> declOption : declaredOptions.entrySet()) {
       OptionSpec option = declOption.getValue();
-      if(option.getEnvVar().length() > 0 && ! parsedOptions.containsKey(option.getName())) {
+      if (option.getEnvVar().length() > 0 && !parsedOptions.containsKey(option.getName())) {
         String envVal = System.getenv(option.getEnvVar());
-        if(null != envVal) {
+        if (null != envVal) {
           try {
             option.setValue(envVal);
           } catch (IllegalAccessException e) {
@@ -123,12 +125,12 @@ public final class OptionsParser {
     // Iterate through all the fields specified in the main class
     // and find out annotations that have Option and construct a table.
     do {
-      for(Field field : clazz.getDeclaredFields()) {
+      for (Field field : clazz.getDeclaredFields()) {
         Option option = field.getAnnotation(Option.class);
-        if(option != null) {
+        if (option != null) {
           OptionSpec optionSpec = new OptionSpec(field, option, object);
           String name = optionSpec.getName();
-          if(options.containsKey(name)) {
+          if (options.containsKey(name)) {
             throw new DuplicateOptionException(name);
           }
           String n = optionSpec.getName();
@@ -142,9 +144,9 @@ public final class OptionsParser {
   private static Map<String, String> parseArgs(String[] args, List<String> nonOptionArgs) {
     Map<String, String> parsedOptions = new TreeMap<String, String>();
     boolean ignoreTheRest = false;
-    for(String arg : args) {
-      if(arg.startsWith("-") && !ignoreTheRest) {
-        if(arg.endsWith("--")) {
+    for (String arg : args) {
+      if (arg.startsWith("-") && !ignoreTheRest) {
+        if (arg.endsWith("--")) {
           ignoreTheRest = true;
           break;
         }
@@ -174,21 +176,21 @@ public final class OptionsParser {
     out.print(String.format("%s - v%s\n", appName, appVersion));
     out.println("Options:");
 
-    if(!options.containsKey("help")) {
+    if (!options.containsKey("help")) {
       out.printf(NON_DEFAULT_FORMAT_STRING, "help", "", "\tDisplay this help message");
     }
 
-    for(OptionSpec option : options.values()) {
-      if(option.isHidden()) {
+    for (OptionSpec option : options.values()) {
+      if (option.isHidden()) {
         continue;
       }
       String usage = option.getUsage();
-      if(!usage.isEmpty()) {
+      if (!usage.isEmpty()) {
         usage = "\t" + usage;
       }
 
       String def = option.getDefaultValue();
-      if("null".equals(def)) {
+      if ("null".equals(def)) {
         out.printf(NON_DEFAULT_FORMAT_STRING, option.getName(), "<" + option.getTypeName() + ">", usage);
       } else {
         out.printf(DEFAULT_FORMAT_STRING, option.getName(), "<" + option.getTypeName() + ">",
