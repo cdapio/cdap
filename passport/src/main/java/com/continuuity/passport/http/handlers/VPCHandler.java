@@ -120,7 +120,6 @@ public class VPCHandler extends PassportHandler implements HttpHandler {
    * Gets account if for VPC.
    * Endpoint is obfuscated on purpose
    * @param vpcName VpcName
-   * @return Instance of {@code Response}
    */
   @Path("xkcd/{vpcName}")
   @GET

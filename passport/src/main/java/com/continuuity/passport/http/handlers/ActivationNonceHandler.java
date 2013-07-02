@@ -161,7 +161,8 @@ public class ActivationNonceHandler extends PassportHandler implements HttpHandl
                                 "GET /passport/v1/resetPassword/{nonce}"));
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              Utils.getJson("FAILED", "Must send password in request"));
-      }   } catch (Exception e) {
+      }   
+    } catch (Exception e) {
       requestFailed(); // Request failed
 
       LOG.error(String.format("Could not get reset password. Endpoint %s",

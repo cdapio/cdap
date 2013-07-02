@@ -110,7 +110,7 @@ public class OrganizationHandler extends PassportHandler implements HttpHandler 
     } catch (JsonParseException e){
       requestFailed();
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())) );
+                           Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())));
     } catch (OrganizationNotFoundException e){
       requestFailed();
       responder.sendString(HttpResponseStatus.NOT_FOUND,
