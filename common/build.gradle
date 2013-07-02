@@ -50,11 +50,6 @@ dependencies {
     compile libraries.google_guava
     compile libraries.google_gson
     compile libraries.google_guice
-    compile libraries.netflix_curator_framework
-    compile libraries.netflix_curator_client
-    compile libraries.netflix_curator_discovery_client
-    compile libraries.netflix_curator_discovery_server
-    compile libraries.netflix_curator_recipes
     compile (libraries.hadoop_common) {
         exclude group: 'commons-logging'
         exclude group: 'junit'
