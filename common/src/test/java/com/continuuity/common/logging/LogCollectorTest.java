@@ -3,8 +3,6 @@ package com.continuuity.common.logging;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -28,7 +26,7 @@ public class LogCollectorTest {
 
     String logtag = "a:b:c";
     int lengthOfOne = String.format("%s [%s] %s\n", logtag, "ERROR",
-        makeMessage(10000)).getBytes(LogFileWriter.charsetUtf8).length;
+        makeMessage(10000)).getBytes(LogFileWriter.CHARSET_UTF8).length;
 
     // start a log collector with 3 instances and space for 11 messages each
     // (file rolls after a message is logged, hence the extra 2 bytes make

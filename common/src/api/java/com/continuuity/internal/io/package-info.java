@@ -5,8 +5,8 @@
 /**
  * <h3>Schema definition</h3>
  *
- * The schema definition is adopted from <a href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro Schema</a>, with
- * the following modifications:
+ * The schema definition is adopted from <a href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro Schema</a>,
+ * with the following modifications:
  *
  * <ol>
  *   <li>Supports any type as map key, not just string.</li>
@@ -75,7 +75,11 @@
  *   </tr>
  *   <tr>
  *     <td>Map</td>
- *     <td><code>{"type":"map","keys":<i>&lt;schema of key type&gt;</i>,"values":<i>&lt;schema of value type&gt;</i>}</code></td>
+ *     <td>
+ *       <code>
+ *         {"type":"map","keys":<i>&lt;schema of key type&gt;</i>,"values":<i>&lt;schema of value type&gt;</i>}
+ *       </code>
+ *     </td>
  *     <td>Map from the same key type to the same value type.</td>
  *   </tr>
  *   <tr>

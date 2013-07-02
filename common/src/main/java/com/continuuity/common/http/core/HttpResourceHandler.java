@@ -32,7 +32,8 @@ import java.util.Set;
 public final class HttpResourceHandler implements HttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpResourceHandler.class);
-  private PatternPathRouterWithGroups<HttpResourceModel> patternRouter = new PatternPathRouterWithGroups<HttpResourceModel>();
+  private PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
+    new PatternPathRouterWithGroups<HttpResourceModel>();
   private List<HttpHandler> handlers;
 
   /**

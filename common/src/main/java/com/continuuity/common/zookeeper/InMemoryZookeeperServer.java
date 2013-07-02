@@ -22,7 +22,7 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
   private final int instanceIndex;
 
   /**
-   * Defines the states of Zookeeper server
+   * Defines the states of Zookeeper server.
    */
   private enum State {
     LATENT,
@@ -40,7 +40,7 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
   }
 
   /**
-   * Constructor creates an instance of Zookeeper based on the config
+   * Constructor creates an instance of Zookeeper based on the config.
    * @param configBuilder Quorum config builder.
    * @param instanceIndex Instance ID of this zookeeper
    */

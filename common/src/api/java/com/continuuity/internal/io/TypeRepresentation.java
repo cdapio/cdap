@@ -51,8 +51,7 @@ public final class TypeRepresentation implements ParameterizedType {
       this.enclosingType = null;
       this.parameters = null;
       this.isClass = true;
-    }
-    else if (type instanceof ParameterizedType) {
+    } else if (type instanceof ParameterizedType) {
       ParameterizedType pType = (ParameterizedType) type;
       Type raw = pType.getRawType();
       if (raw instanceof Class<?>) {
@@ -68,8 +67,7 @@ public final class TypeRepresentation implements ParameterizedType {
         this.parameters[i] = new TypeRepresentation(typeArgs[i]);
       }
       this.isClass = false;
-    }
-    else {
+    } else {
       throw new UnsupportedTypeException("can't represent type " + type + " (must be a class or a parametrized type)");
     }
   }

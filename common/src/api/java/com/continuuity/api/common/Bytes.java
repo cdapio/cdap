@@ -96,7 +96,7 @@ public class Bytes {
   /**
    * Pass this to TreeMaps where byte [] are keys.
    */
-  public static Comparator<byte []> BYTES_COMPARATOR =
+  public static final Comparator<byte []> BYTES_COMPARATOR =
       new ByteArrayComparator();
 
   /**
@@ -164,7 +164,9 @@ public class Bytes {
     return toString(b1, 0, b1.length) + sep + toString(b2, 0, b2.length);
   }
 
-  /** When we encode strings, we always specify UTF8 encoding */
+  /**
+   * When we encode strings, we always specify UTF8 encoding.
+   */
   public static final String UTF8_ENCODING = "UTF-8";
 
   /**
@@ -686,7 +688,7 @@ public class Bytes {
   }
 
   /**
-   * Convert a BigDecimal value to a byte array
+   * Convert a BigDecimal value to a byte array.
    *
    * @param val
    * @return the byte array
@@ -701,7 +703,7 @@ public class Bytes {
 
 
   /**
-   * Converts a byte array to a BigDecimal
+   * Converts a byte array to a BigDecimal.
    *
    * @param bytes
    * @return the char value
@@ -711,7 +713,7 @@ public class Bytes {
   }
 
   /**
-   * Converts a byte array to a BigDecimal value
+   * Converts a byte array to a BigDecimal value.
    *
    * @param bytes
    * @param offset
@@ -979,7 +981,7 @@ public class Bytes {
   public static final byte [] EMPTY_BYTE_ARRAY = new byte [0];
 
   /**
-   * Concatenate two byte arrays
+   * Concatenate two byte arrays.
    * @param a lower half
    * @param b upper half
    * @return New array that has a in lower half and b in upper half.

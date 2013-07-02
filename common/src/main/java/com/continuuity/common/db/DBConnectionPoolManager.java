@@ -55,7 +55,7 @@ public class DBConnectionPoolManager {
 
   /**
    * A PooledConnection which is currently within a
-   * PooledConnection.getConnection() call, or null
+   * PooledConnection.getConnection() call, or null.
    */
   private PooledConnection               connectionInTransition;
 

@@ -3,6 +3,7 @@ package com.continuuity.common.zookeeper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -20,7 +21,8 @@ class QuorumConfigBuilder {
 
   public QuorumConfigBuilder(InstanceSpecification... specs) {
     fromRandom = (specs == null) || (specs.length == 0);
-    instanceSpecs = fromRandom ? ImmutableList.of(InstanceSpecification.newInstanceSpec()) : ImmutableList.copyOf(specs);
+    instanceSpecs = fromRandom ? ImmutableList.of(InstanceSpecification.newInstanceSpec())
+                               : ImmutableList.copyOf(specs);
   }
 
   public boolean isFromRandom() {
@@ -58,7 +60,8 @@ class QuorumConfigBuilder {
     properties.setProperty("clientPort", Integer.toString(spec.getPort()));
     if (isCluster) {
       for (InstanceSpecification thisSpec : instanceSpecs) {
-        properties.setProperty("server." + thisSpec.getServerId(), String.format("localhost:%d:%d", thisSpec.getQuorumPort(), thisSpec.getElectionPort()));
+        properties.setProperty("server." + thisSpec.getServerId(),
+                               String.format("localhost:%d:%d", thisSpec.getQuorumPort(), thisSpec.getElectionPort()));
       }
     }
 

@@ -22,7 +22,7 @@ class InMemoryZookeeperMain extends ZooKeeperServerMain implements InMemoryZooke
   private final CountDownLatch latch = new CountDownLatch(1);
 
   /**
-   * Runs a ZooKeeperServer with provided {@link QuorumPeerConfig}
+   * Runs a ZooKeeperServer with provided {@link QuorumPeerConfig}.
    * @param config Configuration of Peer.
    * @throws Exception
    */

@@ -11,14 +11,14 @@ package com.continuuity.common.collect;
  */
 public interface Collector<Element> {
   /**
-   * collect one element
+   * collect one element.
    * @param element the element to collect
    * @return whether more elements need to be collected
    */
-  public boolean addElement(Element element );
+  public boolean addElement(Element element);
 
   /**
-   * Finish collection of elements and return all elements that were added
+   * Finish collection of elements and return all elements that were added.
    * @return all the collected elements
    */
   public Element[] finish();

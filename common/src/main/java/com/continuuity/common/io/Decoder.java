@@ -45,7 +45,7 @@ public interface Decoder {
   void skipString() throws IOException;
 
   /**
-   * Skips a byte array
+   * Skips a byte array.
    */
   void skipBytes() throws IOException;
 }

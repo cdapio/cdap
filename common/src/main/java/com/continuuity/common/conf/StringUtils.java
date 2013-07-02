@@ -64,13 +64,13 @@ public class StringUtils {
    */
   public static String[] getTrimmedStrings(String str){
     if (null == str || "".equals(str.trim())) {
-      return emptyStringArray;
+      return EMPTY_STRING_ARRAY;
     }
 
     return str.trim().split("\\s*,\\s*");
   }
 
-  public static final String[] emptyStringArray = {};
+  public static final String[] EMPTY_STRING_ARRAY = {};
 
 
   /**

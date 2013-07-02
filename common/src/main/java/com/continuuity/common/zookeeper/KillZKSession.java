@@ -37,7 +37,8 @@ public final class KillZKSession {
    * @param maxMs time in millisecond specifying the max time to kill a client.
    * @throws Exception
    */
-  public static void kill(ZooKeeper client, String connectionString, int maxMs) throws IOException, InterruptedException {
+  public static void kill(ZooKeeper client, String connectionString,
+                          int maxMs) throws IOException, InterruptedException {
     long start = System.currentTimeMillis();
     long sleep = 10;
 
