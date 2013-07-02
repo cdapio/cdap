@@ -14,8 +14,6 @@ import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.internal.app.services.AppFabricServer;
-import com.continuuity.logging.appender.LogAppenderInitializer;
-import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -65,7 +63,6 @@ public final class AppFabricMain extends DaemonMain {
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -84,8 +81,6 @@ public final class AppFabricMain extends DaemonMain {
     injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     Futures.getUnchecked(Services.chainStart(zkClientService, appFabricServer));
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-    logAppenderInitializer.intialize();
   }
 
   /**

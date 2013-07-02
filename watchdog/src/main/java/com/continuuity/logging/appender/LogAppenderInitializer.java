@@ -18,7 +18,7 @@ public class LogAppenderInitializer {
     this.logAppender = logAppender;
   }
 
-  public void intialize() {
+  public void initialize() {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
     // Display any errors during initialization of log appender to console

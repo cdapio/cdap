@@ -91,7 +91,7 @@ public class SingleNodeMain {
    * Start the service.
    */
   protected void startUp(String[] args) throws Exception {
-    logAppenderInitializer.intialize();
+    logAppenderInitializer.initialize();
 
     File zkDir = new File(ZOOKEEPER_DATA_DIR);
     zkDir.mkdir();
