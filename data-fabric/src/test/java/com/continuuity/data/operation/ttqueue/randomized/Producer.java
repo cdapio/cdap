@@ -51,13 +51,13 @@ public class Producer implements Runnable {
       testController.waitToStart();
       LOG.info(String.format("Producer:%d started", id));
       List<Integer> enqueueBatch = getNextEnqueueBatch();
-      while(enqueueBatch != null) {
+      while (enqueueBatch != null) {
         final Transaction transaction =  oracle.startTransaction(true);
 
         EnqueueResult result = queue.enqueue(getEnqueueEntries(enqueueBatch), transaction);
         TimeUnit.MILLISECONDS.sleep(testConfig.getEnqueueSleepMs());
 
-        if(testConfig.shouldInvalidate()) {
+        if (testConfig.shouldInvalidate()) {
           oracle.abortTransaction(transaction);
           queue.invalidate(result.getEntryPointers(), transaction);
           oracle.removeTransaction(transaction);
@@ -81,14 +81,14 @@ public class Producer implements Runnable {
   private List<Integer> getNextEnqueueBatch() {
     int batchSize = testConfig.getEnqueueBatchSize();
     List<Integer> enqueueBatch = Lists.newArrayListWithExpectedSize(batchSize);
-    for(int i = 0; i < batchSize; ++i) {
+    for (int i = 0; i < batchSize; ++i) {
       Integer entry = inputList.poll();
-      if(entry == null) {
+      if (entry == null) {
         break;
       }
       enqueueBatch.add(entry);
     }
-    if(enqueueBatch.isEmpty()) {
+    if (enqueueBatch.isEmpty()) {
       // No more entries to enqueue, producer can be stopped
       return null;
     }

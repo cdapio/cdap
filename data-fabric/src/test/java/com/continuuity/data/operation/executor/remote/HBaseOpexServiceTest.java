@@ -15,6 +15,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class HBaseOpexServiceTest extends OperationExecutorServiceTest {
 
   static Injector injector;

@@ -15,6 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class  TestHBaseNativeOVCTable extends TestOVCTable {
 
   private static final Logger Log = LoggerFactory.getLogger(TestHBaseNativeOVCTable.class);
@@ -26,7 +29,7 @@ public class  TestHBaseNativeOVCTable extends TestOVCTable {
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
       conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf));
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -56,7 +59,7 @@ public class  TestHBaseNativeOVCTable extends TestOVCTable {
   public void testIncrementCASIncrementWithSameTimestamp() {}
 
   /**
-   * Not working because native hbase ignores excludes in read pointer
+   * Not working because native hbase ignores excludes in read pointer.
    */
   @Override @Test
   @Ignore

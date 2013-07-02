@@ -14,6 +14,9 @@ import java.util.Random;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 // TODO: fix testSkipBatchOfInvalidEntries
 @Ignore
 public class TestHyperSQLNewTTQueue extends TestTTQueueNew {

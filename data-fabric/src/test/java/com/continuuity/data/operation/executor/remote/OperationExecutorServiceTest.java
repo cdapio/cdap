@@ -55,6 +55,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+/**
+ *
+ */
 public abstract class OperationExecutorServiceTest extends
     OpexServiceTestBase {
 
@@ -63,12 +66,12 @@ public abstract class OperationExecutorServiceTest extends
   static OperationContext context = OperationUtil.DEFAULT;
 
   /**
-   * Every subclass should implement this to verify that injection works and uses the correct table type
+   * Every subclass should implement this to verify that injection works and uses the correct table type.
    */
   @Test
   public abstract void testInjection();
 
-  /** Tests Write, Read */
+  /** Tests Write, Read. */
   @Test
   public void testWriteThenRead() throws Exception {
     final byte[] key1 = "tWTRkey1".getBytes();
@@ -97,7 +100,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("val3".getBytes(), columns.get("col3".getBytes()));
   }
 
-  /** Tests Increment, Read */
+  /** Tests Increment, Read. */
   @Test
   public void testIncrementThenRead() throws Exception {
     final byte[] count = "tITRcount".getBytes();
@@ -117,7 +120,7 @@ public abstract class OperationExecutorServiceTest extends
     // increment two columns with remote
     increment = new Increment(count,
         new byte[][] { "a".getBytes(), col },
-        new long[] { 5L, 10L } );
+        new long[] { 5L, 10L });
     remote.increment(context, increment);
     // read back with remote and verify values
     read = new Read(count,
@@ -131,7 +134,7 @@ public abstract class OperationExecutorServiceTest extends
         ByteBuffer.wrap(columns.get(col)).asLongBuffer().get());
   }
 
-  /** Tests read for non-existent key */
+  /** Tests read for non-existent key. */
   @Test
   public void testDeleteThenRead() throws Exception {
 
@@ -168,7 +171,7 @@ public abstract class OperationExecutorServiceTest extends
     assertTrue(remote.execute(context, readColumnRange).isEmpty());
   }
 
-   /** Tests Write, ReadColumnRange, Delete */
+   /** Tests Write, ReadColumnRange, Delete. */
   @Test
   public void testWriteThenRangeThenDelete() throws Exception {
 
@@ -254,7 +257,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertNull(columns.get("c".getBytes()));
   }
 
-  /** Tests Write, CompareAndSwap, Read */
+  /** Tests Write, CompareAndSwap, Read. */
   @Test
   public void testWriteThenSwapThenRead() throws Exception {
 
@@ -327,7 +330,7 @@ public abstract class OperationExecutorServiceTest extends
     assertTrue(remote.execute(context, read).isEmpty());
   }
 
-  /** clear the tables, then write a batch of keys, then readAllKeys */
+  /** clear the tables, then write a batch of keys, then readAllKeys. */
   @Test
   public void testWriteBatchThenReadAllKeys() throws Exception  {
     // clear all data, otherwise we will get keys from other tests
@@ -382,9 +385,9 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertEquals(0, keys.size());
   }
 
-  static final byte[] kvcol = Operation.KV_COL;
+  private static final byte[] kvcol = Operation.KV_COL;
 
-  /** test batch, one that succeeds and one that fails */
+  /** test batch, one that succeeds and one that fails. */
   @Test
   public void testBatchSuccessAndFailure() throws Exception {
 
@@ -400,7 +403,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.commit(context, write);
     write = new Write(keyD, kvcol, "0".getBytes());
     remote.commit(context, write);
-    QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     remote.execute(context, new QueueConfigure(q, consumer));
     remote.execute(context, new QueueConfigure(qq, consumer));
@@ -459,7 +462,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("1".getBytes(),
         remote.execute(context, new Read(keyA, kvcol)).getValue().get(kvcol));
     assertTrue(remote.execute(context, new Read(keyB, kvcol)).isEmpty());
-    Assert.assertArrayEquals(new byte[] { 0,0,0,0,0,0,0,5 },
+    Assert.assertArrayEquals(new byte[] { 0, 0, 0, 0, 0, 0, 0, 5 },
         remote.execute(context, new Read(keyC, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals("2".getBytes(),
         remote.execute(context, new Read(keyD, kvcol)).getValue().get(kvcol));
@@ -476,7 +479,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("1".getBytes(), dequeueResult.getEntry().getData());
   }
 
-  /** test clearFabric */
+  /** test clearFabric. */
   @Test
   public void testClearFabric() throws Exception {
     final byte[] a = "tCFa".getBytes();
@@ -544,11 +547,11 @@ public abstract class OperationExecutorServiceTest extends
     assertTrue(remote.execute(context, new QueueDequeue(s, consumer, config)).isEmpty());
   }
 
-  /** tests enqueue, getGroupId and dequeue with ack for different groups */
+  /** tests enqueue, getGroupId and dequeue with ack for different groups. */
   @Test
   public void testEnqueueThenDequeueAndAckWithDifferentGroups() throws Exception {
     final byte[] q = "queue://tWTDAAWDG/q".getBytes();
-    final String HASH_KEY = "HashKey";
+    final String hashKey = "HashKey";
 
     // enqueue a bunch of entries, each one twice.
     // why twice? with hash partitioner, the same value will go to the same
@@ -559,10 +562,12 @@ public abstract class OperationExecutorServiceTest extends
     int prev = 0, i = 0;
     while (i < 100) {
       int next = rand.nextInt(1000);
-      if (next == prev) continue;
+      if (next == prev) {
+        continue;
+      }
       byte[] value = Integer.toString(next).getBytes();
-      QueueEntry entry =new QueueEntry(value);
-      entry.addHashKey(HASH_KEY, next);
+      QueueEntry entry = new QueueEntry(value);
+      entry.addHashKey(hashKey, next);
       QueueEnqueue enqueue = new QueueEnqueue(q, entry);
       remote.commit(context, enqueue);
       remote.commit(context, enqueue);
@@ -579,8 +584,8 @@ public abstract class OperationExecutorServiceTest extends
     QueueConfig conf2 = new QueueConfig(PartitionerType.FIFO, true, 1);
 
     // create 2 consumers for each groupId
-    QueueConsumer cons11 = new StatefulQueueConsumer(0, id1, 2, "group1", HASH_KEY, conf1);
-    QueueConsumer cons12 = new StatefulQueueConsumer(1, id1, 2, "group1", HASH_KEY, conf1);
+    QueueConsumer cons11 = new StatefulQueueConsumer(0, id1, 2, "group1", hashKey, conf1);
+    QueueConsumer cons12 = new StatefulQueueConsumer(1, id1, 2, "group1", hashKey, conf1);
     QueueConsumer cons21 = new QueueConsumer(0, id2, 2, "group2", conf2);
     QueueConsumer cons22 = new QueueConsumer(1, id2, 2, "group2", conf2);
 
@@ -801,11 +806,11 @@ public abstract class OperationExecutorServiceTest extends
     assertEquals(new Long(5L), iresult.get(c1));
   }
 
-  static final byte[] c = { 'c' }, v = { 'v' };
+  private static final byte[] c = { 'c' }, v = { 'v' };
 
   // this is a slight variation of the same test in TestOmidOpEx, the difference is that remote opex does not
   // support scans, so we have to get splits using remote opex, but verify them by scanning with local opex.
-  @Test(timeout=30000)
+  @Test(timeout = 30000)
   public void testBatchReads() throws OperationException, InterruptedException {
     final String table = "tBRs";
 

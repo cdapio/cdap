@@ -19,6 +19,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class NativeHBaseOpexServiceTest extends OperationExecutorServiceTest {
 
   static Injector injector;

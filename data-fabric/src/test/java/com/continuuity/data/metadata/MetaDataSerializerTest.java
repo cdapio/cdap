@@ -3,6 +3,9 @@ package com.continuuity.data.metadata;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ *
+ */
 public class MetaDataSerializerTest {
 
   // test that a serialize followed by deserialize returns identity
@@ -12,8 +15,12 @@ public class MetaDataSerializerTest {
       throws MetaDataException {
 
     MetaDataEntry meta = new MetaDataEntry(account, application, name, type);
-    if (field != null) meta.addField(field, text);
-    if (binaryField != null) meta.addField(binaryField, binary);
+    if (field != null) {
+      meta.addField(field, text);
+    }
+    if (binaryField != null) {
+      meta.addField(binaryField, binary);
+    }
     MetaDataSerializer serializer = new MetaDataSerializer();
     Assert.assertEquals(
         meta, serializer.deserialize(serializer.serialize(meta)));

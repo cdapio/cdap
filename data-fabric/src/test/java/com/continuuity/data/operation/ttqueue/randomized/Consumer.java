@@ -46,7 +46,7 @@ public class Consumer implements Runnable {
 
   private final ConsumerHolder consumerHolder;
 
-  private static final Logger LOG = LoggerFactory.getLogger(Consumer.class);
+  private static final Logger log = LoggerFactory.getLogger(Consumer.class);
 
   public Consumer(int id, QueueConsumer queueConsumer, TransactionOracle oracle, ConsumerControl consumerControl,
                   int numGroups,
@@ -68,11 +68,11 @@ public class Consumer implements Runnable {
   @Override
   public void run() {
     try {
-      LOG.info(getLogMessage(String.format("groupSize:%d started", consumerControl.getSize())));
+      log.info(getLogMessage(String.format("groupSize:%d started", consumerControl.getSize())));
 
       // Note: in this test we have a different batch size for each consumer of same group
       final int maxAsyncDegree = queueConfig.isSingleEntry() ?  1 : testConfig.getAsyncDegree();
-      LOG.info(getLogMessage(String.format("maxAsyncDegree=%d", maxAsyncDegree)));
+      log.info(getLogMessage(String.format("maxAsyncDegree=%d", maxAsyncDegree)));
 
       int stopTries = 0;
       int runId = 0;
@@ -80,10 +80,10 @@ public class Consumer implements Runnable {
       int maxStopTries = STOP_TRIES_PER_INSTANCE * maxAsyncDegree;
 
       // Run till end of queue or number of runs are done
-      while(stopTries < maxStopTries &&
+      while (stopTries < maxStopTries &&
         dequeueRunsDone.get() + asyncDegree.get() < consumerControl.getNumDequeueRuns()) {
         // Create maxAsyncDegree dequeues at a time
-        if(asyncDegree.get() < maxAsyncDegree) {
+        if (asyncDegree.get() < maxAsyncDegree) {
           ++runId;
           asyncDegree.incrementAndGet();
           listeningExecutorService.submit(new QueueDequeue(runId, 0, listeningExecutorService, consumerHolder));
@@ -92,9 +92,9 @@ public class Consumer implements Runnable {
           TimeUnit.MILLISECONDS.sleep(1000);
         }
 
-        if(msgCtr++ % 200 == 0) {
+        if (msgCtr++ % 200 == 0) {
           msgCtr = 1;
-          LOG.info(getLogMessage(
+          log.info(getLogMessage(
             String.format(
               "runId=%d, dequeueRunsDone=%d, numDequeueRunsToDo=%d, asyncDegree=%d, maxAsyncDegree=%d, stopTries=%d",
               runId, dequeueRunsDone.get(), consumerControl.getNumDequeueRuns(), asyncDegree.get(),
@@ -102,7 +102,7 @@ public class Consumer implements Runnable {
             )));
         }
 
-        if(stopFlag.get() > 0) {
+        if (stopFlag.get() > 0) {
           TimeUnit.MILLISECONDS.sleep(100);
           stopTries++;
         } else {
@@ -114,10 +114,10 @@ public class Consumer implements Runnable {
 
       // Wait for all async calls to complete
       msgCtr = 0;
-      while(asyncDegree.get() > 0) {
-        if(msgCtr++ % 200 == 0) {
+      while (asyncDegree.get() > 0) {
+        if (msgCtr++ % 200 == 0) {
           msgCtr = 1;
-          LOG.info(getLogMessage(String.format("Waiting for pending async calls (%d) to complete...",
+          log.info(getLogMessage(String.format("Waiting for pending async calls (%d) to complete...",
                                                asyncDegree.get())));
         }
         TimeUnit.MILLISECONDS.sleep(100);
@@ -125,11 +125,11 @@ public class Consumer implements Runnable {
 
       // If all dequeues report empty queue for maxStopTries, then the queue is really empty.
       // Report it to the consumer group.
-      if(stopTries >= maxStopTries - 1) {
-        LOG.info(getLogMessage("Consumer at queue end."));
+      if (stopTries >= maxStopTries - 1) {
+        log.info(getLogMessage("Consumer at queue end."));
         consumerControl.setConsumersAtQueueEnd(id);
       } else {
-        LOG.info(getLogMessage(
+        log.info(getLogMessage(
           String.format("dequeueRunsDone=%d, numDequeueRunsToDo=%d, asyncDegree=%d, maxAsyncDegree=%d",
                         dequeueRunsDone.get(), consumerControl.getNumDequeueRuns(), asyncDegree.get(),
                         maxAsyncDegree
@@ -157,6 +157,9 @@ public class Consumer implements Runnable {
     });
   }
 
+  /**
+   *
+   */
   public class QueueDequeue implements Runnable {
     private final int runId;
     private final int crashId;
@@ -164,7 +167,7 @@ public class Consumer implements Runnable {
     private final ConsumerHolder consumerHolder;
     private final int oldConsumerId;
 
-    private final Logger LOG = LoggerFactory.getLogger(QueueDequeue.class);
+    private final Logger log = LoggerFactory.getLogger(QueueDequeue.class);
 
     public QueueDequeue(int runId, int crashId, ListeningExecutorService listeningExecutorService,
                         ConsumerHolder consumerHolder) {
@@ -183,28 +186,28 @@ public class Consumer implements Runnable {
         TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         synchronized (consumerHolder) {
           QueueConsumer consumer = consumerHolder.getConsumer("dequeue", runId, crashId);
-          if(oldConsumerId != consumerHolder.getConsumerId()) {
+          if (oldConsumerId != consumerHolder.getConsumerId()) {
             // Consumer has crashed!
-            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
+            log.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
             listeningExecutorService.submit(new QueueDequeue(runId, crashId + 1, listeningExecutorService,
                                                              consumerHolder));
             return;
           }
           DequeueResult result = queue.dequeue(consumer, transaction.getReadPointer());
           QueueInfo queueInfo = queue.getQueueInfo();
-          LOG.info(getLogMessage(String.format("QueueInfo=%s", queueInfo.getJSONString())));
-          if(result.isEmpty()) {
-            if(testController.canDequeueStop()) {
+          log.info(getLogMessage(String.format("QueueInfo=%s", queueInfo.getJSONString())));
+          if (result.isEmpty()) {
+            if (testController.canDequeueStop()) {
               stopFlag.incrementAndGet();
             }
             asyncDegree.decrementAndGet();
-            LOG.info(getLogMessage(String.format("Stop flag is true. asyncDegree=%d", asyncDegree.get())));
+            log.info(getLogMessage(String.format("Stop flag is true. asyncDegree=%d", asyncDegree.get())));
             return;
           } else {
             stopFlag.set(0);
           }
           Iterable<Integer> dequeued = entriesToInt(result.getEntries());
-          LOG.info(getLogMessage(String.format("Intermediate dequeue list=%s", dequeued)));
+          log.info(getLogMessage(String.format("Intermediate dequeue list=%s", dequeued)));
           listeningExecutorService.submit(new QueueAck(runId, crashId, listeningExecutorService, consumerHolder, result,
                                                        transaction));
         }
@@ -218,6 +221,9 @@ public class Consumer implements Runnable {
     }
   }
 
+  /**
+   *
+   */
   public class QueueAck implements Runnable {
     private final int runId;
     private final int crashId;
@@ -227,7 +233,7 @@ public class Consumer implements Runnable {
     private final DequeueResult dequeueResult;
     private final Transaction transaction;
 
-    private final Logger LOG = LoggerFactory.getLogger(QueueAck.class);
+    private final Logger log = LoggerFactory.getLogger(QueueAck.class);
 
     public QueueAck(int runId, int crashId, ListeningExecutorService listeningExecutorService,
                     ConsumerHolder consumerHolder, DequeueResult dequeueResult, Transaction transaction) {
@@ -246,9 +252,9 @@ public class Consumer implements Runnable {
         TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         synchronized (consumerHolder) {
           QueueConsumer consumer = consumerHolder.getConsumer("ack", runId, crashId);
-          if(oldConsumerId != consumerHolder.getConsumerId()) {
+          if (oldConsumerId != consumerHolder.getConsumerId()) {
             // Consumer has crashed!
-            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
+            log.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
             listeningExecutorService.submit(new QueueDequeue(runId, crashId + 1, listeningExecutorService,
                                                              consumerHolder));
             return;
@@ -269,6 +275,9 @@ public class Consumer implements Runnable {
     }
   }
 
+  /**
+   *
+   */
   public class QueueCommit implements Runnable {
     private final int runId;
     private final int crashId;
@@ -277,7 +286,7 @@ public class Consumer implements Runnable {
     private final DequeueResult dequeueResult;
     private final Transaction transaction;
 
-    private final Logger LOG = LoggerFactory.getLogger(QueueAck.class);
+    private final Logger log = LoggerFactory.getLogger(QueueAck.class);
 
     public QueueCommit(int runId, int crashId, ListeningExecutorService listeningExecutorService,
                     ConsumerHolder consumerHolder, DequeueResult dequeueResult, Transaction transaction) {
@@ -294,11 +303,11 @@ public class Consumer implements Runnable {
       try {
         TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         synchronized (consumerHolder) {
-          if(testConfig.shouldUnack()) {
+          if (testConfig.shouldUnack()) {
             // Note: consumer cannot crash after an ack before txn is committed since Opex runs
             // all the operations together. However, Opex can crash which is not tested here.
             QueueConsumer consumer = consumerHolder.getConsumer();
-            LOG.info(getLogMessage(String.format("Unacking list =%s", entriesToInt(dequeueResult.getEntries()))));
+            log.info(getLogMessage(String.format("Unacking list =%s", entriesToInt(dequeueResult.getEntries()))));
             queue.unack(dequeueResult.getEntryPointers(), consumer, transaction);
             oracle.abortTransaction(transaction);
             oracle.removeTransaction(transaction);
@@ -310,7 +319,7 @@ public class Consumer implements Runnable {
           }
           Iterable<Integer> dequeued = entriesToInt(dequeueResult.getEntries());
           Iterables.addAll(dequeueList, dequeued);
-          LOG.info(getLogMessage(String.format("Acked dequeue list=%s", dequeued)));
+          log.info(getLogMessage(String.format("Acked dequeue list=%s", dequeued)));
 
           listeningExecutorService.submit(new QueueFinalize(runId, crashId, consumerHolder, dequeueResult,
                                                             transaction));
@@ -325,6 +334,9 @@ public class Consumer implements Runnable {
     }
   }
 
+  /**
+   *
+   */
   public class QueueFinalize implements Runnable {
     private final int runId;
     private final int crashId;
@@ -349,19 +361,19 @@ public class Consumer implements Runnable {
         TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         synchronized (consumerHolder) {
           QueueConsumer consumer = consumerHolder.getConsumer("finalize", runId, crashId);
-          if(oldConsumerId != consumerHolder.getConsumerId()) {
+          if (oldConsumerId != consumerHolder.getConsumerId()) {
             // Consumer has crashed!
-            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
+            log.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
             return;
           }
-          if(testConfig.shouldFinalize()) {
+          if (testConfig.shouldFinalize()) {
             queue.finalize(dequeueResult.getEntryPointers(), consumer, numGroups,
                            transaction);
-            LOG.info(getLogMessage(String.format("finalizing=%s",
+            log.info(getLogMessage(String.format("finalizing=%s",
                                                  entriesToInt(dequeueResult.getEntries()))));
-            if(Consumer.this.consumerControl.getId() == 0) {
+            if (Consumer.this.consumerControl.getId() == 0) {
               QueueInfo queueInfo = queue.getQueueInfo();
-              LOG.info(getLogMessage(String.format("QueueInfo=%s", queueInfo.getJSONString())));
+              log.info(getLogMessage(String.format("QueueInfo=%s", queueInfo.getJSONString())));
             }
           }
         }
@@ -370,7 +382,7 @@ public class Consumer implements Runnable {
       } finally {
         final int newAsyncDegree = asyncDegree.decrementAndGet();
         final int neDequeueRunsDone = dequeueRunsDone.incrementAndGet();
-        LOG.info(getLogMessage(String.format("Decremented values of asyncDegree=%d, dequeueRunsDone=%d",
+        log.info(getLogMessage(String.format("Decremented values of asyncDegree=%d, dequeueRunsDone=%d",
                                              newAsyncDegree, neDequeueRunsDone)));
       }
     }
@@ -396,8 +408,8 @@ public class Consumer implements Runnable {
 
     public QueueConsumer getConsumer(String position, int runId, int crashId)
       throws Exception {
-      if(testConfig.shouldConsumerCrash()) {
-        LOG.info(getLogMessage(String.format("Crashing consumer before %s runId=%d crashId=%d",
+      if (testConfig.shouldConsumerCrash()) {
+        log.info(getLogMessage(String.format("Crashing consumer before %s runId=%d crashId=%d",
                                              position, runId, crashId)));
         createNewConsumer();
       }

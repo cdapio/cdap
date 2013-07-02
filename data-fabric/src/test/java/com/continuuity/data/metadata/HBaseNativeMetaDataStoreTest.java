@@ -15,6 +15,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * HBase meta data store tests.
+ */
 public abstract class HBaseNativeMetaDataStoreTest extends MetaDataStoreTest {
 
   private static Injector injector;
@@ -24,7 +27,7 @@ public abstract class HBaseNativeMetaDataStoreTest extends MetaDataStoreTest {
     HBaseTestBase.startHBase();
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
-    DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf);
+    DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf);
     injector = Guice.createInjector(module);
     opex = injector.getInstance(Key.get(OperationExecutor.class, Names.named("DataFabricOperationExecutor")));
     mds = new SerializingMetaDataStore(opex);

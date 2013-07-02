@@ -6,6 +6,9 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Utility class for locks.
+ */
 public class LockTableTest {
 
   @Test(timeout = 1000)
@@ -42,7 +45,7 @@ public class LockTableTest {
     final RowLockTable locks;
     final long sleep;
     int rounds;
-    static final RowLockTable.Row row = new RowLockTable.Row(new byte[] { 'r' });
+    public static final RowLockTable.Row ROW = new RowLockTable.Row(new byte[] { 'r' });
     LockAndRemoveThread(RowLockTable locks, long sleep, int rounds) {
       this.locks = locks;
       this.sleep = sleep;
@@ -52,7 +55,7 @@ public class LockTableTest {
     public void run() {
       while (rounds > 0) {
         --rounds;
-        Assert.assertTrue(locks.validLock(row).isValid());
+        Assert.assertTrue(locks.validLock(ROW).isValid());
         int value = counter;
         if (sleep > 0) {
           try {
@@ -62,12 +65,12 @@ public class LockTableTest {
           }
         }
         counter = value + 1;
-        locks.unlockAndRemove(row);
+        locks.unlockAndRemove(ROW);
       }
     }
   }
 
-  @Test(timeout=5000)
+  @Test(timeout = 5000)
   public void testConcurrentLockAndRemove() throws InterruptedException {
     RowLockTable locks = new RowLockTable();
     long sleep = 10;
@@ -88,7 +91,7 @@ public class LockTableTest {
     Assert.assertEquals(3 * rounds, counter);
   }
 
-  @Test(timeout=5000)
+  @Test(timeout = 5000)
   public void testLotsOfLockAndRemove() throws InterruptedException {
     RowLockTable locks = new RowLockTable();
     long sleep = 0;
@@ -112,7 +115,7 @@ public class LockTableTest {
   static class LockAndUnlockThread extends Thread {
     final RowLockTable locks;
     int rounds;
-    static final RowLockTable.Row row = new RowLockTable.Row(new byte[] { 'r' });
+    static final RowLockTable.Row ROW = new RowLockTable.Row(new byte[] { 'r' });
     LockAndUnlockThread(RowLockTable locks, int rounds) {
       this.locks = locks;
       this.rounds = rounds;
@@ -121,15 +124,15 @@ public class LockTableTest {
     public void run() {
       while (rounds > 0) {
         --rounds;
-        Assert.assertTrue(locks.lock(row).isValid());
+        Assert.assertTrue(locks.lock(ROW).isValid());
         int value = counter;
         counter = value + 1;
-        locks.unlock(row);
+        locks.unlock(ROW);
       }
     }
   }
 
-  @Test(timeout=5000)
+  @Test(timeout = 5000)
   public void testLotsOfLockAndUnlock() throws InterruptedException {
     RowLockTable locks = new RowLockTable();
     int rounds = 10000;

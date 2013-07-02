@@ -8,7 +8,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-
+/**
+ *
+ */
 public class TestMemoryTTQueue extends TestTTQueue {
 
   @Override
@@ -57,7 +59,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
 
     long nanoStart = System.nanoTime();
     for (int round = 0; round < rounds; round++) {
-      System.out.println("Round no. "+round);
+      System.out.println("Round no. " + round);
 
       // enqueue a whole lotta entries
       long nanoStartRound = System.nanoTime();
@@ -110,7 +112,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
 
     long nanoStart = System.nanoTime();
     for (int round = 0; round < rounds; round++) {
-      System.out.println("Round no. "+round);
+      System.out.println("Round no. " + round);
 
       // enqueue a whole lotta entries
       long nanoStartRound = System.nanoTime();

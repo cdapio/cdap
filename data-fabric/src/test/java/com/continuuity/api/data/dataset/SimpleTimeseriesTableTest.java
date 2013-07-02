@@ -1,9 +1,9 @@
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -14,6 +14,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Time series table tests.
+ */
 public class SimpleTimeseriesTableTest extends DataSetTestBase {
   private static SimpleTimeseriesTable table;
 

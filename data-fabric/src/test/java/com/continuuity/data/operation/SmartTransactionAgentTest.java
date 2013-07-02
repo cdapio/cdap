@@ -26,7 +26,7 @@ public class SmartTransactionAgentTest {
   static OperationExecutor opex;
 
   /**
-   * Sets up the in-memory operation executor and the data fabric
+   * Sets up the in-memory operation executor and the data fabric.
    */
   @BeforeClass
   public static void setupDataFabric() {
@@ -40,12 +40,12 @@ public class SmartTransactionAgentTest {
     return new SmartTransactionAgent(opex, OperationUtil.DEFAULT);
   }
 
-  static final byte[] a = { 'a' };
-  static final byte[] b = { 'b' };
-  static final byte[] x = { 'x' };
-  static final byte[] y = { 'y' };
-  static final byte[] one = { '1' };
-  static final byte[] two = { '2' };
+  private static final byte[] a = { 'a' };
+  private static final byte[] b = { 'b' };
+  private static final byte[] x = { 'x' };
+  private static final byte[] y = { 'y' };
+  private static final byte[] one = { '1' };
+  private static final byte[] two = { '2' };
 
   // test illegal states:
   // start, then start again
