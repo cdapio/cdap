@@ -71,16 +71,18 @@ public final class HttpResourceModel {
     try {
       if (httpMethods.contains(request.getMethod())){
         //Setup args for reflection call
-        Object [] args = new Object[groupValues.size() + 2];
+        Object [] args = new Object[method.getParameterTypes().length];
         int index = 0;
         args[index] = request;
         index++;
         args[index] = responder;
 
-        Class<?>[] parameterTypes = method.getParameterTypes();
-        for (Map.Entry<String, String> entry : groupValues.entrySet()){
-          index++;
-          args[index] = ConvertUtils.convert(entry.getValue(), parameterTypes[index]);
+        if (method.getParameterTypes().length > 2 ) {
+          Class<?>[] parameterTypes = method.getParameterTypes();
+          for (Map.Entry<String, String> entry : groupValues.entrySet()){
+            index++;
+            args[index] = ConvertUtils.convert(entry.getValue(), parameterTypes[index]);
+          }
         }
         method.invoke(handler, args);
       } else {

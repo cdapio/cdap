@@ -56,16 +56,14 @@ public final class HttpResourceHandler implements HttpHandler {
       }
 
       for (Method method:  handler.getClass().getDeclaredMethods()){
-        if (method.isAnnotationPresent(Path.class)){
+        if (method.getParameterTypes().length >= 2 &&
+          method.getParameterTypes()[0].isAssignableFrom(HttpRequest.class) &&
+          method.getParameterTypes()[1].isAssignableFrom(HttpResponder.class)) {
 
-          Preconditions.checkArgument(method.getParameterTypes().length >= 2,
-                                      "No HttpRequest and HttpResponder parameter in the http handler signature");
-          Preconditions.checkArgument(method.getParameterTypes()[0].isAssignableFrom(HttpRequest.class),
-                                      "HttpRequest should be the first argument in the http handler");
-          Preconditions.checkArgument(method.getParameterTypes()[1].isAssignableFrom(HttpResponder.class),
-                                      "HttpResponder should be the first argument in the http handler");
-
-          String relativePath = method.getAnnotation(Path.class).value();
+          String relativePath = "";
+          if (method.getAnnotation(Path.class) != null) {
+            relativePath = method.getAnnotation(Path.class).value();
+          }
           String absolutePath = String.format("%s/%s", basePath, relativePath);
           Set<HttpMethod> httpMethods = getHttpMethods(method);
           Preconditions.checkArgument(httpMethods.size() >= 1,
@@ -73,8 +71,8 @@ public final class HttpResourceHandler implements HttpHandler {
           patternRouter.add(absolutePath, new HttpResourceModel(httpMethods, method, handler));
 
         } else {
-          LOG.warn("No Path annotation for method {}. HTTP calls will not be routed to this method",
-                   method.getName());
+          LOG.warn("Not adding method {}({}) to path routing like. HTTP calls will not be routed to this method",
+                   method.getName(), method.getParameterTypes());
         }
       }
     }
@@ -161,7 +159,7 @@ public final class HttpResourceHandler implements HttpHandler {
 
   @Override
   public void destroy(HandlerContext context) {
-   for (HttpHandler handler : handlers){
+    for (HttpHandler handler : handlers){
       handler.destroy(context);
     }
   }

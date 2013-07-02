@@ -63,6 +63,31 @@ public class HttpResponder {
   }
 
   /**
+   * Send a string response back to the http client.
+   * @param status status of the Http response.
+   * @param data string data to be sent back.
+   */
+  public synchronized void sendString(HttpResponseStatus status, String data){
+    try {
+      HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
+
+      ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
+      OutputStreamWriter writer = new OutputStreamWriter (new ChannelBufferOutputStream(channelBuffer));
+      writer.write(data);
+      writer.close();
+      response.setContent(channelBuffer);
+      response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+      response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, channelBuffer.readableBytes());
+
+      channel.write(response).addListener(ChannelFutureListener.CLOSE);
+      //TODO: Fix connection keep-alive case
+
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
    * Sends error message back to the client.
    *
    * @param status Status of the response.

@@ -1,5 +1,8 @@
 package com.continuuity.passport.http.handlers;
 
+import com.continuuity.common.http.core.HandlerContext;
+import com.continuuity.common.http.core.HttpHandler;
+import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.passport.core.exceptions.OrganizationAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
 import com.continuuity.passport.core.service.DataManagementService;
@@ -10,6 +13,10 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.commons.io.IOUtils;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +28,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
 
 /**
  * Handler for Organization CRUD operation.
@@ -29,7 +35,7 @@ import javax.ws.rs.core.Response;
 
 @Path("/passport/v1/organization/")
 @Singleton
-public class OrganizationHandler extends PassportHandler {
+public class OrganizationHandler extends PassportHandler implements HttpHandler {
   private final DataManagementService dataManagementService;
   private static final Logger LOG = LoggerFactory.getLogger(AccountHandler.class);
 
@@ -41,9 +47,11 @@ public class OrganizationHandler extends PassportHandler {
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  public Response createOrganization(String data){
+  public void createOrganization(HttpRequest request, HttpResponder responder){
     requestReceived();
     try {
+      String data = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
+
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
@@ -52,38 +60,39 @@ public class OrganizationHandler extends PassportHandler {
       String name = jsonObject.get("name") == null ? null : jsonObject.get("name").getAsString();
 
       if (id == null || name == null){
-        return Response.status(Response.Status.BAD_REQUEST)
-          .entity(Utils.getJson("FAILED", "Id and/or name is missing")).build();
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                            Utils.getJson("FAILED", "Id and/or name is missing"));
+      } else {
+        Organization org = this.dataManagementService.createOrganization(id, name);
+        requestSuccess();
+        responder.sendString(HttpResponseStatus.OK, org.toString());
       }
-      Organization org = this.dataManagementService.createOrganization(id, name);
-      requestSuccess();
-      return Response.ok(org.toString()).build();
     } catch (OrganizationAlreadyExistsException e){
       requestFailed();
-      return Response.status(Response.Status.CONFLICT)
-        .entity(Utils.getJsonError("FAILED", "Organization already exists"))
-        .build();
+      responder.sendString(HttpResponseStatus.CONFLICT,
+                           Utils.getJsonError("FAILED", "Organization already exists"));
     } catch (JsonParseException e){
       requestFailed();
-      return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())))
-        .build();
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())));
     } catch (Throwable e) {
       requestFailed();
       LOG.error(String.format("Internal server error while processing endpoint: %s %s",
                               "POST /passport/v1/organization", e.getMessage()));
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJson("FAILED", String.format("Organization Creation Failed. %s", e)))
-        .build();
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           Utils.getJson("FAILED", String.format("Organization Creation Failed. %s", e)));
     }
   }
 
 
   @PUT
   @Path("{id}")
-  public Response updateOrganization(@PathParam("id") String id, String data){
+  public void updateOrganization(HttpRequest request, HttpResponder responder,
+                                 @PathParam("id") String id){
     requestReceived();
     try {
+      String data = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
+
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
@@ -91,74 +100,75 @@ public class OrganizationHandler extends PassportHandler {
       String name = jsonObject.get("name") == null ? null : jsonObject.get("name").getAsString();
 
       if (name == null){
-        return Response.status(Response.Status.BAD_REQUEST)
-          .entity(Utils.getJson("FAILED", "Name is missing")).build();
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             Utils.getJson("FAILED", "Name is missing"));
+      } else {
+        Organization org = this.dataManagementService.updateOrganization(id, name);
+        requestSuccess();
+        responder.sendString(HttpResponseStatus.OK, org.toString());
       }
-
-      Organization org = this.dataManagementService.updateOrganization(id, name);
-      requestSuccess();
-      return Response.ok(org.toString()).build();
     } catch (JsonParseException e){
       requestFailed();
-      return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())))
-        .build();
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())) );
     } catch (OrganizationNotFoundException e){
       requestFailed();
-      return Response.status(Response.Status.NOT_FOUND)
-        .entity(Utils.getJsonError("FAILED", "Organization already exists"))
-        .build();
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           Utils.getJsonError("FAILED", "Organization already exists"));
     }  catch (Exception e) {
       requestFailed();
       LOG.error("Internal server error while processing endpoint: PUT /passport/v1/organization/{} {}",
                 id, e.getMessage());
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJson("FAILED", String.format("Organization update Failed. %s", e)))
-        .build();
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           Utils.getJson("FAILED", String.format("Organization update Failed. %s", e)));
     }
   }
 
   @DELETE
   @Path("{id}")
-  public Response deleteOrganization(@PathParam("id") String id) {
+  public void deleteOrganization(HttpRequest request, HttpResponder responder,
+                                 @PathParam("id") String id) {
     requestReceived();
     try {
       this.dataManagementService.deleteOrganization(id);
       requestSuccess();
-      return Response.ok("Delete successful").build();
+      responder.sendString(HttpResponseStatus.OK, "Delete Successful");
     } catch (OrganizationNotFoundException e){
       requestFailed();
-      return Response.status(Response.Status.NOT_FOUND)
-        .entity(Utils.getJsonError("FAILED", "Organization already exists"))
-        .build();
+      responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getJsonError("FAILED", "Organization already exists"));
     }  catch (Exception e) {
       requestFailed();
       LOG.error("Internal server error while processing endpoint: DELETE /passport/v1/organization/{} {}",
                 id, e.getMessage());
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJson("FAILED", String.format("Organization delete Failed. %s", e)))
-        .build();
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           Utils.getJson("FAILED", String.format("Organization delete Failed. %s", e)));
     }
   }
 
   @GET
   @Path("{id}")
-  public Response getOrganization(@PathParam("id") String id) {
+  public void getOrganization(HttpRequest request, HttpResponder responder,
+                              @PathParam("id") String id) {
     requestReceived();
     try {
       Organization org = this.dataManagementService.getOrganization(id);
       requestSuccess();
-      return Response.ok(org.toString()).build();
+      responder.sendString(HttpResponseStatus.OK, org.toString());
     } catch (OrganizationNotFoundException e){
-      return Response.status(Response.Status.NOT_FOUND)
-        .entity(Utils.getJsonError("Organization not found")).build();
+      responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getJsonError("Organization not found"));
     } catch (Exception e) {
       requestFailed();
       LOG.error("Internal server error while processing endpoint: GET /passport/v1/organization/{} {}",
                 id, e.getMessage());
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJson("FAILED", String.format("Organization get Failed. %s", e)))
-        .build();
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           Utils.getJson("FAILED", String.format("Organization get Failed. %s", e)));
     }
+  }
+  @Override
+  public void init(HandlerContext context) {
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
   }
 }
