@@ -9,7 +9,6 @@
     <logger name="org.apache.mina.filter.codec" level="WARN"/>
     <logger name="org.apache.zookeeper.server" level="ERROR"/>
     <logger name="org.apache.zookeeper" level="ERROR"/>
-    <logger name="com.netflix.curator" level="ERROR"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
       <encoder>
