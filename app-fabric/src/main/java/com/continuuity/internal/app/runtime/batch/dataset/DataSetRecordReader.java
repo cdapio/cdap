@@ -32,7 +32,7 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
 
     try {
       splitReader.initialize(inputSplit.getSplit());
-    } catch(OperationException e) {
+    } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -50,7 +50,7 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
         context.getSystemMapperMetrics().meter(DataSetRecordReader.class, "tuples.read", 1);
       }
       return success;
-    } catch(OperationException e) {
+    } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -64,7 +64,7 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   public VALUE getCurrentValue() throws IOException, InterruptedException {
     try {
       return splitReader.getCurrentValue();
-    } catch(OperationException e) {
+    } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
   }

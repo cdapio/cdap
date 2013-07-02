@@ -3,7 +3,7 @@ package com.continuuity.data.operation;
 import com.google.common.base.Preconditions;
 
 /**
- * Clears table data
+ * Clears table data.
  */
 public class TruncateTable extends Operation {
 

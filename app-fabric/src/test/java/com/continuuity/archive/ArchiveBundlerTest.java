@@ -60,10 +60,10 @@ public class ArchiveBundlerTest {
       JarResources oldJar = new JarResources(jarfile);
 
       boolean found_app_json = false;
-      while(entries.hasMoreElements()) {
+      while (entries.hasMoreElements()) {
         JarEntry entry = entries.nextElement();
 
-        if(entry.getName().contains("application.json")){
+        if (entry.getName().contains("application.json")){
           found_app_json = true;
         } else if (!entry.isDirectory() && !entry.getName().equals(JarFile.MANIFEST_NAME)) {
           Assert.assertNotNull(oldJar.getResource(entry.getName()));

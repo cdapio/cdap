@@ -1,9 +1,11 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
+import com.google.common.base.Objects;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.common.base.Objects;
-
+/**
+ * Defines Group State.
+ */
 public class GroupState {
 
   private final int groupSize;
@@ -44,11 +46,19 @@ public class GroupState {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof GroupState)) return false;
-    GroupState gs = (GroupState)o;
-    if (gs.getGroupSize() != this.groupSize) return false;
-    if (!gs.getHead().equals(this.head)) return false;
-    if (gs.getMode() != this.mode) return false; 
+    if (!(o instanceof GroupState)) {
+      return false;
+    }
+    GroupState gs = (GroupState) o;
+    if (gs.getGroupSize() != this.groupSize) {
+      return false;
+    }
+    if (!gs.getHead().equals(this.head)) {
+      return false;
+    }
+    if (gs.getMode() != this.mode) {
+      return false;
+    }
     return true;
   }
 

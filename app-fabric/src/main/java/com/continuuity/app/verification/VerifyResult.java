@@ -5,7 +5,7 @@ import com.continuuity.error.Errors;
 /**
  * This class defines the result of {@link Verifier#verify(Object)}.
  */
-public class VerifyResult {
+public final class VerifyResult {
   /**
    * Status of verification.
    */
@@ -56,7 +56,7 @@ public class VerifyResult {
    *
    * @return An instance of {@link VerifyResult} which is successful.
    */
-  public static VerifyResult SUCCESS() {
+  public static VerifyResult success() {
     return new VerifyResult(Status.SUCCESS, "OK");
   }
 
@@ -66,7 +66,7 @@ public class VerifyResult {
    *
    * @return An instance of {@link VerifyResult} which has failed with descriptive message.
    */
-  public static VerifyResult FAILURE(Errors error, Object... objects) {
+  public static VerifyResult failure(Errors error, Object... objects) {
     return new VerifyResult(Status.FAILED, error.getMessage(objects));
   }
 }

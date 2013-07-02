@@ -266,7 +266,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     
     byte [] queueName = Bytes.toBytes("testWriteBatchJustAck");
 
-    TTQueueOnVCTable.TRACE = true;
+    TTQueueOnVCTable.trace = true;
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     this.executor.execute(context, new QueueConfigure(queueName, consumer));
@@ -284,7 +284,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     result = this.executor.execute(context, dequeue);
     assertDequeueResultSuccess(result, Bytes.toBytes(1L));
 
-    TTQueueOnVCTable.TRACE = false;
+    TTQueueOnVCTable.trace = false;
 
     // Ack it
     this.executor.commit(context, batch(new QueueAck(queueName, result.getEntryPointer(), consumer)));

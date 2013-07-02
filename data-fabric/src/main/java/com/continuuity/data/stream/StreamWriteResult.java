@@ -13,7 +13,7 @@ public class StreamWriteResult extends EnqueueResult {
   }
 
   public static StreamWriteResult fromEnqueueResult(EnqueueResult result){
-    return new  StreamWriteResult(result.getStatus(),result.getEntryPointer());
+    return new  StreamWriteResult(result.getStatus(), result.getEntryPointer());
   }
 
 }

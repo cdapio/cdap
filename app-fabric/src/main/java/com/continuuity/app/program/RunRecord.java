@@ -4,6 +4,9 @@
 
 package com.continuuity.app.program;
 
+/**
+ * This class record information for a particular run.
+ */
 public final class RunRecord {
   private String pid;
   private long startTs;

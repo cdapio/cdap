@@ -1,8 +1,8 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.batch.MapReduce;
-import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.filesystem.Location;
 
 /**
  * Performs the actual execution of mapreduce job.
@@ -18,6 +18,9 @@ public interface MapReduceRuntimeService {
   Cancellable submit(MapReduce job, Location jobJarLocation, BasicMapReduceContext context, JobFinishCallback callback)
     throws Exception;
 
+  /**
+   * Interface for receiving callback when map reduce job finished.
+   */
   public static interface JobFinishCallback {
     void onFinished(boolean success);
   }

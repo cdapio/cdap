@@ -352,7 +352,7 @@ public class ConverterUtils {
   }
 
   /**
-   * wrap a list of key ranges
+   * wrap a list of key ranges.
    */
   List<TKeyRange> wrap(OperationResult<List<KeyRange>> result) {
     if (result.isEmpty() || result.getValue() == null || result.getValue().isEmpty()) {
@@ -367,7 +367,7 @@ public class ConverterUtils {
   }
 
   /**
-   * unwrap a list of key ranges
+   * unwrap a list of key ranges.
    */
   OperationResult<List<KeyRange>> unwrap(List<TKeyRange> tKeyRanges) {
     if (tKeyRanges.isEmpty()) {
@@ -725,7 +725,7 @@ public class ConverterUtils {
   }
 
   /**
-   * wrap a getSplits operations
+   * wrap a getSplits operations.
    */
   TGetSplits wrap(GetSplits getSplits) {
     TGetSplits tGetSplits = new TGetSplits(getSplits.getTable(), getSplits.getNumSplits(), getSplits.getId());
@@ -745,7 +745,7 @@ public class ConverterUtils {
   }
 
   /**
-   * unwrap a getSplits operations
+   * unwrap a getSplits operations.
    */
   GetSplits unwrap(TGetSplits tGetSplits) {
     GetSplits getSplits = new GetSplits(tGetSplits.getId(), tGetSplits.getTable(), tGetSplits.getNumSplits(),
@@ -988,7 +988,7 @@ public class ConverterUtils {
    * wrap a queue consumer.
    */
   TQueueConsumer wrap(QueueConsumer consumer) throws TOperationException {
-    TQueueConsumer tQueueConsumer=  new TQueueConsumer(
+    TQueueConsumer tQueueConsumer =  new TQueueConsumer(
         consumer.getInstanceId(),
         consumer.getGroupId(),
         consumer.getGroupSize(),
@@ -1167,7 +1167,7 @@ public class ConverterUtils {
     if (tDequeueResult.getConsumer() != null) {
       QueueConsumer retConsumer = unwrap(tDequeueResult.getConsumer());
       // No need to unwrap queue state, since it is now stored in Opex
-      if(retConsumer != null) {
+      if (retConsumer != null) {
         consumer.setStateType(retConsumer.getStateType());
       }
     }
@@ -1214,31 +1214,31 @@ public class ConverterUtils {
   }
   
   TQueueConfigureGroups wrap(QueueConfigureGroups configure) throws TOperationException {
-    if(configure == null) {
+    if (configure == null) {
       return null;
     }
     TQueueConfigureGroups tQueueConfigureGroups = new TQueueConfigureGroups(wrap(configure.getQueueName()), 
                                                                             configure.getGroupIds());
-    if(configure.getMetricName() != null) {
+    if (configure.getMetricName() != null) {
       tQueueConfigureGroups.setMetric(configure.getMetricName());
     }
     return tQueueConfigureGroups;
   }
 
   QueueConfigureGroups unwrap(TQueueConfigureGroups tQueueConfigureGroups) throws TOperationException {
-    if(tQueueConfigureGroups == null) {
+    if (tQueueConfigureGroups == null) {
       return null;
     }
     QueueConfigureGroups configure = new QueueConfigureGroups(tQueueConfigureGroups.getQueueName(),
                                                               tQueueConfigureGroups.getGroupIds());
-    if(tQueueConfigureGroups.getMetric() != null) {
+    if (tQueueConfigureGroups.getMetric() != null) {
       configure.setMetricName(tQueueConfigureGroups.getMetric());
     }
     return configure;
   }
 
   TQueueDropInflight wrap(QueueDropInflight op) throws TOperationException {
-    if(op == null) {
+    if (op == null) {
       return null;
     }
     TQueueDropInflight tOp =
@@ -1251,7 +1251,7 @@ public class ConverterUtils {
   }
 
   QueueDropInflight unwrap(TQueueDropInflight tOp) throws TOperationException {
-    if(tOp == null) {
+    if (tOp == null) {
       return null;
     }
     QueueDropInflight op =

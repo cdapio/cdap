@@ -20,7 +20,7 @@ public class TempFolder {
    */
   public TempFolder() {
     try {
-      folder= File.createTempFile("junit", "");
+      folder = File.createTempFile("junit", "");
       folder.delete();
       if (!folder.mkdir()) {
         throw new RuntimeException("Could NOT create temp dir at " + folder.getAbsolutePath());
@@ -51,7 +51,7 @@ public class TempFolder {
    * Returns a new fresh folder with the given name under the temporary folder.
    */
   public File newFolder(String folderName) {
-    File file= new File(folder, folderName);
+    File file = new File(folder, folderName);
     if (!file.mkdir()) {
       throw new RuntimeException("Could NOT create temp dir at " + file.getAbsolutePath());
     }
@@ -75,11 +75,12 @@ public class TempFolder {
   }
 
   private void recursiveDelete(File file) {
-    File[] files= file.listFiles();
-    if (files != null)
-      for (File each : files)
+    File[] files = file.listFiles();
+    if (files != null) {
+      for (File each : files) {
         recursiveDelete(each);
+      }
+    }
     file.delete();
   }
-
 }

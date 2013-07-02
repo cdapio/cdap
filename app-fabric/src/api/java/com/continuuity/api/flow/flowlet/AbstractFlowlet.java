@@ -22,7 +22,7 @@ public abstract class AbstractFlowlet implements Flowlet {
 
   /**
    * Default constructor which uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
-   * flowlet name
+   * flowlet name.
    */
   protected AbstractFlowlet() {
     this.name = getClass().getSimpleName();

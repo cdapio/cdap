@@ -17,6 +17,8 @@ import com.google.common.util.concurrent.ListenableFuture;
  * Before processing to next {@link Stage}, we wait for results
  * to be available.
  * </p>
+ *
+ * @param <T> Type of object produced by this pipeline.
  */
 public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
   /**
@@ -33,7 +35,7 @@ public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
     try {
       Object input = o;
       Object output = null;
-      for(Stage stage : getStages()) {
+      for (Stage stage : getStages()) {
         Context ctx = new StageContext(input);
         stage.process(ctx);
         output = ctx.getDownStream();

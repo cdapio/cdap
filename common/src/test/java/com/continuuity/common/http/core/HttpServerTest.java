@@ -93,6 +93,16 @@ public class HttpServerTest {
   public void testPathWithMultipleMethods() throws IOException {
     String endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
     HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity("data"));
+    HttpResponse response = request(put);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testPathWithPost() throws IOException {
+    String endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
+    HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity("data"));
     HttpResponse response = request(put);
     assertEquals(200, response.getStatusLine().getStatusCode());
   }
@@ -100,8 +110,9 @@ public class HttpServerTest {
   @Test
   public void testNonExistingEndPoints() throws IOException {
     String endPoint = String.format("http://localhost:%d/test/v1/users", port);
-    HttpGet get = new HttpGet(endPoint);
-    HttpResponse response = request(get);
+    HttpPost post = new HttpPost(endPoint);
+    post.setEntity(new StringEntity("data"));
+    HttpResponse response = request(post);
     assertEquals(404, response.getStatusLine().getStatusCode());
   }
 

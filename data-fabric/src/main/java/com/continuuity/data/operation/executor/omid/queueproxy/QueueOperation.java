@@ -5,12 +5,13 @@ import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 
 /**
 * Represents a queue operation that can be run in {@link QueueStateProxy}.
+* @param <T> operation parameter.
 */
 public abstract class QueueOperation<T> {
   /**
    * When {@link #updateStatefulConsumer(com.continuuity.data.operation.ttqueue.StatefulQueueConsumer)} is used
    * by the operation to update the statefulQueueConsumer, the derived classes need to set the this field to pass the
-   * update to {@link QueueStateProxy}
+   * update to {@link QueueStateProxy}.
    */
   protected volatile StatefulQueueConsumer statefulQueueConsumer = null;
 

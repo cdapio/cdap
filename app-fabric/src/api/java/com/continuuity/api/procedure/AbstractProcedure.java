@@ -36,7 +36,7 @@ public abstract class AbstractProcedure implements Procedure {
   }
 
   /**
-   * Default implementation of configure that returns a default {@link ProcedureSpecification}
+   * Default implementation of configure that returns a default {@link ProcedureSpecification}.
    * @return An instance of {@link ProcedureSpecification}
    */
   @Override
@@ -48,7 +48,7 @@ public abstract class AbstractProcedure implements Procedure {
   }
 
   /**
-   * Simpler implementation that memormizes the context of {@link Procedure}
+   * Simpler implementation that memormizes the context of {@link Procedure}.
    * @param context An instance of {@link ProcedureContext}
    */
   @Override

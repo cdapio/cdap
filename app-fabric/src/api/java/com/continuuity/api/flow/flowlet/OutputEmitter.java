@@ -11,10 +11,12 @@ import java.util.Map;
 /**
  * This interface defines an emitter used for emitting events from
  * within a flowlet.
+ *
+ * @param <T> Type of data that could be emitted by this OutputEmitter.
  */
 public interface OutputEmitter<T> {
   /**
-   * Emits an event of type T
+   * Emits an event of type T.
    * @param data to be emitted by the emitter which is of type T
    */
   void emit(T data);

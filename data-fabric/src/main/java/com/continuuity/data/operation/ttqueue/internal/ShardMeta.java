@@ -1,8 +1,7 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.common.base.Objects;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Meta data about the current shard.

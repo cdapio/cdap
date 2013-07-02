@@ -59,7 +59,7 @@ public final class ArchiveBundler {
   public ArchiveBundler(Location archive, String jarEntryPrefix) {
     Preconditions.checkNotNull(jarEntryPrefix, "Entry prefix of additional files in JAR is null");
     this.archive = archive;
-    if(jarEntryPrefix.charAt(jarEntryPrefix.length() - 1) != '/') {
+    if (jarEntryPrefix.charAt(jarEntryPrefix.length() - 1) != '/') {
       jarEntryPrefix += "/";
     }
     this.jarEntryPrefix = jarEntryPrefix;
@@ -108,17 +108,17 @@ public final class ArchiveBundler {
         // being added are not already present. If not, they are added to the
         // output zip.
         JarEntry entry = zin.getNextJarEntry();
-        while(entry != null) {
+        while (entry != null) {
           // Invoke the predicate to see if the entry needs to be filtered.
           // If the ignoreFilter returns true, then it needs to be filtered; false keep it.
-          if(ignoreFilter.apply(entry)) {
+          if (ignoreFilter.apply(entry)) {
             entry = zin.getNextJarEntry();
             continue;
           }
 
           final String name = entry.getName();
           // adding entries missing in jar
-          if(!files.containsKey(name)) {
+          if (!files.containsKey(name)) {
             zout.putNextEntry(new JarEntry(entry));
             ByteStreams.copy(zin, zout);
           }
@@ -130,7 +130,7 @@ public final class ArchiveBundler {
       }
 
       // Add the new files.
-      for(Map.Entry<String, ? extends InputSupplier<? extends InputStream>> toAdd : files.entrySet()) {
+      for (Map.Entry<String, ? extends InputSupplier<? extends InputStream>> toAdd : files.entrySet()) {
         zout.putNextEntry(new JarEntry(jarEntryPrefix + toAdd.getKey()));
         InputStream in = toAdd.getValue().getInput();
         try {

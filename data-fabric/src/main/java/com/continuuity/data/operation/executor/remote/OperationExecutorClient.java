@@ -140,7 +140,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public Transaction startTransaction(OperationContext context, boolean trackChanges) throws OperationException, TException {
+  public Transaction startTransaction(OperationContext context, boolean trackChanges)
+    throws OperationException, TException {
 
     MetricsHelper helper = newHelper("startTransaction");
 
@@ -798,12 +799,18 @@ public class OperationExecutorClient extends ConverterUtils {
     MetricsHelper helper = newHelper("configureGroup", configure.getQueueName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + configure);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + configure);
+      }
       TOperationContext tContext = wrap(context);
       TQueueConfigureGroups tQueueConfigure = wrap(configure);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tQueueConfigure);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tQueueConfigure);
+      }
       client.configureQueueGroups(tContext, tQueueConfigure);
-      if (Log.isTraceEnabled()) Log.trace("QueueConfigureGroups successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("QueueConfigureGroups successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -823,12 +830,18 @@ public class OperationExecutorClient extends ConverterUtils {
     MetricsHelper helper = newHelper("QueueDropInFlight", op.getQueueName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + op);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + op);
+      }
       TOperationContext tContext = wrap(context);
       TQueueDropInflight tOp = wrap(op);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tOp);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tOp);
+      }
       client.queueDropInflight(tContext, tOp);
-      if (Log.isTraceEnabled()) Log.trace("QueueDropInFlight successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("QueueDropInFlight successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {

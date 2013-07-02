@@ -1368,8 +1368,7 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
           }
           colMap.put(column, result.getBytes(6));
         }
-      }
-      catch (SQLException e){
+     } catch (SQLException e){
         throw Throwables.propagate(e);
       }
     }

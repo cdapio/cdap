@@ -14,9 +14,9 @@ public class StreamVerification extends AbstractVerifier implements Verifier<Str
   @Override
   public VerifyResult verify(final StreamSpecification input) {
     // Checks if DataSet name is an ID
-    if(!isId(input.getName())) {
-      return VerifyResult.FAILURE(Err.NOT_AN_ID, "Stream");
+    if (!isId(input.getName())) {
+      return VerifyResult.failure(Err.NOT_AN_ID, "Stream");
     }
-    return VerifyResult.SUCCESS();
+    return VerifyResult.success();
   }
 }

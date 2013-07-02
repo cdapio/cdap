@@ -23,13 +23,16 @@ public class AggregateMetricsByTag {
   public static final Logger LOG = LoggerFactory.getLogger(AggregateMetricsByTag.class);
   public static final byte[] BY_TAGS = com.continuuity.common.utils.Bytes.toBytes("byTag");
 
+  /**
+   *
+   */
   public static class Map extends Mapper<byte[], TimeseriesTable.Entry, BytesWritable, LongWritable> {
     @UseDataSet("counters")
     private Table counters;
 
     public void map(byte[] key, TimeseriesTable.Entry value, Context context) throws IOException, InterruptedException {
       for (byte[] tag : value.getTags()) {
-        context.write(new BytesWritable(tag), new LongWritable(com.continuuity.common.utils.Bytes.toLong(value.getValue())));
+        context.write(new BytesWritable(tag), new LongWritable(Bytes.toLong(value.getValue())));
       }
     }
 
@@ -47,6 +50,9 @@ public class AggregateMetricsByTag {
     }
   }
 
+  /**
+   *
+   */
   public static class Reduce extends Reducer<BytesWritable, LongWritable, byte[], TimeseriesTable.Entry> {
     @UseDataSet("counters")
     private Table counters;
@@ -58,7 +64,7 @@ public class AggregateMetricsByTag {
         sum += val.get();
       }
       byte[] tag = key.copyBytes();
-      context.write(tag, new TimeseriesTable.Entry(BY_TAGS, com.continuuity.common.utils.Bytes.toBytes(sum), System.currentTimeMillis(), tag));
+      context.write(tag, new TimeseriesTable.Entry(BY_TAGS, Bytes.toBytes(sum), System.currentTimeMillis(), tag));
     }
 
     @Override

@@ -19,7 +19,7 @@ public class QueueConfig {
   private final boolean returnBatch;
 
   /**
-   * A config without batching
+   * A config without batching.
    * @param partitionerType the partitioner to use
    * @param singleEntry if true, repeated dequeue returns the same element until it is ack'ed
    */
@@ -31,7 +31,7 @@ public class QueueConfig {
   }
 
   /**
-   * A config with batch claim but single entry return
+   * A config with batch claim but single entry return.
    * @param partitionerType the partitioner to use
    * @param singleEntry if true, repeated dequeue returns the same element until it is ack'ed
    * @param batchSize dequeue will prefetch this many entries, but return only one at a time
@@ -41,7 +41,7 @@ public class QueueConfig {
   }
 
   /**
-   * A config with batch claim but single entry return
+   * A config with batch claim but single entry return.
    * @param partitionerType the partitioner to use
    * @param singleEntry if true, repeated dequeue returns the same element until it is ack'ed
    * @param batchSize dequeue will (pre)fetch this many entries
@@ -51,7 +51,7 @@ public class QueueConfig {
     this.partitionerType = partitionerType;
     this.singleEntry = singleEntry;
 
-    if(batchSize <= 0) {
+    if (batchSize <= 0) {
       throw new IllegalArgumentException(
         String.format("batchSize has to be greater than zero, given batchSize=%d", batchSize));
     }
