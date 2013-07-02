@@ -215,7 +215,7 @@ public class WordCountApp2 implements Application {
   }
 
   /**
-   * Procedure to count.
+   * Procedure to query word counts.
    */
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
@@ -274,7 +274,7 @@ public class WordCountApp2 implements Application {
     }
 
     /**
-     *
+     * Reducer for map reduce job.
      */
     public static class MyReducer extends Reducer<BytesWritable, LongWritable, byte[], byte[]> {
       @Override
