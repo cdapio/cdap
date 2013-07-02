@@ -68,7 +68,7 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
       return;
     }
 
-    handleRequest((HttpRequest)message, ctx.getChannel());
+    handleRequest((HttpRequest) message, ctx.getChannel());
   }
 
   @Override
@@ -79,8 +79,8 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
 
   /**
    * Sends a error response and close the channel.
-   * @param status
-   * @param channel
+   * @param status Status of the response.
+   * @param channel Netty channel for output.
    */
   private void errorResponse(HttpResponseStatus status, Channel channel, String content) {
     metrics.counter("query.failed", 1);
@@ -123,7 +123,7 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
   private ProcedureRequest createProcedureRequest(HttpRequest request, Channel channel, String requestMethod) {
     try {
       Map<String, String> args = gson.get().fromJson(
-        new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8),REQUEST_TYPE);
+        new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8), REQUEST_TYPE);
 
       return new DefaultProcedureRequest(requestMethod, args);
 

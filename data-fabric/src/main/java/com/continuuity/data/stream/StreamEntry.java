@@ -29,14 +29,14 @@ public class StreamEntry {
     return data;
   }
 
-  public StreamEntry( byte[] data) {
+  public StreamEntry(byte[] data) {
     Preconditions.checkNotNull(data);
     this.header = Maps.newHashMap();
     this.data = data;
   }
 
   public QueueEntry toQueueEntry(){
-    return new QueueEntry(header,data);
+    return new QueueEntry(header, data);
   }
 
   public static StreamEntry fromQueueEntry(QueueEntry entry) {

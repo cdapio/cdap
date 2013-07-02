@@ -67,16 +67,16 @@ import java.util.jar.Manifest;
  */
 public class TestHelper {
 
-  public final static AuthToken DUMMY_AUTH_TOKEN = new AuthToken("appFabricTest");
-  public final static TempFolder tempFolder = new TempFolder();
+  public static final AuthToken DUMMY_AUTH_TOKEN = new AuthToken("appFabricTest");
+  public static final TempFolder TEMP_FOLDER = new TempFolder();
   public static CConfiguration configuration;
   private static Injector injector;
 
   static {
 //    TempFolder tempFolder = new TempFolder();
     configuration = CConfiguration.create();
-    configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
-    configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
+    configuration.set("app.output.dir", TEMP_FOLDER.newFolder("app").getAbsolutePath());
+    configuration.set("app.tmp.dir", TEMP_FOLDER.newFolder("temp").getAbsolutePath());
     injector = Guice.createInjector(new AppFabricTestModule(configuration));
   }
 
@@ -106,10 +106,12 @@ public class TestHelper {
   }
 
   public static void deployApplication(Class<? extends Application> application) throws Exception {
-    deployApplication(application, "app-" + System.currentTimeMillis()/1000 + ".jar");
+    deployApplication(application,
+                      "app-" + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + ".jar");
   }
 
-  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass) throws Exception {
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass)
+                                                                                                      throws Exception {
     LocalLocationFactory lf = new LocalLocationFactory();
 
     Location deployedJar = lf.create(
@@ -235,7 +237,13 @@ public class TestHelper {
             tmpDir);
           return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec);
         } else if (uri.getScheme().equals("jar")) {
-          return new File(uri.getPath());
+          String rawSchemeSpecificPart = uri.getRawSchemeSpecificPart();
+          if (rawSchemeSpecificPart.startsWith("file:") && rawSchemeSpecificPart.contains("!")) {
+            String[] parts = rawSchemeSpecificPart.substring("file:".length()).split("!");
+            return new File(parts[0]);
+          } else {
+            return new File(uri.getPath());
+          }
         }
       }
     } catch (Exception e) {

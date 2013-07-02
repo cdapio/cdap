@@ -214,7 +214,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
-            LOG.error(String.format("Fail to invoke process method: %s, %s", entry.getProcessSpec(), flowletContext), t);
+            LOG.error("Fail to invoke process method: {}, {}", entry.getProcessSpec(), flowletContext, t);
           }
         } catch (OperationException e) {
           LOG.error("Queue operation failure: " + flowletContext, e);
@@ -275,7 +275,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
-            LOG.error(String.format("Fail to invoke process method: %s, %s", entry.getProcessSpec(), flowletContext), t);
+            LOG.error("Fail to invoke process method: {}, {}", entry.getProcessSpec(), flowletContext, t);
           }
         } catch (OperationException e) {
           // This should never happen for retry entries

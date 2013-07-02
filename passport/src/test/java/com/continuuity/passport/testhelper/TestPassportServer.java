@@ -3,10 +3,16 @@ package com.continuuity.passport.testhelper;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.http.modules.ShiroGuiceModule;
+import com.google.common.io.ByteStreams;
+import com.google.gson.JsonObject;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.GuiceServletContextListener;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.mortbay.jetty.Server;
@@ -15,6 +21,10 @@ import org.mortbay.jetty.servlet.DefaultServlet;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Mock Server to test out the Http endpoints.
@@ -77,8 +87,27 @@ public class TestPassportServer {
       SecurityUtils.setSecurityManager(securityManager);
 
       return injector;
+    }
   }
- }
+
+  public static String request(HttpUriRequest uri) throws IOException {
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(uri);
+    System.out.println(response.toString());
+    assertTrue(response.getStatusLine().getStatusCode() == 200);
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ByteStreams.copy(response.getEntity().getContent(), bos);
+    String result = bos.toString("UTF-8");
+    bos.close();
+    return result;
+  }
+
+  public static String getCompany(String id, String name){
+    JsonObject object = new JsonObject();
+    object.addProperty("id", id);
+    object.addProperty("name", name);
+    return object.toString();
+  }
 }
 
 

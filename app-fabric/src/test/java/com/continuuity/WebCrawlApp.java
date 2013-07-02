@@ -55,6 +55,9 @@ public class WebCrawlApp implements Application {
     String getURL();
   }
 
+  /**
+   *
+   */
   public static final class DocumentURLImpl implements DocumentURL {
     private final String url;
 
@@ -78,6 +81,9 @@ public class WebCrawlApp implements Application {
     Long   getLoadTime();
   }
 
+  /**
+   *
+   */
   public static final class DocumentImpl implements Document {
     private final String body;
     private final String meta;

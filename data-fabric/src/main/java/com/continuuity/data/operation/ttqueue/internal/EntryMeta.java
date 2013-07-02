@@ -45,6 +45,9 @@ public class EntryMeta {
         .toString();
   }
 
+  /**
+   * Defines possible states for queue entry.
+   */
   public static enum EntryState {
     VALID, INVALID, SHARD_END, EVICTED;
 
@@ -65,10 +68,18 @@ public class EntryMeta {
 
     public static EntryState fromBytes(byte [] bytes) {
       if (bytes.length == 1) {
-        if (bytes[0] == VALID_BYTES[0]) return VALID;
-        if (bytes[0] == INVALID_BYTES[0]) return INVALID;
-        if (bytes[0] == SHARD_END_BYTES[0]) return SHARD_END;
-        if (bytes[0] == EVICTED_BYTES[0]) return EVICTED;
+        if (bytes[0] == VALID_BYTES[0]) {
+          return VALID;
+        }
+        if (bytes[0] == INVALID_BYTES[0]) {
+          return INVALID;
+        }
+        if (bytes[0] == SHARD_END_BYTES[0]) {
+          return SHARD_END;
+        }
+        if (bytes[0] == EVICTED_BYTES[0]) {
+          return EVICTED;
+        }
       }
       throw new RuntimeException("Invalid deserialization of EntryState");
     }

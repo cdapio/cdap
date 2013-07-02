@@ -24,8 +24,13 @@ CREATE  TABLE IF NOT EXISTS `passport`.`account` (
   `dev_suite_downloaded_at` DATETIME NULL DEFAULT NULL,
   `payment_account_id` VARCHAR(100) NULL DEFAULT NULL,
   `payment_info_provided_at` DATETIME NULL DEFAULT NULL,
+  `org_id` VARCHAR(100) NULL DEFAULT NULL,
   PRIMARY KEY (`id`) ,
-  UNIQUE INDEX `email_id_UNIQUE` (`email_id` ASC) )
+  UNIQUE INDEX `email_id_UNIQUE` (`email_id` ASC),
+  INDEX `org_id_idx` (`org_id` ASC),
+  CONSTRAINT `org_id`
+    FOREIGN KEY (`org_id` )
+    REFERENCES `passport`.`organization` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
@@ -175,6 +180,15 @@ CREATE  TABLE IF NOT EXISTS `passport`.`nonce` (
   `nonce_expires_at` DATETIME NOT NULL,
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) ,
   UNIQUE INDEX `nonce_id_UNIQUE` (`nonce_id` ASC) )
+
+-- -----------------------------------------------------
+-- Table `passport`.`organization`
+-- Entity to store organization info
+-- -----------------------------------------------------
+CREATE  TABLE IF NOT EXISTS `passport`.`organization` (
+  `id` VARCHAR(100) NOT NULL,
+  `name` VARCHAR(100) NOT NULL ,
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC)
 
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;

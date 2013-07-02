@@ -15,7 +15,6 @@ out/
 .DS_Store
 lib/
 .idea
-data/
 
 # Gradle Files & Dir #
 build/
@@ -29,4 +28,4 @@ npm-*.log
 logs/
 
 # Singlenode run files. 
-data/
+./data/

@@ -70,7 +70,7 @@ public class OverlordServer extends AbstractRegisteredServer implements
    */
   @Override
   protected void stop() {
-    if(server != null) {
+    if (server != null) {
       server.stop();
     }
     executorService.shutdown();

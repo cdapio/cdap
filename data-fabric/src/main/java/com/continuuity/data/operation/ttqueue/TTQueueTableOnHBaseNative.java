@@ -28,7 +28,7 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   private final CConfiguration conf;
 
   private final ConcurrentSkipListMap<byte[], TTQueue> queues =
-      new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
+      new ConcurrentSkipListMap<byte[], TTQueue>(Bytes.BYTES_COMPARATOR);
 
   public TTQueueTableOnHBaseNative(HTable table, TransactionOracle oracle,
                                    CConfiguration conf, Configuration hbaseConf) {
@@ -40,7 +40,9 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
 
   private TTQueue getQueue(byte [] queueName) {
     TTQueue queue = this.queues.get(queueName);
-    if (queue != null) return queue;
+    if (queue != null) {
+      return queue;
+    }
     queue = new TTQueueOnHBaseNative(this.table, queueName, this.oracle,
         this.conf);
     TTQueue existing = this.queues.putIfAbsent(queueName, queue);
@@ -107,7 +109,8 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public void dropInflightState(byte[] queueName, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+  public void dropInflightState(byte[] queueName, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException {
     getQueue(queueName).dropInflightState(consumer, readPointer);
   }
 
@@ -115,8 +118,9 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   public String getGroupInfo(byte[] queueName, int groupId)
       throws OperationException {
     TTQueue queue = getQueue(queueName);
-    if (queue instanceof TTQueueOnVCTable)
-      return ((TTQueueOnVCTable)queue).getInfo(groupId);
+    if (queue instanceof TTQueueOnVCTable) {
+      return ((TTQueueOnVCTable) queue).getInfo(groupId);
+    }
     return "GroupInfo not supported";
   }
 
@@ -124,8 +128,9 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   public String getEntryInfo(byte[] queueName, long entryId)
       throws OperationException {
     TTQueue queue = getQueue(queueName);
-    if (queue instanceof TTQueueOnVCTable)
-      return ((TTQueueOnVCTable)queue).getEntryInfo(entryId);
+    if (queue instanceof TTQueueOnVCTable) {
+      return ((TTQueueOnVCTable) queue).getEntryInfo(entryId);
+    }
     return "EntryInfo not supported";
   }
 

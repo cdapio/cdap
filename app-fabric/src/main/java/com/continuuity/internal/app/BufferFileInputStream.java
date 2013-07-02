@@ -43,7 +43,7 @@ public final class BufferFileInputStream {
    * @throws java.io.FileNotFoundException
    */
   public BufferFileInputStream(String file) throws FileNotFoundException {
-    this(file, 100*1024);
+    this(file, 100 * 1024);
   }
 
   /**
@@ -65,10 +65,10 @@ public final class BufferFileInputStream {
    */
   public byte[] read() throws IOException {
     int length = stream.read(buffer);
-    if(length==-1) {
+    if (length == -1) {
       close();
       return new byte[0];
-    } else if(length==buffer.length) {
+    } else if (length == buffer.length) {
       return buffer;
     } else {
       return Arrays.copyOf(buffer, length);

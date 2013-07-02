@@ -205,7 +205,7 @@ public class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
 
           // If there is a point at a given timestamp, then the
           // metric value are added.
-          if(points.containsKey(parsedTimestamp)) {
+          if (points.containsKey(parsedTimestamp)) {
             double value = points.get(parsedTimestamp).getValue()
                     + dp.getValue();
             points.put(parsedTimestamp,

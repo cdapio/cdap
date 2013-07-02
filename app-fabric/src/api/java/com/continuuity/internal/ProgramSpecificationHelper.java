@@ -9,7 +9,7 @@ import java.lang.reflect.Field;
 import java.util.Set;
 
 /**
- * Helper used for initializing program's specs
+ * Helper used for initializing program's specs.
  */
 public final class ProgramSpecificationHelper {
   public static Set<String> inspectDataSets(Class<?> classToInspect, ImmutableSet.Builder<String> datasets) {

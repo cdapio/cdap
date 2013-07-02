@@ -64,7 +64,7 @@ public class FlowTest {
     // Only running flow is good. But, in case procedure, we need to send something to procedure as it's lazy
     // load on procedure.
     List<ProgramController> controllers = Lists.newArrayList();
-    for(final Program program : app.getPrograms()) {
+    for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override

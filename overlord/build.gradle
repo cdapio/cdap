@@ -73,4 +73,10 @@ javadoc {
     classpath += sourceSets.thrift.output
 }
 
+checkstyleThrift {
+  source = sourceSets.thrift.allJava.matching {
+     exclude '**/thrift/**/*'
+  }
+}
+
 jar.exclude '*.xml'

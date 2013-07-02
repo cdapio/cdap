@@ -69,7 +69,7 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
    */
   @Override
   protected void stop() {
-    if(server != null) {
+    if (server != null) {
       server.stop();
     }
     executorService.shutdown();

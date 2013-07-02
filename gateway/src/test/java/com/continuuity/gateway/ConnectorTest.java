@@ -4,6 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Tests connector.
+ */
 public class ConnectorTest {
 
   /**

@@ -45,6 +45,9 @@ public class ToyApp implements Application {
       .build();
   }
 
+  /**
+   *
+   */
   public static final class ToyFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -74,6 +77,9 @@ public class ToyApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class A extends AbstractFlowlet {
     @UseDataSet("data1")
     private KeyValueTable myDataSet;
@@ -102,6 +108,9 @@ public class ToyApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class B extends AbstractFlowlet {
     private OutputEmitter<Boolean> out;
 
@@ -114,6 +123,9 @@ public class ToyApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class C extends AbstractFlowlet {
     @Output("c1")
     private OutputEmitter<Long> c1;
@@ -125,12 +137,15 @@ public class ToyApp implements Application {
       super("C");
     }
 
-    public void process(String A) {
+    public void process(String a) {
       c1.emit(1L);
       c2.emit(1);
     }
   }
 
+  /**
+   *
+   */
   public static final class E extends AbstractFlowlet {
     private OutputEmitter<Double> out;
 
@@ -148,6 +163,9 @@ public class ToyApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class D extends AbstractFlowlet {
     @Output("d1")
     private OutputEmitter<List<String>> out;
@@ -163,6 +181,9 @@ public class ToyApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class F extends AbstractFlowlet {
     @Output("f1")
     private OutputEmitter<URI> f1;
@@ -177,6 +198,9 @@ public class ToyApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class G extends AbstractFlowlet {
     public G() {
       super("G");
@@ -196,6 +220,4 @@ public class ToyApp implements Application {
 
     }
   }
-
-
 }

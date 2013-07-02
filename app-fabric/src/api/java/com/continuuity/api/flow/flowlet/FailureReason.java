@@ -52,7 +52,7 @@ public final class FailureReason {
   }
 
   /**
-   * Returns the type of failure
+   * Returns the type of failure.
    * @return type of failure
    */
   public Type getType() {

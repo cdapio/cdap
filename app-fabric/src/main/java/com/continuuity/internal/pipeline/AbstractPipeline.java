@@ -13,6 +13,8 @@ import java.util.List;
 
 /**
  * Abstract implementation of {@link Pipeline}.
+ *
+ * @param <T> Type of object produced by this pipeline.
  */
 public abstract class AbstractPipeline<T> implements Pipeline<T> {
   /**

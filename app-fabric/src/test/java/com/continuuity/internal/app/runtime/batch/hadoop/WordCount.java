@@ -31,12 +31,18 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
+/**
+ *
+ */
 public class WordCount {
 
-  public static class TokenizerMapper 
+  /**
+   *
+   */
+  public static class TokenizerMapper
        extends Mapper<Object, Text, Text, IntWritable> {
     
-    private final static IntWritable one = new IntWritable(1);
+    private static final IntWritable ONE = new IntWritable(1);
     private Text word = new Text();
       
     public void map(Object key, Text value, Context context
@@ -44,13 +50,15 @@ public class WordCount {
       StringTokenizer itr = new StringTokenizer(value.toString());
       while (itr.hasMoreTokens()) {
         word.set(itr.nextToken());
-        context.write(word, one);
+        context.write(word, ONE);
       }
     }
   }
-  
-  public static class IntSumReducer 
-       extends Reducer<Text,IntWritable,Text,IntWritable> {
+
+  /**
+   *
+   */
+  public static class IntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
     private IntWritable result = new IntWritable();
 
     public void reduce(Text key, Iterable<IntWritable> values,

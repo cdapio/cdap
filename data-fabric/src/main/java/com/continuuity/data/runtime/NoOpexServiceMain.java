@@ -11,7 +11,15 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.Random;
 
+/**
+ * Driver to start and stop NOOP opex. The opex that is started using this driver returns only empty results.
+ * It is useful for testing and performance benchmarks.
+ */
 public class NoOpexServiceMain {
+
+  private static final int NOOP = 0;
+  private static final int START = 1;
+  private static final int STOP = 2;
 
   static void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
@@ -31,10 +39,6 @@ public class NoOpexServiceMain {
       usage(false);
       return;
     }
-
-    final int NOOP = 0;
-    final int START = 1;
-    final int STOP = 2;
 
     int command = NOOP;
 
@@ -74,8 +78,7 @@ public class NoOpexServiceMain {
         System.err.println("Failed to start service: " + e.getMessage());
         return;
       }
-    }
-    else if (STOP == command) {
+    } else if (STOP == command) {
       Copyright.print(System.out);
       System.out.println("Stopping Operation Executor Service...");
       opexService.stop(true);

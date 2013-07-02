@@ -72,6 +72,7 @@ public class MetricsFrontendServiceImpl
 
   private static int MAX_THREAD_POOL_SIZE = 50;
 
+
   /**
    * Connection string to connect to database.
    */
@@ -109,37 +110,31 @@ public class MetricsFrontendServiceImpl
   @Inject
   public MetricsFrontendServiceImpl(CConfiguration configuration)
     throws ClassNotFoundException, SQLException {
-    this.connectionUrl
-      = configuration.get(Constants.CFG_METRICS_CONNECTION_URL,
-                          Constants.DEFAULT_METIRCS_CONNECTION_URL);
-    this.type = DBUtils.loadDriver(connectionUrl);
+    /*
+    Connection string to connect to database.
+   */
+    String connectionUrl = configuration.get(Constants.CFG_METRICS_CONNECTION_URL,
+                                             Constants.DEFAULT_METIRCS_CONNECTION_URL);
+    /*
+    Type of Database we are configured with.
+   */
+    DBUtils.DBType type = DBUtils.loadDriver(connectionUrl);
 
     // Creates a pooled data source.
-    if(this.type == DBUtils.DBType.MYSQL) {
+    if (type == DBUtils.DBType.MYSQL) {
       MysqlConnectionPoolDataSource mysqlDataSource =
         new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionUrl);
       poolManager = new DBConnectionPoolManager(mysqlDataSource, 1000);
-    } else if(this.type == DBUtils.DBType.HSQLDB) {
+    } else if (type == DBUtils.DBType.HSQLDB) {
       JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
       jdbcDataSource.setUrl(connectionUrl);
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 1000);
     }
+
     DBUtils.createMetricsTables(getConnection(), this.type);
 
     this.logPattern = configuration.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
-  }
-
-  private ExecutorService createExecutor() {
-    // Thread pool of size max TX_EXECUTOR_POOL_SIZE.
-    // 60 seconds wait time before killing idle threads.
-    // Keep no idle threads more than 60 seconds.
-    // If max thread pool size reached, reject the new coming
-    return new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
-                                  60L, TimeUnit.SECONDS,
-                                  new SynchronousQueue<Runnable>(),
-                                  Threads.createDaemonThreadFactory("metrics-service-%d"),
-                                  new ThreadPoolExecutor.DiscardPolicy());
   }
 
   /**
@@ -147,7 +142,7 @@ public class MetricsFrontendServiceImpl
    * @throws java.sql.SQLException thrown in case of any error.
    */
   private Connection getConnection() throws SQLException {
-    if(poolManager != null) {
+    if (poolManager != null) {
       return poolManager.getValidConnection();
     }
     return null;
@@ -177,7 +172,7 @@ public class MetricsFrontendServiceImpl
   @Override
   public void reset(String accountId) throws MetricsServiceException, TException {
     try {
-      if(! DBUtils.clearMetricsTables(getConnection(), accountId)) {
+      if (!DBUtils.clearMetricsTables(getConnection(), accountId)) {
         throw new MetricsServiceException("Failed to reset metrics for " +
                                             "account " + accountId);
       }
@@ -277,7 +272,7 @@ public class MetricsFrontendServiceImpl
 
       // If run id is passed, then use it.
       String runIdInclusion = null;
-      if(request.getArgument() != null &&
+      if (request.getArgument() != null &&
         request.getArgument().isSetRunId()) {
         runIdInclusion = String.format("run_id = '%s'",
           request.getArgument().getRunId());
@@ -285,14 +280,14 @@ public class MetricsFrontendServiceImpl
 
       // If metric name list is zero, then we return all the metrics.
       StringBuffer sql = new StringBuffer();
-      if(request.getName() == null || request.getName().size() == 0) {
+      if (request.getName() == null || request.getName().size() == 0) {
         sql.append("SELECT flowlet_id, metric, SUM(value) AS aggr_value");
         sql.append(" ");
         sql.append("FROM metrics WHERE account_id = ? AND application_id = ?");
         sql.append(" ");
         sql.append("AND flow_id = ?");
         sql.append(" ");
-        if(runIdInclusion != null) {
+        if (runIdInclusion != null) {
           sql.append("AND").append(" ").append(runIdInclusion).append(" ");
         }
         sql.append("GROUP BY flowlet_id, metric");
@@ -315,7 +310,7 @@ public class MetricsFrontendServiceImpl
         sql.append(" ");
         sql.append("AND flow_id = ?");
         sql.append("AND");
-        if(runIdInclusion != null) {
+        if (runIdInclusion != null) {
           sql.append(" ").append(runIdInclusion).append(" AND");
         }
         sql.append(" ").append("metric in (")
@@ -333,7 +328,7 @@ public class MetricsFrontendServiceImpl
         stmt.setString(2, request.getArgument().getApplicationId());
         stmt.setString(3, request.getArgument().getFlowId());
         rs = stmt.executeQuery();
-        while(rs.next()) {
+        while (rs.next()) {
           results.add(new Counter(
             rs.getString("flowlet_id"),
             rs.getString("metric"),
@@ -344,16 +339,16 @@ public class MetricsFrontendServiceImpl
         LOG.warn("Unable to retrieve counters. Reason : {}", e.getMessage());
       } finally {
         try {
-          if(rs != null) {
+          if (rs != null) {
             rs.close();
           }
-          if(stmt != null) {
+          if (stmt != null) {
             stmt.close();
           }
-          if(connection != null) {
+          if (connection != null) {
             connection.close();
           }
-        } catch(SQLException e) {
+        } catch (SQLException e) {
           LOG.warn("Failed to close connection/statement/record. Reason : " +
                      "{}", e.getMessage());
         }
@@ -374,7 +369,7 @@ public class MetricsFrontendServiceImpl
       dataPointsFuture = Lists.newArrayList();
     Timeseries timeseries = new Timeseries();
 
-    long start = System.currentTimeMillis()/1000;
+    long start = System.currentTimeMillis() / 1000;
     long end = start - 1; // Skip few current datapoints, as they might be
     // being populated.
 
@@ -383,19 +378,19 @@ public class MetricsFrontendServiceImpl
 
     // If start time is specified and end time is negative offset
     // from that start time, then we use that.
-    if(request.isSetStartts() && request.getStartts() < 0) {
+    if (request.isSetStartts() && request.getStartts() < 0) {
       start = start + request.getStartts() + SKIP_POINTS;
     }
 
-    if(request.isSetStartts() && request.isSetEndts()) {
+    if (request.isSetStartts() && request.isSetEndts()) {
       start = request.getStartts();
       end = request.getEndts();
     }
 
     // Preprocess the metrics list.
     List<String> preprocessedMetrics = Lists.newArrayList();
-    for(String metric : request.getMetrics()) {
-      if("busyness".equals(metric)) {
+    for (String metric : request.getMetrics()) {
+      if ("busyness".equals(metric)) {
         preprocessedMetrics.add("tuples.read.count");
         preprocessedMetrics.add("tuples.attempt.read.count");
       } else {
@@ -405,7 +400,7 @@ public class MetricsFrontendServiceImpl
 
     // Iterate through the metric list to be retrieved and request them
     // to be fetched in parallel.
-    for(String metric : preprocessedMetrics) {
+    for (String metric : preprocessedMetrics) {
       Callable<ImmutablePair<String, List<DataPoint>>> worker =
         new RetrieveDataPointCallable(metric, start, end, request);
       Future<ImmutablePair<String, List<DataPoint>>> submit = executor.submit(worker);
@@ -415,7 +410,7 @@ public class MetricsFrontendServiceImpl
     // Now, join on all dataPodints retrieved from future.
     long numPoints = Math.min(1800, end - start);
     Map<String, List<DataPoint>> dataPoints = Maps.newHashMap();
-    for(Future<ImmutablePair<String, List<DataPoint>>> future : dataPointsFuture) {
+    for (Future<ImmutablePair<String, List<DataPoint>>> future : dataPointsFuture) {
       try {
         ImmutablePair<String, List<DataPoint>> dataPoint = future.get();
         dataPoints.put(dataPoint.getFirst(), dataPoint.getSecond());
@@ -432,14 +427,14 @@ public class MetricsFrontendServiceImpl
     Map<String, List<Point>> results = Maps.newHashMap();
 
     // Iterate through the list of metric requested and
-    for(String metric : request.getMetrics()) {
+    for (String metric : request.getMetrics()) {
       // If the metric to be retrieved is busyness, it's a composite metric
       // and hence we retrieve the tuple.read.count and tuples.proc.count
       // and divide one by the other. This is done on the rate.
-      if(metric.equals("busyness")) {
+      if (metric.equals("busyness")) {
         List<DataPoint> processed = dataPoints.get("tuples.read.count");
         List<DataPoint> read = dataPoints.get("tuples.attempt.read.count");
-        if(read == null || processed == null) {
+        if (read == null || processed == null) {
           List<DataPoint> n = null;
           results.put(metric, convertDataPointToPoint(n));
         } else {
@@ -449,7 +444,7 @@ public class MetricsFrontendServiceImpl
             new Function<Double, Double>() {
               @Override
               public Double apply(Double value) {
-                if(value.doubleValue() > 1) {
+                if (value.doubleValue() > 1) {
                   value = new Double(1);
                 }
                 return value * 100;
@@ -457,7 +452,7 @@ public class MetricsFrontendServiceImpl
             }
           );
           ImmutableList<DataPoint> filledBusyness =
-            timeseries.fill(busyness,"busyness",start, end, numPoints, 1);
+            timeseries.fill(busyness, "busyness", start, end, numPoints, 1);
           results.put(metric, convertDataPointToPoint(filledBusyness));
         }
       } else {
@@ -493,12 +488,12 @@ public class MetricsFrontendServiceImpl
    */
   List<Point> convertDataPointToPoint(List<DataPoint> points) {
     List<Point> p = Lists.newArrayList();
-    if(points == null || points.size() < 1) {
+    if (points == null || points.size() < 1) {
       return p;
     }
     short count = SKIP_POINTS;
-    for(DataPoint point : points) {
-      if(points.size() > SKIP_POINTS && count > 0) {
+    for (DataPoint point : points) {
+      if (points.size() > SKIP_POINTS && count > 0) {
         count--;
         continue;
       }
@@ -531,9 +526,8 @@ public class MetricsFrontendServiceImpl
     }
     @Override
     public ImmutablePair<String, List<DataPoint>> call() throws Exception {
-      long id = System.nanoTime();
       MetricTimeseriesLevel level = MetricTimeseriesLevel.FLOW_LEVEL;
-      if(request.isSetLevel()) {
+      if (request.isSetLevel()) {
         level = request.getLevel();
       }
       List<DataPoint> points =
@@ -564,7 +558,7 @@ public class MetricsFrontendServiceImpl
       connection = getConnection();
 
       // Generates statement for retrieving metrics at run level.
-      if(level == MetricTimeseriesLevel.RUNID_LEVEL) {
+      if (level == MetricTimeseriesLevel.RUNID_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
         sb.append(" ").append(" FROM timeseries");
@@ -589,7 +583,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(6, end);
         stmt.setString(7, metric);
         LOG.trace("Timeseries query {}", stmt.toString());
-      } else if(level == MetricTimeseriesLevel.ACCOUNT_LEVEL) {
+      } else if (level == MetricTimeseriesLevel.ACCOUNT_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
         sb.append(" ").append(" FROM timeseries");
@@ -597,7 +591,7 @@ public class MetricsFrontendServiceImpl
         sb.append(" ").append("account_id = ? AND");
         sb.append(" ").append("timestamp >= ? AND");
         sb.append(" ").append("timestamp < ? AND");
-        sb.append(" ").append("metric = ?") ;
+        sb.append(" ").append("metric = ?");
         sb.append(" ").append("GROUP BY timestamp, metric");
         sb.append(" ").append("ORDER BY timestamp");
         stmt = connection.prepareStatement(sb.toString());
@@ -606,7 +600,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(3, end);
         stmt.setString(4, metric);
         LOG.trace("Timeseries query {}", stmt.toString());
-      } else if(level == MetricTimeseriesLevel.APPLICATION_LEVEL) {
+      } else if (level == MetricTimeseriesLevel.APPLICATION_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
         sb.append(" ").append(" FROM timeseries");
@@ -615,7 +609,7 @@ public class MetricsFrontendServiceImpl
         sb.append(" ").append("application_id = ? AND");
         sb.append(" ").append("timestamp >= ? AND");
         sb.append(" ").append("timestamp < ? AND");
-        sb.append(" ").append("metric = ?") ;
+        sb.append(" ").append("metric = ?");
         sb.append(" ").append("GROUP BY timestamp, metric");
         sb.append(" ").append("ORDER BY timestamp");
         stmt = connection.prepareStatement(sb.toString());
@@ -625,7 +619,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(4, end);
         stmt.setString(5, metric);
         LOG.trace("Timeseries query {}", stmt.toString());
-      } else if(level == MetricTimeseriesLevel.FLOW_LEVEL) {
+      } else if (level == MetricTimeseriesLevel.FLOW_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
         sb.append(" ").append(" FROM timeseries");
@@ -635,7 +629,7 @@ public class MetricsFrontendServiceImpl
         sb.append(" ").append("flow_id = ? AND");
         sb.append(" ").append("timestamp >= ? AND");
         sb.append(" ").append("timestamp < ? AND");
-        sb.append(" ").append("metric = ?") ;
+        sb.append(" ").append("metric = ?");
         sb.append(" ").append("GROUP BY timestamp, metric");
         sb.append(" ").append("ORDER BY timestamp");
         stmt = connection.prepareStatement(sb.toString());
@@ -646,7 +640,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(5, end);
         stmt.setString(6, metric);
         LOG.trace("Timeseries query {}", stmt.toString());
-      } else if(level == MetricTimeseriesLevel.FLOWLET_LEVEL) {
+      } else if (level == MetricTimeseriesLevel.FLOWLET_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
         sb.append(" ").append(" FROM timeseries");
@@ -657,7 +651,7 @@ public class MetricsFrontendServiceImpl
         sb.append(" ").append("flowlet_id = ? AND");
         sb.append(" ").append("timestamp >= ? AND");
         sb.append(" ").append("timestamp < ? AND");
-        sb.append(" ").append("metric = ?") ;
+        sb.append(" ").append("metric = ?");
         sb.append(" ").append("GROUP BY timestamp, metric");
         sb.append(" ").append("ORDER BY timestamp");
         stmt = connection.prepareStatement(sb.toString());
@@ -675,7 +669,7 @@ public class MetricsFrontendServiceImpl
       rs = stmt.executeQuery();
 
       // Iterate through the points.
-      while(rs.next()) {
+      while (rs.next()) {
         DataPoint.Builder dpb = new DataPoint.Builder(rs.getString("metric"));
         dpb.addTimestamp(rs.getLong("timestamp"));
         dpb.addValue(rs.getFloat("aggregate"));
@@ -686,13 +680,13 @@ public class MetricsFrontendServiceImpl
                argument.toString(), e.getMessage());
     } finally {
       try {
-        if(rs != null) {
+        if (rs != null) {
           rs.close();
         }
-        if(stmt != null) {
+        if (stmt != null) {
           stmt.close();
         }
-        if(connection != null) {
+        if (connection != null) {
           connection.close();
         }
       } catch (SQLException e) {
@@ -711,23 +705,23 @@ public class MetricsFrontendServiceImpl
 
     // Check if there are arguments, if there are none, then we cannot
     // proceed further.
-    if(argument == null) {
+    if (argument == null) {
       throw new MetricsServiceException(
         "Arguments specifying the flow has not been provided. Please specify " +
           "account, application, flow id"
       );
     }
 
-    if(argument.getAccountId() == null || argument.getAccountId().isEmpty()) {
+    if (argument.getAccountId() == null || argument.getAccountId().isEmpty()) {
       throw new MetricsServiceException("Account ID has not been specified.");
     }
 
-    if(argument.getApplicationId() == null ||
+    if (argument.getApplicationId() == null ||
       argument.getApplicationId().isEmpty()) {
       throw new MetricsServiceException("Application ID has not been specified");
     }
 
-    if(argument.getFlowId() == null ||
+    if (argument.getFlowId() == null ||
       argument.getFlowId().isEmpty()) {
       throw new MetricsServiceException("Flow ID has not been specified.");
     }
@@ -736,11 +730,11 @@ public class MetricsFrontendServiceImpl
   private void validateTimeseriesRequest(TimeseriesRequest request)
     throws MetricsServiceException {
 
-    if(! request.isSetArgument()) {
+    if (!request.isSetArgument()) {
       throw new MetricsServiceException("Flow arguments should be specified.");
     }
 
-    if(! request.isSetMetrics()) {
+    if (!request.isSetMetrics()) {
       throw new MetricsServiceException("No metrics specified");
     }
   }

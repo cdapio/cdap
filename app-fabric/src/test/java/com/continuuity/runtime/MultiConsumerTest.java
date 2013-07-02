@@ -42,6 +42,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class MultiConsumerTest {
 
+  /**
+   *
+   */
   public static final class MultiApp implements Application {
 
     @Override
@@ -57,6 +60,9 @@ public class MultiConsumerTest {
     }
   }
 
+  /**
+   *
+   */
   public static final class MultiFlow implements Flow {
 
     @Override
@@ -77,6 +83,9 @@ public class MultiConsumerTest {
     }
   }
 
+  /**
+   *
+   */
   public static final class Generator extends AbstractGeneratorFlowlet {
 
     private OutputEmitter<Integer> output;
@@ -94,8 +103,11 @@ public class MultiConsumerTest {
     }
   }
 
-  private static final byte[] KEY = new byte[] {'k','e','y'};
+  private static final byte[] KEY = new byte[] {'k', 'e', 'y'};
 
+  /**
+   *
+   */
   public static final class Consumer extends AbstractFlowlet {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
@@ -105,6 +117,9 @@ public class MultiConsumerTest {
     }
   }
 
+  /**
+   *
+   */
   public static final class ConsumerStr extends AbstractFlowlet {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;

@@ -12,7 +12,7 @@ import java.util.Arrays;
  */
 public class QueueEnqueue extends WriteOperation {
 
-  /** info about the producer */
+  //info about the producer.
   private final QueueProducer producer;
 
   private final byte [] queueName;

@@ -34,13 +34,12 @@ task jshint << {
     "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
   ]
 
-
+  print command.join(' ');
 /*
   if(executeCommand(command) != 0) {
     throw new GradleScriptException("JSHint reported errors while building command app", null)
   }
 */
-
 }
 
 /**
@@ -50,7 +49,7 @@ task nodeTests << {
   def command = [
     "$rootProject.projectDir/web-cloud-app/test/node_modules/mocha/bin/mocha"
   ]
-/*
+/* Commented until fixed on develop
   if(executeCommand(command) != 0) {
     throw new GradleScriptException("Error running node tests", null)
   }

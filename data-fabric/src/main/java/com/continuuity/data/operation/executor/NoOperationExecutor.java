@@ -14,6 +14,7 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -129,6 +130,11 @@ public class NoOperationExecutor implements OperationExecutor {
   @Override
   public void execute(OperationContext context,
                       OpenTable openTable) throws OperationException {
+    // do nothing
+  }
+
+  @Override
+  public void execute(OperationContext context, TruncateTable truncateTable) throws OperationException {
     // do nothing
   }
 

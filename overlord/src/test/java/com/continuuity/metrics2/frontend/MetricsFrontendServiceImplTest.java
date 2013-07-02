@@ -31,7 +31,7 @@ public class MetricsFrontendServiceImplTest {
   private static CConfiguration configuration;
   private static MetricsProcessor processor = null;
   private static MetricsFrontendService.Iface client = null;
-  private static long timestamp = System.currentTimeMillis()/1000;
+  private static long timestamp = System.currentTimeMillis() / 1000;
   private static long counter = 0;
   private static int POINTS = 10;
 
@@ -56,27 +56,27 @@ public class MetricsFrontendServiceImplTest {
 
     // Add multiple flows, on multiple accounts, with multiple run ids
     // multiple flowlets, with multiple applications and multiple metrics
-    for(int i = 0; i < POINTS; ++i )  {
+    for (int i = 0; i < POINTS; ++i)  {
       addMetric("acc0.app1.flow1.runid1.fl1.1.processed", 10);
-      addMetric("acc0.app1.flow1.runid1.fl2.1.processed", 11*i);
-      addMetric("acc0.app1.flow1.runid1.fl3.1.processed", 12*(i+1));
-      addMetric("acc0.app1.flow1.runid1.fl4.1.processed", 13*(i+2));
+      addMetric("acc0.app1.flow1.runid1.fl2.1.processed", 11 * i);
+      addMetric("acc0.app1.flow1.runid1.fl3.1.processed", 12 * (i + 1));
+      addMetric("acc0.app1.flow1.runid1.fl4.1.processed", 13 * (i + 2));
 
       // Another metric
       addMetric("acc0.app1.flow1.runid1.fl1.1.acks", 1);
-      addMetric("acc0.app1.flow1.runid1.fl2.1.acks", 2*i);
-      addMetric("acc0.app1.flow1.runid1.fl3.1.acks", 3*(i+1));
-      addMetric("acc0.app1.flow1.runid1.fl4.1.acks", 4*(i+2));
+      addMetric("acc0.app1.flow1.runid1.fl2.1.acks", 2 * i);
+      addMetric("acc0.app1.flow1.runid1.fl3.1.acks", 3 * (i + 1));
+      addMetric("acc0.app1.flow1.runid1.fl4.1.acks", 4 * (i + 2));
 
       addMetric("acc0.app1.flow1.runid1.fl1.1.tuples.read.count", 10);
-      addMetric("acc0.app1.flow1.runid1.fl2.1.tuples.read.count", 11*i);
-      addMetric("acc0.app1.flow1.runid1.fl3.1.tuples.read.count", 12*(i+1));
-      addMetric("acc0.app1.flow1.runid1.fl4.1.tuples.read.count", 13*(i+2));
+      addMetric("acc0.app1.flow1.runid1.fl2.1.tuples.read.count", 11 * i);
+      addMetric("acc0.app1.flow1.runid1.fl3.1.tuples.read.count", 12 * (i + 1));
+      addMetric("acc0.app1.flow1.runid1.fl4.1.tuples.read.count", 13 * (i + 2));
 
       addMetric("acc0.app1.flow1.runid1.fl1.1.tuples.proc.count", 10);
-      addMetric("acc0.app1.flow1.runid1.fl2.1.tuples.proc.count", 8*i);
-      addMetric("acc0.app1.flow1.runid1.fl3.1.tuples.proc.count", 14*(i+1));
-      addMetric("acc0.app1.flow1.runid1.fl4.1.tuples.proc.count", 7*(i+2));
+      addMetric("acc0.app1.flow1.runid1.fl2.1.tuples.proc.count", 8 * i);
+      addMetric("acc0.app1.flow1.runid1.fl3.1.tuples.proc.count", 14 * (i + 1));
+      addMetric("acc0.app1.flow1.runid1.fl4.1.tuples.proc.count", 7 * (i + 2));
 
       // Single flow, multiple flowlets
       addMetric("acc1.app1.flow1.runid1.fl1.1.processed", random.nextInt());
@@ -223,7 +223,7 @@ public class MetricsFrontendServiceImplTest {
 
     // We should not find any runid related counters.
     argument.setRunId("rund2");
-    counters = getCounters(argument,null);
+    counters = getCounters(argument, null);
     Assert.assertNotNull(counters);
     Assert.assertThat(counters.size(), CoreMatchers.is(0));
   }
@@ -492,7 +492,7 @@ public class MetricsFrontendServiceImplTest {
     List<String> metrics = Lists.newArrayList();
     metrics.add("busyness");
     Points points = getTimeseries(new FlowArgument("acc0", "app1", "flow1"),
-                           metrics, MetricTimeseriesLevel.FLOW_LEVEL,timestamp,
+                           metrics, MetricTimeseriesLevel.FLOW_LEVEL, timestamp,
                            timestamp + counter);
     Assert.assertNotNull(points);
     Assert.assertTrue(points.getPoints().get("busyness").size() >= 1);
@@ -531,7 +531,7 @@ public class MetricsFrontendServiceImplTest {
   private List<Counter> getCounters(FlowArgument argument, List<String> names)
     throws TException, MetricsServiceException {
     CounterRequest request = new CounterRequest(argument);
-    if(names != null) {
+    if (names != null) {
       request.setName(names);
     }
     return client.getCounters(request);

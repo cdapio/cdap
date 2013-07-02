@@ -26,9 +26,9 @@ public class ProcedureVerification extends AbstractVerifier implements Verifier<
   @Override
   public VerifyResult verify(final ProcedureSpecification input) {
     // Checks if Procedure name is an ID
-    if(!isId(input.getName())) {
-      return VerifyResult.FAILURE(Err.NOT_AN_ID, "Procedure");
+    if (!isId(input.getName())) {
+      return VerifyResult.failure(Err.NOT_AN_ID, "Procedure");
     }
-    return VerifyResult.SUCCESS();
+    return VerifyResult.success();
   }
 }

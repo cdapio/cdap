@@ -14,15 +14,15 @@ import java.net.URI;
  * across flows.
  */
 public interface FlowStreamDefinition {
-	/**
-	 * Returns the name of the stream
-	 * @return name of the stream.
-	 */
-	public String getName();
+  /**
+   * Returns the name of the stream
+   * @return name of the stream.
+   */
+  public String getName();
 
-	/**
-	 * Returns the URI of the stream.
-	 * @return the URI of the stream.
-	 */
-	public URI getURI();
+  /**
+   * Returns the URI of the stream.
+   * @return the URI of the stream.
+   */
+  public URI getURI();
 }

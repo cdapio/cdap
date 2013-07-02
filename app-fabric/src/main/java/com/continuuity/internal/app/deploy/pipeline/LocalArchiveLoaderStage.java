@@ -18,7 +18,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * LocalArchiveLoaderStage gets a {@link com.continuuity.weave.filesystem.Location} and emits a {@link ApplicationSpecification}.
+ * LocalArchiveLoaderStage gets a {@link Location} and emits a {@link ApplicationSpecification}.
  * <p>
  * This stage is responsible for reading the JAR and generating an ApplicationSpecification
  * that is forwarded to the next stage of processing.

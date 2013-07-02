@@ -31,7 +31,7 @@ define([], function () {
 
 		getStats: function () {
 
-			C.get.apply(this.get('model'), this.get('model').getUpdateRequest());
+			C.get.apply(this.get('model'), this.get('model').getUpdateRequest(this.HTTP));
 
 			var self = this;
 

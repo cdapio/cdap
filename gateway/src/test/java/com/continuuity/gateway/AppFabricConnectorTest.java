@@ -30,8 +30,11 @@ import java.io.Reader;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Tests Reactor connector.
+ */
 public class AppFabricConnectorTest {
-  private final static String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
+  private static final String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
 
   private static AppFabricServer server;
   private static Connector restConnector;
@@ -85,7 +88,7 @@ public class AppFabricConnectorTest {
     String deployStatusUrl = baseURL + "/status";
     Assert.assertEquals(200, deploy("WordCount.jar"));
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("Content-Type", "application/json");
 
@@ -99,7 +102,7 @@ public class AppFabricConnectorTest {
 
     String deployStatusUrl = baseURL + "/status";
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("Content-Type", "application/json");
 
@@ -116,7 +119,7 @@ public class AppFabricConnectorTest {
   public void testPing() throws Exception {
     Assert.assertEquals(200, deploy("WordCount.jar"));
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
 
     HttpResponse response = TestUtil.sendGetRequest(pingURL, headers);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -130,7 +133,7 @@ public class AppFabricConnectorTest {
     String queryInstancesUrl = baseURL + "/WordCountApp/flow/WordCountFlow/Tokenizer?op=instances";
     String setInstancesUrl = baseURL + "/WordCountApp/flow/WordCountFlow/Tokenizer?op=instances";
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("Content-Type", "application/json");
 
@@ -157,7 +160,7 @@ public class AppFabricConnectorTest {
     String stopProcedureUrl = baseURL + "/WordCountApp/procedure/WordFrequency?op=stop";
     String statusFlowUrl = baseURL + "/WordCountApp/flow/WordCountFlow?op=status";
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("Content-Type", "application/json");
 
@@ -197,8 +200,8 @@ public class AppFabricConnectorTest {
     // JAR file is stored in test/resource/WordCount.jar.
     File archive = FileUtils.toFile(getClass().getResource("/" + jarFileName));
 
-    Map<String,String> headers = Maps.newHashMap();
-    headers.put(CONTINUUITY_API_KEY,"api-key-example");
+    Map<String, String> headers = Maps.newHashMap();
+    headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("X-Archive-Name", jarFileName);
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();

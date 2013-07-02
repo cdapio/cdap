@@ -1,10 +1,10 @@
 package com.continuuity.flow.stream;
 
 import com.continuuity.test.AppFabricTestBase;
-import com.continuuity.test.ApplicationManager;
-import com.continuuity.test.RuntimeMetrics;
-import com.continuuity.test.RuntimeStats;
-import com.continuuity.test.StreamWriter;
+import com.continuuity.test.app.ApplicationManager;
+import com.continuuity.test.app.RuntimeMetrics;
+import com.continuuity.test.app.RuntimeStats;
+import com.continuuity.test.app.StreamWriter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,8 +22,7 @@ public class TestFlowStreamIntegration extends AppFabricTestBase {
 
       applicationManager.startFlow("StreamTestFlow");
       RuntimeMetrics flowletMetrics1 = RuntimeStats.getFlowletMetrics("TestFlowStreamIntegrationApp",
-                                                                      "StreamTestFlow",
-                                                                      "StreamReader");
+                                                                      "StreamTestFlow", "StreamReader");
       flowletMetrics1.waitForProcessed(1, 10, TimeUnit.SECONDS);
       if (flowletMetrics1.getException() > 0) {
         Assert.fail("StreamReader test failed");

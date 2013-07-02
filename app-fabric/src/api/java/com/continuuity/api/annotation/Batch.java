@@ -14,7 +14,6 @@ import java.lang.annotation.Target;
 public @interface Batch {
   /**
    * Declare the maximum number of objects that can be processed in a batch.
-   * @return batch size
    */
   int value();
 }

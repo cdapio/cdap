@@ -33,11 +33,11 @@ public class FlowVerificationTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     FlowVerification flowSpec = new FlowVerification();
-    for(Map.Entry<String, FlowSpecification> entry : newSpec.getFlows().entrySet()) {
+    for (Map.Entry<String, FlowSpecification> entry : newSpec.getFlows().entrySet()) {
       VerifyResult result = flowSpec.verify(entry.getValue());
       // This is the flow that has Tokenizer flowlet that defines one more output called "mylist"
       // that is not connected to any input to flowlet CountByField.
-      if(entry.getValue().getName().equals("WordCountFlow")) {
+      if (entry.getValue().getName().equals("WordCountFlow")) {
         Assert.assertTrue(result.getStatus() == VerifyResult.Status.FAILED);
       } else {
         Assert.assertTrue(result.getStatus() == VerifyResult.Status.SUCCESS);
@@ -52,13 +52,16 @@ public class FlowVerificationTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     FlowVerification flowSpec = new FlowVerification();
-    for(Map.Entry<String, FlowSpecification> entry : newSpec.getFlows().entrySet()) {
+    for (Map.Entry<String, FlowSpecification> entry : newSpec.getFlows().entrySet()) {
       VerifyResult result = flowSpec.verify(entry.getValue());
       Assert.assertTrue(result.getStatus() == VerifyResult.Status.SUCCESS);
     }
   }
 
 
+  /**
+   *
+   */
   public static class NoConsumerApp implements Application {
 
     @Override
@@ -72,6 +75,9 @@ public class FlowVerificationTest {
         .noProcedure().build();
     }
 
+    /**
+     *
+     */
     public static class NoConsumerFlow implements Flow {
 
       @Override
@@ -91,6 +97,9 @@ public class FlowVerificationTest {
       }
     }
 
+    /**
+     *
+     */
     public static class SourceFlowlet extends AbstractFlowlet {
       private OutputEmitter<String> output;
 
@@ -99,6 +108,9 @@ public class FlowVerificationTest {
       }
     }
 
+    /**
+     *
+     */
     public static class DestFlowlet extends AbstractFlowlet {
       public void process(String str) {
         System.out.println(str);
