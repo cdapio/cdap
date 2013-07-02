@@ -29,7 +29,7 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
 
   //Pattern to look for valid vpc name. letters a-z, A-Z, numbers 0-9 and hypen are supported.
   //The name cannot start or end with a hyphen.
-  private Pattern p = Pattern.compile("^[a-zA-Z0-9^][a-zA-Z0-9-]+[a-zA-Z0-9]$");
+  private static final Pattern p = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]$");
 
   @Inject
   public ProfanityFilterFileAccess(@Named(Constants.CFG_PROFANE_WORDS_FILE_PATH)String profaneFilePath) {
