@@ -10,6 +10,9 @@ import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ *
+ */
 public class TestFlowStreamIntegration extends AppFabricTestBase {
   @Test
   public void testStreamBatch() throws Exception {
