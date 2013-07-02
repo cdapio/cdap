@@ -1,8 +1,8 @@
 package com.continuuity.data.metadata;
 
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.util.OperationUtil;
@@ -18,14 +18,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-abstract public class MetaDataStoreTest {
+/**
+ * Common methods for Metadata store test.
+ */
+public abstract class MetaDataStoreTest {
 
   static OperationExecutor opex;
   static MetaDataStore mds;
   static OperationContext context = OperationUtil.DEFAULT;
 
   /**
-   * Every subclass should implement this to verify that injection works and uses the correct table type
+   * Every subclass should implement this to verify that injection works and uses the correct table type.
    */
   @Test
   public abstract void testInjection();
@@ -38,9 +41,17 @@ abstract public class MetaDataStoreTest {
       throws OperationException {
 
     MetaDataEntry meta = new MetaDataEntry(account, application, type, id);
-    if (field != null) meta.addField(field, text);
-    if (binaryField != null) meta.addField(binaryField, binary);
-    if (update) mds.update(context, meta); else mds.add(context, meta);
+    if (field != null) {
+      meta.addField(field, text);
+    }
+    if (binaryField != null) {
+      meta.addField(binaryField, binary);
+    }
+    if (update) {
+      mds.update(context, meta);
+    } else {
+      mds.add(context, meta);
+    }
     MetaDataEntry meta2 = mds.get(context, account, application, type, id);
     Assert.assertEquals(meta, meta2);
   }
@@ -161,14 +172,14 @@ abstract public class MetaDataStoreTest {
     testOneAddGet(false, "a", "p", "x", "1", "a", "1", null, null);
     testOneAddGet(false, "a", "p", "y", "2", "a", "2", null, null);
     testOneAddGet(false, "a", "q", "x", "3", "b", "1", null, null);
-    testOneAddGet(false, "a", null,"x", "4", "a", "2", null, null);
-    testOneAddGet(false, "b", null,"x", "1", "b", "2", null, null);
+    testOneAddGet(false, "a", null, "x", "4", "a", "2", null, null);
+    testOneAddGet(false, "b", null, "x", "1", "b", "2", null, null);
     testOneAddGet(false, "b", "r", "y", "2", "b", "2", null, null);
 
     MetaDataEntry meta1 = mds.get(context, "a", "p", "x", "1");
     MetaDataEntry meta2 = mds.get(context, "a", "p", "y", "2");
     MetaDataEntry meta3 = mds.get(context, "a", "q", "x", "3");
-    MetaDataEntry meta4 = mds.get(context, "a", null,"x", "4");
+    MetaDataEntry meta4 = mds.get(context, "a", null, "x", "4");
     MetaDataEntry meta6 = mds.get(context, "b", "r", "y", "2");
 
     List<MetaDataEntry> entries;
@@ -347,8 +358,9 @@ abstract public class MetaDataStoreTest {
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
               //System.err.println("Conflict for binary " + i + ": " + value);
               binaryConflicts.incrementAndGet();
-            } else
+            } else {
               Assert.fail(e.getMessage());
+            }
           } catch (Exception e) {
             Assert.fail(e.getMessage());
           }
@@ -422,8 +434,9 @@ abstract public class MetaDataStoreTest {
           if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
             // System.out.println("Conflict for binary " + i + ": " + value);
             conflicts.incrementAndGet();
-          } else
+          } else {
             Assert.fail(e.getMessage());
+          }
         } catch (Exception e) {
           Assert.fail(e.getMessage());
         }

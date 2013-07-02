@@ -41,7 +41,7 @@ public class MuxClientProtocol {
    *                     <code>protocol</code>
    */
   public MuxClientProtocol(TProtocol protocol, String... serviceNames) {
-    for(String serviceName : serviceNames) {
+    for (String serviceName : serviceNames) {
       protocolMap.put(serviceName, new MuxProtocol(protocol, serviceName));
     }
   }
@@ -62,7 +62,7 @@ public class MuxClientProtocol {
    * @param serviceName Name of the service to be removed.
    */
   public void delete(String serviceName) {
-    if(protocolMap.containsKey(serviceName)) {
+    if (protocolMap.containsKey(serviceName)) {
       protocolMap.remove(serviceName);
     }
   }
@@ -77,7 +77,7 @@ public class MuxClientProtocol {
    */
   public MuxProtocol get(String serviceName)
       throws IllegalArgumentException {
-    if(! protocolMap.containsKey(serviceName)) {
+    if (!protocolMap.containsKey(serviceName)) {
       throw new IllegalArgumentException("Service name " + serviceName +
         " is registered");
     }

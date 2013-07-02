@@ -9,6 +9,9 @@ import com.google.inject.Injector;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class TestHyperSQLOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
   private static final Injector injector = Guice.createInjector (
@@ -16,7 +19,7 @@ public class TestHyperSQLOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow
   // Guice.createInjector(new DataFabricModules().getSingleNodeModules());
 
   private static final OmidTransactionalOperationExecutor executor =
-      (OmidTransactionalOperationExecutor)injector.getInstance(
+      (OmidTransactionalOperationExecutor) injector.getInstance(
           OperationExecutor.class);
 
   private static final OVCTableHandle handle = executor.getTableHandle();

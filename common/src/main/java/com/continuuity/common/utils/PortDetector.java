@@ -3,6 +3,9 @@ package com.continuuity.common.utils;
 import java.io.IOException;
 import java.net.Socket;
 
+/**
+ * Class for help finding network ports.
+ */
 public class PortDetector {
 
   /**

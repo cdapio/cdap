@@ -22,7 +22,7 @@ class InMemoryZookeeperMain extends ZooKeeperServerMain implements InMemoryZooke
   private final CountDownLatch latch = new CountDownLatch(1);
 
   /**
-   * Runs a ZooKeeperServer with provided {@link QuorumPeerConfig}
+   * Runs a ZooKeeperServer with provided {@link QuorumPeerConfig}.
    * @param config Configuration of Peer.
    * @throws Exception
    */
@@ -56,7 +56,7 @@ class InMemoryZookeeperMain extends ZooKeeperServerMain implements InMemoryZooke
 
       Field ssField = cnxnFactory.getClass().getDeclaredField("ss");
       ssField.setAccessible(true);
-      ServerSocketChannel ss = (ServerSocketChannel)ssField.get(cnxnFactory);
+      ServerSocketChannel ss = (ServerSocketChannel) ssField.get(cnxnFactory);
       ss.close();
     } catch (Exception e) {
       LOG.error("Failed to kill InMemoryZookeeper " + e.getMessage());

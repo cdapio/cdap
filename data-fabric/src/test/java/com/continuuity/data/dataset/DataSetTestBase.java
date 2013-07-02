@@ -38,14 +38,17 @@ public class DataSetTestBase {
   protected static DataFabric fabric;
 
   private static TransactionAgent agent;
-  protected static final TransactionProxy proxy = new TransactionProxy();
+  protected static final TransactionProxy PROXY = new TransactionProxy();
 
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
 
+  /**
+   * Enum for the transaction agent mode.
+   */
   protected enum Mode { Sync, Batch, Smart }
   /**
-   * Sets up the in-memory operation executor and the data fabric
+   * Sets up the in-memory operation executor and the data fabric.
    */
   @BeforeClass
   public static void setupDataFabric() {
@@ -58,15 +61,15 @@ public class DataSetTestBase {
   }
 
   /**
-   * Configures the data set instantiator with a single data set
-   * @param dataset the single data set used in the test
+   * Configures the data set instantiator with a single data set.
+   * @param dataset the single data set used in the test.
    */
   public static void setupInstantiator(DataSet dataset) {
     setupInstantiator(Collections.singletonList(dataset));
   }
 
   /**
-   * Configures the data set instantiator with a list of data sets
+   * Configures the data set instantiator with a list of data sets.
    * @param datasets the data sets used in the test
    */
   public static void setupInstantiator(List<DataSet> datasets) {
@@ -76,7 +79,7 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, proxy, null);
+    instantiator = new DataSetInstantiator(fabric, PROXY, null);
     instantiator.setDataSets(specs);
   }
 
@@ -93,7 +96,7 @@ public class DataSetTestBase {
       case Smart: agent = new SmartTransactionAgent(opex, OperationUtil.DEFAULT);
     }
     agent.start();
-    proxy.setTransactionAgent(agent);
+    PROXY.setTransactionAgent(agent);
   }
 
   /**

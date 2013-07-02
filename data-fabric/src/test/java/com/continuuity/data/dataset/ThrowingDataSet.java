@@ -2,7 +2,9 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSetSpecification;
 
-// this class' data set spec constructor throws an exception
+/**
+ * Throwing data-set. Constructor throws exception.
+ */
 public class ThrowingDataSet extends IncompleteDataSet {
   public ThrowingDataSet(String name) {
     super(name);

@@ -20,7 +20,7 @@ public class SimplePerformanceTest {
 
   @PerformanceTest
   public void testApp() throws IOException, TimeoutException, InterruptedException {
-    final int numStreamEvents = 10000;
+    final int numStreamEvents = 1000;
 
     ApplicationManager applicationManager = PerformanceTestRunner.deployApplication(
       "com.continuuity.performance.apps.simple.SimpleApp");
@@ -28,8 +28,6 @@ public class SimplePerformanceTest {
     try {
 
       FlowManager flowManager = applicationManager.startFlow("SimpleFlow");
-
-      flowManager.setFlowletInstances("source", 2);
 
       BenchmarkRuntimeMetrics sourceFlowletMetrics = BenchmarkRuntimeStats.getFlowletMetrics("SimpleApp", "SimpleFlow",
                                                                                              "source");

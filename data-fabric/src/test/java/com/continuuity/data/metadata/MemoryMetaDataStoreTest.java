@@ -11,6 +11,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * Memory metadata store tests.
+ */
 public abstract class MemoryMetaDataStoreTest extends MetaDataStoreTest {
 
   private static Injector injector;

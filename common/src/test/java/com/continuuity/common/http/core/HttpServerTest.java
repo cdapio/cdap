@@ -1,11 +1,5 @@
 package com.continuuity.common.http.core;
 
-import com.continuuity.common.http.core.HttpDispatcher;
-import com.continuuity.common.http.core.HttpResourceHandler;
-import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.common.utils.PortDetector;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
@@ -20,19 +14,9 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.http.HttpContentCompressor;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
-import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.execution.ExecutionHandler;
-import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,11 +29,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -112,6 +93,16 @@ public class HttpServerTest {
   public void testPathWithMultipleMethods() throws IOException {
     String endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
     HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity("data"));
+    HttpResponse response = request(put);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testPathWithPost() throws IOException {
+    String endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
+    HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity("data"));
     HttpResponse response = request(put);
     assertEquals(200, response.getStatusLine().getStatusCode());
   }
@@ -119,8 +110,9 @@ public class HttpServerTest {
   @Test
   public void testNonExistingEndPoints() throws IOException {
     String endPoint = String.format("http://localhost:%d/test/v1/users", port);
-    HttpGet get = new HttpGet(endPoint);
-    HttpResponse response = request(get);
+    HttpPost post = new HttpPost(endPoint);
+    post.setEntity(new StringEntity("data"));
+    HttpResponse response = request(post);
     assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
@@ -160,6 +152,9 @@ public class HttpServerTest {
     assertEquals(405, response.getStatusLine().getStatusCode());
   }
 
+  /**
+   * Test handler.
+   */
   @Path("/test/v1")
   public static class Handler implements HttpHandler {
     @Path("resource")

@@ -15,6 +15,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
   private static Injector injector;
@@ -29,8 +32,8 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
       conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf));
-      executor = (OmidTransactionalOperationExecutor)injector.getInstance(
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
+      executor = (OmidTransactionalOperationExecutor) injector.getInstance(
           Key.get(OperationExecutor.class,
               Names.named("DataFabricOperationExecutor")));
       handle = executor.getTableHandle();

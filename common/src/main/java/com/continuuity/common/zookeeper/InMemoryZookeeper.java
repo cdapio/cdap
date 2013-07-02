@@ -26,7 +26,7 @@ import java.io.IOException;
  * </code>
  */
 public class InMemoryZookeeper implements Closeable {
-  private final static Logger LOG = LoggerFactory.getLogger(InMemoryZookeeper.class);
+  private static final  Logger LOG = LoggerFactory.getLogger(InMemoryZookeeper.class);
   private final InMemoryZookeeperServer inMemoryZookeeperServer;
   private final InstanceSpecification specification;
 

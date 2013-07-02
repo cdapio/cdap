@@ -3,6 +3,9 @@ package com.continuuity.common;
 import com.continuuity.common.conf.CConfiguration;
 import org.junit.Test;
 
+/**
+ * Test case for suite.
+ */
 public class OtherTest {
 
     @Test

@@ -12,6 +12,9 @@ import org.junit.Test;
 
 import java.util.Map;
 
+/**
+ * Tests for Index table.
+ */
 public class IndexedTableTest extends DataSetTestBase {
 
   static IndexedTable table;

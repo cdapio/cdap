@@ -13,6 +13,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 
+/**
+ *
+ */
 public class TestLocalModeTTQueuePerf {
 
   //  private static final Properties hsqlProperties = new Properties();
@@ -85,7 +88,7 @@ public class TestLocalModeTTQueuePerf {
     log("Enqueueing to queue table");
     long start = now();
     long last = start;
-    for (int i=0; i<n; i++) {
+    for (int i = 0; i < n; i++) {
       queueTable.enqueue(queueName, new QueueEntry(data), transaction);
       last = printStat(i, last, 1000);
     }
@@ -95,7 +98,7 @@ public class TestLocalModeTTQueuePerf {
     log("Dequeueing from queue table");
     start = now();
     last = start;
-    for (int i=0; i<n; i++) {
+    for (int i = 0; i < n; i++) {
       DequeueResult result = queueTable.dequeue(queueName, consumer, memoryReadPointer);
       queueTable.ack(queueName, result.getEntryPointer(), consumer, transaction);
       queueTable.finalize(queueName, result.getEntryPointers(), consumer, -1, transaction);
@@ -107,7 +110,7 @@ public class TestLocalModeTTQueuePerf {
     log("Enqueueing to stream table");
     start = now();
     last = start;
-    for (int i=0; i<n; i++) {
+    for (int i = 0; i < n; i++) {
       streamTable.enqueue(streamName, new QueueEntry(data), transaction);
       last = printStat(i, last, 1000);
     }
@@ -117,7 +120,7 @@ public class TestLocalModeTTQueuePerf {
     log("Dequeueing from stream table");
     start = now();
     last = start;
-    for (int i=0; i<n; i++) {
+    for (int i = 0; i < n; i++) {
       DequeueResult result =
           streamTable.dequeue(streamName, consumer, memoryReadPointer);
       streamTable.ack(streamName, result.getEntryPointer(), consumer, transaction);
@@ -132,7 +135,9 @@ public class TestLocalModeTTQueuePerf {
 
   private long printStat(int i, long last, int perline) {
     i++;
-    if (i % (perline/10) == 0) System.out.print(".");
+    if (i % (perline / 10) == 0) {
+      System.out.print(".");
+    }
     if (i % perline == 0) {
       System.out.println(" " + i + " : Last " + perline + " finished in " +
           timeReport(last, now(), perline));
@@ -147,19 +152,23 @@ public class TestLocalModeTTQueuePerf {
   }
 
   private String timeReport(long start, long end, int iterations) {
-    return "" + format(end-start) + " (" +
-        format(end-start, iterations) + "/iteration)";
+    return "" + format(end - start) + " (" +
+        format(end - start, iterations) + "/iteration)";
   }
 
   private String format(long time, int iterations) {
-    return "" + (time/(float)iterations) + "ms";
+    return "" + (time / (float) iterations) + "ms";
   }
 
   private String format(long time) {
-    if (time < 1000) return "" + time + "ms";
-    if (time < 60000) return "" + (time/(float)1000) + "sec";
+    if (time < 1000) {
+      return "" + time + "ms";
+    }
+    if (time < 60000) {
+      return "" + (time / (float) 1000) + "sec";
+    }
     long min = time / 60000;
-    float sec = (time - (min*60000)) / (float)1000;
+    float sec = (time - (min * 60000)) / (float) 1000;
     return "" + min + "min " + sec + "sec";
   }
 

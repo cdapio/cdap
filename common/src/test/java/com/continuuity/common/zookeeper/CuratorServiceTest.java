@@ -61,7 +61,7 @@ public class CuratorServiceTest {
 
     } finally {
       Collections.reverse(closeables);
-      for(Closeable c : closeables) {
+      for (Closeable c : closeables) {
         Closeables.closeQuietly(c);
       }
     }
