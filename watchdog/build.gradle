@@ -12,11 +12,18 @@ dependencies {
                      changing: true], "data-fabric")
 
     compile libraries.slf4j_api
-    compile libraries.hadoop_common
+
     compile libraries.weave_core
     compile (libraries.weave_yarn) {
         exclude group: 'org.apache.hadoop'
     }
+
+    compile libraries.hadoop_annotations
+    compile libraries.hadoop_auth
+    compile libraries.hadoop_common
+    compile libraries.hadoop_yarn_api
+    compile libraries.hadoop_yarn_client
+    compile libraries.hadoop_yarn_common
 
     // Kafka dependencies
     compile group: 'kafka', name: 'kafka', version: '0.8.0'
