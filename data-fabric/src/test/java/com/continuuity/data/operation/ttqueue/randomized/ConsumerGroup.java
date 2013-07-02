@@ -66,7 +66,7 @@ public class ConsumerGroup implements Runnable {
       testController.waitToStart();
       LOG.info(getLogMessage("Starting."));
 
-      while(true) {
+      while (true) {
         run++;
         // Create consumers
         final int numConsumers = testConfig.getNumConsumers();
@@ -82,7 +82,7 @@ public class ConsumerGroup implements Runnable {
         List<ListenableFuture<?>> consumerFutures = Lists.newArrayList();
         Map<Integer, Queue<Integer>> groupMap = Maps.newConcurrentMap();
         List<QueueConsumer> consumers = Lists.newArrayListWithCapacity(numConsumers);
-        for(int i = 0; i < numConsumers; ++i) {
+        for (int i = 0; i < numConsumers; ++i) {
           QueueConsumer consumer =
             new StatefulQueueConsumer(i, id, numConsumers, "", TTQueueRandomizedTest.HASH_KEY, config);
           consumers.add(consumer);
@@ -95,7 +95,7 @@ public class ConsumerGroup implements Runnable {
         LOG.info(getLogMessage("All config done, starting"));
 
         // Start consumers
-        for(QueueConsumer consumer : consumers) {
+        for (QueueConsumer consumer : consumers) {
           groupMap.put(consumer.getInstanceId(), new ConcurrentLinkedQueue<Integer>());
           ListenableFuture<?> future = listeningExecutorService.submit(
             new Consumer(consumer.getInstanceId(), consumer, oracle, consumerControl, numGroups,
@@ -120,7 +120,7 @@ public class ConsumerGroup implements Runnable {
 //          LOG.info(getLogMessage("Consumer:" + i + " dequeueList=" + groupMap.get(i)));
 //        }
 
-        if(consumerControl.getConsumersAtQueueEnd().size() == numConsumers) {
+        if (consumerControl.getConsumersAtQueueEnd().size() == numConsumers) {
           break;
         }
       }

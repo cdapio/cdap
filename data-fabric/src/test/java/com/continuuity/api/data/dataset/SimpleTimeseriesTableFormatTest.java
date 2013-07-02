@@ -12,8 +12,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-// TODO: move to SimpleTimeseriesTable test?
+/**
+ * Time series table format test.
+ */
 public class SimpleTimeseriesTableFormatTest {
+  // TODO: move to SimpleTimeseriesTable test?
   @Test
   public void testColumnNameFormat() {
     // Note: tags are sorted lexographically
@@ -77,7 +80,7 @@ public class SimpleTimeseriesTableFormatTest {
                                                                     timeIntervalPerRow)) < 0);
 
     // * For different keys the constructed rows are different
-    byte[] key2 = Bytes.toBytes("key2");
+    byte[] key2 = Bytes.toBytes("KEY2");
     Assert.assertFalse(Arrays.equals(
                                       SimpleTimeseriesTable.createRow(key, ts1, timeIntervalPerRow),
                                      SimpleTimeseriesTable.createRow(key2, ts1, timeIntervalPerRow)));
@@ -95,7 +98,7 @@ public class SimpleTimeseriesTableFormatTest {
 
     int intervalsCount = (int) SimpleTimeseriesTable.getTimeIntervalsCount(startTime, endTime, timeIntervalPerRow);
     byte[][] rowsForInterval = new byte[intervalsCount][];
-    for(int i = 0; i < intervalsCount; i++) {
+    for (int i = 0; i < intervalsCount; i++) {
       rowsForInterval[i] = SimpleTimeseriesTable.getRowOfKthInterval(key, startTime, i, timeIntervalPerRow);
     }
     assertEquals(rows.toArray(new byte[rows.size()][]), rowsForInterval);

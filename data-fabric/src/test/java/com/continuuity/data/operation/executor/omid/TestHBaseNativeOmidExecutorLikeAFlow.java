@@ -17,6 +17,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * Hbase native Omid tests.
+ */
 public class TestHBaseNativeOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
   private static Injector injector;
@@ -31,8 +34,8 @@ public class TestHBaseNativeOmidExecutorLikeAFlow extends TestOmidExecutorLikeAF
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
       conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf));
-      executor = (OmidTransactionalOperationExecutor)injector.getInstance(
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
+      executor = (OmidTransactionalOperationExecutor) injector.getInstance(
           Key.get(OperationExecutor.class,
               Names.named("DataFabricOperationExecutor")));
       handle = executor.getTableHandle();

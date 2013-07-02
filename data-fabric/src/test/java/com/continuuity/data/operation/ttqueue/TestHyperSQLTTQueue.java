@@ -13,6 +13,9 @@ import java.util.Random;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class TestHyperSQLTTQueue extends TestTTQueue {
 
   private static final Injector injector = Guice.createInjector (

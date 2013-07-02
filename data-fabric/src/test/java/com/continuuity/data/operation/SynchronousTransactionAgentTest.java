@@ -24,7 +24,7 @@ public class SynchronousTransactionAgentTest {
   static OperationExecutor opex;
 
   /**
-   * Sets up the in-memory operation executor and the data fabric
+   * Sets up the in-memory operation executor and the data fabric.
    */
   @BeforeClass
   public static void setupDataFabric() {
@@ -40,14 +40,14 @@ public class SynchronousTransactionAgentTest {
     return agent;
   }
 
-  static final byte[] a = { 'a' };
-  static final byte[] b = { 'b' };
-  static final byte[] c = { 'c' };
-  static final byte[] x = { 'x' };
-  static final byte[] y = { 'y' };
-  static final byte[] one = Bytes.toBytes(1L);
-  static final byte[] two = Bytes.toBytes(2L);
-  static final byte[] three = Bytes.toBytes(3L);
+  private static final byte[] a = { 'a' };
+  private static final byte[] b = { 'b' };
+  private static final byte[] c = { 'c' };
+  private static final byte[] x = { 'x' };
+  private static final byte[] y = { 'y' };
+  private static final byte[] one = Bytes.toBytes(1L);
+  private static final byte[] two = Bytes.toBytes(2L);
+  private static final byte[] three = Bytes.toBytes(3L);
 
   // test that all writes and reads go through, and abort has no effect
   @Test

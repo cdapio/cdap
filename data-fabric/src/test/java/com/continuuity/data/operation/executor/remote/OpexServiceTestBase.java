@@ -18,6 +18,9 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ *
+ */
 public abstract class OpexServiceTestBase {
 
   static OperationExecutor local, remote;
@@ -55,8 +58,10 @@ public abstract class OpexServiceTestBase {
     // and wait until it has fully initialized
     StopWatch watch = new StopWatch();
     watch.start();
-    while(watch.getTime() < 10000) {
-      if (opexService.ruok()) break;
+    while (watch.getTime() < 10000) {
+      if (opexService.ruok()) {
+        break;
+      }
     }
     Assert.assertTrue("Operation Executor Service failed to come up within " +
         "10 seconds.", opexService.ruok());
@@ -72,8 +77,9 @@ public abstract class OpexServiceTestBase {
   public static void stopService() throws Exception {
 
     // shutdown the opex service
-    if (opexService != null)
+    if (opexService != null) {
       opexService.stop(true);
+    }
 
     // and shutdown the zookeeper
     if (zookeeper != null) {
