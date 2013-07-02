@@ -7,6 +7,7 @@ package com.continuuity.passport.dal.db;
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
+import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
 import com.continuuity.passport.core.utils.ApiKey;
 import com.continuuity.passport.core.utils.PasswordUtils;
 import com.continuuity.passport.dal.AccountDAO;
@@ -61,6 +62,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
 
       ps.executeUpdate();
+      connection.commit();
 
       result = ps.getGeneratedKeys();
       if (result == null) {
@@ -75,7 +77,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       if (DBUtils.DB_INTEGRITY_CONSTRAINT_VIOLATION.equals(e.getSQLState())) {
         throw new AccountAlreadyExistsException(e.getMessage());
       }
-
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
     } finally {
@@ -237,12 +238,13 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String sql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s, %s FROM %s WHERE %s = ?",
+      String sql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
         DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
         DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
         DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT, DBUtils.AccountTable.PAYMENT_ACCOUNT_ID,
+        DBUtils.AccountTable.ORG_ID,
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.ID_COLUMN);
 
@@ -262,7 +264,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
                               rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
                               DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)),
                               DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT)),
-                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID));
+                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID),
+                              rs.getString(DBUtils.AccountTable.ORG_ID));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -273,6 +276,40 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       close(connection, ps, rs);
     }
     return account;
+  }
+
+
+  @Override
+  public void updateOrganizationId(int accountId, String orgId)
+    throws AccountNotFoundException, OrganizationNotFoundException {
+    Connection connection = this.poolManager.getValidConnection();
+    String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?",
+                               DBUtils.AccountTable.TABLE_NAME,
+                               DBUtils.AccountTable.ORG_ID,
+                               DBUtils.AccountTable.ID_COLUMN
+    );
+    try {
+      PreparedStatement ps = connection.prepareStatement(sql);
+      try {
+        ps.setString(1, orgId);
+        ps.setInt(2, accountId);
+        int affectedRows = ps.executeUpdate();
+        connection.commit();
+        if (affectedRows == 0) {
+          throw new AccountNotFoundException("Account doesn't exists");
+        }
+      } finally {
+        ps.close();
+      }
+    } catch (SQLException e) {
+      if (DBUtils.DB_INTEGRITY_CONSTRAINT_VIOLATION_FOR_KEY.equals(e.getSQLState())) {
+        throw new OrganizationNotFoundException("Organization to be updated not found");
+      } else {
+        throw Throwables.propagate(e);
+      }
+    } finally {
+      close(connection);
+    }
   }
 
   /**
@@ -291,11 +328,12 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String sql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
+      String sql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
         DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
         DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
+        DBUtils.AccountTable.ORG_ID,
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.EMAIL_COLUMN);
 
@@ -315,7 +353,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
                               rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
                               DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)),
                               DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT)),
-                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID));
+                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID),
+                              rs.getString(DBUtils.AccountTable.ORG_ID));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -467,17 +506,19 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     );
 
     //Update is successful. now return the account information
-    String selectSql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
+    String selectSql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
       "(SELECT %s FROM %s where %s = ?)",
       DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
       DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
       DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
       DBUtils.AccountTable.CONFIRMED_COLUMN,
       DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
-      DBUtils.AccountTable.TABLE_NAME,
       DBUtils.AccountTable.EMAIL_COLUMN,
       DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT,
       DBUtils.AccountTable.PAYMENT_ACCOUNT_ID,
+      DBUtils.AccountTable.ORG_ID,
+      DBUtils.AccountTable.TABLE_NAME,
+      DBUtils.AccountTable.EMAIL_COLUMN,
       DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME,
       DBUtils.Nonce.NONCE_ID_COLUMN
     );
@@ -493,8 +534,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       update.setString(1, PasswordUtils.generateHashedPassword(newPassword));
       update.setInt(2, nonce);
       update.executeUpdate();
-
-
 
       select = connection.prepareStatement(selectSql);
 
@@ -517,7 +556,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
                               rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
                               DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)),
                               DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT)),
-                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID));
+                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID),
+                              rs.getString(DBUtils.AccountTable.ORG_ID));
       }
       return account;
     } catch (SQLException e) {
@@ -555,5 +595,4 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       close(connection, ps);
     }
   }
-
 }

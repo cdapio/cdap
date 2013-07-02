@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Adapter for flume.
+ */
 public class FlumeLogAdapter implements AvroSourceProtocol {
 
   private static final Logger LOG
@@ -25,14 +28,13 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
     this.collector = new LogCollector(config, hConfig);
   }
 
-  private static Map<String, String>
-  toStringMap(Map<CharSequence, CharSequence> charSeqMap) {
+  private static Map<String, String> toStringMap(Map<CharSequence, CharSequence> charSeqMap) {
     Map<String, String> stringMap =
       new HashMap<String, String>();
-    if(charSeqMap == null) {
+    if (charSeqMap == null) {
       return stringMap;
     }
-    for(Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
+    for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
       stringMap.put(entry.getKey().toString(), entry.getValue().toString());
     }
     return stringMap;
@@ -41,15 +43,14 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
   @Override
   public Status append(AvroFlumeEvent event) throws AvroRemoteException {
     Map<String, String> headers = toStringMap(event.getHeaders());
-    if(! headers.containsKey(LogEvent.FIELD_NAME_LOGTAG) ||
-       ! headers.containsKey(LogEvent.FIELD_NAME_LOGLEVEL)) {
+    if (!headers.containsKey(LogEvent.FIELD_NAME_LOGTAG) || !headers.containsKey(LogEvent.FIELD_NAME_LOGLEVEL)) {
       return Status.UNKNOWN;
     }
 
     String logtag = headers.get(LogEvent.FIELD_NAME_LOGTAG);
     String level = headers.get(LogEvent.FIELD_NAME_LOGLEVEL);
 
-    if(logtag == null || logtag.isEmpty() || level == null || level.isEmpty()) {
+    if (logtag == null || logtag.isEmpty() || level == null || level.isEmpty()) {
       LOG.warn("Logtag or level is null. Please check the send events.");
       return Status.UNKNOWN;
     }
@@ -65,9 +66,9 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
     Status status = Status.OK;
     for (AvroFlumeEvent event : events) {
       Status stat = append(event);
-      if (stat.equals(Status.FAILED) ||
-          stat.equals(Status.UNKNOWN) && (!status.equals(Status.FAILED)))
+      if (stat.equals(Status.FAILED) || stat.equals(Status.UNKNOWN) && (!status.equals(Status.FAILED))) {
         status = stat;
+      }
     }
     return status;
   }

@@ -57,7 +57,7 @@ public interface QueueSpecificationGenerator {
 
     @Override
     public boolean equals(Object o) {
-      if(o == null) {
+      if (o == null) {
         return false;
       }
       Node other = (Node) o;

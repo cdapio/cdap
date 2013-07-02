@@ -7,7 +7,9 @@ import java.util.Arrays;
 
 /**
  * This collector is used for collecting the first N elements, it returns
- * false after N elements have been collected
+ * false after N elements have been collected.
+ *
+ * @param <Element> Type of element.
  */
 public class FirstNCollector<Element> implements Collector<Element> {
   private final Element[] elements;
@@ -20,15 +22,19 @@ public class FirstNCollector<Element> implements Collector<Element> {
 
   @Override
   public boolean addElement(Element element) {
-    if (count >= elements.length) return false;
+    if (count >= elements.length) {
+      return false;
+    }
     elements[count++] = element;
     return (count < elements.length);
   }
 
   @Override
   public Element[] finish() {
-    if (count >= elements.length) return elements;
-    else return Arrays.copyOf(elements, count);
+    if (count >= elements.length) {
+      return elements;
+    }
+    return Arrays.copyOf(elements, count);
   }
 }
 

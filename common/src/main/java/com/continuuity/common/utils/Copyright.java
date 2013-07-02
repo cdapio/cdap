@@ -8,6 +8,9 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.PrintStream;
 
+/**
+ * Central copyright class.
+ */
 public class Copyright {
 
   private static final String[] lines = {
@@ -18,7 +21,9 @@ public class Copyright {
   };
 
   public static void print(PrintStream out) {
-    for (String line : lines) out.println(line);
+    for (String line : lines) {
+      out.println(line);
+    }
   }
 
   public static void print() {

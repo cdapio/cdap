@@ -26,7 +26,7 @@ public class OptionSpec {
   private Object object;
 
   /**
-   * Creates an instance of OptionSpec
+   * Creates an instance of OptionSpec.
    * @param field annotated with @Option
    * @param option specifying information about the field that needs to be filled in by command line argument.
    * @param object specifies the object the option is specified in.
@@ -54,7 +54,7 @@ public class OptionSpec {
   }
 
   /**
-   * Returns the type name of the field annotated by <code>@Option</code>
+   * Returns the type name of the field annotated by <code>@Option</code>.
    * @return name of the type of field.
    */
   public String getTypeName() {
@@ -67,7 +67,7 @@ public class OptionSpec {
   }
 
   /**
-   * Returns whether the field needs to be hidden or no
+   * Returns whether the field needs to be hidden or no.
    * @return true if hidden; false otherwise.
    */
   public boolean isHidden() {
@@ -75,7 +75,7 @@ public class OptionSpec {
   }
 
   /**
-   * Returns the usage of the field
+   * Returns the usage of the field.
    * @return String representation of usage.
    */
   public String getUsage() {
@@ -98,27 +98,27 @@ public class OptionSpec {
     String value = "";
     try {
       // If private field, set the accessible to true to access it.
-      if(! field.isAccessible()) {
+      if (!field.isAccessible()) {
         field.setAccessible(true);
       }
 
       // Now depending on the type of the field convert the field
       // to string type.
-      if(field.getType() == int.class) {
+      if (field.getType() == int.class) {
         value = Integer.toString(field.getInt(object));
-      } else if(field.getType() == long.class) {
+      } else if (field.getType() == long.class) {
         value = Long.toString(field.getLong(object));
-      } else if(field.getType() == short.class) {
+      } else if (field.getType() == short.class) {
         value = Short.toString(field.getShort(object));
-      } else if(field.getType() == float.class) {
+      } else if (field.getType() == float.class) {
         value = Float.toString(field.getFloat(object));
-      } else if(field.getType() == double.class) {
+      } else if (field.getType() == double.class) {
         value = Double.toString(field.getDouble(object));
-      } else if(field.getType() == boolean.class) {
+      } else if (field.getType() == boolean.class) {
         value = Boolean.toString(field.getBoolean(object));
-      } else if(field.getType() == String.class) {
+      } else if (field.getType() == String.class) {
         String s = (String) field.get(object);
-        if(s != null) {
+        if (s != null) {
           value = "\"" + s + "\"";
         } else {
           value = "null";
@@ -131,7 +131,7 @@ public class OptionSpec {
   }
 
   /**
-   * Sets the field with the value
+   * Sets the field with the value.
    * @param value to be set
    * @throws IllegalAccessException
    */

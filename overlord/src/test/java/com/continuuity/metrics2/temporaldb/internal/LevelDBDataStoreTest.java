@@ -16,10 +16,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Tests LevelDB Based metrics system.
+ */
 public class LevelDBDataStoreTest {
   private static LevelDBTemporalDataStore temporalDB;
   private static File dir;
-  private static long timestamp = (System.currentTimeMillis()/1000) - 24*60*60;
+  private static long timestamp = (System.currentTimeMillis() / 1000) - 24 * 60 * 60;
   private static int DATAPOINTS = 10000;
 
   public static File createTempDirectory() throws IOException {
@@ -53,8 +56,8 @@ public class LevelDBDataStoreTest {
 
   @Test
   public void testPutAndGetSingle() throws Exception {
-    String key1 = new String("key1");
-    String value1 = new String("value1");
+    String key1 = "key1";
+    String value1 = "value1";
     temporalDB.put(key1.getBytes(), value1.getBytes());
     byte[] valueFromStore = temporalDB.get(key1.getBytes());
     Assert.assertNotNull(valueFromStore);
@@ -207,7 +210,7 @@ public class LevelDBDataStoreTest {
     attr41.put("instance", "1");
 
     long movingTimestamp = timestamp;
-    for(int i = 0; i < DATAPOINTS; ++i) {
+    for (int i = 0; i < DATAPOINTS; ++i) {
       {
         DataPoint point1 = new DataPoint.Builder("tuple.read")
                 .addTimestamp(movingTimestamp).addValue(i).addTags(attr10).create();
@@ -228,7 +231,7 @@ public class LevelDBDataStoreTest {
     }
 
     movingTimestamp = timestamp;
-    for(int i = 0; i < DATAPOINTS; ++i) {
+    for (int i = 0; i < DATAPOINTS; ++i) {
       {
         DataPoint point1 = new DataPoint.Builder("tuple.read")
           .addTimestamp(movingTimestamp).addValue(i).addTags(attr12).create();
@@ -249,7 +252,7 @@ public class LevelDBDataStoreTest {
     }
 
     movingTimestamp = timestamp;
-    for(int i = 0; i < DATAPOINTS; ++i) {
+    for (int i = 0; i < DATAPOINTS; ++i) {
       {
         DataPoint point1 = new DataPoint.Builder("tuple.read")
           .addTimestamp(movingTimestamp).addValue(i).addTags(attr20).create();
@@ -270,7 +273,7 @@ public class LevelDBDataStoreTest {
     }
 
     movingTimestamp = timestamp;
-    for(int i = 0; i < DATAPOINTS; ++i) {
+    for (int i = 0; i < DATAPOINTS; ++i) {
       {
         DataPoint point1 = new DataPoint.Builder("tuple.read")
           .addTimestamp(movingTimestamp).addValue(i).addTags(attr30).create();
@@ -291,7 +294,7 @@ public class LevelDBDataStoreTest {
     }
 
     movingTimestamp = timestamp;
-    for(int i = 0; i < DATAPOINTS; ++i) {
+    for (int i = 0; i < DATAPOINTS; ++i) {
       {
         DataPoint point1 = new DataPoint.Builder("tuple.read")
           .addTimestamp(movingTimestamp).addValue(i).addTags(attr40).create();
@@ -334,7 +337,7 @@ public class LevelDBDataStoreTest {
     ImmutableList<DataPoint> points = temporalDB.execute(query);
     Assert.assertNotNull(points);
     double count = 0;
-    for(DataPoint point : points) {
+    for (DataPoint point : points) {
       Assert.assertTrue(count == point.getValue());
       count++;
     }
@@ -362,8 +365,8 @@ public class LevelDBDataStoreTest {
     ImmutableList<DataPoint> points = temporalDB.execute(query);
     Assert.assertNotNull(points);
     double count = 0;
-    for(DataPoint point : points) {
-      Assert.assertTrue(count*2 == point.getValue());
+    for (DataPoint point : points) {
+      Assert.assertTrue(count * 2 == point.getValue());
       count++;
     }
   }
@@ -390,8 +393,8 @@ public class LevelDBDataStoreTest {
 
     Assert.assertNotNull(points);
     double count = 0;
-    for(DataPoint point : points) {
-      Assert.assertTrue(count*4 == point.getValue());
+    for (DataPoint point : points) {
+      Assert.assertTrue(count * 4 == point.getValue());
       count++;
     }
   }
@@ -428,8 +431,8 @@ public class LevelDBDataStoreTest {
     ImmutableList<DataPoint> busyness =
       new Timeseries().div(a, b);
     int idx = 0;
-    for(DataPoint p : busyness) {
-      if(idx == 0) {
+    for (DataPoint p : busyness) {
+      if (idx == 0) {
         Assert.assertTrue(p.getValue() == 0);
         idx = 1;
       } else {
@@ -474,8 +477,8 @@ public class LevelDBDataStoreTest {
     ImmutableList<DataPoint> busyness =
       new Timeseries().div(a, b, new Timeseries.Percentage());
     int idx = 0;
-    for(DataPoint p : busyness) {
-      if(idx == 0) {
+    for (DataPoint p : busyness) {
+      if (idx == 0) {
         Assert.assertTrue(p.getValue() == 0);
         idx = 1;
       } else {

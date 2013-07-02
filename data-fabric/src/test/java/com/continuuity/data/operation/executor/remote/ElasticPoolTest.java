@@ -5,6 +5,9 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ *
+ */
 public class ElasticPoolTest {
 
   static class Dummy {
@@ -37,14 +40,22 @@ public class ElasticPoolTest {
         public void run() {
           for (int j = 0; j < 5; ++j) {
             Dummy dummy = pool.obtain();
-            try { Thread.sleep(100L); } catch (Exception e) { };
+            try {
+              Thread.sleep(100L);
+            } catch (Exception e) {
+
+            }
             pool.release(dummy);
           }
         }
       };
     }
-    for (Thread t : threads) t.start();
-    for (Thread t : threads) t.join();
+    for (Thread t : threads) {
+      t.start();
+    }
+    for (Thread t : threads) {
+      t.join();
+    }
     Assert.assertEquals(2, Dummy.count.get());
   }
 
@@ -58,14 +69,21 @@ public class ElasticPoolTest {
         public void run() {
           for (int j = 0; j < 5; ++j) {
             Dummy dummy = pool.obtain();
-            try { Thread.sleep(100L); } catch (Exception e) { };
+            try {
+              Thread.sleep(100L);
+            } catch (Exception e) {
+            }
             pool.release(dummy);
           }
         }
       };
     }
-    for (Thread t : threads) t.start();
-    for (Thread t : threads) t.join();
+    for (Thread t : threads) {
+      t.start();
+    }
+    for (Thread t : threads) {
+      t.join();
+    }
     Assert.assertEquals(2, Dummy.count.get());
   }
 
@@ -80,14 +98,21 @@ public class ElasticPoolTest {
         public void run() {
           for (int j = 0; j < 5; ++j) {
             Dummy dummy = pool.obtain();
-            try { Thread.sleep(100L); } catch (Exception e) { };
+            try {
+              Thread.sleep(100L);
+            } catch (Exception e) {
+            }
             pool.discard(dummy);
           }
         }
       };
     }
-    for (Thread t : threads) t.start();
-    for (Thread t : threads) t.join();
+    for (Thread t : threads) {
+      t.start();
+    }
+    for (Thread t : threads) {
+      t.join();
+    }
     Assert.assertEquals(5 * threads.length, Dummy.count.get());
   }
 }

@@ -4,25 +4,25 @@
 
 package com.continuuity.common.logging.logback;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
-import ch.qos.logback.core.AppenderBase;
-import ch.qos.logback.core.Layout;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.HumanReadableLogMessageFormat;
 import com.continuuity.common.logging.common.LogMessageFormat;
 import com.continuuity.common.logging.common.LogWriter;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.core.AppenderBase;
+import ch.qos.logback.core.Layout;
 
 /**
- * Handles emitted log messages and delegates the actual writing to provided LogWriter
+ * Handles emitted log messages and delegates the actual writing to provided LogWriter.
  */
 public class CAppender extends AppenderBase<ILoggingEvent> {
   // Hack hack hack: time constraints
   public static LogWriter logWriter = null;
 
   /**
-   * Defines the format of the written log messages
+   * Defines the format of the written log messages.
    */
   private LogMessageFormat format = new HumanReadableLogMessageFormat();
 
@@ -61,7 +61,7 @@ public class CAppender extends AppenderBase<ILoggingEvent> {
     }
 
     String[] traceLines = null;
-    if(event.getThrowableProxy() != null) {
+    if (event.getThrowableProxy() != null) {
       final StackTraceElementProxy[] exc
         = event.getThrowableProxy().getStackTraceElementProxyArray();
       if (exc != null) {

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Tests static methods in the abstract OVC table
+ * Tests static methods in the abstract OVC table.
  */
 public class TestAbtractOVCTable {
 
@@ -65,18 +65,18 @@ public class TestAbtractOVCTable {
 
   @Test
   public void testPrimitiveSplits() {
-    testPrimitiveNoSplits(0, new byte[] { 'a' }, new byte[] { 'a' } );
-    testPrimitiveNoSplits(0, new byte[] { 'c' }, new byte[] { 'b' } );
-    testPrimitiveNoSplits(1, new byte[] { 'a' }, new byte[] { 'a' } );
-    testPrimitiveNoSplits(1000, new byte[] { 'c' }, new byte[] { 'b' } );
+    testPrimitiveNoSplits(0, new byte[] { 'a' }, new byte[] { 'a' });
+    testPrimitiveNoSplits(0, new byte[] { 'c' }, new byte[] { 'b' });
+    testPrimitiveNoSplits(1, new byte[] { 'a' }, new byte[] { 'a' });
+    testPrimitiveNoSplits(1000, new byte[] { 'c' }, new byte[] { 'b' });
     testPrimitiveSplits(0, null, null);
     testPrimitiveSplits(1, null, null);
     testPrimitiveSplits(24, null, null);
-    testPrimitiveSplits(0, null, new byte[] { (byte)0x80 });
-    testPrimitiveSplits(16, null, new byte[] { (byte)0x80 });
-    testPrimitiveSplits(0, new byte[] { (byte)0x80 }, null);
-    testPrimitiveSplits(1, new byte[] { (byte)0x80 }, null);
-    testPrimitiveSplits(5, new byte[] { (byte)0x80 }, null);
+    testPrimitiveSplits(0, null, new byte[] { (byte) 0x80 });
+    testPrimitiveSplits(16, null, new byte[] { (byte) 0x80 });
+    testPrimitiveSplits(0, new byte[] { (byte) 0x80 }, null);
+    testPrimitiveSplits(1, new byte[] { (byte) 0x80 }, null);
+    testPrimitiveSplits(5, new byte[] { (byte) 0x80 }, null);
     testPrimitiveSplits(0, new byte[] { 'A', 'B', 'C' }, new byte[] { 'a', 'b', 'c' });
     testPrimitiveSplits(1, new byte[] { 'A', 'B', 'C' }, new byte[] { 'a', 'b', 'c' });
     testPrimitiveSplits(10, new byte[] { 'A', 'B', 'C' }, new byte[] { 'a', 'b', 'c' });

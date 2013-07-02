@@ -57,9 +57,9 @@ public class CMetrics {
 
     // if a metric type is user or system flow metric then metric
     // group has be valid.
-    if(metricType == MetricType.FlowSystem ||
+    if (metricType == MetricType.FlowSystem ||
         metricType == MetricType.FlowUser) {
-      if(metricGroup == null || metricGroup.isEmpty()) {
+      if (metricGroup == null || metricGroup.isEmpty()) {
         throw new IllegalArgumentException("Metric group cannot be empty or null " +
                                              "for a flow metric.");
       }
@@ -99,7 +99,7 @@ public class CMetrics {
    * @param value to increment the metric by.
    */
   public void counter(Class<?> scope, String metricName, long value) {
-    if(! counters.containsKey(metricName)) {
+    if (!counters.containsKey(metricName)) {
       MetricName name = getMetricName(scope, metricName);
       counters.put(metricName, Metrics.newCounter(name));
     }
@@ -125,7 +125,7 @@ public class CMetrics {
    * @param value to be associated with the metric.
    */
   public void set(String metricName, final float value) {
-    if(! gauges.containsKey(metricName)) {
+    if (!gauges.containsKey(metricName)) {
       MetricName name = getMetricName(null, metricName);
       gauges.put(metricName, Metrics.newGauge(name, new Gauge<Float>() {
         @Override
@@ -156,7 +156,7 @@ public class CMetrics {
    * @param value to increment the meter by.
    */
   public void meter(Class<?> scope, String metricName, long value) {
-    if(! meters.containsKey(metricName)) {
+    if (!meters.containsKey(metricName)) {
       MetricName name = getMetricName(scope, metricName);
       meters.put(metricName,
                  Metrics.newMeter(name, metricName, TimeUnit.SECONDS));
@@ -186,7 +186,7 @@ public class CMetrics {
    * @param value to be used for histogram.
    */
   public void histogram(Class<?> scope, String metricName, long value) {
-    if(! histograms.containsKey(metricName)) {
+    if (!histograms.containsKey(metricName)) {
       MetricName name = getMetricName(scope, metricName);
       histograms.put(metricName, Metrics.newHistogram(name));
     }

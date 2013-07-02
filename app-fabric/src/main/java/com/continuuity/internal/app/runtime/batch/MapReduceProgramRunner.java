@@ -343,6 +343,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private static final class MapReduceProgramController extends AbstractProgramController {
     MapReduceProgramController(BasicMapReduceContext context) {
       super(context.getProgramName(), context.getRunId());
+      started();
     }
 
     @Override

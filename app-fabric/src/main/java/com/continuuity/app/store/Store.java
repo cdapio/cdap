@@ -10,8 +10,8 @@ import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
-import com.continuuity.weave.filesystem.Location;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.collect.Table;
 
 import java.io.IOException;
@@ -24,7 +24,7 @@ import java.util.List;
 public interface Store {
 
   /**
-   * Loads a given program
+   * Loads a given program.
    *
    * @param program id of the program
    * @param type of program
@@ -34,7 +34,7 @@ public interface Store {
   Program loadProgram(Id.Program program, Type type) throws IOException;
 
   /**
-   * @return MetaDataService to access program configuration data
+   * @return MetaDataService to access program configuration data.
    */
   MetadataService.Iface getMetaDataService();
 
@@ -48,7 +48,7 @@ public interface Store {
   void setStart(Id.Program id, String pid, long startTime);
 
   /**
-   * Logs end of program run
+   * Logs end of program run.
    *
    * @param id      id of program
    * @param pid     run id
@@ -96,7 +96,7 @@ public interface Store {
   ApplicationSpecification getApplication(Id.Application id) throws OperationException;
 
   /**
-   * Returns location of the application archive
+   * Returns location of the application archive.
    * @param id application id
    * @return application archive location
    * @throws OperationException
@@ -104,7 +104,7 @@ public interface Store {
   Location getApplicationArchiveLocation(Id.Application id) throws OperationException;
 
   /**
-   * Sets number of instances of specific flowlet
+   * Sets number of instances of specific flowlet.
    * @param id flow id
    * @param flowletId flowlet id
    * @param count new number of instances
@@ -113,7 +113,7 @@ public interface Store {
   void setFlowletInstances(Id.Program id, String flowletId, int count) throws OperationException;
 
   /**
-   * Removes program data
+   * Removes program data.
    * @param id program to remove
    */
   void remove(Id.Program id) throws OperationException;
@@ -127,13 +127,13 @@ public interface Store {
   ApplicationSpecification removeApplication(Id.Application id) throws OperationException;
 
   /**
-   * Removes all applications (with programs) of the given account
+   * Removes all applications (with programs) of the given account.
    * @param id account id whose applications to remove
    */
   void removeAllApplications(Id.Account id) throws OperationException;
 
   /**
-   * Remove all metadata associated with account
+   * Remove all metadata associated with account.
    * @param id account id whose items to remove
    */
   void removeAll(Id.Account id) throws OperationException;

@@ -9,7 +9,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 */
 public class GetQueueInfo extends ReadOperation {
 
-  /** Unique id for the operation */
+  //Unique id for the operation.
   private final byte [] queueName;
 
   public GetQueueInfo(byte[] queueName) {

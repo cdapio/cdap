@@ -83,7 +83,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
   }
 
   private static class NoOracleOpexModule extends AbstractModule {
-    private static NoOracleOpexModule INSTANCE = new NoOracleOpexModule();
+    private static final NoOracleOpexModule INSTANCE = new NoOracleOpexModule();
 
     @Override
     public void configure() {

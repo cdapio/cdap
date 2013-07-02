@@ -21,6 +21,8 @@ import java.util.UUID;
  * A {@link DatumWriter} that uses java reflection to encode data. The encoding schema it uses is
  * the same as the binary encoding as specified in Avro, with the enhancement of support non-string
  * map key.
+ *
+ * @param <T> Type T to be written.
  */
 public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
 
@@ -41,7 +43,7 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
   }
 
   private void write(Object object, Encoder encoder, Schema objSchema, Set<Object> seenRefs) throws IOException {
-    if(object != null) {
+    if (object != null) {
       if (seenRefs.contains(object)) {
         throw new IOException("Circular reference not supported.");
       }
@@ -58,10 +60,10 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
         encoder.writeBool((Boolean) object);
         break;
       case INT:
-        encoder.writeInt(( (Number) object ).intValue());
+        encoder.writeInt(((Number) object).intValue());
         break;
       case LONG:
-        encoder.writeLong(( (Number) object ).longValue());
+        encoder.writeLong(((Number) object).longValue());
         break;
       case FLOAT:
         encoder.writeFloat((Float) object);
@@ -101,13 +103,13 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
   }
 
   private void writeBytes(Object object, Encoder encoder) throws IOException {
-    if(object instanceof ByteBuffer) {
+    if (object instanceof ByteBuffer) {
       encoder.writeBytes((ByteBuffer) object);
     } else if (object instanceof UUID) {
-      UUID uuid = (UUID)object;
+      UUID uuid = (UUID)  object;
       ByteBuffer buf = ByteBuffer.allocate(Longs.BYTES * 2);
       buf.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
-      encoder.writeBytes((ByteBuffer)buf.flip());
+      encoder.writeBytes((ByteBuffer) buf.flip());
     } else {
       encoder.writeBytes((byte[]) object);
     }
@@ -115,7 +117,7 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
 
   private void writeEnum(String value, Encoder encoder, Schema schema) throws IOException {
     int idx = schema.getEnumIndex(value);
-    if(idx < 0) {
+    if (idx < 0) {
       throw new IOException("Invalid enum value " + value);
     }
     encoder.writeInt(idx);
@@ -124,17 +126,17 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
   private void writeArray(Object array, Encoder encoder,
                           Schema componentSchema, Set<Object> seenRefs) throws IOException {
     int size = 0;
-    if(array instanceof Collection) {
+    if (array instanceof Collection) {
       Collection col = (Collection) array;
       encoder.writeInt(col.size());
-      for(Object obj : col) {
+      for (Object obj : col) {
         write(obj, encoder, componentSchema, seenRefs);
       }
       size = col.size();
     } else {
       size = Array.getLength(array);
       encoder.writeInt(size);
-      for(int i = 0; i < size; i++) {
+      for (int i = 0; i < size; i++) {
         write(Array.get(array, i), encoder, componentSchema, seenRefs);
       }
     }
@@ -149,7 +151,7 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
     Map<?, ?> objMap = (Map<?, ?>) map;
     int size = objMap.size();
     encoder.writeInt(size);
-    for(Map.Entry<?, ?> entry : objMap.entrySet()) {
+    for (Map.Entry<?, ?> entry : objMap.entrySet()) {
       write(entry.getKey(), encoder, mapSchema.getKey(), seenRefs);
       write(entry.getValue(), encoder, mapSchema.getValue(), seenRefs);
     }
@@ -166,16 +168,16 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
       Map<String, Method> methods = collectByMethod(type, Maps.<String, Method>newHashMap());
       Map<String, Field> fields = collectByFields(type, Maps.<String, Field>newHashMap());
 
-      for(Schema.Field field : recordSchema.getFields()) {
+      for (Schema.Field field : recordSchema.getFields()) {
         String fieldName = field.getName();
         Object value;
         Field recordField = fields.get(fieldName);
-        if(recordField != null) {
+        if (recordField != null) {
           recordField.setAccessible(true);
           value = recordField.get(record);
         } else {
           Method method = methods.get(fieldName);
-          if(method == null) {
+          if (method == null) {
             throw new IOException("Unable to read field value through getter. Class=" + type + ", field=" + fieldName);
           }
           value = method.invoke(record);
@@ -184,8 +186,8 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
         Schema fieldSchema = field.getSchema();
         write(value, encoder, fieldSchema, seenRefs);
       }
-    } catch(Exception e) {
-      if(e instanceof IOException) {
+    } catch (Exception e) {
+      if (e instanceof IOException) {
         throw (IOException) e;
       }
       throw new IOException(e);
@@ -194,15 +196,15 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
 
   private Map<String, Field> collectByFields(TypeToken<?> typeToken, Map<String, Field> fields) {
     // Collect the field types
-    for(TypeToken<?> classType : typeToken.getTypes().classes()) {
+    for (TypeToken<?> classType : typeToken.getTypes().classes()) {
       Class<?> rawType = classType.getRawType();
-      if(rawType.equals(Object.class)) {
+      if (rawType.equals(Object.class)) {
         // Ignore all object fields
         continue;
       }
 
-      for(Field field : rawType.getDeclaredFields()) {
-        if(Modifier.isTransient(field.getModifiers()) || field.isSynthetic()) {
+      for (Field field : rawType.getDeclaredFields()) {
+        if (Modifier.isTransient(field.getModifiers()) || field.isSynthetic()) {
           continue;
         }
         fields.put(field.getName(), field);
@@ -212,24 +214,24 @@ public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
   }
 
   private Map<String, Method> collectByMethod(TypeToken<?> typeToken, Map<String, Method> methods) {
-    for(Method method : typeToken.getRawType().getMethods()) {
-      if(method.getDeclaringClass().equals(Object.class)) {
+    for (Method method : typeToken.getRawType().getMethods()) {
+      if (method.getDeclaringClass().equals(Object.class)) {
         // Ignore all object methods
         continue;
       }
       String methodName = method.getName();
-      if(!( methodName.startsWith("get") || methodName.startsWith("is") )
+      if (!(methodName.startsWith("get") || methodName.startsWith("is"))
            || method.isSynthetic() || method.getParameterTypes().length != 0) {
         // Ignore not getter methods
         continue;
       }
       String fieldName = methodName.startsWith("get") ?
                            methodName.substring("get".length()) : methodName.substring("is".length());
-      if(fieldName.isEmpty()) {
+      if (fieldName.isEmpty()) {
         continue;
       }
       fieldName = String.format("%c%s", Character.toLowerCase(fieldName.charAt(0)), fieldName.substring(1));
-      if(methods.containsKey(fieldName)) {
+      if (methods.containsKey(fieldName)) {
         continue;
       }
       methods.put(fieldName, method);

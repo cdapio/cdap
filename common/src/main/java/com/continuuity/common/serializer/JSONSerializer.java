@@ -11,6 +11,8 @@ import java.nio.charset.Charset;
  *   This implementation uses Gson (Google JSON) serializer and
  *   deserializer. It operates on object of type T.
  * </p>
+ *
+ * @param <T> Type to be serialized.
  */
 public final class JSONSerializer<T> {
 

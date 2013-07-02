@@ -20,7 +20,7 @@ public abstract class AbstractLoggingContext implements LoggingContext {
   private Map<String, SystemTag> systemTags = Maps.newHashMap();
 
   /**
-   * Sets system tag
+   * Sets system tag.
    * @param name tag name
    * @param value tag value
    */
@@ -29,7 +29,7 @@ public abstract class AbstractLoggingContext implements LoggingContext {
   }
 
   /**
-   * Gets system tag value by tag name
+   * Gets system tag value by tag name.
    * @param name tag name
    * @return system tag value
    */

@@ -152,3 +152,15 @@ sonar {
     sourceExclusions = '**/manager/stubs/*'
   }
 }
+
+checkstyleMain {
+  source = sourceSets.main.allJava.matching {
+    exclude '**/LocalJobRunnerWithFix*'
+  }
+}
+
+checkstyleThrift {
+  source = sourceSets.main.allJava.matching {
+    exclude '**'
+  }
+}

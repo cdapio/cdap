@@ -28,7 +28,7 @@ public final class SchemaCache {
 
     // TODO: Later on we should use ClassLoader.getResource
     final Map<SchemaHash, Schema> schemaMap = Maps.newHashMap();
-    for(Schema schema : schemas) {
+    for (Schema schema : schemas) {
       schemaMap.put(schema.getSchemaHash(), schema);
     }
 
@@ -58,7 +58,7 @@ public final class SchemaCache {
   public Schema get(SchemaHash hash) {
     try {
       return cache.get(hash);
-    } catch(ExecutionException e) {
+    } catch (ExecutionException e) {
       return null;
     }
   }

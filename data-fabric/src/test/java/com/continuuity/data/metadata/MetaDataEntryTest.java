@@ -3,6 +3,9 @@ package com.continuuity.data.metadata;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Meta data entry test.
+ */
 public class MetaDataEntryTest {
 
   void testOne(String account, String application, String type, String id,

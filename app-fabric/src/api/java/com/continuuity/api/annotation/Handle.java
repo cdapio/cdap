@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
 public @interface Handle {
 
   /**
-   * @return Array of procedure method names.
+   * Returns array of procedure method names.
    */
   String[] value();
 }

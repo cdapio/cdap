@@ -4,6 +4,9 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+/**
+ * HBase Serialize meta data store test.
+ */
 public class HBaseSerializingMetaDataStoreTest extends HBaseMetaDataStoreTest {
 
   @BeforeClass

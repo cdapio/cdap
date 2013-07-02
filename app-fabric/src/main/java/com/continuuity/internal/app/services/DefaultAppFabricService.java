@@ -243,7 +243,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       FlowIdentifier id = descriptor.getIdentifier();
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
-      Preconditions.checkArgument(existingRuntimeInfo == null, "Flow is already running" );
+      Preconditions.checkArgument(existingRuntimeInfo == null, "Flow is already running");
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
 
       Program program;
@@ -281,7 +281,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param id
    */
   @Override
-  public FlowStatus status(AuthToken token, FlowIdentifier id)
+  public synchronized FlowStatus status(AuthToken token, FlowIdentifier id)
     throws AppFabricServiceException, TException {
 
     try {
@@ -315,7 +315,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private String controllerStateToString(ProgramController.State state) {
     if (state == ProgramController.State.ALIVE) {
       return "RUNNING";
-    } else if (state == ProgramController.State.ERROR) {
+    }
+    if (state == ProgramController.State.ERROR) {
       return "FAILED";
     }
     return state.toString();
@@ -328,7 +329,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param identifier
    */
   @Override
-  public RunIdentifier stop(AuthToken token, FlowIdentifier identifier)
+  public synchronized RunIdentifier stop(AuthToken token, FlowIdentifier identifier)
     throws AppFabricServiceException, TException {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
@@ -925,7 +926,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         public boolean apply(Id.Program programId) {
           return programId.equals(programId);
         }
-      }, Type.values()), "Program still running for application " + programId.getApplication() + "," + programId.getId());
+      }, Type.values()), "Program still running for application %s, %s.",
+                               programId.getApplication(), programId.getId());
 
 
       Type programType = entityTypeToType(identifier);

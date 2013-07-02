@@ -13,9 +13,9 @@ import java.util.Map;
  */
 public class MockedPassportClient extends PassportClient {
 
-  private final Map<String,List<String>> keysAndClusters;
+  private final Map<String, List<String>> keysAndClusters;
 
-  public MockedPassportClient(Map<String,List<String>> keysAndClusters) {
+  public MockedPassportClient(Map<String, List<String>> keysAndClusters) {
     this.keysAndClusters = keysAndClusters;
   }
 
@@ -28,7 +28,7 @@ public class MockedPassportClient extends PassportClient {
   @Override
   public AccountProvider<Account> getAccount(String apiKey)
     throws RuntimeException {
-    return new AccountProvider<Account>(new Account("John","Smith", "john@smith.com")) {
+    return new AccountProvider<Account>(new Account("John", "Smith", "john@smith.com")) {
       @Override
       public String getAccountId() {
         return Constants.DEVELOPER_ACCOUNT_ID;

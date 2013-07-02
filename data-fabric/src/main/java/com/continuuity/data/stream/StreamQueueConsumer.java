@@ -22,8 +22,8 @@ public class StreamQueueConsumer extends QueueConsumer {
     super(instanceId, groupId, groupSize, groupName, partitioningKey, config);
   }
   public static StreamQueueConsumer fromQueueConsumer(QueueConsumer consumer) {
-    return new StreamQueueConsumer(consumer.getInstanceId(),consumer.getGroupId(),consumer.getGroupSize(),
-                                   consumer.getGroupName(),consumer.getPartitioningKey(),consumer.getQueueConfig());
+    return new StreamQueueConsumer(consumer.getInstanceId(), consumer.getGroupId(), consumer.getGroupSize(),
+                                   consumer.getGroupName(), consumer.getPartitioningKey(), consumer.getQueueConfig());
   }
 
 }

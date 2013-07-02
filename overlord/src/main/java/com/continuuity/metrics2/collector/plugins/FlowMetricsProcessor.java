@@ -104,7 +104,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       try {
         connection = processor.getConnection();
         stmt = connection.prepareStatement(sb.toString());
-        long oldestStartTime = ((System.currentTimeMillis()/1000)
+        long oldestStartTime = ((System.currentTimeMillis() / 1000)
           - metricsTimeToLiveInSeconds);
         stmt.setLong(1, oldestStartTime);
         stmt.executeUpdate();
@@ -115,10 +115,10 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
           e.getMessage());
       } finally {
         try {
-          if(connection != null) {
+          if (connection != null) {
             connection.close();
           }
-          if(stmt != null) {
+          if (stmt != null) {
             stmt.close();
           }
         } catch (SQLException e) {
@@ -159,7 +159,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
             Constants.DEFAULT_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS
         );
 
-    for(String metric : allowedMetrics) {
+    for (String metric : allowedMetrics) {
       allowedTimeseriesMetrics.put(metric, true);
     }
 
@@ -167,12 +167,12 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     this.type = DBUtils.loadDriver(connectionUrl);
 
     // Creates a pooled data source.
-    if(this.type == DBUtils.DBType.MYSQL) {
+    if (this.type == DBUtils.DBType.MYSQL) {
       MysqlConnectionPoolDataSource mysqlDataSource =
         new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionUrl);
       poolManager = new DBConnectionPoolManager(mysqlDataSource, 100);
-    } else if(this.type == DBUtils.DBType.HSQLDB) {
+    } else if (this.type == DBUtils.DBType.HSQLDB) {
       JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
       jdbcDataSource.setUrl(connectionUrl);
       jdbcDataSource.setProperties(getHsqlProperties(configuration));
@@ -180,7 +180,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     }
 
     // Starting the timeseries cleaners.
-    if(timeseriesCleanser == null) {
+    if (timeseriesCleanser == null) {
       timeseriesCleanser = new TimeseriesCleanser(this,
           configuration.getLong(Constants.CFG_METRICS_CLEANUP_TIME_TO_LIVE,
               Constants.DEFAULT_METRICS_CLEANUP_TIME_TO_LIVE),
@@ -214,7 +214,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    * @throws SQLException thrown in case of any error.
    */
   private Connection getConnection() throws SQLException {
-    if(poolManager != null) {
+    if (poolManager != null) {
       return poolManager.getValidConnection();
     }
     return null;
@@ -284,21 +284,21 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     try {
       connection = getConnection();
 
-      if(connection == null) {
+      if (connection == null) {
         return false;
       }
 
       stmt = connection.prepareStatement(sql);
       stmt.executeUpdate();
 
-      if(stmt != null) {
+      if (stmt != null) {
         stmt.close();
       }
 
       // If metric is not present then we don't attempt to
       // write the time series for that metric.
       // If metric has same value, then we don't add the point.
-      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())
+      if (!allowedTimeseriesMetrics.containsKey(elements.getMetric())
         && !elements.getMetric().contains(".stream.out")
         && !elements.getMetric().contains(".stream.in")
         && !elements.getMetric().contains("queue//")
@@ -338,13 +338,13 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       return false;
     } finally {
       try {
-        if(stmt != null) {
+        if (stmt != null) {
           stmt.close();
         }
-        if(connection != null) {
+        if (connection != null) {
           connection.close();
         }
-      } catch(SQLException e) {
+      } catch (SQLException e) {
         Log.warn("Failed to close connection or statement. Reason : {}.",
                  e.getMessage());
       }
@@ -387,14 +387,14 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       stmt.setFloat(9, request.getValue());
       stmt.executeUpdate();
 
-      if(stmt != null) {
+      if (stmt != null) {
         stmt.close();
       }
 
       // If metric is not present then we don't attempt to
       // write the time series for that metric.
       // If metric has same value, then we don't add the point.
-      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())
+      if (!allowedTimeseriesMetrics.containsKey(elements.getMetric())
         && !elements.getMetric().contains(".stream.out")
         && !elements.getMetric().contains(".stream.in")
         && !elements.getMetric().contains("queue//")
@@ -435,10 +435,10 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       return false;
     } finally {
       try {
-        if(stmt != null) {
+        if (stmt != null) {
           stmt.close();
         }
-        if(connection != null) {
+        if (connection != null) {
           connection.commit();
           connection.close();
         }
@@ -452,9 +452,9 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
   private boolean insertUpdateCounters(FlowMetricElements elements,
                                        MetricRequest request) {
-    if(type == DBUtils.DBType.HSQLDB) {
+    if (type == DBUtils.DBType.HSQLDB) {
       return insertUpdateHSQLDB(elements, request);
-    } else if(type == DBUtils.DBType.MYSQL) {
+    } else if (type == DBUtils.DBType.MYSQL) {
       return insertUpdateMYSQLDB(elements, request);
     }
     return false;
@@ -482,8 +482,8 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     try {
       final FlowMetricElements elements =
           new FlowMetricElements.Builder(request.getMetricName()).create();
-      if(elements != null) {
-        if(insertUpdateCounters(elements, request)) {
+      if (elements != null) {
+        if (insertUpdateCounters(elements, request)) {
           response.set(MetricResponse.Status.SUCCESS);
         } else {
           response.set(MetricResponse.Status.FAILED);
@@ -508,7 +508,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
   public void close() throws IOException {
     Statement st = null;
     try {
-      if(type == DBUtils.DBType.HSQLDB) {
+      if (type == DBUtils.DBType.HSQLDB) {
         st = getConnection().createStatement();
         st.execute("SHUTDOWN");
         st.close();
@@ -517,7 +517,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     } catch (SQLException e) {
       Log.warn("Failed while shutting down. Reason : {}", e.getMessage());
     } finally {
-      if(st != null) {
+      if (st != null) {
         try {
           st.close();
         } catch (SQLException e){
@@ -526,7 +526,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       }
     }
 
-    if(es != null) {
+    if (es != null) {
       es.shutdown();
     }
   }

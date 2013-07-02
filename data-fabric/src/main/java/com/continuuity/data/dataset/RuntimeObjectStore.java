@@ -139,7 +139,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
   /**
    * The split reader for objects is reading a table split using the underlying KeyValuyeTable's split reader.
    */
-  public class ObjectScanner extends SplitReader<byte[],T> {
+  public class ObjectScanner extends SplitReader<byte[], T> {
 
     // the underlying KeyValueTable's split reader
     private SplitReader<byte[], byte[]> reader;

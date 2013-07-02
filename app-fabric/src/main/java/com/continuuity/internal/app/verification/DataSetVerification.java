@@ -26,9 +26,9 @@ public class DataSetVerification extends AbstractVerifier implements Verifier<Da
   @Override
   public VerifyResult verify(final DataSetSpecification input) {
     // Checks if DataSet name is an ID
-    if(!isId(input.getName())) {
-      return VerifyResult.FAILURE(Err.NOT_AN_ID, "Dataset");
+    if (!isId(input.getName())) {
+      return VerifyResult.failure(Err.NOT_AN_ID, "Dataset");
     }
-    return VerifyResult.SUCCESS();
+    return VerifyResult.success();
   }
 }

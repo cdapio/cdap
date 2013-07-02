@@ -8,8 +8,8 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.pipeline.PipelineFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.Inject;
 
 /**

@@ -23,9 +23,12 @@ import java.util.Random;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Object store tests.
+ */
 public class ObjectStoreTest extends DataSetTestBase {
 
-  static final byte[] a = { 'a' };
+  private static final byte[] a = { 'a' };
 
   @BeforeClass
   public static void configure() throws Exception {
@@ -139,7 +142,7 @@ public class ObjectStoreTest extends DataSetTestBase {
       }
     };
     // create an instantiator that uses the dummy class loader
-    DataSetInstantiator inst = new DataSetInstantiator(fabric, proxy, loader);
+    DataSetInstantiator inst = new DataSetInstantiator(fabric, PROXY, loader);
     inst.setDataSets(specs);
     // use that instantiator to get a data set instance
     inst.getDataSet("customs");
@@ -209,7 +212,7 @@ public class ObjectStoreTest extends DataSetTestBase {
   public void testSubclass() throws OperationException {
     IntegerStore ints = instantiator.getDataSet("ints");
     ints.write(42, 101);
-    Assert.assertEquals((Integer)101, ints.read(42));
+    Assert.assertEquals((Integer) 101, ints.read(42));
   }
 
 }
@@ -223,11 +226,19 @@ class Custom {
   }
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || o.getClass() != this.getClass()) return false;
-    if (this.i != ((Custom)o).i) return false;
-    if (this.sl == null) return ((Custom)o).sl == null;
-    return this.sl.equals(((Custom)o).sl);
+    if (this == o) {
+      return true;
+    }
+    if (o == null || o.getClass() != this.getClass()) {
+      return false;
+    }
+    if (this.i != ((Custom) o).i) {
+      return false;
+    }
+    if (this.sl == null) {
+      return ((Custom) o).sl == null;
+    }
+    return this.sl.equals(((Custom) o).sl);
   }
   @Override
   public int hashCode() {
@@ -250,11 +261,19 @@ class CustomWithInner<T> {
     }
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
       Inner inner = (Inner) o;
-      if (set != null ? !set.equals(inner.set) : inner.set != null) return false;
-      if (x != null ? !x.equals(inner.x) : inner.x != null) return false;
+      if (set != null ? !set.equals(inner.set) : inner.set != null) {
+        return false;
+      }
+      if (x != null ? !x.equals(inner.x) : inner.x != null) {
+        return false;
+      }
       return true;
     }
     @Override
@@ -267,10 +286,16 @@ class CustomWithInner<T> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     CustomWithInner that = (CustomWithInner) o;
-    if (a != null ? !a.equals(that.a) : that.a != null) return false;
+    if (a != null ? !a.equals(that.a) : that.a != null) {
+      return false;
+    }
     return true;
   }
 

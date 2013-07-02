@@ -64,6 +64,9 @@ public class WordCountApp implements Application {
       .withProcedures().add(new WordFrequency()).noBatch().build();
   }
 
+  /**
+   *
+   */
   public static final class MyRecord {
 
     private final String title;
@@ -89,6 +92,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class WordCountFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -105,6 +111,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class StreamSucker extends AbstractFlowlet {
     private OutputEmitter<MyRecord> output;
     private Metrics metrics;
@@ -124,6 +133,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class Tokenizer extends AbstractFlowlet {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
@@ -145,6 +157,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
 //  @Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
@@ -179,6 +194,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
     private KeyValueTable counters;

@@ -28,7 +28,7 @@ public class TestController {
 
   public boolean canDequeueStop() {
     // Wait for a few seconds after enqueue is done for things to settle down
-    if(enqueueDoneTime > 0 && System.currentTimeMillis() > enqueueDoneTime + 5000) {
+    if (enqueueDoneTime > 0 && System.currentTimeMillis() > enqueueDoneTime + 5000) {
       LOG.info(String.format("canDequeueStop: enqueueDoneTime=%s", enqueueDoneTime));
       return true;
     }

@@ -86,7 +86,7 @@ final class TransactionResponder implements ProcedureResponder {
 
   private IOException propagate(Throwable t) throws IOException {
     if (t instanceof IOException) {
-      throw (IOException)t;
+      throw (IOException) t;
     } else {
       throw new IOException(t);
     }

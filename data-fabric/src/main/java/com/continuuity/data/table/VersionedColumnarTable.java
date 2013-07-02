@@ -208,7 +208,7 @@ public interface VersionedColumnarTable {
    * @param amounts amounts to increment columns by
    * @return values of counters after the increments are performed, never null
    */
-  public Map<byte[],Long> increment(
+  public Map<byte[], Long> increment(
     byte [] row, byte[][] columns, long[] amounts,
     ReadPointer readPointer, long writeVersion)
     throws OperationException;
@@ -234,8 +234,13 @@ public interface VersionedColumnarTable {
    * It does the compare and swap using dirty read and dirty write pointers.
    * It also assumes the values do not have tombstones.
    *
+   * @param row byte representation of existing row to be swapped
+   * @param column byte representation of column to be swapped
+   * @param expectedValue byte representation of expected value in (row, col)
+   * @param newValue byte representation of new value to be updated in (row, col)
    * @return true if swap was executed, false otherwise
-   * @throws OperationException, Note: this does not throw exception when expectedValue does not match existingValue.
+   * @throws OperationException Note: this does not throw exception when
+   * expectedValue does not match existingValue.
    */
   public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
     throws OperationException;

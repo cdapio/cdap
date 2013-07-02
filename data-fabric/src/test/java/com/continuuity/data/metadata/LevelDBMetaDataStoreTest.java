@@ -14,6 +14,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * LevelDB backed metadata store tests.
+ */
 public abstract class LevelDBMetaDataStoreTest extends MetaDataStoreTest {
 
   private static Injector injector;

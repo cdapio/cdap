@@ -96,7 +96,7 @@ public abstract class MultiClassLoader extends ClassLoader {
   protected abstract byte[] loadClassBytes(String className);
 
   protected String formatClassName(String className) {
-    if(classNameReplacementChar == '\u0000') {
+    if (classNameReplacementChar == '\u0000') {
       // '/' is used to map the package to the path
       return className.replace('.', '/') + ".class";
     } else {

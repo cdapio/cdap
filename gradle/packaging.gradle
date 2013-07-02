@@ -35,6 +35,10 @@ task ('prepackager', dependsOn : ['build']) {
       exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
       into "${installDir}/lib"
     }
+    copy {
+      from "$rootProject.projectDir/distributions/src/LICENSE.txt"
+      into "${installDir}"
+    }
   }
 }
 
@@ -45,11 +49,6 @@ task ('debianPrepackager', dependsOn: ['prepackager']) {
   def installDir = file("$stageDir/opt/continuuity/$project.name")
 
   doLast {
-    copy {
-      from "$rootProject.projectDir/distributions/src/LICENSE.txt"
-      into "${installDir}"
-    }
-   
     File confDir = file("$projectDir/conf")
     envfiles = files { confDir.listFiles() }
     envfiles.collect { relativePath(it) }.each {
@@ -73,11 +72,6 @@ task ('rpmPrepackager', dependsOn: ['prepackager']) {
   def installDir = file("$stageDir/opt/continuuity/$project.name")
 
   doLast {
-    copy {
-      from "$rootProject.projectDir/distributions/src/LICENSE.txt"
-      into "${installDir}"
-    }
-
     File confDir = file("$projectDir/conf")
     envfiles = files { confDir.listFiles() }
     envfiles.collect { relativePath(it) }.each {
@@ -172,6 +166,20 @@ rpm.doFirst {
   }
 }
 
+/**
+ * Generates a tarball distribution.
+ */
+task tgz(type: Tar, dependsOn : ['prepackager']) {
+  compression = Compression.GZIP
+  baseName = "continuuity-$baseName"
+  version = getPomVersion()
+  include 'opt/continuuity/**'
+  includeEmptyDirs false
+  from "$project.buildDir/stage-packaging"
+  eachFile { it.setPath(it.getPath().replaceFirst("^opt/continuuity/$project.name/", "continuuity-$project.name-$version/")) }
+}
+
+
 // Make the dependency on prepackager.
 debian.dependsOn debianPrepackager
 rpm.dependsOn rpmPrepackager
@@ -192,6 +200,7 @@ if(project.name == 'distributions') {
   artifacts {
     packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
     packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
+    packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.name}"
   }
 }
 
@@ -216,3 +225,5 @@ uploadPackages {
 
 uploadPackages.dependsOn debian
 uploadPackages.dependsOn rpm
+uploadPackages.dependsOn tgz
+

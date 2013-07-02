@@ -30,14 +30,14 @@ public class FlowDefinitionImpl implements FlowDefinitionModifier, FlowDefinitio
   private List<FlowletDefinitionImpl> flowlets;
 
   /**
-	 * Defines a collection of connections interconnecting flowlets.
-	 */
-	private List<ConnectionDefinitionImpl> connections;
+   * Defines a collection of connections interconnecting flowlets.
+   */
+  private List<ConnectionDefinitionImpl> connections;
 
-	/**
-	 * Defines a collection of connections interconnecting flowlets.
-	 */
-	private List<FlowStreamDefinitionImpl> flowStreams;
+  /**
+   * Defines a collection of connections interconnecting flowlets.
+   */
+  private List<FlowStreamDefinitionImpl> flowStreams;
 
   /**
    * Defines the mapping of flowlet name to flowletStreams name and their URI and type of stream it is.
@@ -91,22 +91,22 @@ public class FlowDefinitionImpl implements FlowDefinitionModifier, FlowDefinitio
     this.flowlets = flowlets;
   }
 
-	/**
-	 * Sets a new collection of flow streams
-	 *
-	 * @param streams the list of flow stream defintions
-	 */
-	public void setFlowStreams(List<FlowStreamDefinitionImpl> streams) {
-		this.flowStreams = streams;
-	}
+  /**
+   * Sets a new collection of flow streams
+   *
+   * @param streams the list of flow stream defintions
+   */
+  public void setFlowStreams(List<FlowStreamDefinitionImpl> streams) {
+    this.flowStreams = streams;
+  }
 
 
-	@Override
-	public Collection<? extends FlowStreamDefinition> getFlowStreams() {
-		return flowStreams;
-	}
+  @Override
+  public Collection<? extends FlowStreamDefinition> getFlowStreams() {
+    return flowStreams;
+  }
 
-	/**
+  /**
    * Returns a collection of connections connecting the flowlets.
    *
    * @return collection of connections.
@@ -125,7 +125,7 @@ public class FlowDefinitionImpl implements FlowDefinitionModifier, FlowDefinitio
    */
   @Override
   public Map<String, ImmutablePair<URI, StreamType>> getFlowletStreams(String flowlet) {
-    if(flowletStreams.containsKey(flowlet)) {
+    if (flowletStreams.containsKey(flowlet)) {
       return Collections.unmodifiableMap(flowletStreams.get(flowlet));
     }
     return null;
@@ -149,8 +149,8 @@ public class FlowDefinitionImpl implements FlowDefinitionModifier, FlowDefinitio
    */
   @Override
   public void setStreamURI(String flowlet, String stream, URI uri, StreamType type) {
-    if(flowletStreams.containsKey(flowlet)) {
-      if(! flowletStreams.get(flowlet).containsKey(stream)) {
+    if (flowletStreams.containsKey(flowlet)) {
+      if (!flowletStreams.get(flowlet).containsKey(stream)) {
         flowletStreams.get(flowlet).put(stream, new ImmutablePair<URI, StreamType>(uri, type));
       }
     } else {

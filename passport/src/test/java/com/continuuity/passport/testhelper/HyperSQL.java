@@ -26,7 +26,10 @@ public class HyperSQL {
                                                      "dev_suite_downloaded_at TIMESTAMP DEFAULT null," +
                                                      "payment_account_id VARCHAR(30) DEFAULT null,"   +
                                                      "payment_info_provided_at TIMESTAMP DEFAULT null," +
-                                                     "UNIQUE (email_id)" +
+                                                     "org_id VARCHAR(100) DEFAULT null, " +
+                                                     "UNIQUE (email_id), " +
+                                                     "FOREIGN KEY(org_id) " +
+                                                     "REFERENCES organization(id)" +
                                                      ")";
 
   private static final String CREATE_VPC_ACCOUNT_TABLE = "CREATE TABLE vpc_account ( id INTEGER IDENTITY, " +
@@ -71,25 +74,25 @@ public class HyperSQL {
     connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
       "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
 
-
+    connection.createStatement().execute(CREATE_ORG_TABLE);
     connection.createStatement().execute(CREATE_ACCOUNT_TABLE);
     connection.createStatement().execute(CREATE_NONCE_TABLE);
     connection.createStatement().execute(CREATE_VPC_ACCOUNT_TABLE);
     connection.createStatement().execute(CREATE_VPC_ROLE_TABLE);
-    connection.createStatement().execute(CREATE_ORG_TABLE);
   }
 
 
   public static void stopHsqlDB() throws SQLException {
 
     System.out.println("======================================STOP=======================================");
+
     connection.createStatement().execute(DROP_ACCOUNT_TABLE);
     connection.createStatement().execute(DROP_NONCE_TABLE);
     connection.createStatement().execute(DROP_VPC_ACCOUNT_TABLE);
     connection.createStatement().execute(DROP_VPC_ROLE_TABLE);
     connection.createStatement().execute(DROP_ORG_TABLE);
-
     connection.close();
+
     server.stop();
   }
 

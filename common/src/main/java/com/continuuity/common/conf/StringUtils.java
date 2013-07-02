@@ -12,6 +12,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
 
+/**
+ * Utility for strings.
+ */
 public class StringUtils {
   /**
    * Returns an arraylist of strings.
@@ -20,7 +23,7 @@ public class StringUtils {
    */
   public static String[] getStrings(String str){
     Collection<String> values = getStringCollection(str);
-    if(values.size() == 0) {
+    if (values.size() == 0) {
       return null;
     }
     return values.toArray(new String[values.size()]);
@@ -33,9 +36,10 @@ public class StringUtils {
    */
   public static Collection<String> getStringCollection(String str){
     List<String> values = new ArrayList<String>();
-    if (str == null)
+    if (str == null) {
       return values;
-    StringTokenizer tokenizer = new StringTokenizer (str,",");
+    }
+    StringTokenizer tokenizer = new StringTokenizer (str, ",");
     values = new ArrayList<String>();
     while (tokenizer.hasMoreTokens()) {
       values.add(tokenizer.nextToken());
@@ -60,13 +64,13 @@ public class StringUtils {
    */
   public static String[] getTrimmedStrings(String str){
     if (null == str || "".equals(str.trim())) {
-      return emptyStringArray;
+      return EMPTY_STRING_ARRAY;
     }
 
     return str.trim().split("\\s*,\\s*");
   }
 
-  final public static String[] emptyStringArray = {};
+  public static final String[] EMPTY_STRING_ARRAY = {};
 
 
   /**
@@ -113,7 +117,7 @@ public class StringUtils {
      */
     public static TraditionalBinaryPrefix valueOf(char symbol) {
       symbol = Character.toUpperCase(symbol);
-      for(TraditionalBinaryPrefix prefix : TraditionalBinaryPrefix.values()) {
+      for (TraditionalBinaryPrefix prefix : TraditionalBinaryPrefix.values()) {
         if (symbol == prefix.symbol) {
           return prefix;
         }
@@ -137,9 +141,9 @@ public class StringUtils {
       s = s.trim();
       final int lastpos = s.length() - 1;
       final char lastchar = s.charAt(lastpos);
-      if (Character.isDigit(lastchar))
+      if (Character.isDigit(lastchar)) {
         return Long.parseLong(s);
-      else {
+      } else {
         long prefix;
         try {
           prefix = TraditionalBinaryPrefix.valueOf(lastchar).value;
@@ -149,7 +153,7 @@ public class StringUtils {
                                                + "'. Allowed prefixes are k, m, g, t, p, e(case insensitive)");
         }
         long num = Long.parseLong(s.substring(0, lastpos));
-        if (num > (Long.MAX_VALUE/prefix) || num < (Long.MIN_VALUE/prefix)) {
+        if (num > (Long.MAX_VALUE / prefix) || num < (Long.MIN_VALUE / prefix)) {
           throw new IllegalArgumentException(s + " does not fit in a Long");
         }
         return num * prefix;

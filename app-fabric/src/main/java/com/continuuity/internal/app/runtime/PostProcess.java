@@ -11,14 +11,20 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import java.util.concurrent.Executor;
 
 /**
- *
+ * Function object to invoke for committing any work done by a process method.
  */
 public interface PostProcess {
-  
+
+  /**
+   * Interface to represent sending an ack on a input.
+   */
   public interface InputAcknowledger {
     void ack() throws OperationException;
   }
 
+  /**
+   * Interface to represent callback object for commit result.
+   */
   public interface Callback {
     void onSuccess(Object inputObject, InputContext inputContext);
 

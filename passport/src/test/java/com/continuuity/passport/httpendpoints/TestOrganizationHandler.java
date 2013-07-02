@@ -35,11 +35,10 @@ public class TestOrganizationHandler {
   @BeforeClass
   public static void setup() throws Exception {
 
-    port = PortDetector.findFreePort();
-
     //Startup HSQL instance
     HyperSQL.startHsqlDB();
 
+    port = PortDetector.findFreePort();
     CConfiguration configuration = CConfiguration.create();
     configuration.setInt(Constants.CFG_SERVER_PORT, port);
 
@@ -51,11 +50,7 @@ public class TestOrganizationHandler {
 
     configuration.set(Constants.CFG_PROFANE_WORDS_FILE_PATH, profanePath);
     server = new TestPassportServer(configuration);
-
-    System.out.println("Starting server");
     server.start();
-    Thread.sleep(1000);
-    assertTrue(server.isStarted());
   }
 
   @AfterClass
@@ -68,7 +63,7 @@ public class TestOrganizationHandler {
   public void orgCreate() throws IOException {
     String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity(new StringEntity(getCompany("C123", "Continuuity")));
+    post.setEntity(new StringEntity(TestPassportServer.getCompany("C123", "Continuuity")));
     post.addHeader("Content-Type", "application/json");
 
     String result = TestPassportServer.request(post);
@@ -89,7 +84,7 @@ public class TestOrganizationHandler {
     //Create Org and delete later.
     String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity(new StringEntity(getCompany("G123", "Google")));
+    post.setEntity(new StringEntity(TestPassportServer.getCompany("G123", "Google")));
     post.addHeader("Content-Type", "application/json");
 
     String result = TestPassportServer.request(post);
@@ -115,7 +110,7 @@ public class TestOrganizationHandler {
     //Create Org
     String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity(new StringEntity(getCompany("F123", "Facebok")));
+    post.setEntity(new StringEntity(TestPassportServer.getCompany("F123", "Facebok")));
     post.addHeader("Content-Type", "application/json");
 
     String result = TestPassportServer.request(post);
@@ -160,13 +155,4 @@ public class TestOrganizationHandler {
     HttpResponse response = client.execute(get);
     assertEquals(404, response.getStatusLine().getStatusCode());
   }
-
-
-  private String getCompany(String id, String name){
-    JsonObject object = new JsonObject();
-    object.addProperty("id", id);
-    object.addProperty("name", name);
-    return object.toString();
-  }
-
 }

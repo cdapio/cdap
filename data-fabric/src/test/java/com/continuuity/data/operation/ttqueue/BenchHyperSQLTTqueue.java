@@ -10,6 +10,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Properties;
 
+/**
+ *
+ */
 public class BenchHyperSQLTTqueue extends BenchTTQueue {
 
   private static final Properties hsqlProperties = new Properties();
@@ -44,7 +47,7 @@ public class BenchHyperSQLTTqueue extends BenchTTQueue {
 
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
-    String rand = "" + Math.abs(BenchTTQueue.r.nextInt());
+    String rand = "" + Math.abs(BenchTTQueue.RANDOM.nextInt());
     return new TTQueueOnVCTable(
         handle.getTable(Bytes.toBytes("BenchTable" + rand)),
         Bytes.toBytes("BQN" + rand),

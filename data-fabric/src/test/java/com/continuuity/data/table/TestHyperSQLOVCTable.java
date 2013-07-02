@@ -7,6 +7,9 @@ import com.google.inject.Injector;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class TestHyperSQLOVCTable extends TestOVCTable {
 
   private static final Injector injector = Guice.createInjector (

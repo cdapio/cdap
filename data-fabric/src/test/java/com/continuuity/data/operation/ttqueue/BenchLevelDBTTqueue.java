@@ -9,6 +9,9 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 
+/**
+ *
+ */
 public class BenchLevelDBTTqueue extends BenchTTQueue {
 
   private static CConfiguration conf;
@@ -41,7 +44,7 @@ public class BenchLevelDBTTqueue extends BenchTTQueue {
 
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
-    String rand = "" + Math.abs(BenchTTQueue.r.nextInt());
+    String rand = "" + Math.abs(BenchTTQueue.RANDOM.nextInt());
     return new TTQueueOnVCTable(
         handle.getTable(Bytes.toBytes("BenchTable" + rand)),
         Bytes.toBytes("BQN" + rand),

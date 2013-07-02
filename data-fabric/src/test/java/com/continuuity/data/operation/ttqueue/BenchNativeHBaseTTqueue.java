@@ -14,6 +14,9 @@ import org.junit.BeforeClass;
 
 import java.io.IOException;
 
+/**
+ *
+ */
 public class BenchNativeHBaseTTqueue extends BenchTTQueue {
 
   @BeforeClass
@@ -45,7 +48,7 @@ public class BenchNativeHBaseTTqueue extends BenchTTQueue {
 
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
-    String rand = "" + Math.abs(BenchTTQueue.r.nextInt());
+    String rand = "" + Math.abs(BenchTTQueue.RANDOM.nextInt());
     HTable table;
     try {
       table = createTable(Bytes.toBytes("BenchNativeHBaseQueueTTQ" + rand),

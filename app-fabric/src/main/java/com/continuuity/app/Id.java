@@ -8,10 +8,13 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 /**
- *
+ * Contains collection of classes representing different types of Ids.
  */
 public final class Id  {
 
+  /**
+   * Represents ID of an account.
+   */
   public static final class Account {
     private final String id;
 
@@ -33,7 +36,7 @@ public final class Id  {
         return false;
       }
 
-      return id.equals(((Account)o).id);
+      return id.equals(((Account) o).id);
     }
 
     @Override
