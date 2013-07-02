@@ -77,7 +77,7 @@ public final class HttpResourceModel {
         index++;
         args[index] = responder;
 
-        if (method.getParameterTypes().length > 2 ) {
+        if (method.getParameterTypes().length > 2) {
           Class<?>[] parameterTypes = method.getParameterTypes();
           for (Map.Entry<String, String> entry : groupValues.entrySet()){
             index++;
