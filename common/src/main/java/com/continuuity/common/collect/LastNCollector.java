@@ -8,6 +8,8 @@ import java.util.Arrays;
 /**
  * This collector will keep only the most recent N elements. It will
  * never return false, but keeps a bound on the memory it uses.
+ *
+ * @param <Element> Type of element.
  */
 public class LastNCollector<Element> implements Collector<Element> {
   private final Class<Element> clazz;

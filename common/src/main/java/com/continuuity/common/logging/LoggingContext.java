@@ -38,7 +38,7 @@ public interface LoggingContext {
   String getLogPathFragment();
 
   /**
-   * Defines the interface for the system tag associated with LoggingContext
+   * Defines the interface for the system tag associated with LoggingContext.
    */
   interface SystemTag {
     /**

@@ -22,7 +22,7 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
   private final int instanceIndex;
 
   /**
-   * Defines the states of Zookeeper server
+   * Defines the states of Zookeeper server.
    */
   private enum State {
     LATENT,
@@ -40,7 +40,7 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
   }
 
   /**
-   * Constructor creates an instance of Zookeeper based on the config
+   * Constructor creates an instance of Zookeeper based on the config.
    * @param configBuilder Quorum config builder.
    * @param instanceIndex Instance ID of this zookeeper
    */
@@ -56,7 +56,7 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
    * @throws Exception
    */
   public void start() throws IOException, InterruptedException {
-    if(! state.compareAndSet(State.LATENT, State.STARTED)) {
+    if (!state.compareAndSet(State.LATENT, State.STARTED)) {
       return;
     }
 
@@ -80,7 +80,7 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
    * @throws IOException
    */
   public void stop() throws IOException {
-    if(state.compareAndSet(State.STARTED, State.STOPPED)) {
+    if (state.compareAndSet(State.STARTED, State.STOPPED)) {
       main.close();
     }
   }
@@ -93,9 +93,9 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
    */
   public void close() throws IOException {
     stop();
-    if(state.compareAndSet(State.STOPPED, State.CLOSED)) {
+    if (state.compareAndSet(State.STOPPED, State.CLOSED)) {
       InstanceSpecification spec = configBuilder.getInstanceSpec(instanceIndex);
-      if(spec.deleteDataDirectoryOnClose()) {
+      if (spec.deleteDataDirectoryOnClose()) {
         DirUtils.deleteRecursively(spec.getDataDirectory());
       }
     }

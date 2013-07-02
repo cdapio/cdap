@@ -15,12 +15,11 @@ import org.slf4j.LoggerFactory;
 public class MetricResponseEncoder implements ProtocolEncoder {
   private static final Logger Log
       = LoggerFactory.getLogger(MetricResponseEncoder.class);
-  private static final int capacity = (Integer.SIZE)/8;
+  private static final int capacity = (Integer.SIZE) / 8;
 
   @Override
-  public void encode(IoSession session, Object message, ProtocolEncoderOutput
-    out) throws Exception {
-    if(message instanceof MetricResponse) {
+  public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
+    if (message instanceof MetricResponse) {
       MetricResponse response = (MetricResponse) message;
 
       // allocated the capacity.

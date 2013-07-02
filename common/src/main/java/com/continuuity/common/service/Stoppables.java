@@ -15,5 +15,4 @@ public final class Stoppables {
   public static void stopQuietly(Stoppable stopable, final String reason) {
     stopable.stop(reason);
   }
-
 }

@@ -14,7 +14,7 @@ public class MetricCodecFactory implements ProtocolCodecFactory {
   private ProtocolDecoder decoder;
 
   public MetricCodecFactory(boolean client) {
-    if(client) {
+    if (client) {
       encoder = new MetricRequestEncoder();
       decoder = new MetricResponseDecoder();
     } else {

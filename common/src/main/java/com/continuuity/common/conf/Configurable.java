@@ -6,6 +6,9 @@
 
 package com.continuuity.common.conf;
 
+/**
+ * Interface defining the object is configurable.
+ */
 public interface Configurable {
 
   /** Set the configuration to be used by this object. */

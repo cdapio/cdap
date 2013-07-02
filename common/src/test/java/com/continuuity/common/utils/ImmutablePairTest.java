@@ -9,11 +9,11 @@ import org.junit.Test;
 public class ImmutablePairTest {
 
   static final class Fixture {
-    static ImmutablePair<Integer, Integer> a = new ImmutablePair<Integer, Integer>(1,2);
+    static ImmutablePair<Integer, Integer> a = new ImmutablePair<Integer, Integer>(1, 2);
     static ImmutablePair<Integer, String>  b = new ImmutablePair<Integer, String>(1, "woot");
     static ImmutablePair<String, String>   c = new ImmutablePair<String, String>("me", "you");
-    static ImmutablePair<Integer, Integer> d = new ImmutablePair<Integer, Integer>(1,2);
-    static ImmutablePair<Integer, Integer> e = new ImmutablePair<Integer, Integer>(1,2);
+    static ImmutablePair<Integer, Integer> d = new ImmutablePair<Integer, Integer>(1, 2);
+    static ImmutablePair<Integer, Integer> e = new ImmutablePair<Integer, Integer>(1, 2);
   }
 
   @Test
@@ -90,7 +90,7 @@ public class ImmutablePairTest {
 
   @Test
   public void testTwoDifferentObjectHashCode() throws Exception {
-    Assert.assertTrue(! (Fixture.a.hashCode() == Fixture.c.hashCode()));
+    Assert.assertTrue(!(Fixture.a.hashCode() == Fixture.c.hashCode()));
   }
 
 }

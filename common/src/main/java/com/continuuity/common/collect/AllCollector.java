@@ -7,7 +7,9 @@ import java.util.List;
 
 /**
  * This collector will collect until it runs out of memory, it
- * never returns false
+ * never returns false.
+ *
+ * @param <Element> Type of element
  */
 public class AllCollector<Element> implements Collector<Element> {
 

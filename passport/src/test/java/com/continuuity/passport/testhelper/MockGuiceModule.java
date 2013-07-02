@@ -25,66 +25,60 @@ import com.continuuity.passport.impl.AuthenticatorServiceImpl;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.continuuity.passport.impl.SecuritySeviceImpl;
 import com.google.common.base.Preconditions;
+import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
-import org.mortbay.jetty.servlet.DefaultServlet;
 
 import javax.sql.ConnectionPoolDataSource;
 
 /**
  *
  */
-public class MockGuiceBindings extends JerseyServletModule {
+public class MockGuiceModule extends AbstractModule {
 
   private final String jdbcType;
   private final String connectionString;
   private final String profaneWordsPath;
+  private final int port;
 
 
-  public MockGuiceBindings(CConfiguration configuration) {
+  public MockGuiceModule(CConfiguration configuration) {
     jdbcType = configuration.get(Constants.CFG_JDBC_TYPE, Constants.DEFAULT_JDBC_TYPE);
     connectionString = configuration.get(Constants.CFG_JDBC_CONNECTION_STRING,
-      Constants.DEFAULT_JDBC_CONNECTION_STRING);
+                                         Constants.DEFAULT_JDBC_CONNECTION_STRING);
     profaneWordsPath = configuration.get(Constants.CFG_PROFANE_WORDS_FILE_PATH,
-      Constants.DEFAULT_PROFANE_WORDS_FILE_PATH);
+                                         Constants.DEFAULT_PROFANE_WORDS_FILE_PATH);
+    port = configuration.getInt(Constants.CFG_SERVER_PORT, 7777);
   }
+
 
   @Override
-  protected void configureServlets() {
-    bindings();
-    filters();
-  }
-
-  private void bindings() {
+  protected void configure() {
     Preconditions.checkNotNull(jdbcType, "JDBC type cannot be null");
     Preconditions.checkArgument(jdbcType.equals(Constants.DEFAULT_JDBC_TYPE), "Unsupported JDBC type");
 
     Preconditions.checkNotNull(connectionString, "Connection String cannot be null");
-    Preconditions.checkNotNull(profaneWordsPath, "Profane words path cannot be null");
+    Preconditions.checkNotNull(profaneWordsPath, "Profane words path cannot be null"); //TODO: Remove this constraint
 
     JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
     System.out.println(connectionString);
     jdbcDataSource.setUrl(connectionString);
+
     DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(jdbcDataSource, 10);
 
     bind(DBConnectionPoolManager.class)
-         .toInstance(connectionPoolManager);
+      .toInstance(connectionPoolManager);
 
     bindConstant().annotatedWith(Names.named(Constants.CFG_PROFANE_WORDS_FILE_PATH))
       .to(profaneWordsPath);
 
-    //Bind ReST resources
     bind(AccountHandler.class);
-    bind(ActivationNonceHandler.class);
-    bind(SessionNonceHandler.class);
     bind(VPCHandler.class);
+    bind(SessionNonceHandler.class);
+    bind(ActivationNonceHandler.class);
     bind(OrganizationHandler.class);
 
-
-    //Bind services to default implementations
     bind(DataManagementService.class).to(DataManagementServiceImpl.class);
     bind(AuthenticatorService.class).to(AuthenticatorServiceImpl.class);
     bind(SecurityService.class).to(SecuritySeviceImpl.class);
@@ -95,22 +89,5 @@ public class MockGuiceBindings extends JerseyServletModule {
     bind(NonceDAO.class).to(NonceDBAccess.class);
     bind(OrganizationDAO.class).to(OrganizationDBAccess.class);
     bind(ProfanityFilter.class).to(ProfanityFilterFileAccess.class);
-
-
-    bind(GuiceContainer.class).asEagerSingleton();
-    bind(DefaultServlet.class).asEagerSingleton();
-    serve("/*").with(DefaultServlet.class);
-
-  }
-
-  private void filters() {
-    filter("/passport/*").through(GuiceContainer.class);
-  }
-
-  @Provides
-  ConnectionPoolDataSource provider() {
-    JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
-    jdbcDataSource.setUrl(connectionString);
-    return jdbcDataSource;
   }
 }

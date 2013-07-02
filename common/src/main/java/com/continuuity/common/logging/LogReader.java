@@ -3,10 +3,13 @@ package com.continuuity.common.logging;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Represents classes that can read log.
+ */
 public interface LogReader {
 
   /**
-   * Configures this reader
+   * Configures this reader.
    * @param config specifies what log to read
    */
   public void configure(LogConfiguration config) throws IOException;
