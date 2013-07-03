@@ -227,6 +227,7 @@ public class MetadataHelper {
   static Helper<Application> applicationHelper = new ApplicationHelper();
   static Helper<Query> queryHelper = new QueryHelper();
   static Helper<Flow> flowHelper = new FlowHelper();
+  static Helper<Mapreduce> mapreduceHelper = new MapreduceHelper();
 
   //-------------------------- Stream stuff ----------------------------------
 
@@ -711,6 +712,108 @@ public class MetadataHelper {
     }
 
   } // end QueryHelper
+
+  //-------------------------- Mapreduce stuff -----------------------------------
+
+  static class MapreduceHelper implements Helper<Mapreduce> {
+
+    @Override
+    public void validate(Mapreduce mapreduce) throws MetadataServiceException {
+      if (mapreduce.getId() == null || mapreduce.getId().isEmpty()) {
+        throw new MetadataServiceException("mapreduce id is empty or null.");
+      }
+      if (mapreduce.getName() == null || mapreduce.getName().isEmpty()) {
+        throw new MetadataServiceException("Mapreduce name is empty or null.");
+      }
+      if(mapreduce.getApplication() == null || mapreduce.getApplication().isEmpty()) {
+        throw new MetadataServiceException("Mapreduce's app name is empty or null.");
+      }
+    }
+
+    @Override
+    public MetaDataEntry makeEntry(Account account, Mapreduce mapreduce) {
+      MetaDataEntry entry = new MetaDataEntry(account.getId(),
+          mapreduce.getApplication(), FieldTypes.Mapreduce.ID, mapreduce.getId());
+      if (mapreduce.getName() != null) {
+        entry.addField(FieldTypes.Mapreduce.NAME, mapreduce.getName());
+      }
+      if (mapreduce.getDescription() != null) {
+        entry.addField(FieldTypes.Mapreduce.DESCRIPTION, mapreduce.getDescription());
+      }
+      if (mapreduce.isSetDatasets()) {
+        entry.addField(FieldTypes.Mapreduce.DATASETS,
+            ListToString(mapreduce.getDatasets()));
+      }
+      return entry;
+    }
+
+    @Override
+    public Mapreduce makeFromEntry(MetaDataEntry entry) {
+      Mapreduce mapreduce = new Mapreduce(entry.getId(), entry.getApplication());
+      String name = entry.getTextField(FieldTypes.Mapreduce.NAME);
+      if (name != null) {
+        mapreduce.setName(name);
+      }
+      String description = entry.getTextField(FieldTypes.Mapreduce.DESCRIPTION);
+      if (description != null) {
+        mapreduce.setDescription(description);
+      }
+      String datasets = entry.getTextField(FieldTypes.Mapreduce.DATASETS);
+      if (datasets != null) {
+        mapreduce.setDatasets(StringToList(datasets));
+      }
+      return mapreduce;
+    }
+
+    @Override
+    public Mapreduce makeNonExisting(Mapreduce mapreduce) {
+      Mapreduce mapreduce1 = new Mapreduce(mapreduce.getId(), mapreduce.getApplication());
+      mapreduce1.setExists(false);
+      return mapreduce1;
+    }
+
+    @Override
+    public CompareStatus compare(Mapreduce mapreduce, MetaDataEntry existingEntry) {
+      Mapreduce existing = makeFromEntry(existingEntry);
+      CompareStatus status = CompareStatus.EQUAL;
+      status = compareAlso(status, mapreduce.getId(), existing.getId());
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+      status = compareAlso(status, mapreduce.getName(), existing.getName());
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+      status = compareAlso(
+          status, mapreduce.getDescription(), existing.getDescription());
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+      status = compareAlso(status, mapreduce.getDatasets(), existing.getDatasets());
+      return status;
+    }
+
+    @Override
+    public String getId(Mapreduce mapreduce) {
+      return mapreduce.getId();
+    }
+
+    @Override
+    public String getApplication(Mapreduce mapreduce) {
+      return mapreduce.getApplication();
+    }
+
+    @Override
+    public String getName() {
+      return "mapreduce";
+    }
+
+    @Override
+    public String getFieldType() {
+      return FieldTypes.Mapreduce.ID;
+    }
+
+  } // end MapreduceHelper
 
   //-------------------------- Flow stuff ------------------------------------
 
