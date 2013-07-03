@@ -12,7 +12,7 @@ import org.junit.Test;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Flow queue integration tests.
  */
 public class TestFlowQueueIntegration extends AppFabricTestBase {
   private static final int FLOWLET_TIMEOUT = 30;

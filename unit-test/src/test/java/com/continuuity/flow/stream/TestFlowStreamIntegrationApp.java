@@ -19,6 +19,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Flow stream integration tests.
+ */
 public class TestFlowStreamIntegrationApp implements Application {
   private static final Logger LOG = LoggerFactory.getLogger(TestFlowStreamIntegrationApp.class);
 
@@ -67,7 +70,7 @@ public class TestFlowStreamIntegrationApp implements Application {
       Assert.assertTrue(events.size() > 1);
 
       List<Integer> out = Lists.newArrayList();
-      for(StreamEvent event : events) {
+      for (StreamEvent event : events) {
         out.add(Integer.parseInt(Charsets.UTF_8.decode(event.getBody()).toString()));
       }
       LOG.info("Read events=" + out);
