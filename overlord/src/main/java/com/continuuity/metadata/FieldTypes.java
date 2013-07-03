@@ -58,4 +58,14 @@ public class FieldTypes {
     public static final String DESCRIPTION = "description";
     public static final String SERVICE_NAME = "serviceName";
   }
+
+  /**
+   * Class representing constants for fields stored for Mapreduce.
+   */
+  public static class Mapreduce {
+    public static final String ID = "mapreduce";
+    public static final String NAME = "name";
+    public static final String DATASETS = "datasets";
+    public static final String DESCRIPTION = "description";
+  }
 }
