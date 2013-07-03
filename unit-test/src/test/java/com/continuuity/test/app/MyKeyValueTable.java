@@ -1,6 +1,5 @@
 package com.continuuity.test.app;
 
-import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
@@ -62,7 +61,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
    * Read the value for a given key.
    * @param key the key to read for
    * @return the value for that key, or null if no value was found
-   * @throws com.continuuity.api.data.OperationException if the read fails
+   * @throws OperationException if the read fails
    */
   @Nullable
   public byte[] read(byte[] key) throws OperationException {
@@ -79,7 +78,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
    * Increment the value for a given key and return the resulting value.
    * @param key the key to incrememt
    * @return the incremented value of that key
-   * @throws com.continuuity.api.data.OperationException if the increment fails
+   * @throws OperationException if the increment fails
    */
   public long incrementAndGet(byte[] key, long value) throws OperationException {
     Map<byte[], Long> result =
@@ -96,7 +95,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
    * Write a value to a key.
    * @param key the key
    * @param value the new value
-   * @throws com.continuuity.api.data.OperationException if the write fails
+   * @throws OperationException if the write fails
    */
   public void write(byte[] key, byte[] value) throws OperationException {
     this.table.write(new Write(key, KEY_COLUMN, value));
@@ -107,7 +106,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
    * current value must be 8 bytes long to be interpretable as a long.
    * @param key the key
    * @param value the new value
-   * @throws com.continuuity.api.data.OperationException if the increment fails
+   * @throws OperationException if the increment fails
    */
   public void increment(byte[] key, long value) throws OperationException {
     this.table.write(new Increment(key, KEY_COLUMN, value));
@@ -116,7 +115,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
   /**
    * Delete a key.
    * @param key the key to delete
-   * @throws com.continuuity.api.data.OperationException if the delete fails
+   * @throws OperationException if the delete fails
    */
   public void delete(byte[] key) throws OperationException {
     this.table.write(new Delete(key, KEY_COLUMN));
@@ -131,7 +130,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
    * of null means that the key shall be deleted instead of replaced.
    *
    * @param key the key to delete
-   * @throws com.continuuity.api.data.OperationException if the swap fails
+   * @throws OperationException if the swap fails
    */
   public void swap(byte[] key, byte[] oldValue, byte[] newValue) throws OperationException {
     this.table.write(new Swap(key, KEY_COLUMN, oldValue, newValue));

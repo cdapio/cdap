@@ -67,14 +67,14 @@ public final class JarResources {
       Manifest manifest = jarInput.getManifest();
       JarEntry ze;
       // For each entry in the jar file, read the bytes and stores it in the entryContents map.
-      while((ze = jarInput.getNextJarEntry()) != null) {
-        if(LOG.isTraceEnabled()) {
+      while ((ze = jarInput.getNextJarEntry()) != null) {
+        if (LOG.isTraceEnabled()) {
           LOG.trace(dumpJarEntry(ze));
         }
-        if(ze.isDirectory()) {
+        if (ze.isDirectory()) {
           continue;
         }
-        if(ze.getSize() > Integer.MAX_VALUE) {
+        if (ze.getSize() > Integer.MAX_VALUE) {
           throw new IOException("Jar entry is too big to fit in memory.");
         }
         // The JarInputStream only tries to read the MANIFEST file if it is the first entry in the jar
@@ -85,7 +85,7 @@ public final class JarResources {
         }
 
         byte[] bytes;
-        if(ze.getSize() < 0) {
+        if (ze.getSize() < 0) {
           bytes = ByteStreams.toByteArray(jarInput);
         } else {
           bytes = new byte[(int) ze.getSize()];
@@ -93,7 +93,7 @@ public final class JarResources {
         }
         // add to internal resource hashtable
         entryContents.put(ze.getName(), bytes);
-        if(LOG.isTraceEnabled()) {
+        if (LOG.isTraceEnabled()) {
           LOG.trace(ze.getName() + "size=" + ze.getSize() + ",csize=" + ze.getCompressedSize());
         }
       }
@@ -111,23 +111,23 @@ public final class JarResources {
    */
   private String dumpJarEntry(JarEntry ze) {
     StringBuilder sb = new StringBuilder();
-    if(ze.isDirectory()) {
+    if (ze.isDirectory()) {
       sb.append("d ");
     } else {
       sb.append("f ");
     }
 
-    if(ze.getMethod() == JarEntry.STORED) {
+    if (ze.getMethod() == JarEntry.STORED) {
       sb.append("stored   ");
     } else {
       sb.append("defalted ");
     }
 
     sb.append(ze.getName()).append("\t").append(ze.getSize());
-    if(ze.getMethod() == JarEntry.DEFLATED) {
+    if (ze.getMethod() == JarEntry.DEFLATED) {
       sb.append("/").append(ze.getCompressedSize());
     }
 
-    return ( sb.toString() );
+    return sb.toString();
   }
 }

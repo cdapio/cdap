@@ -6,20 +6,23 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+/**
+ * Helper class to build stream uri for flow.
+ */
 public final class FlowStream {
 
   private static final Logger Log = LoggerFactory.getLogger(FlowStream.class);
 
-	/**
-	 * Build the default URI for a stream, which is:
+  /**
+   * Build the default URI for a stream, which is:
    *   stream://accountname/streamname
-	 * @param accountName the name of the account
-	 * @param streamName the name of the stream
-	 * @return the URI for the stream
-	 */
-	static public URI buildStreamURI(String accountName, String streamName) {
+   * @param accountName the name of the account
+   * @param streamName the name of the stream
+   * @return the URI for the stream
+   */
+  public static URI buildStreamURI(String accountName, String streamName) {
     try {
-  		return new URI("stream", accountName, "/" + streamName, null);
+      return new URI("stream", accountName, "/" + streamName, null);
     } catch (URISyntaxException e) {
       Log.error("Cannot construct a valid URI from account name {} and stream" +
           " name {}: {}",
@@ -28,5 +31,5 @@ public final class FlowStream {
           "name "
           + accountName + " and stream name " + streamName + ".", e);
     }
-	}
+  }
 }

@@ -49,7 +49,7 @@ public final class SchemaHash {
       return false;
     }
 
-    return Arrays.equals(hash, ((SchemaHash)other).hash);
+    return Arrays.equals(hash, ((SchemaHash) other).hash);
   }
 
   @Override
@@ -93,46 +93,46 @@ public final class SchemaHash {
     // Don't use enum.ordinal() as ordering in enum could change
     switch (schema.getType()) {
       case NULL:
-        md5.update((byte)0);
+        md5.update((byte) 0);
         break;
       case BOOLEAN:
-        md5.update((byte)1);
+        md5.update((byte) 1);
         break;
       case INT:
-        md5.update((byte)2);
+        md5.update((byte) 2);
         break;
       case LONG:
-        md5.update((byte)3);
+        md5.update((byte) 3);
         break;
       case FLOAT:
-        md5.update((byte)4);
+        md5.update((byte) 4);
         break;
       case DOUBLE:
-        md5.update((byte)5);
+        md5.update((byte) 5);
         break;
       case BYTES:
-        md5.update((byte)6);
+        md5.update((byte) 6);
         break;
       case STRING:
-        md5.update((byte)7);
+        md5.update((byte) 7);
         break;
       case ENUM:
-        md5.update((byte)8);
+        md5.update((byte) 8);
         for (String value : schema.getEnumValues()) {
           md5.update(Charsets.UTF_8.encode(value));
         }
         break;
       case ARRAY:
-        md5.update((byte)9);
+        md5.update((byte) 9);
         updateHash(md5, schema.getComponentSchema(), knownRecords);
         break;
       case MAP:
-        md5.update((byte)10);
+        md5.update((byte) 10);
         updateHash(md5, schema.getMapSchema().getKey(), knownRecords);
         updateHash(md5, schema.getMapSchema().getValue(), knownRecords);
         break;
       case RECORD:
-        md5.update((byte)11);
+        md5.update((byte) 11);
         boolean notKnown = knownRecords.add(schema.getRecordName());
         for (Schema.Field field : schema.getFields()) {
           md5.update(Charsets.UTF_8.encode(field.getName()));
@@ -142,7 +142,7 @@ public final class SchemaHash {
         }
         break;
       case UNION:
-        md5.update((byte)12);
+        md5.update((byte) 12);
         for (Schema unionSchema : schema.getUnionSchemas()) {
           updateHash(md5, unionSchema, knownRecords);
         }

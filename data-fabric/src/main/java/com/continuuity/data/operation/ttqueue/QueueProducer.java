@@ -1,6 +1,8 @@
 package com.continuuity.data.operation.ttqueue;
 
-/** used to transmit information about the producer of an enqueue */
+/**
+ * used to transmit information about the producer of an enqueue.
+ */
 public class QueueProducer {
 
   private final String producerName; // may be null

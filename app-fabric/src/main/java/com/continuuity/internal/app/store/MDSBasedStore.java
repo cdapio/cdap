@@ -61,12 +61,12 @@ public class MDSBasedStore implements Store {
   private static final RunRecordComparator PROGRAM_RUN_RECORD_START_TIME_COMPARATOR =
     new RunRecordComparator();
   /**
-   * We re-use metadataService to store configuration type data
+   * We re-use metadataService to store configuration type data.
    */
   private final MetadataService.Iface metaDataService;
 
   /**
-   * Helper class
+   * Helper class.
    */
   private final MetadataServiceHelper metadataServiceHelper;
 
@@ -75,7 +75,7 @@ public class MDSBasedStore implements Store {
   private final CConfiguration configuration;
 
   /**
-   * We use metaDataStore directly to store user actions history
+   * We use metaDataStore directly to store user actions history.
    */
   private MetaDataStore metaDataStore;
 
@@ -92,7 +92,7 @@ public class MDSBasedStore implements Store {
   }
 
   /**
-   * Loads a given program
+   * Loads a given program.
    *
    * @param id of the program
    * @param type of program
@@ -100,13 +100,14 @@ public class MDSBasedStore implements Store {
    * @throws IOException
    */
   @Override
-  public Program loadProgram(Id.Program id, Type type ) throws IOException {
+  public Program loadProgram(Id.Program id, Type type) throws IOException {
     Location programLocation = getProgramLocation(id, type);
     return new Program(programLocation);
   }
 
   /**
-   * NOTE: fails with RuntimeException if program can't be found
+   * @return The {@link Location} of the given program.
+   * @throws RuntimeException if program can't be found.
    */
   private Location getProgramLocation(Id.Program id, Type type) throws IOException {
     Location allAppsLocation = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR,
@@ -114,12 +115,12 @@ public class MDSBasedStore implements Store {
     Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
     String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
     Location applicationProgramsLocation = accountAppsLocation.append(name);
-    if(! applicationProgramsLocation.exists()) {
+    if (!applicationProgramsLocation.exists()) {
       throw new RuntimeException("Unable to locate the Program,  location doesn't exist: "
                                    + applicationProgramsLocation.toURI().getPath());
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
-    if(! programLocation.exists()) {
+    if (!programLocation.exists()) {
       throw new RuntimeException(String.format("Program %s.%s of type %s does not exists.",
                                                id.getApplication(), id.getId(), type));
     }
@@ -157,7 +158,7 @@ public class MDSBasedStore implements Store {
   }
 
   /**
-   * Logs end of program run
+   * Logs end of program run.
    *
    * @param id      id of program
    * @param pid     run id
@@ -176,7 +177,7 @@ public class MDSBasedStore implements Store {
                                 FieldTypes.ProgramRun.ENTRY_TYPE, pid,
                                 FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1);
       metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE,
-                                pid, FieldTypes.ProgramRun.END_STATE,state, -1);
+                                pid, FieldTypes.ProgramRun.END_STATE, state, -1);
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
@@ -199,9 +200,9 @@ public class MDSBasedStore implements Store {
                                                      id.getApplicationId(),
                                                      FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields);
     List<RunRecord> runHistory = Lists.newArrayList();
-    for(MetaDataEntry entry : entries) {
+    for (MetaDataEntry entry : entries) {
       String endTsStr = entry.getTextField(FieldTypes.ProgramRun.END_TS);
-      if(endTsStr == null) {
+      if (endTsStr == null) {
         // we need to return only those that finished
         continue;
       }
@@ -254,7 +255,7 @@ public class MDSBasedStore implements Store {
   private static final class RunRecordComparator implements Comparator<RunRecord> {
     @Override
     public int compare(final RunRecord left, final RunRecord right) {
-      if(left.getStartTs() > right.getStartTs()) {
+      if (left.getStartTs() > right.getStartTs()) {
         return 1;
       } else {
         return left.getStartTs() < right.getStartTs() ? -1 : 0;
@@ -613,7 +614,7 @@ public class MDSBasedStore implements Store {
     MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
 
-    if(entry == null) {
+    if (entry == null) {
       return null;
     }
 
@@ -627,7 +628,7 @@ public class MDSBasedStore implements Store {
     MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
 
-    if(entry == null) {
+    if (entry == null) {
       return null;
     }
 

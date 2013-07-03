@@ -22,7 +22,7 @@ public interface ProcedureRequest {
   Map<String, String> getArguments();
 
   /**
-   * Returns an argument value provided by the key argument
+   * Returns an argument value provided by the key argument.
    * @param key of the argument to be retrieved
    * @return If found, returns the value associated with key; if not found, returns null.
    */

@@ -9,13 +9,16 @@ import com.google.inject.Injector;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class TestMemoryOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
   private static final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules());
 
   private static final OmidTransactionalOperationExecutor executor =
-      (OmidTransactionalOperationExecutor)injector.getInstance(
+      (OmidTransactionalOperationExecutor) injector.getInstance(
           OperationExecutor.class);
 
   private static final OVCTableHandle handle = executor.getTableHandle();

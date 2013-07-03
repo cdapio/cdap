@@ -1,20 +1,13 @@
 package com.continuuity.metrics2.collector;
 
-import akka.dispatch.Await;
-import akka.dispatch.Future;
-import akka.dispatch.Mapper;
-import akka.dispatch.OnComplete;
-import akka.util.Duration;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricRequest;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.common.metrics.MetricResponse;
 import com.continuuity.common.metrics.MetricType;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -24,15 +17,12 @@ import org.apache.mina.core.session.IoSession;
 import org.apache.mina.integration.jmx.IoSessionMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Tuple2;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Handler for metrics collection server.
@@ -43,7 +33,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     = LoggerFactory.getLogger(MetricsCollectionServerIoHandler.class);
 
   /**
-   * Holds the instance of MBeanServer
+   * Holds the instance of MBeanServer.
    */
   private MBeanServer mBeanServer;
 
@@ -65,8 +55,6 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
    *   used to register new IoSession objects so that the JMX subsystem
    *   can report statistics on the sessions.
    * </p>
-   * @param mBeanServer
-   * @param configuration
    */
   public MetricsCollectionServerIoHandler(MBeanServer mBeanServer,
                                           CConfiguration configuration)
@@ -82,26 +70,21 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     String[] klassSystem = configuration.getStrings(
         Constants.CFG_METRICS_COLLECTION_SYSTEM_PLUGINS
     );
-    if(klassSystem != null && klassSystem.length > 0) {
-      for(String klass : klassSystem) {
+    if (klassSystem != null && klassSystem.length > 0) {
+      for (String klass : klassSystem) {
         loadCreateAndAddToList(MetricType.System, klass);
         Log.trace("Added {} plugin for processing system metrics.",
                   klass);
       }
     }
 
-    // Flag indicating if there were any FlowSystem and/or FlowUser
-    // Plugin enabled.
-    boolean enabledFlowPlugin = false;
-
     // Load processor for handling flow system metrics. If none defined,
     // we add a default processor.
     String[] klassFlowSystem = configuration.getStrings(
       Constants.CFG_METRICS_COLLECTION_FLOW_SYSTEM_PLUGINS
     );
-    if(klassFlowSystem != null && klassFlowSystem.length > 0) {
-      for(String klass : klassFlowSystem) {
-        enabledFlowPlugin = true;
+    if (klassFlowSystem != null && klassFlowSystem.length > 0) {
+      for (String klass : klassFlowSystem) {
         loadCreateAndAddToList(MetricType.FlowSystem, klass);
         Log.trace("Added {} plugin for processing flow system metrics.",
                   klass);
@@ -114,9 +97,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       Constants.CFG_METRICS_COLLECTION_FLOW_USER_PLUGINS
     );
 
-    if(klassFlowUser != null && klassFlowUser.length > 0) {
-      for(String klass : klassFlowUser) {
-        enabledFlowPlugin = true;
+    if (klassFlowUser != null && klassFlowUser.length > 0) {
+      for (String klass : klassFlowUser) {
         loadCreateAndAddToList(MetricType.FlowUser, klass);
         Log.trace("Added {} plugin for processing flow user metrics.",
                   klass);
@@ -136,7 +118,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
   /**
    * Creates a new instance of this object without bean tracking.
    *
-   * @param configuration
+   * @param configuration object.
    */
   public MetricsCollectionServerIoHandler(CConfiguration configuration)
     throws Exception {
@@ -166,13 +148,13 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
    * <p>
    *   We set the the JMX session MBean.
    * </p>
-   * @param session
+   * @param session current session for which the callback was made.
    * @throws Exception
    */
   @Override
   public void sessionCreated(IoSession session) throws Exception {
     // If no bean server created then no tracking is done.
-    if(mBeanServer == null) {
+    if (mBeanServer == null) {
       return;
     }
 
@@ -193,7 +175,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
   @Override
   public void exceptionCaught(IoSession session, Throwable cause) throws
     Exception {
-    if(cause != null && cause.getMessage() != null) {
+    if (cause != null && cause.getMessage() != null) {
       Log.warn(cause.getMessage(), cause);
     }
   }
@@ -201,15 +183,15 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
   /**
    * Processes the message received by the collection server.
    *
-   * @param session
-   * @param message
+   * @param session Session for which the message was received.
+   * @param message Object for the session.
    * @throws Exception
    */
   @Override
   public void messageReceived(final IoSession session, final Object message)
     throws Exception {
 
-    if(message instanceof MetricRequest) {
+    if (message instanceof MetricRequest) {
       final MetricRequest request = (MetricRequest) message;
       Log.trace("Received metric : {}.", request.toString());
 
@@ -220,16 +202,16 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       // in terms of processing the request. If there is any issue in
       // one of the future in processing the request, we return failure
       // to the client.
-      if(request.getValid()) {
-        ListenableFuture<MetricResponse.Status> future = null;
+      if (request.getValid()) {
+        ListenableFuture<MetricResponse.Status> future;
 
         // Iterate through the processor invoking the process method
-        for(final ImmutablePair<MetricType, MetricsProcessor> processor :
+        for (final ImmutablePair<MetricType, MetricsProcessor> processor :
           processors) {
 
           // If request metric type matches, then farm out the work
           // to the processor. If the
-          if(request.getMetricType() == processor.getFirst()) {
+          if (request.getMetricType() == processor.getFirst()) {
             future = processor.getSecond().process(request);
             Futures.addCallback(future, new FutureCallback<MetricResponse.Status>() {
               @Override
@@ -258,14 +240,14 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
   }
 
   private void writeIfConnected(IoSession session, MetricResponse response) {
-    if(session.isConnected()) {
+    if (session.isConnected()) {
       session.write(response);
     }
   }
 
   @Override
   public void close() throws IOException {
-    for(ImmutablePair<MetricType, MetricsProcessor> processor : processors) {
+    for (ImmutablePair<MetricType, MetricsProcessor> processor : processors) {
       processor.getSecond().close();
     }
   }

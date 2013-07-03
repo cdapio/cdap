@@ -73,6 +73,8 @@ public class TOperationExecutor {
 
     public void openTable(TOperationContext context, TOpenTable openTable) throws TOperationException, org.apache.thrift.TException;
 
+    public void truncateTable(TOperationContext context, TTruncateTable truncateTable) throws TOperationException, org.apache.thrift.TException;
+
     public void configureQueue(TOperationContext context, TQueueConfigure configure) throws TOperationException, org.apache.thrift.TException;
 
     public void configureQueueGroups(TOperationContext context, TQueueConfigureGroups configure) throws TOperationException, org.apache.thrift.TException;
@@ -124,6 +126,8 @@ public class TOperationExecutor {
     public void clearFabric(TOperationContext context, TClearFabric clearFabric, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.clearFabric_call> resultHandler) throws org.apache.thrift.TException;
 
     public void openTable(TOperationContext context, TOpenTable openTable, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.openTable_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void truncateTable(TOperationContext context, TTruncateTable truncateTable, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.truncateTable_call> resultHandler) throws org.apache.thrift.TException;
 
     public void configureQueue(TOperationContext context, TQueueConfigure configure, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.configureQueue_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -703,6 +707,30 @@ public class TOperationExecutor {
     {
       openTable_result result = new openTable_result();
       receiveBase(result, "openTable");
+      if (result.ex != null) {
+        throw result.ex;
+      }
+      return;
+    }
+
+    public void truncateTable(TOperationContext context, TTruncateTable truncateTable) throws TOperationException, org.apache.thrift.TException
+    {
+      send_truncateTable(context, truncateTable);
+      recv_truncateTable();
+    }
+
+    public void send_truncateTable(TOperationContext context, TTruncateTable truncateTable) throws org.apache.thrift.TException
+    {
+      truncateTable_args args = new truncateTable_args();
+      args.setContext(context);
+      args.setTruncateTable(truncateTable);
+      sendBase("truncateTable", args);
+    }
+
+    public void recv_truncateTable() throws TOperationException, org.apache.thrift.TException
+    {
+      truncateTable_result result = new truncateTable_result();
+      receiveBase(result, "truncateTable");
       if (result.ex != null) {
         throw result.ex;
       }
@@ -1555,6 +1583,41 @@ public class TOperationExecutor {
       }
     }
 
+    public void truncateTable(TOperationContext context, TTruncateTable truncateTable, org.apache.thrift.async.AsyncMethodCallback<truncateTable_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      truncateTable_call method_call = new truncateTable_call(context, truncateTable, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class truncateTable_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private TOperationContext context;
+      private TTruncateTable truncateTable;
+      public truncateTable_call(TOperationContext context, TTruncateTable truncateTable, org.apache.thrift.async.AsyncMethodCallback<truncateTable_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.context = context;
+        this.truncateTable = truncateTable;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("truncateTable", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        truncateTable_args args = new truncateTable_args();
+        args.setContext(context);
+        args.setTruncateTable(truncateTable);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_truncateTable();
+      }
+    }
+
     public void configureQueue(TOperationContext context, TQueueConfigure configure, org.apache.thrift.async.AsyncMethodCallback<configureQueue_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       configureQueue_call method_call = new configureQueue_call(context, configure, resultHandler, this, ___protocolFactory, ___transport);
@@ -1694,6 +1757,7 @@ public class TOperationExecutor {
       processMap.put("getQueueInfo", new getQueueInfo());
       processMap.put("clearFabric", new clearFabric());
       processMap.put("openTable", new openTable());
+      processMap.put("truncateTable", new truncateTable());
       processMap.put("configureQueue", new configureQueue());
       processMap.put("configureQueueGroups", new configureQueueGroups());
       processMap.put("queueDropInflight", new queueDropInflight());
@@ -2114,6 +2178,26 @@ public class TOperationExecutor {
         openTable_result result = new openTable_result();
         try {
           iface.openTable(args.context, args.openTable);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
+        return result;
+      }
+    }
+
+    private static class truncateTable<I extends Iface> extends org.apache.thrift.ProcessFunction<I, truncateTable_args> {
+      public truncateTable() {
+        super("truncateTable");
+      }
+
+      protected truncateTable_args getEmptyArgsInstance() {
+        return new truncateTable_args();
+      }
+
+      protected truncateTable_result getResult(I iface, truncateTable_args args) throws org.apache.thrift.TException {
+        truncateTable_result result = new truncateTable_result();
+        try {
+          iface.truncateTable(args.context, args.truncateTable);
         } catch (TOperationException ex) {
           result.ex = ex;
         }
@@ -21830,6 +21914,818 @@ public class TOperationExecutor {
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, openTable_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class truncateTable_args implements org.apache.thrift.TBase<truncateTable_args, truncateTable_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("truncateTable_args");
+
+    private static final org.apache.thrift.protocol.TField CONTEXT_FIELD_DESC = new org.apache.thrift.protocol.TField("context", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField TRUNCATE_TABLE_FIELD_DESC = new org.apache.thrift.protocol.TField("truncateTable", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new truncateTable_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new truncateTable_argsTupleSchemeFactory());
+    }
+
+    public TOperationContext context; // required
+    public TTruncateTable truncateTable; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      CONTEXT((short)1, "context"),
+      TRUNCATE_TABLE((short)2, "truncateTable");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // CONTEXT
+            return CONTEXT;
+          case 2: // TRUNCATE_TABLE
+            return TRUNCATE_TABLE;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.CONTEXT, new org.apache.thrift.meta_data.FieldMetaData("context", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOperationContext.class)));
+      tmpMap.put(_Fields.TRUNCATE_TABLE, new org.apache.thrift.meta_data.FieldMetaData("truncateTable", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TTruncateTable.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(truncateTable_args.class, metaDataMap);
+    }
+
+    public truncateTable_args() {
+    }
+
+    public truncateTable_args(
+      TOperationContext context,
+      TTruncateTable truncateTable)
+    {
+      this();
+      this.context = context;
+      this.truncateTable = truncateTable;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public truncateTable_args(truncateTable_args other) {
+      if (other.isSetContext()) {
+        this.context = new TOperationContext(other.context);
+      }
+      if (other.isSetTruncateTable()) {
+        this.truncateTable = new TTruncateTable(other.truncateTable);
+      }
+    }
+
+    public truncateTable_args deepCopy() {
+      return new truncateTable_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.context = null;
+      this.truncateTable = null;
+    }
+
+    public TOperationContext getContext() {
+      return this.context;
+    }
+
+    public truncateTable_args setContext(TOperationContext context) {
+      this.context = context;
+      return this;
+    }
+
+    public void unsetContext() {
+      this.context = null;
+    }
+
+    /** Returns true if field context is set (has been assigned a value) and false otherwise */
+    public boolean isSetContext() {
+      return this.context != null;
+    }
+
+    public void setContextIsSet(boolean value) {
+      if (!value) {
+        this.context = null;
+      }
+    }
+
+    public TTruncateTable getTruncateTable() {
+      return this.truncateTable;
+    }
+
+    public truncateTable_args setTruncateTable(TTruncateTable truncateTable) {
+      this.truncateTable = truncateTable;
+      return this;
+    }
+
+    public void unsetTruncateTable() {
+      this.truncateTable = null;
+    }
+
+    /** Returns true if field truncateTable is set (has been assigned a value) and false otherwise */
+    public boolean isSetTruncateTable() {
+      return this.truncateTable != null;
+    }
+
+    public void setTruncateTableIsSet(boolean value) {
+      if (!value) {
+        this.truncateTable = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case CONTEXT:
+        if (value == null) {
+          unsetContext();
+        } else {
+          setContext((TOperationContext)value);
+        }
+        break;
+
+      case TRUNCATE_TABLE:
+        if (value == null) {
+          unsetTruncateTable();
+        } else {
+          setTruncateTable((TTruncateTable)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case CONTEXT:
+        return getContext();
+
+      case TRUNCATE_TABLE:
+        return getTruncateTable();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case CONTEXT:
+        return isSetContext();
+      case TRUNCATE_TABLE:
+        return isSetTruncateTable();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof truncateTable_args)
+        return this.equals((truncateTable_args)that);
+      return false;
+    }
+
+    public boolean equals(truncateTable_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_context = true && this.isSetContext();
+      boolean that_present_context = true && that.isSetContext();
+      if (this_present_context || that_present_context) {
+        if (!(this_present_context && that_present_context))
+          return false;
+        if (!this.context.equals(that.context))
+          return false;
+      }
+
+      boolean this_present_truncateTable = true && this.isSetTruncateTable();
+      boolean that_present_truncateTable = true && that.isSetTruncateTable();
+      if (this_present_truncateTable || that_present_truncateTable) {
+        if (!(this_present_truncateTable && that_present_truncateTable))
+          return false;
+        if (!this.truncateTable.equals(that.truncateTable))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(truncateTable_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      truncateTable_args typedOther = (truncateTable_args)other;
+
+      lastComparison = Boolean.valueOf(isSetContext()).compareTo(typedOther.isSetContext());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetContext()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.context, typedOther.context);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTruncateTable()).compareTo(typedOther.isSetTruncateTable());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTruncateTable()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.truncateTable, typedOther.truncateTable);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("truncateTable_args(");
+      boolean first = true;
+
+      sb.append("context:");
+      if (this.context == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.context);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("truncateTable:");
+      if (this.truncateTable == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.truncateTable);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class truncateTable_argsStandardSchemeFactory implements SchemeFactory {
+      public truncateTable_argsStandardScheme getScheme() {
+        return new truncateTable_argsStandardScheme();
+      }
+    }
+
+    private static class truncateTable_argsStandardScheme extends StandardScheme<truncateTable_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, truncateTable_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // CONTEXT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.context = new TOperationContext();
+                struct.context.read(iprot);
+                struct.setContextIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // TRUNCATE_TABLE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.truncateTable = new TTruncateTable();
+                struct.truncateTable.read(iprot);
+                struct.setTruncateTableIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, truncateTable_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.context != null) {
+          oprot.writeFieldBegin(CONTEXT_FIELD_DESC);
+          struct.context.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.truncateTable != null) {
+          oprot.writeFieldBegin(TRUNCATE_TABLE_FIELD_DESC);
+          struct.truncateTable.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class truncateTable_argsTupleSchemeFactory implements SchemeFactory {
+      public truncateTable_argsTupleScheme getScheme() {
+        return new truncateTable_argsTupleScheme();
+      }
+    }
+
+    private static class truncateTable_argsTupleScheme extends TupleScheme<truncateTable_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, truncateTable_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetContext()) {
+          optionals.set(0);
+        }
+        if (struct.isSetTruncateTable()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetContext()) {
+          struct.context.write(oprot);
+        }
+        if (struct.isSetTruncateTable()) {
+          struct.truncateTable.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, truncateTable_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.context = new TOperationContext();
+          struct.context.read(iprot);
+          struct.setContextIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.truncateTable = new TTruncateTable();
+          struct.truncateTable.read(iprot);
+          struct.setTruncateTableIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class truncateTable_result implements org.apache.thrift.TBase<truncateTable_result, truncateTable_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("truncateTable_result");
+
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new truncateTable_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new truncateTable_resultTupleSchemeFactory());
+    }
+
+    public TOperationException ex; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      EX((short)1, "ex");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // EX
+            return EX;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(truncateTable_result.class, metaDataMap);
+    }
+
+    public truncateTable_result() {
+    }
+
+    public truncateTable_result(
+      TOperationException ex)
+    {
+      this();
+      this.ex = ex;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public truncateTable_result(truncateTable_result other) {
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
+    }
+
+    public truncateTable_result deepCopy() {
+      return new truncateTable_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.ex = null;
+    }
+
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public truncateTable_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case EX:
+        return getEx();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case EX:
+        return isSetEx();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof truncateTable_result)
+        return this.equals((truncateTable_result)that);
+      return false;
+    }
+
+    public boolean equals(truncateTable_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(truncateTable_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      truncateTable_result typedOther = (truncateTable_result)other;
+
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("truncateTable_result(");
+      boolean first = true;
+
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class truncateTable_resultStandardSchemeFactory implements SchemeFactory {
+      public truncateTable_resultStandardScheme getScheme() {
+        return new truncateTable_resultStandardScheme();
+      }
+    }
+
+    private static class truncateTable_resultStandardScheme extends StandardScheme<truncateTable_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, truncateTable_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, truncateTable_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class truncateTable_resultTupleSchemeFactory implements SchemeFactory {
+      public truncateTable_resultTupleScheme getScheme() {
+        return new truncateTable_resultTupleScheme();
+      }
+    }
+
+    private static class truncateTable_resultTupleScheme extends TupleScheme<truncateTable_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, truncateTable_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetEx()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, truncateTable_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {

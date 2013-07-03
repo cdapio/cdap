@@ -40,7 +40,7 @@ public class MetricsCollectionServerMainTest {
     connectionUrl = "jdbc:hsqldb:mem:end2end?user=sa";
     configuration = CConfiguration.create();
     zookeeper = new InMemoryZookeeper();
-    if(zookeeper.getConnectionString() == null) {
+    if (zookeeper.getConnectionString() == null) {
       throw new Exception("No ZK Connection string");
     }
     configuration.set(
@@ -64,7 +64,7 @@ public class MetricsCollectionServerMainTest {
 
 
   /**
-   * FIXME: Not sure why this test is failing.
+   * TODO: Not sure why this test is failing.
    * @throws Exception
    */
   public void end2endTest() throws Exception {
@@ -112,7 +112,7 @@ public class MetricsCollectionServerMainTest {
                                        "demo.myapp.myflow.myrunid");
 
       // create some metrics.
-      for(int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 10; ++i) {
         cmetrics.counter("source.1.processed", 1);
         cmetrics.counter("compute.1.processed", 2);
         cmetrics.counter("sink.1.processed", 3);
@@ -133,15 +133,15 @@ public class MetricsCollectionServerMainTest {
       Assert.assertTrue(counters.size() > 0);
 
       // Iterate through each counter and verify the numbers are correct.
-      for(Counter counter : counters) {
-        if(counter.getQualifier().equals("source")) {
+      for (Counter counter : counters) {
+        if (counter.getQualifier().equals("source")) {
           Assert.assertTrue(counter.getValue() >= 10.0f);
-        } else if(counter.getQualifier().equals("compute")
+        } else if (counter.getQualifier().equals("compute")
           && counter.getName().equals("processed")) {
           Assert.assertTrue(counter.getValue() >= 20.0f);
-        } else if(counter.getQualifier().equals("sink")) {
+        } else if (counter.getQualifier().equals("sink")) {
           Assert.assertTrue(counter.getValue() >= 30.0f);
-        } else if(counter.getQualifier().equals("compute")
+        } else if (counter.getQualifier().equals("compute")
           && counter.getName().equals("request.meanReate")) {
           Assert.assertTrue(counter.getValue() > 2.79103);
         }
@@ -154,7 +154,7 @@ public class MetricsCollectionServerMainTest {
   private List<Counter> getMetric(FlowArgument argument, List<String> names)
     throws TException, MetricsServiceException {
     CounterRequest request = new CounterRequest(argument);
-    if(names != null) {
+    if (names != null) {
       request.setName(names);
     }
     return client.getCounters(request);

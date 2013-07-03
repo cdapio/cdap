@@ -79,9 +79,9 @@ class MetadataServiceHelper {
       // procedures
       updateProceduresInMetadataService(id, spec);
 
-    } catch(MetadataServiceException e) {
+    } catch (MetadataServiceException e) {
       throw Throwables.propagate(e);
-    } catch(TException e) {
+    } catch (TException e) {
       throw Throwables.propagate(e);
     }
   }

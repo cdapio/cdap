@@ -9,6 +9,8 @@ import com.google.common.reflect.TypeToken;
 /**
  * Abstract implementation of {@link Stage} allowing ability to determine type
  * to invoke the actual processing of event.
+ *
+ * @param <T> Type of object processed by this stage.
  */
 public abstract class AbstractStage<T> implements Stage {
   private Context ctx;

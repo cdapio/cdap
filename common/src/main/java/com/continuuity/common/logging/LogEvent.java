@@ -1,5 +1,8 @@
 package com.continuuity.common.logging;
 
+/**
+ * Represents a logging event.
+ */
 public class LogEvent {
 
   public static final String FIELD_NAME_LOGTAG = "logtag";

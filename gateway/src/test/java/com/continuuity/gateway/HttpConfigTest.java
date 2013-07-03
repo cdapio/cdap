@@ -5,10 +5,13 @@ import com.continuuity.gateway.util.HttpConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Tests Http Configs.
+ */
 public class HttpConfigTest {
 
   /**
-   * verify that config picks up the port, path and other options from config
+   * verify that config picks up the port, path and other options from config.
    */
   @Test
   public void testConfiguration() throws Exception {

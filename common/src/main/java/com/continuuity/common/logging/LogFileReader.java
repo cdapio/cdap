@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A LogReader reading from file.
+ */
 public class LogFileReader implements LogReader {
   LogConfiguration config;
   FileSystem fileSystem;
@@ -52,14 +55,22 @@ public class LogFileReader implements LogReader {
     Path path = new Path(config.getLogFilePath(), makeFileName(i));
 
     // check for its existence, if it does not exist, return empty list
-    if (!fileSystem.exists(path)) return lines;
+    if (!fileSystem.exists(path)) {
+      return lines;
+    }
     FileStatus status = fileSystem.getFileStatus(path);
-    if (!status.isFile()) return lines;
+    if (!status.isFile()) {
+      return lines;
+    }
 
     long fileSize;
-    if (sizeHint >= 0) fileSize = sizeHint;
-    else if (i > 0) fileSize = status.getLen();
-    else fileSize = determineTrueFileSize(path, status);
+    if (sizeHint >= 0) {
+      fileSize = sizeHint;
+    } else if (i > 0) {
+      fileSize = status.getLen();
+    } else {
+      fileSize = determineTrueFileSize(path, status);
+    }
 
     long seekPos = 0;
     long bytesToRead = size;
@@ -75,7 +86,7 @@ public class LogFileReader implements LogReader {
     }
 
     // open current file for reading
-    byte[] bytes = new byte[(int)bytesToRead];
+    byte[] bytes = new byte[(int) bytesToRead];
     FSDataInputStream input = fileSystem.open(path);
     try {
       // seek into latest file
@@ -91,18 +102,22 @@ public class LogFileReader implements LogReader {
     if (seekPos > 0) {
       // if we seeked into the file, then we are likely in the middle of the
       // line, and we want to skip up to the first new line
-      while (pos < bytesToRead && bytes[pos] != '\n') pos++;
+      while (pos < bytesToRead && bytes[pos] != '\n') {
+        pos++;
+      }
       pos++; // now we are just after the first new line
     }
 
     // read lines until the end of the buffer
     while (pos < bytesToRead) {
       int start = pos;
-      while (pos < bytesToRead && bytes[pos] != '\n') pos++;
+      while (pos < bytesToRead && bytes[pos] != '\n') {
+        pos++;
+      }
       // now we are at end of file or at the new line
       if (pos != start) { // ignore empty lines
         String line = new String(bytes, start, pos - start,
-            LogFileWriter.charsetUtf8);
+            LogFileWriter.CHARSET_UTF8);
         lines.add(line);
       }
       pos++; // skip the new line character
@@ -117,7 +132,9 @@ public class LogFileReader implements LogReader {
       stream.seek(status.getLen());
       // we need to read repeatedly until we reach the end of the file
       byte[] buffer = new byte[1024 * 1024];
-      while (stream.read(buffer, 0, buffer.length) >= 0);
+      while (stream.read(buffer, 0, buffer.length) >= 0) {
+        // empty body.
+      }
       long trueSize = stream.getPos();
       return trueSize;
     } finally {

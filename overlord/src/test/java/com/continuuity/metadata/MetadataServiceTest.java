@@ -1,6 +1,7 @@
 package com.continuuity.metadata;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.Constants;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -59,7 +60,7 @@ public class MetadataServiceTest {
   public void cleanDataFabric() throws OperationException {
     // cleanups data
     injector.getInstance(OperationExecutor.class)
-      .execute(new OperationContext("developer"), new ClearFabric());
+      .execute(new OperationContext(Constants.DEVELOPER_ACCOUNT_ID), new ClearFabric());
   }
 
   /**
@@ -150,8 +151,8 @@ public class MetadataServiceTest {
       = mds.getStreams(account);
     int after = streams.size();
     Assert.assertTrue(after == before + 1);
-    for(Stream s : streams) {
-      if(s.getId().equals("id3")) {
+    for (Stream s : streams) {
+      if (s.getId().equals("id3")) {
         Assert.assertTrue("Serious stream".equals(s.getName()));
         Assert.assertTrue("Serious stream. Shutup".equals(s.getDescription()));
       }
@@ -307,8 +308,8 @@ public class MetadataServiceTest {
     Collection<Application> applications = mds.getApplications(account);
     int after = applications.size();
     Assert.assertTrue(after == before + 1);
-    for(Application a : applications) {
-      if(a.getId().equals("tapp1")) {
+    for (Application a : applications) {
+      if (a.getId().equals("tapp1")) {
         Assert.assertTrue("Serious App".equals(a.getName()));
         Assert.assertTrue("Serious App. Shutup".equals(a.getDescription()));
       }

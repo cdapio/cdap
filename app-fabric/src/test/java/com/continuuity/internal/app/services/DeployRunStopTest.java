@@ -46,6 +46,9 @@ public class DeployRunStopTest {
   private static AtomicInteger messageCount = new AtomicInteger(0);
   private static Semaphore messageSemaphore = new Semaphore(0);
 
+  /**
+   *
+   */
   public static final class GenSinkApp implements Application {
 
     @Override
@@ -61,6 +64,9 @@ public class DeployRunStopTest {
     }
 
 
+    /**
+     *
+     */
     public static final class GenSinkFlow implements Flow {
 
       @Override
@@ -77,6 +83,9 @@ public class DeployRunStopTest {
       }
     }
 
+    /**
+     *
+     */
     public static final class GenFlowlet extends AbstractFlowlet implements GeneratorFlowlet {
 
       private OutputEmitter<String> output;
@@ -93,6 +102,9 @@ public class DeployRunStopTest {
       }
     }
 
+    /**
+     *
+     */
     public static final class SinkFlowlet extends AbstractFlowlet {
 
       private static final Logger LOG = LoggerFactory.getLogger(SinkFlowlet.class);

@@ -98,7 +98,7 @@ class DataPointSerializer {
       return -1;
     } else {
       ByteBuffer bb = ByteBuffer.wrap(key);
-      return bb.getInt();// metric id
+      return bb.getInt(); // metric id
     }
   }
 
@@ -107,7 +107,7 @@ class DataPointSerializer {
       return -1;
     } else {
       ByteBuffer bb = ByteBuffer.wrap(key);
-      bb.getInt();// metric id
+      bb.getInt(); // metric id
       return bb.getLong();
     }
   }
@@ -126,8 +126,8 @@ class DataPointSerializer {
       }
       int[][] result = new int[length / 8][];
       ByteBuffer bb = ByteBuffer.wrap(key);
-      bb.getInt();// metric id
-      bb.getLong();// timestamp
+      bb.getInt(); // metric id
+      bb.getLong(); // timestamp
       int i = 0;
       while (bb.hasRemaining()) {
         int nameid = bb.getInt();

@@ -29,52 +29,58 @@ define([], function () {
 			/*
 			 * Load Streams
 			 */
-			this.HTTP.getElements('Stream', function (objects) {
+			this.HTTP.get('rest', 'apps', model.id, 'streams', function (objects) {
 
+				var i = objects.length;
+				while (i--) {
+					objects[i] = C.Stream.create(objects[i]);
+				}
 				self.get('elements.Stream').pushObjects(objects);
 				self.__loaded();
 
-			}, model.id);
+			});
 
 			/*
 			 * Load Flows
 			 */
-			this.HTTP.getElements('Flow', function (objects) {
+			this.HTTP.get('rest', 'apps', model.id, 'flows', function (objects) {
 
+				var i = objects.length;
+				while (i--) {
+					objects[i] = C.Flow.create(objects[i]);
+				}
 				self.get('elements.Flow').pushObjects(objects);
 				self.__loaded();
 
-			}, model.id);
-
-			/**
-			 * Load Batches
-			 */
-			this.HTTP.getElements('Batch', function (objects) {
-
-				self.get('elements.Batch').pushObjects(objects);
-				self.__loaded();
-
-			}, model.id);
+			});
 
 			/*
 			 * Load Datasets
 			 */
-			this.HTTP.getElements('Dataset', function (objects) {
+			this.HTTP.get('rest', 'apps', model.id, 'datasets', function (objects) {
 
+				var i = objects.length;
+				while (i--) {
+					objects[i] = C.Dataset.create(objects[i]);
+				}
 				self.get('elements.Dataset').pushObjects(objects);
 				self.__loaded();
 
-			}, model.id);
+			});
 
 			/*
 			 * Load Procedures
 			 */
-			this.HTTP.getElements('Procedure', function (objects) {
+			this.HTTP.get('rest', 'apps', model.id, 'procedures', function (objects) {
 
+				var i = objects.length;
+				while (i--) {
+					objects[i] = C.Procedure.create(objects[i]);
+				}
 				self.get('elements.Procedure').pushObjects(objects);
 				self.__loaded();
 
-			}, model.id);
+			});
 
 		},
 
@@ -112,14 +118,14 @@ define([], function () {
 
 			if (this.get('model')) {
 
-				C.get.apply(C, this.get('model').getUpdateRequest());
+				C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
 
 				for (var i = 0; i < types.length; i ++) {
 
 					var content = this.get('elements').get(types[i]).get('content');
 					for (var j = 0; j < content.length; j ++) {
 						if (typeof content[j].getUpdateRequest === 'function') {
-							C.get.apply(C, content[j].getUpdateRequest());
+							C.get.apply(C, content[j].getUpdateRequest(this.HTTP));
 						}
 					}
 				}
@@ -504,18 +510,16 @@ define([], function () {
 
 			destination += '.continuuity.net';
 
-			C.get('far', {
-				method: 'promote',
-				params: [model.id, destination, C.Env.get('credential')]
-			}, function (error, response) {
+			this.HTTP.rpc('fabric', 'promote', [model.id, destination, C.Env.get('credential')],
+				function (response) {
 
-				if (error) {
+				if (response.error) {
 
 					self.set('finished', 'Error');
-					if (error.name) {
-						self.set('finishedMessage', error.name + ': ' + error.message);
+					if (response.error.name) {
+						self.set('finishedMessage', response.error.name + ': ' + response.error.message);
 					} else {
-						self.set('finishedMessage', response.message || JSON.stringify(error));
+						self.set('finishedMessage', response.result.message || JSON.stringify(response.error));
 					}
 
 				} else {

@@ -45,6 +45,7 @@ import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.test.app.DefaultId;
 import com.continuuity.test.app.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Charsets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -55,6 +56,9 @@ import org.junit.Test;
 
 import java.util.List;
 
+/**
+ *
+ */
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
   private MetadataService.Iface metadataService;
@@ -79,7 +83,7 @@ public class MDSBasedStoreTest {
             bind(OperationExecutor.class).to(NoOperationExecutor.class);
             bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
             bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-            bind(com.continuuity.weave.filesystem.LocationFactory.class).to(com.continuuity.weave.filesystem.LocalLocationFactory.class);
+            bind(LocationFactory.class).to(LocalLocationFactory.class);
           }
         }
       );
@@ -139,7 +143,7 @@ public class MDSBasedStoreTest {
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().build(), new com.continuuity.weave.filesystem.LocalLocationFactory().create("/foo"));
+                         .noProcedure().build(), new LocalLocationFactory().create("/foo"));
     store.addApplication(Id.Application.from("account2", "application1"),
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
@@ -265,6 +269,9 @@ public class MDSBasedStoreTest {
     }
   }
 
+  /**
+   *
+   */
   public static class FlowletImpl extends AbstractFlowlet {
     @UseDataSet("dataset2")
     private KeyValueTable counters;
@@ -298,6 +305,9 @@ public class MDSBasedStoreTest {
     }
   }
 
+  /**
+   *
+   */
   public static class ProcedureImpl extends AbstractProcedure {
     @UseDataSet("dataset2")
     private KeyValueTable counters;

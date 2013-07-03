@@ -47,7 +47,7 @@ public interface ProcedureSpecification {
   Map<String, String> getArguments();
 
   /**
-   * Builder for building {@link ProcedureSpecification}
+   * Builder for building {@link ProcedureSpecification}.
    */
   static final class Builder {
     private String name;
@@ -65,7 +65,7 @@ public interface ProcedureSpecification {
     public final class NameSetter {
 
       /**
-       * Sets the name of the {@link Procedure}
+       * Sets the name of the {@link Procedure}.
        * @param name of the procedure.
        * @return instance of this {@link Builder}
        */
@@ -83,7 +83,7 @@ public interface ProcedureSpecification {
     public final class DescriptionSetter {
 
       /**
-       * Sets the description for this {@link Procedure}
+       * Sets the description for this {@link Procedure}.
        * @param description of the {@link Procedure}
        * @return An instance of {@link AfterDescription}
        */

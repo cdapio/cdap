@@ -16,6 +16,9 @@ import org.junit.Ignore;
 import java.io.IOException;
 import java.util.Random;
 
+/**
+ *
+ */
 public class TestNativeHBaseTTQueue extends TestTTQueue {
 
   private static HTable table;

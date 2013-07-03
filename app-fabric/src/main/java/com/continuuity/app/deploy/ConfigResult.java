@@ -5,7 +5,9 @@
 package com.continuuity.app.deploy;
 
 /**
+ * A container class for holding configuration result.
  *
+ * @param <T> Type of specification this result will hold.
  */
 public class ConfigResult<T> {
   private final T specification;

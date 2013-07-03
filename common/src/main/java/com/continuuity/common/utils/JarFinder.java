@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.text.MessageFormat;
@@ -90,8 +89,7 @@ public class JarFinder {
           String filePath = f.getPath();
           File file = new File(filePath);
           zipDir(file, relativePath + f.getName() + "/", zos, false);
-        }
-        else {
+        } else {
           String path = relativePath + f.getName();
           if (!path.equals(JarFile.MANIFEST_NAME)) {
             ZipEntry anEntry = new ZipEntry(path);
@@ -129,9 +127,9 @@ public class JarFinder {
     Preconditions.checkNotNull(klass, "klass");
     ClassLoader loader = klass.getClassLoader();
     if (loader != null) {
-      String class_file = klass.getName().replaceAll("\\.", "/") + ".class";
+      String classFile = klass.getName().replaceAll("\\.", "/") + ".class";
       try {
-        for (Enumeration itr = loader.getResources(class_file);
+        for (Enumeration itr = loader.getResources(classFile);
              itr.hasMoreElements(); ) {
           URL url = (URL) itr.nextElement();
           String path = url.getPath();
@@ -142,8 +140,7 @@ public class JarFinder {
           if ("jar".equals(url.getProtocol())) {
             path = URLDecoder.decode(path, "UTF-8");
             return path.replaceAll("!.*$", "");
-          }
-          else if ("file".equals(url.getProtocol())) {
+          } else if ("file".equals(url.getProtocol())) {
             String klassName = klass.getName();
             klassName = klassName.replace(".", "/") + ".class";
             path = path.substring(0, path.length() - klassName.length());
@@ -159,8 +156,7 @@ public class JarFinder {
             return tempJar.getAbsolutePath();
           }
         }
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
         throw new RuntimeException(e);
       }
     }

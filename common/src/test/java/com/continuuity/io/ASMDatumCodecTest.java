@@ -32,11 +32,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ *
+ */
 public class ASMDatumCodecTest {
 
   private static final ASMDatumWriterFactory DATUM_WRITER_FACTORY
     = new ASMDatumWriterFactory(new ASMFieldAccessorFactory());
 
+  /**
+   *
+   */
   public static enum TestEnum {
     VALUE1, VALUE2, VALUE3, VALUE4
   }
@@ -56,12 +62,12 @@ public class ASMDatumCodecTest {
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
     DatumWriter<Short> writer = getWriter(type);
-    writer.encode((short)3000, new BinaryEncoder(os));
+    writer.encode((short) 3000, new BinaryEncoder(os));
 
     ReflectionDatumReader<Short> reader = new ReflectionDatumReader<Short>(getSchema(type), type);
     short value = reader.read(new BinaryDecoder(is), getSchema(type));
 
-    Assert.assertEquals((short)3000, value);
+    Assert.assertEquals((short) 3000, value);
   }
 
   @Test
@@ -290,6 +296,9 @@ public class ASMDatumCodecTest {
     Assert.assertArrayEquals(writeValue, value);
   }
 
+  /**
+   *
+   */
   public static final class Node {
     public int data;
     public Node left;

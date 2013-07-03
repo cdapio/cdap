@@ -1,8 +1,7 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.common.base.Objects;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Meta data for a group about a queue entry.
@@ -71,7 +70,10 @@ public class EntryGroupMeta {
         .add("instanceId", this.instanceId)
         .toString();
   }
-  
+
+  /**
+   * Defines possible states for EntryGroup.
+   */
   public static enum EntryGroupState {
     AVAILABLE, SEMI_ACKED, ACKED, DEQUEUED;
     
@@ -83,7 +85,7 @@ public class EntryGroupMeta {
     public byte [] getBytes() {
       switch (this) {
         case AVAILABLE: return AVAILABLE_BYTES;
-        case SEMI_ACKED:return SEMI_ACKED_BYTES;
+        case SEMI_ACKED: return SEMI_ACKED_BYTES;
         case ACKED:     return ACKED_BYTES;
         case DEQUEUED:  return DEQUEUED_BYTES;
       }
@@ -92,10 +94,18 @@ public class EntryGroupMeta {
     
     public static EntryGroupState fromBytes(byte [] bytes) {
       if (bytes.length == 1) {
-        if (bytes[0] == AVAILABLE_BYTES[0]) return AVAILABLE;
-        if (bytes[0] == SEMI_ACKED_BYTES[0]) return SEMI_ACKED;
-        if (bytes[0] == ACKED_BYTES[0]) return ACKED;
-        if (bytes[0] == DEQUEUED_BYTES[0]) return DEQUEUED;
+        if (bytes[0] == AVAILABLE_BYTES[0]) {
+          return AVAILABLE;
+        }
+        if (bytes[0] == SEMI_ACKED_BYTES[0]) {
+          return SEMI_ACKED;
+        }
+        if (bytes[0] == ACKED_BYTES[0]) {
+          return ACKED;
+        }
+        if (bytes[0] == DEQUEUED_BYTES[0]) {
+          return DEQUEUED;
+        }
       }
       throw new RuntimeException("Invalid deserialization of EntryGroupState");
     }

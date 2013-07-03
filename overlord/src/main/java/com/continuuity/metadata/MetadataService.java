@@ -3,7 +3,6 @@ package com.continuuity.metadata;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -31,15 +30,14 @@ import java.util.Random;
  * Implementation of thrift meta data service handler.
  */
 public class MetadataService extends MetadataHelper
-    implements com.continuuity.metadata.thrift.MetadataService.Iface
-{
-  private static final Logger LOG
-      = LoggerFactory.getLogger(MetadataService.class);
+    implements com.continuuity.metadata.thrift.MetadataService.Iface {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataService.class);
 
   private final MetaDataStore mds;
 
   /**
-   * Construction of metadata service handler
+   * Construction of metadata service handler.
    * @param opex instance of opex.
    */
   @Inject
@@ -123,8 +121,9 @@ public class MetadataService extends MetadataHelper
           mds.add(context, entry);
           return true;
         } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
             throw e; // we can only handle write conflicts here
+          }
           // read again for conflict resolution
           readEntry = mds.get(context, account.getId(),
               helper.getApplication(t), helper.getFieldType(), helper.getId(t));
@@ -138,9 +137,11 @@ public class MetadataService extends MetadataHelper
             ? CompareStatus.SUPER : helper.compare(t, readEntry);
         // existing entry is equal or a superset of the new one -> good
         if (status.equals(CompareStatus.EQUAL) ||
-            status.equals(CompareStatus.SUB))
+            status.equals(CompareStatus.SUB)) {
           return true;
-        else if (status.equals(CompareStatus.DIFF)) {
+        }
+
+        if (status.equals(CompareStatus.DIFF)) {
           // new entry is incompatible with existing -> conflict!
           throw new MetadataServiceException("another, incompatible meta " +
               "data entry already exists.");
@@ -158,10 +159,14 @@ public class MetadataService extends MetadataHelper
           return true;
 
         } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
             throw e; // we can only handle write conflicts here
-          if (attempts <= 1)
+          }
+
+          if (attempts <= 1) {
             throw e; // number of attempts exhausted
+          }
+
           // read again for conflict resolution
           readEntry = mds.get(context, account.getId(),
               helper.getApplication(t), helper.getFieldType(), helper.getId(t));
@@ -206,8 +211,9 @@ public class MetadataService extends MetadataHelper
       this.mds.update(opContext, helper.makeEntry(account, t));
       return true;
     } catch (OperationException e) {
-      if (e.getStatus() == StatusCode.ENTRY_NOT_FOUND) // entry does not exist
+      if (e.getStatus() == StatusCode.ENTRY_NOT_FOUND) { // entry does not exist
         return false;
+      }
       String message = String.format("Failed to update %s %s. Reason: %s.",
           helper.getName(), helper.getId(t), e.getMessage());
       LOG.error(message, e);
@@ -233,7 +239,7 @@ public class MetadataService extends MetadataHelper
 
     // Verify the meta data object has an id
     String id = helper.getId(t);
-    if(id == null || id.isEmpty()) {
+    if (id == null || id.isEmpty()) {
       throw new MetadataServiceException(helper.getName() +
           " id is empty or null.");
     }
@@ -294,8 +300,9 @@ public class MetadataService extends MetadataHelper
       Collection<MetaDataEntry> entries =
           mds.list(context, accountId, appId, helper.getFieldType(), null);
 
-      for(MetaDataEntry entry : entries)
+      for (MetaDataEntry entry : entries) {
         result.add(helper.makeFromEntry(entry));
+      }
       return result;
 
     } catch (OperationException e) {
@@ -328,7 +335,7 @@ public class MetadataService extends MetadataHelper
     String accountId = account.getId();
 
     String id = helper.getId(t);
-    if(id == null || id.isEmpty()) {
+    if (id == null || id.isEmpty()) {
       throw new MetadataServiceException(
           helper.getName() + " does not have an id.");
     }
@@ -341,7 +348,7 @@ public class MetadataService extends MetadataHelper
       MetaDataEntry entry = mds.get(context,
           accountId, helper.getApplication(t), helper.getFieldType(), id);
 
-      if(entry != null) {
+      if (entry != null) {
         // convert the the meta data entry
         return helper.makeFromEntry(entry);
       } else {
@@ -383,8 +390,11 @@ public class MetadataService extends MetadataHelper
         LOG.error(message, e);
         throw new MetadataServiceException(message);
       }
-      if (entry == null) throw new MetadataServiceException(
+
+      if (entry == null) {
+        throw new MetadataServiceException(
           "No meta data found for " + what + " '" + id + "'");
+      }
 
       String oldValue = entry.getTextField(field);
       for (String x : oldValue.split(" ")) {
@@ -696,11 +706,13 @@ public class MetadataService extends MetadataHelper
     // now iterate over all flows and get each stream
     for (Flow flow : flows) {
       List<String> flowStreams = flow.getStreams();
-      if (flowStreams == null || flowStreams.isEmpty())
+      if (flowStreams == null || flowStreams.isEmpty()) {
         continue;
+      }
       for (String streamName : flowStreams) {
-        if (foundStreams.containsKey(streamName))
+        if (foundStreams.containsKey(streamName)) {
           continue;
+        }
         Stream stream =
             getStream(new Account(account), new Stream(streamName));
         if (stream.isExists()) {
@@ -711,8 +723,9 @@ public class MetadataService extends MetadataHelper
 
     // extract the found streams into a list
     List<Stream> streams = Lists.newArrayList();
-    for (Stream stream : foundStreams.values())
+    for (Stream stream : foundStreams.values()) {
       streams.add(stream);
+    }
     return streams;
   }
 
@@ -732,11 +745,13 @@ public class MetadataService extends MetadataHelper
     // now iterate over all flows and get each dataset
     for (Flow flow : flows) {
       List<String> flowDatasets = flow.getDatasets();
-      if (flowDatasets == null || flowDatasets.isEmpty())
+      if (flowDatasets == null || flowDatasets.isEmpty()) {
         continue;
+      }
       for (String datasetName : flowDatasets) {
-        if (foundDatasets.containsKey(datasetName))
+        if (foundDatasets.containsKey(datasetName)) {
           continue;
+        }
         Dataset dataset =
             getDataset(new Account(account), new Dataset(datasetName));
         if (dataset.isExists()) {
@@ -751,11 +766,13 @@ public class MetadataService extends MetadataHelper
     // now iterate over all queries and get each dataset
     for (Query query : queries) {
       List<String> queryDatasets = query.getDatasets();
-      if (queryDatasets == null || queryDatasets.isEmpty())
+      if (queryDatasets == null || queryDatasets.isEmpty()) {
         continue;
+      }
       for (String datasetName : queryDatasets) {
-        if (foundDatasets.containsKey(datasetName))
+        if (foundDatasets.containsKey(datasetName)) {
           continue;
+        }
         Dataset dataset =
             getDataset(new Account(account), new Dataset(datasetName));
         if (dataset.isExists()) {
@@ -785,8 +802,9 @@ public class MetadataService extends MetadataHelper
 
     // extract the found datasets into a list
     List<Dataset> datasets = Lists.newArrayList();
-    for (Dataset dataset : foundDatasets.values())
+    for (Dataset dataset : foundDatasets.values()) {
       datasets.add(dataset);
+    }
     return datasets;
   }
 
@@ -803,8 +821,9 @@ public class MetadataService extends MetadataHelper
     // select the flows that read from the stream
     List<Flow> flowsForStream = Lists.newLinkedList();
     for (Flow flow : flows) {
-      if (flow.getStreams().contains(stream))
+      if (flow.getStreams().contains(stream)) {
         flowsForStream.add(flow);
+      }
     }
     return flowsForStream;
   }
@@ -821,8 +840,9 @@ public class MetadataService extends MetadataHelper
     // select the flows that use the dataset
     List<Flow> flowsForDS = Lists.newLinkedList();
     for (Flow flow : flows) {
-      if (flow.getDatasets().contains(dataset))
+      if (flow.getDatasets().contains(dataset)) {
         flowsForDS.add(flow);
+      }
     }
     return flowsForDS;
   }
@@ -839,8 +859,9 @@ public class MetadataService extends MetadataHelper
     // select the flows that use the dataset
     List<Query> queriesForDS = Lists.newLinkedList();
     for (Query query : queries) {
-      if (query.getDatasets().contains(dataset))
+      if (query.getDatasets().contains(dataset)) {
         queriesForDS.add(query);
+      }
     }
     return queriesForDS;
   }

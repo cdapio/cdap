@@ -183,9 +183,11 @@ public abstract class HBaseTestBase {
       byte[] stopKey, String callingMethod, Configuration conf,
       byte[]... families)
       throws IOException {
-    if (conf == null) conf = new Configuration();
+    if (conf == null) {
+      conf = new Configuration();
+    }
     HTableDescriptor htd = new HTableDescriptor(tableName);
-    for(byte [] family : families) {
+    for (byte [] family : families) {
       htd.addFamily(new HColumnDescriptor(family));
     }
     HRegionInfo info = new HRegionInfo(htd.getName(), startKey, stopKey, false);

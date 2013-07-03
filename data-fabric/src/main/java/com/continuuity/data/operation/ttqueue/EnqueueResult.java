@@ -40,6 +40,9 @@ public class EnqueueResult {
     return this.entryPointers[0];
   }
 
+  /**
+   * Defines EnqueueStatus.
+   */
   public static enum EnqueueStatus {
     SUCCESS
   }

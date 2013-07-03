@@ -78,8 +78,8 @@ public class CodecTest {
     Assert.assertEquals(Short.MAX_VALUE, decoder.readFloat(), 0.0000001f);
     encoder.writeFloat(Integer.MIN_VALUE);
     Assert.assertEquals(Integer.MIN_VALUE, decoder.readFloat(), 0.0000001f);
-    encoder.writeFloat((long)Integer.MAX_VALUE * Short.MAX_VALUE);
-    Assert.assertEquals((long)Integer.MAX_VALUE * Short.MAX_VALUE, decoder.readFloat(), 0.0000001f);
+    encoder.writeFloat((long) Integer.MAX_VALUE * Short.MAX_VALUE);
+    Assert.assertEquals((long) Integer.MAX_VALUE * Short.MAX_VALUE, decoder.readFloat(), 0.0000001f);
     encoder.writeFloat(Float.MAX_VALUE);
     Assert.assertEquals(Float.MAX_VALUE, decoder.readFloat(), 0.0000001f);
     encoder.writeFloat(Float.MIN_VALUE);
@@ -92,7 +92,7 @@ public class CodecTest {
     encoder.writeDouble(Long.MIN_VALUE);
     Assert.assertEquals(Long.MIN_VALUE, decoder.readDouble(), 0.0000001f);
     encoder.writeDouble((long) Integer.MAX_VALUE * Short.MAX_VALUE);
-    Assert.assertEquals((long)Integer.MAX_VALUE * Short.MAX_VALUE, decoder.readDouble(), 0.0000001f);
+    Assert.assertEquals((long) Integer.MAX_VALUE * Short.MAX_VALUE, decoder.readDouble(), 0.0000001f);
     encoder.writeDouble(Double.MAX_VALUE);
     Assert.assertEquals(Double.MAX_VALUE, decoder.readDouble(), 0.0000001f);
     encoder.writeDouble(Double.MIN_VALUE);
@@ -100,7 +100,7 @@ public class CodecTest {
 
     encoder.writeString("This is a testing message");
     Assert.assertEquals("This is a testing message", decoder.readString());
-    String str = Character.toString((char)200) + Character.toString((char)20000) + Character.toString((char)40000);
+    String str = Character.toString((char) 200) + Character.toString((char) 20000) + Character.toString((char) 40000);
     encoder.writeString(str);
     Assert.assertEquals(str, decoder.readString());
 

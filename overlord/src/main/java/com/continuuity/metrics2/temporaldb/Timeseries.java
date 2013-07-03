@@ -2,14 +2,10 @@ package com.continuuity.metrics2.temporaldb;
 
 import com.continuuity.metrics2.common.Zip;
 import com.continuuity.metrics2.common.ZipIterator;
-import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -19,10 +15,10 @@ public final class Timeseries {
 
   /** Divides a/b with check for Inf. */
   private static double divide(double a, double b) {
-    if(b == 0) {
+    if (b == 0) {
       b = 0.0000000001;
     }
-    return a/b;
+    return a / b;
   }
 
   /**
@@ -43,10 +39,10 @@ public final class Timeseries {
     implements ZipIterator<DataPoint, DataPoint>  {
     @Override
     public Advance advance(DataPoint a, DataPoint b) {
-      if(a.getTimestamp() == b.getTimestamp()) {
+      if (a.getTimestamp() == b.getTimestamp()) {
         return Advance.BOTH;
       }
-      if(a.getTimestamp() > b.getTimestamp()) {
+      if (a.getTimestamp() > b.getTimestamp()) {
         return Advance.ITER_B;
       }
       return Advance.ITER_A;
@@ -87,7 +83,7 @@ public final class Timeseries {
 
     // If any of the timeseries is less than 1, then we return result.
     // No point in proceeding with this.
-    if(a == null || b == null || a.size() < 1 || b.size() < 1) {
+    if (a == null || b == null || a.size() < 1 || b.size() < 1) {
       return ImmutableList.copyOf(result);
     }
 
@@ -97,7 +93,7 @@ public final class Timeseries {
       @Override
       public boolean each(DataPoint a, DataPoint b, Advance advance) {
         double value = divide(a.getValue(), b.getValue());
-        if(decorator != null) {
+        if (decorator != null) {
           value = decorator.apply(value);
         }
         DataPoint.Builder dp = new DataPoint.Builder(a.getMetric());
@@ -130,7 +126,7 @@ public final class Timeseries {
 
     // If any of the timeseries is less than 1, then we return result.
     // No point in proceeding with this.
-    if(a.size() < 1 || b.size() < 1) {
+    if (a.size() < 1 || b.size() < 1) {
       return ImmutableList.copyOf(result);
     }
 
@@ -164,13 +160,13 @@ public final class Timeseries {
    */
   public ImmutableList<DataPoint> rate(List<DataPoint> a) {
     List<DataPoint> result = new ArrayList<DataPoint>();
-    if(a == null) {
+    if (a == null) {
       return ImmutableList.copyOf(result);
     }
     DataPoint prev = null;
 
-    for(DataPoint dataPoint : a) {
-      if(prev == null) {
+    for (DataPoint dataPoint : a) {
+      if (prev == null) {
         prev = dataPoint;
       }
       DataPoint.Builder dpb = new DataPoint.Builder(dataPoint.getMetric());
@@ -180,7 +176,7 @@ public final class Timeseries {
       result.add(dpb.create());
       prev = dataPoint;
     }
-    if(result.size() > 1) {
+    if (result.size() > 1) {
       DataPoint p = result.get(1);
       result.remove(0);
       result.add(0, p);
@@ -203,31 +199,31 @@ public final class Timeseries {
                                        long start, long end,
                                        long points, long interval) {
     List<DataPoint> result = new ArrayList<DataPoint>();
-    if(a == null || a.size() < 1) {
+    if (a == null || a.size() < 1) {
       DataPoint.Builder dpb = new DataPoint.Builder(metric);
-      for(long i = start; i < start+points; i = i + interval) {
+      for (long i = start; i < start + points; i = i + interval) {
         dpb.addTimestamp(i);
-        dpb.addValue(new Double(0));
+        dpb.addValue((double) 0);
         result.add(dpb.create());
       }
       return ImmutableList.copyOf(result);
     } else {
       long startTimestamp = a.get(0).getTimestamp();
-      long endTimestamp = a.get(a.size()-1).getTimestamp();
-      if(start < startTimestamp) {
+      long endTimestamp = a.get(a.size() - 1).getTimestamp();
+      if (start < startTimestamp) {
         DataPoint.Builder dpb = new DataPoint.Builder(metric);
-        for(long i = start; i < startTimestamp; i = i + interval) {
+        for (long i = start; i < startTimestamp; i = i + interval) {
           dpb.addTimestamp(i);
-          dpb.addValue(new Double(0));
+          dpb.addValue((double) 0);
           result.add(dpb.create());
         }
       }
       result.addAll(a);
-      if(endTimestamp < end) {
+      if (endTimestamp < end) {
         DataPoint.Builder dpb = new DataPoint.Builder(metric);
-        for(long i = endTimestamp+interval; i < end; i = i + interval) {
+        for (long i = endTimestamp + interval; i < end; i = i + interval) {
           dpb.addTimestamp(i);
-          dpb.addValue(new Double(0));
+          dpb.addValue((double) 0);
           result.add(dpb.create());
 //          size++;
 //          if(size >= points) {

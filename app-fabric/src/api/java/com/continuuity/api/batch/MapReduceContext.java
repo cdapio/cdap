@@ -29,7 +29,7 @@ public interface MapReduceContext extends RuntimeContext {
   void setInput(BatchReadable dataset, List<Split> splits);
 
   /**
-   * Overrides output configuration of this mapreduce job to write to given dataset
+   * Overrides output configuration of this mapreduce job to write to given dataset.
    * @param dataset output dataset
    */
   void setOutput(BatchWritable dataset);

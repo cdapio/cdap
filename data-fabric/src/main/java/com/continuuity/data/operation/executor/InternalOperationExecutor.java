@@ -5,6 +5,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
@@ -39,4 +40,8 @@ public interface InternalOperationExecutor {
   public void execute(OperationContext context,
                       OpenTable openTable)
       throws OperationException;
+
+  public void execute(OperationContext context,
+                      TruncateTable truncateTable)
+    throws OperationException;
 }

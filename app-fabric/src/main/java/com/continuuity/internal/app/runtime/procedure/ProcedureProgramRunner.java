@@ -189,6 +189,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     ProcedureProgramController(Program program, RunId runId, Cancellable cancellable) {
       super(program.getProgramName(), runId);
       this.cancellable = cancellable;
+      started();
     }
 
     @Override

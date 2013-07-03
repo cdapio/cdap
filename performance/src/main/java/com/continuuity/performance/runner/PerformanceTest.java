@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.performance.runner;
 
 import java.lang.annotation.ElementType;
@@ -12,8 +16,11 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 public @interface PerformanceTest {
 
+  /**
+   * Default empty exception.
+   */
   static class None extends Throwable {
-    private static final long serialVersionUID= 1L;
+    private static final long serialVersionUID = 1L;
     private None() {
     }
   }

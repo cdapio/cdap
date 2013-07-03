@@ -23,7 +23,7 @@ public final class Signatures {
     interfaceVisitor.visitClassType(Type.getInternalName(interfaceType.getRawType()));
 
     if (interfaceType.getType() instanceof ParameterizedType) {
-      for (java.lang.reflect.Type paramType : ((ParameterizedType)interfaceType.getType()).getActualTypeArguments()) {
+      for (java.lang.reflect.Type paramType : ((ParameterizedType) interfaceType.getType()).getActualTypeArguments()) {
         interfaceVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF);
         visitTypeSignature(interfaceType.resolveType(paramType), interfaceVisitor);
       }
@@ -59,7 +59,7 @@ public final class Signatures {
     signWriter.visitClassType(Type.getInternalName(fieldType.getRawType()));
 
     if (fieldType.getType() instanceof ParameterizedType) {
-      for (java.lang.reflect.Type paramType : ((ParameterizedType)fieldType.getType()).getActualTypeArguments()) {
+      for (java.lang.reflect.Type paramType : ((ParameterizedType) fieldType.getType()).getActualTypeArguments()) {
         signWriter.visitTypeArgument(SignatureVisitor.INSTANCEOF);
         visitTypeSignature(fieldType.resolveType(paramType), signWriter);
       }

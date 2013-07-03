@@ -36,8 +36,8 @@ import java.util.Map;
  */
 public class MuxPocessor implements TProcessor {
 
-  private final Map<String,TProcessor> SERVICE_PROCESSOR_MAP
-    = new HashMap<String,TProcessor>();
+  private final Map<String, TProcessor> serviceProcessorMap
+    = new HashMap<String, TProcessor>();
 
   /**
    * 'Register' a service with this <code>MuxPocessor</code>.  This
@@ -50,7 +50,7 @@ public class MuxPocessor implements TProcessor {
    * as "handlers", e.g. WeatherReportHandler implementing WeatherReport.Iface.
    */
   public void registerProcessor(String serviceName, TProcessor processor) {
-    SERVICE_PROCESSOR_MAP.put(serviceName, processor);
+    serviceProcessorMap.put(serviceName, processor);
   }
 
   /**
@@ -92,7 +92,7 @@ public class MuxPocessor implements TProcessor {
 
     // Create a new TMessage, something that can be consumed by any TProtocol
     String serviceName = message.name.substring(0, index);
-    TProcessor actualProcessor = SERVICE_PROCESSOR_MAP.get(serviceName);
+    TProcessor actualProcessor = serviceProcessorMap.get(serviceName);
     if (actualProcessor == null) {
       throw new TException("Service name not found: " + serviceName +
         ".  Check if you" + "call registerProcessor()?");

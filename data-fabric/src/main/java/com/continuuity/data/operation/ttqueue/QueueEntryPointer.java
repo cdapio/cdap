@@ -66,8 +66,8 @@ public class QueueEntryPointer {
   @Override
   public boolean equals(Object o) {
     // tries doesn't affect object identity
-    return this.entryId == ((QueueEntryPointer)o).entryId &&
-        this.shardId == ((QueueEntryPointer)o).shardId;
+    return this.entryId == ((QueueEntryPointer) o).entryId &&
+        this.shardId == ((QueueEntryPointer) o).shardId;
   }
 
   @Override
@@ -91,7 +91,7 @@ public class QueueEntryPointer {
   }
 
   /**
-   * Serialize QueueEntry into byte array
+   * Serialize QueueEntry into byte array.
    * @return serialized byte array containing entryId, shardId and queueName
    */
   public byte [] getBytes() {

@@ -23,12 +23,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Tests the stream client.
+ */
 public class StreamClientTest {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(StreamClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(StreamClientTest.class);
 
-  private OperationExecutor executor = null;
   Gateway gateway = null;
 
   String name = "access.rest";
@@ -48,7 +49,7 @@ public class StreamClientTest {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
-    this.executor = injector.getInstance(OperationExecutor.class);
+    OperationExecutor executor = injector.getInstance(OperationExecutor.class);
 
     String[][] keyValues = {
         { "cat", "pfunk" }, // a simple key and value

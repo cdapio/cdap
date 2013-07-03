@@ -10,28 +10,31 @@ define([], function () {
 	 * Joins the arguments as a path string.
 	 * e.g. HTTP.get('metrics', 1, 2, 3) => GET /metrics/1/2/3 HTTP/1.1
 	 */
-	function getPath(args) {
-		var i = args.length, path = [];
-		while (i--) {
+	function findPath(args) {
+		var path = [];
+		for (var i = 0; i < args.length; i ++) {
 			if (typeof args[i] === 'string') {
 				path.push(args[i]);
 			}
 		}
-		return path.join('/');
+		return '/' + path.join('/');
 	}
 
 	/*
 	 * Finds the object argument based on the last argument.
 	 */
-	function getObject(args) {
+	function findObject(args) {
 		var object = args[args.length - 1];
+		if (typeof object === 'function') {
+			object = args[args.length - 2];
+		}
 		return (!object || typeof object === 'string' ? null : object);
 	}
 
 	/*
 	 * Finds the callback argument based on the last argument.
 	 */
-	function getCallback(args) {
+	function findCallback(args) {
 		var callback = args[args.length - 1];
 		return (typeof callback === 'function' ? callback : function () {
 			Em.debug('No callback provided for HTTP response.');
@@ -42,110 +45,59 @@ define([], function () {
 
 		get: function () {
 
-			var path = getPath(arguments);
-			var callback = getCallback(arguments);
+			var path = findPath(arguments);
+			var callback = findCallback(arguments);
 
-			$.ajax({
-				url: path,
-				success: callback,
-				statusCode: {
-					404: function() {
-						callback(null, 404);
-					}
-				}
-			});
+			$.getJSON(path, callback);
 
 		},
 
-		put: function () {
+		rest: function () {
 
-			var path = getPath(arguments);
-			var object = getObject(arguments);
-
-			return {
-				status: 200,
-				result: {
-					id: '',
-					type: ''
-				}
-			};
+			var args = [].slice.call(arguments);
+			args.unshift('rest');
+			this.get.apply(this, args);
 
 		},
 
 		post: function () {
 
-			var path = getPath(arguments);
-			var object = getObject(arguments);
+			var path = findPath(arguments);
+			var object = findObject(arguments);
+			var callback = findCallback(arguments);
 
-			return {
-				status: 200,
-				result: {
-					id: '',
-					type: ''
-				}
-			};
+			$.post(path, object, callback);
+
+		},
+
+		rpc: function () {
+
+			var args = [].slice.call(arguments);
+			args.unshift('rpc');
+
+			var object = args[args.length - 2];
+
+			if (typeof object === 'object' && object.length) {
+				args[args.length - 2] = { 'params[]': JSON.stringify(object) };
+			}
+
+			this.post.apply(this, args);
 
 		},
 
 		"delete": function () {
 
-			var path = getPath(arguments);
-
-			return {
-				status: 200,
-				result: null
-			};
-
-		},
-
-		__methodNames: {
-			'App': 'getApplications',
-			'Flow': 'getFlows',
-			'Batch': 'getMapreduces',
-			'Stream': 'getStreams',
-			'Procedure': 'getQueries',
-			'Dataset': 'getDatasets'
-		},
-
-		getElements: function (type, callback, appId, arg) {
-
-			var self = this;
-
-			C.get('metadata', {
-				method: this.__methodNames[type] + (appId ? 'ByApplication' : ''),
-				params: appId ? [appId] : []
-			}, function (error, response, params) {
-
-				if (error) {
-					if (typeof callback === 'function') {
-						callback([], arg);
-					} else {
-						C.interstitial.label(error);
-					}
-				} else {
-					var objects = response.params || [];
-					var i = objects.length, type = params[0];
-
-					while (i--) {
-						objects[i] = C[type].create(objects[i]);
-					}
-
-					if (typeof params[1] === 'function') {
-						callback(objects, arg);
-					}
-				}
-			}, [type, callback]);
-
-		},
-
-		getMetrics: function () {
+			var path = findPath(arguments);
+			var callback = findCallback(arguments);
+			this.post(path + '?_method=DELETE', callback);
 
 		}
+
 	});
 
 	Resource.reopenClass({
 		type: 'HTTP',
-		kind: 'Mock'
+		kind: 'Resource'
 	});
 
 	return Resource;

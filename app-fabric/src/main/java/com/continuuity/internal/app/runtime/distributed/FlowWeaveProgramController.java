@@ -53,7 +53,7 @@ final class FlowWeaveProgramController extends AbstractWeaveProgramController {
    */
   private synchronized void changeInstances(String flowletName, final int newInstanceCount) throws Exception {
     weaveController.sendCommand(flowletName, ProgramCommands.SUSPEND).get();
-    weaveController.changeInstances(flowletName, newInstanceCount);
+    weaveController.changeInstances(flowletName, newInstanceCount).get();
     weaveController.sendCommand(flowletName, ProgramCommands.RESUME).get();
   }
 }

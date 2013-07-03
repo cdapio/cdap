@@ -32,12 +32,12 @@ public class FlexibleCyclicBarrier {
   }
 
   public int decrementParties() throws BrokenBarrierException, InterruptedException {
-    while(!barrierLock.writeLock().tryLock()) {
+    while (!barrierLock.writeLock().tryLock()) {
       // Someone is holding read lock or write lock
-      if(barrierLock.readLock().tryLock()) {
+      if (barrierLock.readLock().tryLock()) {
         // Someone is holding a read lock
         try {
-          if(barrier.getNumberWaiting() > 0) {
+          if (barrier.getNumberWaiting() > 0) {
             barrier.await();
           }
         } finally {
@@ -51,7 +51,7 @@ public class FlexibleCyclicBarrier {
     // We have the write lock, reduce the size of barrier by one
     try {
       int newParties = barrier.getParties() - 1;
-      if(newParties < 1) {
+      if (newParties < 1) {
         return newParties;
       }
       barrier = new CyclicBarrier(newParties);

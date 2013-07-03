@@ -12,6 +12,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Defines QueueEntry.
+ */
 public class QueueEntry {
   private final Map<String, Integer> hashKeys;
   private byte[] data;
@@ -67,7 +70,7 @@ public class QueueEntry {
       throw new RuntimeException("encoding empty hash keys went wrong - bailing out: " + e.getMessage(), e);
     }
   }
-  private final static byte[] serializedEmptyHashKeys = serializeEmptyHashKeys();
+  private static final byte[] serializedEmptyHashKeys = serializeEmptyHashKeys();
 
   public static byte[] serializeHashKeys(Map<String, Integer> hashKeys) throws IOException {
     // many entries will have no hash keys. Reuse a static value for that

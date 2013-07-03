@@ -14,6 +14,9 @@ import org.junit.Test;
  */
 public class PipelineTest {
 
+  /**
+   *
+   */
   public static final class HowStage extends AbstractStage<String> {
     public HowStage() {
       super(TypeToken.of(String.class));
@@ -26,6 +29,9 @@ public class PipelineTest {
     }
   }
 
+  /**
+   *
+   */
   public static class AreStage extends AbstractStage<String> {
     public AreStage() {
       super(TypeToken.of(String.class));
@@ -38,6 +44,9 @@ public class PipelineTest {
     }
   }
 
+  /**
+   *
+   */
   public static class YouStage extends AbstractStage<String> {
     public YouStage() {
       super(TypeToken.of(String.class));

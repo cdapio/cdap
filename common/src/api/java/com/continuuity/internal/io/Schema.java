@@ -28,6 +28,9 @@ import java.util.Set;
  */
 public final class Schema {
 
+  /**
+   * Types known to Schema.
+   */
   public enum Type {
     NULL(true),
     BOOLEAN(true),
@@ -396,7 +399,7 @@ public final class Schema {
       return false;
     }
 
-    return getSchemaHash().equals(((Schema)other).getSchemaHash());
+    return getSchemaHash().equals(((Schema) other).getSchemaHash());
   }
 
   @Override

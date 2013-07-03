@@ -7,7 +7,8 @@ var Thrift = require('thrift').Thrift;
 var ttypes = module.exports = {};
 ttypes.EntityType = {
 'FLOW' : 0,
-'QUERY' : 1
+'QUERY' : 1,
+'MAPREDUCE' : 2
 };
 AuthToken = module.exports.AuthToken = function(args) {
   this.token = null;
@@ -850,21 +851,25 @@ FlowDescriptor.prototype.read = function(input) {
       }
       break;
       case 2:
-      if (ftype == Thrift.Type.LIST) {
+      if (ftype == Thrift.Type.MAP) {
         var _size8 = 0;
         var _rtmp312;
-        this.arguments = [];
-        var _etype11 = 0;
-        _rtmp312 = input.readListBegin();
-        _etype11 = _rtmp312.etype;
+        this.arguments = {};
+        var _ktype9 = 0;
+        var _vtype10 = 0;
+        _rtmp312 = input.readMapBegin();
+        _ktype9 = _rtmp312.ktype;
+        _vtype10 = _rtmp312.vtype;
         _size8 = _rtmp312.size;
         for (var _i13 = 0; _i13 < _size8; ++_i13)
         {
-          var elem14 = null;
-          elem14 = input.readString();
-          this.arguments.push(elem14);
+          var key14 = null;
+          var val15 = null;
+          key14 = input.readString();
+          val15 = input.readString();
+          this.arguments[key14] = val15;
         }
-        input.readListEnd();
+        input.readMapEnd();
       } else {
         input.skip(ftype);
       }
@@ -886,17 +891,18 @@ FlowDescriptor.prototype.write = function(output) {
     output.writeFieldEnd();
   }
   if (this.arguments !== null && this.arguments !== undefined) {
-    output.writeFieldBegin('arguments', Thrift.Type.LIST, 2);
-    output.writeListBegin(Thrift.Type.STRING, this.arguments.length);
-    for (var iter15 in this.arguments)
+    output.writeFieldBegin('arguments', Thrift.Type.MAP, 2);
+    output.writeMapBegin(Thrift.Type.STRING, Thrift.Type.STRING, Thrift.objectLength(this.arguments));
+    for (var kiter16 in this.arguments)
     {
-      if (this.arguments.hasOwnProperty(iter15))
+      if (this.arguments.hasOwnProperty(kiter16))
       {
-        iter15 = this.arguments[iter15];
-        output.writeString(iter15);
+        var viter17 = this.arguments[kiter16];
+        output.writeString(kiter16);
+        output.writeString(viter17);
       }
     }
-    output.writeListEnd();
+    output.writeMapEnd();
     output.writeFieldEnd();
   }
   output.writeFieldStop();

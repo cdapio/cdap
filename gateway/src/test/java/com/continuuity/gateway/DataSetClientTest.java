@@ -15,6 +15,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * Data set client.
+ */
 public class DataSetClientTest {
 
   static CConfiguration configuration = null;

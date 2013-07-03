@@ -149,6 +149,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       this.flowlets = flowlets;
       this.program = program;
       this.flowSpec = flowSpec;
+      started();
     }
 
     @Override

@@ -14,6 +14,7 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.ReadPointer;
@@ -54,6 +55,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TReadPointer;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
+import com.continuuity.data.operation.executor.remote.stubs.TTruncateTable;
 import com.continuuity.data.operation.executor.remote.stubs.TWrite;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
@@ -350,7 +352,7 @@ public class ConverterUtils {
   }
 
   /**
-   * wrap a list of key ranges
+   * wrap a list of key ranges.
    */
   List<TKeyRange> wrap(OperationResult<List<KeyRange>> result) {
     if (result.isEmpty() || result.getValue() == null || result.getValue().isEmpty()) {
@@ -365,7 +367,7 @@ public class ConverterUtils {
   }
 
   /**
-   * unwrap a list of key ranges
+   * unwrap a list of key ranges.
    */
   OperationResult<List<KeyRange>> unwrap(List<TKeyRange> tKeyRanges) {
     if (tKeyRanges.isEmpty()) {
@@ -439,6 +441,28 @@ public class ConverterUtils {
       openTable.setMetricName(tOpenTable.getMetric());
     }
     return openTable;
+  }
+
+  /**
+   * wrap an TruncateTable operation.
+   */
+  public TTruncateTable wrap(TruncateTable truncateTable) {
+    TTruncateTable tTruncateTable = new TTruncateTable(truncateTable.getTableName(), truncateTable.getId());
+    if (truncateTable.getMetricName() != null) {
+      tTruncateTable.setMetric(truncateTable.getMetricName());
+    }
+    return tTruncateTable;
+  }
+
+  /**
+   * unwrap an TruncateTable operation.
+   */
+  public TruncateTable unwrap(TTruncateTable tTruncateTable) {
+    TruncateTable truncateTable = new TruncateTable(tTruncateTable.getId(), tTruncateTable.getTable());
+    if (tTruncateTable.isSetMetric()) {
+      truncateTable.setMetricName(tTruncateTable.getMetric());
+    }
+    return truncateTable;
   }
 
   /**
@@ -701,7 +725,7 @@ public class ConverterUtils {
   }
 
   /**
-   * wrap a getSplits operations
+   * wrap a getSplits operations.
    */
   TGetSplits wrap(GetSplits getSplits) {
     TGetSplits tGetSplits = new TGetSplits(getSplits.getTable(), getSplits.getNumSplits(), getSplits.getId());
@@ -721,7 +745,7 @@ public class ConverterUtils {
   }
 
   /**
-   * unwrap a getSplits operations
+   * unwrap a getSplits operations.
    */
   GetSplits unwrap(TGetSplits tGetSplits) {
     GetSplits getSplits = new GetSplits(tGetSplits.getId(), tGetSplits.getTable(), tGetSplits.getNumSplits(),
@@ -964,7 +988,7 @@ public class ConverterUtils {
    * wrap a queue consumer.
    */
   TQueueConsumer wrap(QueueConsumer consumer) throws TOperationException {
-    TQueueConsumer tQueueConsumer=  new TQueueConsumer(
+    TQueueConsumer tQueueConsumer =  new TQueueConsumer(
         consumer.getInstanceId(),
         consumer.getGroupId(),
         consumer.getGroupSize(),
@@ -1143,7 +1167,7 @@ public class ConverterUtils {
     if (tDequeueResult.getConsumer() != null) {
       QueueConsumer retConsumer = unwrap(tDequeueResult.getConsumer());
       // No need to unwrap queue state, since it is now stored in Opex
-      if(retConsumer != null) {
+      if (retConsumer != null) {
         consumer.setStateType(retConsumer.getStateType());
       }
     }
@@ -1190,31 +1214,31 @@ public class ConverterUtils {
   }
   
   TQueueConfigureGroups wrap(QueueConfigureGroups configure) throws TOperationException {
-    if(configure == null) {
+    if (configure == null) {
       return null;
     }
     TQueueConfigureGroups tQueueConfigureGroups = new TQueueConfigureGroups(wrap(configure.getQueueName()), 
                                                                             configure.getGroupIds());
-    if(configure.getMetricName() != null) {
+    if (configure.getMetricName() != null) {
       tQueueConfigureGroups.setMetric(configure.getMetricName());
     }
     return tQueueConfigureGroups;
   }
 
   QueueConfigureGroups unwrap(TQueueConfigureGroups tQueueConfigureGroups) throws TOperationException {
-    if(tQueueConfigureGroups == null) {
+    if (tQueueConfigureGroups == null) {
       return null;
     }
     QueueConfigureGroups configure = new QueueConfigureGroups(tQueueConfigureGroups.getQueueName(),
                                                               tQueueConfigureGroups.getGroupIds());
-    if(tQueueConfigureGroups.getMetric() != null) {
+    if (tQueueConfigureGroups.getMetric() != null) {
       configure.setMetricName(tQueueConfigureGroups.getMetric());
     }
     return configure;
   }
 
   TQueueDropInflight wrap(QueueDropInflight op) throws TOperationException {
-    if(op == null) {
+    if (op == null) {
       return null;
     }
     TQueueDropInflight tOp =
@@ -1227,7 +1251,7 @@ public class ConverterUtils {
   }
 
   QueueDropInflight unwrap(TQueueDropInflight tOp) throws TOperationException {
-    if(tOp == null) {
+    if (tOp == null) {
       return null;
     }
     QueueDropInflight op =

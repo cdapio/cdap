@@ -32,7 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubmitter {
 
   public static final Function<Object, Integer> PARTITION_MAP_TRANSFORMER = new PartitionMapTransformer();
-  public final Function<DataObject<T>, QueueEntry> QUEUE_ENTRY_GENERATOR = new DataObjectToQueueEntry();
+  public final Function<DataObject<T>, QueueEntry> queueEntryGenerator = new DataObjectToQueueEntry();
 
   private final BasicFlowletContext flowletContext;
   private final QueueProducer queueProducer;
@@ -86,7 +86,7 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
       return;
     }
 
-    QueueEntry[] queueEntries = Iterables.toArray(Iterables.transform(outputs, QUEUE_ENTRY_GENERATOR),
+    QueueEntry[] queueEntries = Iterables.toArray(Iterables.transform(outputs, queueEntryGenerator),
                                                   QueueEntry.class);
     agent.submit(new QueueEnqueue(queueProducer, queueName.toBytes(), queueEntries));
   }

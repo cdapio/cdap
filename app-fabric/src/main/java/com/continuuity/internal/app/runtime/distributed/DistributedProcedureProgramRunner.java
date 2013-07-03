@@ -17,7 +17,6 @@ import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,9 +60,6 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
           .withArguments(procedureSpec.getName(),
                          String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
 
-    final WeaveController controller = preparer.start();
-
-    return new ProcedureWeaveProgramController(program.getProgramName(), controller);
+    return new ProcedureWeaveProgramController(program.getProgramName(), preparer.start()).startListen();
   }
-
 }

@@ -21,6 +21,8 @@ import java.util.concurrent.Executors;
  * Before processing to next {@link com.continuuity.pipeline.Stage}, we wait for results
  * to be available.
  * </p>
+ *
+ * @param <T> Type of object produced by this pipeline.
  */
 public final class AsynchronousPipeline<T> extends AbstractPipeline<T> {
   private ListeningExecutorService service;
@@ -47,7 +49,7 @@ public final class AsynchronousPipeline<T> extends AbstractPipeline<T> {
       public T call() throws Exception {
         Object input = o;
         Object output = null;
-        for(Stage stage : getStages()) {
+        for (Stage stage : getStages()) {
           Context ctx = new StageContext(input);
           stage.process(ctx);
           output = ctx.getDownStream();

@@ -8,6 +8,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
 
+/**
+ * Supporting class for managing MDS service.
+ */
 public class MetadataHelper {
 
   //-------------- Some utilities for list/string conversion -----------------
@@ -24,8 +27,9 @@ public class MetadataHelper {
   }
 
   static List<String> StringToList(String str) {
-    if (str == null || str.isEmpty())
+    if (str == null || str.isEmpty()) {
       return Collections.emptyList();
+    }
     StringTokenizer tok = new StringTokenizer(str, " ");
     List<String> list = Lists.newArrayList();
     while (tok.hasMoreTokens()) {
@@ -40,75 +44,120 @@ public class MetadataHelper {
     EQUAL, DIFF, SUPER, SUB
   }
 
-  // returns SUPER if the new value has more information than the existing one
+  // returns SUPER if the new value has more information than the existing one.
   static CompareStatus compareAlso(CompareStatus soFar,
                                    String newValue,
                                    String existingValue) {
-    if (soFar.equals(CompareStatus.DIFF)) return soFar;
+    if (soFar.equals(CompareStatus.DIFF)) {
+      return soFar;
+    }
+
     if (newValue == null) {
       // both null, no change in status
-      if (existingValue == null) return soFar;
-        // new value has less info: incompatible if it had more info so far
-      else if (soFar.equals(CompareStatus.SUPER)) return CompareStatus.DIFF;
-        // new value has less info and it did not have more so far -> sub
-      else return CompareStatus.SUB;
+      if (existingValue == null) {
+        return soFar;
+      }
+
+      // new value has less info: incompatible if it had more info so far
+      if (soFar.equals(CompareStatus.SUPER)) {
+        return CompareStatus.DIFF;
+      }
+
+      // new value has less info and it did not have more so far -> sub
+      return CompareStatus.SUB;
     } else { // new != null
       // both are the same, no change in status
-      if (newValue.equals(existingValue)) return soFar;
-        // both non-null but different
-      else if (existingValue != null) return CompareStatus.DIFF;
-        // new value has more info: incompatible if it had less info so far
-      else if (soFar.equals(CompareStatus.SUB)) return CompareStatus.DIFF;
-        // new value has more info and it did not have less so far -> super
-      else return CompareStatus.SUPER;
+      if (newValue.equals(existingValue)) {
+        return soFar;
+      }
+
+      // both non-null but different
+      if (existingValue != null) {
+        return CompareStatus.DIFF;
+      }
+
+      // new value has more info: incompatible if it had less info so far
+      if (soFar.equals(CompareStatus.SUB)) {
+        return CompareStatus.DIFF;
+      }
+      // new value has more info and it did not have less so far -> super
+      return CompareStatus.SUPER;
     }
   }
 
-  // returns SUPER if the new value has more information than the existing one
+  // returns SUPER if the new value has more information than the existing one.
   static CompareStatus compareAlso(CompareStatus soFar,
                                    List<String> newValue,
                                    List<String> existingValue) {
-    if (soFar.equals(CompareStatus.DIFF)) return soFar;
+    if (soFar.equals(CompareStatus.DIFF)) {
+      return soFar;
+    }
+
     if (newValue == null) {
       // both null, no change in status
-      if (existingValue == null) return soFar;
-        // new value has less info: incompatible if it had more info so far
-      else if (soFar.equals(CompareStatus.SUPER)) return CompareStatus.DIFF;
-        // new value has less info and it did not have more so far -> sub
-      else return CompareStatus.SUB;
+      if (existingValue == null) {
+        return soFar;
+      }
+      // new value has less info: incompatible if it had more info so far
+      if (soFar.equals(CompareStatus.SUPER)) {
+        return CompareStatus.DIFF;
+      }
+      // new value has less info and it did not have more so far -> sub
+      return CompareStatus.SUB;
     } else { // new != null
       // both are the same, no change in status
-      if (newValue.equals(existingValue)) return soFar;
-        // both non-null but different
-      else if (existingValue != null) return CompareStatus.DIFF;
-        // new value has more info: incompatible if it had less info so far
-      else if (soFar.equals(CompareStatus.SUB)) return CompareStatus.DIFF;
-        // new value has more info and it did not have less so far -> super
-      else return CompareStatus.SUPER;
+      if (newValue.equals(existingValue)) {
+        return soFar;
+      }
+      // both non-null but different
+      if (existingValue != null) {
+        return CompareStatus.DIFF;
+      }
+      // new value has more info: incompatible if it had less info so far
+      if (soFar.equals(CompareStatus.SUB)) {
+        return CompareStatus.DIFF;
+      }
+
+      // new value has more info and it did not have less so far -> super
+      return CompareStatus.SUPER;
     }
   }
 
-  // returns SUPER if the new value has more information than the existing one
+  // returns SUPER if the new value has more information than the existing one.
   static CompareStatus compareAlso(CompareStatus soFar,
                                    boolean newNull, long newValue,
                                    boolean existingNull, long existingValue) {
-    if (soFar.equals(CompareStatus.DIFF)) return soFar;
+    if (soFar.equals(CompareStatus.DIFF)) {
+      return soFar;
+    }
+
     if (newNull) {
       // both null, no change in status
-      if (existingNull) return soFar;
-        // new value has less info: incompatible if it had more info so far
-      else if (soFar.equals(CompareStatus.SUPER)) return CompareStatus.DIFF;
-        // new value has less info and it did not have more so far -> sub
-      else return CompareStatus.SUB;
+      if (existingNull) {
+        return soFar;
+      }
+
+      // new value has less info: incompatible if it had more info so far
+      if (soFar.equals(CompareStatus.SUPER)) {
+        return CompareStatus.DIFF;
+      }
+      // new value has less info and it did not have more so far -> sub
+      return CompareStatus.SUB;
     } else { // new != null
       // both are the same, no change in status
-      if (newValue == existingValue) return soFar;
-        // both non-null but different
-      else if (!existingNull) return CompareStatus.DIFF;
-        // new value has more info: incompatible if it had less info so far
-      else if (soFar.equals(CompareStatus.SUB)) return CompareStatus.DIFF;
-        // new value has more info and it did not have less so far -> super
-      else return CompareStatus.SUPER;
+      if (newValue == existingValue) {
+        return soFar;
+      }
+      // both non-null but different
+      if (!existingNull) {
+        return CompareStatus.DIFF;
+      }
+      // new value has more info: incompatible if it had less info so far
+      if (soFar.equals(CompareStatus.SUB)) {
+        return CompareStatus.DIFF;
+      }
+      // new value has more info and it did not have less so far -> super
+      return CompareStatus.SUPER;
     }
   }
 
@@ -128,6 +177,7 @@ public class MetadataHelper {
     }
     validateAccount(account.getId());
   }
+
   void validateAccount(String accountId)
       throws MetadataServiceException {
     if (accountId == null || accountId.isEmpty()) {
@@ -143,31 +193,31 @@ public class MetadataHelper {
    */
   interface Helper<T> {
 
-    /** validate the completeness of a meta object to be written */
+    /** validate the completeness of a meta object to be written. */
     public void validate(T t) throws MetadataServiceException;
 
-    /** convert a raw mds entry into a meta object of the specific type */
+    /** convert a raw mds entry into a meta object of the specific type. */
     public MetaDataEntry makeEntry(Account account, T t);
 
-    /** convert a meta object into a raw mds entry */
+    /** convert a meta object into a raw mds entry. */
     public T makeFromEntry(MetaDataEntry entry);
 
-    /** return an empty meta object with exists=false */
+    /** return an empty meta object with exists=false. */
     public T makeNonExisting(T t);
 
-    /** compare a meta object with an existing raw meta entry */
+    /** compare a meta object with an existing raw meta entry. */
     public CompareStatus compare(T t, MetaDataEntry existingEntry);
 
-    /** get the id of a meta object */
+    /** get the id of a meta object. */
     public String getId(T t);
 
-    /** get the application of a meta object. May return null */
+    /** get the application of a meta object. May return null. */
     public String getApplication(T t);
 
-    /** get the name for this type of objects, e.g., "stream" */
+    /** get the name for this type of objects, e.g., "stream". */
     public String getName();
 
-    /** get the type to use for the raw mds objects */
+    /** get the type to use for the raw mds objects. */
     public String getFieldType();
   }
 
@@ -186,10 +236,10 @@ public class MetadataHelper {
     @Override
     public void validate(Stream stream) throws MetadataServiceException {
       // When creating a stream, you need to have id, name and description
-      if(stream.getId() == null || stream.getId().isEmpty()) {
+      if (stream.getId() == null || stream.getId().isEmpty()) {
         throw new MetadataServiceException("Stream id is empty or null.");
       }
-      if(stream.getName() == null || stream.getName().isEmpty()) {
+      if (stream.getName() == null || stream.getName().isEmpty()) {
         throw new MetadataServiceException(
             "Stream name must not be null or empty");
       }
@@ -199,16 +249,24 @@ public class MetadataHelper {
     public MetaDataEntry makeEntry(Account account, Stream stream) {
       MetaDataEntry entry = new MetaDataEntry(
           account.getId(), null, FieldTypes.Stream.ID, stream.getId());
-      if (stream.isSetName())
+      if (stream.isSetName()) {
         entry.addField(FieldTypes.Stream.NAME, stream.getName());
-      if (stream.isSetDescription())
+      }
+
+      if (stream.isSetDescription()) {
         entry.addField(FieldTypes.Stream.DESCRIPTION, stream.getDescription());
-      if(stream.isSetCapacityInBytes())
+      }
+
+      if (stream.isSetCapacityInBytes()) {
         entry.addField(FieldTypes.Stream.CAPACITY_IN_BYTES,
             String.format("%d", stream.getCapacityInBytes()));
-      if(stream.isSetExpiryInSeconds())
+      }
+
+      if (stream.isSetExpiryInSeconds()) {
         entry.addField(FieldTypes.Stream.EXPIRY_IN_SECONDS,
             String.format("%d", stream.getExpiryInSeconds()));
+      }
+
       return entry;
     }
 
@@ -216,13 +274,24 @@ public class MetadataHelper {
     public Stream makeFromEntry(MetaDataEntry entry) {
       Stream stream = new Stream(entry.getId());
       String name = entry.getTextField(FieldTypes.Stream.NAME);
-      if (name != null) stream.setName(name);
+      if (name != null) {
+        stream.setName(name);
+      }
+
       String description = entry.getTextField(FieldTypes.Stream.DESCRIPTION);
-      if (description != null) stream.setDescription(description);
+      if (description != null) {
+        stream.setDescription(description);
+      }
+
       String capacity = entry.getTextField(FieldTypes.Stream.CAPACITY_IN_BYTES);
-      if (capacity != null) stream.setCapacityInBytes(Integer.valueOf(capacity));
+      if (capacity != null) {
+        stream.setCapacityInBytes(Integer.valueOf(capacity));
+      }
+
       String expiry = entry.getTextField(FieldTypes.Stream.EXPIRY_IN_SECONDS);
-      if (expiry != null) stream.setExpiryInSeconds(Integer.valueOf(expiry));
+      if (expiry != null) {
+        stream.setExpiryInSeconds(Integer.valueOf(expiry));
+      }
       return stream;
     }
 
@@ -237,17 +306,30 @@ public class MetadataHelper {
     public CompareStatus compare(Stream stream, MetaDataEntry existingEntry) {
       Stream existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
+
       status = compareAlso(status, stream.getId(), existing.getId());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, stream.getName(), existing.getName());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(
           status, stream.getDescription(), existing.getDescription());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status,
           stream.isSetCapacityInBytes(), stream.getCapacityInBytes(),
           existing.isSetCapacityInBytes(), existing.getCapacityInBytes());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status,
           stream.isSetExpiryInSeconds(), stream.getExpiryInSeconds(),
           existing.isSetExpiryInSeconds(), existing.getExpiryInSeconds());
@@ -299,28 +381,47 @@ public class MetadataHelper {
     public MetaDataEntry makeEntry(Account account, Dataset dataset) {
       MetaDataEntry entry = new MetaDataEntry(
           account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
-      if (dataset.isSetName())
+      if (dataset.isSetName()) {
         entry.addField(FieldTypes.Dataset.NAME, dataset.getName());
-      if (dataset.isSetDescription())
+      }
+
+      if (dataset.isSetDescription()) {
         entry.addField(FieldTypes.Dataset.DESCRIPTION, dataset.getDescription());
-      if (dataset.isSetType())
+      }
+
+      if (dataset.isSetType()) {
         entry.addField(FieldTypes.Dataset.TYPE, dataset.getType());
-      if (dataset.isSetSpecification())
+      }
+
+      if (dataset.isSetSpecification()) {
         entry.addField(FieldTypes.Dataset.SPECIFICATION, dataset.getSpecification());
+      }
       return entry;
     }
 
     @Override
     public Dataset makeFromEntry(MetaDataEntry entry) {
       Dataset dataset = new Dataset(entry.getId());
+
       String name = entry.getTextField(FieldTypes.Dataset.NAME);
-      if (name != null) dataset.setName(name);
+      if (name != null) {
+        dataset.setName(name);
+      }
+
       String description = entry.getTextField(FieldTypes.Dataset.DESCRIPTION);
-      if (description != null) dataset.setDescription(description);
+      if (description != null) {
+        dataset.setDescription(description);
+      }
+
       String type = entry.getTextField(FieldTypes.Dataset.TYPE);
-      if (type != null) dataset.setType(type);
+      if (type != null) {
+        dataset.setType(type);
+      }
+
       String spec = entry.getTextField(FieldTypes.Dataset.SPECIFICATION);
-      if (spec != null) dataset.setSpecification(spec);
+      if (spec != null) {
+        dataset.setSpecification(spec);
+      }
       return dataset;
     }
 
@@ -335,15 +436,28 @@ public class MetadataHelper {
     public CompareStatus compare(Dataset dataset, MetaDataEntry existingEntry) {
       Dataset existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
+
       status = compareAlso(status, dataset.getId(), existing.getId());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, dataset.getName(), existing.getName());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(
           status, dataset.getDescription(), existing.getDescription());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, dataset.getType(), existing.getType());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, dataset.getSpecification(), existing.getSpecification());
       return status;
     }
@@ -389,21 +503,29 @@ public class MetadataHelper {
     public MetaDataEntry makeEntry(Account account, Application app) {
       MetaDataEntry entry = new MetaDataEntry(
           account.getId(), null, FieldTypes.Application.ID, app.getId());
-      if (app.isSetName())
+      if (app.isSetName()) {
         entry.addField(FieldTypes.Application.NAME, app.getName());
-      if (app.isSetDescription())
+      }
+      if (app.isSetDescription()) {
         entry.addField(FieldTypes.Application.DESCRIPTION,
             app.getDescription());
+      }
       return entry;
     }
 
     @Override
     public Application makeFromEntry(MetaDataEntry entry) {
       Application app = new Application(entry.getId());
+
       String name = entry.getTextField(FieldTypes.Dataset.NAME);
-      if (name != null) app.setName(name);
+      if (name != null) {
+        app.setName(name);
+      }
+
       String description = entry.getTextField(FieldTypes.Dataset.DESCRIPTION);
-      if (description != null) app.setDescription(description);
+      if (description != null) {
+        app.setDescription(description);
+      }
       return app;
     }
 
@@ -418,10 +540,17 @@ public class MetadataHelper {
     public CompareStatus compare(Application app, MetaDataEntry existingEntry) {
       Application existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
+
       status = compareAlso(status, app.getId(), existing.getId());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, app.getName(), existing.getName());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(
           status, app.getDescription(), existing.getDescription());
       return status;
@@ -455,44 +584,72 @@ public class MetadataHelper {
 
     @Override
     public void validate(Query query) throws MetadataServiceException {
-      if (query.getId() == null || query.getId().isEmpty())
+      if (query.getId() == null || query.getId().isEmpty()) {
         throw new MetadataServiceException("Query id is empty or null.");
-      if (query.getName() == null || query.getName().isEmpty())
+      }
+
+      if (query.getName() == null || query.getName().isEmpty()) {
         throw new MetadataServiceException("Query name is empty or null.");
-      if(query.getApplication() == null || query.getApplication().isEmpty())
+      }
+
+      if (query.getApplication() == null || query.getApplication().isEmpty()) {
         throw new MetadataServiceException("Query's app name is empty or null.");
-      if(query.getServiceName() == null || query.getServiceName().isEmpty())
+      }
+
+      if (query.getServiceName() == null || query.getServiceName().isEmpty()) {
         throw new MetadataServiceException(
             "Query service name cannot be null or empty");
+      }
     }
 
     @Override
     public MetaDataEntry makeEntry(Account account, Query query) {
       MetaDataEntry entry = new MetaDataEntry(account.getId(),
           query.getApplication(), FieldTypes.Query.ID, query.getId());
-      if (query.getName() != null)
+
+      if (query.getName() != null) {
         entry.addField(FieldTypes.Query.NAME, query.getName());
-      if (query.getDescription() != null)
+      }
+
+      if (query.getDescription() != null) {
         entry.addField(FieldTypes.Query.DESCRIPTION, query.getDescription());
-      if (query.getServiceName() != null)
+      }
+
+      if (query.getServiceName() != null) {
         entry.addField(FieldTypes.Query.SERVICE_NAME, query.getServiceName());
-      if (query.isSetDatasets())
+      }
+
+      if (query.isSetDatasets()) {
         entry.addField(FieldTypes.Query.DATASETS,
             ListToString(query.getDatasets()));
+      }
+
       return entry;
     }
 
     @Override
     public Query makeFromEntry(MetaDataEntry entry) {
       Query query = new Query(entry.getId(), entry.getApplication());
+
       String name = entry.getTextField(FieldTypes.Query.NAME);
-      if (name != null) query.setName(name);
+      if (name != null) {
+        query.setName(name);
+      }
+
       String description = entry.getTextField(FieldTypes.Query.DESCRIPTION);
-      if (description != null) query.setDescription(description);
+      if (description != null) {
+        query.setDescription(description);
+      }
+
       String service = entry.getTextField(FieldTypes.Query.SERVICE_NAME);
-      if (service != null) query.setServiceName(service);
+      if (service != null) {
+        query.setServiceName(service);
+      }
+
       String datasets = entry.getTextField(FieldTypes.Query.DATASETS);
-      if (datasets != null) query.setDatasets(StringToList(datasets));
+      if (datasets != null) {
+        query.setDatasets(StringToList(datasets));
+      }
       return query;
     }
 
@@ -507,16 +664,29 @@ public class MetadataHelper {
     public CompareStatus compare(Query query, MetaDataEntry existingEntry) {
       Query existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
+
       status = compareAlso(status, query.getId(), existing.getId());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, query.getName(), existing.getName());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(
           status, query.getDescription(), existing.getDescription());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, query.getServiceName(),
           existing.getServiceName());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, query.getDatasets(), existing.getDatasets());
       return status;
     }
@@ -651,12 +821,17 @@ public class MetadataHelper {
 
     @Override
     public void validate(Flow flow) throws MetadataServiceException {
-      if (flow.getId() == null || flow.getId().isEmpty())
+      if (flow.getId() == null || flow.getId().isEmpty()) {
         throw new MetadataServiceException("Flow id is empty or null.");
-      if (flow.getName() == null || flow.getName().isEmpty())
+      }
+
+      if (flow.getName() == null || flow.getName().isEmpty()) {
         throw new MetadataServiceException("Flow name is empty or null.");
-      if(flow.getApplication() == null || flow.getApplication().isEmpty())
+      }
+
+      if (flow.getApplication() == null || flow.getApplication().isEmpty()) {
         throw new MetadataServiceException("Flow's app name is empty or null.");
+      }
     }
 
     @Override
@@ -692,12 +867,22 @@ public class MetadataHelper {
     public CompareStatus compare(Flow flow, MetaDataEntry existingEntry) {
       Flow existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
+
       status = compareAlso(status, flow.getId(), existing.getId());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, flow.getName(), existing.getName());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, flow.getDatasets(), existing.getDatasets());
-      if (status.equals(CompareStatus.DIFF)) return status;
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
       status = compareAlso(status, flow.getStreams(), existing.getStreams());
       return status;
     }

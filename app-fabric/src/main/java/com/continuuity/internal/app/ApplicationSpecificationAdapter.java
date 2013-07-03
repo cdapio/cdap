@@ -9,11 +9,11 @@ import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.api.procedure.ProcedureSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -70,7 +70,7 @@ public final class ApplicationSpecificationAdapter {
       StringBuilder builder = new StringBuilder();
       toJson(appSpec, builder);
       return builder.toString();
-    } catch(IOException e) {
+    } catch (IOException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -78,14 +78,14 @@ public final class ApplicationSpecificationAdapter {
   public void toJson(ApplicationSpecification appSpec, Appendable appendable) throws IOException {
     Preconditions.checkState(schemaGenerator != null, "No schema generator is configured. Fail to serialize to json");
     try {
-      for(FlowSpecification flowSpec : appSpec.getFlows().values()) {
-        for(FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
+      for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+        for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
           flowletDef.generateSchema(schemaGenerator);
         }
       }
       gson.toJson(appSpec, ApplicationSpecification.class, appendable);
 
-    } catch(UnsupportedTypeException e) {
+    } catch (UnsupportedTypeException e) {
       throw new IOException(e);
     }
   }
@@ -107,7 +107,7 @@ public final class ApplicationSpecificationAdapter {
   public ApplicationSpecification fromJson(Reader reader) throws IOException {
     try {
       return gson.fromJson(reader, ApplicationSpecification.class);
-    } catch(JsonParseException e) {
+    } catch (JsonParseException e) {
       throw new IOException(e);
     }
   }

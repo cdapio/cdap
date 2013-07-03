@@ -29,7 +29,7 @@ public class FlumeLogWriter implements LogWriter {
   private final String hostname;
 
   public FlumeLogWriter(CConfiguration configuration) {
-    port = configuration.getInt( Constants.CFG_LOG_COLLECTION_PORT,
+    port = configuration.getInt(Constants.CFG_LOG_COLLECTION_PORT,
                                  Constants.DEFAULT_LOG_COLLECTION_PORT);
     hostname = configuration.get(Constants.CFG_LOG_COLLECTION_SERVER_ADDRESS,
                                  Constants.DEFAULT_LOG_COLLECTION_SERVER_ADDRESS);
@@ -45,11 +45,11 @@ public class FlumeLogWriter implements LogWriter {
     event.setHeaders(headers);
     event.setBody(message.getBytes());
     try {
-      if(!client.isActive()) {
+      if (!client.isActive()) {
         client.close();
         client = RpcClientFactory.getDefaultInstance(hostname, port, 1);
       }
-      if(client.isActive()) {
+      if (client.isActive()) {
         client.append(event);
       } else {
         LOG.warn("Unable to send log to central log server. Check the server.");

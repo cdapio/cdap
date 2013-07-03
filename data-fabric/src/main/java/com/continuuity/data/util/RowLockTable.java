@@ -182,7 +182,7 @@ public class RowLockTable {
 
     @Override
     public boolean equals(Object o) {
-      return (o instanceof RowLock) && this.id == ((RowLock)o).id
+      return (o instanceof RowLock) && this.id == ((RowLock) o).id
         && Bytes.equals(this.row.value, ((RowLock) o).row.value);
     }
 
