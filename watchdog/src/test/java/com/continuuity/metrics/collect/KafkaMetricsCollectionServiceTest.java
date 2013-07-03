@@ -3,25 +3,42 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ASMDatumWriterFactory;
 import com.continuuity.internal.io.ASMFieldAccessorFactory;
+import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriter;
+import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.kafka.client.FetchedMessage;
+import com.continuuity.kafka.client.KafkaClientService;
+import com.continuuity.kafka.client.KafkaConsumer;
+import com.continuuity.kafka.client.ZKKafkaClientService;
 import com.continuuity.metrics.transport.MetricRecord;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
 import com.continuuity.weave.internal.utils.Networks;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
+import com.continuuity.weave.zookeeper.ZKClientService;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,32 +46,81 @@ import java.util.concurrent.TimeUnit;
  */
 public class KafkaMetricsCollectionServiceTest {
 
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsCollectionServiceTest.class);
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static InMemoryZKServer zkServer;
   private static EmbeddedKafkaServer kafkaServer;
-  private static String kafkaBrokers;
 
   @Test
   public void testKafkaPublish() throws UnsupportedTypeException, InterruptedException {
-    TypeToken<MetricRecord> metricRecordType = TypeToken.of(MetricRecord.class);
+    ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+    zkClient.startAndWait();
+
+    KafkaClientService kafkaClient = new ZKKafkaClientService(zkClient);
+    kafkaClient.startAndWait();
+
+    final TypeToken<MetricRecord> metricRecordType = TypeToken.of(MetricRecord.class);
+    final Schema schema = new ReflectionSchemaGenerator().generate(metricRecordType.getType());
     DatumWriter<MetricRecord> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
-      .create(metricRecordType, new ReflectionSchemaGenerator().generate(metricRecordType.getType()));
+      .create(metricRecordType, schema);
 
-    MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaBrokers,
-                                                                                   "metrics", metricRecordDatumWriter);
-
+    MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
+                                                                                   metricRecordDatumWriter);
     collectionService.startAndWait();
 
-    for (int i = 0; i < 10; i++) {
+    // publish metrics for different context
+    for (int i = 1; i <= 3; i++) {
       collectionService.getCollector("test.context." + i, "processed").gauge(i);
-      collectionService.getCollector("test.context." + i + 1, "processed").gauge(i + 1);
-      collectionService.getCollector("test.context." + i + 2, "processed").gauge(i + 2);
-      TimeUnit.SECONDS.sleep(1);
     }
 
+    // Sleep to make sure metrics get published
+    TimeUnit.SECONDS.sleep(2);
+
     collectionService.stopAndWait();
+
+    // Consumer from kafka
+    final Map<String, MetricRecord> metrics = Maps.newHashMap();
+    final Semaphore semaphore = new Semaphore(0);
+    kafkaClient.getConsumer().prepare().addFromBeginning("metrics", 0).consume(new KafkaConsumer.MessageCallback() {
+
+      ReflectionDatumReader<MetricRecord> reader = new ReflectionDatumReader<MetricRecord>(schema, metricRecordType);
+
+      @Override
+      public void onReceived(Iterator<FetchedMessage> messages) {
+        try {
+          while (messages.hasNext()) {
+            ByteBuffer payload = messages.next().getPayload();
+            MetricRecord metricRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
+            metrics.put(metricRecord.getContext(), metricRecord);
+            semaphore.release();
+          }
+        } catch (Exception e) {
+          LOG.error("Error in consume", e);
+        }
+      }
+
+      @Override
+      public void finished(boolean error, Throwable cause) {
+        if (!error) {
+          semaphore.release();
+        }
+        LOG.info("Finished");
+      }
+    });
+
+    Assert.assertTrue(semaphore.tryAcquire(3, 5, TimeUnit.SECONDS));
+
+    for (int i = 1; i <= 3; i++) {
+      Assert.assertEquals(i, metrics.get("test.context." + i).getValue());
+    }
+
+    kafkaClient.stopAndWait();
+
+    // Finished on the callback should get called.
+    Assert.assertTrue(semaphore.tryAcquire(1, 5, TimeUnit.SECONDS));
   }
 
   @BeforeClass
@@ -65,7 +131,6 @@ public class KafkaMetricsCollectionServiceTest {
     Properties kafkaConfig = generateKafkaConfig();
     kafkaServer = new EmbeddedKafkaServer(KafkaMetricsCollectionServiceTest.class.getClassLoader(), kafkaConfig);
     kafkaServer.startAndWait();
-    kafkaBrokers = "localhost:" + kafkaConfig.getProperty("port");
   }
 
   @AfterClass
@@ -87,7 +152,7 @@ public class KafkaMetricsCollectionServiceTest {
     prop.setProperty("socket.receive.buffer.bytes", "1048576");
     prop.setProperty("socket.request.max.bytes", "104857600");
     prop.setProperty("log.dir", tmpFolder.newFolder().getAbsolutePath());
-    prop.setProperty("num.partitions", "10");
+    prop.setProperty("num.partitions", "1");
     prop.setProperty("log.flush.interval.messages", "10000");
     prop.setProperty("log.flush.interval.ms", "1000");
     prop.setProperty("log.retention.hours", "1");
