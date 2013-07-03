@@ -17,6 +17,9 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Test cases for LoggingEventSerializer.
+ */
 public class LoggingEventSerializerTest {
 
   @BeforeClass

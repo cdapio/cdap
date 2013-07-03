@@ -10,6 +10,9 @@ import org.apache.avro.generic.GenericRecord;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * Test cases for LoggingEvent.
+ */
 public class LoggingEventTest {
 
   @BeforeClass
