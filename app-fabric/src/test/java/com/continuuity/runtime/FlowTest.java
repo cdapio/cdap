@@ -116,6 +116,10 @@ public class FlowTest {
     List<ProgramController> controllers = Lists.newArrayList();
 
     for (final Program program : app.getPrograms()) {
+      // running mapreduce is out of scope of this tests (there's separate unit-test for that)
+      if (program.getProcessorType() == Type.MAPREDUCE) {
+        continue;
+      }
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override

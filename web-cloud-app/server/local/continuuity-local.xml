@@ -20,7 +20,7 @@
 
 	<property>
 		<name>resource.manager.server.address</name>
-		<value>192.168.1.36</value>
+		<value>127.0.0.1</value>
 	</property>
 
 	<property>
@@ -50,7 +50,7 @@
 
 	<property>
 		<name>flow.monitor.server.address</name>
-		<value>192.168.1.36</value>
+		<value>127.0.0.1</value>
 	</property>
 
 	<property>
@@ -75,16 +75,6 @@
 
 	<property>
 		<name>procedure.rest.port</name>
-		<value>10010</value>
-	</property>
-
-	<property>
-		<name>metrics.server.address</name>
-		<value>127.0.0.1</value>
-	</property>
-
-	<property>
-		<name>metrics.server.port</name>
 		<value>10010</value>
 	</property>
 

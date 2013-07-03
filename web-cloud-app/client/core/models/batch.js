@@ -121,9 +121,6 @@ define(['lib/date'], function (Datejs) {
         var i = result.length, metric;
         while (i--) {
           metric = placeholderNames[paths[i]];
-
-          console.log(result[i]);
-
           self.setMetricData(metric, result[i]);
         }
 
