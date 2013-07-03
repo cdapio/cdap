@@ -51,7 +51,7 @@ public class WordCountApp implements Application {
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}
+   * {@link com.continuuity.api.ApplicationSpecification}.
    *
    * @return An instance of {@code ApplicationSpecification}.
    */
@@ -96,6 +96,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   * Map reduce job to test MDS.
+   */
   public static class VoidMapReduceJob extends AbstractMapReduce {
     @Override
     public MapReduceSpecification configure() {
