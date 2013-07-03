@@ -15,7 +15,7 @@ public class MetadataHelper {
 
   //-------------- Some utilities for list/string conversion -----------------
 
-  static String ListToString(List<String> list) {
+  static String listToString(List<String> list) {
     StringBuilder str = new StringBuilder();
     if (list != null) {
       for (String item : list) {
@@ -26,7 +26,7 @@ public class MetadataHelper {
     return str.toString();
   }
 
-  static List<String> StringToList(String str) {
+  static List<String> stringToList(String str) {
     if (str == null || str.isEmpty()) {
       return Collections.emptyList();
     }
@@ -621,7 +621,7 @@ public class MetadataHelper {
 
       if (query.isSetDatasets()) {
         entry.addField(FieldTypes.Query.DATASETS,
-            ListToString(query.getDatasets()));
+            listToString(query.getDatasets()));
       }
 
       return entry;
@@ -648,7 +648,7 @@ public class MetadataHelper {
 
       String datasets = entry.getTextField(FieldTypes.Query.DATASETS);
       if (datasets != null) {
-        query.setDatasets(StringToList(datasets));
+        query.setDatasets(stringToList(datasets));
       }
       return query;
     }
@@ -725,7 +725,7 @@ public class MetadataHelper {
       if (mapreduce.getName() == null || mapreduce.getName().isEmpty()) {
         throw new MetadataServiceException("Mapreduce name is empty or null.");
       }
-      if(mapreduce.getApplication() == null || mapreduce.getApplication().isEmpty()) {
+      if (mapreduce.getApplication() == null || mapreduce.getApplication().isEmpty()) {
         throw new MetadataServiceException("Mapreduce's app name is empty or null.");
       }
     }
@@ -742,7 +742,7 @@ public class MetadataHelper {
       }
       if (mapreduce.isSetDatasets()) {
         entry.addField(FieldTypes.Mapreduce.DATASETS,
-            ListToString(mapreduce.getDatasets()));
+            listToString(mapreduce.getDatasets()));
       }
       return entry;
     }
@@ -760,7 +760,7 @@ public class MetadataHelper {
       }
       String datasets = entry.getTextField(FieldTypes.Mapreduce.DATASETS);
       if (datasets != null) {
-        mapreduce.setDatasets(StringToList(datasets));
+        mapreduce.setDatasets(stringToList(datasets));
       }
       return mapreduce;
     }
@@ -840,8 +840,8 @@ public class MetadataHelper {
       MetaDataEntry entry = new MetaDataEntry(account.getId(),
           flow.getApplication(), FieldTypes.Flow.ID, flow.getId());
       entry.addField(FieldTypes.Flow.NAME, flow.getName());
-      entry.addField(FieldTypes.Flow.STREAMS, ListToString(flow.getStreams()));
-      entry.addField(FieldTypes.Flow.DATASETS, ListToString(flow.getDatasets()));
+      entry.addField(FieldTypes.Flow.STREAMS, listToString(flow.getStreams()));
+      entry.addField(FieldTypes.Flow.DATASETS, listToString(flow.getDatasets()));
       return entry;
     }
 
@@ -849,8 +849,8 @@ public class MetadataHelper {
     public Flow makeFromEntry(MetaDataEntry entry) {
       Flow fl = new Flow(entry.getId(), entry.getApplication());
       fl.setName(entry.getTextField(FieldTypes.Flow.NAME));
-      fl.setStreams(StringToList(entry.getTextField(FieldTypes.Flow.STREAMS)));
-      fl.setDatasets(StringToList(entry.getTextField(FieldTypes.Flow.DATASETS)));
+      fl.setStreams(stringToList(entry.getTextField(FieldTypes.Flow.STREAMS)));
+      fl.setDatasets(stringToList(entry.getTextField(FieldTypes.Flow.DATASETS)));
       return fl;
     }
 

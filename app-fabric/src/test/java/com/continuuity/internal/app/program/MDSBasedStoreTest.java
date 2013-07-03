@@ -289,6 +289,9 @@ public class MDSBasedStoreTest {
     }
   }
 
+  /**
+   * Map reduce job for testing MDS.
+   */
   public static class FooMapReduceJob extends AbstractMapReduce {
     private final String name;
 
