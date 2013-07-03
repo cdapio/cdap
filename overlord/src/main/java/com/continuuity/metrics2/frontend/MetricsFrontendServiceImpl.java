@@ -185,7 +185,18 @@ public class MetricsFrontendServiceImpl
   public List<String> getLog(final String accountId, final String applicationId,
                              final String flowId, int size)
     throws MetricsServiceException, TException {
-    return getLogNext(accountId, applicationId, flowId, TEntityType.FLOW, "", 200).getLogEvents();
+    List<String> flowLogs = getLogNext(accountId, applicationId, flowId, TEntityType.FLOW, "", 200).getLogEvents();
+    if (!flowLogs.isEmpty()) {
+      return flowLogs;
+    }
+
+    List<String> procLogs = getLogNext(accountId, applicationId, flowId, TEntityType.PROCEDURE, "", 200).getLogEvents();
+    if (!procLogs.isEmpty()) {
+      return procLogs;
+    }
+
+    List<String> mrLogs =  getLogNext(accountId, applicationId, flowId, TEntityType.MAP_REDUCE, "", 200).getLogEvents();
+    return mrLogs;
   }
 
   @Override
