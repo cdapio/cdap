@@ -23,7 +23,7 @@ public class GenericLoggingContext extends ApplicationLoggingContext {
 
   @Override
   public String getLogPartition() {
-    throw new UnsupportedOperationException("GenericLoggingContext does not support this");
+    return String.format("%s:%s", super.getLogPartition(), getSystemTag(TAG_ENTITY_ID));
   }
 
   @Override

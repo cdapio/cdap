@@ -32,7 +32,7 @@ public class FlowletLoggingContext extends ApplicationLoggingContext {
 
   @Override
   public String getLogPartition() {
-    return super.getLogPartition() + String.format(":%s", getSystemTag(TAG_FLOW_ID));
+    return String.format("%s:%s", super.getLogPartition(), getSystemTag(TAG_FLOW_ID));
   }
 
   @Override

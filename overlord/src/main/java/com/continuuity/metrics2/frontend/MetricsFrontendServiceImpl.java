@@ -9,6 +9,7 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.logging.context.GenericLoggingContext;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics2.common.DBUtils;
@@ -185,7 +186,16 @@ public class MetricsFrontendServiceImpl
   public List<String> getLog(final String accountId, final String applicationId,
                              final String flowId, int size)
     throws MetricsServiceException, TException {
-    return getLogNext(accountId, applicationId, flowId, TEntityType.FLOW, "", 200).getLogEvents();
+    try {
+      LoggingContext loggingContext = new GenericLoggingContext(accountId, applicationId, flowId);
+      Result result = logReader.getLogNext(loggingContext, "", 200);
+      return convertLogEvents(result).getLogEvents();
+    } catch (Throwable e) {
+      LOG.warn(
+        String.format("Failed to tail log file - %s:%s:%s", accountId, applicationId, flowId),
+        e);
+      throw new MetricsServiceException(e.getMessage());
+    }
   }
 
   @Override

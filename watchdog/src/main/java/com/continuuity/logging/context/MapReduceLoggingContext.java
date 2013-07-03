@@ -26,7 +26,7 @@ public class MapReduceLoggingContext extends ApplicationLoggingContext {
 
   @Override
   public String getLogPartition() {
-    return super.getLogPartition() + String.format(":%s", getSystemTag(TAG_MAP_REDUCE_JOB_ID));
+    return String.format("%s:%s", super.getLogPartition(), getSystemTag(TAG_MAP_REDUCE_JOB_ID));
   }
 
   @Override
