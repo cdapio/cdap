@@ -10,6 +10,8 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.batch.AbstractMapReduce;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
@@ -61,7 +63,9 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency()).noBatch().build();
+      .withProcedures().add(new WordFrequency())
+      .withBatch().add(new VoidMapReduceJob())
+      .build();
   }
 
   /**
@@ -89,6 +93,16 @@ public class WordCountApp implements Application {
 
     public boolean isExpired() {
       return expired;
+    }
+  }
+
+  public static class VoidMapReduceJob extends AbstractMapReduce {
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("VoidMapReduceJob")
+        .setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS")
+        .build();
     }
   }
 
