@@ -1,13 +1,20 @@
 package com.continuuity.metadata;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.metadata.thrift.*;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.thrift.Mapreduce;
+import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.thrift.Stream;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -555,7 +562,7 @@ public class MetadataService extends MetadataHelper
                                    String qid, String dataset)
       throws MetadataServiceException, TException {
     return addItemToListField(account, app, FieldTypes.Query.ID, qid,
-        "query", FieldTypes.Query.DATASETS, dataset);
+                              "query", FieldTypes.Query.DATASETS, dataset);
   }
 
   @Override
@@ -580,6 +587,52 @@ public class MetadataService extends MetadataHelper
   public Query getQuery(Account account, Query query)
       throws MetadataServiceException, TException {
     return get(queryHelper, account, query);
+  }
+
+  //-------------------------- Mapreduce APIs --------------------------------
+
+  @Override
+  public boolean createMapreduce(Account account, Mapreduce mapreduce)
+      throws MetadataServiceException, TException {
+    return create(mapreduceHelper, account, mapreduce);
+  }
+
+  @Override
+  public boolean updateMapreduce(Account account, Mapreduce mapreduce)
+      throws MetadataServiceException, TException {
+    return update(mapreduceHelper, account, mapreduce);
+  }
+
+  @Override
+  public boolean addDatasetToMapreduce(String account, String app,
+                                   String qid, String dataset)
+      throws MetadataServiceException, TException {
+    return addItemToListField(account, app, FieldTypes.Mapreduce.ID, qid,
+        "mapreduce", FieldTypes.Mapreduce.DATASETS, dataset);
+  }
+
+  @Override
+  public boolean deleteMapreduce(Account account, Mapreduce mapreduce)
+      throws MetadataServiceException, TException {
+    return delete(mapreduceHelper, account, mapreduce);
+  }
+
+  @Override
+  public List<Mapreduce> getMapreduces(Account account)
+      throws MetadataServiceException, TException {
+    return list(mapreduceHelper, account, null);
+  }
+
+  @Override
+  public List<Mapreduce> getMapreducesByApplication(String account, String appid)
+      throws MetadataServiceException, TException {
+    return list(mapreduceHelper, new Account(account), new Application(appid));
+  }
+
+  @Override
+  public Mapreduce getMapreduce(Account account, Mapreduce mapreduce)
+      throws MetadataServiceException, TException {
+    return get(mapreduceHelper, account, mapreduce);
   }
 
   //-------------------------- Flow APIs --------------------------------
@@ -711,13 +764,34 @@ public class MetadataService extends MetadataHelper
     // first get all queries for the app
     List<Query> queries = getQueriesByApplication(account, app);
 
-    // now iterate over all flows and get each dataset
+    // now iterate over all queries and get each dataset
     for (Query query : queries) {
       List<String> queryDatasets = query.getDatasets();
       if (queryDatasets == null || queryDatasets.isEmpty()) {
         continue;
       }
       for (String datasetName : queryDatasets) {
+        if (foundDatasets.containsKey(datasetName)) {
+          continue;
+        }
+        Dataset dataset =
+            getDataset(new Account(account), new Dataset(datasetName));
+        if (dataset.isExists()) {
+          foundDatasets.put(datasetName, dataset);
+        }
+      }
+    }
+
+    // first get all mapreduces for the app
+    List<Mapreduce> mapreduces = getMapreducesByApplication(account, app);
+
+    // now iterate over all flows and get each dataset
+    for (Mapreduce mapreduce : mapreduces) {
+      List<String> mapreduceDatasets = mapreduce.getDatasets();
+      if (mapreduceDatasets == null || mapreduceDatasets.isEmpty()) {
+        continue;
+      }
+      for (String datasetName : mapreduceDatasets) {
         if (foundDatasets.containsKey(datasetName)) {
           continue;
         }
@@ -796,6 +870,25 @@ public class MetadataService extends MetadataHelper
   }
 
   @Override
+  public List<Mapreduce> getMapreducesByDataset(String account, String dataset)
+      throws MetadataServiceException, TException {
+    // Validate all account.
+    validateAccount(account);
+
+    // first get all flows for the app
+    List<Mapreduce> mapreduces = getMapreduces(new Account(account));
+
+    // select the flows that use the dataset
+    List<Mapreduce> queriesForDS = Lists.newLinkedList();
+    for (Mapreduce mapreduce : mapreduces) {
+      if (mapreduce.getDatasets().contains(dataset)) {
+        queriesForDS.add(mapreduce);
+      }
+    }
+    return queriesForDS;
+  }
+
+  @Override
   public void deleteAll(String accountId)
       throws MetadataServiceException, TException {
 
@@ -821,6 +914,12 @@ public class MetadataService extends MetadataHelper
       deleteQuery(account, query);
     }
     LOG.info("Query meta data for account '" + accountId + "' deleted.");
+
+    // list all mapreduces for the account and delete them
+    for (Mapreduce mapreduce : getMapreduces(account)) {
+      deleteMapreduce(account, mapreduce);
+    }
+    LOG.info("Mapreduce meta data for account '" + accountId + "' deleted.");
 
     // list all flows for the account and delete them
     for (Flow flow : getFlows(accountId)) {

@@ -68,6 +68,18 @@ struct Query {
 }
 
 /**
+ * Defines a mapreduce.
+ */
+struct Mapreduce {
+   1: required string id,
+   2: required string application,
+   3: optional string name,
+   4: optional string description,
+   6: optional list<string> datasets,
+   7: optional bool exists = true,
+}
+
+/**
  * Thrown when there is any issue that client should know about in
  * MetadataService.
  */
@@ -294,6 +306,69 @@ service MetadataService {
   Query getQuery(1: Account account, 2: Query query)
     throws (1: MetadataServiceException e),
 
+
+  /**
+   * Creates a new mapreduce.
+   *
+   * @return true if created successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the mapreduce.
+   */
+  bool createMapreduce(1: Account account, 2: Mapreduce mapreduce)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Updates a mapreduce if it exists.
+   *
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the mapreduce.
+   */
+  bool updateMapreduce(1: Account account, 2: Mapreduce mapreduce)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Adds a dataset to the datasets of a mapreduce if it is not there yet
+   *
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with updating
+   * metadata store entry for the flow.
+   */
+   bool addDatasetToMapreduce(1: string account, 2: string app, 3: string mapreduce,
+                          4: string dataset)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Deletes an mapreduce if exists.
+   *
+   * @return true if mapreduce was deleted successfully or did not exists to
+   * be deleted; false otherwise.
+   * @throws MetadataServiceException thrown when there is issue deleting an
+   * mapreduce.
+   */
+  bool deleteMapreduce(1: Account account, 2: Mapreduce mapreduce)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Returns a list of mapreduce associated with account.
+   *
+   * @returns a list of mapreduce associated with account; else empty list.
+   * @throws MetadataServiceException thrown when there is issue listing
+   * mapreduce for a account.
+   */
+  list<Mapreduce> getMapreduces(1: Account account)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return more information about an mapreduce.
+  *
+  * @return mapreduce meta data if exists; else the id passed.
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a mapreduce from metadata store.
+  */
+  Mapreduce getMapreduce(1: Account account, 2: Mapreduce mapreduce)
+    throws (1: MetadataServiceException e),
+
   /**
    * Creates a new flow.
    *
@@ -388,6 +463,16 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
  /**
+  * Return a list of all mapreduces of an application
+  *
+  * @return list of all mapreduces of the app
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a mapreduce from metadata store.
+  */
+  list<Mapreduce> getMapreducesByApplication(1: string account, 2: string application)
+    throws (1: MetadataServiceException e),
+
+ /**
   * Return a list of all streams of an application
   *
   * @return list of all streams used by any of the app's flows
@@ -438,7 +523,17 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
  /**
-  * Delete all applications, flows, queries, datasets and streams for an
+  * Return a list of all mapreduces that use a dataset
+  *
+  * @return list of all mapreduces using the dataset
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a mapreduce from metadata store.
+  */
+  list<Mapreduce> getMapreducesByDataset(1: string account, 2: string dataset)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Delete all applications, flows, queries, datasets, mapreduces and streams for an
   * account.
   *
   * @throws MetadataServiceException thrown when there is an issue listing
