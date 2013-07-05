@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.kafka.client;
+package com.continuuity.internal.kafka.client;
 
 import kafka.serializer.Encoder;
 import kafka.utils.VerifiableProperties;
@@ -9,7 +9,7 @@ import kafka.utils.VerifiableProperties;
 import java.nio.ByteBuffer;
 
 /**
- *
+ * A kafka {@link Encoder} for encoding byte buffer into byte array.
  */
 public final class ByteBufferEncoder implements Encoder<ByteBuffer> {
 

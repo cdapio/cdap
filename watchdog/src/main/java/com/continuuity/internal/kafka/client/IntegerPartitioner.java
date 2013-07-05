@@ -1,13 +1,13 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.kafka.client;
+package com.continuuity.internal.kafka.client;
 
 import kafka.producer.Partitioner;
 import kafka.utils.VerifiableProperties;
 
 /**
- *
+ * A kafka {@link Partitioner} using integer key to compute partition id.
  */
 public final class IntegerPartitioner implements Partitioner<Integer> {
 

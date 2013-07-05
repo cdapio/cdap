@@ -15,7 +15,7 @@ import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.kafka.client.FetchedMessage;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaConsumer;
-import com.continuuity.kafka.client.ZKKafkaClientService;
+import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.metrics.transport.MetricRecord;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
 import com.continuuity.weave.internal.utils.Networks;

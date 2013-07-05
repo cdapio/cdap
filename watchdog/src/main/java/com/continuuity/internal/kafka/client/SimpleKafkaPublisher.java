@@ -1,8 +1,9 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.kafka.client;
+package com.continuuity.internal.kafka.client;
 
+import com.continuuity.kafka.client.KafkaPublisher;
 import com.continuuity.weave.common.Cancellable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * Implementation of {@link KafkaPublisher} using the kafka scala-java api.
+ * Implementation of {@link com.continuuity.kafka.client.KafkaPublisher} using the kafka scala-java api.
  */
 final class SimpleKafkaPublisher implements KafkaPublisher {
 

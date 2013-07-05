@@ -1,8 +1,13 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.kafka.client;
+package com.continuuity.internal.kafka.client;
 
+import com.continuuity.kafka.client.BrokerInfo;
+import com.continuuity.kafka.client.BrokerService;
+import com.continuuity.kafka.client.FetchedMessage;
+import com.continuuity.kafka.client.KafkaConsumer;
+import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
@@ -46,7 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A {@link KafkaConsumer} implementation using the scala kafka api.
+ * A {@link com.continuuity.kafka.client.KafkaConsumer} implementation using the scala kafka api.
  */
 final class SimpleKafkaConsumer implements KafkaConsumer {
 

@@ -1,14 +1,14 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.kafka.client;
+package com.continuuity.internal.kafka.client;
 
 import com.google.common.primitives.Ints;
 import kafka.serializer.Encoder;
 import kafka.utils.VerifiableProperties;
 
 /**
- *
+ * A kafka {@link Encoder} for encoding integer into bytes.
  */
 public final class IntegerEncoder implements Encoder<Integer> {
 

@@ -1,8 +1,11 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.kafka.client;
+package com.continuuity.internal.kafka.client;
 
+import com.continuuity.kafka.client.BrokerInfo;
+import com.continuuity.kafka.client.BrokerService;
+import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.zookeeper.NodeChildren;
 import com.continuuity.weave.zookeeper.NodeData;
@@ -39,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A {@link BrokerService} that watches kafka zk nodes for updates of broker lists and leader for
+ * A {@link com.continuuity.kafka.client.BrokerService} that watches kafka zk nodes for updates of broker lists and leader for
  * each topic partition.
  */
 final class ZKBrokerService extends AbstractIdleService implements BrokerService {

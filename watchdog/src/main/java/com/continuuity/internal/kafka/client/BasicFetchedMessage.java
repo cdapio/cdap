@@ -1,7 +1,9 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.kafka.client;
+package com.continuuity.internal.kafka.client;
+
+import com.continuuity.kafka.client.FetchedMessage;
 
 import java.nio.ByteBuffer;
 

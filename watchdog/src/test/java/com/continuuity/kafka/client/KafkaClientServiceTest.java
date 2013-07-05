@@ -3,6 +3,7 @@
  */
 package com.continuuity.kafka.client;
 
+import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.metrics.collect.KafkaMetricsCollectionServiceTest;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
