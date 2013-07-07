@@ -82,7 +82,7 @@ public class AvroFileLogReader {
               && loggingEvent.getTimeStamp() != prevTimestamp) {
               break;
             }
-            callback.handle(loggingEvent);
+            callback.handle(new LogEvent(loggingEvent, loggingEvent.getTimeStamp()));
           }
           prevTimestamp = loggingEvent.getTimeStamp();
         }

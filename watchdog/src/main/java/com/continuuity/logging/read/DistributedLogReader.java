@@ -110,6 +110,56 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
+  public void getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback) {
+    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+    int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
+
+    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
+
+    try {
+      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
+      long startOffset = fromOffset + 1;
+      if (fromOffset < 0 || startOffset >= latestOffset) {
+        startOffset = latestOffset - maxEvents - 1;
+      }
+
+      fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+    } finally {
+      try {
+        kafkaConsumer.close();
+      } catch (IOException e) {
+        LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
+                                topic, partition), e);
+      }
+    }
+  }
+
+  @Override
+  public void getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback) {
+    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+    int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
+
+    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
+
+    try {
+      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
+      long startOffset = fromOffset - maxEvents - 1;
+      if (fromOffset < 0 || startOffset >= latestOffset)  {
+        startOffset = latestOffset - maxEvents - 1;
+      }
+
+      fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+    } finally {
+      try {
+        kafkaConsumer.close();
+      } catch (IOException e) {
+        LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
+                                topic, partition), e);
+      }
+    }
+  }
+
+  @Override
   public Result getLogPrev(LoggingContext loggingContext, String positionHintString, int maxEvents) {
     Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
     PositionHint positionHint = new PositionHint(positionHintString);
@@ -133,8 +183,7 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
-                     com.continuuity.logging.read.Callback callback) {
+  public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Callback callback) {
     try {
       Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
 
@@ -152,52 +201,107 @@ public final class DistributedLogReader implements LogReader {
         files.add(prevFile);
       }
 
-      AvroFileLogReader logReader = new AvroFileLogReader(hConfig, schema);
+      AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConfig, schema);
       for (Path file : files) {
-        logReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+        avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
       }
     } catch (OperationException e) {
       throw  Throwables.propagate(e);
     }
   }
 
-  private Result fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, PositionHint positionHint,
-                                long startOffset, long latestOffset, int maxEvents) {
-    Callback callback = new Callback(logFilter, serializer, maxEvents);
+  private void fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, long startOffset, long latestOffset,
+                              int maxEvents, Callback callback) {
+    KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, maxEvents, callback);
 
     long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
     if (startOffset < earliestOffset) {
       startOffset = earliestOffset;
     }
 
-    while (callback.getEvents().size() < maxEvents && startOffset < latestOffset) {
-      kafkaConsumer.fetchMessages(startOffset, callback);
-      long lastOffset = callback.getLastOffset();
+    while (kafkaCallback.getCount() < maxEvents && startOffset < latestOffset) {
+      kafkaConsumer.fetchMessages(startOffset, kafkaCallback);
+      long lastOffset = kafkaCallback.getLastOffset();
 
       // No more Kafka messages
       if (lastOffset == -1) {
         break;
       }
-      startOffset = callback.getLastOffset() + 1;
+      startOffset = kafkaCallback.getLastOffset() + 1;
+    }
+  }
+
+  private Result fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, PositionHint positionHint,
+                                long startOffset, long latestOffset, int maxEvents) {
+    KafkaCallbackOld kafkaCallback = new KafkaCallbackOld(logFilter, serializer, maxEvents);
+
+    long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
+    if (startOffset < earliestOffset) {
+      startOffset = earliestOffset;
     }
 
-    if (callback.getEvents().isEmpty()) {
-      return new Result(callback.getEvents(), positionHint.getPositionHintString(), positionHint.isValid());
+    while (kafkaCallback.getEvents().size() < maxEvents && startOffset < latestOffset) {
+      kafkaConsumer.fetchMessages(startOffset, kafkaCallback);
+      long lastOffset = kafkaCallback.getLastOffset();
+
+      // No more Kafka messages
+      if (lastOffset == -1) {
+        break;
+      }
+      startOffset = kafkaCallback.getLastOffset() + 1;
+    }
+
+    if (kafkaCallback.getEvents().isEmpty()) {
+      return new Result(kafkaCallback.getEvents(), positionHint.getPositionHintString(), positionHint.isValid());
     } else {
-      return new Result(callback.getEvents(),
-                        PositionHint.genPositionHint(startOffset - 1, startOffset + callback.getEvents().size()),
+      return new Result(kafkaCallback.getEvents(),
+                        PositionHint.genPositionHint(startOffset - 1, startOffset + kafkaCallback.getEvents().size()),
                         positionHint.isValid());
     }
   }
 
-  private static class Callback implements com.continuuity.logging.kafka.Callback {
+  private static class KafkaCallback implements com.continuuity.logging.kafka.Callback {
+    private final Filter logFilter;
+    private final LoggingEventSerializer serializer;
+    private final int maxEvents;
+    private final Callback callback;
+    private long lastOffset;
+    private int count = 0;
+
+    private KafkaCallback(Filter logFilter, LoggingEventSerializer serializer, int maxEvents, Callback callback) {
+      this.logFilter = logFilter;
+      this.serializer = serializer;
+      this.maxEvents = maxEvents;
+      this.callback = callback;
+    }
+
+    @Override
+    public void handle(long offset, ByteBuffer msgBuffer) {
+      ++count;
+      ILoggingEvent event = serializer.fromBytes(msgBuffer);
+      if (count <= maxEvents && logFilter.match(event)) {
+        callback.handle(new LogEvent(event, offset));
+      }
+      lastOffset = offset;
+    }
+
+    public long getLastOffset() {
+      return lastOffset;
+    }
+
+    public int getCount() {
+      return count;
+    }
+  }
+
+  private static class KafkaCallbackOld implements com.continuuity.logging.kafka.Callback {
     private final Filter logFilter;
     private final LoggingEventSerializer serializer;
     private final int maxEvents;
     private final List<ILoggingEvent> events;
     private long lastOffset;
 
-    private Callback(Filter logFilter, LoggingEventSerializer serializer, int maxEvents) {
+    private KafkaCallbackOld(Filter logFilter, LoggingEventSerializer serializer, int maxEvents) {
       this.logFilter = logFilter;
       this.serializer = serializer;
       this.maxEvents = maxEvents;

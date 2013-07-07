@@ -98,8 +98,8 @@ public class SingleNodeLogReader implements LogReader {
         logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(),
                           new Callback() {
                             @Override
-                            public void handle(ILoggingEvent event) {
-                              loggingEvents.add(event);
+                            public void handle(LogEvent event) {
+                              loggingEvents.add(event.getLoggingEvent());
                             }
                           });
         if (loggingEvents.size() >= maxEvents) {
@@ -112,6 +112,88 @@ public class SingleNodeLogReader implements LogReader {
         return new Result(loggingEvents,
                           PositionHint.genPositionHint(loggingEvents.get(0).getTimeStamp() - 1,
                             loggingEvents.get(loggingEvents.size() - 1).getTimeStamp() + 1), positionHint.isValid());
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback) {
+    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+    try {
+      if (fromOffset < 0) {
+        getLogPrev(loggingContext, -1, maxEvents, callback);
+      }
+
+      long fromTimeMs = fromOffset + 1;
+      SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
+      if (sortedFiles.isEmpty()) {
+        return;
+      }
+
+      long prevInterval = -1;
+      Path prevPath = null;
+      List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+      for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
+        if (entry.getKey() >= fromTimeMs && prevPath != null) {
+          tailFiles.add(prevPath);
+        }
+        prevInterval = entry.getKey();
+        prevPath = entry.getValue().getPath();
+      }
+
+      if (prevInterval != -1) {
+        tailFiles.add(prevPath);
+      }
+
+      final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+      for (Path file : tailFiles) {
+        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(), callback);
+        if (loggingEvents.size() >= maxEvents) {
+          break;
+        }
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback) {
+    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+
+    try {
+      SortedMap<Long, FileStatus> sortedFiles = getFiles(Collections.<Long>reverseOrder());
+      if (sortedFiles.isEmpty()) {
+        return;
+      }
+
+      long fromTimeMs = fromOffset >= 0 ? fromOffset - 1 :
+        sortedFiles.get(sortedFiles.firstKey()).getModificationTime();
+
+      List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+      for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
+        if (entry.getKey() <= fromTimeMs) {
+          tailFiles.add(entry.getValue().getPath());
+        }
+      }
+
+      List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+      for (Path file : tailFiles) {
+        Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
+                                                                 maxEvents - loggingEvents.size());
+        loggingEvents.addAll(0, events);
+        if (events.size() >= maxEvents) {
+          break;
+        }
+      }
+
+      // TODO: better algorithm to read previous events
+      for (ILoggingEvent event : loggingEvents) {
+        callback.handle(new LogEvent(event, event.getTimeStamp()));
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -184,9 +266,9 @@ public class SingleNodeLogReader implements LogReader {
         files.add(prevPath);
       }
 
-      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+      AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConf, schema);
       for (Path file : files) {
-        logReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+        avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);
