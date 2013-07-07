@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.app.services.ActiveFlow;
 import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowStatus;
@@ -26,8 +27,10 @@ import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
+import com.continuuity.metrics2.thrift.MetricsServiceException;
 import com.continuuity.weave.discovery.Discoverable;
 import com.google.common.collect.ImmutableMap;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -245,67 +248,8 @@ public class MonitorRestHandler extends NettyRestHandler {
       // entry point for internal continuuity metrics monitoring
       if ("/flowmetrics".equals(path)) {
         helper.setMethod("flowmetrics");
-
-        StringBuilder resp = new StringBuilder();
-        boolean first = true;
-
-        Map<String, Integer> statusmetrics = new HashMap<String, Integer>();
-        // initialize zeros for the minimal set of statuses we always want to return
-        statusmetrics.put("RUNNING", 0);
-        statusmetrics.put("STOPPED", 0);
-        statusmetrics.put("DEPLOYED", 0);
-        statusmetrics.put("FAILED", 0);
-        statusmetrics.put("STARTING", 0);
-        statusmetrics.put("STOPPING", 0);
-        AppFabricService.Client flowClient = this.getFlowClient();
-        List<ActiveFlow> activeFlows = flowClient.getFlows(accountId);
-        //iterate through flows, build up response string
-        for (ActiveFlow activeFlow : activeFlows) {
-          // increment general status metric
-          if (!"".equals(activeFlow.getCurrentState())) {
-            int count = statusmetrics.containsKey(activeFlow.getCurrentState())
-              ? statusmetrics.get(activeFlow.getCurrentState()) : 0;
-            statusmetrics.put(activeFlow.getCurrentState(), count + 1);
-          }
-          // get flow metrics for this flow
-          MetricsFrontendService.Client metricsClient = this.getMetricsClient();
-          CounterRequest counterRequest = new CounterRequest(
-            new FlowArgument(accountId, activeFlow.getApplicationId(),
-                             activeFlow.getFlowId()));
-          List<String> counterNames = parameters.get("counter");
-          if (counterNames != null) {
-            counterRequest.setName(counterNames);
-          }
-          List<Counter> counters = metricsClient.getCounters(counterRequest);
-          // append this flow's metrics to response
-          for (Counter counter : counters) {
-            if (first) {
-              first = false;
-            } else {
-              resp.append(',');
-            }
-            if (counter.isSetQualifier()) {
-              resp.append("flows.").append(activeFlow.getApplicationId()).append('.');
-              resp.append(activeFlow.getFlowId()).append('.');
-              resp.append(counter.getQualifier()).append(".");
-            }
-            resp.append(counter.getName()).append('=').append(counter.getValue());
-          }
-        }
-
-        // append general flow status metrics to response
-        for (Map.Entry<String, Integer> entry : statusmetrics.entrySet()) {
-          String key = entry.getKey();
-          int value = entry.getValue();
-          if (first) {
-            first = false;
-          } else {
-            resp.append(',');
-          }
-          resp.append("flows.").append(key.toLowerCase()).append('=').append(value);
-        }
-
-        respondSuccess(message.getChannel(), request, resp.toString().getBytes());
+        String resp = getFlowMetrics(accountId, parameters);
+        respondSuccess(message.getChannel(), request, resp.getBytes());
         helper.finish(Success);
         return;
       }
@@ -334,7 +278,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
         return;
       }
-      // is the query supported (only status or metrics right now)
+      // is the query supported (only status or metrics or logs right now)
       if (!("status".equals(query) || "metrics".equals(query) || "logs".equals(query))) {
         helper.finish(BadRequest);
         LOG.trace("Received a request with unsupported query " + query);
@@ -351,37 +295,18 @@ public class MonitorRestHandler extends NettyRestHandler {
         respondSuccess(message.getChannel(), request, value.getBytes());
         helper.finish(Success);
       } else if ("metrics".equals(query)) {
-        MetricsFrontendService.Client metricsClient = this.getMetricsClient();
-        CounterRequest counterRequest = new CounterRequest(
-          new FlowArgument(accountId, appid, flowid));
-        List<String> counterNames = parameters.get("counter");
-        if (counterNames != null) {
-          counterRequest.setName(counterNames);
-        }
-        List<Counter> counters = metricsClient.getCounters(counterRequest);
-        StringBuilder str = new StringBuilder();
-        boolean first = true;
-        for (Counter counter : counters) {
-          if (first) {
-            first = false;
-          } else {
-            str.append(',');
-          }
-          if (counter.isSetQualifier()) {
-            str.append(counter.getQualifier()).append(".");
-          }
-          str.append(counter.getName()).append('=').append(counter.getValue());
-        }
-        respondSuccess(message.getChannel(), request, str.toString().getBytes());
+        String resp = getMetrics(accountId, appid, flowid, parameters);
+        respondSuccess(message.getChannel(), request, resp.getBytes());
         helper.finish(Success);
 
       } else if ("logs".equals(query)) {
         // Parse fromTime and toTime
-        long fromTimeMs = parseLong(parameters.get("fromTime"));
-        long toTimeMs = parseLong(parameters.get("toTime"));
+        long fromTimeMs = parseTimestamp(parameters.get("fromTime"));
+        long toTimeMs = parseTimestamp(parameters.get("toTime"));
 
         if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
           respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+          helper.finish(BadRequest);
           return;
         }
 
@@ -425,6 +350,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         respondChunk(message.getChannel(), ChannelBuffers.wrappedBuffer(byteBuffer));
         respondChunkEnd(message.getChannel(), request);
         patternLayout.stop();
+        helper.finish(Success);
       } else {
         // this should not happen because we checked above -> internal error
         helper.finish(Error);
@@ -454,7 +380,96 @@ public class MonitorRestHandler extends NettyRestHandler {
     }
   }
 
-  private static long parseLong(List<String> parameter) {
+  private String getFlowMetrics(String accountId, Map<String, List<String>> parameters)
+    throws ServerException, TException, MetricsServiceException, AppFabricServiceException {
+    StringBuilder resp = new StringBuilder();
+    boolean first = true;
+
+    Map<String, Integer> statusmetrics = new HashMap<String, Integer>();
+    // initialize zeros for the minimal set of statuses we always want to return
+    statusmetrics.put("RUNNING", 0);
+    statusmetrics.put("STOPPED", 0);
+    statusmetrics.put("DEPLOYED", 0);
+    statusmetrics.put("FAILED", 0);
+    statusmetrics.put("STARTING", 0);
+    statusmetrics.put("STOPPING", 0);
+    AppFabricService.Client flowClient = this.getFlowClient();
+    List<ActiveFlow> activeFlows = flowClient.getFlows(accountId);
+    //iterate through flows, build up response string
+    for (ActiveFlow activeFlow : activeFlows) {
+      // increment general status metric
+      if (!"".equals(activeFlow.getCurrentState())) {
+        int count = statusmetrics.containsKey(activeFlow.getCurrentState())
+          ? statusmetrics.get(activeFlow.getCurrentState()) : 0;
+        statusmetrics.put(activeFlow.getCurrentState(), count + 1);
+      }
+      // get flow metrics for this flow
+      MetricsFrontendService.Client metricsClient = this.getMetricsClient();
+      CounterRequest counterRequest = new CounterRequest(
+        new FlowArgument(accountId, activeFlow.getApplicationId(),
+                         activeFlow.getFlowId()));
+      List<String> counterNames = parameters.get("counter");
+      if (counterNames != null) {
+        counterRequest.setName(counterNames);
+      }
+      List<Counter> counters = metricsClient.getCounters(counterRequest);
+      // append this flow's metrics to response
+      for (Counter counter : counters) {
+        if (first) {
+          first = false;
+        } else {
+          resp.append(',');
+        }
+        if (counter.isSetQualifier()) {
+          resp.append("flows.").append(activeFlow.getApplicationId()).append('.');
+          resp.append(activeFlow.getFlowId()).append('.');
+          resp.append(counter.getQualifier()).append(".");
+        }
+        resp.append(counter.getName()).append('=').append(counter.getValue());
+      }
+    }
+
+    // append general flow status metrics to response
+    for (Map.Entry<String, Integer> entry : statusmetrics.entrySet()) {
+      String key = entry.getKey();
+      int value = entry.getValue();
+      if (first) {
+        first = false;
+      } else {
+        resp.append(',');
+      }
+      resp.append("flows.").append(key.toLowerCase()).append('=').append(value);
+    }
+    return resp.toString();
+  }
+
+  private String getMetrics(String accountId, String appid, String flowid, Map<String, List<String>> parameters)
+    throws ServerException, TException, MetricsServiceException {
+    MetricsFrontendService.Client metricsClient = this.getMetricsClient();
+    CounterRequest counterRequest = new CounterRequest(
+      new FlowArgument(accountId, appid, flowid));
+    List<String> counterNames = parameters.get("counter");
+    if (counterNames != null) {
+      counterRequest.setName(counterNames);
+    }
+    List<Counter> counters = metricsClient.getCounters(counterRequest);
+    StringBuilder str = new StringBuilder();
+    boolean first = true;
+    for (Counter counter : counters) {
+      if (first) {
+        first = false;
+      } else {
+        str.append(',');
+      }
+      if (counter.isSetQualifier()) {
+        str.append(counter.getQualifier()).append(".");
+      }
+      str.append(counter.getName()).append('=').append(counter.getValue());
+    }
+    return str.toString();
+  }
+
+  private static long parseTimestamp(List<String> parameter) {
     if (parameter == null || parameter.isEmpty()) {
       return -1;
     }
