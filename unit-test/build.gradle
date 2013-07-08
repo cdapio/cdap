@@ -2,6 +2,8 @@ apply plugin: 'java'
 
 archivesBaseName = 'continuuity-test'
 
+project.evaluationDependsOn(':app-fabric')
+
 /**
  * Specify all the dependencies for smartyFacts & main.
  */
@@ -30,6 +32,12 @@ dependencies {
  * Includes API output to main and test source sets.
  */
 sourceSets {
+    main {
+        compileClasspath += project(':app-fabric').sourceSets.testbase.output
+    }
+    test {
+        compileClasspath += project(':app-fabric').sourceSets.testbase.output
+    }
 }
 
 /**

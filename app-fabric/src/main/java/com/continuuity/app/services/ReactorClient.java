@@ -51,7 +51,7 @@ public final class ReactorClient {
    */
   public static boolean debug = false;
 
-  private static final String DEVELOPER_ACCOUNT_ID = "developer";
+  private static final String DEVELOPER_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
   private static final Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
                                                                         "status", "scale");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";

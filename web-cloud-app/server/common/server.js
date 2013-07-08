@@ -11,7 +11,10 @@ var express = require('express'),
   fs = require('fs'),
   log4js = require('log4js'),
   http = require('http'),
-  https = require('https');
+  https = require('https'),
+  cookie = require('cookie'),
+  utils = require('connect').utils,
+  crypto = require('crypto');
 
 var Api = require('../common/api');
 
@@ -71,7 +74,7 @@ WebAppServer.prototype.setVersion = function() {
   } catch (e) {
     this.VERSION = 'UNKNOWN';
   }
-}
+};
 
 /**
  * Configures logger.
@@ -107,6 +110,16 @@ WebAppServer.prototype.configureExpress = function() {
 };
 
 /**
+ * Sets a session in express and assigns a cookie identifier.
+ * @param {string} cookieName Name of the cookie.
+ * @param {string} secret cookie secret.
+ */
+WebAppServer.prototype.setCookieSession = function(cookieName, secret) {
+  this.app.use(express.cookieParser());
+  this.app.use(express.session({secret: secret, key: cookieName}));
+};
+
+/**
  * Creates http server based on app framework.
  * Currently works only with express.
  * @param {Object} app framework.
@@ -132,12 +145,14 @@ WebAppServer.prototype.getSocketIo = function(server) {
 
 /**
  * Defines actions in response to a recieving data from a socket.
+ * @param {Object} io socket io manager.
  * @param {Object} request a socket request.
  * @param {Object} error error.
  * @param {Object} response for hte socket request.
  */
-WebAppServer.prototype.socketResponse = function(request, error, response) {
-  this.socket.emit('exec', error, {
+WebAppServer.prototype.socketResponse = function(io, request, error, response) {
+  // Emit to all open socket connections, this enables multi broswer tab support.
+  io.sockets.emit('exec', error, {
     method: request.method,
     params: typeof response === "string" ? JSON.parse(response) : response,
     id: request.id
@@ -150,42 +165,67 @@ WebAppServer.prototype.socketResponse = function(request, error, response) {
  * @param {string} product of evn for socket to emit.
  * @param {string} version.
  */
-WebAppServer.prototype.configureIoHandlers = function(io, product, version) {
+WebAppServer.prototype.configureIoHandlers = function(io, product, version, cookieName, secret) {
   var self = this;
+  var sockets = [];
+
+  //Authorize and accept socket connection only if cookie exists.
+  io.set('authorization', function (data, accept) {
+
+    if (data.headers.cookie) {
+
+      var cookies = cookie.parse(data.headers.cookie);
+      var signedCookies = utils.parseSignedCookies(cookies, secret);
+      var obj = utils.parseJSONCookies(signedCookies);
+      data.session_id = obj[cookieName];
+
+    } else {
+
+      return accept('No cookie transmitted', false);
+
+    }
+
+    accept(null, true);
+  });
+
   io.sockets.on('connection', function (newSocket) {
 
-    self.socket = newSocket;
-    self.socket.emit('env', {
+    sockets.push(newSocket);
+
+    // Join room based on session id.
+    newSocket.join(newSocket.handshake.session_id);
+
+    newSocket.emit('env', {
       "product": product,
       "version": version,
       "credential": self.Api.credential
     });
 
-    self.socket.on('metadata', function (request) {
+    newSocket.on('metadata', function (request) {
       self.Api.metadata(version, request.method, request.params, function (error, response) {
-        self.socketResponse(request, error, response);
+        self.socketResponse(io, request, error, response);
       });
     });
 
-    self.socket.on('far', function (request) {
+    newSocket.on('far', function (request) {
       self.Api.far(version, request.method, request.params, function (error, response) {
-        self.socketResponse(request, error, response);
+        self.socketResponse(io, request, error, response);
       });
     });
 
-    self.socket.on('gateway', function (request) {
+    newSocket.on('gateway', function (request) {
       self.Api.gateway('apikey', request.method, request.params, function (error, response) {
-        self.socketResponse(request, error, response);
+        self.socketResponse(io, request, error, response);
       });
     });
 
-    self.socket.on('monitor', function (request) {
+    newSocket.on('monitor', function (request) {
       self.Api.monitor(version, request.method, request.params, function (error, response) {
-        self.socketResponse(request, error, response);
+        self.socketResponse(io, request, error, response);
       });
     });
 
-    self.socket.on('manager', function (request) {
+    newSocket.on('manager', function (request) {
       self.Api.manager(version, request.method, request.params, function (error, response) {
 
         if (response && response.length) {
@@ -203,7 +243,7 @@ WebAppServer.prototype.configureIoHandlers = function(io, product, version) {
             }
           }
         }
-        self.socketResponse(request, error, response);
+        self.socketResponse(io, request, error, response);
       });
     });
   });
@@ -211,8 +251,9 @@ WebAppServer.prototype.configureIoHandlers = function(io, product, version) {
 
 /**
  * Binds individual expressjs routes. Any additional routes should be added here.
+ * @param {Object} io socket io adapter.
  */
-WebAppServer.prototype.bindRoutes = function() {
+WebAppServer.prototype.bindRoutes = function(io) {
   var self = this;
   // Check to see if config is set.
   if(!this.configSet) {
@@ -224,7 +265,8 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.post('/upload/:file', function (req, res) {
     var accountID = 'developer';
-    self.Api.upload(accountID, req, res, req.params.file, self.socket);
+    var sessionId = req.session.id;
+    self.Api.upload(accountID, req, res, req.params.file, io.sockets["in"](sessionId));
   });
 
   /**
@@ -232,7 +274,6 @@ WebAppServer.prototype.bindRoutes = function() {
    * http://www.continuuity.com/version
    */
   this.app.get('/version', function (req, res) {
-
     var options = {
       host: 'www.continuuity.com',
       path: '/version',
@@ -243,24 +284,21 @@ WebAppServer.prototype.bindRoutes = function() {
       'Content-Type': 'application-json'
     });
 
-    http.request(options, function(response) {
+    var request = http.request(options, function(response) {
       var data = '';
       response.on('data', function (chunk) {
         data += chunk;
       });
 
       response.on('end', function () {
-
         data = data.replace(/\n/g, '');
-
         res.send(JSON.stringify({
           current: self.VERSION,
           newest: data
         }));
-        res.end();
       });
-    }).end();
-
+    });
+    request.end();
   });
 
   /**

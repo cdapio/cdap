@@ -13,9 +13,8 @@
 atlassian-ide-plugin.xml
 out/
 .DS_Store
-lib/
+./lib/
 .idea
-data/
 
 # Gradle Files & Dir #
 build/
@@ -29,4 +28,4 @@ npm-*.log
 logs/
 
 # Singlenode run files. 
-data/
+./data/

@@ -23,9 +23,14 @@ var logLevel = 'INFO';
 var EntServer = function() {
   EntServer.super_.call(this, __dirname, logLevel);
 
+  this.cookieName = 'continuuity-enterprise-edition';
+  this.secret = 'enterprise-edition-secret';
+
   this.logger = this.getLogger('console', 'Enterprise UI');
   this.setVersion();
+  this.setCookieSession(this.cookieName, this.secret);
   this.configureExpress();
+  this.setCookieSession('continuuity-enterprise-edition', this.secret);
 
 };
 util.inherits(EntServer, WebAppServer);
@@ -61,8 +66,8 @@ EntServer.prototype.start = function() {
   this.getConfig(function() {
     this.server = this.getServerInstance(this.app);
     this.io = this.getSocketIo(this.server);
-    this.configureIoHandlers(this.io, 'Enterprise', 'developer');
-    this.bindRoutes();
+    this.configureIoHandlers(this.io, 'Enterprise', 'developer', this.cookieName, this.secret);
+    this.bindRoutes(this.io);
     this.server.listen(this.config['node-port']);
     this.logger.info('Listening on port', this.config['node-port']);
     this.logger.info(this.config);
@@ -73,6 +78,12 @@ EntServer.prototype.start = function() {
 var entServer = new EntServer();
 entServer.start();
 
+/**
+ * Catch anything uncaught.
+ */
+process.on('uncaughtException', function (err) {
+  entServer.logger.error('Uncaught Exception', err);
+});
 
 /**
  * Export app.

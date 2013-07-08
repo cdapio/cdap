@@ -6,12 +6,6 @@ package com.continuuity.gateway;
  */
 public class Constants {
   /**
-   * Corresponds to account id used when running AppFabric in local mode.
-   * NOTE: value should be in sync with the one used by UI.
-   */
-  public static final String DEVELOPER_ACCOUNT_ID = "developer";
-
-  /**
    * The prefix for all continuity classes.
    */
   static final String CONTINUUITY_PREFIX = "X-Continuuity-";

@@ -38,6 +38,8 @@ task ('prepackager', dependsOn : ['build']) {
   }
 }
 
+import org.apache.tools.ant.filters.ReplaceTokens
+
 task ('debianPrepackager', dependsOn: ['prepackager']) {
   def stageDir = file("$buildDir/stage-packaging")
   def installDir = file("$stageDir/opt/continuuity/$project.name")
@@ -46,6 +48,22 @@ task ('debianPrepackager', dependsOn: ['prepackager']) {
     copy {
       from "$rootProject.projectDir/distributions/src/LICENSE.txt"
       into "${installDir}"
+    }
+   
+    File confDir = file("$projectDir/conf")
+    envfiles = files { confDir.listFiles() }
+    envfiles.collect { relativePath(it) }.each {
+      if(it =~ /conf\/(.*)-env.sh/) {
+        service = it.substring(it.indexOf("conf/") + 5, it.indexOf("-env.sh"))
+        println "creating service script from template for $project.name : $service"
+        copy {
+          from "$rootProject.projectDir/distributions/src/debian/init.d"
+          into "${stageDir}/etc/init.d"
+          include "continuuity-service"
+          rename 'continuuity-service', "continuuity-$service"
+          filter(ReplaceTokens, tokens: [packagename: project.name, servicename: service])
+        }
+      }
     }
   }
 }
@@ -58,6 +76,22 @@ task ('rpmPrepackager', dependsOn: ['prepackager']) {
     copy {
       from "$rootProject.projectDir/distributions/src/LICENSE.txt"
       into "${installDir}"
+    }
+
+    File confDir = file("$projectDir/conf")
+    envfiles = files { confDir.listFiles() }
+    envfiles.collect { relativePath(it) }.each {
+      if(it =~ /conf\/(.*)-env.sh/) {
+        service = it.substring(it.indexOf("conf/") + 5, it.indexOf("-env.sh"))
+        println "creating service script from template for $project.name : $service"
+        copy {
+          from "$rootProject.projectDir/distributions/src/rpm/init.d"
+          into "${stageDir}/etc/rc.d/init.d"
+          include "continuuity-service"
+          rename 'continuuity-service', "continuuity-$service"
+          filter(ReplaceTokens, tokens: [packagename: project.name, servicename: service])
+        }
+      }
     }
   }
 }
