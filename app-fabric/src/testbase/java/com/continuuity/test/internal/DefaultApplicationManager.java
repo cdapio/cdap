@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test.internal;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
@@ -18,6 +18,13 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.FlowManager;
+import com.continuuity.test.MapReduceManager;
+import com.continuuity.test.ProcedureClient;
+import com.continuuity.test.ProcedureManager;
+import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.StreamWriter;
 import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

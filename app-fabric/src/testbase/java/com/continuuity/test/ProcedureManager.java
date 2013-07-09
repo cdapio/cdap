@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test;
 
 /**
  * Instance of this class is for managing a running {@link com.continuuity.api.procedure.Procedure Procedure}.

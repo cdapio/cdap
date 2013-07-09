@@ -1,4 +1,4 @@
-package com.continuuity.test.app.internal.bytecode;
+package com.continuuity.test.internal.bytecode;
 
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.flow.flowlet.Flowlet;

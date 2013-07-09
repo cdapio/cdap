@@ -5,4 +5,4 @@
 /**
  * This package contains the byte code classes.
  */
-package com.continuuity.test.app.internal.bytecode;
+package com.continuuity.test.internal.bytecode;

@@ -1,4 +1,4 @@
-package com.continuuity.test.app.internal.bytecode;
+package com.continuuity.test.internal.bytecode;
 
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.procedure.Procedure;

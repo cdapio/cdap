@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.test.app;
+package com.continuuity.test.internal;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -24,9 +24,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.test.app.guice.AppFabricTestModule;
-import com.continuuity.test.app.internal.bytecode.FlowletRewriter;
-import com.continuuity.test.app.internal.bytecode.ProcedureRewriter;
+import com.continuuity.test.guice.AppFabricTestModule;
+import com.continuuity.test.internal.bytecode.FlowletRewriter;
+import com.continuuity.test.internal.bytecode.ProcedureRewriter;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -73,7 +73,6 @@ public class TestHelper {
   private static Injector injector;
 
   static {
-//    TempFolder tempFolder = new TempFolder();
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", TEMP_FOLDER.newFolder("app").getAbsolutePath());
     configuration.set("app.tmp.dir", TEMP_FOLDER.newFolder("temp").getAbsolutePath());

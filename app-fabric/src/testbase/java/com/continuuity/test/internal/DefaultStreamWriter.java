@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test.internal;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -10,6 +10,7 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
+import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;

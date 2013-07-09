@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test;
 
 /**
  * Instance for this class is for managing a running {@link com.continuuity.api.flow.Flow Flow}.

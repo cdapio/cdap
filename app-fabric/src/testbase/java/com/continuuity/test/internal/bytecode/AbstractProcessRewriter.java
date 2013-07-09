@@ -1,6 +1,6 @@
-package com.continuuity.test.app.internal.bytecode;
+package com.continuuity.test.internal.bytecode;
 
-import com.continuuity.test.app.RuntimeStats;
+import com.continuuity.test.RuntimeStats;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.objectweb.asm.AnnotationVisitor;

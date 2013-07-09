@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test;
 
 import com.continuuity.api.data.DataSet;
 

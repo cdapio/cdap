@@ -1,8 +1,9 @@
-package com.continuuity.test.app;
+package com.continuuity.test.internal;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.test.ApplicationManager;
 import com.continuuity.weave.filesystem.Location;
 import com.google.inject.assistedinject.Assisted;
 

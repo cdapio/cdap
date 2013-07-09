@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test.internal;
 
 import com.continuuity.app.Id;
 import com.continuuity.test.data.Constants;

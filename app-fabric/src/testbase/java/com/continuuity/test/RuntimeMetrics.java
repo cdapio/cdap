@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

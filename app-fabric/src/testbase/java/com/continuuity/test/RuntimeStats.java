@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;

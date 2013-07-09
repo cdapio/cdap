@@ -1,5 +1,6 @@
-package com.continuuity.test.app;
+package com.continuuity.test.internal;
 
+import com.continuuity.test.ProcedureClient;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;

@@ -1,4 +1,4 @@
-package com.continuuity.test.app;
+package com.continuuity.test.internal;
 
 import com.google.common.base.Throwables;
 

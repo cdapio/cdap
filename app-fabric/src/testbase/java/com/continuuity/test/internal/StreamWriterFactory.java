@@ -1,10 +1,11 @@
-package com.continuuity.test.app;
+package com.continuuity.test.internal;
 
 import com.continuuity.app.queue.QueueName;
+import com.continuuity.test.StreamWriter;
 import com.google.inject.assistedinject.Assisted;
 
 /**
- * This interface is using Guice assisted inject to create {@link com.continuuity.test.app.StreamWriter}.
+ * This interface is using Guice assisted inject to create {@link com.continuuity.test.StreamWriter}.
  */
 public interface StreamWriterFactory {
 
