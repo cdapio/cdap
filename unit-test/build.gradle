@@ -11,6 +11,8 @@ dependencies {
   // Dependencies for smartyFacts & main
   compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true],"app-fabric")
   compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
+/* next line, new method to use testbase */
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'testbase', version: "${version}", changing: true],"app-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
 
@@ -31,6 +33,8 @@ dependencies {
 /**
  * Includes API output to main and test source sets.
  */
+
+/* old method to use testbase
 sourceSets {
     main {
         compileClasspath += project(':app-fabric').sourceSets.testbase.output
@@ -39,7 +43,7 @@ sourceSets {
         compileClasspath += project(':app-fabric').sourceSets.testbase.output
     }
 }
-
+*/
 /**
  * Generates API javadoc.
  */
