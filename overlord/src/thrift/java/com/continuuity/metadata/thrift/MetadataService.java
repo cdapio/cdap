@@ -6,7 +6,6 @@
  */
 package com.continuuity.metadata.thrift;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -290,6 +289,80 @@ public class MetadataService {
     public Query getQuery(Account account, Query query) throws MetadataServiceException, org.apache.thrift.TException;
 
     /**
+     * Creates a new mapreduce.
+     * 
+     * @return true if created successfully, false otherwise.
+     * @throws MetadataServiceException thrown when there is issue with creating
+     * metadata store entry for the mapreduce.
+     * 
+     * @param account
+     * @param mapreduce
+     */
+    public boolean createMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Updates a mapreduce if it exists.
+     * 
+     * @return true if updated successfully, false otherwise.
+     * @throws MetadataServiceException thrown when there is issue with creating
+     * metadata store entry for the mapreduce.
+     * 
+     * @param account
+     * @param mapreduce
+     */
+    public boolean updateMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Adds a dataset to the datasets of a mapreduce if it is not there yet
+     * 
+     * @return true if updated successfully, false otherwise.
+     * @throws MetadataServiceException thrown when there is issue with updating
+     * metadata store entry for the flow.
+     * 
+     * @param account
+     * @param app
+     * @param mapreduce
+     * @param dataset
+     */
+    public boolean addDatasetToMapreduce(String account, String app, String mapreduce, String dataset) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Deletes an mapreduce if exists.
+     * 
+     * @return true if mapreduce was deleted successfully or did not exists to
+     * be deleted; false otherwise.
+     * @throws MetadataServiceException thrown when there is issue deleting an
+     * mapreduce.
+     * 
+     * @param account
+     * @param mapreduce
+     */
+    public boolean    deleteMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Returns a list of mapreduce associated with account.
+     * 
+     * @returns a list of mapreduce associated with account; else empty list.
+     * @throws MetadataServiceException thrown when there is issue listing
+     * mapreduce for a account.
+     * 
+     * @param account
+     */
+    public List<Mapreduce> getMapreduces(Account account) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Return more information about an mapreduce.
+     * 
+     * @return mapreduce meta data if exists; else the id passed.
+     * @throws MetadataServiceException thrown when there is issue retrieving
+     * a mapreduce from metadata store.
+     * 
+     * @param account
+     * @param mapreduce
+     */
+    public Mapreduce getMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
      * Creates a new flow.
      * 
      * @return true if created successfully or already exists, false otherwise.
@@ -404,6 +477,18 @@ public class MetadataService {
     public List<Query> getQueriesByApplication(String account, String application) throws MetadataServiceException, org.apache.thrift.TException;
 
     /**
+     * Return a list of all mapreduces of an application
+     * 
+     * @return list of all mapreduces of the app
+     * @throws MetadataServiceException thrown when there is issue retrieving
+     * a mapreduce from metadata store.
+     * 
+     * @param account
+     * @param application
+     */
+    public List<Mapreduce> getMapreducesByApplication(String account, String application) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
      * Return a list of all streams of an application
      * 
      * @return list of all streams used by any of the app's flows
@@ -464,7 +549,19 @@ public class MetadataService {
     public List<Query> getQueriesByDataset(String account, String dataset) throws MetadataServiceException, org.apache.thrift.TException;
 
     /**
-     * Delete all applications, flows, queries, datasets and streams for an
+     * Return a list of all mapreduces that use a dataset
+     * 
+     * @return list of all mapreduces using the dataset
+     * @throws MetadataServiceException thrown when there is issue retrieving
+     * a mapreduce from metadata store.
+     * 
+     * @param account
+     * @param dataset
+     */
+    public List<Mapreduce> getMapreducesByDataset(String account, String dataset) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Delete all applications, flows, queries, datasets, mapreduces and streams for an
      * account.
      * 
      * @throws MetadataServiceException thrown when there is an issue listing
@@ -520,6 +617,18 @@ public class MetadataService {
 
     public void getQuery(Account account, Query query, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getQuery_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void createMapreduce(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.createMapreduce_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void updateMapreduce(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.updateMapreduce_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void addDatasetToMapreduce(String account, String app, String mapreduce, String dataset, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.addDatasetToMapreduce_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void deleteMapreduce(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.deleteMapreduce_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void getMapreduces(Account account, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getMapreduces_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void getMapreduce(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getMapreduce_call> resultHandler) throws org.apache.thrift.TException;
+
     public void createFlow(String account, Flow flow, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.createFlow_call> resultHandler) throws org.apache.thrift.TException;
 
     public void updateFlow(String account, Flow flow, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.updateFlow_call> resultHandler) throws org.apache.thrift.TException;
@@ -538,6 +647,8 @@ public class MetadataService {
 
     public void getQueriesByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getQueriesByApplication_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void getMapreducesByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getMapreducesByApplication_call> resultHandler) throws org.apache.thrift.TException;
+
     public void getStreamsByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getStreamsByApplication_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getDatasetsByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getDatasetsByApplication_call> resultHandler) throws org.apache.thrift.TException;
@@ -547,6 +658,8 @@ public class MetadataService {
     public void getFlowsByDataset(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowsByDataset_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getQueriesByDataset(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getQueriesByDataset_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void getMapreducesByDataset(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getMapreducesByDataset_call> resultHandler) throws org.apache.thrift.TException;
 
     public void deleteAll(String account, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.deleteAll_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -1137,6 +1250,169 @@ public class MetadataService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getQuery failed: unknown result");
     }
 
+    public boolean createMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_createMapreduce(account, mapreduce);
+      return recv_createMapreduce();
+    }
+
+    public void send_createMapreduce(Account account, Mapreduce mapreduce) throws org.apache.thrift.TException
+    {
+      createMapreduce_args args = new createMapreduce_args();
+      args.setAccount(account);
+      args.setMapreduce(mapreduce);
+      sendBase("createMapreduce", args);
+    }
+
+    public boolean recv_createMapreduce() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      createMapreduce_result result = new createMapreduce_result();
+      receiveBase(result, "createMapreduce");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "createMapreduce failed: unknown result");
+    }
+
+    public boolean updateMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_updateMapreduce(account, mapreduce);
+      return recv_updateMapreduce();
+    }
+
+    public void send_updateMapreduce(Account account, Mapreduce mapreduce) throws org.apache.thrift.TException
+    {
+      updateMapreduce_args args = new updateMapreduce_args();
+      args.setAccount(account);
+      args.setMapreduce(mapreduce);
+      sendBase("updateMapreduce", args);
+    }
+
+    public boolean recv_updateMapreduce() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      updateMapreduce_result result = new updateMapreduce_result();
+      receiveBase(result, "updateMapreduce");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "updateMapreduce failed: unknown result");
+    }
+
+    public boolean addDatasetToMapreduce(String account, String app, String mapreduce, String dataset) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_addDatasetToMapreduce(account, app, mapreduce, dataset);
+      return recv_addDatasetToMapreduce();
+    }
+
+    public void send_addDatasetToMapreduce(String account, String app, String mapreduce, String dataset) throws org.apache.thrift.TException
+    {
+      addDatasetToMapreduce_args args = new addDatasetToMapreduce_args();
+      args.setAccount(account);
+      args.setApp(app);
+      args.setMapreduce(mapreduce);
+      args.setDataset(dataset);
+      sendBase("addDatasetToMapreduce", args);
+    }
+
+    public boolean recv_addDatasetToMapreduce() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      addDatasetToMapreduce_result result = new addDatasetToMapreduce_result();
+      receiveBase(result, "addDatasetToMapreduce");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "addDatasetToMapreduce failed: unknown result");
+    }
+
+    public boolean deleteMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_deleteMapreduce(account, mapreduce);
+      return recv_deleteMapreduce();
+    }
+
+    public void send_deleteMapreduce(Account account, Mapreduce mapreduce) throws org.apache.thrift.TException
+    {
+      deleteMapreduce_args args = new deleteMapreduce_args();
+      args.setAccount(account);
+      args.setMapreduce(mapreduce);
+      sendBase("deleteMapreduce", args);
+    }
+
+    public boolean recv_deleteMapreduce() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      deleteMapreduce_result result = new deleteMapreduce_result();
+      receiveBase(result, "deleteMapreduce");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "deleteMapreduce failed: unknown result");
+    }
+
+    public List<Mapreduce> getMapreduces(Account account) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_getMapreduces(account);
+      return recv_getMapreduces();
+    }
+
+    public void send_getMapreduces(Account account) throws org.apache.thrift.TException
+    {
+      getMapreduces_args args = new getMapreduces_args();
+      args.setAccount(account);
+      sendBase("getMapreduces", args);
+    }
+
+    public List<Mapreduce> recv_getMapreduces() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      getMapreduces_result result = new getMapreduces_result();
+      receiveBase(result, "getMapreduces");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getMapreduces failed: unknown result");
+    }
+
+    public Mapreduce getMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_getMapreduce(account, mapreduce);
+      return recv_getMapreduce();
+    }
+
+    public void send_getMapreduce(Account account, Mapreduce mapreduce) throws org.apache.thrift.TException
+    {
+      getMapreduce_args args = new getMapreduce_args();
+      args.setAccount(account);
+      args.setMapreduce(mapreduce);
+      sendBase("getMapreduce", args);
+    }
+
+    public Mapreduce recv_getMapreduce() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      getMapreduce_result result = new getMapreduce_result();
+      receiveBase(result, "getMapreduce");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getMapreduce failed: unknown result");
+    }
+
     public boolean createFlow(String account, Flow flow) throws MetadataServiceException, org.apache.thrift.TException
     {
       send_createFlow(account, flow);
@@ -1385,6 +1661,33 @@ public class MetadataService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getQueriesByApplication failed: unknown result");
     }
 
+    public List<Mapreduce> getMapreducesByApplication(String account, String application) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_getMapreducesByApplication(account, application);
+      return recv_getMapreducesByApplication();
+    }
+
+    public void send_getMapreducesByApplication(String account, String application) throws org.apache.thrift.TException
+    {
+      getMapreducesByApplication_args args = new getMapreducesByApplication_args();
+      args.setAccount(account);
+      args.setApplication(application);
+      sendBase("getMapreducesByApplication", args);
+    }
+
+    public List<Mapreduce> recv_getMapreducesByApplication() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      getMapreducesByApplication_result result = new getMapreducesByApplication_result();
+      receiveBase(result, "getMapreducesByApplication");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getMapreducesByApplication failed: unknown result");
+    }
+
     public List<Stream> getStreamsByApplication(String account, String application) throws MetadataServiceException, org.apache.thrift.TException
     {
       send_getStreamsByApplication(account, application);
@@ -1518,6 +1821,33 @@ public class MetadataService {
         throw result.e;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getQueriesByDataset failed: unknown result");
+    }
+
+    public List<Mapreduce> getMapreducesByDataset(String account, String dataset) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_getMapreducesByDataset(account, dataset);
+      return recv_getMapreducesByDataset();
+    }
+
+    public void send_getMapreducesByDataset(String account, String dataset) throws org.apache.thrift.TException
+    {
+      getMapreducesByDataset_args args = new getMapreducesByDataset_args();
+      args.setAccount(account);
+      args.setDataset(dataset);
+      sendBase("getMapreducesByDataset", args);
+    }
+
+    public List<Mapreduce> recv_getMapreducesByDataset() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      getMapreducesByDataset_result result = new getMapreducesByDataset_result();
+      receiveBase(result, "getMapreducesByDataset");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getMapreducesByDataset failed: unknown result");
     }
 
     public void deleteAll(String account) throws MetadataServiceException, org.apache.thrift.TException
@@ -2290,6 +2620,219 @@ public class MetadataService {
       }
     }
 
+    public void createMapreduce(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<createMapreduce_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      createMapreduce_call method_call = new createMapreduce_call(account, mapreduce, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class createMapreduce_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private Account account;
+      private Mapreduce mapreduce;
+      public createMapreduce_call(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<createMapreduce_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.mapreduce = mapreduce;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("createMapreduce", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        createMapreduce_args args = new createMapreduce_args();
+        args.setAccount(account);
+        args.setMapreduce(mapreduce);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_createMapreduce();
+      }
+    }
+
+    public void updateMapreduce(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<updateMapreduce_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      updateMapreduce_call method_call = new updateMapreduce_call(account, mapreduce, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class updateMapreduce_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private Account account;
+      private Mapreduce mapreduce;
+      public updateMapreduce_call(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<updateMapreduce_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.mapreduce = mapreduce;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("updateMapreduce", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        updateMapreduce_args args = new updateMapreduce_args();
+        args.setAccount(account);
+        args.setMapreduce(mapreduce);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_updateMapreduce();
+      }
+    }
+
+    public void addDatasetToMapreduce(String account, String app, String mapreduce, String dataset, org.apache.thrift.async.AsyncMethodCallback<addDatasetToMapreduce_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      addDatasetToMapreduce_call method_call = new addDatasetToMapreduce_call(account, app, mapreduce, dataset, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class addDatasetToMapreduce_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String account;
+      private String app;
+      private String mapreduce;
+      private String dataset;
+      public addDatasetToMapreduce_call(String account, String app, String mapreduce, String dataset, org.apache.thrift.async.AsyncMethodCallback<addDatasetToMapreduce_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.app = app;
+        this.mapreduce = mapreduce;
+        this.dataset = dataset;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("addDatasetToMapreduce", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        addDatasetToMapreduce_args args = new addDatasetToMapreduce_args();
+        args.setAccount(account);
+        args.setApp(app);
+        args.setMapreduce(mapreduce);
+        args.setDataset(dataset);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_addDatasetToMapreduce();
+      }
+    }
+
+    public void deleteMapreduce(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<deleteMapreduce_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      deleteMapreduce_call method_call = new deleteMapreduce_call(account, mapreduce, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class deleteMapreduce_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private Account account;
+      private Mapreduce mapreduce;
+      public deleteMapreduce_call(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<deleteMapreduce_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.mapreduce = mapreduce;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("deleteMapreduce", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        deleteMapreduce_args args = new deleteMapreduce_args();
+        args.setAccount(account);
+        args.setMapreduce(mapreduce);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_deleteMapreduce();
+      }
+    }
+
+    public void getMapreduces(Account account, org.apache.thrift.async.AsyncMethodCallback<getMapreduces_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getMapreduces_call method_call = new getMapreduces_call(account, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getMapreduces_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private Account account;
+      public getMapreduces_call(Account account, org.apache.thrift.async.AsyncMethodCallback<getMapreduces_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getMapreduces", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getMapreduces_args args = new getMapreduces_args();
+        args.setAccount(account);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Mapreduce> getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getMapreduces();
+      }
+    }
+
+    public void getMapreduce(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<getMapreduce_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getMapreduce_call method_call = new getMapreduce_call(account, mapreduce, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getMapreduce_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private Account account;
+      private Mapreduce mapreduce;
+      public getMapreduce_call(Account account, Mapreduce mapreduce, org.apache.thrift.async.AsyncMethodCallback<getMapreduce_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.mapreduce = mapreduce;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getMapreduce", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getMapreduce_args args = new getMapreduce_args();
+        args.setAccount(account);
+        args.setMapreduce(mapreduce);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public Mapreduce getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getMapreduce();
+      }
+    }
+
     public void createFlow(String account, Flow flow, org.apache.thrift.async.AsyncMethodCallback<createFlow_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       createFlow_call method_call = new createFlow_call(account, flow, resultHandler, this, ___protocolFactory, ___transport);
@@ -2620,6 +3163,41 @@ public class MetadataService {
       }
     }
 
+    public void getMapreducesByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<getMapreducesByApplication_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getMapreducesByApplication_call method_call = new getMapreducesByApplication_call(account, application, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getMapreducesByApplication_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String account;
+      private String application;
+      public getMapreducesByApplication_call(String account, String application, org.apache.thrift.async.AsyncMethodCallback<getMapreducesByApplication_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.application = application;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getMapreducesByApplication", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getMapreducesByApplication_args args = new getMapreducesByApplication_args();
+        args.setAccount(account);
+        args.setApplication(application);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Mapreduce> getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getMapreducesByApplication();
+      }
+    }
+
     public void getStreamsByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<getStreamsByApplication_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getStreamsByApplication_call method_call = new getStreamsByApplication_call(account, application, resultHandler, this, ___protocolFactory, ___transport);
@@ -2795,6 +3373,41 @@ public class MetadataService {
       }
     }
 
+    public void getMapreducesByDataset(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<getMapreducesByDataset_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getMapreducesByDataset_call method_call = new getMapreducesByDataset_call(account, dataset, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getMapreducesByDataset_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String account;
+      private String dataset;
+      public getMapreducesByDataset_call(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<getMapreducesByDataset_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.dataset = dataset;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getMapreducesByDataset", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getMapreducesByDataset_args args = new getMapreducesByDataset_args();
+        args.setAccount(account);
+        args.setDataset(dataset);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Mapreduce> getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getMapreducesByDataset();
+      }
+    }
+
     public void deleteAll(String account, org.apache.thrift.async.AsyncMethodCallback<deleteAll_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       deleteAll_call method_call = new deleteAll_call(account, resultHandler, this, ___protocolFactory, ___transport);
@@ -2861,6 +3474,12 @@ public class MetadataService {
       processMap.put("deleteQuery", new deleteQuery());
       processMap.put("getQueries", new getQueries());
       processMap.put("getQuery", new getQuery());
+      processMap.put("createMapreduce", new createMapreduce());
+      processMap.put("updateMapreduce", new updateMapreduce());
+      processMap.put("addDatasetToMapreduce", new addDatasetToMapreduce());
+      processMap.put("deleteMapreduce", new deleteMapreduce());
+      processMap.put("getMapreduces", new getMapreduces());
+      processMap.put("getMapreduce", new getMapreduce());
       processMap.put("createFlow", new createFlow());
       processMap.put("updateFlow", new updateFlow());
       processMap.put("addDatasetToFlow", new addDatasetToFlow());
@@ -2870,11 +3489,13 @@ public class MetadataService {
       processMap.put("getFlow", new getFlow());
       processMap.put("getFlowsByApplication", new getFlowsByApplication());
       processMap.put("getQueriesByApplication", new getQueriesByApplication());
+      processMap.put("getMapreducesByApplication", new getMapreducesByApplication());
       processMap.put("getStreamsByApplication", new getStreamsByApplication());
       processMap.put("getDatasetsByApplication", new getDatasetsByApplication());
       processMap.put("getFlowsByStream", new getFlowsByStream());
       processMap.put("getFlowsByDataset", new getFlowsByDataset());
       processMap.put("getQueriesByDataset", new getQueriesByDataset());
+      processMap.put("getMapreducesByDataset", new getMapreducesByDataset());
       processMap.put("deleteAll", new deleteAll());
       return processMap;
     }
@@ -3312,6 +3933,130 @@ public class MetadataService {
       }
     }
 
+    private static class createMapreduce<I extends Iface> extends org.apache.thrift.ProcessFunction<I, createMapreduce_args> {
+      public createMapreduce() {
+        super("createMapreduce");
+      }
+
+      protected createMapreduce_args getEmptyArgsInstance() {
+        return new createMapreduce_args();
+      }
+
+      protected createMapreduce_result getResult(I iface, createMapreduce_args args) throws org.apache.thrift.TException {
+        createMapreduce_result result = new createMapreduce_result();
+        try {
+          result.success = iface.createMapreduce(args.account, args.mapreduce);
+          result.setSuccessIsSet(true);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class updateMapreduce<I extends Iface> extends org.apache.thrift.ProcessFunction<I, updateMapreduce_args> {
+      public updateMapreduce() {
+        super("updateMapreduce");
+      }
+
+      protected updateMapreduce_args getEmptyArgsInstance() {
+        return new updateMapreduce_args();
+      }
+
+      protected updateMapreduce_result getResult(I iface, updateMapreduce_args args) throws org.apache.thrift.TException {
+        updateMapreduce_result result = new updateMapreduce_result();
+        try {
+          result.success = iface.updateMapreduce(args.account, args.mapreduce);
+          result.setSuccessIsSet(true);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class addDatasetToMapreduce<I extends Iface> extends org.apache.thrift.ProcessFunction<I, addDatasetToMapreduce_args> {
+      public addDatasetToMapreduce() {
+        super("addDatasetToMapreduce");
+      }
+
+      protected addDatasetToMapreduce_args getEmptyArgsInstance() {
+        return new addDatasetToMapreduce_args();
+      }
+
+      protected addDatasetToMapreduce_result getResult(I iface, addDatasetToMapreduce_args args) throws org.apache.thrift.TException {
+        addDatasetToMapreduce_result result = new addDatasetToMapreduce_result();
+        try {
+          result.success = iface.addDatasetToMapreduce(args.account, args.app, args.mapreduce, args.dataset);
+          result.setSuccessIsSet(true);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class deleteMapreduce<I extends Iface> extends org.apache.thrift.ProcessFunction<I, deleteMapreduce_args> {
+      public deleteMapreduce() {
+        super("deleteMapreduce");
+      }
+
+      protected deleteMapreduce_args getEmptyArgsInstance() {
+        return new deleteMapreduce_args();
+      }
+
+      protected deleteMapreduce_result getResult(I iface, deleteMapreduce_args args) throws org.apache.thrift.TException {
+        deleteMapreduce_result result = new deleteMapreduce_result();
+        try {
+          result.success = iface.deleteMapreduce(args.account, args.mapreduce);
+          result.setSuccessIsSet(true);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class getMapreduces<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getMapreduces_args> {
+      public getMapreduces() {
+        super("getMapreduces");
+      }
+
+      protected getMapreduces_args getEmptyArgsInstance() {
+        return new getMapreduces_args();
+      }
+
+      protected getMapreduces_result getResult(I iface, getMapreduces_args args) throws org.apache.thrift.TException {
+        getMapreduces_result result = new getMapreduces_result();
+        try {
+          result.success = iface.getMapreduces(args.account);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class getMapreduce<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getMapreduce_args> {
+      public getMapreduce() {
+        super("getMapreduce");
+      }
+
+      protected getMapreduce_args getEmptyArgsInstance() {
+        return new getMapreduce_args();
+      }
+
+      protected getMapreduce_result getResult(I iface, getMapreduce_args args) throws org.apache.thrift.TException {
+        getMapreduce_result result = new getMapreduce_result();
+        try {
+          result.success = iface.getMapreduce(args.account, args.mapreduce);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
     private static class createFlow<I extends Iface> extends org.apache.thrift.ProcessFunction<I, createFlow_args> {
       public createFlow() {
         super("createFlow");
@@ -3497,6 +4242,26 @@ public class MetadataService {
       }
     }
 
+    private static class getMapreducesByApplication<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getMapreducesByApplication_args> {
+      public getMapreducesByApplication() {
+        super("getMapreducesByApplication");
+      }
+
+      protected getMapreducesByApplication_args getEmptyArgsInstance() {
+        return new getMapreducesByApplication_args();
+      }
+
+      protected getMapreducesByApplication_result getResult(I iface, getMapreducesByApplication_args args) throws org.apache.thrift.TException {
+        getMapreducesByApplication_result result = new getMapreducesByApplication_result();
+        try {
+          result.success = iface.getMapreducesByApplication(args.account, args.application);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
     private static class getStreamsByApplication<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getStreamsByApplication_args> {
       public getStreamsByApplication() {
         super("getStreamsByApplication");
@@ -3597,6 +4362,26 @@ public class MetadataService {
       }
     }
 
+    private static class getMapreducesByDataset<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getMapreducesByDataset_args> {
+      public getMapreducesByDataset() {
+        super("getMapreducesByDataset");
+      }
+
+      protected getMapreducesByDataset_args getEmptyArgsInstance() {
+        return new getMapreducesByDataset_args();
+      }
+
+      protected getMapreducesByDataset_result getResult(I iface, getMapreducesByDataset_args args) throws org.apache.thrift.TException {
+        getMapreducesByDataset_result result = new getMapreducesByDataset_result();
+        try {
+          result.success = iface.getMapreducesByDataset(args.account, args.dataset);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
     private static class deleteAll<I extends Iface> extends org.apache.thrift.ProcessFunction<I, deleteAll_args> {
       public deleteAll() {
         super("deleteAll");
@@ -3631,8 +4416,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createStream_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Stream stream; // required
+    public Account account; // required
+    public Stream stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -3745,8 +4530,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public createStream_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -3768,8 +4554,9 @@ public class MetadataService {
       return this.stream;
     }
 
-    public void setStream(Stream stream) {
+    public createStream_args setStream(Stream stream) {
       this.stream = stream;
+      return this;
     }
 
     public void unsetStream() {
@@ -3871,19 +4658,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_stream = true && (isSetStream());
-      builder.append(present_stream);
-      if (present_stream)
-        builder.append(stream);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createStream_args other) {
@@ -4015,6 +4790,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -4096,8 +4873,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createStream_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4214,9 +4991,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public createStream_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -4236,8 +5014,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public createStream_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -4339,19 +5118,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createStream_result other) {
@@ -4431,6 +5198,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -4478,6 +5247,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -4556,8 +5327,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new assertStream_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Stream stream; // required
+    public Account account; // required
+    public Stream stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4670,8 +5441,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public assertStream_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -4693,8 +5465,9 @@ public class MetadataService {
       return this.stream;
     }
 
-    public void setStream(Stream stream) {
+    public assertStream_args setStream(Stream stream) {
       this.stream = stream;
+      return this;
     }
 
     public void unsetStream() {
@@ -4796,19 +5569,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_stream = true && (isSetStream());
-      builder.append(present_stream);
-      if (present_stream)
-        builder.append(stream);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(assertStream_args other) {
@@ -4940,6 +5701,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -5021,8 +5784,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new assertStream_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -5139,9 +5902,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public assertStream_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -5161,8 +5925,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public assertStream_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -5264,19 +6029,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(assertStream_result other) {
@@ -5356,6 +6109,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -5403,6 +6158,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -5481,8 +6238,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteStream_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Stream stream; // required
+    public Account account; // required
+    public Stream stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -5595,8 +6352,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public deleteStream_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -5618,8 +6376,9 @@ public class MetadataService {
       return this.stream;
     }
 
-    public void setStream(Stream stream) {
+    public deleteStream_args setStream(Stream stream) {
       this.stream = stream;
+      return this;
     }
 
     public void unsetStream() {
@@ -5721,19 +6480,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_stream = true && (isSetStream());
-      builder.append(present_stream);
-      if (present_stream)
-        builder.append(stream);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteStream_args other) {
@@ -5865,6 +6612,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -5946,8 +6695,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteStream_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -6064,9 +6813,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public deleteStream_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -6086,8 +6836,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public deleteStream_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -6189,19 +6940,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteStream_result other) {
@@ -6281,6 +7020,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -6328,6 +7069,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -6405,7 +7148,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStreams_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
+    public Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -6507,8 +7250,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public getStreams_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -6588,14 +7332,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getStreams_args other) {
@@ -6700,6 +7437,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -6765,8 +7504,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStreams_resultTupleSchemeFactory());
     }
 
-    private List<Stream> success; // required
-    private MetadataServiceException e; // required
+    public List<Stream> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -6899,8 +7638,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Stream> success) {
+    public getStreams_result setSuccess(List<Stream> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -6922,8 +7662,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getStreams_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -7025,19 +7766,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getStreams_result other) {
@@ -7148,14 +7877,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list24 = iprot.readListBegin();
-                  struct.success = new ArrayList<Stream>(_list24.size);
-                  for (int _i25 = 0; _i25 < _list24.size; ++_i25)
+                  org.apache.thrift.protocol.TList _list32 = iprot.readListBegin();
+                  struct.success = new ArrayList<Stream>(_list32.size);
+                  for (int _i33 = 0; _i33 < _list32.size; ++_i33)
                   {
-                    Stream _elem26; // required
-                    _elem26 = new Stream();
-                    _elem26.read(iprot);
-                    struct.success.add(_elem26);
+                    Stream _elem34; // required
+                    _elem34 = new Stream();
+                    _elem34.read(iprot);
+                    struct.success.add(_elem34);
                   }
                   iprot.readListEnd();
                 }
@@ -7179,6 +7908,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -7190,9 +7921,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Stream _iter27 : struct.success)
+            for (Stream _iter35 : struct.success)
             {
-              _iter27.write(oprot);
+              _iter35.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -7231,9 +7962,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Stream _iter28 : struct.success)
+            for (Stream _iter36 : struct.success)
             {
-              _iter28.write(oprot);
+              _iter36.write(oprot);
             }
           }
         }
@@ -7248,14 +7979,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list29 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Stream>(_list29.size);
-            for (int _i30 = 0; _i30 < _list29.size; ++_i30)
+            org.apache.thrift.protocol.TList _list37 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Stream>(_list37.size);
+            for (int _i38 = 0; _i38 < _list37.size; ++_i38)
             {
-              Stream _elem31; // required
-              _elem31 = new Stream();
-              _elem31.read(iprot);
-              struct.success.add(_elem31);
+              Stream _elem39; // required
+              _elem39 = new Stream();
+              _elem39.read(iprot);
+              struct.success.add(_elem39);
             }
           }
           struct.setSuccessIsSet(true);
@@ -7282,8 +8013,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStream_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Stream stream; // required
+    public Account account; // required
+    public Stream stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -7396,8 +8127,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public getStream_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -7419,8 +8151,9 @@ public class MetadataService {
       return this.stream;
     }
 
-    public void setStream(Stream stream) {
+    public getStream_args setStream(Stream stream) {
       this.stream = stream;
+      return this;
     }
 
     public void unsetStream() {
@@ -7522,19 +8255,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_stream = true && (isSetStream());
-      builder.append(present_stream);
-      if (present_stream)
-        builder.append(stream);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getStream_args other) {
@@ -7666,6 +8387,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -7747,8 +8470,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStream_resultTupleSchemeFactory());
     }
 
-    private Stream success; // required
-    private MetadataServiceException e; // required
+    public Stream success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -7861,8 +8584,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(Stream success) {
+    public getStream_result setSuccess(Stream success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -7884,8 +8608,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getStream_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -7987,19 +8712,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getStream_result other) {
@@ -8131,6 +8844,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -8212,8 +8927,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createDataset_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Dataset dataset; // required
+    public Account account; // required
+    public Dataset dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -8326,8 +9041,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public createDataset_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -8349,8 +9065,9 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public void setDataset(Dataset dataset) {
+    public createDataset_args setDataset(Dataset dataset) {
       this.dataset = dataset;
+      return this;
     }
 
     public void unsetDataset() {
@@ -8452,19 +9169,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_dataset = true && (isSetDataset());
-      builder.append(present_dataset);
-      if (present_dataset)
-        builder.append(dataset);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createDataset_args other) {
@@ -8596,6 +9301,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -8677,8 +9384,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createDataset_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -8795,9 +9502,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public createDataset_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -8817,8 +9525,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public createDataset_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -8920,19 +9629,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createDataset_result other) {
@@ -9012,6 +9709,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -9059,6 +9758,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -9137,8 +9838,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new assertDataset_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Dataset dataset; // required
+    public Account account; // required
+    public Dataset dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -9251,8 +9952,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public assertDataset_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -9274,8 +9976,9 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public void setDataset(Dataset dataset) {
+    public assertDataset_args setDataset(Dataset dataset) {
       this.dataset = dataset;
+      return this;
     }
 
     public void unsetDataset() {
@@ -9377,19 +10080,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_dataset = true && (isSetDataset());
-      builder.append(present_dataset);
-      if (present_dataset)
-        builder.append(dataset);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(assertDataset_args other) {
@@ -9521,6 +10212,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -9602,8 +10295,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new assertDataset_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -9720,9 +10413,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public assertDataset_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -9742,8 +10436,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public assertDataset_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -9845,19 +10540,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(assertDataset_result other) {
@@ -9937,6 +10620,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -9984,6 +10669,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -10062,8 +10749,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteDataset_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Dataset dataset; // required
+    public Account account; // required
+    public Dataset dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -10176,8 +10863,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public deleteDataset_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -10199,8 +10887,9 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public void setDataset(Dataset dataset) {
+    public deleteDataset_args setDataset(Dataset dataset) {
       this.dataset = dataset;
+      return this;
     }
 
     public void unsetDataset() {
@@ -10302,19 +10991,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_dataset = true && (isSetDataset());
-      builder.append(present_dataset);
-      if (present_dataset)
-        builder.append(dataset);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteDataset_args other) {
@@ -10446,6 +11123,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -10527,8 +11206,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteDataset_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -10645,9 +11324,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public deleteDataset_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -10667,8 +11347,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public deleteDataset_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -10770,19 +11451,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteDataset_result other) {
@@ -10862,6 +11531,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -10909,6 +11580,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -10986,7 +11659,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDatasets_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
+    public Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -11088,8 +11761,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public getDatasets_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -11169,14 +11843,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getDatasets_args other) {
@@ -11281,6 +11948,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -11346,8 +12015,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDatasets_resultTupleSchemeFactory());
     }
 
-    private List<Dataset> success; // required
-    private MetadataServiceException e; // required
+    public List<Dataset> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -11480,8 +12149,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Dataset> success) {
+    public getDatasets_result setSuccess(List<Dataset> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -11503,8 +12173,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getDatasets_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -11606,19 +12277,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getDatasets_result other) {
@@ -11729,14 +12388,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list32 = iprot.readListBegin();
-                  struct.success = new ArrayList<Dataset>(_list32.size);
-                  for (int _i33 = 0; _i33 < _list32.size; ++_i33)
+                  org.apache.thrift.protocol.TList _list40 = iprot.readListBegin();
+                  struct.success = new ArrayList<Dataset>(_list40.size);
+                  for (int _i41 = 0; _i41 < _list40.size; ++_i41)
                   {
-                    Dataset _elem34; // required
-                    _elem34 = new Dataset();
-                    _elem34.read(iprot);
-                    struct.success.add(_elem34);
+                    Dataset _elem42; // required
+                    _elem42 = new Dataset();
+                    _elem42.read(iprot);
+                    struct.success.add(_elem42);
                   }
                   iprot.readListEnd();
                 }
@@ -11760,6 +12419,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -11771,9 +12432,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Dataset _iter35 : struct.success)
+            for (Dataset _iter43 : struct.success)
             {
-              _iter35.write(oprot);
+              _iter43.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -11812,9 +12473,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Dataset _iter36 : struct.success)
+            for (Dataset _iter44 : struct.success)
             {
-              _iter36.write(oprot);
+              _iter44.write(oprot);
             }
           }
         }
@@ -11829,14 +12490,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list37 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Dataset>(_list37.size);
-            for (int _i38 = 0; _i38 < _list37.size; ++_i38)
+            org.apache.thrift.protocol.TList _list45 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Dataset>(_list45.size);
+            for (int _i46 = 0; _i46 < _list45.size; ++_i46)
             {
-              Dataset _elem39; // required
-              _elem39 = new Dataset();
-              _elem39.read(iprot);
-              struct.success.add(_elem39);
+              Dataset _elem47; // required
+              _elem47 = new Dataset();
+              _elem47.read(iprot);
+              struct.success.add(_elem47);
             }
           }
           struct.setSuccessIsSet(true);
@@ -11863,8 +12524,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDataset_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Dataset dataset; // required
+    public Account account; // required
+    public Dataset dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -11977,8 +12638,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public getDataset_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -12000,8 +12662,9 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public void setDataset(Dataset dataset) {
+    public getDataset_args setDataset(Dataset dataset) {
       this.dataset = dataset;
+      return this;
     }
 
     public void unsetDataset() {
@@ -12103,19 +12766,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_dataset = true && (isSetDataset());
-      builder.append(present_dataset);
-      if (present_dataset)
-        builder.append(dataset);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getDataset_args other) {
@@ -12247,6 +12898,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -12328,8 +12981,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDataset_resultTupleSchemeFactory());
     }
 
-    private Dataset success; // required
-    private MetadataServiceException e; // required
+    public Dataset success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -12442,8 +13095,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(Dataset success) {
+    public getDataset_result setSuccess(Dataset success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -12465,8 +13119,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getDataset_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -12568,19 +13223,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getDataset_result other) {
@@ -12712,6 +13355,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -12793,8 +13438,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createApplication_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Application application; // required
+    public Account account; // required
+    public Application application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -12907,8 +13552,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public createApplication_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -12930,8 +13576,9 @@ public class MetadataService {
       return this.application;
     }
 
-    public void setApplication(Application application) {
+    public createApplication_args setApplication(Application application) {
       this.application = application;
+      return this;
     }
 
     public void unsetApplication() {
@@ -13033,19 +13680,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_application = true && (isSetApplication());
-      builder.append(present_application);
-      if (present_application)
-        builder.append(application);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createApplication_args other) {
@@ -13177,6 +13812,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -13258,8 +13895,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createApplication_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -13376,9 +14013,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public createApplication_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -13398,8 +14036,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public createApplication_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -13501,19 +14140,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createApplication_result other) {
@@ -13593,6 +14220,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -13640,6 +14269,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -13718,8 +14349,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateApplication_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Application application; // required
+    public Account account; // required
+    public Application application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -13832,8 +14463,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public updateApplication_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -13855,8 +14487,9 @@ public class MetadataService {
       return this.application;
     }
 
-    public void setApplication(Application application) {
+    public updateApplication_args setApplication(Application application) {
       this.application = application;
+      return this;
     }
 
     public void unsetApplication() {
@@ -13958,19 +14591,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_application = true && (isSetApplication());
-      builder.append(present_application);
-      if (present_application)
-        builder.append(application);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(updateApplication_args other) {
@@ -14102,6 +14723,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -14183,8 +14806,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateApplication_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -14301,9 +14924,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public updateApplication_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -14323,8 +14947,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public updateApplication_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -14426,19 +15051,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(updateApplication_result other) {
@@ -14518,6 +15131,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -14565,6 +15180,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -14643,8 +15260,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteApplication_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Application application; // required
+    public Account account; // required
+    public Application application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -14757,8 +15374,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public deleteApplication_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -14780,8 +15398,9 @@ public class MetadataService {
       return this.application;
     }
 
-    public void setApplication(Application application) {
+    public deleteApplication_args setApplication(Application application) {
       this.application = application;
+      return this;
     }
 
     public void unsetApplication() {
@@ -14883,19 +15502,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_application = true && (isSetApplication());
-      builder.append(present_application);
-      if (present_application)
-        builder.append(application);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteApplication_args other) {
@@ -15027,6 +15634,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -15108,8 +15717,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteApplication_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -15226,9 +15835,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public deleteApplication_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -15248,8 +15858,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public deleteApplication_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -15351,19 +15962,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteApplication_result other) {
@@ -15443,6 +16042,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -15490,6 +16091,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -15567,7 +16170,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getApplications_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
+    public Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -15669,8 +16272,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public getApplications_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -15750,14 +16354,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getApplications_args other) {
@@ -15862,6 +16459,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -15927,8 +16526,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getApplications_resultTupleSchemeFactory());
     }
 
-    private List<Application> success; // required
-    private MetadataServiceException e; // required
+    public List<Application> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -16061,8 +16660,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Application> success) {
+    public getApplications_result setSuccess(List<Application> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -16084,8 +16684,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getApplications_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -16187,19 +16788,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getApplications_result other) {
@@ -16310,14 +16899,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list40 = iprot.readListBegin();
-                  struct.success = new ArrayList<Application>(_list40.size);
-                  for (int _i41 = 0; _i41 < _list40.size; ++_i41)
+                  org.apache.thrift.protocol.TList _list48 = iprot.readListBegin();
+                  struct.success = new ArrayList<Application>(_list48.size);
+                  for (int _i49 = 0; _i49 < _list48.size; ++_i49)
                   {
-                    Application _elem42; // required
-                    _elem42 = new Application();
-                    _elem42.read(iprot);
-                    struct.success.add(_elem42);
+                    Application _elem50; // required
+                    _elem50 = new Application();
+                    _elem50.read(iprot);
+                    struct.success.add(_elem50);
                   }
                   iprot.readListEnd();
                 }
@@ -16341,6 +16930,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -16352,9 +16943,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Application _iter43 : struct.success)
+            for (Application _iter51 : struct.success)
             {
-              _iter43.write(oprot);
+              _iter51.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -16393,9 +16984,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Application _iter44 : struct.success)
+            for (Application _iter52 : struct.success)
             {
-              _iter44.write(oprot);
+              _iter52.write(oprot);
             }
           }
         }
@@ -16410,14 +17001,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list45 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Application>(_list45.size);
-            for (int _i46 = 0; _i46 < _list45.size; ++_i46)
+            org.apache.thrift.protocol.TList _list53 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Application>(_list53.size);
+            for (int _i54 = 0; _i54 < _list53.size; ++_i54)
             {
-              Application _elem47; // required
-              _elem47 = new Application();
-              _elem47.read(iprot);
-              struct.success.add(_elem47);
+              Application _elem55; // required
+              _elem55 = new Application();
+              _elem55.read(iprot);
+              struct.success.add(_elem55);
             }
           }
           struct.setSuccessIsSet(true);
@@ -16444,8 +17035,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getApplication_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Application application; // required
+    public Account account; // required
+    public Application application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -16558,8 +17149,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public getApplication_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -16581,8 +17173,9 @@ public class MetadataService {
       return this.application;
     }
 
-    public void setApplication(Application application) {
+    public getApplication_args setApplication(Application application) {
       this.application = application;
+      return this;
     }
 
     public void unsetApplication() {
@@ -16684,19 +17277,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_application = true && (isSetApplication());
-      builder.append(present_application);
-      if (present_application)
-        builder.append(application);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getApplication_args other) {
@@ -16828,6 +17409,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -16909,8 +17492,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getApplication_resultTupleSchemeFactory());
     }
 
-    private Application success; // required
-    private MetadataServiceException e; // required
+    public Application success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -17023,8 +17606,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(Application success) {
+    public getApplication_result setSuccess(Application success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -17046,8 +17630,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getApplication_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -17149,19 +17734,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getApplication_result other) {
@@ -17293,6 +17866,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -17374,8 +17949,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createQuery_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Query query; // required
+    public Account account; // required
+    public Query query; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -17488,8 +18063,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public createQuery_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -17511,8 +18087,9 @@ public class MetadataService {
       return this.query;
     }
 
-    public void setQuery(Query query) {
+    public createQuery_args setQuery(Query query) {
       this.query = query;
+      return this;
     }
 
     public void unsetQuery() {
@@ -17614,19 +18191,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_query = true && (isSetQuery());
-      builder.append(present_query);
-      if (present_query)
-        builder.append(query);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createQuery_args other) {
@@ -17758,6 +18323,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -17839,8 +18406,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createQuery_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -17957,9 +18524,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public createQuery_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -17979,8 +18547,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public createQuery_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -18082,19 +18651,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createQuery_result other) {
@@ -18174,6 +18731,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -18221,6 +18780,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -18299,8 +18860,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateQuery_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Query query; // required
+    public Account account; // required
+    public Query query; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -18413,8 +18974,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public updateQuery_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -18436,8 +18998,9 @@ public class MetadataService {
       return this.query;
     }
 
-    public void setQuery(Query query) {
+    public updateQuery_args setQuery(Query query) {
       this.query = query;
+      return this;
     }
 
     public void unsetQuery() {
@@ -18539,19 +19102,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_query = true && (isSetQuery());
-      builder.append(present_query);
-      if (present_query)
-        builder.append(query);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(updateQuery_args other) {
@@ -18683,6 +19234,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -18764,8 +19317,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateQuery_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -18882,9 +19435,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public updateQuery_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -18904,8 +19458,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public updateQuery_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -19007,19 +19562,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(updateQuery_result other) {
@@ -19099,6 +19642,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -19146,6 +19691,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -19226,10 +19773,10 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToQuery_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String app; // required
-    private String query; // required
-    private String dataset; // required
+    public String account; // required
+    public String app; // required
+    public String query; // required
+    public String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -19364,8 +19911,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public addDatasetToQuery_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -19387,8 +19935,9 @@ public class MetadataService {
       return this.app;
     }
 
-    public void setApp(String app) {
+    public addDatasetToQuery_args setApp(String app) {
       this.app = app;
+      return this;
     }
 
     public void unsetApp() {
@@ -19410,8 +19959,9 @@ public class MetadataService {
       return this.query;
     }
 
-    public void setQuery(String query) {
+    public addDatasetToQuery_args setQuery(String query) {
       this.query = query;
+      return this;
     }
 
     public void unsetQuery() {
@@ -19433,8 +19983,9 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public void setDataset(String dataset) {
+    public addDatasetToQuery_args setDataset(String dataset) {
       this.dataset = dataset;
+      return this;
     }
 
     public void unsetDataset() {
@@ -19580,29 +20131,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_app = true && (isSetApp());
-      builder.append(present_app);
-      if (present_app)
-        builder.append(app);
-
-      boolean present_query = true && (isSetQuery());
-      builder.append(present_query);
-      if (present_query)
-        builder.append(query);
-
-      boolean present_dataset = true && (isSetDataset());
-      builder.append(present_dataset);
-      if (present_dataset)
-        builder.append(dataset);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(addDatasetToQuery_args other) {
@@ -19784,6 +20313,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -19893,8 +20424,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToQuery_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -20011,9 +20542,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public addDatasetToQuery_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -20033,8 +20565,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public addDatasetToQuery_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -20136,19 +20669,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(addDatasetToQuery_result other) {
@@ -20228,6 +20749,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -20275,6 +20798,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -20353,8 +20878,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteQuery_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Query query; // required
+    public Account account; // required
+    public Query query; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -20467,8 +20992,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public deleteQuery_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -20490,8 +21016,9 @@ public class MetadataService {
       return this.query;
     }
 
-    public void setQuery(Query query) {
+    public deleteQuery_args setQuery(Query query) {
       this.query = query;
+      return this;
     }
 
     public void unsetQuery() {
@@ -20593,19 +21120,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_query = true && (isSetQuery());
-      builder.append(present_query);
-      if (present_query)
-        builder.append(query);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteQuery_args other) {
@@ -20737,6 +21252,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -20818,8 +21335,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteQuery_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -20936,9 +21453,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public deleteQuery_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -20958,8 +21476,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public deleteQuery_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -21061,19 +21580,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteQuery_result other) {
@@ -21153,6 +21660,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -21200,6 +21709,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -21277,7 +21788,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueries_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
+    public Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -21379,8 +21890,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public getQueries_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -21460,14 +21972,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getQueries_args other) {
@@ -21572,6 +22077,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -21637,8 +22144,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueries_resultTupleSchemeFactory());
     }
 
-    private List<Query> success; // required
-    private MetadataServiceException e; // required
+    public List<Query> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -21771,8 +22278,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Query> success) {
+    public getQueries_result setSuccess(List<Query> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -21794,8 +22302,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getQueries_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -21897,19 +22406,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getQueries_result other) {
@@ -22020,14 +22517,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list48 = iprot.readListBegin();
-                  struct.success = new ArrayList<Query>(_list48.size);
-                  for (int _i49 = 0; _i49 < _list48.size; ++_i49)
+                  org.apache.thrift.protocol.TList _list56 = iprot.readListBegin();
+                  struct.success = new ArrayList<Query>(_list56.size);
+                  for (int _i57 = 0; _i57 < _list56.size; ++_i57)
                   {
-                    Query _elem50; // required
-                    _elem50 = new Query();
-                    _elem50.read(iprot);
-                    struct.success.add(_elem50);
+                    Query _elem58; // required
+                    _elem58 = new Query();
+                    _elem58.read(iprot);
+                    struct.success.add(_elem58);
                   }
                   iprot.readListEnd();
                 }
@@ -22051,6 +22548,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -22062,9 +22561,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Query _iter51 : struct.success)
+            for (Query _iter59 : struct.success)
             {
-              _iter51.write(oprot);
+              _iter59.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -22103,9 +22602,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Query _iter52 : struct.success)
+            for (Query _iter60 : struct.success)
             {
-              _iter52.write(oprot);
+              _iter60.write(oprot);
             }
           }
         }
@@ -22120,14 +22619,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list53 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Query>(_list53.size);
-            for (int _i54 = 0; _i54 < _list53.size; ++_i54)
+            org.apache.thrift.protocol.TList _list61 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Query>(_list61.size);
+            for (int _i62 = 0; _i62 < _list61.size; ++_i62)
             {
-              Query _elem55; // required
-              _elem55 = new Query();
-              _elem55.read(iprot);
-              struct.success.add(_elem55);
+              Query _elem63; // required
+              _elem63 = new Query();
+              _elem63.read(iprot);
+              struct.success.add(_elem63);
             }
           }
           struct.setSuccessIsSet(true);
@@ -22154,8 +22653,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQuery_argsTupleSchemeFactory());
     }
 
-    private Account account; // required
-    private Query query; // required
+    public Account account; // required
+    public Query query; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -22268,8 +22767,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(Account account) {
+    public getQuery_args setAccount(Account account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -22291,8 +22791,9 @@ public class MetadataService {
       return this.query;
     }
 
-    public void setQuery(Query query) {
+    public getQuery_args setQuery(Query query) {
       this.query = query;
+      return this;
     }
 
     public void unsetQuery() {
@@ -22394,19 +22895,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_query = true && (isSetQuery());
-      builder.append(present_query);
-      if (present_query)
-        builder.append(query);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getQuery_args other) {
@@ -22538,6 +23027,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -22619,8 +23110,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQuery_resultTupleSchemeFactory());
     }
 
-    private Query success; // required
-    private MetadataServiceException e; // required
+    public Query success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -22733,8 +23224,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(Query success) {
+    public getQuery_result setSuccess(Query success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -22756,8 +23248,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getQuery_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -22859,19 +23352,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getQuery_result other) {
@@ -23003,6 +23484,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -23072,6 +23555,5624 @@ public class MetadataService {
 
   }
 
+  public static class createMapreduce_args implements org.apache.thrift.TBase<createMapreduce_args, createMapreduce_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("createMapreduce_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField MAPREDUCE_FIELD_DESC = new org.apache.thrift.protocol.TField("mapreduce", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new createMapreduce_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new createMapreduce_argsTupleSchemeFactory());
+    }
+
+    public Account account; // required
+    public Mapreduce mapreduce; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      MAPREDUCE((short)2, "mapreduce");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // MAPREDUCE
+            return MAPREDUCE;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Account.class)));
+      tmpMap.put(_Fields.MAPREDUCE, new org.apache.thrift.meta_data.FieldMetaData("mapreduce", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Mapreduce.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(createMapreduce_args.class, metaDataMap);
+    }
+
+    public createMapreduce_args() {
+    }
+
+    public createMapreduce_args(
+      Account account,
+      Mapreduce mapreduce)
+    {
+      this();
+      this.account = account;
+      this.mapreduce = mapreduce;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public createMapreduce_args(createMapreduce_args other) {
+      if (other.isSetAccount()) {
+        this.account = new Account(other.account);
+      }
+      if (other.isSetMapreduce()) {
+        this.mapreduce = new Mapreduce(other.mapreduce);
+      }
+    }
+
+    public createMapreduce_args deepCopy() {
+      return new createMapreduce_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.mapreduce = null;
+    }
+
+    public Account getAccount() {
+      return this.account;
+    }
+
+    public createMapreduce_args setAccount(Account account) {
+      this.account = account;
+      return this;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public Mapreduce getMapreduce() {
+      return this.mapreduce;
+    }
+
+    public createMapreduce_args setMapreduce(Mapreduce mapreduce) {
+      this.mapreduce = mapreduce;
+      return this;
+    }
+
+    public void unsetMapreduce() {
+      this.mapreduce = null;
+    }
+
+    /** Returns true if field mapreduce is set (has been assigned a value) and false otherwise */
+    public boolean isSetMapreduce() {
+      return this.mapreduce != null;
+    }
+
+    public void setMapreduceIsSet(boolean value) {
+      if (!value) {
+        this.mapreduce = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((Account)value);
+        }
+        break;
+
+      case MAPREDUCE:
+        if (value == null) {
+          unsetMapreduce();
+        } else {
+          setMapreduce((Mapreduce)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case MAPREDUCE:
+        return getMapreduce();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case MAPREDUCE:
+        return isSetMapreduce();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof createMapreduce_args)
+        return this.equals((createMapreduce_args)that);
+      return false;
+    }
+
+    public boolean equals(createMapreduce_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_mapreduce = true && this.isSetMapreduce();
+      boolean that_present_mapreduce = true && that.isSetMapreduce();
+      if (this_present_mapreduce || that_present_mapreduce) {
+        if (!(this_present_mapreduce && that_present_mapreduce))
+          return false;
+        if (!this.mapreduce.equals(that.mapreduce))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(createMapreduce_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      createMapreduce_args typedOther = (createMapreduce_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMapreduce()).compareTo(typedOther.isSetMapreduce());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMapreduce()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mapreduce, typedOther.mapreduce);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("createMapreduce_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mapreduce:");
+      if (this.mapreduce == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mapreduce);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class createMapreduce_argsStandardSchemeFactory implements SchemeFactory {
+      public createMapreduce_argsStandardScheme getScheme() {
+        return new createMapreduce_argsStandardScheme();
+      }
+    }
+
+    private static class createMapreduce_argsStandardScheme extends StandardScheme<createMapreduce_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, createMapreduce_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.account = new Account();
+                struct.account.read(iprot);
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // MAPREDUCE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.mapreduce = new Mapreduce();
+                struct.mapreduce.read(iprot);
+                struct.setMapreduceIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, createMapreduce_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          struct.account.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.mapreduce != null) {
+          oprot.writeFieldBegin(MAPREDUCE_FIELD_DESC);
+          struct.mapreduce.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class createMapreduce_argsTupleSchemeFactory implements SchemeFactory {
+      public createMapreduce_argsTupleScheme getScheme() {
+        return new createMapreduce_argsTupleScheme();
+      }
+    }
+
+    private static class createMapreduce_argsTupleScheme extends TupleScheme<createMapreduce_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, createMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetMapreduce()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          struct.account.write(oprot);
+        }
+        if (struct.isSetMapreduce()) {
+          struct.mapreduce.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, createMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = new Account();
+          struct.account.read(iprot);
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.mapreduce = new Mapreduce();
+          struct.mapreduce.read(iprot);
+          struct.setMapreduceIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class createMapreduce_result implements org.apache.thrift.TBase<createMapreduce_result, createMapreduce_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("createMapreduce_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new createMapreduce_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new createMapreduce_resultTupleSchemeFactory());
+    }
+
+    public boolean success; // required
+    public MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(createMapreduce_result.class, metaDataMap);
+    }
+
+    public createMapreduce_result() {
+    }
+
+    public createMapreduce_result(
+      boolean success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public createMapreduce_result(createMapreduce_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public createMapreduce_result deepCopy() {
+      return new createMapreduce_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public createMapreduce_result setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public createMapreduce_result setE(MetadataServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return Boolean.valueOf(isSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof createMapreduce_result)
+        return this.equals((createMapreduce_result)that);
+      return false;
+    }
+
+    public boolean equals(createMapreduce_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(createMapreduce_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      createMapreduce_result typedOther = (createMapreduce_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("createMapreduce_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class createMapreduce_resultStandardSchemeFactory implements SchemeFactory {
+      public createMapreduce_resultStandardScheme getScheme() {
+        return new createMapreduce_resultStandardScheme();
+      }
+    }
+
+    private static class createMapreduce_resultStandardScheme extends StandardScheme<createMapreduce_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, createMapreduce_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.success = iprot.readBool();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, createMapreduce_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(struct.success);
+        oprot.writeFieldEnd();
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class createMapreduce_resultTupleSchemeFactory implements SchemeFactory {
+      public createMapreduce_resultTupleScheme getScheme() {
+        return new createMapreduce_resultTupleScheme();
+      }
+    }
+
+    private static class createMapreduce_resultTupleScheme extends TupleScheme<createMapreduce_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, createMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeBool(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, createMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class updateMapreduce_args implements org.apache.thrift.TBase<updateMapreduce_args, updateMapreduce_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("updateMapreduce_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField MAPREDUCE_FIELD_DESC = new org.apache.thrift.protocol.TField("mapreduce", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new updateMapreduce_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new updateMapreduce_argsTupleSchemeFactory());
+    }
+
+    public Account account; // required
+    public Mapreduce mapreduce; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      MAPREDUCE((short)2, "mapreduce");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // MAPREDUCE
+            return MAPREDUCE;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Account.class)));
+      tmpMap.put(_Fields.MAPREDUCE, new org.apache.thrift.meta_data.FieldMetaData("mapreduce", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Mapreduce.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(updateMapreduce_args.class, metaDataMap);
+    }
+
+    public updateMapreduce_args() {
+    }
+
+    public updateMapreduce_args(
+      Account account,
+      Mapreduce mapreduce)
+    {
+      this();
+      this.account = account;
+      this.mapreduce = mapreduce;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public updateMapreduce_args(updateMapreduce_args other) {
+      if (other.isSetAccount()) {
+        this.account = new Account(other.account);
+      }
+      if (other.isSetMapreduce()) {
+        this.mapreduce = new Mapreduce(other.mapreduce);
+      }
+    }
+
+    public updateMapreduce_args deepCopy() {
+      return new updateMapreduce_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.mapreduce = null;
+    }
+
+    public Account getAccount() {
+      return this.account;
+    }
+
+    public updateMapreduce_args setAccount(Account account) {
+      this.account = account;
+      return this;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public Mapreduce getMapreduce() {
+      return this.mapreduce;
+    }
+
+    public updateMapreduce_args setMapreduce(Mapreduce mapreduce) {
+      this.mapreduce = mapreduce;
+      return this;
+    }
+
+    public void unsetMapreduce() {
+      this.mapreduce = null;
+    }
+
+    /** Returns true if field mapreduce is set (has been assigned a value) and false otherwise */
+    public boolean isSetMapreduce() {
+      return this.mapreduce != null;
+    }
+
+    public void setMapreduceIsSet(boolean value) {
+      if (!value) {
+        this.mapreduce = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((Account)value);
+        }
+        break;
+
+      case MAPREDUCE:
+        if (value == null) {
+          unsetMapreduce();
+        } else {
+          setMapreduce((Mapreduce)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case MAPREDUCE:
+        return getMapreduce();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case MAPREDUCE:
+        return isSetMapreduce();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof updateMapreduce_args)
+        return this.equals((updateMapreduce_args)that);
+      return false;
+    }
+
+    public boolean equals(updateMapreduce_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_mapreduce = true && this.isSetMapreduce();
+      boolean that_present_mapreduce = true && that.isSetMapreduce();
+      if (this_present_mapreduce || that_present_mapreduce) {
+        if (!(this_present_mapreduce && that_present_mapreduce))
+          return false;
+        if (!this.mapreduce.equals(that.mapreduce))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(updateMapreduce_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      updateMapreduce_args typedOther = (updateMapreduce_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMapreduce()).compareTo(typedOther.isSetMapreduce());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMapreduce()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mapreduce, typedOther.mapreduce);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("updateMapreduce_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mapreduce:");
+      if (this.mapreduce == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mapreduce);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class updateMapreduce_argsStandardSchemeFactory implements SchemeFactory {
+      public updateMapreduce_argsStandardScheme getScheme() {
+        return new updateMapreduce_argsStandardScheme();
+      }
+    }
+
+    private static class updateMapreduce_argsStandardScheme extends StandardScheme<updateMapreduce_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, updateMapreduce_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.account = new Account();
+                struct.account.read(iprot);
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // MAPREDUCE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.mapreduce = new Mapreduce();
+                struct.mapreduce.read(iprot);
+                struct.setMapreduceIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, updateMapreduce_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          struct.account.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.mapreduce != null) {
+          oprot.writeFieldBegin(MAPREDUCE_FIELD_DESC);
+          struct.mapreduce.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class updateMapreduce_argsTupleSchemeFactory implements SchemeFactory {
+      public updateMapreduce_argsTupleScheme getScheme() {
+        return new updateMapreduce_argsTupleScheme();
+      }
+    }
+
+    private static class updateMapreduce_argsTupleScheme extends TupleScheme<updateMapreduce_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, updateMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetMapreduce()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          struct.account.write(oprot);
+        }
+        if (struct.isSetMapreduce()) {
+          struct.mapreduce.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, updateMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = new Account();
+          struct.account.read(iprot);
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.mapreduce = new Mapreduce();
+          struct.mapreduce.read(iprot);
+          struct.setMapreduceIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class updateMapreduce_result implements org.apache.thrift.TBase<updateMapreduce_result, updateMapreduce_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("updateMapreduce_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new updateMapreduce_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new updateMapreduce_resultTupleSchemeFactory());
+    }
+
+    public boolean success; // required
+    public MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(updateMapreduce_result.class, metaDataMap);
+    }
+
+    public updateMapreduce_result() {
+    }
+
+    public updateMapreduce_result(
+      boolean success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public updateMapreduce_result(updateMapreduce_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public updateMapreduce_result deepCopy() {
+      return new updateMapreduce_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public updateMapreduce_result setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public updateMapreduce_result setE(MetadataServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return Boolean.valueOf(isSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof updateMapreduce_result)
+        return this.equals((updateMapreduce_result)that);
+      return false;
+    }
+
+    public boolean equals(updateMapreduce_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(updateMapreduce_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      updateMapreduce_result typedOther = (updateMapreduce_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("updateMapreduce_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class updateMapreduce_resultStandardSchemeFactory implements SchemeFactory {
+      public updateMapreduce_resultStandardScheme getScheme() {
+        return new updateMapreduce_resultStandardScheme();
+      }
+    }
+
+    private static class updateMapreduce_resultStandardScheme extends StandardScheme<updateMapreduce_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, updateMapreduce_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.success = iprot.readBool();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, updateMapreduce_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(struct.success);
+        oprot.writeFieldEnd();
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class updateMapreduce_resultTupleSchemeFactory implements SchemeFactory {
+      public updateMapreduce_resultTupleScheme getScheme() {
+        return new updateMapreduce_resultTupleScheme();
+      }
+    }
+
+    private static class updateMapreduce_resultTupleScheme extends TupleScheme<updateMapreduce_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, updateMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeBool(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, updateMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class addDatasetToMapreduce_args implements org.apache.thrift.TBase<addDatasetToMapreduce_args, addDatasetToMapreduce_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("addDatasetToMapreduce_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField APP_FIELD_DESC = new org.apache.thrift.protocol.TField("app", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField MAPREDUCE_FIELD_DESC = new org.apache.thrift.protocol.TField("mapreduce", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField DATASET_FIELD_DESC = new org.apache.thrift.protocol.TField("dataset", org.apache.thrift.protocol.TType.STRING, (short)4);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new addDatasetToMapreduce_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new addDatasetToMapreduce_argsTupleSchemeFactory());
+    }
+
+    public String account; // required
+    public String app; // required
+    public String mapreduce; // required
+    public String dataset; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      APP((short)2, "app"),
+      MAPREDUCE((short)3, "mapreduce"),
+      DATASET((short)4, "dataset");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // APP
+            return APP;
+          case 3: // MAPREDUCE
+            return MAPREDUCE;
+          case 4: // DATASET
+            return DATASET;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.APP, new org.apache.thrift.meta_data.FieldMetaData("app", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.MAPREDUCE, new org.apache.thrift.meta_data.FieldMetaData("mapreduce", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.DATASET, new org.apache.thrift.meta_data.FieldMetaData("dataset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(addDatasetToMapreduce_args.class, metaDataMap);
+    }
+
+    public addDatasetToMapreduce_args() {
+    }
+
+    public addDatasetToMapreduce_args(
+      String account,
+      String app,
+      String mapreduce,
+      String dataset)
+    {
+      this();
+      this.account = account;
+      this.app = app;
+      this.mapreduce = mapreduce;
+      this.dataset = dataset;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public addDatasetToMapreduce_args(addDatasetToMapreduce_args other) {
+      if (other.isSetAccount()) {
+        this.account = other.account;
+      }
+      if (other.isSetApp()) {
+        this.app = other.app;
+      }
+      if (other.isSetMapreduce()) {
+        this.mapreduce = other.mapreduce;
+      }
+      if (other.isSetDataset()) {
+        this.dataset = other.dataset;
+      }
+    }
+
+    public addDatasetToMapreduce_args deepCopy() {
+      return new addDatasetToMapreduce_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.app = null;
+      this.mapreduce = null;
+      this.dataset = null;
+    }
+
+    public String getAccount() {
+      return this.account;
+    }
+
+    public addDatasetToMapreduce_args setAccount(String account) {
+      this.account = account;
+      return this;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public String getApp() {
+      return this.app;
+    }
+
+    public addDatasetToMapreduce_args setApp(String app) {
+      this.app = app;
+      return this;
+    }
+
+    public void unsetApp() {
+      this.app = null;
+    }
+
+    /** Returns true if field app is set (has been assigned a value) and false otherwise */
+    public boolean isSetApp() {
+      return this.app != null;
+    }
+
+    public void setAppIsSet(boolean value) {
+      if (!value) {
+        this.app = null;
+      }
+    }
+
+    public String getMapreduce() {
+      return this.mapreduce;
+    }
+
+    public addDatasetToMapreduce_args setMapreduce(String mapreduce) {
+      this.mapreduce = mapreduce;
+      return this;
+    }
+
+    public void unsetMapreduce() {
+      this.mapreduce = null;
+    }
+
+    /** Returns true if field mapreduce is set (has been assigned a value) and false otherwise */
+    public boolean isSetMapreduce() {
+      return this.mapreduce != null;
+    }
+
+    public void setMapreduceIsSet(boolean value) {
+      if (!value) {
+        this.mapreduce = null;
+      }
+    }
+
+    public String getDataset() {
+      return this.dataset;
+    }
+
+    public addDatasetToMapreduce_args setDataset(String dataset) {
+      this.dataset = dataset;
+      return this;
+    }
+
+    public void unsetDataset() {
+      this.dataset = null;
+    }
+
+    /** Returns true if field dataset is set (has been assigned a value) and false otherwise */
+    public boolean isSetDataset() {
+      return this.dataset != null;
+    }
+
+    public void setDatasetIsSet(boolean value) {
+      if (!value) {
+        this.dataset = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((String)value);
+        }
+        break;
+
+      case APP:
+        if (value == null) {
+          unsetApp();
+        } else {
+          setApp((String)value);
+        }
+        break;
+
+      case MAPREDUCE:
+        if (value == null) {
+          unsetMapreduce();
+        } else {
+          setMapreduce((String)value);
+        }
+        break;
+
+      case DATASET:
+        if (value == null) {
+          unsetDataset();
+        } else {
+          setDataset((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case APP:
+        return getApp();
+
+      case MAPREDUCE:
+        return getMapreduce();
+
+      case DATASET:
+        return getDataset();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case APP:
+        return isSetApp();
+      case MAPREDUCE:
+        return isSetMapreduce();
+      case DATASET:
+        return isSetDataset();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof addDatasetToMapreduce_args)
+        return this.equals((addDatasetToMapreduce_args)that);
+      return false;
+    }
+
+    public boolean equals(addDatasetToMapreduce_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_app = true && this.isSetApp();
+      boolean that_present_app = true && that.isSetApp();
+      if (this_present_app || that_present_app) {
+        if (!(this_present_app && that_present_app))
+          return false;
+        if (!this.app.equals(that.app))
+          return false;
+      }
+
+      boolean this_present_mapreduce = true && this.isSetMapreduce();
+      boolean that_present_mapreduce = true && that.isSetMapreduce();
+      if (this_present_mapreduce || that_present_mapreduce) {
+        if (!(this_present_mapreduce && that_present_mapreduce))
+          return false;
+        if (!this.mapreduce.equals(that.mapreduce))
+          return false;
+      }
+
+      boolean this_present_dataset = true && this.isSetDataset();
+      boolean that_present_dataset = true && that.isSetDataset();
+      if (this_present_dataset || that_present_dataset) {
+        if (!(this_present_dataset && that_present_dataset))
+          return false;
+        if (!this.dataset.equals(that.dataset))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(addDatasetToMapreduce_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      addDatasetToMapreduce_args typedOther = (addDatasetToMapreduce_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetApp()).compareTo(typedOther.isSetApp());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetApp()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.app, typedOther.app);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMapreduce()).compareTo(typedOther.isSetMapreduce());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMapreduce()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mapreduce, typedOther.mapreduce);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetDataset()).compareTo(typedOther.isSetDataset());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetDataset()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.dataset, typedOther.dataset);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("addDatasetToMapreduce_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("app:");
+      if (this.app == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.app);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mapreduce:");
+      if (this.mapreduce == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mapreduce);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("dataset:");
+      if (this.dataset == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.dataset);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class addDatasetToMapreduce_argsStandardSchemeFactory implements SchemeFactory {
+      public addDatasetToMapreduce_argsStandardScheme getScheme() {
+        return new addDatasetToMapreduce_argsStandardScheme();
+      }
+    }
+
+    private static class addDatasetToMapreduce_argsStandardScheme extends StandardScheme<addDatasetToMapreduce_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, addDatasetToMapreduce_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.account = iprot.readString();
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // APP
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.app = iprot.readString();
+                struct.setAppIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // MAPREDUCE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.mapreduce = iprot.readString();
+                struct.setMapreduceIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 4: // DATASET
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.dataset = iprot.readString();
+                struct.setDatasetIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, addDatasetToMapreduce_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          oprot.writeString(struct.account);
+          oprot.writeFieldEnd();
+        }
+        if (struct.app != null) {
+          oprot.writeFieldBegin(APP_FIELD_DESC);
+          oprot.writeString(struct.app);
+          oprot.writeFieldEnd();
+        }
+        if (struct.mapreduce != null) {
+          oprot.writeFieldBegin(MAPREDUCE_FIELD_DESC);
+          oprot.writeString(struct.mapreduce);
+          oprot.writeFieldEnd();
+        }
+        if (struct.dataset != null) {
+          oprot.writeFieldBegin(DATASET_FIELD_DESC);
+          oprot.writeString(struct.dataset);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class addDatasetToMapreduce_argsTupleSchemeFactory implements SchemeFactory {
+      public addDatasetToMapreduce_argsTupleScheme getScheme() {
+        return new addDatasetToMapreduce_argsTupleScheme();
+      }
+    }
+
+    private static class addDatasetToMapreduce_argsTupleScheme extends TupleScheme<addDatasetToMapreduce_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, addDatasetToMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetApp()) {
+          optionals.set(1);
+        }
+        if (struct.isSetMapreduce()) {
+          optionals.set(2);
+        }
+        if (struct.isSetDataset()) {
+          optionals.set(3);
+        }
+        oprot.writeBitSet(optionals, 4);
+        if (struct.isSetAccount()) {
+          oprot.writeString(struct.account);
+        }
+        if (struct.isSetApp()) {
+          oprot.writeString(struct.app);
+        }
+        if (struct.isSetMapreduce()) {
+          oprot.writeString(struct.mapreduce);
+        }
+        if (struct.isSetDataset()) {
+          oprot.writeString(struct.dataset);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, addDatasetToMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(4);
+        if (incoming.get(0)) {
+          struct.account = iprot.readString();
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.app = iprot.readString();
+          struct.setAppIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.mapreduce = iprot.readString();
+          struct.setMapreduceIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.dataset = iprot.readString();
+          struct.setDatasetIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class addDatasetToMapreduce_result implements org.apache.thrift.TBase<addDatasetToMapreduce_result, addDatasetToMapreduce_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("addDatasetToMapreduce_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new addDatasetToMapreduce_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new addDatasetToMapreduce_resultTupleSchemeFactory());
+    }
+
+    public boolean success; // required
+    public MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(addDatasetToMapreduce_result.class, metaDataMap);
+    }
+
+    public addDatasetToMapreduce_result() {
+    }
+
+    public addDatasetToMapreduce_result(
+      boolean success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public addDatasetToMapreduce_result(addDatasetToMapreduce_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public addDatasetToMapreduce_result deepCopy() {
+      return new addDatasetToMapreduce_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public addDatasetToMapreduce_result setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public addDatasetToMapreduce_result setE(MetadataServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return Boolean.valueOf(isSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof addDatasetToMapreduce_result)
+        return this.equals((addDatasetToMapreduce_result)that);
+      return false;
+    }
+
+    public boolean equals(addDatasetToMapreduce_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(addDatasetToMapreduce_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      addDatasetToMapreduce_result typedOther = (addDatasetToMapreduce_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("addDatasetToMapreduce_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class addDatasetToMapreduce_resultStandardSchemeFactory implements SchemeFactory {
+      public addDatasetToMapreduce_resultStandardScheme getScheme() {
+        return new addDatasetToMapreduce_resultStandardScheme();
+      }
+    }
+
+    private static class addDatasetToMapreduce_resultStandardScheme extends StandardScheme<addDatasetToMapreduce_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, addDatasetToMapreduce_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.success = iprot.readBool();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, addDatasetToMapreduce_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(struct.success);
+        oprot.writeFieldEnd();
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class addDatasetToMapreduce_resultTupleSchemeFactory implements SchemeFactory {
+      public addDatasetToMapreduce_resultTupleScheme getScheme() {
+        return new addDatasetToMapreduce_resultTupleScheme();
+      }
+    }
+
+    private static class addDatasetToMapreduce_resultTupleScheme extends TupleScheme<addDatasetToMapreduce_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, addDatasetToMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeBool(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, addDatasetToMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class deleteMapreduce_args implements org.apache.thrift.TBase<deleteMapreduce_args, deleteMapreduce_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deleteMapreduce_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField MAPREDUCE_FIELD_DESC = new org.apache.thrift.protocol.TField("mapreduce", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new deleteMapreduce_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new deleteMapreduce_argsTupleSchemeFactory());
+    }
+
+    public Account account; // required
+    public Mapreduce mapreduce; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      MAPREDUCE((short)2, "mapreduce");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // MAPREDUCE
+            return MAPREDUCE;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Account.class)));
+      tmpMap.put(_Fields.MAPREDUCE, new org.apache.thrift.meta_data.FieldMetaData("mapreduce", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Mapreduce.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deleteMapreduce_args.class, metaDataMap);
+    }
+
+    public deleteMapreduce_args() {
+    }
+
+    public deleteMapreduce_args(
+      Account account,
+      Mapreduce mapreduce)
+    {
+      this();
+      this.account = account;
+      this.mapreduce = mapreduce;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public deleteMapreduce_args(deleteMapreduce_args other) {
+      if (other.isSetAccount()) {
+        this.account = new Account(other.account);
+      }
+      if (other.isSetMapreduce()) {
+        this.mapreduce = new Mapreduce(other.mapreduce);
+      }
+    }
+
+    public deleteMapreduce_args deepCopy() {
+      return new deleteMapreduce_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.mapreduce = null;
+    }
+
+    public Account getAccount() {
+      return this.account;
+    }
+
+    public deleteMapreduce_args setAccount(Account account) {
+      this.account = account;
+      return this;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public Mapreduce getMapreduce() {
+      return this.mapreduce;
+    }
+
+    public deleteMapreduce_args setMapreduce(Mapreduce mapreduce) {
+      this.mapreduce = mapreduce;
+      return this;
+    }
+
+    public void unsetMapreduce() {
+      this.mapreduce = null;
+    }
+
+    /** Returns true if field mapreduce is set (has been assigned a value) and false otherwise */
+    public boolean isSetMapreduce() {
+      return this.mapreduce != null;
+    }
+
+    public void setMapreduceIsSet(boolean value) {
+      if (!value) {
+        this.mapreduce = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((Account)value);
+        }
+        break;
+
+      case MAPREDUCE:
+        if (value == null) {
+          unsetMapreduce();
+        } else {
+          setMapreduce((Mapreduce)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case MAPREDUCE:
+        return getMapreduce();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case MAPREDUCE:
+        return isSetMapreduce();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof deleteMapreduce_args)
+        return this.equals((deleteMapreduce_args)that);
+      return false;
+    }
+
+    public boolean equals(deleteMapreduce_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_mapreduce = true && this.isSetMapreduce();
+      boolean that_present_mapreduce = true && that.isSetMapreduce();
+      if (this_present_mapreduce || that_present_mapreduce) {
+        if (!(this_present_mapreduce && that_present_mapreduce))
+          return false;
+        if (!this.mapreduce.equals(that.mapreduce))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(deleteMapreduce_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      deleteMapreduce_args typedOther = (deleteMapreduce_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMapreduce()).compareTo(typedOther.isSetMapreduce());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMapreduce()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mapreduce, typedOther.mapreduce);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("deleteMapreduce_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mapreduce:");
+      if (this.mapreduce == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mapreduce);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class deleteMapreduce_argsStandardSchemeFactory implements SchemeFactory {
+      public deleteMapreduce_argsStandardScheme getScheme() {
+        return new deleteMapreduce_argsStandardScheme();
+      }
+    }
+
+    private static class deleteMapreduce_argsStandardScheme extends StandardScheme<deleteMapreduce_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, deleteMapreduce_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.account = new Account();
+                struct.account.read(iprot);
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // MAPREDUCE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.mapreduce = new Mapreduce();
+                struct.mapreduce.read(iprot);
+                struct.setMapreduceIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, deleteMapreduce_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          struct.account.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.mapreduce != null) {
+          oprot.writeFieldBegin(MAPREDUCE_FIELD_DESC);
+          struct.mapreduce.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class deleteMapreduce_argsTupleSchemeFactory implements SchemeFactory {
+      public deleteMapreduce_argsTupleScheme getScheme() {
+        return new deleteMapreduce_argsTupleScheme();
+      }
+    }
+
+    private static class deleteMapreduce_argsTupleScheme extends TupleScheme<deleteMapreduce_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, deleteMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetMapreduce()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          struct.account.write(oprot);
+        }
+        if (struct.isSetMapreduce()) {
+          struct.mapreduce.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, deleteMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = new Account();
+          struct.account.read(iprot);
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.mapreduce = new Mapreduce();
+          struct.mapreduce.read(iprot);
+          struct.setMapreduceIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class deleteMapreduce_result implements org.apache.thrift.TBase<deleteMapreduce_result, deleteMapreduce_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deleteMapreduce_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new deleteMapreduce_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new deleteMapreduce_resultTupleSchemeFactory());
+    }
+
+    public boolean success; // required
+    public MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deleteMapreduce_result.class, metaDataMap);
+    }
+
+    public deleteMapreduce_result() {
+    }
+
+    public deleteMapreduce_result(
+      boolean success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public deleteMapreduce_result(deleteMapreduce_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public deleteMapreduce_result deepCopy() {
+      return new deleteMapreduce_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public deleteMapreduce_result setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public deleteMapreduce_result setE(MetadataServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return Boolean.valueOf(isSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof deleteMapreduce_result)
+        return this.equals((deleteMapreduce_result)that);
+      return false;
+    }
+
+    public boolean equals(deleteMapreduce_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(deleteMapreduce_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      deleteMapreduce_result typedOther = (deleteMapreduce_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("deleteMapreduce_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class deleteMapreduce_resultStandardSchemeFactory implements SchemeFactory {
+      public deleteMapreduce_resultStandardScheme getScheme() {
+        return new deleteMapreduce_resultStandardScheme();
+      }
+    }
+
+    private static class deleteMapreduce_resultStandardScheme extends StandardScheme<deleteMapreduce_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, deleteMapreduce_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.success = iprot.readBool();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, deleteMapreduce_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(struct.success);
+        oprot.writeFieldEnd();
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class deleteMapreduce_resultTupleSchemeFactory implements SchemeFactory {
+      public deleteMapreduce_resultTupleScheme getScheme() {
+        return new deleteMapreduce_resultTupleScheme();
+      }
+    }
+
+    private static class deleteMapreduce_resultTupleScheme extends TupleScheme<deleteMapreduce_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, deleteMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeBool(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, deleteMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getMapreduces_args implements org.apache.thrift.TBase<getMapreduces_args, getMapreduces_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMapreduces_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getMapreduces_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getMapreduces_argsTupleSchemeFactory());
+    }
+
+    public Account account; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Account.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMapreduces_args.class, metaDataMap);
+    }
+
+    public getMapreduces_args() {
+    }
+
+    public getMapreduces_args(
+      Account account)
+    {
+      this();
+      this.account = account;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMapreduces_args(getMapreduces_args other) {
+      if (other.isSetAccount()) {
+        this.account = new Account(other.account);
+      }
+    }
+
+    public getMapreduces_args deepCopy() {
+      return new getMapreduces_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+    }
+
+    public Account getAccount() {
+      return this.account;
+    }
+
+    public getMapreduces_args setAccount(Account account) {
+      this.account = account;
+      return this;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((Account)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMapreduces_args)
+        return this.equals((getMapreduces_args)that);
+      return false;
+    }
+
+    public boolean equals(getMapreduces_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMapreduces_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMapreduces_args typedOther = (getMapreduces_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMapreduces_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getMapreduces_argsStandardSchemeFactory implements SchemeFactory {
+      public getMapreduces_argsStandardScheme getScheme() {
+        return new getMapreduces_argsStandardScheme();
+      }
+    }
+
+    private static class getMapreduces_argsStandardScheme extends StandardScheme<getMapreduces_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getMapreduces_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.account = new Account();
+                struct.account.read(iprot);
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getMapreduces_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          struct.account.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getMapreduces_argsTupleSchemeFactory implements SchemeFactory {
+      public getMapreduces_argsTupleScheme getScheme() {
+        return new getMapreduces_argsTupleScheme();
+      }
+    }
+
+    private static class getMapreduces_argsTupleScheme extends TupleScheme<getMapreduces_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getMapreduces_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetAccount()) {
+          struct.account.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getMapreduces_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.account = new Account();
+          struct.account.read(iprot);
+          struct.setAccountIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getMapreduces_result implements org.apache.thrift.TBase<getMapreduces_result, getMapreduces_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMapreduces_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getMapreduces_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getMapreduces_resultTupleSchemeFactory());
+    }
+
+    public List<Mapreduce> success; // required
+    public MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Mapreduce.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMapreduces_result.class, metaDataMap);
+    }
+
+    public getMapreduces_result() {
+    }
+
+    public getMapreduces_result(
+      List<Mapreduce> success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMapreduces_result(getMapreduces_result other) {
+      if (other.isSetSuccess()) {
+        List<Mapreduce> __this__success = new ArrayList<Mapreduce>();
+        for (Mapreduce other_element : other.success) {
+          __this__success.add(new Mapreduce(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public getMapreduces_result deepCopy() {
+      return new getMapreduces_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Mapreduce> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(Mapreduce elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Mapreduce>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Mapreduce> getSuccess() {
+      return this.success;
+    }
+
+    public getMapreduces_result setSuccess(List<Mapreduce> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public getMapreduces_result setE(MetadataServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<Mapreduce>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMapreduces_result)
+        return this.equals((getMapreduces_result)that);
+      return false;
+    }
+
+    public boolean equals(getMapreduces_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMapreduces_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMapreduces_result typedOther = (getMapreduces_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMapreduces_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getMapreduces_resultStandardSchemeFactory implements SchemeFactory {
+      public getMapreduces_resultStandardScheme getScheme() {
+        return new getMapreduces_resultStandardScheme();
+      }
+    }
+
+    private static class getMapreduces_resultStandardScheme extends StandardScheme<getMapreduces_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getMapreduces_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list64 = iprot.readListBegin();
+                  struct.success = new ArrayList<Mapreduce>(_list64.size);
+                  for (int _i65 = 0; _i65 < _list64.size; ++_i65)
+                  {
+                    Mapreduce _elem66; // required
+                    _elem66 = new Mapreduce();
+                    _elem66.read(iprot);
+                    struct.success.add(_elem66);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getMapreduces_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (Mapreduce _iter67 : struct.success)
+            {
+              _iter67.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getMapreduces_resultTupleSchemeFactory implements SchemeFactory {
+      public getMapreduces_resultTupleScheme getScheme() {
+        return new getMapreduces_resultTupleScheme();
+      }
+    }
+
+    private static class getMapreduces_resultTupleScheme extends TupleScheme<getMapreduces_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getMapreduces_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (Mapreduce _iter68 : struct.success)
+            {
+              _iter68.write(oprot);
+            }
+          }
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getMapreduces_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list69 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Mapreduce>(_list69.size);
+            for (int _i70 = 0; _i70 < _list69.size; ++_i70)
+            {
+              Mapreduce _elem71; // required
+              _elem71 = new Mapreduce();
+              _elem71.read(iprot);
+              struct.success.add(_elem71);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getMapreduce_args implements org.apache.thrift.TBase<getMapreduce_args, getMapreduce_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMapreduce_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField MAPREDUCE_FIELD_DESC = new org.apache.thrift.protocol.TField("mapreduce", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getMapreduce_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getMapreduce_argsTupleSchemeFactory());
+    }
+
+    public Account account; // required
+    public Mapreduce mapreduce; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      MAPREDUCE((short)2, "mapreduce");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // MAPREDUCE
+            return MAPREDUCE;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Account.class)));
+      tmpMap.put(_Fields.MAPREDUCE, new org.apache.thrift.meta_data.FieldMetaData("mapreduce", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Mapreduce.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMapreduce_args.class, metaDataMap);
+    }
+
+    public getMapreduce_args() {
+    }
+
+    public getMapreduce_args(
+      Account account,
+      Mapreduce mapreduce)
+    {
+      this();
+      this.account = account;
+      this.mapreduce = mapreduce;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMapreduce_args(getMapreduce_args other) {
+      if (other.isSetAccount()) {
+        this.account = new Account(other.account);
+      }
+      if (other.isSetMapreduce()) {
+        this.mapreduce = new Mapreduce(other.mapreduce);
+      }
+    }
+
+    public getMapreduce_args deepCopy() {
+      return new getMapreduce_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.mapreduce = null;
+    }
+
+    public Account getAccount() {
+      return this.account;
+    }
+
+    public getMapreduce_args setAccount(Account account) {
+      this.account = account;
+      return this;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public Mapreduce getMapreduce() {
+      return this.mapreduce;
+    }
+
+    public getMapreduce_args setMapreduce(Mapreduce mapreduce) {
+      this.mapreduce = mapreduce;
+      return this;
+    }
+
+    public void unsetMapreduce() {
+      this.mapreduce = null;
+    }
+
+    /** Returns true if field mapreduce is set (has been assigned a value) and false otherwise */
+    public boolean isSetMapreduce() {
+      return this.mapreduce != null;
+    }
+
+    public void setMapreduceIsSet(boolean value) {
+      if (!value) {
+        this.mapreduce = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((Account)value);
+        }
+        break;
+
+      case MAPREDUCE:
+        if (value == null) {
+          unsetMapreduce();
+        } else {
+          setMapreduce((Mapreduce)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case MAPREDUCE:
+        return getMapreduce();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case MAPREDUCE:
+        return isSetMapreduce();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMapreduce_args)
+        return this.equals((getMapreduce_args)that);
+      return false;
+    }
+
+    public boolean equals(getMapreduce_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_mapreduce = true && this.isSetMapreduce();
+      boolean that_present_mapreduce = true && that.isSetMapreduce();
+      if (this_present_mapreduce || that_present_mapreduce) {
+        if (!(this_present_mapreduce && that_present_mapreduce))
+          return false;
+        if (!this.mapreduce.equals(that.mapreduce))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMapreduce_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMapreduce_args typedOther = (getMapreduce_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMapreduce()).compareTo(typedOther.isSetMapreduce());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMapreduce()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mapreduce, typedOther.mapreduce);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMapreduce_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mapreduce:");
+      if (this.mapreduce == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mapreduce);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getMapreduce_argsStandardSchemeFactory implements SchemeFactory {
+      public getMapreduce_argsStandardScheme getScheme() {
+        return new getMapreduce_argsStandardScheme();
+      }
+    }
+
+    private static class getMapreduce_argsStandardScheme extends StandardScheme<getMapreduce_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getMapreduce_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.account = new Account();
+                struct.account.read(iprot);
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // MAPREDUCE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.mapreduce = new Mapreduce();
+                struct.mapreduce.read(iprot);
+                struct.setMapreduceIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getMapreduce_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          struct.account.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.mapreduce != null) {
+          oprot.writeFieldBegin(MAPREDUCE_FIELD_DESC);
+          struct.mapreduce.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getMapreduce_argsTupleSchemeFactory implements SchemeFactory {
+      public getMapreduce_argsTupleScheme getScheme() {
+        return new getMapreduce_argsTupleScheme();
+      }
+    }
+
+    private static class getMapreduce_argsTupleScheme extends TupleScheme<getMapreduce_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetMapreduce()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          struct.account.write(oprot);
+        }
+        if (struct.isSetMapreduce()) {
+          struct.mapreduce.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getMapreduce_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = new Account();
+          struct.account.read(iprot);
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.mapreduce = new Mapreduce();
+          struct.mapreduce.read(iprot);
+          struct.setMapreduceIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getMapreduce_result implements org.apache.thrift.TBase<getMapreduce_result, getMapreduce_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMapreduce_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getMapreduce_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getMapreduce_resultTupleSchemeFactory());
+    }
+
+    public Mapreduce success; // required
+    public MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Mapreduce.class)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMapreduce_result.class, metaDataMap);
+    }
+
+    public getMapreduce_result() {
+    }
+
+    public getMapreduce_result(
+      Mapreduce success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMapreduce_result(getMapreduce_result other) {
+      if (other.isSetSuccess()) {
+        this.success = new Mapreduce(other.success);
+      }
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public getMapreduce_result deepCopy() {
+      return new getMapreduce_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public Mapreduce getSuccess() {
+      return this.success;
+    }
+
+    public getMapreduce_result setSuccess(Mapreduce success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public getMapreduce_result setE(MetadataServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Mapreduce)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMapreduce_result)
+        return this.equals((getMapreduce_result)that);
+      return false;
+    }
+
+    public boolean equals(getMapreduce_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMapreduce_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMapreduce_result typedOther = (getMapreduce_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMapreduce_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getMapreduce_resultStandardSchemeFactory implements SchemeFactory {
+      public getMapreduce_resultStandardScheme getScheme() {
+        return new getMapreduce_resultStandardScheme();
+      }
+    }
+
+    private static class getMapreduce_resultStandardScheme extends StandardScheme<getMapreduce_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getMapreduce_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.success = new Mapreduce();
+                struct.success.read(iprot);
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getMapreduce_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getMapreduce_resultTupleSchemeFactory implements SchemeFactory {
+      public getMapreduce_resultTupleScheme getScheme() {
+        return new getMapreduce_resultTupleScheme();
+      }
+    }
+
+    private static class getMapreduce_resultTupleScheme extends TupleScheme<getMapreduce_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          struct.success.write(oprot);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getMapreduce_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = new Mapreduce();
+          struct.success.read(iprot);
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
   public static class createFlow_args implements org.apache.thrift.TBase<createFlow_args, createFlow_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("createFlow_args");
 
@@ -23084,8 +29185,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createFlow_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private Flow flow; // required
+    public String account; // required
+    public Flow flow; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -23198,8 +29299,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public createFlow_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -23221,8 +29323,9 @@ public class MetadataService {
       return this.flow;
     }
 
-    public void setFlow(Flow flow) {
+    public createFlow_args setFlow(Flow flow) {
       this.flow = flow;
+      return this;
     }
 
     public void unsetFlow() {
@@ -23324,19 +29427,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_flow = true && (isSetFlow());
-      builder.append(present_flow);
-      if (present_flow)
-        builder.append(flow);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createFlow_args other) {
@@ -23467,6 +29558,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -23547,8 +29640,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createFlow_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -23665,9 +29758,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public createFlow_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -23687,8 +29781,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public createFlow_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -23790,19 +29885,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(createFlow_result other) {
@@ -23882,6 +29965,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -23929,6 +30014,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -24007,8 +30094,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateFlow_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private Flow flow; // required
+    public String account; // required
+    public Flow flow; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -24121,8 +30208,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public updateFlow_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -24144,8 +30232,9 @@ public class MetadataService {
       return this.flow;
     }
 
-    public void setFlow(Flow flow) {
+    public updateFlow_args setFlow(Flow flow) {
       this.flow = flow;
+      return this;
     }
 
     public void unsetFlow() {
@@ -24247,19 +30336,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_flow = true && (isSetFlow());
-      builder.append(present_flow);
-      if (present_flow)
-        builder.append(flow);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(updateFlow_args other) {
@@ -24390,6 +30467,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -24470,8 +30549,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateFlow_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -24588,9 +30667,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public updateFlow_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -24610,8 +30690,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public updateFlow_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -24713,19 +30794,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(updateFlow_result other) {
@@ -24805,6 +30874,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -24852,6 +30923,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -24932,10 +31005,10 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToFlow_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String app; // required
-    private String flowid; // required
-    private String dataset; // required
+    public String account; // required
+    public String app; // required
+    public String flowid; // required
+    public String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -25070,8 +31143,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public addDatasetToFlow_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -25093,8 +31167,9 @@ public class MetadataService {
       return this.app;
     }
 
-    public void setApp(String app) {
+    public addDatasetToFlow_args setApp(String app) {
       this.app = app;
+      return this;
     }
 
     public void unsetApp() {
@@ -25116,8 +31191,9 @@ public class MetadataService {
       return this.flowid;
     }
 
-    public void setFlowid(String flowid) {
+    public addDatasetToFlow_args setFlowid(String flowid) {
       this.flowid = flowid;
+      return this;
     }
 
     public void unsetFlowid() {
@@ -25139,8 +31215,9 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public void setDataset(String dataset) {
+    public addDatasetToFlow_args setDataset(String dataset) {
       this.dataset = dataset;
+      return this;
     }
 
     public void unsetDataset() {
@@ -25286,29 +31363,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_app = true && (isSetApp());
-      builder.append(present_app);
-      if (present_app)
-        builder.append(app);
-
-      boolean present_flowid = true && (isSetFlowid());
-      builder.append(present_flowid);
-      if (present_flowid)
-        builder.append(flowid);
-
-      boolean present_dataset = true && (isSetDataset());
-      builder.append(present_dataset);
-      if (present_dataset)
-        builder.append(dataset);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(addDatasetToFlow_args other) {
@@ -25490,6 +31545,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -25599,8 +31656,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToFlow_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -25717,9 +31774,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public addDatasetToFlow_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -25739,8 +31797,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public addDatasetToFlow_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -25842,19 +31901,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(addDatasetToFlow_result other) {
@@ -25934,6 +31981,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -25981,6 +32030,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -26061,10 +32112,10 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addStreamToFlow_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String app; // required
-    private String flowid; // required
-    private String stream; // required
+    public String account; // required
+    public String app; // required
+    public String flowid; // required
+    public String stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -26199,8 +32250,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public addStreamToFlow_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -26222,8 +32274,9 @@ public class MetadataService {
       return this.app;
     }
 
-    public void setApp(String app) {
+    public addStreamToFlow_args setApp(String app) {
       this.app = app;
+      return this;
     }
 
     public void unsetApp() {
@@ -26245,8 +32298,9 @@ public class MetadataService {
       return this.flowid;
     }
 
-    public void setFlowid(String flowid) {
+    public addStreamToFlow_args setFlowid(String flowid) {
       this.flowid = flowid;
+      return this;
     }
 
     public void unsetFlowid() {
@@ -26268,8 +32322,9 @@ public class MetadataService {
       return this.stream;
     }
 
-    public void setStream(String stream) {
+    public addStreamToFlow_args setStream(String stream) {
       this.stream = stream;
+      return this;
     }
 
     public void unsetStream() {
@@ -26415,29 +32470,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_app = true && (isSetApp());
-      builder.append(present_app);
-      if (present_app)
-        builder.append(app);
-
-      boolean present_flowid = true && (isSetFlowid());
-      builder.append(present_flowid);
-      if (present_flowid)
-        builder.append(flowid);
-
-      boolean present_stream = true && (isSetStream());
-      builder.append(present_stream);
-      if (present_stream)
-        builder.append(stream);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(addStreamToFlow_args other) {
@@ -26619,6 +32652,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -26728,8 +32763,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addStreamToFlow_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -26846,9 +32881,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public addStreamToFlow_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -26868,8 +32904,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public addStreamToFlow_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -26971,19 +33008,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(addStreamToFlow_result other) {
@@ -27063,6 +33088,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -27110,6 +33137,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -27189,9 +33218,9 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteFlow_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String app; // required
-    private String flowid; // required
+    public String account; // required
+    public String app; // required
+    public String flowid; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -27315,8 +33344,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public deleteFlow_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -27338,8 +33368,9 @@ public class MetadataService {
       return this.app;
     }
 
-    public void setApp(String app) {
+    public deleteFlow_args setApp(String app) {
       this.app = app;
+      return this;
     }
 
     public void unsetApp() {
@@ -27361,8 +33392,9 @@ public class MetadataService {
       return this.flowid;
     }
 
-    public void setFlowid(String flowid) {
+    public deleteFlow_args setFlowid(String flowid) {
       this.flowid = flowid;
+      return this;
     }
 
     public void unsetFlowid() {
@@ -27486,24 +33518,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_app = true && (isSetApp());
-      builder.append(present_app);
-      if (present_app)
-        builder.append(app);
-
-      boolean present_flowid = true && (isSetFlowid());
-      builder.append(present_flowid);
-      if (present_flowid)
-        builder.append(flowid);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteFlow_args other) {
@@ -27659,6 +33674,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -27753,8 +33770,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteFlow_resultTupleSchemeFactory());
     }
 
-    private boolean success; // required
-    private MetadataServiceException e; // required
+    public boolean success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -27871,9 +33888,10 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(boolean success) {
+    public deleteFlow_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
+      return this;
     }
 
     public void unsetSuccess() {
@@ -27893,8 +33911,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public deleteFlow_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -27996,19 +34015,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true;
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteFlow_result other) {
@@ -28088,6 +34095,8 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -28135,6 +34144,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -28212,7 +34223,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlows_argsTupleSchemeFactory());
     }
 
-    private String account; // required
+    public String account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -28314,8 +34325,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getFlows_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -28395,14 +34407,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlows_args other) {
@@ -28506,6 +34511,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -28570,8 +34577,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlows_resultTupleSchemeFactory());
     }
 
-    private List<Flow> success; // required
-    private MetadataServiceException e; // required
+    public List<Flow> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -28704,8 +34711,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Flow> success) {
+    public getFlows_result setSuccess(List<Flow> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -28727,8 +34735,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getFlows_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -28830,19 +34839,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlows_result other) {
@@ -28953,14 +34950,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list56 = iprot.readListBegin();
-                  struct.success = new ArrayList<Flow>(_list56.size);
-                  for (int _i57 = 0; _i57 < _list56.size; ++_i57)
+                  org.apache.thrift.protocol.TList _list72 = iprot.readListBegin();
+                  struct.success = new ArrayList<Flow>(_list72.size);
+                  for (int _i73 = 0; _i73 < _list72.size; ++_i73)
                   {
-                    Flow _elem58; // required
-                    _elem58 = new Flow();
-                    _elem58.read(iprot);
-                    struct.success.add(_elem58);
+                    Flow _elem74; // required
+                    _elem74 = new Flow();
+                    _elem74.read(iprot);
+                    struct.success.add(_elem74);
                   }
                   iprot.readListEnd();
                 }
@@ -28984,6 +34981,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -28995,9 +34994,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Flow _iter59 : struct.success)
+            for (Flow _iter75 : struct.success)
             {
-              _iter59.write(oprot);
+              _iter75.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -29036,9 +35035,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Flow _iter60 : struct.success)
+            for (Flow _iter76 : struct.success)
             {
-              _iter60.write(oprot);
+              _iter76.write(oprot);
             }
           }
         }
@@ -29053,14 +35052,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list61 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Flow>(_list61.size);
-            for (int _i62 = 0; _i62 < _list61.size; ++_i62)
+            org.apache.thrift.protocol.TList _list77 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Flow>(_list77.size);
+            for (int _i78 = 0; _i78 < _list77.size; ++_i78)
             {
-              Flow _elem63; // required
-              _elem63 = new Flow();
-              _elem63.read(iprot);
-              struct.success.add(_elem63);
+              Flow _elem79; // required
+              _elem79 = new Flow();
+              _elem79.read(iprot);
+              struct.success.add(_elem79);
             }
           }
           struct.setSuccessIsSet(true);
@@ -29088,9 +35087,9 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlow_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String app; // required
-    private String flowid; // required
+    public String account; // required
+    public String app; // required
+    public String flowid; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -29214,8 +35213,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getFlow_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -29237,8 +35237,9 @@ public class MetadataService {
       return this.app;
     }
 
-    public void setApp(String app) {
+    public getFlow_args setApp(String app) {
       this.app = app;
+      return this;
     }
 
     public void unsetApp() {
@@ -29260,8 +35261,9 @@ public class MetadataService {
       return this.flowid;
     }
 
-    public void setFlowid(String flowid) {
+    public getFlow_args setFlowid(String flowid) {
       this.flowid = flowid;
+      return this;
     }
 
     public void unsetFlowid() {
@@ -29385,24 +35387,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_app = true && (isSetApp());
-      builder.append(present_app);
-      if (present_app)
-        builder.append(app);
-
-      boolean present_flowid = true && (isSetFlowid());
-      builder.append(present_flowid);
-      if (present_flowid)
-        builder.append(flowid);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlow_args other) {
@@ -29558,6 +35543,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -29652,8 +35639,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlow_resultTupleSchemeFactory());
     }
 
-    private Flow success; // required
-    private MetadataServiceException e; // required
+    public Flow success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -29766,8 +35753,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(Flow success) {
+    public getFlow_result setSuccess(Flow success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -29789,8 +35777,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getFlow_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -29892,19 +35881,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlow_result other) {
@@ -30036,6 +36013,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -30117,8 +36096,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByApplication_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String application; // required
+    public String account; // required
+    public String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -30231,8 +36210,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getFlowsByApplication_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -30254,8 +36234,9 @@ public class MetadataService {
       return this.application;
     }
 
-    public void setApplication(String application) {
+    public getFlowsByApplication_args setApplication(String application) {
       this.application = application;
+      return this;
     }
 
     public void unsetApplication() {
@@ -30357,19 +36338,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_application = true && (isSetApplication());
-      builder.append(present_application);
-      if (present_application)
-        builder.append(application);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlowsByApplication_args other) {
@@ -30499,6 +36468,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -30578,8 +36549,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByApplication_resultTupleSchemeFactory());
     }
 
-    private List<Flow> success; // required
-    private MetadataServiceException e; // required
+    public List<Flow> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -30712,8 +36683,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Flow> success) {
+    public getFlowsByApplication_result setSuccess(List<Flow> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -30735,8 +36707,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getFlowsByApplication_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -30838,19 +36811,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlowsByApplication_result other) {
@@ -30961,14 +36922,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list64 = iprot.readListBegin();
-                  struct.success = new ArrayList<Flow>(_list64.size);
-                  for (int _i65 = 0; _i65 < _list64.size; ++_i65)
+                  org.apache.thrift.protocol.TList _list80 = iprot.readListBegin();
+                  struct.success = new ArrayList<Flow>(_list80.size);
+                  for (int _i81 = 0; _i81 < _list80.size; ++_i81)
                   {
-                    Flow _elem66; // required
-                    _elem66 = new Flow();
-                    _elem66.read(iprot);
-                    struct.success.add(_elem66);
+                    Flow _elem82; // required
+                    _elem82 = new Flow();
+                    _elem82.read(iprot);
+                    struct.success.add(_elem82);
                   }
                   iprot.readListEnd();
                 }
@@ -30992,6 +36953,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -31003,9 +36966,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Flow _iter67 : struct.success)
+            for (Flow _iter83 : struct.success)
             {
-              _iter67.write(oprot);
+              _iter83.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -31044,9 +37007,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Flow _iter68 : struct.success)
+            for (Flow _iter84 : struct.success)
             {
-              _iter68.write(oprot);
+              _iter84.write(oprot);
             }
           }
         }
@@ -31061,14 +37024,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list69 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Flow>(_list69.size);
-            for (int _i70 = 0; _i70 < _list69.size; ++_i70)
+            org.apache.thrift.protocol.TList _list85 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Flow>(_list85.size);
+            for (int _i86 = 0; _i86 < _list85.size; ++_i86)
             {
-              Flow _elem71; // required
-              _elem71 = new Flow();
-              _elem71.read(iprot);
-              struct.success.add(_elem71);
+              Flow _elem87; // required
+              _elem87 = new Flow();
+              _elem87.read(iprot);
+              struct.success.add(_elem87);
             }
           }
           struct.setSuccessIsSet(true);
@@ -31095,8 +37058,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueriesByApplication_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String application; // required
+    public String account; // required
+    public String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -31209,8 +37172,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getQueriesByApplication_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -31232,8 +37196,9 @@ public class MetadataService {
       return this.application;
     }
 
-    public void setApplication(String application) {
+    public getQueriesByApplication_args setApplication(String application) {
       this.application = application;
+      return this;
     }
 
     public void unsetApplication() {
@@ -31335,19 +37300,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_application = true && (isSetApplication());
-      builder.append(present_application);
-      if (present_application)
-        builder.append(application);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getQueriesByApplication_args other) {
@@ -31477,6 +37430,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -31556,8 +37511,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueriesByApplication_resultTupleSchemeFactory());
     }
 
-    private List<Query> success; // required
-    private MetadataServiceException e; // required
+    public List<Query> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -31690,8 +37645,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Query> success) {
+    public getQueriesByApplication_result setSuccess(List<Query> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -31713,8 +37669,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getQueriesByApplication_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -31816,19 +37773,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getQueriesByApplication_result other) {
@@ -31939,14 +37884,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list72 = iprot.readListBegin();
-                  struct.success = new ArrayList<Query>(_list72.size);
-                  for (int _i73 = 0; _i73 < _list72.size; ++_i73)
+                  org.apache.thrift.protocol.TList _list88 = iprot.readListBegin();
+                  struct.success = new ArrayList<Query>(_list88.size);
+                  for (int _i89 = 0; _i89 < _list88.size; ++_i89)
                   {
-                    Query _elem74; // required
-                    _elem74 = new Query();
-                    _elem74.read(iprot);
-                    struct.success.add(_elem74);
+                    Query _elem90; // required
+                    _elem90 = new Query();
+                    _elem90.read(iprot);
+                    struct.success.add(_elem90);
                   }
                   iprot.readListEnd();
                 }
@@ -31970,6 +37915,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -31981,9 +37928,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Query _iter75 : struct.success)
+            for (Query _iter91 : struct.success)
             {
-              _iter75.write(oprot);
+              _iter91.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -32022,9 +37969,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Query _iter76 : struct.success)
+            for (Query _iter92 : struct.success)
             {
-              _iter76.write(oprot);
+              _iter92.write(oprot);
             }
           }
         }
@@ -32039,14 +37986,976 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list77 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Query>(_list77.size);
-            for (int _i78 = 0; _i78 < _list77.size; ++_i78)
+            org.apache.thrift.protocol.TList _list93 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Query>(_list93.size);
+            for (int _i94 = 0; _i94 < _list93.size; ++_i94)
             {
-              Query _elem79; // required
-              _elem79 = new Query();
-              _elem79.read(iprot);
-              struct.success.add(_elem79);
+              Query _elem95; // required
+              _elem95 = new Query();
+              _elem95.read(iprot);
+              struct.success.add(_elem95);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getMapreducesByApplication_args implements org.apache.thrift.TBase<getMapreducesByApplication_args, getMapreducesByApplication_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMapreducesByApplication_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField APPLICATION_FIELD_DESC = new org.apache.thrift.protocol.TField("application", org.apache.thrift.protocol.TType.STRING, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getMapreducesByApplication_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getMapreducesByApplication_argsTupleSchemeFactory());
+    }
+
+    public String account; // required
+    public String application; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      APPLICATION((short)2, "application");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // APPLICATION
+            return APPLICATION;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.APPLICATION, new org.apache.thrift.meta_data.FieldMetaData("application", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMapreducesByApplication_args.class, metaDataMap);
+    }
+
+    public getMapreducesByApplication_args() {
+    }
+
+    public getMapreducesByApplication_args(
+      String account,
+      String application)
+    {
+      this();
+      this.account = account;
+      this.application = application;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMapreducesByApplication_args(getMapreducesByApplication_args other) {
+      if (other.isSetAccount()) {
+        this.account = other.account;
+      }
+      if (other.isSetApplication()) {
+        this.application = other.application;
+      }
+    }
+
+    public getMapreducesByApplication_args deepCopy() {
+      return new getMapreducesByApplication_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.application = null;
+    }
+
+    public String getAccount() {
+      return this.account;
+    }
+
+    public getMapreducesByApplication_args setAccount(String account) {
+      this.account = account;
+      return this;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public String getApplication() {
+      return this.application;
+    }
+
+    public getMapreducesByApplication_args setApplication(String application) {
+      this.application = application;
+      return this;
+    }
+
+    public void unsetApplication() {
+      this.application = null;
+    }
+
+    /** Returns true if field application is set (has been assigned a value) and false otherwise */
+    public boolean isSetApplication() {
+      return this.application != null;
+    }
+
+    public void setApplicationIsSet(boolean value) {
+      if (!value) {
+        this.application = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((String)value);
+        }
+        break;
+
+      case APPLICATION:
+        if (value == null) {
+          unsetApplication();
+        } else {
+          setApplication((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case APPLICATION:
+        return getApplication();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case APPLICATION:
+        return isSetApplication();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMapreducesByApplication_args)
+        return this.equals((getMapreducesByApplication_args)that);
+      return false;
+    }
+
+    public boolean equals(getMapreducesByApplication_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_application = true && this.isSetApplication();
+      boolean that_present_application = true && that.isSetApplication();
+      if (this_present_application || that_present_application) {
+        if (!(this_present_application && that_present_application))
+          return false;
+        if (!this.application.equals(that.application))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMapreducesByApplication_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMapreducesByApplication_args typedOther = (getMapreducesByApplication_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetApplication()).compareTo(typedOther.isSetApplication());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetApplication()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.application, typedOther.application);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMapreducesByApplication_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("application:");
+      if (this.application == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.application);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getMapreducesByApplication_argsStandardSchemeFactory implements SchemeFactory {
+      public getMapreducesByApplication_argsStandardScheme getScheme() {
+        return new getMapreducesByApplication_argsStandardScheme();
+      }
+    }
+
+    private static class getMapreducesByApplication_argsStandardScheme extends StandardScheme<getMapreducesByApplication_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getMapreducesByApplication_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.account = iprot.readString();
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // APPLICATION
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.application = iprot.readString();
+                struct.setApplicationIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getMapreducesByApplication_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          oprot.writeString(struct.account);
+          oprot.writeFieldEnd();
+        }
+        if (struct.application != null) {
+          oprot.writeFieldBegin(APPLICATION_FIELD_DESC);
+          oprot.writeString(struct.application);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getMapreducesByApplication_argsTupleSchemeFactory implements SchemeFactory {
+      public getMapreducesByApplication_argsTupleScheme getScheme() {
+        return new getMapreducesByApplication_argsTupleScheme();
+      }
+    }
+
+    private static class getMapreducesByApplication_argsTupleScheme extends TupleScheme<getMapreducesByApplication_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getMapreducesByApplication_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetApplication()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          oprot.writeString(struct.account);
+        }
+        if (struct.isSetApplication()) {
+          oprot.writeString(struct.application);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getMapreducesByApplication_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = iprot.readString();
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.application = iprot.readString();
+          struct.setApplicationIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getMapreducesByApplication_result implements org.apache.thrift.TBase<getMapreducesByApplication_result, getMapreducesByApplication_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMapreducesByApplication_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getMapreducesByApplication_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getMapreducesByApplication_resultTupleSchemeFactory());
+    }
+
+    public List<Mapreduce> success; // required
+    public MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Mapreduce.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMapreducesByApplication_result.class, metaDataMap);
+    }
+
+    public getMapreducesByApplication_result() {
+    }
+
+    public getMapreducesByApplication_result(
+      List<Mapreduce> success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMapreducesByApplication_result(getMapreducesByApplication_result other) {
+      if (other.isSetSuccess()) {
+        List<Mapreduce> __this__success = new ArrayList<Mapreduce>();
+        for (Mapreduce other_element : other.success) {
+          __this__success.add(new Mapreduce(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public getMapreducesByApplication_result deepCopy() {
+      return new getMapreducesByApplication_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Mapreduce> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(Mapreduce elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Mapreduce>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Mapreduce> getSuccess() {
+      return this.success;
+    }
+
+    public getMapreducesByApplication_result setSuccess(List<Mapreduce> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public getMapreducesByApplication_result setE(MetadataServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<Mapreduce>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMapreducesByApplication_result)
+        return this.equals((getMapreducesByApplication_result)that);
+      return false;
+    }
+
+    public boolean equals(getMapreducesByApplication_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMapreducesByApplication_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMapreducesByApplication_result typedOther = (getMapreducesByApplication_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMapreducesByApplication_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getMapreducesByApplication_resultStandardSchemeFactory implements SchemeFactory {
+      public getMapreducesByApplication_resultStandardScheme getScheme() {
+        return new getMapreducesByApplication_resultStandardScheme();
+      }
+    }
+
+    private static class getMapreducesByApplication_resultStandardScheme extends StandardScheme<getMapreducesByApplication_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getMapreducesByApplication_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list96 = iprot.readListBegin();
+                  struct.success = new ArrayList<Mapreduce>(_list96.size);
+                  for (int _i97 = 0; _i97 < _list96.size; ++_i97)
+                  {
+                    Mapreduce _elem98; // required
+                    _elem98 = new Mapreduce();
+                    _elem98.read(iprot);
+                    struct.success.add(_elem98);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getMapreducesByApplication_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (Mapreduce _iter99 : struct.success)
+            {
+              _iter99.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getMapreducesByApplication_resultTupleSchemeFactory implements SchemeFactory {
+      public getMapreducesByApplication_resultTupleScheme getScheme() {
+        return new getMapreducesByApplication_resultTupleScheme();
+      }
+    }
+
+    private static class getMapreducesByApplication_resultTupleScheme extends TupleScheme<getMapreducesByApplication_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getMapreducesByApplication_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (Mapreduce _iter100 : struct.success)
+            {
+              _iter100.write(oprot);
+            }
+          }
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getMapreducesByApplication_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list101 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Mapreduce>(_list101.size);
+            for (int _i102 = 0; _i102 < _list101.size; ++_i102)
+            {
+              Mapreduce _elem103; // required
+              _elem103 = new Mapreduce();
+              _elem103.read(iprot);
+              struct.success.add(_elem103);
             }
           }
           struct.setSuccessIsSet(true);
@@ -32073,8 +38982,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStreamsByApplication_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String application; // required
+    public String account; // required
+    public String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -32187,8 +39096,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getStreamsByApplication_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -32210,8 +39120,9 @@ public class MetadataService {
       return this.application;
     }
 
-    public void setApplication(String application) {
+    public getStreamsByApplication_args setApplication(String application) {
       this.application = application;
+      return this;
     }
 
     public void unsetApplication() {
@@ -32313,19 +39224,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_application = true && (isSetApplication());
-      builder.append(present_application);
-      if (present_application)
-        builder.append(application);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getStreamsByApplication_args other) {
@@ -32455,6 +39354,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -32534,8 +39435,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStreamsByApplication_resultTupleSchemeFactory());
     }
 
-    private List<Stream> success; // required
-    private MetadataServiceException e; // required
+    public List<Stream> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -32668,8 +39569,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Stream> success) {
+    public getStreamsByApplication_result setSuccess(List<Stream> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -32691,8 +39593,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getStreamsByApplication_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -32794,19 +39697,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getStreamsByApplication_result other) {
@@ -32917,14 +39808,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list80 = iprot.readListBegin();
-                  struct.success = new ArrayList<Stream>(_list80.size);
-                  for (int _i81 = 0; _i81 < _list80.size; ++_i81)
+                  org.apache.thrift.protocol.TList _list104 = iprot.readListBegin();
+                  struct.success = new ArrayList<Stream>(_list104.size);
+                  for (int _i105 = 0; _i105 < _list104.size; ++_i105)
                   {
-                    Stream _elem82; // required
-                    _elem82 = new Stream();
-                    _elem82.read(iprot);
-                    struct.success.add(_elem82);
+                    Stream _elem106; // required
+                    _elem106 = new Stream();
+                    _elem106.read(iprot);
+                    struct.success.add(_elem106);
                   }
                   iprot.readListEnd();
                 }
@@ -32948,6 +39839,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -32959,9 +39852,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Stream _iter83 : struct.success)
+            for (Stream _iter107 : struct.success)
             {
-              _iter83.write(oprot);
+              _iter107.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -33000,9 +39893,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Stream _iter84 : struct.success)
+            for (Stream _iter108 : struct.success)
             {
-              _iter84.write(oprot);
+              _iter108.write(oprot);
             }
           }
         }
@@ -33017,14 +39910,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list85 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Stream>(_list85.size);
-            for (int _i86 = 0; _i86 < _list85.size; ++_i86)
+            org.apache.thrift.protocol.TList _list109 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Stream>(_list109.size);
+            for (int _i110 = 0; _i110 < _list109.size; ++_i110)
             {
-              Stream _elem87; // required
-              _elem87 = new Stream();
-              _elem87.read(iprot);
-              struct.success.add(_elem87);
+              Stream _elem111; // required
+              _elem111 = new Stream();
+              _elem111.read(iprot);
+              struct.success.add(_elem111);
             }
           }
           struct.setSuccessIsSet(true);
@@ -33051,8 +39944,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDatasetsByApplication_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String application; // required
+    public String account; // required
+    public String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -33165,8 +40058,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getDatasetsByApplication_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -33188,8 +40082,9 @@ public class MetadataService {
       return this.application;
     }
 
-    public void setApplication(String application) {
+    public getDatasetsByApplication_args setApplication(String application) {
       this.application = application;
+      return this;
     }
 
     public void unsetApplication() {
@@ -33291,19 +40186,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_application = true && (isSetApplication());
-      builder.append(present_application);
-      if (present_application)
-        builder.append(application);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getDatasetsByApplication_args other) {
@@ -33433,6 +40316,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -33512,8 +40397,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDatasetsByApplication_resultTupleSchemeFactory());
     }
 
-    private List<Dataset> success; // required
-    private MetadataServiceException e; // required
+    public List<Dataset> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -33646,8 +40531,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Dataset> success) {
+    public getDatasetsByApplication_result setSuccess(List<Dataset> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -33669,8 +40555,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getDatasetsByApplication_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -33772,19 +40659,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getDatasetsByApplication_result other) {
@@ -33895,14 +40770,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list88 = iprot.readListBegin();
-                  struct.success = new ArrayList<Dataset>(_list88.size);
-                  for (int _i89 = 0; _i89 < _list88.size; ++_i89)
+                  org.apache.thrift.protocol.TList _list112 = iprot.readListBegin();
+                  struct.success = new ArrayList<Dataset>(_list112.size);
+                  for (int _i113 = 0; _i113 < _list112.size; ++_i113)
                   {
-                    Dataset _elem90; // required
-                    _elem90 = new Dataset();
-                    _elem90.read(iprot);
-                    struct.success.add(_elem90);
+                    Dataset _elem114; // required
+                    _elem114 = new Dataset();
+                    _elem114.read(iprot);
+                    struct.success.add(_elem114);
                   }
                   iprot.readListEnd();
                 }
@@ -33926,6 +40801,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -33937,9 +40814,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Dataset _iter91 : struct.success)
+            for (Dataset _iter115 : struct.success)
             {
-              _iter91.write(oprot);
+              _iter115.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -33978,9 +40855,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Dataset _iter92 : struct.success)
+            for (Dataset _iter116 : struct.success)
             {
-              _iter92.write(oprot);
+              _iter116.write(oprot);
             }
           }
         }
@@ -33995,14 +40872,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list93 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Dataset>(_list93.size);
-            for (int _i94 = 0; _i94 < _list93.size; ++_i94)
+            org.apache.thrift.protocol.TList _list117 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Dataset>(_list117.size);
+            for (int _i118 = 0; _i118 < _list117.size; ++_i118)
             {
-              Dataset _elem95; // required
-              _elem95 = new Dataset();
-              _elem95.read(iprot);
-              struct.success.add(_elem95);
+              Dataset _elem119; // required
+              _elem119 = new Dataset();
+              _elem119.read(iprot);
+              struct.success.add(_elem119);
             }
           }
           struct.setSuccessIsSet(true);
@@ -34029,8 +40906,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByStream_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String stream; // required
+    public String account; // required
+    public String stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -34143,8 +41020,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getFlowsByStream_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -34166,8 +41044,9 @@ public class MetadataService {
       return this.stream;
     }
 
-    public void setStream(String stream) {
+    public getFlowsByStream_args setStream(String stream) {
       this.stream = stream;
+      return this;
     }
 
     public void unsetStream() {
@@ -34269,19 +41148,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_stream = true && (isSetStream());
-      builder.append(present_stream);
-      if (present_stream)
-        builder.append(stream);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlowsByStream_args other) {
@@ -34411,6 +41278,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -34490,8 +41359,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByStream_resultTupleSchemeFactory());
     }
 
-    private List<Flow> success; // required
-    private MetadataServiceException e; // required
+    public List<Flow> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -34624,8 +41493,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Flow> success) {
+    public getFlowsByStream_result setSuccess(List<Flow> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -34647,8 +41517,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getFlowsByStream_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -34750,19 +41621,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlowsByStream_result other) {
@@ -34873,14 +41732,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list96 = iprot.readListBegin();
-                  struct.success = new ArrayList<Flow>(_list96.size);
-                  for (int _i97 = 0; _i97 < _list96.size; ++_i97)
+                  org.apache.thrift.protocol.TList _list120 = iprot.readListBegin();
+                  struct.success = new ArrayList<Flow>(_list120.size);
+                  for (int _i121 = 0; _i121 < _list120.size; ++_i121)
                   {
-                    Flow _elem98; // required
-                    _elem98 = new Flow();
-                    _elem98.read(iprot);
-                    struct.success.add(_elem98);
+                    Flow _elem122; // required
+                    _elem122 = new Flow();
+                    _elem122.read(iprot);
+                    struct.success.add(_elem122);
                   }
                   iprot.readListEnd();
                 }
@@ -34904,6 +41763,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -34915,9 +41776,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Flow _iter99 : struct.success)
+            for (Flow _iter123 : struct.success)
             {
-              _iter99.write(oprot);
+              _iter123.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -34956,9 +41817,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Flow _iter100 : struct.success)
+            for (Flow _iter124 : struct.success)
             {
-              _iter100.write(oprot);
+              _iter124.write(oprot);
             }
           }
         }
@@ -34973,14 +41834,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list101 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Flow>(_list101.size);
-            for (int _i102 = 0; _i102 < _list101.size; ++_i102)
+            org.apache.thrift.protocol.TList _list125 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Flow>(_list125.size);
+            for (int _i126 = 0; _i126 < _list125.size; ++_i126)
             {
-              Flow _elem103; // required
-              _elem103 = new Flow();
-              _elem103.read(iprot);
-              struct.success.add(_elem103);
+              Flow _elem127; // required
+              _elem127 = new Flow();
+              _elem127.read(iprot);
+              struct.success.add(_elem127);
             }
           }
           struct.setSuccessIsSet(true);
@@ -35007,8 +41868,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByDataset_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String dataset; // required
+    public String account; // required
+    public String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -35121,8 +41982,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getFlowsByDataset_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -35144,8 +42006,9 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public void setDataset(String dataset) {
+    public getFlowsByDataset_args setDataset(String dataset) {
       this.dataset = dataset;
+      return this;
     }
 
     public void unsetDataset() {
@@ -35247,19 +42110,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_dataset = true && (isSetDataset());
-      builder.append(present_dataset);
-      if (present_dataset)
-        builder.append(dataset);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlowsByDataset_args other) {
@@ -35389,6 +42240,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -35468,8 +42321,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByDataset_resultTupleSchemeFactory());
     }
 
-    private List<Flow> success; // required
-    private MetadataServiceException e; // required
+    public List<Flow> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -35602,8 +42455,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Flow> success) {
+    public getFlowsByDataset_result setSuccess(List<Flow> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -35625,8 +42479,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getFlowsByDataset_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -35728,19 +42583,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getFlowsByDataset_result other) {
@@ -35851,14 +42694,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list104 = iprot.readListBegin();
-                  struct.success = new ArrayList<Flow>(_list104.size);
-                  for (int _i105 = 0; _i105 < _list104.size; ++_i105)
+                  org.apache.thrift.protocol.TList _list128 = iprot.readListBegin();
+                  struct.success = new ArrayList<Flow>(_list128.size);
+                  for (int _i129 = 0; _i129 < _list128.size; ++_i129)
                   {
-                    Flow _elem106; // required
-                    _elem106 = new Flow();
-                    _elem106.read(iprot);
-                    struct.success.add(_elem106);
+                    Flow _elem130; // required
+                    _elem130 = new Flow();
+                    _elem130.read(iprot);
+                    struct.success.add(_elem130);
                   }
                   iprot.readListEnd();
                 }
@@ -35882,6 +42725,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -35893,9 +42738,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Flow _iter107 : struct.success)
+            for (Flow _iter131 : struct.success)
             {
-              _iter107.write(oprot);
+              _iter131.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -35934,9 +42779,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Flow _iter108 : struct.success)
+            for (Flow _iter132 : struct.success)
             {
-              _iter108.write(oprot);
+              _iter132.write(oprot);
             }
           }
         }
@@ -35951,14 +42796,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list109 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Flow>(_list109.size);
-            for (int _i110 = 0; _i110 < _list109.size; ++_i110)
+            org.apache.thrift.protocol.TList _list133 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Flow>(_list133.size);
+            for (int _i134 = 0; _i134 < _list133.size; ++_i134)
             {
-              Flow _elem111; // required
-              _elem111 = new Flow();
-              _elem111.read(iprot);
-              struct.success.add(_elem111);
+              Flow _elem135; // required
+              _elem135 = new Flow();
+              _elem135.read(iprot);
+              struct.success.add(_elem135);
             }
           }
           struct.setSuccessIsSet(true);
@@ -35985,8 +42830,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueriesByDataset_argsTupleSchemeFactory());
     }
 
-    private String account; // required
-    private String dataset; // required
+    public String account; // required
+    public String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -36099,8 +42944,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public getQueriesByDataset_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -36122,8 +42968,9 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public void setDataset(String dataset) {
+    public getQueriesByDataset_args setDataset(String dataset) {
       this.dataset = dataset;
+      return this;
     }
 
     public void unsetDataset() {
@@ -36225,19 +43072,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      boolean present_dataset = true && (isSetDataset());
-      builder.append(present_dataset);
-      if (present_dataset)
-        builder.append(dataset);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getQueriesByDataset_args other) {
@@ -36367,6 +43202,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -36446,8 +43283,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueriesByDataset_resultTupleSchemeFactory());
     }
 
-    private List<Query> success; // required
-    private MetadataServiceException e; // required
+    public List<Query> success; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -36580,8 +43417,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public void setSuccess(List<Query> success) {
+    public getQueriesByDataset_result setSuccess(List<Query> success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -36603,8 +43441,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public getQueriesByDataset_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -36706,19 +43545,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getQueriesByDataset_result other) {
@@ -36829,14 +43656,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list112 = iprot.readListBegin();
-                  struct.success = new ArrayList<Query>(_list112.size);
-                  for (int _i113 = 0; _i113 < _list112.size; ++_i113)
+                  org.apache.thrift.protocol.TList _list136 = iprot.readListBegin();
+                  struct.success = new ArrayList<Query>(_list136.size);
+                  for (int _i137 = 0; _i137 < _list136.size; ++_i137)
                   {
-                    Query _elem114; // required
-                    _elem114 = new Query();
-                    _elem114.read(iprot);
-                    struct.success.add(_elem114);
+                    Query _elem138; // required
+                    _elem138 = new Query();
+                    _elem138.read(iprot);
+                    struct.success.add(_elem138);
                   }
                   iprot.readListEnd();
                 }
@@ -36860,6 +43687,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -36871,9 +43700,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Query _iter115 : struct.success)
+            for (Query _iter139 : struct.success)
             {
-              _iter115.write(oprot);
+              _iter139.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -36912,9 +43741,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Query _iter116 : struct.success)
+            for (Query _iter140 : struct.success)
             {
-              _iter116.write(oprot);
+              _iter140.write(oprot);
             }
           }
         }
@@ -36929,14 +43758,976 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list117 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Query>(_list117.size);
-            for (int _i118 = 0; _i118 < _list117.size; ++_i118)
+            org.apache.thrift.protocol.TList _list141 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Query>(_list141.size);
+            for (int _i142 = 0; _i142 < _list141.size; ++_i142)
             {
-              Query _elem119; // required
-              _elem119 = new Query();
-              _elem119.read(iprot);
-              struct.success.add(_elem119);
+              Query _elem143; // required
+              _elem143 = new Query();
+              _elem143.read(iprot);
+              struct.success.add(_elem143);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getMapreducesByDataset_args implements org.apache.thrift.TBase<getMapreducesByDataset_args, getMapreducesByDataset_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMapreducesByDataset_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField DATASET_FIELD_DESC = new org.apache.thrift.protocol.TField("dataset", org.apache.thrift.protocol.TType.STRING, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getMapreducesByDataset_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getMapreducesByDataset_argsTupleSchemeFactory());
+    }
+
+    public String account; // required
+    public String dataset; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      DATASET((short)2, "dataset");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // DATASET
+            return DATASET;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.DATASET, new org.apache.thrift.meta_data.FieldMetaData("dataset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMapreducesByDataset_args.class, metaDataMap);
+    }
+
+    public getMapreducesByDataset_args() {
+    }
+
+    public getMapreducesByDataset_args(
+      String account,
+      String dataset)
+    {
+      this();
+      this.account = account;
+      this.dataset = dataset;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMapreducesByDataset_args(getMapreducesByDataset_args other) {
+      if (other.isSetAccount()) {
+        this.account = other.account;
+      }
+      if (other.isSetDataset()) {
+        this.dataset = other.dataset;
+      }
+    }
+
+    public getMapreducesByDataset_args deepCopy() {
+      return new getMapreducesByDataset_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.dataset = null;
+    }
+
+    public String getAccount() {
+      return this.account;
+    }
+
+    public getMapreducesByDataset_args setAccount(String account) {
+      this.account = account;
+      return this;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public String getDataset() {
+      return this.dataset;
+    }
+
+    public getMapreducesByDataset_args setDataset(String dataset) {
+      this.dataset = dataset;
+      return this;
+    }
+
+    public void unsetDataset() {
+      this.dataset = null;
+    }
+
+    /** Returns true if field dataset is set (has been assigned a value) and false otherwise */
+    public boolean isSetDataset() {
+      return this.dataset != null;
+    }
+
+    public void setDatasetIsSet(boolean value) {
+      if (!value) {
+        this.dataset = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((String)value);
+        }
+        break;
+
+      case DATASET:
+        if (value == null) {
+          unsetDataset();
+        } else {
+          setDataset((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case DATASET:
+        return getDataset();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case DATASET:
+        return isSetDataset();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMapreducesByDataset_args)
+        return this.equals((getMapreducesByDataset_args)that);
+      return false;
+    }
+
+    public boolean equals(getMapreducesByDataset_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_dataset = true && this.isSetDataset();
+      boolean that_present_dataset = true && that.isSetDataset();
+      if (this_present_dataset || that_present_dataset) {
+        if (!(this_present_dataset && that_present_dataset))
+          return false;
+        if (!this.dataset.equals(that.dataset))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMapreducesByDataset_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMapreducesByDataset_args typedOther = (getMapreducesByDataset_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetDataset()).compareTo(typedOther.isSetDataset());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetDataset()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.dataset, typedOther.dataset);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMapreducesByDataset_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("dataset:");
+      if (this.dataset == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.dataset);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getMapreducesByDataset_argsStandardSchemeFactory implements SchemeFactory {
+      public getMapreducesByDataset_argsStandardScheme getScheme() {
+        return new getMapreducesByDataset_argsStandardScheme();
+      }
+    }
+
+    private static class getMapreducesByDataset_argsStandardScheme extends StandardScheme<getMapreducesByDataset_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getMapreducesByDataset_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.account = iprot.readString();
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // DATASET
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.dataset = iprot.readString();
+                struct.setDatasetIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getMapreducesByDataset_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          oprot.writeString(struct.account);
+          oprot.writeFieldEnd();
+        }
+        if (struct.dataset != null) {
+          oprot.writeFieldBegin(DATASET_FIELD_DESC);
+          oprot.writeString(struct.dataset);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getMapreducesByDataset_argsTupleSchemeFactory implements SchemeFactory {
+      public getMapreducesByDataset_argsTupleScheme getScheme() {
+        return new getMapreducesByDataset_argsTupleScheme();
+      }
+    }
+
+    private static class getMapreducesByDataset_argsTupleScheme extends TupleScheme<getMapreducesByDataset_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getMapreducesByDataset_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetDataset()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          oprot.writeString(struct.account);
+        }
+        if (struct.isSetDataset()) {
+          oprot.writeString(struct.dataset);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getMapreducesByDataset_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = iprot.readString();
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.dataset = iprot.readString();
+          struct.setDatasetIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getMapreducesByDataset_result implements org.apache.thrift.TBase<getMapreducesByDataset_result, getMapreducesByDataset_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getMapreducesByDataset_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getMapreducesByDataset_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getMapreducesByDataset_resultTupleSchemeFactory());
+    }
+
+    public List<Mapreduce> success; // required
+    public MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Mapreduce.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getMapreducesByDataset_result.class, metaDataMap);
+    }
+
+    public getMapreducesByDataset_result() {
+    }
+
+    public getMapreducesByDataset_result(
+      List<Mapreduce> success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getMapreducesByDataset_result(getMapreducesByDataset_result other) {
+      if (other.isSetSuccess()) {
+        List<Mapreduce> __this__success = new ArrayList<Mapreduce>();
+        for (Mapreduce other_element : other.success) {
+          __this__success.add(new Mapreduce(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public getMapreducesByDataset_result deepCopy() {
+      return new getMapreducesByDataset_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Mapreduce> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(Mapreduce elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Mapreduce>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Mapreduce> getSuccess() {
+      return this.success;
+    }
+
+    public getMapreducesByDataset_result setSuccess(List<Mapreduce> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public getMapreducesByDataset_result setE(MetadataServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<Mapreduce>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getMapreducesByDataset_result)
+        return this.equals((getMapreducesByDataset_result)that);
+      return false;
+    }
+
+    public boolean equals(getMapreducesByDataset_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getMapreducesByDataset_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getMapreducesByDataset_result typedOther = (getMapreducesByDataset_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getMapreducesByDataset_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getMapreducesByDataset_resultStandardSchemeFactory implements SchemeFactory {
+      public getMapreducesByDataset_resultStandardScheme getScheme() {
+        return new getMapreducesByDataset_resultStandardScheme();
+      }
+    }
+
+    private static class getMapreducesByDataset_resultStandardScheme extends StandardScheme<getMapreducesByDataset_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getMapreducesByDataset_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list144 = iprot.readListBegin();
+                  struct.success = new ArrayList<Mapreduce>(_list144.size);
+                  for (int _i145 = 0; _i145 < _list144.size; ++_i145)
+                  {
+                    Mapreduce _elem146; // required
+                    _elem146 = new Mapreduce();
+                    _elem146.read(iprot);
+                    struct.success.add(_elem146);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getMapreducesByDataset_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (Mapreduce _iter147 : struct.success)
+            {
+              _iter147.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getMapreducesByDataset_resultTupleSchemeFactory implements SchemeFactory {
+      public getMapreducesByDataset_resultTupleScheme getScheme() {
+        return new getMapreducesByDataset_resultTupleScheme();
+      }
+    }
+
+    private static class getMapreducesByDataset_resultTupleScheme extends TupleScheme<getMapreducesByDataset_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getMapreducesByDataset_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (Mapreduce _iter148 : struct.success)
+            {
+              _iter148.write(oprot);
+            }
+          }
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getMapreducesByDataset_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list149 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Mapreduce>(_list149.size);
+            for (int _i150 = 0; _i150 < _list149.size; ++_i150)
+            {
+              Mapreduce _elem151; // required
+              _elem151 = new Mapreduce();
+              _elem151.read(iprot);
+              struct.success.add(_elem151);
             }
           }
           struct.setSuccessIsSet(true);
@@ -36962,7 +44753,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteAll_argsTupleSchemeFactory());
     }
 
-    private String account; // required
+    public String account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -37064,8 +44855,9 @@ public class MetadataService {
       return this.account;
     }
 
-    public void setAccount(String account) {
+    public deleteAll_args setAccount(String account) {
       this.account = account;
+      return this;
     }
 
     public void unsetAccount() {
@@ -37145,14 +44937,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_account = true && (isSetAccount());
-      builder.append(present_account);
-      if (present_account)
-        builder.append(account);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteAll_args other) {
@@ -37256,6 +45041,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -37319,7 +45106,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteAll_resultTupleSchemeFactory());
     }
 
-    private MetadataServiceException e; // required
+    public MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -37421,8 +45208,9 @@ public class MetadataService {
       return this.e;
     }
 
-    public void setE(MetadataServiceException e) {
+    public deleteAll_result setE(MetadataServiceException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -37502,14 +45290,7 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(deleteAll_result other) {
@@ -37614,6 +45395,8 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
