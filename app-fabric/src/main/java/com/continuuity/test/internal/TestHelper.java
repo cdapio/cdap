@@ -219,6 +219,10 @@ public class TestHelper {
     Preconditions.checkArgument(loader != null, "Cannot get ClassLoader for class " + clz);
     String classFile = clz.getName().replace('.', '/') + ".class";
 
+
+    // For easier testing within IDE we pick jar file first, before making this publicly available
+    // we need to add code here to throw an exception if the class is in classpath twice (file and jar)
+    // see ENG-2961
     try {
       Enumeration<URL> resources = loader.getResources(classFile);
       // first look for jar file (in classpath) that contains class and return it
