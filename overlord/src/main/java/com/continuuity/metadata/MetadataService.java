@@ -1,9 +1,10 @@
 package com.continuuity.metadata;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.metadata.thrift.Account;
@@ -787,11 +788,13 @@ public class MetadataService extends MetadataHelper
     // now iterate over all flows and get each dataset
     for (Mapreduce mapreduce : mapreduces) {
       List<String> mapreduceDatasets = mapreduce.getDatasets();
-      if (mapreduceDatasets == null || mapreduceDatasets.isEmpty())
+      if (mapreduceDatasets == null || mapreduceDatasets.isEmpty()) {
         continue;
+      }
       for (String datasetName : mapreduceDatasets) {
-        if (foundDatasets.containsKey(datasetName))
+        if (foundDatasets.containsKey(datasetName)) {
           continue;
+        }
         Dataset dataset =
             getDataset(new Account(account), new Dataset(datasetName));
         if (dataset.isExists()) {
@@ -878,8 +881,9 @@ public class MetadataService extends MetadataHelper
     // select the flows that use the dataset
     List<Mapreduce> queriesForDS = Lists.newLinkedList();
     for (Mapreduce mapreduce : mapreduces) {
-      if (mapreduce.getDatasets().contains(dataset))
+      if (mapreduce.getDatasets().contains(dataset)) {
         queriesForDS.add(mapreduce);
+      }
     }
     return queriesForDS;
   }

@@ -42,8 +42,8 @@ import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.test.app.DefaultId;
-import com.continuuity.test.app.TestHelper;
+import com.continuuity.test.internal.DefaultId;
+import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Charsets;
@@ -289,6 +289,9 @@ public class MDSBasedStoreTest {
     }
   }
 
+  /**
+   * Map reduce job for testing MDS.
+   */
   public static class FooMapReduceJob extends AbstractMapReduce {
     private final String name;
 
