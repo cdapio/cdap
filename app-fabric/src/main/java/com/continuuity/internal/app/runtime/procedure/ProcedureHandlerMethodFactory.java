@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.procedure.Procedure;
-import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
@@ -121,7 +120,7 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   private static final class ProcedureEntry {
 
     private final Procedure procedure;
-    private final ProcedureContext context;
+    private final BasicProcedureContext context;
 
     private ProcedureEntry(ProcedureHandlerMethod method) {
       this.procedure = method.getProcedure();
@@ -132,6 +131,7 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
       try {
         LOG.info("Destroying procedure: " + context);
         procedure.destroy();
+        context.close();
         LOG.info("Procedure destroyed: " + context);
       } catch (Throwable t) {
         LOG.error("Procedure throws exception during destroy.", t);

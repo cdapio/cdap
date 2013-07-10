@@ -77,5 +77,6 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   @Override
   public void close() throws IOException {
     splitReader.close();
+    context.close();
   }
 }

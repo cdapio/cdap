@@ -23,23 +23,28 @@ public class MapperWrapper extends Mapper {
     MapReduceContextProvider mrContextProvider = new MapReduceContextProvider(context);
     BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
 
-    String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
-    Mapper delegate = createMapperInstance(context.getConfiguration().getClassLoader(), userMapper);
-
-    // injecting runtime components, like datasets, etc.
-    basicMapReduceContext.injectFields(delegate);
-
-    LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
-
-    delegate.run(context);
-
-    // transaction is not finished, but we want all operations to be dispatched (some could be buffered in memory by tx
-    // agent
+    // now that the context is created, we need to make sure to properly close all datasets of the context
     try {
-      basicMapReduceContext.flushOperations();
-    } catch (OperationException e) {
-      LOG.error("Failed to flush operations at the end of mapper of " + basicMapReduceContext.toString());
-      throw Throwables.propagate(e);
+      String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
+      Mapper delegate = createMapperInstance(context.getConfiguration().getClassLoader(), userMapper);
+
+      // injecting runtime components, like datasets, etc.
+      basicMapReduceContext.injectFields(delegate);
+
+      LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
+
+      delegate.run(context);
+
+      // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
+      // memory by tx agent
+      try {
+        basicMapReduceContext.flushOperations();
+      } catch (OperationException e) {
+        LOG.error("Failed to flush operations at the end of mapper of " + basicMapReduceContext.toString());
+        throw Throwables.propagate(e);
+      }
+    } finally {
+      basicMapReduceContext.close();
     }
   }
 
