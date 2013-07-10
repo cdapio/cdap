@@ -45,7 +45,6 @@ import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
-import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,13 +52,12 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
@@ -341,26 +339,44 @@ public class MonitorRestHandler extends NettyRestHandler {
             @Override
             public void handle(LogEvent event) {
               String logLine = patternLayout.doLayout(event.getLoggingEvent());
-              // if reached buffer capacity then flush chunk
-              if (logLine.length() * charsetEncoder.maxBytesPerChar() +
-                chunkBuffer.position() >= chunkBuffer.capacity()) {
-                chunkBuffer.limit(chunkBuffer.position());
-                chunkBuffer.rewind();
-                respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
-              }
-              charsetEncoder.encode(CharBuffer.wrap(logLine), chunkBuffer, true);
-              charsetEncoder.flush(chunkBuffer);
-              charsetEncoder.reset();
+              encode(CharBuffer.wrap(logLine), false);
             }
 
             @Override
             public void close() {
               // Write the last chunk
-              chunkBuffer.limit(chunkBuffer.position());
-              chunkBuffer.rewind();
-              respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
+              encode(CharBuffer.allocate(0), true);
+              // Flush the encoder
+              CoderResult coderResult;
+              do {
+                coderResult = charsetEncoder.flush(chunkBuffer);
+                chunkBuffer.limit(chunkBuffer.position());
+                chunkBuffer.rewind();
+                respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
+                chunkBuffer.clear();
+              } while (coderResult.isOverflow());
+
               respondChunkEnd(message.getChannel(), request);
               patternLayout.stop();
+            }
+
+            private void encode(CharBuffer inBuffer, boolean endOfInput) {
+              while (true) {
+                CoderResult coderResult = charsetEncoder.encode(inBuffer, chunkBuffer, endOfInput);
+                if (coderResult.isOverflow()) {
+                  // if reached buffer capacity then flush chunk
+                  chunkBuffer.limit(chunkBuffer.position());
+                  chunkBuffer.rewind();
+                  respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
+                  chunkBuffer.clear();
+                } else if (coderResult.isError()) {
+                  // skip characters causing error, and retry
+                  inBuffer.position(inBuffer.position() + coderResult.length());
+                } else {
+                  // log line was completely written
+                  break;
+                }
+              }
             }
           });
         helper.finish(Success);
@@ -490,82 +506,6 @@ public class MonitorRestHandler extends NettyRestHandler {
       return TimeUnit.MILLISECONDS.convert(Long.parseLong(parameter.get(0)), TimeUnit.SECONDS);
     } catch (NumberFormatException e) {
       return -1;
-    }
-  }
-
-  private static class ChunkedLogStream implements ChunkedInput {
-    private final LogReader logReader;
-    private final String logPattern;
-    private final LoggingContext loggingContext;
-    private final BlockingQueue<LogEvent> readQueue;
-    private final Future producerFuture;
-
-    private final PatternLayout patternLayout;
-    private final ByteBuffer chunkBuffer;
-    private final CharsetEncoder charsetEncoder;
-
-    private ChunkedLogStream(MonitorRestAccessor accessor, LoggingContext loggingContext,
-      BlockingQueue<LogEvent> readQueue, Future producerFuture) {
-      this.logReader = accessor.getLogReader();
-
-      this.logPattern = accessor.getConfiguration().get(
-        LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
-      this.loggingContext = loggingContext;
-      this.readQueue = readQueue;
-      this.producerFuture = producerFuture;
-
-      // Setup pattern layout to format log messages
-      ch.qos.logback.classic.Logger rootLogger =
-        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-      LoggerContext loggerContext = rootLogger.getLoggerContext();
-      this.patternLayout = new PatternLayout();
-      this.patternLayout.setContext(loggerContext);
-      this.patternLayout.setPattern(this.logPattern);
-      this.patternLayout.start();
-
-      this.chunkBuffer = ByteBuffer.allocate(8 * 1024);
-      this.charsetEncoder = Charset.forName("UTF-8").newEncoder();
-    }
-
-    @Override
-    public boolean hasNextChunk() throws Exception {
-      return !readQueue.isEmpty();
-    }
-
-    @Override
-    public Object nextChunk() throws Exception {
-      if (isEndOfInput()) {
-        return null;
-      }
-
-      chunkBuffer.clear();
-      while (!readQueue.isEmpty()) {
-        LogEvent event = readQueue.poll();
-        String logLine = patternLayout.doLayout(event.getLoggingEvent());
-        // if reached buffer capacity then flush chunk
-        if (logLine.length() * charsetEncoder.maxBytesPerChar() + chunkBuffer.position() >= chunkBuffer.capacity()) {
-          break;
-        }
-        charsetEncoder.encode(CharBuffer.wrap(logLine), chunkBuffer, true);
-        charsetEncoder.flush(chunkBuffer);
-        charsetEncoder.reset();
-      }
-      chunkBuffer.limit(chunkBuffer.position());
-      chunkBuffer.rewind();
-      return ChannelBuffers.wrappedBuffer(chunkBuffer);
-    }
-
-    @Override
-    public boolean isEndOfInput() throws Exception {
-      return !hasNextChunk() && (producerFuture.isDone() || producerFuture.isCancelled());
-    }
-
-    @Override
-    public void close() throws Exception {
-      patternLayout.stop();
-      if (!isEndOfInput()) {
-        producerFuture.cancel(true);
-      }
     }
   }
 }
