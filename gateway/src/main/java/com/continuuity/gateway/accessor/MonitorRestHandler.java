@@ -496,8 +496,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         CoderResult coderResult;
         do {
           coderResult = charsetEncoder.flush(chunkBuffer);
-          chunkBuffer.limit(chunkBuffer.position());
-          chunkBuffer.rewind();
+          chunkBuffer.flip();
           respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
           chunkBuffer.clear();
         } while (coderResult.isOverflow());
@@ -516,8 +515,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         CoderResult coderResult = charsetEncoder.encode(inBuffer, chunkBuffer, endOfInput);
         if (coderResult.isOverflow()) {
           // if reached buffer capacity then flush chunk
-          chunkBuffer.limit(chunkBuffer.position());
-          chunkBuffer.rewind();
+          chunkBuffer.flip();
           respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
           chunkBuffer.clear();
         } else if (coderResult.isError()) {
