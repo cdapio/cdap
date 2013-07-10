@@ -220,7 +220,22 @@ public class TestHelper {
     String classFile = clz.getName().replace('.', '/') + ".class";
 
     try {
-      for (Enumeration<URL> itr = loader.getResources(classFile); itr.hasMoreElements(); ) {
+      Enumeration<URL> resources = loader.getResources(classFile);
+      // first look for jar file (in classpath) that contains class and return it
+      for (Enumeration<URL> itr = resources; itr.hasMoreElements(); ) {
+        URI uri = itr.nextElement().toURI();
+        if (uri.getScheme().equals("jar")) {
+          String rawSchemeSpecificPart = uri.getRawSchemeSpecificPart();
+          if (rawSchemeSpecificPart.startsWith("file:") && rawSchemeSpecificPart.contains("!")) {
+            String[] parts = rawSchemeSpecificPart.substring("file:".length()).split("!");
+            return new File(parts[0]);
+          } else {
+            return new File(uri.getPath());
+          }
+        }
+      }
+      // look for class file, build jar file and return it
+      for (Enumeration<URL> itr = resources; itr.hasMoreElements(); ) {
         URI uri = itr.nextElement().toURI();
         if (uri.getScheme().equals("file")) {
           File baseDir = new File(uri).getParentFile();
@@ -229,20 +244,9 @@ public class TestHelper {
           String packagePath = appPackage == null ? "" : appPackage.getName().replace('.', '/');
           String basePath = baseDir.getAbsolutePath();
           File relativeBase = new File(basePath.substring(0, basePath.length() - packagePath.length()));
-
-          File jarFile = File.createTempFile(
-            String.format("%s-%d", clz.getSimpleName(), System.currentTimeMillis()),
-            ".jar",
-            tmpDir);
+          File jarFile = File.createTempFile(String.format("%s-%d", clz.getSimpleName(), System.currentTimeMillis()),
+                                             ".jar", tmpDir);
           return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec);
-        } else if (uri.getScheme().equals("jar")) {
-          String rawSchemeSpecificPart = uri.getRawSchemeSpecificPart();
-          if (rawSchemeSpecificPart.startsWith("file:") && rawSchemeSpecificPart.contains("!")) {
-            String[] parts = rawSchemeSpecificPart.substring("file:".length()).split("!");
-            return new File(parts[0]);
-          } else {
-            return new File(uri.getPath());
-          }
         }
       }
     } catch (Exception e) {
