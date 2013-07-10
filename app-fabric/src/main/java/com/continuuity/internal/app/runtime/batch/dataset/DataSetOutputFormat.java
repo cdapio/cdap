@@ -38,6 +38,7 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
     @SuppressWarnings("unchecked")
     BatchWritable<KEY, VALUE> dataset = (BatchWritable) mrContext.getDataSet(getOutputDataSetSpec(conf).getName());
 
+    // the record writer now owns the context and will close it
     return new DataSetRecordWriter<KEY, VALUE>(dataset, mrContext);
   }
 
