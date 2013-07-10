@@ -149,4 +149,16 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     }
     return arguments.build();
   }
+
+  @Override
+  public void close() {
+    super.close();
+    // in addition to the @UseDataSet's, also close the @InputDataSet and @OutputDataSet
+    if (inputDataset != null && (inputDataset instanceof DataSet)) {
+      closeDataSet((DataSet) inputDataset);
+    }
+    if (outputDataset != null && (outputDataset instanceof DataSet)) {
+      closeDataSet((DataSet) outputDataset);
+    }
+  }
 }
