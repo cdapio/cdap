@@ -219,14 +219,13 @@ public class TestHelper {
     Preconditions.checkArgument(loader != null, "Cannot get ClassLoader for class " + clz);
     String classFile = clz.getName().replace('.', '/') + ".class";
 
-
-    // For easier testing within IDE we pick jar file first, before making this publicly available
+    // for easier testing within IDE we pick jar file first, before making this publicly available
     // we need to add code here to throw an exception if the class is in classpath twice (file and jar)
     // see ENG-2961
     try {
-      Enumeration<URL> resources = loader.getResources(classFile);
       // first look for jar file (in classpath) that contains class and return it
-      for (Enumeration<URL> itr = resources; itr.hasMoreElements(); ) {
+      URI fileUri = null;
+      for (Enumeration<URL> itr = loader.getResources(classFile); itr.hasMoreElements(); ) {
         URI uri = itr.nextElement().toURI();
         if (uri.getScheme().equals("jar")) {
           String rawSchemeSpecificPart = uri.getRawSchemeSpecificPart();
@@ -236,27 +235,29 @@ public class TestHelper {
           } else {
             return new File(uri.getPath());
           }
+        } else if (uri.getScheme().equals("file")) {
+          // memorize file URI in case there is no jar that contains the class
+          fileUri = uri;
         }
       }
-      // look for class file, build jar file and return it
-      for (Enumeration<URL> itr = resources; itr.hasMoreElements(); ) {
-        URI uri = itr.nextElement().toURI();
-        if (uri.getScheme().equals("file")) {
-          File baseDir = new File(uri).getParentFile();
+      if (fileUri != null) {
+        // build jar file based on class file and return it
+        File baseDir = new File(fileUri).getParentFile();
 
-          Package appPackage = clz.getPackage();
-          String packagePath = appPackage == null ? "" : appPackage.getName().replace('.', '/');
-          String basePath = baseDir.getAbsolutePath();
-          File relativeBase = new File(basePath.substring(0, basePath.length() - packagePath.length()));
-          File jarFile = File.createTempFile(String.format("%s-%d", clz.getSimpleName(), System.currentTimeMillis()),
-                                             ".jar", tmpDir);
-          return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec);
-        }
+        Package appPackage = clz.getPackage();
+        String packagePath = appPackage == null ? "" : appPackage.getName().replace('.', '/');
+        String basePath = baseDir.getAbsolutePath();
+        File relativeBase = new File(basePath.substring(0, basePath.length() - packagePath.length()));
+        File jarFile = File.createTempFile(String.format("%s-%d", clz.getSimpleName(), System.currentTimeMillis()),
+                                           ".jar", tmpDir);
+        return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec);
+      } else {
+        // return null if neither existing jar was found nor jar was built based on class file
+        return null;
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-    return null;
   }
   /**
    * Creates a jar of a directory and rewrite Flowlet and Procedure bytecodes to emit metrics.
