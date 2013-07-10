@@ -1,56 +1,47 @@
-/*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
- */
+package com.continuuity.test.internal;
 
-package com.continuuity.performance.application;
-
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.queue.QueueName;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
-import com.continuuity.gateway.collector.RestCollector;
-import com.continuuity.gateway.util.Util;
-import com.continuuity.passport.PassportConstants;
-import com.continuuity.performance.gateway.SimpleHttpClient;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * Stream writer that sends events to a stream through Gateway's REST API.
+ *
  */
-public class GatewayStreamWriter implements StreamWriter {
+public final class DefaultStreamWriter implements StreamWriter {
 
+  private final OperationExecutor opex;
+  private final OperationContext opCtx;
+  private final QueueProducer queueProducer;
+  private final QueueName queueName;
   private final StreamEventCodec codec;
-  private final SimpleHttpClient httpClient;
 
   @Inject
-  public GatewayStreamWriter(CConfiguration config,
-                             @Assisted QueueName queueName) {
+  public DefaultStreamWriter(OperationExecutor opex,
+                             @Assisted QueueName queueName,
+                             @Assisted("accountId") String accountId,
+                             @Assisted("applicationId") String applicationId) {
+    this.opex = opex;
+    this.opCtx = new OperationContext(accountId, applicationId);
+    this.queueProducer = new QueueProducer("Testing");
 
-    codec = new StreamEventCodec();
-    Map<String, String> headers = null;
-    String apiKey = config.get("apikey");
-    if (!StringUtils.isEmpty(apiKey)) {
-      headers = ImmutableMap.of(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
-    }
-    String gateway = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS, Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
-    if (StringUtils.isEmpty(gateway)) {
-      gateway = "localhost";
-    }
-    String url =  Util.findBaseUrl(config, RestCollector.class, null, gateway, -1, apiKey != null)
-      + queueName.getSimpleName();
-    httpClient = new SimpleHttpClient(url, headers);
+    this.queueName = queueName;
+    this.codec = new StreamEventCodec();
   }
 
   @Override
@@ -91,10 +82,12 @@ public class GatewayStreamWriter implements StreamWriter {
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
     StreamEvent event = new DefaultStreamEvent(ImmutableMap.copyOf(headers), buffer);
+    QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
+                                            new QueueEntry(codec.encodePayload(event)));
     try {
-      httpClient.post(codec.encodePayload(event));
-    } catch (Exception e) {
-      Throwables.propagate(e);
+      opex.commit(opCtx, enqueue);
+    } catch (OperationException e) {
+      throw new IOException(e);
     }
   }
 }
