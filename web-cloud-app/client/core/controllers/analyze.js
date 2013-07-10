@@ -55,7 +55,7 @@ define([], function (chartHelper) {
 
         C.HTTP.get(url, function(status, result) {
             var data = self.get('data');
-            var newData = self.extendData(data, result);
+            var newData = self.extendData(data, result, app, name);
             self.set('data', newData);
           }
         );
@@ -77,7 +77,7 @@ define([], function (chartHelper) {
 
         C.HTTP.get(url, function(status, result) {
             var data = self.get('data');
-            var newData = self.extendData(data, result);
+            var newData = self.extendData(data, result, app, name);
             self.set('data', newData);
           }
         );
@@ -93,10 +93,10 @@ define([], function (chartHelper) {
         return !(item.app == app && item.name == name);
       });
       this.set('metrics',  metrics);
-      console.log(data);
-      var modifiedName = self.urlRestify(name);
+
+      var modifiedName = self.urlRestify(app) + '_' + self.urlRestify(name);
       data = data.filter(function(item) {
-        delete item['eventsOut'];
+        delete item[modifiedName];
         return item;
       });
       self.set('data', data);
@@ -138,18 +138,24 @@ define([], function (chartHelper) {
 
     },
 
-    extendData: function(data, result) {
+    extendData: function(data, result, app, name) {
       if (!data.length)
-        return result;
+        return result.map(function(item) {
+          var obj = {};
+          obj['timestamp'] = item.timestamp;
+          obj[app+'_'+name] = item.value;
+          return obj;
+        });
+
       var newData = [];
       for (var j = 0, jLen = data.length; j < jLen; j++) {
         for (var k = 0, kLen = result.length; k < kLen; k++) {
           if(result[k].timestamp === data[j].timestamp) {
-            newData.pushObject({
-              timestamp: data[j].timestamp,
-              value: data[j].value,
-              eventsOut: result[k].value
-            });
+            var obj = $.extend(true, {}, data[j]);
+            obj['timestamp'] = data[j].timestamp;
+            obj[app+ '_' +name] = result[k].value;
+
+            newData.pushObject(obj);
           }
         }
       }
