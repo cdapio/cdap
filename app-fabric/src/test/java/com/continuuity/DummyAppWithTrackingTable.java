@@ -51,6 +51,9 @@ public class DummyAppWithTrackingTable implements Application {
       .build();
   }
 
+  /**
+   * A flow.
+   */
   public static class DummyFlow implements Flow {
 
     @Override
@@ -64,6 +67,9 @@ public class DummyAppWithTrackingTable implements Application {
     }
   }
 
+  /**
+   * A flowlet.
+   */
   public static class DummyFlowlet extends AbstractFlowlet {
 
     @UseDataSet("foo")
@@ -76,6 +82,9 @@ public class DummyAppWithTrackingTable implements Application {
     }
   }
 
+  /**
+   * A procedure.
+   */
   public static class DummyProcedure extends AbstractProcedure {
 
     @UseDataSet("foo")
@@ -89,6 +98,9 @@ public class DummyAppWithTrackingTable implements Application {
     }
   }
 
+  /**
+   * A map/reduce job.
+   */
   public static class DummyBatch extends AbstractMapReduce {
 
     @UseDataSet("foo")
@@ -115,6 +127,9 @@ public class DummyAppWithTrackingTable implements Application {
     }
   }
 
+  /**
+   * A mapper.
+   */
   public static class DummyMapper extends Mapper<byte[], byte[], Text, Text> {
 
     @UseDataSet("foo")
@@ -132,6 +147,9 @@ public class DummyAppWithTrackingTable implements Application {
     }
   }
 
+  /**
+   * A reducer.
+   */
   public static class DummyReducer extends Reducer<Text, Text, byte[], byte[]> {
 
     @Override

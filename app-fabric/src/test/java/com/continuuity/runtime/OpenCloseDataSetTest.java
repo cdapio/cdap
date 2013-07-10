@@ -18,8 +18,8 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.continuuity.test.app.DefaultId;
-import com.continuuity.test.app.TestHelper;
+import com.continuuity.test.internal.DefaultId;
+import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * tests that flowlets, procedures and batch jobs close their data sets
+ * tests that flowlets, procedures and batch jobs close their data sets.
  */
 public class OpenCloseDataSetTest {
 
@@ -90,8 +90,7 @@ public class OpenCloseDataSetTest {
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = TestHelper.getInjector().getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
-      String.format("procedure.%s.%s.%s",
-                    DefaultId.ACCOUNT.getId(), "dummy", "DummyProcedure")).iterator().next();
+      String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "dummy", "DummyProcedure")).iterator().next();
 
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/%s",
@@ -123,7 +122,8 @@ public class OpenCloseDataSetTest {
     ProgramController controller = null;
     for (Program program : app.getPrograms()) {
       if (program.getProcessorType().equals(Type.MAPREDUCE)) {
-        ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+        ProgramRunner runner = runnerFactory.create(
+          ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
         controller = runner.run(program, new SimpleProgramOptions(program));
       }
     }

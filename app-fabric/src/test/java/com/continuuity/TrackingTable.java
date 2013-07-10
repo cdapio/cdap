@@ -23,18 +23,18 @@ public class TrackingTable extends DataSet implements BatchReadable<byte[], byte
   // flowlets/procedures/etc, because those are loaded in a different class loader. So we use a global thing like the
   // system properties to count.
 
-  public synchronized static int getTracker(String table, String op) {
+  public static synchronized int getTracker(String table, String op) {
     String key = table + "-" + op;
     String value = System.getProperty(key, "0");
     return Integer.valueOf(value);
   }
-  private synchronized static void track(String table, String op) {
+  private static synchronized void track(String table, String op) {
     String key = table + "-" + op;
     String value = System.getProperty(key, "0");
     String newValue = Integer.toString(Integer.valueOf(value) + 1);
     System.setProperty(key, newValue);
   }
-  public synchronized static void resetTracker() {
+  public static synchronized void resetTracker() {
     for (String table : Arrays.asList("foo", "bar")) {
       for (String op : Arrays.asList("open", "close", "read", "write", "split")) {
         String key = table + "-" + op;
