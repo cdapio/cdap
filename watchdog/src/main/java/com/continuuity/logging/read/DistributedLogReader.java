@@ -18,6 +18,7 @@ import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.save.FileMetaDataManager;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -36,6 +37,11 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Reads logs in a distributed setup.
@@ -44,6 +50,8 @@ import java.util.SortedMap;
 public final class DistributedLogReader implements LogReader {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedLogReader.class);
 
+  private static final int MAX_THREAD_POOL_SIZE = 20;
+
   private final List<LoggingConfiguration.KafkaHost> seedBrokers;
   private final String topic;
   private final int numPartitions;
@@ -51,6 +59,7 @@ public final class DistributedLogReader implements LogReader {
   private final FileMetaDataManager fileMetaDataManager;
   private final Configuration hConfig;
   private final Schema schema;
+  private final ExecutorService executor;
 
   private final int kafkaTailFetchTimeoutMs = 300;
 
@@ -84,6 +93,17 @@ public final class DistributedLogReader implements LogReader {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+
+    // Thread pool of size max MAX_THREAD_POOL_SIZE.
+    // 60 seconds wait time before killing idle threads.
+    // Keep no idle threads more than 60 seconds.
+    // If max thread pool size reached, reject the new coming
+    executor =
+      new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
+                             60L, TimeUnit.SECONDS,
+                             new SynchronousQueue<Runnable>(),
+                             Threads.createDaemonThreadFactory("dist-log-reader-%d"),
+                             new ThreadPoolExecutor.DiscardPolicy());
   }
 
   @Override
@@ -110,53 +130,77 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public void getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback) {
-    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-    int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
+  public Future<?> getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+                              final Callback callback) {
+    return executor.submit(
+      new Runnable() {
+        @Override
+        public void run() {
+          Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
 
-    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
+          KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
 
-    try {
-      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-      long startOffset = fromOffset + 1;
-      if (fromOffset < 0 || startOffset >= latestOffset) {
-        startOffset = latestOffset - maxEvents - 1;
+          try {
+            long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
+            long startOffset = fromOffset + 1;
+            if (fromOffset < 0 || startOffset >= latestOffset) {
+              startOffset = latestOffset - maxEvents - 1;
+            }
+
+            fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+          } finally {
+            try {
+              try {
+                callback.close();
+              } finally {
+                kafkaConsumer.close();
+              }
+            } catch (IOException e) {
+              LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
+                                      topic, partition), e);
+            }
+          }
+        }
       }
-
-      fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
-    } finally {
-      try {
-        kafkaConsumer.close();
-      } catch (IOException e) {
-        LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
-                                topic, partition), e);
-      }
-    }
+    );
   }
 
   @Override
-  public void getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback) {
-    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-    int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
+  public Future<?> getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+                              final Callback callback) {
+    return executor.submit(
+      new Runnable() {
+        @Override
+        public void run() {
+          Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
 
-    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
+          KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
 
-    try {
-      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-      long startOffset = fromOffset - maxEvents - 1;
-      if (fromOffset < 0 || startOffset >= latestOffset)  {
-        startOffset = latestOffset - maxEvents - 1;
+          try {
+            long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
+            long startOffset = fromOffset - maxEvents - 1;
+            if (fromOffset < 0 || startOffset >= latestOffset)  {
+              startOffset = latestOffset - maxEvents - 1;
+            }
+
+            fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+          } finally {
+            try {
+              try {
+                callback.close();
+              } finally {
+                kafkaConsumer.close();
+              }
+            } catch (IOException e) {
+              LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
+                                      topic, partition), e);
+            }
+          }
+        }
       }
-
-      fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
-    } finally {
-      try {
-        kafkaConsumer.close();
-      } catch (IOException e) {
-        LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
-                                topic, partition), e);
-      }
-    }
+    );
   }
 
   @Override
@@ -183,30 +227,47 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Callback callback) {
-    try {
-      Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+  public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
+                          final Callback callback) {
+    return executor.submit(
+      new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
 
-      SortedMap<Long, Path> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
-      Path prevFile = null;
-      List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, Path> entry : sortedFiles.entrySet()) {
-        if (entry.getKey() >= fromTimeMs && entry.getKey() < toTimeMs && prevFile != null) {
-          files.add(prevFile);
+            SortedMap<Long, Path> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
+            Path prevFile = null;
+            List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+            for (Map.Entry<Long, Path> entry : sortedFiles.entrySet()) {
+              if (entry.getKey() >= fromTimeMs && entry.getKey() < toTimeMs && prevFile != null) {
+                files.add(prevFile);
+              }
+              prevFile = entry.getValue();
+            }
+
+            if (prevFile != null) {
+              files.add(prevFile);
+            }
+
+            AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConfig, schema);
+            for (Path file : files) {
+              avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+            }
+          } catch (OperationException e) {
+            throw  Throwables.propagate(e);
+          } finally {
+            callback.close();
+          }
         }
-        prevFile = entry.getValue();
       }
+    );
+  }
 
-      if (prevFile != null) {
-        files.add(prevFile);
-      }
-
-      AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConfig, schema);
-      for (Path file : files) {
-        avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
-      }
-    } catch (OperationException e) {
-      throw  Throwables.propagate(e);
+  @Override
+  public void close() {
+    if (executor != null) {
+      executor.shutdownNow();
     }
   }
 

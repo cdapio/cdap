@@ -5,6 +5,7 @@ import com.continuuity.common.logging.LoggingContext;
 import com.google.common.base.Objects;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * Interface to read logs.
@@ -28,6 +29,10 @@ public interface LogReader {
    */
   Result getLogPrev(LoggingContext loggingContext, String positionHint, int maxEvents);
 
+  Future<?> getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback);
+
+  Future<?> getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback);
+
   /**
    * Returns log events of a Flow, Procedure or Map between given times.
    * @param loggingContext context to look up log events.
@@ -35,7 +40,9 @@ public interface LogReader {
    * @param toTimeMs end time.
    * @param callback Callback to handle the log events.
    */
-  void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Callback callback);
+  Future<?> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Callback callback);
+
+  void close();
 
   /**
    * Result of reading logs. Contains list of log events, position hint and a flag that indicates if the events are

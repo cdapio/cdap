@@ -20,6 +20,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,6 +172,41 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
     response.setContent(content);
 
     ChannelFuture future = channel.write(response);
+    if (!keepAlive) {
+      future.addListener(ChannelFutureListener.CLOSE);
+    }
+  }
+
+  /**
+   * Respond to the client with success. This keeps the connection alive
+   * unless specified otherwise in the original request.
+   *
+   * @param channel the channel on which the request came
+   * @param request the original request (to determine whether to keep the
+   *                connection alive)
+   * @param status  the status code to respond with. Defaults to 200-OK if null
+   * @param headers additional headers to send with the response. May be null.
+   * @param chunkedContent the chunked chunkedContent of the response to send
+   */
+  protected void respondChunked(final Channel channel, HttpRequest request,
+                                HttpResponseStatus status,
+                                Map<String, String> headers, ChunkedInput chunkedContent) {
+    HttpResponse response = new DefaultHttpResponse(
+      HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
+    boolean keepAlive = HttpHeaders.isKeepAlive(request);
+    if (headers != null) {
+      for (Map.Entry<String, String> entry : headers.entrySet()) {
+        response.addHeader(entry.getKey(), entry.getValue());
+      }
+    }
+
+    response.setChunked(true);
+    response.addHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
+    channel.write(response);
+
+    ChannelFuture future = channel.write(chunkedContent);
+    channel.write(new DefaultHttpChunkTrailer());
+    channel.write(new DefaultHttpChunkTrailer());
     if (!keepAlive) {
       future.addListener(ChannelFutureListener.CLOSE);
     }

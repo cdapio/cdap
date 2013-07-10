@@ -11,6 +11,7 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -35,6 +36,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Reads log events in single node setup.
@@ -42,10 +48,12 @@ import java.util.TreeMap;
 public class SingleNodeLogReader implements LogReader {
   private static final Logger LOG = LoggerFactory.getLogger(SingleNodeLogReader.class);
 
+  private static final int MAX_THREAD_POOL_SIZE = 20;
+
   private final Configuration hConf;
   private final Path logBaseDir;
-
   private final Schema schema;
+  private final ExecutorService executor;
 
   @Inject
   public SingleNodeLogReader(CConfiguration cConf, Configuration hConf) {
@@ -55,242 +63,272 @@ public class SingleNodeLogReader implements LogReader {
     this.logBaseDir = new Path(baseDir);
 
     try {
-      schema = new LogSchema().getAvroSchema();
+      this.schema = new LogSchema().getAvroSchema();
     } catch (IOException e) {
       LOG.error("Cannot get LogSchema", e);
       throw Throwables.propagate(e);
     }
+
+    // Thread pool of size max MAX_THREAD_POOL_SIZE.
+    // 60 seconds wait time before killing idle threads.
+    // Keep no idle threads more than 60 seconds.
+    // If max thread pool size reached, reject the new coming
+    this.executor =
+      new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
+                             60L, TimeUnit.SECONDS,
+                             new SynchronousQueue<Runnable>(),
+                             Threads.createDaemonThreadFactory("single-log-reader-%d"),
+                             new ThreadPoolExecutor.DiscardPolicy());
   }
 
   @Override
   public Result getLogNext(LoggingContext loggingContext, String positionHintString, int maxEvents) {
     Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
     PositionHint positionHint = new PositionHint(positionHintString);
-    try {
-      if (!positionHint.isValid()) {
-        return getLogPrev(loggingContext, positionHintString, maxEvents);
-      }
+    if (!positionHint.isValid()) {
+      return getLogPrev(loggingContext, positionHintString, maxEvents);
+    }
 
-      SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
-      if (sortedFiles.isEmpty()) {
-        return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
-      }
+    SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
+    if (sortedFiles.isEmpty()) {
+      return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
+    }
 
-      long fromTimeMs = positionHint.getNextTimestamp();
-      long prevInterval = -1;
-      Path prevPath = null;
-      List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-        if (entry.getKey() >= fromTimeMs && prevPath != null) {
-          tailFiles.add(prevPath);
-        }
-        prevInterval = entry.getKey();
-        prevPath = entry.getValue().getPath();
-      }
-
-      if (prevInterval != -1) {
+    long fromTimeMs = positionHint.getNextTimestamp();
+    long prevInterval = -1;
+    Path prevPath = null;
+    List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+    for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
+      if (entry.getKey() >= fromTimeMs && prevPath != null) {
         tailFiles.add(prevPath);
       }
+      prevInterval = entry.getKey();
+      prevPath = entry.getValue().getPath();
+    }
 
-      final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
-      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
-      for (Path file : tailFiles) {
-        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(),
-                          new Callback() {
-                            @Override
-                            public void handle(LogEvent event) {
-                              loggingEvents.add(event.getLoggingEvent());
-                            }
-                          });
-        if (loggingEvents.size() >= maxEvents) {
-          break;
-        }
+    if (prevInterval != -1) {
+      tailFiles.add(prevPath);
+    }
+
+    final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+    AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+    for (Path file : tailFiles) {
+      logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(),
+                        new Callback() {
+                          @Override
+                          public void handle(LogEvent event) {
+                            loggingEvents.add(event.getLoggingEvent());
+                          }
+
+                          @Override
+                          public void close() {
+                            // Nothing to do
+                          }
+                        });
+      if (loggingEvents.size() >= maxEvents) {
+        break;
       }
-      if (loggingEvents.isEmpty()) {
-        return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
-      } else {
-        return new Result(loggingEvents,
-                          PositionHint.genPositionHint(loggingEvents.get(0).getTimeStamp() - 1,
-                            loggingEvents.get(loggingEvents.size() - 1).getTimeStamp() + 1), positionHint.isValid());
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
+    }
+    if (loggingEvents.isEmpty()) {
+      return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
+    } else {
+      return new Result(loggingEvents,
+                        PositionHint.genPositionHint(loggingEvents.get(0).getTimeStamp() - 1,
+                          loggingEvents.get(loggingEvents.size() - 1).getTimeStamp() + 1), positionHint.isValid());
     }
   }
 
   @Override
-  public void getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback) {
-    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-    try {
-      if (fromOffset < 0) {
-        getLogPrev(loggingContext, -1, maxEvents, callback);
-      }
-
-      long fromTimeMs = fromOffset + 1;
-      SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
-      if (sortedFiles.isEmpty()) {
-        return;
-      }
-
-      long prevInterval = -1;
-      Path prevPath = null;
-      List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-        if (entry.getKey() >= fromTimeMs && prevPath != null) {
-          tailFiles.add(prevPath);
-        }
-        prevInterval = entry.getKey();
-        prevPath = entry.getValue().getPath();
-      }
-
-      if (prevInterval != -1) {
-        tailFiles.add(prevPath);
-      }
-
-      final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
-      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
-      for (Path file : tailFiles) {
-        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(), callback);
-        if (loggingEvents.size() >= maxEvents) {
-          break;
-        }
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
+  public Future<?> getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+                           final Callback callback) {
+    if (fromOffset < 0) {
+      return getLogPrev(loggingContext, -1, maxEvents, callback);
     }
+
+    return executor.submit(
+      new Runnable() {
+        @Override
+        public void run() {
+          Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          long fromTimeMs = fromOffset + 1;
+          SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
+          if (sortedFiles.isEmpty()) {
+            return;
+          }
+
+          long prevInterval = -1;
+          Path prevPath = null;
+          List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+          for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
+            if (entry.getKey() >= fromTimeMs && prevPath != null) {
+              tailFiles.add(prevPath);
+            }
+            prevInterval = entry.getKey();
+            prevPath = entry.getValue().getPath();
+          }
+
+          if (prevInterval != -1) {
+            tailFiles.add(prevPath);
+          }
+
+          final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+          AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+          for (Path file : tailFiles) {
+            logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(), callback);
+            if (loggingEvents.size() >= maxEvents) {
+              break;
+            }
+          }
+          callback.close();
+        }
+      }
+    );
   }
 
   @Override
-  public void getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Callback callback) {
-    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-
-    try {
-      SortedMap<Long, FileStatus> sortedFiles = getFiles(Collections.<Long>reverseOrder());
-      if (sortedFiles.isEmpty()) {
-        return;
-      }
-
-      long fromTimeMs = fromOffset >= 0 ? fromOffset - 1 :
-        sortedFiles.get(sortedFiles.firstKey()).getModificationTime();
-
-      List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-        if (entry.getKey() <= fromTimeMs) {
-          tailFiles.add(entry.getValue().getPath());
+  public Future<?> getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+                           final Callback callback) {
+    return executor.submit(new Runnable() {
+      @Override
+      public void run() {
+        Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+        SortedMap<Long, FileStatus> sortedFiles = getFiles(Collections.<Long>reverseOrder());
+        if (sortedFiles.isEmpty()) {
+          return;
         }
-      }
 
-      List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
-      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
-      for (Path file : tailFiles) {
-        Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
-                                                                 maxEvents - loggingEvents.size());
-        loggingEvents.addAll(0, events);
-        if (events.size() >= maxEvents) {
-          break;
+        long fromTimeMs = fromOffset >= 0 ? fromOffset - 1 :
+          sortedFiles.get(sortedFiles.firstKey()).getModificationTime();
+
+        List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+        for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
+          if (entry.getKey() <= fromTimeMs) {
+            tailFiles.add(entry.getValue().getPath());
+          }
         }
-      }
 
-      // TODO: better algorithm to read previous events
-      for (ILoggingEvent event : loggingEvents) {
-        callback.handle(new LogEvent(event, event.getTimeStamp()));
+        List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+        AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+        for (Path file : tailFiles) {
+          Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
+                                                                   maxEvents - loggingEvents.size());
+          loggingEvents.addAll(0, events);
+          if (events.size() >= maxEvents) {
+            break;
+          }
+        }
+
+        // TODO: better algorithm to read previous events
+        for (ILoggingEvent event : loggingEvents) {
+          callback.handle(new LogEvent(event, event.getTimeStamp()));
+        }
+        callback.close();
       }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    });
   }
 
   @Override
   public Result getLogPrev(LoggingContext loggingContext, String positionHintString, int maxEvents) {
     Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
     PositionHint positionHint = new PositionHint(positionHintString);
-    try {
-      SortedMap<Long, FileStatus> sortedFiles = getFiles(Collections.<Long>reverseOrder());
-      if (sortedFiles.isEmpty()) {
-        return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
-      }
+    SortedMap<Long, FileStatus> sortedFiles = getFiles(Collections.<Long>reverseOrder());
+    if (sortedFiles.isEmpty()) {
+      return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
+    }
 
-      long fromTimeMs = positionHint.isValid() ? positionHint.getPrevTimestamp() :
-        sortedFiles.get(sortedFiles.firstKey()).getModificationTime();
+    long fromTimeMs = positionHint.isValid() ? positionHint.getPrevTimestamp() :
+      sortedFiles.get(sortedFiles.firstKey()).getModificationTime();
 
-      List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-        if (entry.getKey() <= fromTimeMs) {
-          tailFiles.add(entry.getValue().getPath());
-        }
+    List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+    for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
+      if (entry.getKey() <= fromTimeMs) {
+        tailFiles.add(entry.getValue().getPath());
       }
+    }
 
-      List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
-      AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
-      for (Path file : tailFiles) {
-        Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
-                                                                 maxEvents - loggingEvents.size());
-        loggingEvents.addAll(0, events);
-        if (events.size() >= maxEvents) {
-          break;
-        }
+    List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+    AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+    for (Path file : tailFiles) {
+      Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
+                                                               maxEvents - loggingEvents.size());
+      loggingEvents.addAll(0, events);
+      if (events.size() >= maxEvents) {
+        break;
       }
-      if (loggingEvents.isEmpty()) {
-        return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
-      } else {
-        return new Result(loggingEvents,
-                          PositionHint.genPositionHint(loggingEvents.get(0).getTimeStamp() - 1,
-                            loggingEvents.get(loggingEvents.size() - 1).getTimeStamp() + 1), positionHint.isValid());
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
+    }
+    if (loggingEvents.isEmpty()) {
+      return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
+    } else {
+      return new Result(loggingEvents,
+                        PositionHint.genPositionHint(loggingEvents.get(0).getTimeStamp() - 1,
+                          loggingEvents.get(loggingEvents.size() - 1).getTimeStamp() + 1), positionHint.isValid());
     }
   }
 
   @Override
-  public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Callback callback) {
-    try {
-      Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-      SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
-      if (sortedFiles.isEmpty()) {
-        return;
-      }
+  public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
+                       final Callback callback) {
+    return executor.submit(
+      new Runnable() {
+        @Override
+        public void run() {
+          Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
+          if (sortedFiles.isEmpty()) {
+            return;
+          }
 
-      long prevInterval = -1;
-      Path prevPath = null;
-      List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-        if (entry.getKey() >= fromTimeMs && entry.getKey() < toTimeMs && prevPath != null) {
-          files.add(prevPath);
+          long prevInterval = -1;
+          Path prevPath = null;
+          List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+          for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
+            if (entry.getKey() >= fromTimeMs && entry.getKey() < toTimeMs && prevPath != null) {
+              files.add(prevPath);
+            }
+            prevInterval = entry.getKey();
+            prevPath = entry.getValue().getPath();
+          }
+
+          if (prevInterval != -1) {
+            files.add(prevPath);
+          }
+
+          AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConf, schema);
+          for (Path file : files) {
+            avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+          }
+          callback.close();
         }
-        prevInterval = entry.getKey();
-        prevPath = entry.getValue().getPath();
       }
+    );
+  }
 
-      if (prevInterval != -1) {
-        files.add(prevPath);
-      }
-
-      AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConf, schema);
-      for (Path file : files) {
-        avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
+  @Override
+  public void close() {
+    if (executor != null) {
+      executor.shutdownNow();
     }
   }
 
-  private SortedMap<Long, FileStatus> getFiles(Comparator<Long> comparator) throws IOException {
+  private SortedMap<Long, FileStatus> getFiles(Comparator<Long> comparator) {
     TreeMap<Long, FileStatus> sortedFiles = Maps.newTreeMap(comparator);
-    FileContext fileContext = FileContext.getFileContext(hConf);
-    RemoteIterator<FileStatus> filesIt = fileContext.listStatus(logBaseDir);
+    try {
+      FileContext fileContext = FileContext.getFileContext(hConf);
+      RemoteIterator<FileStatus> filesIt = fileContext.listStatus(logBaseDir);
 
-    while (filesIt.hasNext()) {
-      FileStatus status = filesIt.next();
-      Path path = status.getPath();
-      try {
-        long interval = extractInterval(path.getName());
-        sortedFiles.put(interval, status);
-      } catch (NumberFormatException e) {
-        LOG.warn(String.format("Not able to parse interval from log file name %s", path.toUri()));
+      while (filesIt.hasNext()) {
+        FileStatus status = filesIt.next();
+        Path path = status.getPath();
+        try {
+          long interval = extractInterval(path.getName());
+          sortedFiles.put(interval, status);
+        } catch (NumberFormatException e) {
+          LOG.warn(String.format("Not able to parse interval from log file name %s", path.toUri()));
+        }
       }
+    } catch (IOException e) {
+      LOG.warn(String.format("Caught exception while listing files in log dir %s", logBaseDir), e);
     }
-
     return sortedFiles;
   }
 

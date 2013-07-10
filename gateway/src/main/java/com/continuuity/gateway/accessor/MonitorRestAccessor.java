@@ -109,8 +109,14 @@ public class MonitorRestAccessor
   public void stop() {
     LOG.info("Stopping " + this);
     // closing the channel stops the service
-    if (this.serverChannel != null) {
-      this.serverChannel.close();
+    try {
+      if (this.serverChannel != null) {
+        this.serverChannel.close();
+      }
+    } finally {
+      if ((this.logReader != null)) {
+        this.logReader.close();
+      }
     }
     LOG.info("Stopped " + this);
   }

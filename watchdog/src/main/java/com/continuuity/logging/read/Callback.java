@@ -5,4 +5,5 @@ package com.continuuity.logging.read;
  */
 public interface Callback {
   void handle(LogEvent event);
+  void close();
 }
