@@ -27,16 +27,6 @@ dependencies {
    testCompile libraries.mockito_core
    testCompile libraries.junit
 }
-
-sourceSets {
-  main {
-    compileClasspath += project(':app-fabric').sourceSets.testbase.output
-  }
-  test {
-    compileClasspath += project(':app-fabric').sourceSets.testbase.output
-  }
-}
-
 /**
  * Exclude any config xml from jar
  */
