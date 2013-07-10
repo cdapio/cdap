@@ -22,7 +22,6 @@ public class ReducerWrapper extends Reducer {
   public void run(Context context) throws IOException, InterruptedException {
     MapReduceContextProvider mrContextProvider = new MapReduceContextProvider(context);
     BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
-    // now that the context is created, we need to make sure to properly close all datasets of the context
     try {
       String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
       Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
