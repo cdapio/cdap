@@ -1,6 +1,5 @@
 package com.continuuity.gateway.auth;
 
-import com.continuuity.data.Constants;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
@@ -21,12 +20,12 @@ public class NoAuthenticator implements GatewayAuthenticator {
 
   @Override
   public String getAccountId(HttpRequest httpRequest) {
-    return Constants.DEVELOPER_ACCOUNT_ID;
+    return com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
   }
 
   @Override
   public String getAccountId(AvroFlumeEvent event) {
-    return Constants.DEVELOPER_ACCOUNT_ID;
+    return com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
   }
 
   @Override

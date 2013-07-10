@@ -18,7 +18,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.test.guice.AppFabricTestModule;
+import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;

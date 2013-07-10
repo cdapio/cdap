@@ -5,7 +5,7 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.test.internal.TempFolder;
-import com.continuuity.test.guice.AppFabricTestModule;
+import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.weave.internal.utils.Networks;

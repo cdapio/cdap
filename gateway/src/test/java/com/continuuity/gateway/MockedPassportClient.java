@@ -1,6 +1,5 @@
 package com.continuuity.gateway;
 
-import com.continuuity.data.Constants;
 import com.continuuity.passport.http.client.AccountProvider;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.passport.meta.Account;
@@ -31,7 +30,7 @@ public class MockedPassportClient extends PassportClient {
     return new AccountProvider<Account>(new Account("John", "Smith", "john@smith.com")) {
       @Override
       public String getAccountId() {
-        return Constants.DEVELOPER_ACCOUNT_ID;
+        return com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
       }
     };
   }

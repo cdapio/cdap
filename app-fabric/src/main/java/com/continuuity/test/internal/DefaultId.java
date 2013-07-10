@@ -1,13 +1,12 @@
 package com.continuuity.test.internal;
 
 import com.continuuity.app.Id;
-import com.continuuity.test.data.Constants;
 
 /**
  * Default Ids to use in test if you do not want to construct your own.
  */
 public class DefaultId {
-  private static final String DEFAULT_ACCOUNT_ID = Constants.DEFAULT_ACCOUNT_ID;
+  public static final String DEFAULT_ACCOUNT_ID = "default";
   private static final String DEFAULT_APPLICATION_ID = "myapp";
   private static final String DEFAULT_PROGRAM_ID = "pgm";
 

@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.test.guice;
+package com.continuuity.test.internal.guice;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.LocationRuntimeModule;

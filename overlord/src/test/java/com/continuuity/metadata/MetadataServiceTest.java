@@ -1,7 +1,6 @@
 package com.continuuity.metadata;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.Constants;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -60,7 +59,7 @@ public class MetadataServiceTest {
   public void cleanDataFabric() throws OperationException {
     // cleanups data
     injector.getInstance(OperationExecutor.class)
-      .execute(new OperationContext(Constants.DEVELOPER_ACCOUNT_ID), new ClearFabric());
+      .execute(new OperationContext(com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID), new ClearFabric());
   }
 
   /**
