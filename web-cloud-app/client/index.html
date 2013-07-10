@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 
   <script type="text/javascript" src="/core/lib/jquery-1.9.1.js"></script>
-  <script type="text/javascript" src="/core/lib/bootstrap.js"></script>
+  <script type="text/javascript" src="/third_party/bootstrap/js/bootstrap.js"></script>
   <script type="text/javascript" src="/core/lib/handlebars.js"></script>
   <script type="text/javascript" src="/core/lib/ember-1.0.0-rc.5.js"></script>
   <script type="text/javascript" src="/socket.io/socket.io.js"></script>
@@ -28,7 +28,7 @@
     });
   </script>
 
-  <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/assets/css/main.css">
   <link rel="stylesheet" href="/core/lib/nvd3/css/nv.d3.css">
 
@@ -816,14 +816,15 @@
                 {{#each metric in controller.metrics}}
                   <li>
                     <div class="analyze-metric-display">
+                      <button type="button" class="close" {{action removeMetric metric.app metric.name }}>&times;</button>
                       <div class="analyze-app-label">
-                      <a {{action "setDefaultView" }}>{{metric.app}}</a></div>
+                      <a {{action "setDefaultView" }} class="analyze-metric-app">{{metric.app}}</a></div>
                       <div class="analyze-metric-name">{{metric.name}}</div>
                     </div>
                   </li>
                 {{/each}}
                   <li>
-                    <div class="analyze-app-label"><a {{action "toggleAddMetricDialog" }}>Add Metric</a></div>
+                    <div class="analyze-app-label" id="analyze-add-metric-button"><a {{action "toggleAddMetricDialog" }}>Add Metric</a></div>
                     <div id="analyze-add-metric-widget">
                       <div class="dropdown">
                         <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown"> {{controller.metricsRequest.appName}}<b class="caret"></b></button>

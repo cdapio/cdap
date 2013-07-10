@@ -28,7 +28,7 @@ define([], function (chartHelper) {
     load: function (id) {
       this.set('format', DEFAULT_FORMAT);
       this.set('duration', +DEFAULT_DURATION);
-      this.set('metrics', Em.A([DEFAULT_METRIC]));
+      this.set('metrics', Em.A([DEFAULT_METRIC]));    
       this.set('data', Em.A());
       this.set('isAddMetricVisible', true);
       this.set('apps', Em.A(apps));
@@ -43,24 +43,69 @@ define([], function (chartHelper) {
 
     changeMetricFormat: function(formatType) {
       var self = this;
-      var duration = this.get('duration')
-      C.HTTP.get('metrics/twitter_scanner/events_in?format='+formatType+'&duration='+duration,
-        function(status, result) {
-          self.set('data', result);
-          self.set('format', formatType);
-        }
-      );
+      this.set('data', Em.A());
+      var duration = this.get('duration');
+      var metrics = this.get('metrics');
+      self.set('format', formatType);
+
+      for(var i = 0; i < metrics.length; i++) {
+        var app = self.urlRestify(metrics[i]['app']);
+        var name = self.urlRestify(metrics[i]['name']);
+        var url = 'metrics/'+app+'/'+name+'?format='+formatType+'&duration='+duration;
+
+        C.HTTP.get(url, function(status, result) {
+            var data = self.get('data');
+            var newData = self.extendData(data, result);
+            self.set('data', newData);
+          }
+        );
+      }
+
     },
 
     changeMetricDuration: function(duration) {
       var self = this;
+      this.set('data', Em.A());
       var format = this.get('format');
-      C.HTTP.get('metrics/twitter_scanner/events_in?format='+format+'&duration='+duration,
-        function(status, result) {
-          self.set('data', result);
-          self.set('duration', +duration)
-        }
-      );
+      var metrics = this.get('metrics');
+      self.set('duration', +duration);
+
+      for(var i = 0; i < metrics.length; i++) {
+        var app = self.urlRestify(metrics[i]['app']);
+        var name = self.urlRestify(metrics[i]['name']);
+        var url = 'metrics/'+app+'/'+name+'?format='+format+'&duration='+duration;
+
+        C.HTTP.get(url, function(status, result) {
+            var data = self.get('data');
+            var newData = self.extendData(data, result);
+            self.set('data', newData);
+          }
+        );
+      }
+
+    },
+
+    removeMetric: function(app, name) {
+      var self = this;
+      var metrics = this.get('metrics');
+      var data = this.get('data');
+      metrics = metrics.filter(function(item) {
+        return !(item.app == app && item.name == name);
+      });
+      this.set('metrics',  metrics);
+      console.log(data);
+      var modifiedName = self.urlRestify(name);
+      data = data.filter(function(item) {
+        delete item['eventsOut'];
+        return item;
+      });
+      self.set('data', data);
+    },
+
+    urlRestify: function(word) {
+      return word.split(' ').map(function(segment) {
+        return segment.toLowerCase();
+      }).join('_');
     },
 
     toggleAddMetricDialog: function() {
@@ -88,33 +133,33 @@ define([], function (chartHelper) {
         app: this.get('metricsRequest.appName'),
         name: this.get('metricsRequest.metricType')
       });
+      this.changeMetricFormat(this.get('format'));
       var self = this;
-      var data = self.get('data');
+
+    },
+
+    extendData: function(data, result) {
+      if (!data.length)
+        return result;
       var newData = [];
-      C.HTTP.get('metrics/twitter_scanner/events_out?format=rate&duration=7',
-        function(status, result) {
-          for (var j = 0; j < data.length; j++) {
-            for (var k = 0; k < result.length; k++) {
-              if(result[k].timestamp === data[j].timestamp) {
-                newData.pushObject({
-                  timestamp: data[j].timestamp,
-                  value: data[j].value,
-                  eventsOut: result[k].value
-                });  
-              }
-              
-            }
+      for (var j = 0, jLen = data.length; j < jLen; j++) {
+        for (var k = 0, kLen = result.length; k < kLen; k++) {
+          if(result[k].timestamp === data[j].timestamp) {
+            newData.pushObject({
+              timestamp: data[j].timestamp,
+              value: data[j].value,
+              eventsOut: result[k].value
+            });
           }
-          console.log(newData);
-          self.set('data', newData);
         }
-      );
+      }
+      return newData;
     },
 
     metricExists: function() {
       var metrics = this.get('metrics');
 
-      for(var i=0; i < metrics.length; i++) {
+      for(var i = 0, len = metrics.length; i < len; i++) {
         if (this.get('metricsRequest.appName') === metrics[i].app
           && this.get('metricsRequest.metricType') === metrics[i].name) {
           return true;

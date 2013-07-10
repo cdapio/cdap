@@ -25,7 +25,13 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/metrics/twitter_scanner/events_in?format=count&duration=14': TimeSeries.eventsInCountMedium,
     '/metrics/twitter_scanner/events_in?format=rate&duration=30': TimeSeries.eventsInRateLarge,
     '/metrics/twitter_scanner/events_in?format=count&duration=30': TimeSeries.eventsInCountLarge,
-    '/metrics/twitter_scanner/events_out?format=rate&duration=7': TimeSeries.eventsOutRateSmall
+    '/metrics/twitter_scanner/events_out?format=rate&duration=7': TimeSeries.eventsOutRateSmall,
+    '/metrics/twitter_scanner/events_out?format=rate&duration=14': TimeSeries.eventsOutRateMedium,
+    '/metrics/twitter_scanner/events_out?format=rate&duration=30': TimeSeries.eventsOutRateLarge,
+    '/metrics/twitter_scanner/events_out?format=count&duration=7': TimeSeries.eventsOutCountSmall,
+    '/metrics/twitter_scanner/events_out?format=count&duration=14': TimeSeries.eventsOutCountMedium,
+    '/metrics/twitter_scanner/events_out?format=count&duration=30': TimeSeries.eventsOutCountLarge
+
   };
 
   /*

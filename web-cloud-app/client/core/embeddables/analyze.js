@@ -16,19 +16,18 @@ define(['../../helpers/metrics-explorer'], function (chartHelper) {
         this.set('overlays', Em.A([
           $("#analyze-add-metric-widget")
         ]));
+        this.set('addMetricButton', $('#analyze-add-metric-button'));
       },
 
       renderCharts: function() {
+        console.log('data changed');
         $("#metrics-explorer-widget").empty();
-        var dt = this.get('controller').get('data');
+        var dt = this.get('controller.data');
         new chartHelper.Chart(dt, 'metrics-explorer-widget');
       }.observes('controller.data'),
 
       closeOverlays: function() {
-        var overlays = this.get('overlays');
-        for(var i = 0; i < overlays.length; i++) {
-          overlays[i].hide();
-        }
+        this.get('overlays').hide();
       },
 
       toggleDialog: function() {
@@ -36,8 +35,6 @@ define(['../../helpers/metrics-explorer'], function (chartHelper) {
       }.observes('controller.isAddMetricVisible'),
 
       click: function() {
-        this.set('controller.isAddMetricVisible', false);
-        this.closeOverlays();
       }
     });
 
