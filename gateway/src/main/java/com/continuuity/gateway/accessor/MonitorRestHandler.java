@@ -201,9 +201,9 @@ public class MonitorRestHandler extends NettyRestHandler {
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
-                              final MessageEvent message) throws Exception {
+                              MessageEvent message) throws Exception {
 
-    final HttpRequest request = (HttpRequest) message.getMessage();
+    HttpRequest request = (HttpRequest) message.getMessage();
     HttpMethod method = request.getMethod();
     String uri = request.getUri();
 
@@ -313,72 +313,13 @@ public class MonitorRestHandler extends NettyRestHandler {
           return;
         }
 
-        // Setup pattern layout to format log messages
         LoggingContext loggingContext = new GenericLoggingContext(accountId, appid, flowid);
         LogReader logReader = accessor.getLogReader();
         String logPattern = accessor.getConfiguration().get(
           LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
-        ch.qos.logback.classic.Logger rootLogger =
-          (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        LoggerContext loggerContext = rootLogger.getLoggerContext();
 
-        final PatternLayout patternLayout = new PatternLayout();
-        patternLayout.setContext(loggerContext);
-        patternLayout.setPattern(logPattern);
-        patternLayout.start();
-
-        // Read log messages and send them as chunks.
-        respondChunkStart(message.getChannel(), HttpResponseStatus.OK,
-                          ImmutableMap.of(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8"));
-
-        final ByteBuffer chunkBuffer = ByteBuffer.allocate(8 * 1024);
-        final CharsetEncoder charsetEncoder = Charset.forName("UTF-8").newEncoder();
-        logReader.getLog(
-          loggingContext, fromTimeMs, toTimeMs,
-          new Callback() {
-            @Override
-            public void handle(LogEvent event) {
-              String logLine = patternLayout.doLayout(event.getLoggingEvent());
-              encode(CharBuffer.wrap(logLine), false);
-            }
-
-            @Override
-            public void close() {
-              // Write the last chunk
-              encode(CharBuffer.allocate(0), true);
-              // Flush the encoder
-              CoderResult coderResult;
-              do {
-                coderResult = charsetEncoder.flush(chunkBuffer);
-                chunkBuffer.limit(chunkBuffer.position());
-                chunkBuffer.rewind();
-                respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
-                chunkBuffer.clear();
-              } while (coderResult.isOverflow());
-
-              respondChunkEnd(message.getChannel(), request);
-              patternLayout.stop();
-            }
-
-            private void encode(CharBuffer inBuffer, boolean endOfInput) {
-              while (true) {
-                CoderResult coderResult = charsetEncoder.encode(inBuffer, chunkBuffer, endOfInput);
-                if (coderResult.isOverflow()) {
-                  // if reached buffer capacity then flush chunk
-                  chunkBuffer.limit(chunkBuffer.position());
-                  chunkBuffer.rewind();
-                  respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
-                  chunkBuffer.clear();
-                } else if (coderResult.isError()) {
-                  // skip characters causing error, and retry
-                  inBuffer.position(inBuffer.position() + coderResult.length());
-                } else {
-                  // log line was completely written
-                  break;
-                }
-              }
-            }
-          });
+        logReader.getLog(loggingContext, fromTimeMs, toTimeMs,
+                         new NettyLogReaderCallback(message, request, logPattern));
         helper.finish(Success);
       } else {
         // this should not happen because we checked above -> internal error
@@ -506,6 +447,87 @@ public class MonitorRestHandler extends NettyRestHandler {
       return TimeUnit.MILLISECONDS.convert(Long.parseLong(parameter.get(0)), TimeUnit.SECONDS);
     } catch (NumberFormatException e) {
       return -1;
+    }
+  }
+
+  /**
+   * LogReader callback to encode log events, and send them as chunked stream.
+   */
+  private class NettyLogReaderCallback implements Callback {
+    private final ByteBuffer chunkBuffer = ByteBuffer.allocate(8 * 1024);
+    private final CharsetEncoder charsetEncoder = Charset.forName("UTF-8").newEncoder();
+    private final MessageEvent message;
+    private final HttpRequest request;
+    private final PatternLayout patternLayout;
+
+    private NettyLogReaderCallback(MessageEvent message, HttpRequest request, String logPattern) {
+      this.message = message;
+      this.request = request;
+
+      ch.qos.logback.classic.Logger rootLogger =
+        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+      LoggerContext loggerContext = rootLogger.getLoggerContext();
+
+      this.patternLayout = new PatternLayout();
+      this.patternLayout.setContext(loggerContext);
+      this.patternLayout.setPattern(logPattern);
+    }
+
+    @Override
+    public void init() {
+      this.patternLayout.start();
+      respondChunkStart(message.getChannel(), HttpResponseStatus.OK,
+                        ImmutableMap.of(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8"));
+    }
+
+    @Override
+    public void handle(LogEvent event) {
+      String logLine = patternLayout.doLayout(event.getLoggingEvent());
+      // Encode logLine and send chunks
+      encodeSend(CharBuffer.wrap(logLine), false);
+    }
+
+    @Override
+    public void close() {
+      try {
+        // Write the last chunk
+        encodeSend(CharBuffer.allocate(0), true);
+        // Flush the encoder
+        CoderResult coderResult;
+        do {
+          coderResult = charsetEncoder.flush(chunkBuffer);
+          chunkBuffer.limit(chunkBuffer.position());
+          chunkBuffer.rewind();
+          respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
+          chunkBuffer.clear();
+        } while (coderResult.isOverflow());
+
+      } finally {
+        try {
+          patternLayout.stop();
+        } finally {
+          respondChunkEnd(message.getChannel(), request);
+        }
+      }
+    }
+
+    private void encodeSend(CharBuffer inBuffer, boolean endOfInput) {
+      while (true) {
+        CoderResult coderResult = charsetEncoder.encode(inBuffer, chunkBuffer, endOfInput);
+        if (coderResult.isOverflow()) {
+          // if reached buffer capacity then flush chunk
+          chunkBuffer.limit(chunkBuffer.position());
+          chunkBuffer.rewind();
+          respondChunk(message.getChannel(), ChannelBuffers.copiedBuffer(chunkBuffer));
+          chunkBuffer.clear();
+        } else if (coderResult.isError()) {
+          // skip characters causing error, and retry
+          inBuffer.position(inBuffer.position() + coderResult.length());
+        } else {
+          // log line was completely written
+          break;
+        }
+      }
     }
   }
 }

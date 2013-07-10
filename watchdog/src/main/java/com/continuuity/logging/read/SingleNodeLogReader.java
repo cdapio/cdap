@@ -116,6 +116,11 @@ public class SingleNodeLogReader implements LogReader {
       logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(),
                         new Callback() {
                           @Override
+                          public void init() {
+                            // Nothing to do
+                          }
+
+                          @Override
                           public void handle(LogEvent event) {
                             loggingEvents.add(event.getLoggingEvent());
                           }
@@ -171,6 +176,7 @@ public class SingleNodeLogReader implements LogReader {
             tailFiles.add(prevPath);
           }
 
+          callback.init();
           final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
           AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
           for (Path file : tailFiles) {
@@ -218,6 +224,7 @@ public class SingleNodeLogReader implements LogReader {
           }
         }
 
+        callback.init();
         // TODO: better algorithm to read previous events
         for (ILoggingEvent event : loggingEvents) {
           callback.handle(new LogEvent(event, event.getTimeStamp()));
@@ -293,6 +300,7 @@ public class SingleNodeLogReader implements LogReader {
             files.add(prevPath);
           }
 
+          callback.init();
           AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConf, schema);
           for (Path file : files) {
             avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);

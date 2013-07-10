@@ -148,6 +148,7 @@ public final class DistributedLogReader implements LogReader {
               startOffset = latestOffset - maxEvents - 1;
             }
 
+            callback.init();
             fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
           } finally {
             try {
@@ -185,6 +186,7 @@ public final class DistributedLogReader implements LogReader {
               startOffset = latestOffset - maxEvents - 1;
             }
 
+            callback.init();
             fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
           } finally {
             try {
@@ -250,6 +252,7 @@ public final class DistributedLogReader implements LogReader {
               files.add(prevFile);
             }
 
+            callback.init();
             AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConfig, schema);
             for (Path file : files) {
               avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
