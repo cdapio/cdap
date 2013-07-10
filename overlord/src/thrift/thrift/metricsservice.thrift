@@ -79,9 +79,8 @@ enum TEntityType {
  * Log result
  */
 struct TLogResult {
-   1: required list<string> logEvents,
-   2: required string positionHint,
-   3: required bool incremental,
+   1: required string logLine,
+   2: required i64 offset,
 }
 
 /**
@@ -123,17 +122,17 @@ service MetricsFrontendService {
     throws (1: MetricsServiceException e),
 
   /**
-   * Returns log lines after given position.
+   * Returns log lines after given offset.
    */
-  TLogResult getLogNext(1: string accountId, 2: string applicationId, 3: string entityId,
-                        4: TEntityType entityType, 5: string positionHint, 6: i32 maxEvents)
+  list<TLogResult> getLogNext(1: string accountId, 2: string applicationId, 3: string entityId,
+                        4: TEntityType entityType, 5: i64 fromOffset, 6: i32 maxEvents)
     throws (1: MetricsServiceException e),
 
   /**
-   * Returns log lines before given position.
+   * Returns log lines before given offset.
    */
-  TLogResult getLogPrev(1: string accountId, 2: string applicationId, 3: string entityId,
-                        4: TEntityType entityType, 5: string positionHint, 6: i32 maxEvents)
+  list<TLogResult> getLogPrev(1: string accountId, 2: string applicationId, 3: string entityId,
+                        4: TEntityType entityType, 5: i64 fromOffset, 6: i32 maxEvents)
     throws (1: MetricsServiceException e),
 
 }

@@ -20,9 +20,7 @@ import com.continuuity.logging.save.FileMetaDataManager;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
@@ -107,29 +105,6 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public Result getLogNext(LoggingContext loggingContext, String positionHintString, int maxEvents) {
-    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-    PositionHint positionHint = new PositionHint(positionHintString);
-    int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
-
-    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
-
-    try {
-      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-      long startOffset = positionHint.isValid() ? positionHint.getNextOffset() : latestOffset - maxEvents;
-
-      return fetchLogEvents(kafkaConsumer, logFilter, positionHint, startOffset, latestOffset, maxEvents);
-    } finally {
-      try {
-        kafkaConsumer.close();
-      } catch (IOException e) {
-        LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
-                                topic, partition), e);
-      }
-    }
-  }
-
-  @Override
   public Future<?> getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Callback callback) {
     return executor.submit(
@@ -205,28 +180,6 @@ public final class DistributedLogReader implements LogReader {
     );
   }
 
-  @Override
-  public Result getLogPrev(LoggingContext loggingContext, String positionHintString, int maxEvents) {
-    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-    PositionHint positionHint = new PositionHint(positionHintString);
-    int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
-
-    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
-
-    try {
-      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-      long startOffset = positionHint.isValid() ? positionHint.getPrevOffset() - maxEvents : latestOffset - maxEvents;
-
-      return fetchLogEvents(kafkaConsumer, logFilter, positionHint, startOffset, latestOffset, maxEvents);
-    } finally {
-      try {
-        kafkaConsumer.close();
-      } catch (IOException e) {
-        LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
-                                topic, partition), e);
-      }
-    }
-  }
 
   @Override
   public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
@@ -295,35 +248,6 @@ public final class DistributedLogReader implements LogReader {
     }
   }
 
-  private Result fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, PositionHint positionHint,
-                                long startOffset, long latestOffset, int maxEvents) {
-    KafkaCallbackOld kafkaCallback = new KafkaCallbackOld(logFilter, serializer, maxEvents);
-
-    long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
-    if (startOffset < earliestOffset) {
-      startOffset = earliestOffset;
-    }
-
-    while (kafkaCallback.getEvents().size() < maxEvents && startOffset < latestOffset) {
-      kafkaConsumer.fetchMessages(startOffset, kafkaCallback);
-      long lastOffset = kafkaCallback.getLastOffset();
-
-      // No more Kafka messages
-      if (lastOffset == -1) {
-        break;
-      }
-      startOffset = kafkaCallback.getLastOffset() + 1;
-    }
-
-    if (kafkaCallback.getEvents().isEmpty()) {
-      return new Result(kafkaCallback.getEvents(), positionHint.getPositionHintString(), positionHint.isValid());
-    } else {
-      return new Result(kafkaCallback.getEvents(),
-                        PositionHint.genPositionHint(startOffset - 1, startOffset + kafkaCallback.getEvents().size()),
-                        positionHint.isValid());
-    }
-  }
-
   private static class KafkaCallback implements com.continuuity.logging.kafka.Callback {
     private final Filter logFilter;
     private final LoggingEventSerializer serializer;
@@ -355,94 +279,6 @@ public final class DistributedLogReader implements LogReader {
 
     public int getCount() {
       return count;
-    }
-  }
-
-  private static class KafkaCallbackOld implements com.continuuity.logging.kafka.Callback {
-    private final Filter logFilter;
-    private final LoggingEventSerializer serializer;
-    private final int maxEvents;
-    private final List<ILoggingEvent> events;
-    private long lastOffset;
-
-    private KafkaCallbackOld(Filter logFilter, LoggingEventSerializer serializer, int maxEvents) {
-      this.logFilter = logFilter;
-      this.serializer = serializer;
-      this.maxEvents = maxEvents;
-      this.events = Lists.newArrayListWithExpectedSize(this.maxEvents);
-    }
-
-    @Override
-    public void handle(long offset, ByteBuffer msgBuffer) {
-      ILoggingEvent event = serializer.fromBytes(msgBuffer);
-      if (events.size() <= maxEvents && logFilter.match(event)) {
-        events.add(event);
-      }
-      lastOffset = offset;
-    }
-
-    public List<ILoggingEvent> getEvents() {
-      return events;
-    }
-
-    public long getLastOffset() {
-      return lastOffset;
-    }
-  }
-
-  static class PositionHint {
-    private static final String POS_HINT_PREFIX = "KAFKA";
-    private static final int POS_HINT_NUM_FILEDS = 3;
-
-    private String positionHintString;
-    private long prevOffset = -1;
-    private long nextOffset = -1;
-
-    private static final Splitter SPLITTER = Splitter.on(':').limit(POS_HINT_NUM_FILEDS);
-
-    public PositionHint(String positionHint) {
-      this.positionHintString = positionHint;
-
-      if (positionHint == null || positionHint.isEmpty()) {
-        return;
-      }
-
-      List<String> splits = ImmutableList.copyOf(SPLITTER.split(positionHint));
-      if (splits.size() != POS_HINT_NUM_FILEDS || !splits.get(0).equals(POS_HINT_PREFIX)) {
-        return;
-      }
-
-      try {
-        this.prevOffset = Long.parseLong(splits.get(1));
-        this.nextOffset = Long.parseLong(splits.get(2));
-      } catch (NumberFormatException e) {
-        // Cannot parse position hint
-        this.prevOffset = -1;
-        this.nextOffset = -1;
-      }
-    }
-
-    public String getPositionHintString() {
-      return positionHintString;
-    }
-
-    public long getPrevOffset() {
-      return prevOffset;
-    }
-
-    public long getNextOffset() {
-      return nextOffset;
-    }
-
-    public boolean isValid() {
-      return prevOffset > -1 && nextOffset > -1;
-    }
-
-    public static String genPositionHint(long prevOffset, long nextOffset) {
-      if (prevOffset > -1 && nextOffset > -1) {
-        return String.format("%s:%d:%d", POS_HINT_PREFIX, prevOffset, nextOffset);
-      }
-      return "";
     }
   }
 }

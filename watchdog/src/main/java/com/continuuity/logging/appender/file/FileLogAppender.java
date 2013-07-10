@@ -89,9 +89,7 @@ public class FileLogAppender extends LogAppender {
     MDC.put(IGNORE_LOG, "");
 
     try {
-      synchronized (this) {
-        logFileWriter.append(eventObject);
-      }
+      logFileWriter.append(eventObject);
     } catch (IOException e) {
       throw  Throwables.propagate(e);
     } finally {
@@ -101,10 +99,11 @@ public class FileLogAppender extends LogAppender {
 
   private void close() {
     try {
-      synchronized (this) {
+      try {
         if (logFileWriter != null) {
           logFileWriter.close();
         }
+      } finally {
         if (fileSystem != null) {
           fileSystem.close();
         }

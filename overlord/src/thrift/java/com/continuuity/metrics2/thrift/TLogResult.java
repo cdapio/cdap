@@ -13,13 +13,11 @@ import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
 
-import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,9 +26,8 @@ import java.util.Map;
 public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResult._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TLogResult");
 
-  private static final org.apache.thrift.protocol.TField LOG_EVENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("logEvents", org.apache.thrift.protocol.TType.LIST, (short)1);
-  private static final org.apache.thrift.protocol.TField POSITION_HINT_FIELD_DESC = new org.apache.thrift.protocol.TField("positionHint", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField INCREMENTAL_FIELD_DESC = new org.apache.thrift.protocol.TField("incremental", org.apache.thrift.protocol.TType.BOOL, (short)3);
+  private static final org.apache.thrift.protocol.TField LOG_LINE_FIELD_DESC = new org.apache.thrift.protocol.TField("logLine", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("offset", org.apache.thrift.protocol.TType.I64, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -38,15 +35,13 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
     schemes.put(TupleScheme.class, new TLogResultTupleSchemeFactory());
   }
 
-  private List<String> logEvents; // required
-  private String positionHint; // required
-  private boolean incremental; // required
+  private String logLine; // required
+  private long offset; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    LOG_EVENTS((short)1, "logEvents"),
-    POSITION_HINT((short)2, "positionHint"),
-    INCREMENTAL((short)3, "incremental");
+    LOG_LINE((short)1, "logLine"),
+    OFFSET((short)2, "offset");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -61,12 +56,10 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // LOG_EVENTS
-          return LOG_EVENTS;
-        case 2: // POSITION_HINT
-          return POSITION_HINT;
-        case 3: // INCREMENTAL
-          return INCREMENTAL;
+        case 1: // LOG_LINE
+          return LOG_LINE;
+        case 2: // OFFSET
+          return OFFSET;
         default:
           return null;
       }
@@ -107,18 +100,15 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
   }
 
   // isset id assignments
-  private static final int __INCREMENTAL_ISSET_ID = 0;
+  private static final int __OFFSET_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.LOG_EVENTS, new org.apache.thrift.meta_data.FieldMetaData("logEvents", org.apache.thrift.TFieldRequirementType.REQUIRED, 
-        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
-    tmpMap.put(_Fields.POSITION_HINT, new org.apache.thrift.meta_data.FieldMetaData("positionHint", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.LOG_LINE, new org.apache.thrift.meta_data.FieldMetaData("logLine", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.INCREMENTAL, new org.apache.thrift.meta_data.FieldMetaData("incremental", org.apache.thrift.TFieldRequirementType.REQUIRED, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.OFFSET, new org.apache.thrift.meta_data.FieldMetaData("offset", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TLogResult.class, metaDataMap);
   }
@@ -127,15 +117,13 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
   }
 
   public TLogResult(
-    List<String> logEvents,
-    String positionHint,
-    boolean incremental)
+    String logLine,
+    long offset)
   {
     this();
-    this.logEvents = logEvents;
-    this.positionHint = positionHint;
-    this.incremental = incremental;
-    setIncrementalIsSet(true);
+    this.logLine = logLine;
+    this.offset = offset;
+    setOffsetIsSet(true);
   }
 
   /**
@@ -144,17 +132,10 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
   public TLogResult(TLogResult other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetLogEvents()) {
-      List<String> __this__logEvents = new ArrayList<String>();
-      for (String other_element : other.logEvents) {
-        __this__logEvents.add(other_element);
-      }
-      this.logEvents = __this__logEvents;
+    if (other.isSetLogLine()) {
+      this.logLine = other.logLine;
     }
-    if (other.isSetPositionHint()) {
-      this.positionHint = other.positionHint;
-    }
-    this.incremental = other.incremental;
+    this.offset = other.offset;
   }
 
   public TLogResult deepCopy() {
@@ -163,118 +144,71 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
 
   @Override
   public void clear() {
-    this.logEvents = null;
-    this.positionHint = null;
-    setIncrementalIsSet(false);
-    this.incremental = false;
+    this.logLine = null;
+    setOffsetIsSet(false);
+    this.offset = 0;
   }
 
-  public int getLogEventsSize() {
-    return (this.logEvents == null) ? 0 : this.logEvents.size();
+  public String getLogLine() {
+    return this.logLine;
   }
 
-  public java.util.Iterator<String> getLogEventsIterator() {
-    return (this.logEvents == null) ? null : this.logEvents.iterator();
+  public void setLogLine(String logLine) {
+    this.logLine = logLine;
   }
 
-  public void addToLogEvents(String elem) {
-    if (this.logEvents == null) {
-      this.logEvents = new ArrayList<String>();
-    }
-    this.logEvents.add(elem);
+  public void unsetLogLine() {
+    this.logLine = null;
   }
 
-  public List<String> getLogEvents() {
-    return this.logEvents;
+  /** Returns true if field logLine is set (has been assigned a value) and false otherwise */
+  public boolean isSetLogLine() {
+    return this.logLine != null;
   }
 
-  public void setLogEvents(List<String> logEvents) {
-    this.logEvents = logEvents;
-  }
-
-  public void unsetLogEvents() {
-    this.logEvents = null;
-  }
-
-  /** Returns true if field logEvents is set (has been assigned a value) and false otherwise */
-  public boolean isSetLogEvents() {
-    return this.logEvents != null;
-  }
-
-  public void setLogEventsIsSet(boolean value) {
+  public void setLogLineIsSet(boolean value) {
     if (!value) {
-      this.logEvents = null;
+      this.logLine = null;
     }
   }
 
-  public String getPositionHint() {
-    return this.positionHint;
+  public long getOffset() {
+    return this.offset;
   }
 
-  public void setPositionHint(String positionHint) {
-    this.positionHint = positionHint;
+  public void setOffset(long offset) {
+    this.offset = offset;
+    setOffsetIsSet(true);
   }
 
-  public void unsetPositionHint() {
-    this.positionHint = null;
+  public void unsetOffset() {
+    __isset_bit_vector.clear(__OFFSET_ISSET_ID);
   }
 
-  /** Returns true if field positionHint is set (has been assigned a value) and false otherwise */
-  public boolean isSetPositionHint() {
-    return this.positionHint != null;
+  /** Returns true if field offset is set (has been assigned a value) and false otherwise */
+  public boolean isSetOffset() {
+    return __isset_bit_vector.get(__OFFSET_ISSET_ID);
   }
 
-  public void setPositionHintIsSet(boolean value) {
-    if (!value) {
-      this.positionHint = null;
-    }
-  }
-
-  public boolean isIncremental() {
-    return this.incremental;
-  }
-
-  public void setIncremental(boolean incremental) {
-    this.incremental = incremental;
-    setIncrementalIsSet(true);
-  }
-
-  public void unsetIncremental() {
-    __isset_bit_vector.clear(__INCREMENTAL_ISSET_ID);
-  }
-
-  /** Returns true if field incremental is set (has been assigned a value) and false otherwise */
-  public boolean isSetIncremental() {
-    return __isset_bit_vector.get(__INCREMENTAL_ISSET_ID);
-  }
-
-  public void setIncrementalIsSet(boolean value) {
-    __isset_bit_vector.set(__INCREMENTAL_ISSET_ID, value);
+  public void setOffsetIsSet(boolean value) {
+    __isset_bit_vector.set(__OFFSET_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case LOG_EVENTS:
+    case LOG_LINE:
       if (value == null) {
-        unsetLogEvents();
+        unsetLogLine();
       } else {
-        setLogEvents((List<String>)value);
+        setLogLine((String) value);
       }
       break;
 
-    case POSITION_HINT:
+    case OFFSET:
       if (value == null) {
-        unsetPositionHint();
+        unsetOffset();
       } else {
-        setPositionHint((String)value);
-      }
-      break;
-
-    case INCREMENTAL:
-      if (value == null) {
-        unsetIncremental();
-      } else {
-        setIncremental((Boolean)value);
+        setOffset((Long) value);
       }
       break;
 
@@ -283,14 +217,11 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case LOG_EVENTS:
-      return getLogEvents();
+    case LOG_LINE:
+      return getLogLine();
 
-    case POSITION_HINT:
-      return getPositionHint();
-
-    case INCREMENTAL:
-      return Boolean.valueOf(isIncremental());
+    case OFFSET:
+      return Long.valueOf(getOffset());
 
     }
     throw new IllegalStateException();
@@ -303,12 +234,10 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
     }
 
     switch (field) {
-    case LOG_EVENTS:
-      return isSetLogEvents();
-    case POSITION_HINT:
-      return isSetPositionHint();
-    case INCREMENTAL:
-      return isSetIncremental();
+    case LOG_LINE:
+      return isSetLogLine();
+    case OFFSET:
+      return isSetOffset();
     }
     throw new IllegalStateException();
   }
@@ -326,30 +255,21 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
     if (that == null)
       return false;
 
-    boolean this_present_logEvents = true && this.isSetLogEvents();
-    boolean that_present_logEvents = true && that.isSetLogEvents();
-    if (this_present_logEvents || that_present_logEvents) {
-      if (!(this_present_logEvents && that_present_logEvents))
+    boolean this_present_logLine = true && this.isSetLogLine();
+    boolean that_present_logLine = true && that.isSetLogLine();
+    if (this_present_logLine || that_present_logLine) {
+      if (!(this_present_logLine && that_present_logLine))
         return false;
-      if (!this.logEvents.equals(that.logEvents))
-        return false;
-    }
-
-    boolean this_present_positionHint = true && this.isSetPositionHint();
-    boolean that_present_positionHint = true && that.isSetPositionHint();
-    if (this_present_positionHint || that_present_positionHint) {
-      if (!(this_present_positionHint && that_present_positionHint))
-        return false;
-      if (!this.positionHint.equals(that.positionHint))
+      if (!this.logLine.equals(that.logLine))
         return false;
     }
 
-    boolean this_present_incremental = true;
-    boolean that_present_incremental = true;
-    if (this_present_incremental || that_present_incremental) {
-      if (!(this_present_incremental && that_present_incremental))
+    boolean this_present_offset = true;
+    boolean that_present_offset = true;
+    if (this_present_offset || that_present_offset) {
+      if (!(this_present_offset && that_present_offset))
         return false;
-      if (this.incremental != that.incremental)
+      if (this.offset != that.offset)
         return false;
     }
 
@@ -360,20 +280,15 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
   public int hashCode() {
     HashCodeBuilder builder = new HashCodeBuilder();
 
-    boolean present_logEvents = true && (isSetLogEvents());
-    builder.append(present_logEvents);
-    if (present_logEvents)
-      builder.append(logEvents);
+    boolean present_logLine = true && (isSetLogLine());
+    builder.append(present_logLine);
+    if (present_logLine)
+      builder.append(logLine);
 
-    boolean present_positionHint = true && (isSetPositionHint());
-    builder.append(present_positionHint);
-    if (present_positionHint)
-      builder.append(positionHint);
-
-    boolean present_incremental = true;
-    builder.append(present_incremental);
-    if (present_incremental)
-      builder.append(incremental);
+    boolean present_offset = true;
+    builder.append(present_offset);
+    if (present_offset)
+      builder.append(offset);
 
     return builder.toHashCode();
   }
@@ -386,32 +301,22 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
     int lastComparison = 0;
     TLogResult typedOther = (TLogResult)other;
 
-    lastComparison = Boolean.valueOf(isSetLogEvents()).compareTo(typedOther.isSetLogEvents());
+    lastComparison = Boolean.valueOf(isSetLogLine()).compareTo(typedOther.isSetLogLine());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetLogEvents()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.logEvents, typedOther.logEvents);
+    if (isSetLogLine()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.logLine, typedOther.logLine);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetPositionHint()).compareTo(typedOther.isSetPositionHint());
+    lastComparison = Boolean.valueOf(isSetOffset()).compareTo(typedOther.isSetOffset());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetPositionHint()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.positionHint, typedOther.positionHint);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetIncremental()).compareTo(typedOther.isSetIncremental());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetIncremental()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.incremental, typedOther.incremental);
+    if (isSetOffset()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.offset, typedOther.offset);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -436,24 +341,16 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
     StringBuilder sb = new StringBuilder("TLogResult(");
     boolean first = true;
 
-    sb.append("logEvents:");
-    if (this.logEvents == null) {
+    sb.append("logLine:");
+    if (this.logLine == null) {
       sb.append("null");
     } else {
-      sb.append(this.logEvents);
+      sb.append(this.logLine);
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("positionHint:");
-    if (this.positionHint == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.positionHint);
-    }
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("incremental:");
-    sb.append(this.incremental);
+    sb.append("offset:");
+    sb.append(this.offset);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -461,16 +358,12 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
-    if (!isSetLogEvents()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'logEvents' is unset! Struct:" + toString());
+    if (!isSetLogLine()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'logLine' is unset! Struct:" + toString());
     }
 
-    if (!isSetPositionHint()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'positionHint' is unset! Struct:" + toString());
-    }
-
-    if (!isSetIncremental()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'incremental' is unset! Struct:" + toString());
+    if (!isSetOffset()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'offset' is unset! Struct:" + toString());
     }
 
   }
@@ -511,36 +404,18 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
           break;
         }
         switch (schemeField.id) {
-          case 1: // LOG_EVENTS
-            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-              {
-                org.apache.thrift.protocol.TList _list44 = iprot.readListBegin();
-                struct.logEvents = new ArrayList<String>(_list44.size);
-                for (int _i45 = 0; _i45 < _list44.size; ++_i45)
-                {
-                  String _elem46; // required
-                  _elem46 = iprot.readString();
-                  struct.logEvents.add(_elem46);
-                }
-                iprot.readListEnd();
-              }
-              struct.setLogEventsIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
-          case 2: // POSITION_HINT
+          case 1: // LOG_LINE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.positionHint = iprot.readString();
-              struct.setPositionHintIsSet(true);
+              struct.logLine = iprot.readString();
+              struct.setLogLineIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // INCREMENTAL
-            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-              struct.incremental = iprot.readBool();
-              struct.setIncrementalIsSet(true);
+          case 2: // OFFSET
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.offset = iprot.readI64();
+              struct.setOffsetIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -558,25 +433,13 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (struct.logEvents != null) {
-        oprot.writeFieldBegin(LOG_EVENTS_FIELD_DESC);
-        {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.logEvents.size()));
-          for (String _iter47 : struct.logEvents)
-          {
-            oprot.writeString(_iter47);
-          }
-          oprot.writeListEnd();
-        }
+      if (struct.logLine != null) {
+        oprot.writeFieldBegin(LOG_LINE_FIELD_DESC);
+        oprot.writeString(struct.logLine);
         oprot.writeFieldEnd();
       }
-      if (struct.positionHint != null) {
-        oprot.writeFieldBegin(POSITION_HINT_FIELD_DESC);
-        oprot.writeString(struct.positionHint);
-        oprot.writeFieldEnd();
-      }
-      oprot.writeFieldBegin(INCREMENTAL_FIELD_DESC);
-      oprot.writeBool(struct.incremental);
+      oprot.writeFieldBegin(OFFSET_FIELD_DESC);
+      oprot.writeI64(struct.offset);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -595,35 +458,17 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
     @Override
     public void write(org.apache.thrift.protocol.TProtocol prot, TLogResult struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
-      {
-        oprot.writeI32(struct.logEvents.size());
-        for (String _iter48 : struct.logEvents)
-        {
-          oprot.writeString(_iter48);
-        }
-      }
-      oprot.writeString(struct.positionHint);
-      oprot.writeBool(struct.incremental);
+      oprot.writeString(struct.logLine);
+      oprot.writeI64(struct.offset);
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TLogResult struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      {
-        org.apache.thrift.protocol.TList _list49 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-        struct.logEvents = new ArrayList<String>(_list49.size);
-        for (int _i50 = 0; _i50 < _list49.size; ++_i50)
-        {
-          String _elem51; // required
-          _elem51 = iprot.readString();
-          struct.logEvents.add(_elem51);
-        }
-      }
-      struct.setLogEventsIsSet(true);
-      struct.positionHint = iprot.readString();
-      struct.setPositionHintIsSet(true);
-      struct.incremental = iprot.readBool();
-      struct.setIncrementalIsSet(true);
+      struct.logLine = iprot.readString();
+      struct.setLogLineIsSet(true);
+      struct.offset = iprot.readI64();
+      struct.setOffsetIsSet(true);
     }
   }
 

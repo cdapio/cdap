@@ -73,28 +73,28 @@ public class MetricsFrontendService {
     public List<String> getLog(String accountId, String applicationId, String flowId, int size) throws MetricsServiceException, org.apache.thrift.TException;
 
     /**
-     * Returns log lines after given position.
+     * Returns log lines after given offset.
      * 
      * @param accountId
      * @param applicationId
      * @param entityId
      * @param entityType
-     * @param positionHint
+     * @param fromOffset
      * @param maxEvents
      */
-    public TLogResult getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents) throws MetricsServiceException, org.apache.thrift.TException;
+    public List<TLogResult> getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents) throws MetricsServiceException, org.apache.thrift.TException;
 
     /**
-     * Returns log lines before given position.
+     * Returns log lines before given offset.
      * 
      * @param accountId
      * @param applicationId
      * @param entityId
      * @param entityType
-     * @param positionHint
+     * @param fromOffset
      * @param maxEvents
      */
-    public TLogResult getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents) throws MetricsServiceException, org.apache.thrift.TException;
+    public List<TLogResult> getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents) throws MetricsServiceException, org.apache.thrift.TException;
 
   }
 
@@ -110,9 +110,9 @@ public class MetricsFrontendService {
 
     public void getLog(String accountId, String applicationId, String flowId, int size, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLog_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLogNext_call> resultHandler) throws org.apache.thrift.TException;
+    public void getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLogNext_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLogPrev_call> resultHandler) throws org.apache.thrift.TException;
+    public void getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLogPrev_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -264,25 +264,25 @@ public class MetricsFrontendService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getLog failed: unknown result");
     }
 
-    public TLogResult getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents) throws MetricsServiceException, org.apache.thrift.TException
+    public List<TLogResult> getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents) throws MetricsServiceException, org.apache.thrift.TException
     {
-      send_getLogNext(accountId, applicationId, entityId, entityType, positionHint, maxEvents);
+      send_getLogNext(accountId, applicationId, entityId, entityType, fromOffset, maxEvents);
       return recv_getLogNext();
     }
 
-    public void send_getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents) throws org.apache.thrift.TException
+    public void send_getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents) throws org.apache.thrift.TException
     {
       getLogNext_args args = new getLogNext_args();
       args.setAccountId(accountId);
       args.setApplicationId(applicationId);
       args.setEntityId(entityId);
       args.setEntityType(entityType);
-      args.setPositionHint(positionHint);
+      args.setFromOffset(fromOffset);
       args.setMaxEvents(maxEvents);
       sendBase("getLogNext", args);
     }
 
-    public TLogResult recv_getLogNext() throws MetricsServiceException, org.apache.thrift.TException
+    public List<TLogResult> recv_getLogNext() throws MetricsServiceException, org.apache.thrift.TException
     {
       getLogNext_result result = new getLogNext_result();
       receiveBase(result, "getLogNext");
@@ -295,25 +295,25 @@ public class MetricsFrontendService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getLogNext failed: unknown result");
     }
 
-    public TLogResult getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents) throws MetricsServiceException, org.apache.thrift.TException
+    public List<TLogResult> getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents) throws MetricsServiceException, org.apache.thrift.TException
     {
-      send_getLogPrev(accountId, applicationId, entityId, entityType, positionHint, maxEvents);
+      send_getLogPrev(accountId, applicationId, entityId, entityType, fromOffset, maxEvents);
       return recv_getLogPrev();
     }
 
-    public void send_getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents) throws org.apache.thrift.TException
+    public void send_getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents) throws org.apache.thrift.TException
     {
       getLogPrev_args args = new getLogPrev_args();
       args.setAccountId(accountId);
       args.setApplicationId(applicationId);
       args.setEntityId(entityId);
       args.setEntityType(entityType);
-      args.setPositionHint(positionHint);
+      args.setFromOffset(fromOffset);
       args.setMaxEvents(maxEvents);
       sendBase("getLogPrev", args);
     }
 
-    public TLogResult recv_getLogPrev() throws MetricsServiceException, org.apache.thrift.TException
+    public List<TLogResult> recv_getLogPrev() throws MetricsServiceException, org.apache.thrift.TException
     {
       getLogPrev_result result = new getLogPrev_result();
       receiveBase(result, "getLogPrev");
@@ -516,9 +516,9 @@ public class MetricsFrontendService {
       }
     }
 
-    public void getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<getLogNext_call> resultHandler) throws org.apache.thrift.TException {
+    public void getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<getLogNext_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getLogNext_call method_call = new getLogNext_call(accountId, applicationId, entityId, entityType, positionHint, maxEvents, resultHandler, this, ___protocolFactory, ___transport);
+      getLogNext_call method_call = new getLogNext_call(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -528,15 +528,15 @@ public class MetricsFrontendService {
       private String applicationId;
       private String entityId;
       private TEntityType entityType;
-      private String positionHint;
+      private long fromOffset;
       private int maxEvents;
-      public getLogNext_call(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<getLogNext_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public getLogNext_call(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<getLogNext_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.accountId = accountId;
         this.applicationId = applicationId;
         this.entityId = entityId;
         this.entityType = entityType;
-        this.positionHint = positionHint;
+        this.fromOffset = fromOffset;
         this.maxEvents = maxEvents;
       }
 
@@ -547,13 +547,13 @@ public class MetricsFrontendService {
         args.setApplicationId(applicationId);
         args.setEntityId(entityId);
         args.setEntityType(entityType);
-        args.setPositionHint(positionHint);
+        args.setFromOffset(fromOffset);
         args.setMaxEvents(maxEvents);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public TLogResult getResult() throws MetricsServiceException, org.apache.thrift.TException {
+      public List<TLogResult> getResult() throws MetricsServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -563,9 +563,9 @@ public class MetricsFrontendService {
       }
     }
 
-    public void getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<getLogPrev_call> resultHandler) throws org.apache.thrift.TException {
+    public void getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<getLogPrev_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getLogPrev_call method_call = new getLogPrev_call(accountId, applicationId, entityId, entityType, positionHint, maxEvents, resultHandler, this, ___protocolFactory, ___transport);
+      getLogPrev_call method_call = new getLogPrev_call(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -575,15 +575,15 @@ public class MetricsFrontendService {
       private String applicationId;
       private String entityId;
       private TEntityType entityType;
-      private String positionHint;
+      private long fromOffset;
       private int maxEvents;
-      public getLogPrev_call(String accountId, String applicationId, String entityId, TEntityType entityType, String positionHint, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<getLogPrev_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public getLogPrev_call(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, org.apache.thrift.async.AsyncMethodCallback<getLogPrev_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.accountId = accountId;
         this.applicationId = applicationId;
         this.entityId = entityId;
         this.entityType = entityType;
-        this.positionHint = positionHint;
+        this.fromOffset = fromOffset;
         this.maxEvents = maxEvents;
       }
 
@@ -594,13 +594,13 @@ public class MetricsFrontendService {
         args.setApplicationId(applicationId);
         args.setEntityId(entityId);
         args.setEntityType(entityType);
-        args.setPositionHint(positionHint);
+        args.setFromOffset(fromOffset);
         args.setMaxEvents(maxEvents);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public TLogResult getResult() throws MetricsServiceException, org.apache.thrift.TException {
+      public List<TLogResult> getResult() throws MetricsServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -745,7 +745,7 @@ public class MetricsFrontendService {
       protected getLogNext_result getResult(I iface, getLogNext_args args) throws org.apache.thrift.TException {
         getLogNext_result result = new getLogNext_result();
         try {
-          result.success = iface.getLogNext(args.accountId, args.applicationId, args.entityId, args.entityType, args.positionHint, args.maxEvents);
+          result.success = iface.getLogNext(args.accountId, args.applicationId, args.entityId, args.entityType, args.fromOffset, args.maxEvents);
         } catch (MetricsServiceException e) {
           result.e = e;
         }
@@ -765,7 +765,7 @@ public class MetricsFrontendService {
       protected getLogPrev_result getResult(I iface, getLogPrev_args args) throws org.apache.thrift.TException {
         getLogPrev_result result = new getLogPrev_result();
         try {
-          result.success = iface.getLogPrev(args.accountId, args.applicationId, args.entityId, args.entityType, args.positionHint, args.maxEvents);
+          result.success = iface.getLogPrev(args.accountId, args.applicationId, args.entityId, args.entityType, args.fromOffset, args.maxEvents);
         } catch (MetricsServiceException e) {
           result.e = e;
         }
@@ -1529,14 +1529,14 @@ public class MetricsFrontendService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list52 = iprot.readListBegin();
-                  struct.success = new ArrayList<Counter>(_list52.size);
-                  for (int _i53 = 0; _i53 < _list52.size; ++_i53)
+                  org.apache.thrift.protocol.TList _list44 = iprot.readListBegin();
+                  struct.success = new ArrayList<Counter>(_list44.size);
+                  for (int _i45 = 0; _i45 < _list44.size; ++_i45)
                   {
-                    Counter _elem54; // required
-                    _elem54 = new Counter();
-                    _elem54.read(iprot);
-                    struct.success.add(_elem54);
+                    Counter _elem46; // required
+                    _elem46 = new Counter();
+                    _elem46.read(iprot);
+                    struct.success.add(_elem46);
                   }
                   iprot.readListEnd();
                 }
@@ -1571,9 +1571,9 @@ public class MetricsFrontendService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Counter _iter55 : struct.success)
+            for (Counter _iter47 : struct.success)
             {
-              _iter55.write(oprot);
+              _iter47.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -1612,9 +1612,9 @@ public class MetricsFrontendService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Counter _iter56 : struct.success)
+            for (Counter _iter48 : struct.success)
             {
-              _iter56.write(oprot);
+              _iter48.write(oprot);
             }
           }
         }
@@ -1629,14 +1629,14 @@ public class MetricsFrontendService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list57 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Counter>(_list57.size);
-            for (int _i58 = 0; _i58 < _list57.size; ++_i58)
+            org.apache.thrift.protocol.TList _list49 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Counter>(_list49.size);
+            for (int _i50 = 0; _i50 < _list49.size; ++_i50)
             {
-              Counter _elem59; // required
-              _elem59 = new Counter();
-              _elem59.read(iprot);
-              struct.success.add(_elem59);
+              Counter _elem51; // required
+              _elem51 = new Counter();
+              _elem51.read(iprot);
+              struct.success.add(_elem51);
             }
           }
           struct.setSuccessIsSet(true);
@@ -5074,13 +5074,13 @@ public class MetricsFrontendService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list60 = iprot.readListBegin();
-                  struct.success = new ArrayList<String>(_list60.size);
-                  for (int _i61 = 0; _i61 < _list60.size; ++_i61)
+                  org.apache.thrift.protocol.TList _list52 = iprot.readListBegin();
+                  struct.success = new ArrayList<String>(_list52.size);
+                  for (int _i53 = 0; _i53 < _list52.size; ++_i53)
                   {
-                    String _elem62; // required
-                    _elem62 = iprot.readString();
-                    struct.success.add(_elem62);
+                    String _elem54; // required
+                    _elem54 = iprot.readString();
+                    struct.success.add(_elem54);
                   }
                   iprot.readListEnd();
                 }
@@ -5115,9 +5115,9 @@ public class MetricsFrontendService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.success.size()));
-            for (String _iter63 : struct.success)
+            for (String _iter55 : struct.success)
             {
-              oprot.writeString(_iter63);
+              oprot.writeString(_iter55);
             }
             oprot.writeListEnd();
           }
@@ -5156,9 +5156,9 @@ public class MetricsFrontendService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (String _iter64 : struct.success)
+            for (String _iter56 : struct.success)
             {
-              oprot.writeString(_iter64);
+              oprot.writeString(_iter56);
             }
           }
         }
@@ -5173,13 +5173,13 @@ public class MetricsFrontendService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list65 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.success = new ArrayList<String>(_list65.size);
-            for (int _i66 = 0; _i66 < _list65.size; ++_i66)
+            org.apache.thrift.protocol.TList _list57 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.success = new ArrayList<String>(_list57.size);
+            for (int _i58 = 0; _i58 < _list57.size; ++_i58)
             {
-              String _elem67; // required
-              _elem67 = iprot.readString();
-              struct.success.add(_elem67);
+              String _elem59; // required
+              _elem59 = iprot.readString();
+              struct.success.add(_elem59);
             }
           }
           struct.setSuccessIsSet(true);
@@ -5201,7 +5201,7 @@ public class MetricsFrontendService {
     private static final org.apache.thrift.protocol.TField APPLICATION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("applicationId", org.apache.thrift.protocol.TType.STRING, (short)2);
     private static final org.apache.thrift.protocol.TField ENTITY_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("entityId", org.apache.thrift.protocol.TType.STRING, (short)3);
     private static final org.apache.thrift.protocol.TField ENTITY_TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("entityType", org.apache.thrift.protocol.TType.I32, (short)4);
-    private static final org.apache.thrift.protocol.TField POSITION_HINT_FIELD_DESC = new org.apache.thrift.protocol.TField("positionHint", org.apache.thrift.protocol.TType.STRING, (short)5);
+    private static final org.apache.thrift.protocol.TField FROM_OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("fromOffset", org.apache.thrift.protocol.TType.I64, (short)5);
     private static final org.apache.thrift.protocol.TField MAX_EVENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("maxEvents", org.apache.thrift.protocol.TType.I32, (short)6);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -5214,7 +5214,7 @@ public class MetricsFrontendService {
     private String applicationId; // required
     private String entityId; // required
     private TEntityType entityType; // required
-    private String positionHint; // required
+    private long fromOffset; // required
     private int maxEvents; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -5227,7 +5227,7 @@ public class MetricsFrontendService {
        * @see TEntityType
        */
       ENTITY_TYPE((short)4, "entityType"),
-      POSITION_HINT((short)5, "positionHint"),
+      FROM_OFFSET((short)5, "fromOffset"),
       MAX_EVENTS((short)6, "maxEvents");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -5251,8 +5251,8 @@ public class MetricsFrontendService {
             return ENTITY_ID;
           case 4: // ENTITY_TYPE
             return ENTITY_TYPE;
-          case 5: // POSITION_HINT
-            return POSITION_HINT;
+          case 5: // FROM_OFFSET
+            return FROM_OFFSET;
           case 6: // MAX_EVENTS
             return MAX_EVENTS;
           default:
@@ -5295,8 +5295,9 @@ public class MetricsFrontendService {
     }
 
     // isset id assignments
-    private static final int __MAXEVENTS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __FROMOFFSET_ISSET_ID = 0;
+    private static final int __MAXEVENTS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -5308,8 +5309,8 @@ public class MetricsFrontendService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.ENTITY_TYPE, new org.apache.thrift.meta_data.FieldMetaData("entityType", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TEntityType.class)));
-      tmpMap.put(_Fields.POSITION_HINT, new org.apache.thrift.meta_data.FieldMetaData("positionHint", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.FROM_OFFSET, new org.apache.thrift.meta_data.FieldMetaData("fromOffset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       tmpMap.put(_Fields.MAX_EVENTS, new org.apache.thrift.meta_data.FieldMetaData("maxEvents", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -5324,7 +5325,7 @@ public class MetricsFrontendService {
       String applicationId,
       String entityId,
       TEntityType entityType,
-      String positionHint,
+      long fromOffset,
       int maxEvents)
     {
       this();
@@ -5332,7 +5333,8 @@ public class MetricsFrontendService {
       this.applicationId = applicationId;
       this.entityId = entityId;
       this.entityType = entityType;
-      this.positionHint = positionHint;
+      this.fromOffset = fromOffset;
+      setFromOffsetIsSet(true);
       this.maxEvents = maxEvents;
       setMaxEventsIsSet(true);
     }
@@ -5355,9 +5357,7 @@ public class MetricsFrontendService {
       if (other.isSetEntityType()) {
         this.entityType = other.entityType;
       }
-      if (other.isSetPositionHint()) {
-        this.positionHint = other.positionHint;
-      }
+      this.fromOffset = other.fromOffset;
       this.maxEvents = other.maxEvents;
     }
 
@@ -5371,7 +5371,8 @@ public class MetricsFrontendService {
       this.applicationId = null;
       this.entityId = null;
       this.entityType = null;
-      this.positionHint = null;
+      setFromOffsetIsSet(false);
+      this.fromOffset = 0;
       setMaxEventsIsSet(false);
       this.maxEvents = 0;
     }
@@ -5476,27 +5477,26 @@ public class MetricsFrontendService {
       }
     }
 
-    public String getPositionHint() {
-      return this.positionHint;
+    public long getFromOffset() {
+      return this.fromOffset;
     }
 
-    public void setPositionHint(String positionHint) {
-      this.positionHint = positionHint;
+    public void setFromOffset(long fromOffset) {
+      this.fromOffset = fromOffset;
+      setFromOffsetIsSet(true);
     }
 
-    public void unsetPositionHint() {
-      this.positionHint = null;
+    public void unsetFromOffset() {
+      __isset_bit_vector.clear(__FROMOFFSET_ISSET_ID);
     }
 
-    /** Returns true if field positionHint is set (has been assigned a value) and false otherwise */
-    public boolean isSetPositionHint() {
-      return this.positionHint != null;
+    /** Returns true if field fromOffset is set (has been assigned a value) and false otherwise */
+    public boolean isSetFromOffset() {
+      return __isset_bit_vector.get(__FROMOFFSET_ISSET_ID);
     }
 
-    public void setPositionHintIsSet(boolean value) {
-      if (!value) {
-        this.positionHint = null;
-      }
+    public void setFromOffsetIsSet(boolean value) {
+      __isset_bit_vector.set(__FROMOFFSET_ISSET_ID, value);
     }
 
     public int getMaxEvents() {
@@ -5555,11 +5555,11 @@ public class MetricsFrontendService {
         }
         break;
 
-      case POSITION_HINT:
+      case FROM_OFFSET:
         if (value == null) {
-          unsetPositionHint();
+          unsetFromOffset();
         } else {
-          setPositionHint((String)value);
+          setFromOffset((Long)value);
         }
         break;
 
@@ -5588,8 +5588,8 @@ public class MetricsFrontendService {
       case ENTITY_TYPE:
         return getEntityType();
 
-      case POSITION_HINT:
-        return getPositionHint();
+      case FROM_OFFSET:
+        return Long.valueOf(getFromOffset());
 
       case MAX_EVENTS:
         return Integer.valueOf(getMaxEvents());
@@ -5613,8 +5613,8 @@ public class MetricsFrontendService {
         return isSetEntityId();
       case ENTITY_TYPE:
         return isSetEntityType();
-      case POSITION_HINT:
-        return isSetPositionHint();
+      case FROM_OFFSET:
+        return isSetFromOffset();
       case MAX_EVENTS:
         return isSetMaxEvents();
       }
@@ -5670,12 +5670,12 @@ public class MetricsFrontendService {
           return false;
       }
 
-      boolean this_present_positionHint = true && this.isSetPositionHint();
-      boolean that_present_positionHint = true && that.isSetPositionHint();
-      if (this_present_positionHint || that_present_positionHint) {
-        if (!(this_present_positionHint && that_present_positionHint))
+      boolean this_present_fromOffset = true;
+      boolean that_present_fromOffset = true;
+      if (this_present_fromOffset || that_present_fromOffset) {
+        if (!(this_present_fromOffset && that_present_fromOffset))
           return false;
-        if (!this.positionHint.equals(that.positionHint))
+        if (this.fromOffset != that.fromOffset)
           return false;
       }
 
@@ -5715,10 +5715,10 @@ public class MetricsFrontendService {
       if (present_entityType)
         builder.append(entityType.getValue());
 
-      boolean present_positionHint = true && (isSetPositionHint());
-      builder.append(present_positionHint);
-      if (present_positionHint)
-        builder.append(positionHint);
+      boolean present_fromOffset = true;
+      builder.append(present_fromOffset);
+      if (present_fromOffset)
+        builder.append(fromOffset);
 
       boolean present_maxEvents = true;
       builder.append(present_maxEvents);
@@ -5776,12 +5776,12 @@ public class MetricsFrontendService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetPositionHint()).compareTo(typedOther.isSetPositionHint());
+      lastComparison = Boolean.valueOf(isSetFromOffset()).compareTo(typedOther.isSetFromOffset());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetPositionHint()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.positionHint, typedOther.positionHint);
+      if (isSetFromOffset()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.fromOffset, typedOther.fromOffset);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -5848,12 +5848,8 @@ public class MetricsFrontendService {
       }
       first = false;
       if (!first) sb.append(", ");
-      sb.append("positionHint:");
-      if (this.positionHint == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.positionHint);
-      }
+      sb.append("fromOffset:");
+      sb.append(this.fromOffset);
       first = false;
       if (!first) sb.append(", ");
       sb.append("maxEvents:");
@@ -5935,10 +5931,10 @@ public class MetricsFrontendService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 5: // POSITION_HINT
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.positionHint = iprot.readString();
-                struct.setPositionHintIsSet(true);
+            case 5: // FROM_OFFSET
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.fromOffset = iprot.readI64();
+                struct.setFromOffsetIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -5984,11 +5980,9 @@ public class MetricsFrontendService {
           oprot.writeI32(struct.entityType.getValue());
           oprot.writeFieldEnd();
         }
-        if (struct.positionHint != null) {
-          oprot.writeFieldBegin(POSITION_HINT_FIELD_DESC);
-          oprot.writeString(struct.positionHint);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(FROM_OFFSET_FIELD_DESC);
+        oprot.writeI64(struct.fromOffset);
+        oprot.writeFieldEnd();
         oprot.writeFieldBegin(MAX_EVENTS_FIELD_DESC);
         oprot.writeI32(struct.maxEvents);
         oprot.writeFieldEnd();
@@ -6022,7 +6016,7 @@ public class MetricsFrontendService {
         if (struct.isSetEntityType()) {
           optionals.set(3);
         }
-        if (struct.isSetPositionHint()) {
+        if (struct.isSetFromOffset()) {
           optionals.set(4);
         }
         if (struct.isSetMaxEvents()) {
@@ -6041,8 +6035,8 @@ public class MetricsFrontendService {
         if (struct.isSetEntityType()) {
           oprot.writeI32(struct.entityType.getValue());
         }
-        if (struct.isSetPositionHint()) {
-          oprot.writeString(struct.positionHint);
+        if (struct.isSetFromOffset()) {
+          oprot.writeI64(struct.fromOffset);
         }
         if (struct.isSetMaxEvents()) {
           oprot.writeI32(struct.maxEvents);
@@ -6070,8 +6064,8 @@ public class MetricsFrontendService {
           struct.setEntityTypeIsSet(true);
         }
         if (incoming.get(4)) {
-          struct.positionHint = iprot.readString();
-          struct.setPositionHintIsSet(true);
+          struct.fromOffset = iprot.readI64();
+          struct.setFromOffsetIsSet(true);
         }
         if (incoming.get(5)) {
           struct.maxEvents = iprot.readI32();
@@ -6085,7 +6079,7 @@ public class MetricsFrontendService {
   public static class getLogNext_result implements org.apache.thrift.TBase<getLogNext_result, getLogNext_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getLogNext_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -6094,7 +6088,7 @@ public class MetricsFrontendService {
       schemes.put(TupleScheme.class, new getLogNext_resultTupleSchemeFactory());
     }
 
-    private TLogResult success; // required
+    private List<TLogResult> success; // required
     private MetricsServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -6163,7 +6157,8 @@ public class MetricsFrontendService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TLogResult.class)));
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TLogResult.class))));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -6174,7 +6169,7 @@ public class MetricsFrontendService {
     }
 
     public getLogNext_result(
-      TLogResult success,
+      List<TLogResult> success,
       MetricsServiceException e)
     {
       this();
@@ -6187,7 +6182,11 @@ public class MetricsFrontendService {
      */
     public getLogNext_result(getLogNext_result other) {
       if (other.isSetSuccess()) {
-        this.success = new TLogResult(other.success);
+        List<TLogResult> __this__success = new ArrayList<TLogResult>();
+        for (TLogResult other_element : other.success) {
+          __this__success.add(new TLogResult(other_element));
+        }
+        this.success = __this__success;
       }
       if (other.isSetE()) {
         this.e = new MetricsServiceException(other.e);
@@ -6204,11 +6203,26 @@ public class MetricsFrontendService {
       this.e = null;
     }
 
-    public TLogResult getSuccess() {
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<TLogResult> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(TLogResult elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<TLogResult>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<TLogResult> getSuccess() {
       return this.success;
     }
 
-    public void setSuccess(TLogResult success) {
+    public void setSuccess(List<TLogResult> success) {
       this.success = success;
     }
 
@@ -6256,7 +6270,7 @@ public class MetricsFrontendService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((TLogResult)value);
+          setSuccess((List<TLogResult>)value);
         }
         break;
 
@@ -6455,9 +6469,19 @@ public class MetricsFrontendService {
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new TLogResult();
-                struct.success.read(iprot);
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list60 = iprot.readListBegin();
+                  struct.success = new ArrayList<TLogResult>(_list60.size);
+                  for (int _i61 = 0; _i61 < _list60.size; ++_i61)
+                  {
+                    TLogResult _elem62; // required
+                    _elem62 = new TLogResult();
+                    _elem62.read(iprot);
+                    struct.success.add(_elem62);
+                  }
+                  iprot.readListEnd();
+                }
                 struct.setSuccessIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -6487,7 +6511,14 @@ public class MetricsFrontendService {
         oprot.writeStructBegin(STRUCT_DESC);
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          struct.success.write(oprot);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (TLogResult _iter63 : struct.success)
+            {
+              _iter63.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
           oprot.writeFieldEnd();
         }
         if (struct.e != null) {
@@ -6521,7 +6552,13 @@ public class MetricsFrontendService {
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
-          struct.success.write(oprot);
+          {
+            oprot.writeI32(struct.success.size());
+            for (TLogResult _iter64 : struct.success)
+            {
+              _iter64.write(oprot);
+            }
+          }
         }
         if (struct.isSetE()) {
           struct.e.write(oprot);
@@ -6533,8 +6570,17 @@ public class MetricsFrontendService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new TLogResult();
-          struct.success.read(iprot);
+          {
+            org.apache.thrift.protocol.TList _list65 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<TLogResult>(_list65.size);
+            for (int _i66 = 0; _i66 < _list65.size; ++_i66)
+            {
+              TLogResult _elem67; // required
+              _elem67 = new TLogResult();
+              _elem67.read(iprot);
+              struct.success.add(_elem67);
+            }
+          }
           struct.setSuccessIsSet(true);
         }
         if (incoming.get(1)) {
@@ -6554,7 +6600,7 @@ public class MetricsFrontendService {
     private static final org.apache.thrift.protocol.TField APPLICATION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("applicationId", org.apache.thrift.protocol.TType.STRING, (short)2);
     private static final org.apache.thrift.protocol.TField ENTITY_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("entityId", org.apache.thrift.protocol.TType.STRING, (short)3);
     private static final org.apache.thrift.protocol.TField ENTITY_TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("entityType", org.apache.thrift.protocol.TType.I32, (short)4);
-    private static final org.apache.thrift.protocol.TField POSITION_HINT_FIELD_DESC = new org.apache.thrift.protocol.TField("positionHint", org.apache.thrift.protocol.TType.STRING, (short)5);
+    private static final org.apache.thrift.protocol.TField FROM_OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("fromOffset", org.apache.thrift.protocol.TType.I64, (short)5);
     private static final org.apache.thrift.protocol.TField MAX_EVENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("maxEvents", org.apache.thrift.protocol.TType.I32, (short)6);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -6567,7 +6613,7 @@ public class MetricsFrontendService {
     private String applicationId; // required
     private String entityId; // required
     private TEntityType entityType; // required
-    private String positionHint; // required
+    private long fromOffset; // required
     private int maxEvents; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -6580,7 +6626,7 @@ public class MetricsFrontendService {
        * @see TEntityType
        */
       ENTITY_TYPE((short)4, "entityType"),
-      POSITION_HINT((short)5, "positionHint"),
+      FROM_OFFSET((short)5, "fromOffset"),
       MAX_EVENTS((short)6, "maxEvents");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -6604,8 +6650,8 @@ public class MetricsFrontendService {
             return ENTITY_ID;
           case 4: // ENTITY_TYPE
             return ENTITY_TYPE;
-          case 5: // POSITION_HINT
-            return POSITION_HINT;
+          case 5: // FROM_OFFSET
+            return FROM_OFFSET;
           case 6: // MAX_EVENTS
             return MAX_EVENTS;
           default:
@@ -6648,8 +6694,9 @@ public class MetricsFrontendService {
     }
 
     // isset id assignments
-    private static final int __MAXEVENTS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __FROMOFFSET_ISSET_ID = 0;
+    private static final int __MAXEVENTS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -6661,8 +6708,8 @@ public class MetricsFrontendService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.ENTITY_TYPE, new org.apache.thrift.meta_data.FieldMetaData("entityType", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TEntityType.class)));
-      tmpMap.put(_Fields.POSITION_HINT, new org.apache.thrift.meta_data.FieldMetaData("positionHint", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.FROM_OFFSET, new org.apache.thrift.meta_data.FieldMetaData("fromOffset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       tmpMap.put(_Fields.MAX_EVENTS, new org.apache.thrift.meta_data.FieldMetaData("maxEvents", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -6677,7 +6724,7 @@ public class MetricsFrontendService {
       String applicationId,
       String entityId,
       TEntityType entityType,
-      String positionHint,
+      long fromOffset,
       int maxEvents)
     {
       this();
@@ -6685,7 +6732,8 @@ public class MetricsFrontendService {
       this.applicationId = applicationId;
       this.entityId = entityId;
       this.entityType = entityType;
-      this.positionHint = positionHint;
+      this.fromOffset = fromOffset;
+      setFromOffsetIsSet(true);
       this.maxEvents = maxEvents;
       setMaxEventsIsSet(true);
     }
@@ -6708,9 +6756,7 @@ public class MetricsFrontendService {
       if (other.isSetEntityType()) {
         this.entityType = other.entityType;
       }
-      if (other.isSetPositionHint()) {
-        this.positionHint = other.positionHint;
-      }
+      this.fromOffset = other.fromOffset;
       this.maxEvents = other.maxEvents;
     }
 
@@ -6724,7 +6770,8 @@ public class MetricsFrontendService {
       this.applicationId = null;
       this.entityId = null;
       this.entityType = null;
-      this.positionHint = null;
+      setFromOffsetIsSet(false);
+      this.fromOffset = 0;
       setMaxEventsIsSet(false);
       this.maxEvents = 0;
     }
@@ -6829,27 +6876,26 @@ public class MetricsFrontendService {
       }
     }
 
-    public String getPositionHint() {
-      return this.positionHint;
+    public long getFromOffset() {
+      return this.fromOffset;
     }
 
-    public void setPositionHint(String positionHint) {
-      this.positionHint = positionHint;
+    public void setFromOffset(long fromOffset) {
+      this.fromOffset = fromOffset;
+      setFromOffsetIsSet(true);
     }
 
-    public void unsetPositionHint() {
-      this.positionHint = null;
+    public void unsetFromOffset() {
+      __isset_bit_vector.clear(__FROMOFFSET_ISSET_ID);
     }
 
-    /** Returns true if field positionHint is set (has been assigned a value) and false otherwise */
-    public boolean isSetPositionHint() {
-      return this.positionHint != null;
+    /** Returns true if field fromOffset is set (has been assigned a value) and false otherwise */
+    public boolean isSetFromOffset() {
+      return __isset_bit_vector.get(__FROMOFFSET_ISSET_ID);
     }
 
-    public void setPositionHintIsSet(boolean value) {
-      if (!value) {
-        this.positionHint = null;
-      }
+    public void setFromOffsetIsSet(boolean value) {
+      __isset_bit_vector.set(__FROMOFFSET_ISSET_ID, value);
     }
 
     public int getMaxEvents() {
@@ -6908,11 +6954,11 @@ public class MetricsFrontendService {
         }
         break;
 
-      case POSITION_HINT:
+      case FROM_OFFSET:
         if (value == null) {
-          unsetPositionHint();
+          unsetFromOffset();
         } else {
-          setPositionHint((String)value);
+          setFromOffset((Long)value);
         }
         break;
 
@@ -6941,8 +6987,8 @@ public class MetricsFrontendService {
       case ENTITY_TYPE:
         return getEntityType();
 
-      case POSITION_HINT:
-        return getPositionHint();
+      case FROM_OFFSET:
+        return Long.valueOf(getFromOffset());
 
       case MAX_EVENTS:
         return Integer.valueOf(getMaxEvents());
@@ -6966,8 +7012,8 @@ public class MetricsFrontendService {
         return isSetEntityId();
       case ENTITY_TYPE:
         return isSetEntityType();
-      case POSITION_HINT:
-        return isSetPositionHint();
+      case FROM_OFFSET:
+        return isSetFromOffset();
       case MAX_EVENTS:
         return isSetMaxEvents();
       }
@@ -7023,12 +7069,12 @@ public class MetricsFrontendService {
           return false;
       }
 
-      boolean this_present_positionHint = true && this.isSetPositionHint();
-      boolean that_present_positionHint = true && that.isSetPositionHint();
-      if (this_present_positionHint || that_present_positionHint) {
-        if (!(this_present_positionHint && that_present_positionHint))
+      boolean this_present_fromOffset = true;
+      boolean that_present_fromOffset = true;
+      if (this_present_fromOffset || that_present_fromOffset) {
+        if (!(this_present_fromOffset && that_present_fromOffset))
           return false;
-        if (!this.positionHint.equals(that.positionHint))
+        if (this.fromOffset != that.fromOffset)
           return false;
       }
 
@@ -7068,10 +7114,10 @@ public class MetricsFrontendService {
       if (present_entityType)
         builder.append(entityType.getValue());
 
-      boolean present_positionHint = true && (isSetPositionHint());
-      builder.append(present_positionHint);
-      if (present_positionHint)
-        builder.append(positionHint);
+      boolean present_fromOffset = true;
+      builder.append(present_fromOffset);
+      if (present_fromOffset)
+        builder.append(fromOffset);
 
       boolean present_maxEvents = true;
       builder.append(present_maxEvents);
@@ -7129,12 +7175,12 @@ public class MetricsFrontendService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetPositionHint()).compareTo(typedOther.isSetPositionHint());
+      lastComparison = Boolean.valueOf(isSetFromOffset()).compareTo(typedOther.isSetFromOffset());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetPositionHint()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.positionHint, typedOther.positionHint);
+      if (isSetFromOffset()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.fromOffset, typedOther.fromOffset);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -7201,12 +7247,8 @@ public class MetricsFrontendService {
       }
       first = false;
       if (!first) sb.append(", ");
-      sb.append("positionHint:");
-      if (this.positionHint == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.positionHint);
-      }
+      sb.append("fromOffset:");
+      sb.append(this.fromOffset);
       first = false;
       if (!first) sb.append(", ");
       sb.append("maxEvents:");
@@ -7288,10 +7330,10 @@ public class MetricsFrontendService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 5: // POSITION_HINT
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.positionHint = iprot.readString();
-                struct.setPositionHintIsSet(true);
+            case 5: // FROM_OFFSET
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.fromOffset = iprot.readI64();
+                struct.setFromOffsetIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -7337,11 +7379,9 @@ public class MetricsFrontendService {
           oprot.writeI32(struct.entityType.getValue());
           oprot.writeFieldEnd();
         }
-        if (struct.positionHint != null) {
-          oprot.writeFieldBegin(POSITION_HINT_FIELD_DESC);
-          oprot.writeString(struct.positionHint);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(FROM_OFFSET_FIELD_DESC);
+        oprot.writeI64(struct.fromOffset);
+        oprot.writeFieldEnd();
         oprot.writeFieldBegin(MAX_EVENTS_FIELD_DESC);
         oprot.writeI32(struct.maxEvents);
         oprot.writeFieldEnd();
@@ -7375,7 +7415,7 @@ public class MetricsFrontendService {
         if (struct.isSetEntityType()) {
           optionals.set(3);
         }
-        if (struct.isSetPositionHint()) {
+        if (struct.isSetFromOffset()) {
           optionals.set(4);
         }
         if (struct.isSetMaxEvents()) {
@@ -7394,8 +7434,8 @@ public class MetricsFrontendService {
         if (struct.isSetEntityType()) {
           oprot.writeI32(struct.entityType.getValue());
         }
-        if (struct.isSetPositionHint()) {
-          oprot.writeString(struct.positionHint);
+        if (struct.isSetFromOffset()) {
+          oprot.writeI64(struct.fromOffset);
         }
         if (struct.isSetMaxEvents()) {
           oprot.writeI32(struct.maxEvents);
@@ -7423,8 +7463,8 @@ public class MetricsFrontendService {
           struct.setEntityTypeIsSet(true);
         }
         if (incoming.get(4)) {
-          struct.positionHint = iprot.readString();
-          struct.setPositionHintIsSet(true);
+          struct.fromOffset = iprot.readI64();
+          struct.setFromOffsetIsSet(true);
         }
         if (incoming.get(5)) {
           struct.maxEvents = iprot.readI32();
@@ -7438,7 +7478,7 @@ public class MetricsFrontendService {
   public static class getLogPrev_result implements org.apache.thrift.TBase<getLogPrev_result, getLogPrev_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getLogPrev_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -7447,7 +7487,7 @@ public class MetricsFrontendService {
       schemes.put(TupleScheme.class, new getLogPrev_resultTupleSchemeFactory());
     }
 
-    private TLogResult success; // required
+    private List<TLogResult> success; // required
     private MetricsServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -7516,7 +7556,8 @@ public class MetricsFrontendService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TLogResult.class)));
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TLogResult.class))));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -7527,7 +7568,7 @@ public class MetricsFrontendService {
     }
 
     public getLogPrev_result(
-      TLogResult success,
+      List<TLogResult> success,
       MetricsServiceException e)
     {
       this();
@@ -7540,7 +7581,11 @@ public class MetricsFrontendService {
      */
     public getLogPrev_result(getLogPrev_result other) {
       if (other.isSetSuccess()) {
-        this.success = new TLogResult(other.success);
+        List<TLogResult> __this__success = new ArrayList<TLogResult>();
+        for (TLogResult other_element : other.success) {
+          __this__success.add(new TLogResult(other_element));
+        }
+        this.success = __this__success;
       }
       if (other.isSetE()) {
         this.e = new MetricsServiceException(other.e);
@@ -7557,11 +7602,26 @@ public class MetricsFrontendService {
       this.e = null;
     }
 
-    public TLogResult getSuccess() {
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<TLogResult> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(TLogResult elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<TLogResult>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<TLogResult> getSuccess() {
       return this.success;
     }
 
-    public void setSuccess(TLogResult success) {
+    public void setSuccess(List<TLogResult> success) {
       this.success = success;
     }
 
@@ -7609,7 +7669,7 @@ public class MetricsFrontendService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((TLogResult)value);
+          setSuccess((List<TLogResult>)value);
         }
         break;
 
@@ -7808,9 +7868,19 @@ public class MetricsFrontendService {
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new TLogResult();
-                struct.success.read(iprot);
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list68 = iprot.readListBegin();
+                  struct.success = new ArrayList<TLogResult>(_list68.size);
+                  for (int _i69 = 0; _i69 < _list68.size; ++_i69)
+                  {
+                    TLogResult _elem70; // required
+                    _elem70 = new TLogResult();
+                    _elem70.read(iprot);
+                    struct.success.add(_elem70);
+                  }
+                  iprot.readListEnd();
+                }
                 struct.setSuccessIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -7840,7 +7910,14 @@ public class MetricsFrontendService {
         oprot.writeStructBegin(STRUCT_DESC);
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          struct.success.write(oprot);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (TLogResult _iter71 : struct.success)
+            {
+              _iter71.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
           oprot.writeFieldEnd();
         }
         if (struct.e != null) {
@@ -7874,7 +7951,13 @@ public class MetricsFrontendService {
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
-          struct.success.write(oprot);
+          {
+            oprot.writeI32(struct.success.size());
+            for (TLogResult _iter72 : struct.success)
+            {
+              _iter72.write(oprot);
+            }
+          }
         }
         if (struct.isSetE()) {
           struct.e.write(oprot);
@@ -7886,8 +7969,17 @@ public class MetricsFrontendService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new TLogResult();
-          struct.success.read(iprot);
+          {
+            org.apache.thrift.protocol.TList _list73 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<TLogResult>(_list73.size);
+            for (int _i74 = 0; _i74 < _list73.size; ++_i74)
+            {
+              TLogResult _elem75; // required
+              _elem75 = new TLogResult();
+              _elem75.read(iprot);
+              struct.success.add(_elem75);
+            }
+          }
           struct.setSuccessIsSet(true);
         }
         if (incoming.get(1)) {

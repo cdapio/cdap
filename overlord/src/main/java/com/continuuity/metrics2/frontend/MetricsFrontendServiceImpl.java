@@ -2,7 +2,6 @@ package com.continuuity.metrics2.frontend;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
@@ -10,6 +9,8 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
+import com.continuuity.logging.read.Callback;
+import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics2.common.DBUtils;
 import com.continuuity.metrics2.temporaldb.DataPoint;
@@ -28,6 +29,7 @@ import com.continuuity.metrics2.thrift.TimeseriesRequest;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -39,11 +41,13 @@ import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -55,7 +59,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.logging.context.LoggingContextHelper.EntityType;
-import static com.continuuity.logging.read.LogReader.Result;
 
 /**
  * MetricsService provides a readonly service for metrics.
@@ -185,70 +188,98 @@ public class MetricsFrontendServiceImpl
   public List<String> getLog(final String accountId, final String applicationId,
                              final String flowId, int size)
     throws MetricsServiceException, TException {
-    List<String> flowLogs = getLogNext(accountId, applicationId, flowId, TEntityType.FLOW, "", 200).getLogEvents();
-    if (!flowLogs.isEmpty()) {
-      return flowLogs;
-    }
-
-    List<String> procLogs = getLogNext(accountId, applicationId, flowId, TEntityType.PROCEDURE, "", 200).getLogEvents();
-    if (!procLogs.isEmpty()) {
-      return procLogs;
-    }
-
-    List<String> mrLogs =  getLogNext(accountId, applicationId, flowId, TEntityType.MAP_REDUCE, "", 200).getLogEvents();
-    return mrLogs;
+    return Lists.newArrayList(
+      Iterables.transform(
+        getLogNext(accountId, applicationId, flowId, TEntityType.FLOW, -1, 200), TLogResultConverter.getConverter()
+      )
+    );
   }
 
-  @Override
-  public TLogResult getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType,
-                               String positionHint, int maxEvents) throws MetricsServiceException, TException {
-    try {
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(accountId, applicationId,
-                                                                             entityId, getEntityType(entityType));
-      Result result = logReader.getLogNext(loggingContext, positionHint, maxEvents);
-      return convertLogEvents(result);
-    } catch (Throwable e) {
-      LOG.warn(
-        String.format("Failed to tail log file - %s:%s:%s:%s:%s",
-                      entityType, accountId, applicationId, entityId, positionHint),
-        e);
-      throw new MetricsServiceException(e.getMessage());
+  /**
+   * Converts TLogResult into String.
+   */
+  private static class TLogResultConverter implements Function<TLogResult, String> {
+    private static final TLogResultConverter CONVERTER = new TLogResultConverter();
+
+    public static TLogResultConverter getConverter() {
+      return CONVERTER;
+    }
+
+    @Nullable
+    @Override
+    public String apply(@Nullable TLogResult input) {
+      if (input == null) {
+        return null;
+      }
+      return input.getLogLine();
     }
   }
 
   @Override
-  public TLogResult getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType,
-                               String positionHint, int maxEvents) throws MetricsServiceException, TException {
+  public List<TLogResult> getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType,
+                                     long fromOffset, int maxEvents) throws MetricsServiceException, TException {
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(accountId, applicationId,
+                                                                           entityId, getEntityType(entityType));
+    LogCallback logCallback = new LogCallback(maxEvents, logPattern);
     try {
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(accountId, applicationId,
-                                                                             entityId, getEntityType(entityType));
-      Result result = logReader.getLogPrev(loggingContext, positionHint, maxEvents);
-      return convertLogEvents(result);
-    } catch (Throwable e) {
-      LOG.warn(
-        String.format("Failed to tail log file - %s:%s:%s:%s:%s",
-                      entityType, accountId, applicationId, entityId, positionHint),
-        e);
-      throw new MetricsServiceException(e.getMessage());
+      logReader.getLogNext(loggingContext, fromOffset, maxEvents, logCallback).get();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
+    return logCallback.getLogResults();
   }
 
-  private TLogResult convertLogEvents(Result result) {
-    ch.qos.logback.classic.Logger rootLogger =
-      (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-    LoggerContext loggerContext = rootLogger.getLoggerContext();
-
-    PatternLayout patternLayout = new PatternLayout();
-    patternLayout.setContext(loggerContext);
-    patternLayout.setPattern(logPattern);
-    patternLayout.start();
-
-    List<String> lines = Lists.newArrayListWithExpectedSize(result.getLoggingEvents().size());
-    for (ILoggingEvent event : result.getLoggingEvents()) {
-      lines.add(patternLayout.doLayout(event));
+  @Override
+  public List<TLogResult> getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType,
+                                     long fromOffset, int maxEvents) throws MetricsServiceException, TException {
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(accountId, applicationId,
+                                                                           entityId, getEntityType(entityType));
+    LogCallback logCallback = new LogCallback(maxEvents, logPattern);
+    try {
+      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, logCallback).get();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
-    patternLayout.stop();
-    return new TLogResult(lines, result.getPositionHint(), result.isIncremental());
+    return logCallback.getLogResults();
+  }
+
+  /**
+   * Callback to handle log events from LogReader.
+   */
+  private static class LogCallback implements Callback {
+    private final List<TLogResult> logResults;
+    private final PatternLayout patternLayout;
+
+    private LogCallback(int maxEvents, String logPattern) {
+      logResults = Lists.newArrayListWithExpectedSize(maxEvents);
+
+      ch.qos.logback.classic.Logger rootLogger =
+        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+      LoggerContext loggerContext = rootLogger.getLoggerContext();
+
+      patternLayout = new PatternLayout();
+      patternLayout.setContext(loggerContext);
+      patternLayout.setPattern(logPattern);
+    }
+
+    @Override
+    public void init() {
+      patternLayout.start();
+    }
+
+    @Override
+    public void handle(LogEvent event) {
+      logResults.add(new TLogResult(patternLayout.doLayout(event.getLoggingEvent()), event.getOffset()));
+    }
+
+    @Override
+    public void close() {
+      patternLayout.stop();
+    }
+
+    public List<TLogResult> getLogResults() {
+      return Collections.unmodifiableList(logResults);
+    }
   }
 
   private EntityType getEntityType(TEntityType tEntityType) {

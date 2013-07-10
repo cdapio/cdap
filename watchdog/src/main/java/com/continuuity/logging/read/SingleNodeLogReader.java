@@ -13,9 +13,7 @@ import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -79,68 +77,6 @@ public class SingleNodeLogReader implements LogReader {
                              new SynchronousQueue<Runnable>(),
                              Threads.createDaemonThreadFactory("single-log-reader-%d"),
                              new ThreadPoolExecutor.DiscardPolicy());
-  }
-
-  @Override
-  public Result getLogNext(LoggingContext loggingContext, String positionHintString, int maxEvents) {
-    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-    PositionHint positionHint = new PositionHint(positionHintString);
-    if (!positionHint.isValid()) {
-      return getLogPrev(loggingContext, positionHintString, maxEvents);
-    }
-
-    SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
-    if (sortedFiles.isEmpty()) {
-      return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
-    }
-
-    long fromTimeMs = positionHint.getNextTimestamp();
-    long prevInterval = -1;
-    Path prevPath = null;
-    List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-    for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-      if (entry.getKey() >= fromTimeMs && prevPath != null) {
-        tailFiles.add(prevPath);
-      }
-      prevInterval = entry.getKey();
-      prevPath = entry.getValue().getPath();
-    }
-
-    if (prevInterval != -1) {
-      tailFiles.add(prevPath);
-    }
-
-    final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
-    AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
-    for (Path file : tailFiles) {
-      logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(),
-                        new Callback() {
-                          @Override
-                          public void init() {
-                            // Nothing to do
-                          }
-
-                          @Override
-                          public void handle(LogEvent event) {
-                            loggingEvents.add(event.getLoggingEvent());
-                          }
-
-                          @Override
-                          public void close() {
-                            // Nothing to do
-                          }
-                        });
-      if (loggingEvents.size() >= maxEvents) {
-        break;
-      }
-    }
-    if (loggingEvents.isEmpty()) {
-      return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
-    } else {
-      return new Result(loggingEvents,
-                        PositionHint.genPositionHint(loggingEvents.get(0).getTimeStamp() - 1,
-                          loggingEvents.get(loggingEvents.size() - 1).getTimeStamp() + 1), positionHint.isValid());
-    }
   }
 
   @Override
@@ -235,44 +171,6 @@ public class SingleNodeLogReader implements LogReader {
   }
 
   @Override
-  public Result getLogPrev(LoggingContext loggingContext, String positionHintString, int maxEvents) {
-    Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
-    PositionHint positionHint = new PositionHint(positionHintString);
-    SortedMap<Long, FileStatus> sortedFiles = getFiles(Collections.<Long>reverseOrder());
-    if (sortedFiles.isEmpty()) {
-      return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
-    }
-
-    long fromTimeMs = positionHint.isValid() ? positionHint.getPrevTimestamp() :
-      sortedFiles.get(sortedFiles.firstKey()).getModificationTime();
-
-    List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-    for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-      if (entry.getKey() <= fromTimeMs) {
-        tailFiles.add(entry.getValue().getPath());
-      }
-    }
-
-    List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
-    AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
-    for (Path file : tailFiles) {
-      Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
-                                                               maxEvents - loggingEvents.size());
-      loggingEvents.addAll(0, events);
-      if (events.size() >= maxEvents) {
-        break;
-      }
-    }
-    if (loggingEvents.isEmpty()) {
-      return new Result(ImmutableList.<ILoggingEvent>of(), positionHintString, positionHint.isValid());
-    } else {
-      return new Result(loggingEvents,
-                        PositionHint.genPositionHint(loggingEvents.get(0).getTimeStamp() - 1,
-                          loggingEvents.get(loggingEvents.size() - 1).getTimeStamp() + 1), positionHint.isValid());
-    }
-  }
-
-  @Override
   public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
                        final Callback callback) {
     return executor.submit(
@@ -347,55 +245,5 @@ public class SingleNodeLogReader implements LogReader {
     }
     int endIndex = fileName.indexOf('.');
     return Long.parseLong(fileName.substring(0, endIndex));
-  }
-
-
-  static class PositionHint {
-    private static final String POS_HINT_PREFIX = "FILE";
-    private static final int POS_HINT_NUM_FILEDS = 3;
-
-    private long prevTimestamp = -1;
-    private long nextTimestamp = -1;
-
-    private static final Splitter SPLITTER = Splitter.on(':').limit(POS_HINT_NUM_FILEDS);
-
-    public PositionHint(String positionHint) {
-      if (positionHint == null || positionHint.isEmpty()) {
-        return;
-      }
-
-      List<String> splits = ImmutableList.copyOf(SPLITTER.split(positionHint));
-      if (splits.size() != POS_HINT_NUM_FILEDS || !splits.get(0).equals(POS_HINT_PREFIX)) {
-        return;
-      }
-
-      try {
-        prevTimestamp = Long.parseLong(splits.get(1));
-        nextTimestamp = Long.parseLong(splits.get(2));
-      } catch (NumberFormatException e) {
-        // Cannot parse position hint
-        prevTimestamp = -1;
-        nextTimestamp = -1;
-      }
-    }
-
-    public long getPrevTimestamp() {
-      return prevTimestamp;
-    }
-
-    public long getNextTimestamp() {
-      return nextTimestamp;
-    }
-
-    public boolean isValid() {
-      return prevTimestamp > -1 && nextTimestamp > -1;
-    }
-
-    public static String genPositionHint(long prevTimestamp, long nextTimestamp) {
-      if (prevTimestamp > -1) {
-        return String.format("%s:%d:%d", POS_HINT_PREFIX, prevTimestamp, nextTimestamp);
-      }
-      return "";
-    }
   }
 }

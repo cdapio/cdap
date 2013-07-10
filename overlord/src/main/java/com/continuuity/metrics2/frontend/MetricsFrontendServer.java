@@ -33,17 +33,13 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
   /**
    * Manages threads.
    *
-   * Thread pool of size max MAX_THREAD_POOL_SIZE.
-   * 60 seconds wait time before killing idle threads.
-   * Keep no idle threads more than 60 seconds.
-   * If max thread pool size reached, reject the new coming
    */
-  private volatile ExecutorService executorService;
+  private ExecutorService executorService;
 
   /**
    * Half-Sync, Half-Async Thrift server.
    */
-  private volatile THsHaServer server;
+  private THsHaServer server;
 
   /**
    * Handler to the metrics frontend service thrift interface.
@@ -110,6 +106,10 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
                           Constants.DEFAULT_METRICS_FRONTEND_SERVER_THREADS
       );
 
+      // Thread pool of size max MAX_THREAD_POOL_SIZE.
+      // 60 seconds wait time before killing idle threads.
+      // Keep no idle threads more than 60 seconds.
+      // If max thread pool size reached, reject the new coming
       executorService =
         new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
                                60L, TimeUnit.SECONDS,
