@@ -109,11 +109,14 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    transactionExecutor.shutdown();
-    if (!transactionExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-      LOG.error("The transaction executor took more than 10 seconds to shutdown: " + flowletContext);
+    try {
+      transactionExecutor.shutdown();
+      if (!transactionExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+        LOG.error("The transaction executor took more than 10 seconds to shutdown: " + flowletContext);
+      }
+    } finally {
+      flowletContext.close();
     }
-    flowletContext.close();
   }
 
   @Override
