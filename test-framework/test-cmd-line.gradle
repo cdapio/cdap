@@ -1,26 +1,31 @@
 apply from: "test-framework.gradle"
 
 project.ext {
+    if (!project.hasProperty("appHome")) {
+        logger.println("APP_HOME NOT SET.")
+    }
+
     appHome = project.property("appHome")
 }
 
-
-
 task deployApps << {
 
-    command = [
-            "$project.ext.appHome/bin/continuuity-reactor restart"
-    ]
+    restart = ["$project.ext.appHome/bin/continuuity-reactor restart"]
 
-    if(executeCommand(command) != 0) {
-        throw new GradleScriptException("Error restartint reactor: $command", null)
+    if (executeCommand(restart) != 0) {
+        throw new GradleScriptException("Error starting reactor: $restart", null)
+    } else {
+        logger.println('Reactor started')
     }
 
-     command = [
+    deploy = [
             "$project.ext.appHome/bin/reactor-client deploy --archive $project.ext.appHome/examples/WordCount/WordCount.jar"
     ]
 
-  if(executeCommand(command) != 0) {
-    throw new GradleScriptException("Error deploying app. Command: $command", null)
-  }
+    if (executeCommand(deploy) != 0) {
+        throw new GradleScriptException("Error deploying app. Command: $deploy", null)
+    }
+    else {
+        logger.println('Application deployed')
+    }
 }
