@@ -1,4 +1,26 @@
-apply from: "gradle/maven.gradle"
+apply from: "test-framework.gradle"
 
-task commandLine {
+project.ext {
+    appHome = project.property("appHome")
+}
+
+
+
+task deployApps << {
+
+    command = [
+            "$project.ext.appHome/bin/continuuity-reactor restart"
+    ]
+
+    if(executeCommand(command) != 0) {
+        throw new GradleScriptException("Error restartint reactor: $command", null)
+    }
+
+     command = [
+            "$project.ext.appHome/bin/reactor-client deploy --archive $project.ext.appHome/examples/WordCount/WordCount.jar"
+    ]
+
+  if(executeCommand(command) != 0) {
+    throw new GradleScriptException("Error deploying app. Command: $command", null)
+  }
 }

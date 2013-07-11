@@ -1,5 +1,8 @@
 #!/bin/sh
-source common.sh
+
+BASEDIR=$(dirname $0)
+
+source $BASEDIR/common.sh
 
 echo "deploying samples..."
 #$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/AggregateMetrics/AggregateMetrics.jar
