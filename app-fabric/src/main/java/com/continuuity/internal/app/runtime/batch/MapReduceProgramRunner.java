@@ -291,7 +291,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private void stopController(BasicMapReduceContext context, boolean success) {
     try {
-      controller.stop();
+      try {
+        controller.stop().get();
+      } catch (Throwable e) {
+        LOG.warn("Exception from stopping controller: " + context, e);
+        // we ignore the exception because we don't really care about the controller, but we must end the transaction!
+      }
       try {
         if (success) {
           txAgent.finish();
