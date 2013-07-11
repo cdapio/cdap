@@ -63,7 +63,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private Thread runnerThread;
 
   FlowletProcessDriver(Flowlet flowlet, BasicFlowletContext flowletContext,
-                       Collection<ProcessSpecification> processSpecs, Callback txCallback) {
+                       Collection<ProcessSpecification> processSpecs,
+                       Callback txCallback) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.loggingContext = flowletContext.getLoggingContext();
@@ -108,9 +109,13 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    transactionExecutor.shutdown();
-    if (!transactionExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-      LOG.error("The transaction executor took more than 10 seconds to shutdown: " + flowletContext);
+    try {
+      transactionExecutor.shutdown();
+      if (!transactionExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+        LOG.error("The transaction executor took more than 10 seconds to shutdown: " + flowletContext);
+      }
+    } finally {
+      flowletContext.close();
     }
   }
 

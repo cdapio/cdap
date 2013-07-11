@@ -29,18 +29,6 @@ dependencies {
 }
 
 /**
- * Includes API output to main and test source sets.
- */
-sourceSets {
-    main {
-        compileClasspath += project(':app-fabric').sourceSets.testbase.output
-    }
-    test {
-        compileClasspath += project(':app-fabric').sourceSets.testbase.output
-    }
-}
-
-/**
  * Generates API javadoc.
  */
 javadoc {
