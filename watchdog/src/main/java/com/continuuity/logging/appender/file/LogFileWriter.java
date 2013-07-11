@@ -58,13 +58,16 @@ public class LogFileWriter implements Closeable {
 
   @Override
   public void close() throws IOException {
-    if (dataFileWriter != null) {
-      dataFileWriter.close();
-      dataFileWriter = null;
-    }
-    if (outputStream != null) {
-      outputStream.close();
-      outputStream = null;
+    try {
+      if (dataFileWriter != null) {
+        dataFileWriter.close();
+        dataFileWriter = null;
+      }
+    } finally {
+      if (outputStream != null) {
+        outputStream.close();
+        outputStream = null;
+      }
     }
   }
 

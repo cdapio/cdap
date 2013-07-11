@@ -92,11 +92,14 @@ public class AvroFileLogReader {
       throw Throwables.propagate(e);
     } finally {
       try {
-        if (dataFileReader != null) {
-          dataFileReader.close();
-        }
-        if (inputStream != null) {
-          inputStream.close();
+        try {
+          if (dataFileReader != null) {
+            dataFileReader.close();
+          }
+        } finally {
+          if (inputStream != null) {
+            inputStream.close();
+          }
         }
       } catch (IOException e) {
         LOG.error(String.format("Got exception while closing log file %s", file.toUri()), e);
@@ -148,11 +151,14 @@ public class AvroFileLogReader {
       throw Throwables.propagate(e);
     } finally {
       try {
-        if (dataFileReader != null) {
-          dataFileReader.close();
-        }
-        if (inputStream != null) {
-          inputStream.close();
+        try {
+          if (dataFileReader != null) {
+            dataFileReader.close();
+          }
+        } finally {
+          if (inputStream != null) {
+            inputStream.close();
+          }
         }
       } catch (IOException e) {
         LOG.error(String.format("Got exception while closing log file %s", file.toUri()), e);

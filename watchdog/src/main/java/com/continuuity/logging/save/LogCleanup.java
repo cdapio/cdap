@@ -47,7 +47,7 @@ public final class LogCleanup implements Runnable, Closeable {
                                           public void handle(Path path) {
                                             try {
                                               if (fileSystem.exists(path)) {
-                                                LOG.info("Deleting log file %s", path.toUri());
+                                                LOG.info(String.format("Deleting log file %s", path.toUri()));
                                                 fileSystem.delete(path, false);
                                               }
 

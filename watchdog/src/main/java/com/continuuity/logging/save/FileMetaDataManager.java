@@ -31,12 +31,12 @@ import java.util.SortedMap;
  * Handles reading/writing of file metadata.
  */
 public final class FileMetaDataManager {
+  private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(200);
+  private static final byte [] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
+
   private final OperationExecutor opex;
   private final OperationContext operationContext;
   private final String table;
-
-  private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(200);
-  private static final byte [] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
 
   public FileMetaDataManager(OperationExecutor opex, OperationContext operationContext, String table) {
     this.opex = opex;

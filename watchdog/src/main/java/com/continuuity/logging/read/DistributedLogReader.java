@@ -156,7 +156,7 @@ public final class DistributedLogReader implements LogReader {
 
           try {
             long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-            long startOffset = fromOffset - maxEvents - 1;
+            long startOffset = fromOffset - maxEvents;
             if (fromOffset < 0 || startOffset >= latestOffset)  {
               startOffset = latestOffset - maxEvents - 1;
             }

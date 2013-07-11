@@ -11,7 +11,7 @@ public interface LogReader {
   /**
    * Read log events of a Flow, Procedure or Map Reduce program after a given offset.
    * @param loggingContext context to look up log events.
-   * @param fromOffset offset after which to start reading.
+   * @param fromOffset offset after which to start reading. -1 to get the latest log events.
    * @param maxEvents max log events to return.
    * @param callback callback to handle the log events.
    * @return Future of Runnable that reads the log events.
@@ -21,7 +21,7 @@ public interface LogReader {
   /**
    * Read log events of a Flow, Procedure or Map Reduce program before a given offset.
    * @param loggingContext context to look up log events.
-   * @param fromOffset offset before which to start reading.
+   * @param fromOffset offset before which to start reading. -1 to get the latest log events.
    * @param maxEvents max log events to return.
    * @param callback callback to handle the log events.
    * @return Future of Runnable that reads the log events.
