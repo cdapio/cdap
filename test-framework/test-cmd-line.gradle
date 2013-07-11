@@ -1,0 +1,4 @@
+apply from: "gradle/maven.gradle"
+
+task commandLine {
+}
