@@ -131,10 +131,11 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
       try {
         LOG.info("Destroying procedure: " + context);
         procedure.destroy();
-        context.close();
         LOG.info("Procedure destroyed: " + context);
       } catch (Throwable t) {
         LOG.error("Procedure throws exception during destroy.", t);
+      } finally {
+        context.close();
       }
     }
   }
