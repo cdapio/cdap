@@ -1968,8 +1968,8 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .grid .tick {
-    stroke: lightgrey;
-    opacity: 0.7;
+  stroke: lightgrey;
+  opacity: 0.7;
 }
 
 .grid .tick line {
@@ -2051,4 +2051,33 @@ only screen and (min-device-pixel-ratio: 1.5) {
 
 #analyze-add-metric-widget .dropdown {
 	margin-top: 3px;
+}
+
+#analyze-add-metric-table {
+	border: none;
+	padding: 0;
+}
+
+#analyze-add-metric-table td{
+	border: 0;
+	padding: 2px;
+}
+
+.analyze-metric-color {
+	float: left;
+	width: 20px;
+	height: 20px;
+	margin-right: 5px;
+}
+
+div.tooltip {   
+  position: absolute;
+  text-align: center;
+  padding: 5px;
+  font: 16px sans-serif;
+  color; black;
+  border: 2px solid #ccc;
+  box-shadow: 0px 0px 5px #ccc;
+  background: white;
+  pointer-events: none;
 }

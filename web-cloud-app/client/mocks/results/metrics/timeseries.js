@@ -3,7 +3,9 @@
  */
 
 define([], function () {
+
   var data = {};
+
   data.sample = [
     {
         "timestamp": 0,
@@ -1168,10 +1170,5 @@ define([], function () {
   ];
 
   return data;
-  return function (path, query, callback) {
-
-    callback(200, $.extend(true, [], sample));
-
-  };
 
 });
