@@ -1,6 +1,6 @@
 package com.continuuity.gateway;
 
-import com.continuuity.data.Constants;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.passport.http.client.AccountProvider;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.passport.meta.Account;

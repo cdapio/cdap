@@ -1,6 +1,6 @@
 package com.continuuity.data.util;
 
-import com.continuuity.data.Constants;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
 
 /**
