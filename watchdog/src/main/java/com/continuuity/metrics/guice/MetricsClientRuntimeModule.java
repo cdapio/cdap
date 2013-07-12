@@ -6,7 +6,7 @@ package com.continuuity.metrics.guice;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.collect.LocalMetricsCollectionService;
-import com.continuuity.metrics.collect.MetricsCollectionService;
+import com.continuuity.api.metrics.MetricsCollectionService;
 import com.google.common.base.Preconditions;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;

@@ -51,7 +51,7 @@ public final class TimeValueAggregator implements Iterable<TimeValue> {
             continue;
           }
 
-          long ts = iterator.peek().getTimestamp();
+          long ts = iterator.peek().getTime();
           if (ts <= timestamp) {
             timestamp = ts;
             found = true;
@@ -66,7 +66,7 @@ public final class TimeValueAggregator implements Iterable<TimeValue> {
         timeValuesItor = iterators.iterator();
         while (timeValuesItor.hasNext()) {
           PeekingIterator<TimeValue> iterator = timeValuesItor.next();
-          if (iterator.peek().getTimestamp() == timestamp) {
+          if (iterator.peek().getTime() == timestamp) {
             value += iterator.next().getValue();
           }
         }
@@ -81,7 +81,7 @@ public final class TimeValueAggregator implements Iterable<TimeValue> {
     @Override
     public int compare(PeekingIterator<TimeValue> o1, PeekingIterator<TimeValue> o2) {
       if (o1.hasNext() && o2.hasNext()) {
-        return Longs.compare(o1.peek().getTimestamp(), o2.peek().getTimestamp());
+        return Longs.compare(o1.peek().getTime(), o2.peek().getTime());
       }
       return o1.hasNext() ? -1 : 1;
     }

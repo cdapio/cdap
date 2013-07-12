@@ -13,7 +13,7 @@ import com.google.inject.multibindings.Multibinder;
 /**
  * Base guice module for binding metrics query service classes.
  */
-abstract class AbstractMetricsQueryModule extends PrivateModule {
+public abstract class AbstractMetricsQueryModule extends PrivateModule {
 
   @Override
   protected final void configure() {

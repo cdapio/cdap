@@ -3,10 +3,13 @@
  */
 package com.continuuity.metrics.query;
 
+import java.net.URI;
+
 /**
  * An internal builder for creating MetricsRequest.
  */
 final class MetricsRequestBuilder {
+  private final URI requestURI;
   private String contextPrefix;
   private String runId;
   private String metricPrefix;
@@ -14,6 +17,10 @@ final class MetricsRequestBuilder {
   private long endTime;
   private MetricsRequest.Type type;
   private int count;
+
+  MetricsRequestBuilder(URI requestURI) {
+    this.requestURI = requestURI;
+  }
 
   MetricsRequestBuilder setContextPrefix(String contextPrefix) {
     this.contextPrefix = contextPrefix;
@@ -51,10 +58,11 @@ final class MetricsRequestBuilder {
   }
 
   MetricsRequest build() {
-    return new MetricsRequestImpl(contextPrefix, runId, metricPrefix, startTime, endTime, type, count);
+    return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricPrefix, startTime, endTime, type, count);
   }
 
   private static class MetricsRequestImpl implements MetricsRequest {
+    private final URI requestURI;
     private final String contextPrefix;
     private final String runId;
     private final String metricPrefix;
@@ -63,15 +71,21 @@ final class MetricsRequestBuilder {
     private final Type type;
     private final int count;
 
-    public MetricsRequestImpl(String contextPrefix, String runId, String metricPrefix,
+    public MetricsRequestImpl(URI requestURI, String contextPrefix, String runId, String metricPrefix,
                               long startTime, long endTime, Type type, int count) {
       this.contextPrefix = contextPrefix;
+      this.requestURI = requestURI;
       this.runId = runId;
       this.metricPrefix = metricPrefix;
       this.startTime = startTime;
       this.endTime = endTime;
       this.type = type;
       this.count = count;
+    }
+
+    @Override
+    public URI getRequestURI() {
+      return requestURI;
     }
 
     @Override

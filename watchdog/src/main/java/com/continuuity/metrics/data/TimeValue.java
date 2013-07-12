@@ -8,16 +8,16 @@ package com.continuuity.metrics.data;
  */
 public final class TimeValue {
 
-  private final long timestamp;
+  private final long time;
   private final int value;
 
-  public TimeValue(long timestamp, int value) {
-    this.timestamp = timestamp;
+  public TimeValue(long time, int value) {
+    this.time = time;
     this.value = value;
   }
 
-  public long getTimestamp() {
-    return timestamp;
+  public long getTime() {
+    return time;
   }
 
   public int getValue() {

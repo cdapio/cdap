@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ASMDatumWriterFactory;
 import com.continuuity.internal.io.ASMFieldAccessorFactory;

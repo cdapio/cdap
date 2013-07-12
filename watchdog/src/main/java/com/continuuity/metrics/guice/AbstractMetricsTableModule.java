@@ -11,7 +11,7 @@ import com.google.inject.Scopes;
 /**
  * Base guice module for binding MetricsTableFactory in different runtime mode.
  */
-abstract class AbstractMetricsTableModule extends PrivateModule {
+public abstract class AbstractMetricsTableModule extends PrivateModule {
 
   @Override
   protected final void configure() {

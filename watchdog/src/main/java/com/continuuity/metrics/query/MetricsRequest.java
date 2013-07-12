@@ -3,6 +3,8 @@
  */
 package com.continuuity.metrics.query;
 
+import java.net.URI;
+
 /**
  * Representing a metric query request.
  */
@@ -16,6 +18,8 @@ interface MetricsRequest {
     SUMMARY,
     AGGREGATE
   }
+
+  URI getRequestURI();
 
   String getContextPrefix();
 

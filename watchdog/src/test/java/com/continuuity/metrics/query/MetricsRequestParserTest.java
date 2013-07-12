@@ -14,6 +14,13 @@ import java.net.URI;
 public class MetricsRequestParserTest {
 
   @Test
+  public void testOverview() {
+    MetricsRequest request = MetricsRequestParser.parse(URI.create("/process/busyness?count=60"));
+    Assert.assertNull(request.getContextPrefix());
+    Assert.assertEquals("busyness", request.getMetricPrefix());
+  }
+
+  @Test
   public void testFlow() {
     MetricsRequest request = MetricsRequestParser.parse(URI.create("/process/bytes/app1?count=60"));
     Assert.assertEquals("app1", request.getContextPrefix());

@@ -74,65 +74,37 @@ final class MetricsRequestParser {
     // 2. Metric group (prefix)
     String metricName = pathParts.next();
 
-    // Then, depending on the contextType, the parsing would be different.
-    MetricsRequestBuilder builder = new MetricsRequestBuilder();
+    MetricsRequestBuilder builder = new MetricsRequestBuilder(requestURI);
+    builder.setMetricPrefix(metricName);
 
-    switch (contextType) {
-      case COLLECT:
-        // TODO
-        break;
-      case PROCESS:
-        parseProgram(metricName, pathParts, builder);
-        break;
-      case STORE:
-        // TODO
-        break;
-      case QUERY:
-        parseProgram(metricName, pathParts, builder);
-        break;
-    }
-
-    // From the query string determine the query type and related parameters
-    Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
-
-    // Extra the query type.
-    if (queryParams.containsKey(COUNT)) {
-      try {
-        builder.setCount(Integer.parseInt(queryParams.get(COUNT).get(0)));
-        builder.setStartTime(queryParams.containsKey(START_TIME)
-                               ? Integer.parseInt(queryParams.get(START_TIME).get(0))
-                               : 0);
-        builder.setEndTime(queryParams.containsKey(END_TIME)
-                               ? Integer.parseInt(queryParams.get(END_TIME).get(0))
-                               : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-      } catch (Exception e) {
-        throw new IllegalArgumentException(e);
-      }
-    } else {
-      boolean foundType = false;
-      for (MetricsRequest.Type type : MetricsRequest.Type.values()) {
-        if (Boolean.parseBoolean(getQueryParam(queryParams, type.name().toLowerCase(), "false"))) {
-          builder.setType(type);
-          foundType = true;
+    if (pathParts.hasNext()) {
+      // Then, depending on the contextType, the parsing would be different.
+      switch (contextType) {
+        case COLLECT:
+          // TODO
           break;
-        }
+        case PROCESS:
+          parseProgram(metricName, pathParts, builder);
+          break;
+        case STORE:
+          // TODO
+          break;
+        case QUERY:
+          parseProgram(metricName, pathParts, builder);
+          break;
       }
-
-      Preconditions.checkArgument(foundType, "Unknown query type for %s.", requestURI);
     }
+
+    parseQueryString(requestURI, builder);
 
     return builder.build();
   }
-
 
   /**
    * Parses metrics request for program type (process or query).
    */
   private static MetricsRequestBuilder parseProgram(String metricName,
                                                     Iterator<String> pathParts, MetricsRequestBuilder builder) {
-
-    builder.setMetricPrefix(metricName);
-
     // 3. Application Id.
     String contextPrefix = pathParts.next();
 
@@ -184,6 +156,44 @@ final class MetricsRequestParser {
 
     builder.setContextPrefix(contextPrefix);
     return builder.setMetricPrefix(metricName);
+  }
+
+  /**
+   * From the query string determine the query type and related parameters.
+   */
+  private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) {
+
+    Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
+
+    // Extracts the query type.
+    if (queryParams.containsKey(COUNT)) {
+      try {
+        int count = Integer.parseInt(queryParams.get(COUNT).get(0));
+        long endTime = queryParams.containsKey(END_TIME)
+                          ? Integer.parseInt(queryParams.get(END_TIME).get(0))
+                          : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+        builder.setCount(count);
+        builder.setStartTime(queryParams.containsKey(START_TIME)
+                               ? Integer.parseInt(queryParams.get(START_TIME).get(0))
+                               : endTime - count);
+        builder.setEndTime(endTime);
+        builder.setType(MetricsRequest.Type.TIME_SERIES);
+      } catch (Exception e) {
+        throw new IllegalArgumentException(e);
+      }
+    } else {
+      boolean foundType = false;
+      for (MetricsRequest.Type type : MetricsRequest.Type.values()) {
+        if (Boolean.parseBoolean(getQueryParam(queryParams, type.name().toLowerCase(), "false"))) {
+          builder.setType(type);
+          foundType = true;
+          break;
+        }
+      }
+
+      Preconditions.checkArgument(foundType, "Unknown query type for %s.", requestURI);
+    }
   }
 
 

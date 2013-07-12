@@ -3,6 +3,8 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.api.metrics.MetricsCollectionService;
+import com.continuuity.api.metrics.MetricsCollector;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Objects;
@@ -20,7 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Base class for {@link MetricsCollectionService} which collect metrics through a set of cached
+ * Base class for {@link com.continuuity.api.metrics.MetricsCollectionService} which collect metrics through a set of cached
  * {@link AggregatedMetricsEmitter}.
  */
 public abstract class AggregatedMetricsCollectionService extends AbstractScheduledService

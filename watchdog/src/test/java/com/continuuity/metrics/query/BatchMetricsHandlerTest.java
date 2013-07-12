@@ -3,19 +3,19 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data.table.OVCTableHandle;
-import com.continuuity.metrics.collect.LocalMetricsCollectionService;
-import com.continuuity.metrics.collect.MetricsCollectionService;
 import com.continuuity.metrics.data.HBaseFilterableOVCTableHandle;
+import com.continuuity.metrics.guice.AbstractMetricsTableModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
 import com.continuuity.test.hbase.HBaseTestBase;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
+import com.google.inject.Module;
 import com.google.inject.Scopes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -27,25 +27,19 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class BatchMetricsHandlerTest extends HBaseTestBase {
+public class BatchMetricsHandlerTest { //extends HBaseTestBase {
 
   private static Injector injector;
 
   @Test
   @Ignore
   public void testBatchHandler() throws InterruptedException {
-    Injector injector = Guice.createInjector(new ConfigModule(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules(),
-                                             new MetricsClientRuntimeModule().getInMemoryModules(),
-                                             new MetricsQueryRuntimeModule().getInMemoryModules());
-
     MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
+    collectionService.startAndWait();
     MetricsQueryService queryService = injector.getInstance(MetricsQueryService.class);
     queryService.startAndWait();
 
     try {
-
-
 
       TimeUnit.SECONDS.sleep(1);
 
@@ -56,26 +50,40 @@ public class BatchMetricsHandlerTest extends HBaseTestBase {
 
   @BeforeClass
   public static void init() throws Exception {
-    HBaseTestBase.startHBase();
-
-    injector = Guice.createInjector(new ConfigModule(CConfiguration.create(), HBaseTestBase.getConfiguration()),
+    final Module tableModule = new AbstractMetricsTableModule() {
+      @Override
+      protected void bindTableHandle() {
+        bind(OVCTableHandle.class)
+          .to(HBaseFilterableOVCTableHandle.class).in(Scopes.SINGLETON);
+      }
+    };
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set("metrics.query.server.port", "56883");
+    injector = Guice.createInjector(new ConfigModule(cConf), //, HBaseTestBase.getConfiguration()),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new MetricsQueryRuntimeModule().getInMemoryModules(),
-                                    // Have the metrics client writes to hbase directly to skips the kafka
-                                    new PrivateModule() {
-                                      @Override
-                                      protected void configure() {
-                                        bind(OVCTableHandle.class)
-                                          .to(HBaseFilterableOVCTableHandle.class).in(Scopes.SINGLETON);
-                                        bind(MetricsCollectionService.class)
-                                          .to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
-                                        expose(MetricsCollectionService.class);
-                                      }
-                                    });
+                                    new MetricsClientRuntimeModule().getInMemoryModules());
+//                                    new AbstractMetricsQueryModule() {
+//                                      @Override
+//                                      protected void bindMetricsTable() {
+//                                        install(tableModule);
+//                                      }
+//                                    },
+//                                    // Have the metrics client writes to hbase directly to skips the kafka
+//                                    new PrivateModule() {
+//                                      @Override
+//                                      protected void configure() {
+//                                        install(tableModule);
+//                                        bind(MetricsCollectionService.class)
+//                                          .to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
+//                                        expose(MetricsCollectionService.class);
+//                                      }
+//                                    });
+//    HBaseTestBase.startHBase();
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    HBaseTestBase.stopHBase();
+//    HBaseTestBase.stopHBase();
   }
 }

@@ -16,6 +16,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -23,6 +26,8 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -31,12 +36,15 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Class for handling batch requests for time series data.
  */
 @Path("/metrics")
 public final class BatchMetricsHandler extends AbstractHttpHandler {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BatchMetricsHandler.class);
 
   private static final String CONTENT_TYPE_JSON = "application/json";
   private static final Gson GSON = new Gson();
@@ -78,10 +86,26 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     }
 
     // Naive approach, just fire one scan per request
+    JsonArray output = new JsonArray();
     for (MetricsRequest metricsRequest : metricsRequests) {
+      if (metricsRequest.getType() == MetricsRequest.Type.TIME_SERIES) {
+        TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(metricsRequest.getStartTime(),
+                                                                        metricsRequest.getEndTime());
+        for (int i = 0; i < metricsRequest.getCount(); i++) {
+          builder.addData(metricsRequest.getStartTime() + i, new Random().nextInt(80) + 20);
+        }
+        JsonObject json = new JsonObject();
+        json.addProperty("path", metricsRequest.getRequestURI().toString());
+        json.add("result", GSON.toJsonTree(builder.build()));
+        json.add("error", JsonNull.INSTANCE);
 
+        output.add(json);
+      }
     }
-    responder.sendJson(HttpResponseStatus.OK, "");
+
+    LOG.debug("Response: {}", output);
+
+    responder.sendJson(HttpResponseStatus.OK, output);
   }
 
   /**
@@ -92,12 +116,9 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   private List<MetricsRequest> decodeRequests(ChannelBuffer content) throws IOException {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
-      return ImmutableList.copyOf(
-        Iterables.transform(
-          GSON.<List<URI>>fromJson(reader, new TypeToken<List<URI>>() {}.getType()),
-          URI_TO_METRIC_REQUEST
-        )
-      );
+      List<URI> uris = GSON.fromJson(reader, new TypeToken<List<URI>>() {}.getType());
+      LOG.debug("Batch metrics requests: {}", uris);
+      return ImmutableList.copyOf(Iterables.transform(uris, URI_TO_METRIC_REQUEST));
     } finally {
       reader.close();
     }

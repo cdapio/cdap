@@ -11,7 +11,7 @@ import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.collect.KafkaMetricsCollectionService;
-import com.continuuity.metrics.collect.MetricsCollectionService;
+import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;

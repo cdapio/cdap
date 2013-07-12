@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.metrics.collect;
+package com.continuuity.api.metrics;
 
 import com.google.common.util.concurrent.Service;
 
@@ -15,7 +15,7 @@ public interface MetricsCollectionService extends Service {
    * @param context Name of the context that generating the metric.
    * @param runId The Id fo the given run that generating the metric.
    * @param metricName Name of the metric.
-   * @return A {@link MetricsCollector} for emitting metrics for the given metric name.
+   * @return A {@link com.continuuity.api.metrics.MetricsCollector} for emitting metrics for the given metric name.
    */
   MetricsCollector getCollector(String context, String runId, String metricName);
 }

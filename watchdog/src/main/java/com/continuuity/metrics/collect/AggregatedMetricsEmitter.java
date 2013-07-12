@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.api.metrics.MetricsCollector;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.cache.CacheBuilder;
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A {@link MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
+ * A {@link com.continuuity.api.metrics.MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
  * during collection and emit the aggregated values when emit.
  */
 final class AggregatedMetricsEmitter implements MetricsCollector, MetricsEmitter {

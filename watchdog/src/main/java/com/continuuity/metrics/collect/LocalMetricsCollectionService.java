@@ -12,7 +12,7 @@ import com.google.inject.Singleton;
 import java.util.Iterator;
 
 /**
- * A {@link MetricsCollectionService} that writes to MetricsTable directly.
+ * A {@link com.continuuity.api.metrics.MetricsCollectionService} that writes to MetricsTable directly.
  */
 @Singleton
 public final class LocalMetricsCollectionService extends AggregatedMetricsCollectionService {
