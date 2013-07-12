@@ -124,16 +124,23 @@ public class MapReduceProgramRunner implements ProgramRunner {
         new BasicMapReduceContext(program, runId, options.getUserArguments(), txAgent,
                                   DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
 
-      MapReduce job = (MapReduce) program.getMainClass().newInstance();
-      context.injectFields(job);
+      try {
+        MapReduce job = (MapReduce) program.getMainClass().newInstance();
+        context.injectFields(job);
 
-      // note: this sets logging context on the thread level
-      LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+        // note: this sets logging context on the thread level
+        LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-      controller = new MapReduceProgramController(context);
+        controller = new MapReduceProgramController(context);
 
-      LOG.info("Starting MapReduce job: " + context.toString());
-      submit(job, program.getProgramJarLocation(), context, tx);
+        LOG.info("Starting MapReduce job: " + context.toString());
+        submit(job, program.getProgramJarLocation(), context, tx);
+
+      } catch (Throwable e) {
+        // failed before job even started - release all resources of the context
+        context.close();
+        throw Throwables.propagate(e);
+      }
 
       // adding listener which stops mapreduce job when controller stops.
       controller.addListener(new AbstractListener() {
@@ -224,7 +231,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
         } finally {
           // stopping controller when mapreduce job is finished
           // (also that should finish transaction, but that might change after integration with "long running txs")
-          stopController(success);
+          stopController(context, success);
           try {
             jobJar.delete();
           } catch (IOException e) {
@@ -282,16 +289,26 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
   }
 
-  private void stopController(boolean success) {
-    controller.stop();
+  private void stopController(BasicMapReduceContext context, boolean success) {
     try {
-      if (success) {
-        txAgent.finish();
-      } else {
-        txAgent.abort();
+      try {
+        controller.stop().get();
+      } catch (Throwable e) {
+        LOG.warn("Exception from stopping controller: " + context, e);
+        // we ignore the exception because we don't really care about the controller, but we must end the transaction!
       }
-    } catch (OperationException e) {
-      throw Throwables.propagate(e);
+      try {
+        if (success) {
+          txAgent.finish();
+        } else {
+          txAgent.abort();
+        }
+      } catch (OperationException e) {
+        throw Throwables.propagate(e);
+      }
+    } finally {
+      // release all resources, datasets, etc. of the context
+      context.close();
     }
   }
 

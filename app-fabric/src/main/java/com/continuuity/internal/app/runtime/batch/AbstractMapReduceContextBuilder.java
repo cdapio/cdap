@@ -105,10 +105,10 @@ public abstract class AbstractMapReduceContextBuilder {
 
     // Setting extra context's configuration: mapreduce input and output
     if (inputDataSetName != null && inputSplits != null) {
-      context.setInput((BatchReadable) dataSetContext.getDataSet(inputDataSetName), inputSplits);
+      context.setInput((BatchReadable) context.getDataSet(inputDataSetName), inputSplits);
     }
     if (outputDataSetName != null) {
-      context.setOutput((BatchWritable) dataSetContext.getDataSet(outputDataSetName));
+      context.setOutput((BatchWritable) context.getDataSet(outputDataSetName));
     }
 
     // Hooking up with logging and metrics systems

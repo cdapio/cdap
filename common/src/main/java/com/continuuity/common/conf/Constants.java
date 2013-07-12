@@ -353,4 +353,10 @@ public class Constants {
   public static final String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
   public static final String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
 
+
+  /**
+   * Corresponds to account id used when running in local mode.
+   * NOTE: value should be in sync with the one used by UI.
+   */
+  public static final String DEVELOPER_ACCOUNT_ID = "developer";
 }
