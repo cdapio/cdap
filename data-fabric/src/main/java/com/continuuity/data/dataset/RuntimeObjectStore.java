@@ -199,7 +199,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
   @Override
   public SplitReader<byte[], Map<byte[], T>> createSplitReader(Split split) {
-    return new ObjectScanner(split, this.KEY_COLUMN);
+    return new ObjectScanner(split);
   }
 
   /**
@@ -209,11 +209,9 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
     // the underlying KeyValueTable's split reader
     private SplitReader<byte[], Map<byte[], byte[]>> reader;
-    private final byte[] column;
 
-    public ObjectScanner(Split split, byte[] column) {
+    public ObjectScanner(Split split) {
       this.reader = table.createSplitReader(split);
-      this.column = column;
     }
 
     @Override
