@@ -163,7 +163,9 @@ define([], function () {
 			}
 
 			if (queries.length) {
-				http.post('metrics', queries, function (result, error) {
+				http.post('metrics', queries, function (response) {
+
+					var result = response.result;
 
 					var i, k, data, path, label;
 					for (i = 0; i < result.length; i ++) {
@@ -216,7 +218,9 @@ define([], function () {
 
 			if (queries.length) {
 
-				http.post('metrics', queries, function (result, error) {
+				http.post('metrics', queries, function (response) {
+
+					var result = response.result;
 
 					var i, k, data, path;
 					for (i = 0; i < result.length; i ++) {

@@ -131,7 +131,9 @@ define([], function () {
 				return arr[arr.length - 1].value;
 			}
 
-			this.HTTP.post('metrics', queries, function (result, error) {
+			this.HTTP.post('metrics', queries, function (response) {
+
+				var result = response.result;
 
 				self.set('timeseries.collect', result[0].result);
 				self.set('timeseries.process', result[1].result);

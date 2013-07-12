@@ -71,8 +71,6 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 			var callback = findCallback(arguments);
 			var response = [];
 
-			console.log(object);
-
 			if (path === '/metrics') {
 
 				if (typeof object === 'object' && object.length) {
@@ -97,16 +95,25 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 						}
 
 					}
-					callback(response, 200);
+					callback({
+						error: null,
+						result: response
+					}, 200);
 
 				} else {
-					callback(null, 500);
+					callback({
+						error: 1,
+						result: null
+					}, 500);
 				}
 
 			} else {
 
 				var response = HttpRouter.getResult(path);
-				callback(response, 200);
+				callback({
+					result: response,
+					error: null
+				}, 200);
 
 			}
 
