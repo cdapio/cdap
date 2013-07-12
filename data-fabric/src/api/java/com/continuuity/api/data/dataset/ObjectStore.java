@@ -8,6 +8,7 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
@@ -18,6 +19,7 @@ import com.google.gson.GsonBuilder;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This data set allows to store objects of a particular class into a table. The types that are supported are:
@@ -27,22 +29,29 @@ import java.util.List;
  *   <li>a static inner class of one of the above</li>
  * </ul>
  * Interfaces and not-static inner classes are not supported.
+ * ObjectStore supports storing one or more objects for the same key. Multiple objects can be stored using different
+ * column names for each object. If no column name is specified in read or write operations a default column 'c' will
+ * be used.
  * @param <T> the type of objects in the store
  */
 @Beta
-public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>, BatchWritable<byte[], T> {
+public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], Map<byte[], T>>,
+                                                       BatchWritable<byte[], Map<byte[], T>> {
 
   // the (write) schema of the objects in the store
   protected final Schema schema;
   // representation of the type of the objects in the store. needed for decoding (we need to tell the decoder what
   // type is should return - otherwise it would have to return an avro generic).
   protected final TypeRepresentation typeRep;
-  // the underlying key/value table that we use to store the objects
-  protected final KeyValueTable kvTable;
+  // the underlying table that we use to store the objects
+  protected final Table table;
+
+  // the default column to use for the key
+  protected final byte[] KEY_COLUMN = { 'c' };
 
    // this is the dataset that executes the actual operations. using a delegate
    // allows us to inject a different implementation.
-   private ObjectStore<T> delegate = null;
+   protected ObjectStore<T> delegate = null;
 
   /**
    * sets the ObjectStore to which all operations are delegated. This can be used
@@ -61,7 +70,7 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
    */
   public ObjectStore(String name, Type type) throws UnsupportedTypeException {
     super(name);
-    this.kvTable = new KeyValueTable(name + "_kv");
+    this.table = new Table(name + "_kv");
     this.schema = new ReflectionSchemaGenerator().generate(type);
     this.typeRep = new TypeRepresentation(type);
   }
@@ -71,12 +80,12 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
    * key/value store implementation.
    * @param name the name of the data set/object store
    * @param type the type of the objects in the store
-   * @param kvStore existing key/value store
+   * @param table existing table
    * @throws UnsupportedTypeException if the type cannot be supported
    */
-  public ObjectStore(String name, Type type, KeyValueTable kvStore) throws UnsupportedTypeException {
+  public ObjectStore(String name, Type type, Table table) throws UnsupportedTypeException {
     super(name);
-    this.kvTable = kvStore;
+    this.table = table;
     this.schema = new ReflectionSchemaGenerator().generate(type);
     this.typeRep = new TypeRepresentation(type);
   }
@@ -92,7 +101,7 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
       .create();
     this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
     this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
-    this.kvTable = new KeyValueTable(spec.getSpecificationFor(this.getName() + "_kv"));
+    this.table = new Table(spec.getSpecificationFor(this.getName() + "_kv"));
   }
 
   /**
@@ -100,16 +109,16 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
    * to injecta different
    * key/value store implementation.
    * @param spec the data set specification
-   * @param kvStore existing key/value store
+   * @param table existing table
    */
-  protected ObjectStore(DataSetSpecification spec, KeyValueTable kvStore) {
+  protected ObjectStore(DataSetSpecification spec, Table table) {
     super(spec);
     Gson gson = new GsonBuilder()
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .create();
     this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
     this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
-    this.kvTable = kvStore;
+    this.table = table;
   }
 
   @Override
@@ -120,7 +129,7 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
     return new DataSetSpecification.Builder(this)
       .property("schema", gson.toJson(this.schema))
       .property("type", gson.toJson(this.typeRep))
-      .dataset(this.kvTable.configure())
+      .dataset(this.table.configure())
       .create();
   }
 
@@ -133,7 +142,7 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
     super(store.getName());
     this.schema = store.schema;
     this.typeRep = store.typeRep;
-    this.kvTable = store.kvTable;
+    this.table = store.table;
   }
 
   /**
@@ -150,7 +159,21 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
   }
 
   /**
-   * Write an object with a given key.
+   * Read all the objects with the given key.
+   * @param key the key of the object
+   * @return ObjectStore.Entry.
+   * @throws OperationException incase of errors.
+   */
+  public List<T> readAll(byte[] key) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.readAll(key);
+  }
+
+
+  /**
+   * Write an object with a given key. Writes the object to the default column 'c'
    * @param key the key of the object
    * @param object the object to be stored
    * @throws OperationException in case of errors
@@ -161,6 +184,21 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
     }
     this.delegate.write(key, object);
   }
+
+  /**
+   * Write an object with a given key and a column.
+   * @param key the key of the object.
+   * @param col column where the object should be written.
+   * @param object object to be stored.
+   * @throws OperationException incase of errors.
+   */
+  public void write(byte[] key, byte[] col, T object) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    this.delegate.write(key, col, object);
+  }
+
 
   /**
    * Returns splits for a range of keys in the table.
@@ -187,7 +225,7 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
   }
 
   @Override
-  public SplitReader<byte[], T> createSplitReader(Split split) {
+  public SplitReader<byte[],  Map<byte[], T>> createSplitReader(Split split) {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
@@ -200,7 +238,15 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
    * @return a byte array split reader
    */
   @Beta
-  public SplitReader<byte[], byte[]> createRawSplitReader(Split split) {
-    return this.kvTable.createSplitReader(split);
+  public SplitReader<byte[], Map<byte[], byte[]>> createRawSplitReader(Split split) {
+    return this.table.createSplitReader(split);
+  }
+
+  @Override
+  public void write(byte[] key, Map<byte[], T> columnValues) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    this.delegate.write(key, columnValues);
   }
 }
