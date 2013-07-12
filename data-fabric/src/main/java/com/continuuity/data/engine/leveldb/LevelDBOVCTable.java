@@ -1,8 +1,10 @@
 package com.continuuity.data.engine.leveldb;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.engine.leveldb.KeyValue.Type;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
@@ -11,10 +13,6 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.KeyValue.Type;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBComparator;
 import org.iq80.leveldb.DBException;
@@ -140,15 +138,15 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   // LevelDB specific helpers
 
   private byte[] createStartKey(byte[] row) {
-    return new KeyValue(row, FAMILY, null, HConstants.LATEST_TIMESTAMP, Type.Maximum).getKey();
+    return new KeyValue(row, FAMILY, null, KeyValue.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
   private byte[] createStartKey(byte[] row, byte[] column) {
-    return new KeyValue(row, FAMILY, column, HConstants.LATEST_TIMESTAMP, Type.Maximum).getKey();
+    return new KeyValue(row, FAMILY, column, KeyValue.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
   private byte[] createEndKey(byte[] row) {
-    return new KeyValue(row, null, null, HConstants.LATEST_TIMESTAMP, Type.Minimum).getKey();
+    return new KeyValue(row, null, null, KeyValue.LATEST_TIMESTAMP, Type.Minimum).getKey();
   }
 
   private byte[] createEndKey(byte[] row, byte[] column) {
@@ -186,7 +184,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
         if (!readPointer.isVisible(curVersion)) {
           continue;
         }
-        Type type = Type.codeToType(kv.getType());
+        KeyValue.Type type = Type.codeToType(kv.getType());
 
         if (type == Type.Delete) {
           lastDelete = curVersion;
