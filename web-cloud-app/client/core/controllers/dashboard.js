@@ -135,17 +135,17 @@ define([], function () {
 
 				var result = response.result;
 
-				self.set('timeseries.collect', result[0].result);
-				self.set('timeseries.process', result[1].result);
-				self.set('timeseries.store', result[2].result);
-				self.set('timeseries.query', result[3].result);
+				self.set('timeseries.collect', result[0].result.result.data);
+				self.set('timeseries.process', result[1].result.result.data);
+				self.set('timeseries.store', result[2].result.result.data);
+				self.set('timeseries.query', result[3].result.result.data);
 
-				self.set('value.collect', lastValue(result[0].result))
-				self.set('value.query', lastValue(result[3].result));
+				self.set('value.collect', lastValue(result[0].result.result.data));
+				self.set('value.query', lastValue(result[3].result.result.data));
 
-				self.set('value.process', lastValue(result[1].result));
+				self.set('value.process', lastValue(result[1].result.result.data));
 
-				var store = C.Util.bytes(lastValue(result[2].result));
+				var store = C.Util.bytes(lastValue(result[2].result.result.data));
 				self.set('value.store', {
 					label: store[0],
 					unit: store[1]
