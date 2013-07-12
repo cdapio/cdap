@@ -30,7 +30,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   private Table index;
   private String indexName;
 
-  static final byte[] EXISTS = { 'x' };
+  private static final byte[] EXISTS = { 'x' };
 
   /**
    * Construct IndexObjectStore with name and type.
