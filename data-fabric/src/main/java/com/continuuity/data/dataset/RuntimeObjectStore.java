@@ -13,7 +13,7 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
@@ -100,14 +100,14 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
   @Override
   public List<T> readAll(byte[] key) throws OperationException {
-    List<T> result = Lists.newArrayList();
+    ImmutableList.Builder<T> result = new ImmutableList.Builder<T>();
     Map<byte[], byte[]> entries = readRawAll(key);
     if (entries != null) {
       for(Map.Entry<byte[], byte[]> entry : entries.entrySet()){
         result.add(decode(entry.getValue()));
       }
     }
-    return result;
+    return result.build();
   }
 
 
