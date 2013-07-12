@@ -17,8 +17,12 @@ define([], function () {
 			var objects = [];
 			for (var i = 0; i < flowlets.length; i ++) {
 
+				flowlets[i].app = model.get('app');
+
+				console.log(flowlets[i]);
+
 				objects.push(C.Flowlet.create(flowlets[i]));
-				objects[i].trackMetric('/process/events/flowlets/{id}', 'aggregates', 'events');
+				objects[i].trackMetric('/process/events/{app}/flows/{parent}/flowlets/{id}', 'aggregates', 'events');
 
 			}
 			this.set('elements.Flowlet', Em.ArrayProxy.create({content: objects}));
