@@ -192,8 +192,6 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
-					metrics[k] += '?count=' + count;
-
 					if (models[j].get('timeseries').get(metrics[k])) {
 
 						count = max - models[j].get('timeseries').get(metrics[k]).length;
@@ -206,6 +204,7 @@ define([], function () {
 
 					}
 
+					metrics[k] += '?count=' + count;
 					map[metrics[k]] = models[j];
 					queries.push(metrics[k]);
 
@@ -235,7 +234,7 @@ define([], function () {
 								data[k] = data[k].value;
 							}
 
-							var ts = map[path].get('timeseries').get(path);
+							var ts = map[path].get('timeseries').get(path.split('?')[0]);
 							ts.shift(data.length);
 							ts = ts.concat(data);
 
