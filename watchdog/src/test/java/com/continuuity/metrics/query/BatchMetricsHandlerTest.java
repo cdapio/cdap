@@ -8,6 +8,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.metrics.guice.MetricsRuntimeModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class BatchMetricsHandlerTest {
 
   @Test
+  @Ignore
   public void testBatchHandler() throws InterruptedException {
     Injector injector = Guice.createInjector(new ConfigModule(),
                                              new DiscoveryRuntimeModule().getInMemoryModules(),
@@ -28,7 +30,7 @@ public class BatchMetricsHandlerTest {
 
     try {
 
-      TimeUnit.SECONDS.sleep(10000);
+      TimeUnit.SECONDS.sleep(1);
 
     } finally {
       service.stopAndWait();
