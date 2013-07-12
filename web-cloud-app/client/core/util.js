@@ -152,9 +152,8 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
-						metrics[k] += '?aggregate=true';
 						map[metrics[k]] = models[j];
-						queries.push(metrics[k]);
+						queries.push(metrics[k] + '?aggregate=true');
 
 				}
 
@@ -204,9 +203,8 @@ define([], function () {
 
 					}
 
-					metrics[k] += '?count=' + count;
 					map[metrics[k]] = models[j];
-					queries.push(metrics[k]);
+					queries.push(metrics[k] + '?count=' + count);
 
 				}
 
