@@ -451,11 +451,17 @@ var singularREST = {
 
     self.logger.trace('Metrics ', pathList);
 
+    var content = JSON.stringify(pathList);
+
     var options = {
       host: self.config['metrics.service.host'],
       port: self.config['metrics.service.port'],
       path: '/metrics',
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': content.length
+      }
     };
 
     var request = http.request(options, function(response) {
@@ -479,7 +485,7 @@ var singularREST = {
 
     });
 
-    request.write(JSON.stringify(pathList));
+    request.write(content);
     request.end();
 
   });
