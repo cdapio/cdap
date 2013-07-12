@@ -219,7 +219,7 @@ define([], function () {
 					var i, k, data, path;
 					for (i = 0; i < result.length; i ++) {
 
-						path = result[i].path;
+						path = result[i].path.split('?')[0];
 
 						if (result[i].error) {
 
@@ -232,11 +232,13 @@ define([], function () {
 								data[k] = data[k].value;
 							}
 
-							var ts = map[path.split('?')[0]].get('timeseries').get(path.split('?')[0]);
+							var mapped = map[path].get('timeseries');
+							var ts = mapped.get(path);
+
 							ts.shift(data.length);
 							ts = ts.concat(data);
 
-							map[path].get('timeseries').set(path, ts);
+							mapped.set(path, ts);
 
 						}
 
