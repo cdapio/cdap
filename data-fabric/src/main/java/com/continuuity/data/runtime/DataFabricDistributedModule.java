@@ -19,6 +19,9 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Defines guice bindings for distributed modules.
+ */
 public class DataFabricDistributedModule extends AbstractModule {
 
   private static final Logger Log =
@@ -34,7 +37,7 @@ public class DataFabricDistributedModule extends AbstractModule {
   private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
 
   /**
-   * Create a module with default configuration for HBase and Continuuity
+   * Create a module with default configuration for HBase and Continuuity.
    */
   public DataFabricDistributedModule() {
     this.conf = loadConfiguration();
@@ -43,7 +46,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   /**
    * Create a module with custom configuration for HBase,
-   * and defaults for Continuuity
+   * and defaults for Continuuity.
    */
   public DataFabricDistributedModule(Configuration conf) {
     this.hbaseConf = new Configuration(conf);
@@ -52,7 +55,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   /**
    * Create a module with separate, custom configurations for HBase
-   * and for Continuuity
+   * and for Continuuity.
    */
   public DataFabricDistributedModule(Configuration conf,
                                      CConfiguration cconf) {
@@ -62,7 +65,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   /**
    * Create a module with custom configuration, which will
-   * be used both for HBase and for Continuuity
+   * be used both for HBase and for Continuuity.
    */
   public DataFabricDistributedModule(CConfiguration conf) {
     this.hbaseConf = new Configuration();

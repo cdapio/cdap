@@ -12,6 +12,7 @@ import com.google.common.base.Objects;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Session information associated with uploading of an archive.
@@ -65,7 +66,7 @@ public final class SessionInfo {
    */
   public SessionInfo(ResourceIdentifier identifier, ResourceInfo info, Location archive, DeployStatus status) {
     this.identifier = identifier;
-    this.regtime = System.currentTimeMillis()/1000;
+    this.regtime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     this.filename = info.getFilename();
     this.size = info.getSize();
     this.archive = archive;
@@ -139,7 +140,7 @@ public final class SessionInfo {
    * @throws IOException
    */
   public synchronized OutputStream getOutputStream() throws IOException {
-    if(stream == null) {
+    if (stream == null) {
       stream = archive.getOutputStream();
     }
     return stream;
@@ -153,7 +154,7 @@ public final class SessionInfo {
    */
   @Override
   public boolean equals(Object other) {
-    if(other == null) {
+    if (other == null) {
       return false;
     }
     SessionInfo that = (SessionInfo) other;

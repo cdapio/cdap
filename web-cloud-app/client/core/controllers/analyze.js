@@ -48,7 +48,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       this.set('format', DEFAULT_FORMAT);
       this.set('duration', +DEFAULT_DURATION);
       this.set('data', Em.A());
-      this.set('isAddMetricVisible', true);
+      this.set('isAddMetricVisible', false);
       this.set('apps', Em.A(apps));
       this.set('metricTypes', Em.A(metricTypes));
       this.set('metricsRequest', {
@@ -64,7 +64,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
     uploadPersonalization: function() {
       var userData = localStorage.getItem(APP_NAME);
       if (userData) {
-        this.set('metrics', JSON.parse(userData)); 
+        this.set('metrics', JSON.parse(userData));
       } else {
         this.set('metrics', Em.A([DEFAULT_METRIC]));
       }
@@ -91,7 +91,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         var name = chartHelper.urlRestify(metrics[i]['name']);
         var url = 'metrics/'+app+'/'+name+'?format='+format+'&duration='+duration;
 
-        C.HTTP.get(url, function(status, result) {
+        this.HTTP.get(url, function(status, result) {
             var data = self.get('data');
             var newData = self.extendData(data, result, app, name);
             self.set('data', newData);

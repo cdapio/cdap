@@ -6,6 +6,9 @@ package com.continuuity.common.options;
 
 import java.lang.annotation.*;
 
+/**
+ * Options for command line.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Option {

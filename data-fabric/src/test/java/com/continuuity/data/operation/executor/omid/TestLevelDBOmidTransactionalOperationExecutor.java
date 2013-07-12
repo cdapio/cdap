@@ -11,6 +11,9 @@ import com.google.inject.Injector;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class TestLevelDBOmidTransactionalOperationExecutor
 extends TestOmidTransactionalOperationExecutor {
 
@@ -25,7 +28,7 @@ extends TestOmidTransactionalOperationExecutor {
       new DataFabricLevelDBModule(conf));
 
   private static final OmidTransactionalOperationExecutor executor =
-      (OmidTransactionalOperationExecutor)injector.getInstance(
+      (OmidTransactionalOperationExecutor) injector.getInstance(
           OperationExecutor.class);
 
   @Override

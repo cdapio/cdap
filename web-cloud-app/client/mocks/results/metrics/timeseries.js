@@ -4,21 +4,7 @@
 
 define([], function () {
 
-  var data = {};
-
-  data.sample = [
-    {
-        "timestamp": 0,
-        "value": 100
-    },
-    {
-        "timestamp": 0,
-        "value": 100
-    },
-    {
-        "timestamp": 0,
-        "value": 50
-    },
+  var sample = [
     {
         "timestamp": 0,
         "value": 100
@@ -169,10 +155,19 @@ define([], function () {
     },
     {
         "timestamp": 0,
+        "value": 50
+    },
+    {
+        "timestamp": 0,
         "value": 100
+    },
+    {
+        "timestamp": 0,
+        "value": 50
     }
   ];
 
+  /*
   data.eventsInRateSmall = [
     {
         'timestamp': 1372402246933,
@@ -225,7 +220,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -284,7 +279,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 66598
@@ -343,13 +338,13 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
     },
   ];
-  
+
   data.eventsOutCountSmall = [
     {
         'timestamp': 1372402246933,
@@ -402,7 +397,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -461,7 +456,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -485,7 +480,7 @@ define([], function () {
     {
         'timestamp': 1372403025632,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372403569985,
         'value': 30000
@@ -544,7 +539,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 99852
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -568,7 +563,7 @@ define([], function () {
     {
         'timestamp': 1372403025632,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372403569985,
         'value': 30000
@@ -627,7 +622,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -651,7 +646,7 @@ define([], function () {
     {
         'timestamp': 1372403025632,
         'value': 87455
-    },  
+    },
     {
         'timestamp': 1372403569985,
         'value': 30000
@@ -710,7 +705,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 65852
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -734,7 +729,7 @@ define([], function () {
     {
         'timestamp': 1372403025632,
         'value': 87455
-    },  
+    },
     {
         'timestamp': 1372403569985,
         'value': 30000
@@ -793,7 +788,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -817,7 +812,7 @@ define([], function () {
     {
         'timestamp': 1372403025632,
         'value': 87455
-    },  
+    },
     {
         'timestamp': 1372403569985,
         'value': 44556
@@ -841,7 +836,7 @@ define([], function () {
     {
         'timestamp': 1372405263321,
         'value': 87455
-    },  
+    },
     {
         'timestamp': 1372405965542,
         'value': 30000
@@ -900,7 +895,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30215
@@ -924,7 +919,7 @@ define([], function () {
     {
         'timestamp': 1372403025632,
         'value': 87455
-    },  
+    },
     {
         'timestamp': 1372403569985,
         'value': 44556
@@ -948,7 +943,7 @@ define([], function () {
     {
         'timestamp': 1372405263321,
         'value': 87455
-    },  
+    },
     {
         'timestamp': 1372405965542,
         'value': 32000
@@ -1007,7 +1002,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -1031,7 +1026,7 @@ define([], function () {
     {
         'timestamp': 1372403025632,
         'value': 44556
-    },  
+    },
     {
         'timestamp': 1372403569985,
         'value': 30000
@@ -1055,7 +1050,7 @@ define([], function () {
     {
         'timestamp': 1372405263321,
         'value': 11222
-    },  
+    },
     {
         'timestamp': 1372405965542,
         'value': 23444
@@ -1114,7 +1109,7 @@ define([], function () {
     {
         'timestamp': 1372402288464,
         'value': 60000
-    },  
+    },
     {
         'timestamp': 1372402295250,
         'value': 30000
@@ -1138,7 +1133,7 @@ define([], function () {
     {
         'timestamp': 1372403025632,
         'value': 44556
-    },  
+    },
     {
         'timestamp': 1372403569985,
         'value': 30000
@@ -1162,13 +1157,30 @@ define([], function () {
     {
         'timestamp': 1372405263321,
         'value': 11222
-    },  
+    },
     {
         'timestamp': 1372405965542,
         'value': 23444
     }
   ];
 
-  return data;
+  */
+
+  var pathSamples = {};
+
+  return function (path, query, callback) {
+
+    if (pathSamples[path]) {
+
+      var item = pathSamples[path].shift();
+      pathSamples[path].push(item);
+
+    } else {
+
+      pathSamples[path] = $.extend(true, [], sample);
+
+    }
+
+    callback(200, $.extend(true, [], pathSamples[path]));
 
 });

@@ -12,6 +12,8 @@ package com.continuuity.app.verification;
  * Implementation of this interface are expected to be thread-safe,
  * an can be safely accessed by multiple concurrent threads.
  * </p>
+ *
+ * @param <T> Type of object to be verified.
  */
 public interface Verifier<T> {
 

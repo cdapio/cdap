@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.performance.application;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -28,12 +32,11 @@ public final class MensaMetricsReporter  {
   private Future futureDispatcher;
 
   public MensaMetricsReporter(CConfiguration config, List<String> metricNames, String tags, int interval) {
-//    if (StringUtils.isNotEmpty(config.get("opentsdb.server.address"))) {
-//      tsdbHostName = config.get("opentsdb.server.address");
-//    } else {
-//      tsdbHostName = "localhost";
-//    }
-    tsdbHostName = "mon101.ops.sl";
+    if (StringUtils.isNotEmpty(config.get("opentsdb.server.address"))) {
+      tsdbHostName = config.get("opentsdb.server.address");
+    } else {
+      tsdbHostName = "localhost";
+    }
     if (StringUtils.isNotEmpty(config.get("opentsdb.server.port"))) {
       tsdbPort = Integer.valueOf(config.get("opentsdb.server.port"));
     } else {
@@ -87,6 +90,4 @@ public final class MensaMetricsReporter  {
     LOG.debug("Shutting down executor service of metrics collector and dispatcher.");
     executorService.shutdown();
   }
-
-
 }

@@ -6,15 +6,19 @@ package com.continuuity.passport.impl;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
+import com.continuuity.passport.core.exceptions.OrganizationAlreadyExistsException;
+import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.dal.AccountDAO;
+import com.continuuity.passport.dal.OrganizationDAO;
 import com.continuuity.passport.dal.ProfanityFilter;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
+import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 import com.google.inject.Inject;
@@ -29,11 +33,14 @@ public class DataManagementServiceImpl implements DataManagementService {
   private final AccountDAO accountDAO;
   private final VpcDAO vpcDao;
   private final ProfanityFilter profanityFilter;
+  private final OrganizationDAO organizationDAO;
 
   @Inject
-  public DataManagementServiceImpl(AccountDAO accountDAO, VpcDAO vpcDAO, ProfanityFilter profanityFilter) {
+  public DataManagementServiceImpl(AccountDAO accountDAO, VpcDAO vpcDAO, OrganizationDAO organizationDAO,
+                                   ProfanityFilter profanityFilter) {
     this.accountDAO = accountDAO;
     this.vpcDao = vpcDAO;
+    this.organizationDAO = organizationDAO;
     this.profanityFilter = profanityFilter;
   }
 
@@ -158,5 +165,31 @@ public class DataManagementServiceImpl implements DataManagementService {
   @Override
   public RolesAccounts getAccountRoles(String vpcName) {
     return vpcDao.getRolesAccounts(vpcName);
+  }
+
+  @Override
+  public Organization createOrganization(String id, String name) throws OrganizationAlreadyExistsException {
+    return organizationDAO.createOrganization(id, name);
+  }
+
+  @Override
+  public Organization getOrganization(String id) throws OrganizationNotFoundException {
+    return organizationDAO.getOrganization(id);
+  }
+
+  @Override
+  public Organization updateOrganization(String id, String name)  throws OrganizationNotFoundException {
+    return organizationDAO.updateOrganization(id, name);
+  }
+
+  @Override
+  public void deleteOrganization(String id) throws OrganizationNotFoundException {
+    organizationDAO.deleteOrganization(id);
+  }
+
+  @Override
+  public void updateAccountOrganization(int accountId, String orgId)
+      throws AccountNotFoundException, OrganizationNotFoundException {
+    accountDAO.updateOrganizationId(accountId, orgId);
   }
 }

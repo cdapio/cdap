@@ -33,6 +33,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+/**
+ *
+ */
 public abstract class TestTTQueue {
 
   private static final long MAX_TIMEOUT_MS = 10000;
@@ -63,7 +66,7 @@ public abstract class TestTTQueue {
   }
 
   /**
-   * Every subclass should implement this to verify that injection works and uses the correct table type
+   * Every subclass should implement this to verify that injection works and uses the correct table type.
    */
   @Test
   public abstract void testInjection() throws OperationException;
@@ -77,7 +80,7 @@ public abstract class TestTTQueue {
 
     int numEntries = getNumIterations();
 
-    for (int i=1; i<numEntries+1; i++) {
+    for (int i = 1; i < numEntries + 1; i++) {
       queue.enqueue(new QueueEntry(Bytes.toBytes(i)), new Transaction(getDirtyWriteVersion(), getDirtyPointer(), true));
     }
     System.out.println("Done enqueueing");
@@ -85,13 +88,13 @@ public abstract class TestTTQueue {
     long enqueueStop = System.currentTimeMillis();
 
     System.out.println("Finished enqueue of " + numEntries + " entries in " +
-        (enqueueStop-startTime) + " ms (" +
-        (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
+        (enqueueStop - startTime) + " ms (" +
+        (enqueueStop - startTime) / ((float) numEntries) + " ms/entry)");
 
     QueueConfig configSync = new QueueConfig(PartitionerType.FIFO, true);
     StatefulQueueConsumer consumerSync = new StatefulQueueConsumer(0, 0, 1, configSync);
     queue.configure(consumerSync, getDirtyPointer());
-    for (int i=1; i<numEntries+1; i++) {
+    for (int i = 1; i < numEntries + 1; i++) {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       Transaction transaction = new Transaction(rp.getMaximum(), rp, true);
       DequeueResult result = queue.dequeue(consumerSync, rp);
@@ -100,36 +103,44 @@ public abstract class TestTTQueue {
       assertEquals(i, Bytes.toInt(result.getEntry().getData()));
       queue.ack(result.getEntryPointer(), consumerSync, transaction);
 //      queue.finalize(result.getEntryPointer(), consumerSync, -1, transaction);
-      if (i % 100 == 0) System.out.print(".");
-      if (i % 1000 == 0) System.out.println(" " + i);
+      if (i % 100 == 0) {
+        System.out.print(".");
+      }
+      if (i % 1000 == 0) {
+        System.out.println(" " + i);
+      }
     }
 
     long dequeueSyncStop = System.currentTimeMillis();
 
     System.out.println("Finished sync dequeue of " + numEntries + " entries in " +
-        (dequeueSyncStop-enqueueStop) + " ms (" +
-        (dequeueSyncStop-enqueueStop)/((float)numEntries) + " ms/entry)");
+        (dequeueSyncStop - enqueueStop) + " ms (" +
+        (dequeueSyncStop - enqueueStop) / ((float) numEntries) + " ms/entry)");
 
     // Async
 
     QueueConfig configAsync = new QueueConfig(PartitionerType.FIFO, false);
     StatefulQueueConsumer consumerAsync = new StatefulQueueConsumer(0, 2, 1, configAsync);
     queue.configure(consumerAsync, getDirtyPointer());
-    for (int i=1; i<numEntries+1; i++) {
+    for (int i = 1; i < numEntries + 1; i++) {
       DequeueResult result =
           queue.dequeue(consumerAsync, new MemoryReadPointer(timeOracle.getTimestamp()));
       assertTrue(result.isSuccess());
       assertTrue("Expected " + i + ", Actual " + Bytes.toInt(result.getEntry().getData()),
           Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
-      if (i % 100 == 0) System.out.print(".");
-      if (i % 1000 == 0) System.out.println(" " + i);
+      if (i % 100 == 0) {
+        System.out.print(".");
+      }
+      if (i % 1000 == 0) {
+        System.out.println(" " + i);
+      }
     }
 
     long dequeueAsyncStop = System.currentTimeMillis();
 
     System.out.println("Finished async dequeue of " + numEntries + " entries in " +
-        (dequeueAsyncStop-dequeueSyncStop) + " ms (" +
-        (dequeueAsyncStop-dequeueSyncStop)/((float)numEntries) + " ms/entry)");
+        (dequeueAsyncStop - dequeueSyncStop) + " ms (" +
+        (dequeueAsyncStop - dequeueSyncStop) / ((float) numEntries) + " ms/entry)");
 
     // Both queues should be empty for each consumer
     assertTrue(queue.dequeue(consumerSync, new MemoryReadPointer(timeOracle.getTimestamp())).isEmpty());
@@ -141,7 +152,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     int n = 1024;
     Set<Long> groupids = new HashSet<Long>(n);
-    for (int i=0; i<n; i++) {
+    for (int i = 0; i < n; i++) {
       long groupid = queue.getGroupID();
       assertFalse(groupids.contains(groupid));
       groupids.add(groupid);
@@ -159,14 +170,14 @@ public abstract class TestTTQueue {
     int numGroups = -1;
 
     // enqueue 10 things
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       Transaction t = oracle.startTransaction(true);
       queueNormal.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
       oracle.commitTransaction(t);
     }
 
     // dequeue/ack/finalize 10 things w/ numGroups=-1
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       Transaction t = oracle.startTransaction(true);
       DequeueResult result =
           queueNormal.dequeue(consumer, t.getReadPointer());
@@ -194,14 +205,14 @@ public abstract class TestTTQueue {
     queueEvict.configure(consumer, getDirtyPointer());
 
     // enqueue 10 things
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       Transaction t = oracle.startTransaction(true);
       queueEvict.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
       oracle.commitTransaction(t);
     }
 
     // dequeue/ack/finalize 10 things w/ numGroups=1
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       Transaction t = oracle.startTransaction(true);
       result = queueEvict.dequeue(consumer, t.getReadPointer());
       queueEvict.ack(result.getEntryPointer(), consumer, t);
@@ -237,17 +248,17 @@ public abstract class TestTTQueue {
     int numGroups = 3;
 
     // enqueue 10 things
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       Transaction t = oracle.startTransaction(true);
       queue.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
       oracle.commitTransaction(t);
     }
 
     // dequeue/ack/finalize 10 things w/ group1 and numGroups=3
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       Transaction t = oracle.startTransaction(true);
       DequeueResult result =
-          queue.dequeue(consumer1,oracle.getReadPointer());
+          queue.dequeue(consumer1, oracle.getReadPointer());
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
       queue.ack(result.getEntryPointer(), consumer1, t);
       oracle.commitTransaction(t);
@@ -263,7 +274,7 @@ public abstract class TestTTQueue {
         queue.dequeue(consumer2, getDirtyPointer()).isEmpty());
 
     // dequeue everything with consumer2
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       Transaction t = oracle.startTransaction(true);
       DequeueResult result =
           queue.dequeue(consumer2, t.getReadPointer());
@@ -282,7 +293,7 @@ public abstract class TestTTQueue {
         queue.dequeue(consumer3, getDirtyPointer()).isEmpty());
 
     // dequeue everything except the last entry with consumer3
-    for (int i=0; i<9; i++) {
+    for (int i = 0; i < 9; i++) {
       Transaction t = oracle.startTransaction(true);
       DequeueResult result =
           queue.dequeue(consumer3, t.getReadPointer());
@@ -297,7 +308,7 @@ public abstract class TestTTQueue {
     // create a new consumer and dequeue, should get the 10th entry!
     QueueConsumer consumer4 = new QueueConsumer(0, 3, 1, config);
     Transaction t = oracle.startTransaction(true);
-    queue.configure(consumer4,oracle.getReadPointer());
+    queue.configure(consumer4, oracle.getReadPointer());
     DequeueResult result = queue.dequeue(consumer4, t.getReadPointer());
     assertFalse(result.isEmpty());
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getEntry().getData()),
@@ -352,7 +363,7 @@ public abstract class TestTTQueue {
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     queue.configure(consumer, dirtyReadPointer);
 
-    for(int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 2; ++i) {
       byte [] valueOne = Bytes.toBytes("value" + i + "-1");
       byte [] valueTwo = Bytes.toBytes("value" + i + "-2");
 
@@ -409,8 +420,8 @@ public abstract class TestTTQueue {
     Transaction dirtyTxn = new Transaction(dirtyVersion, dirtyReadPointer, true);
 
     QueueEntry[] queueEntries = new QueueEntry[numQueueEntries];
-    for(int i=0; i<numQueueEntries; i++) {
-      queueEntries[i]=new QueueEntry(Bytes.toBytes("value"+i%numConsumers));
+    for (int i = 0; i < numQueueEntries; i++) {
+      queueEntries[i] = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
       queueEntries[i].addHashKey(hashKey, i);
       assertTrue(queue.enqueue(queueEntries[i], dirtyTxn).isSuccess());
     }
@@ -420,10 +431,10 @@ public abstract class TestTTQueue {
     QueueConfig config = new QueueConfig(PartitionerType.HASH, singleEntry);
 
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
-    for(int i=0; i<numConsumers; i++) {
+    for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, consumerGroupName, hashKey, config);
     }
-    for(int i=0; i<numConsumers; i++) {
+    for (int i = 0; i < numConsumers; i++) {
       DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
       // verify we got something and it's the first value
       assertTrue(result.toString(), result.isSuccess());
@@ -431,7 +442,7 @@ public abstract class TestTTQueue {
       // dequeue again without acking, should still get first value
       result = queue.dequeue(consumers[i], dirtyReadPointer);
       assertTrue(result.isSuccess());
-      assertTrue("Expected (" + Bytes.toString(Bytes.toBytes("value"+i)) + ") Got (" +
+      assertTrue("Expected (" + Bytes.toString(Bytes.toBytes("value" + i)) + ") Got (" +
                    Bytes.toString(result.getEntry().getData()) + ")",
                  Bytes.equals(result.getEntry().getData(), Bytes.toBytes("value" + i)));
 
@@ -442,7 +453,7 @@ public abstract class TestTTQueue {
       // dequeue, should get second value
       result = queue.dequeue(consumers[i], dirtyReadPointer);
       assertTrue(result.isSuccess());
-      assertTrue(Bytes.equals(result.getEntry().getData(), Bytes.toBytes("value"+i)));
+      assertTrue(Bytes.equals(result.getEntry().getData(), Bytes.toBytes("value" + i)));
 
       // ack
       queue.ack(result.getEntryPointer(), consumers[i], dirtyTxn);
@@ -535,9 +546,9 @@ public abstract class TestTTQueue {
     Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue ten entries
-    int n=10;
-    for (int i=0;i<n;i++) {
-      assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i+1)), transaction).isSuccess());
+    int n = 10;
+    for (int i = 0; i < n; i++) {
+      assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i + 1)), transaction).isSuccess());
     }
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, false);
@@ -570,7 +581,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultFour.getEntry().getData(), Bytes.toBytes(4)));
 
     // dequeue five through ten, and ack them
-    for (int i=5; i<11; i++) {
+    for (int i = 5; i < 11; i++) {
       DequeueResult result = queue.dequeue(consumer, readPointer);
       assertTrue(Bytes.equals(result.getEntry().getData(), Bytes.toBytes(i)));
       queue.ack(result.getEntryPointer(), consumer, transaction);
@@ -614,9 +625,9 @@ public abstract class TestTTQueue {
     Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue ten entries
-    int n=10;
-    for (int i=0;i<n;i++) {
-      assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i+1)), transaction).isSuccess());
+    int n = 10;
+    for (int i = 0; i < n; i++) {
+      assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i + 1)), transaction).isSuccess());
     }
 
     // dequeue it with the single consumer and FIFO partitioner
@@ -648,7 +659,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultFour.getEntry().getData(), Bytes.toBytes(4)));
 
     // dequeue five through ten, and ack them
-    for (int i=5; i<11; i++) {
+    for (int i = 5; i < 11; i++) {
       DequeueResult result = queue.dequeue(consumer, readPointer);
       assertTrue(Bytes.equals(result.getEntry().getData(), Bytes.toBytes(i)));
       queue.ack(result.getEntryPointer(), consumer, transaction);
@@ -678,12 +689,12 @@ public abstract class TestTTQueue {
     // now set the timeout and sleep for timeout + 1
     long oldTimeout = 0L;
     if (queue instanceof TTQueueOnVCTable) {
-      oldTimeout = ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis;
-      ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis = 50;
+      oldTimeout = ((TTQueueOnVCTable) queue).maxAgeBeforeExpirationInMillis;
+      ((TTQueueOnVCTable) queue).maxAgeBeforeExpirationInMillis = 50;
     } else if (queue instanceof TTQueueOnHBaseNative) {
-      oldTimeout = ((TTQueueOnHBaseNative)queue).expirationConfig
+      oldTimeout = ((TTQueueOnHBaseNative) queue).expirationConfig
           .getMaxAgeBeforeExpirationInMillis();
-      ((TTQueueOnHBaseNative)queue).expirationConfig
+      ((TTQueueOnHBaseNative) queue).expirationConfig
           .setMaxAgeBeforeExpirationInMillis(50);
     }
     Thread.sleep(51);
@@ -723,9 +734,9 @@ public abstract class TestTTQueue {
 
     // restore timeout
     if (queue instanceof TTQueueOnVCTable) {
-      ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis = oldTimeout;
+      ((TTQueueOnVCTable) queue).maxAgeBeforeExpirationInMillis = oldTimeout;
     } else if (queue instanceof TTQueueOnHBaseNative) {
-      ((TTQueueOnHBaseNative)queue).expirationConfig
+      ((TTQueueOnHBaseNative) queue).expirationConfig
           .setMaxAgeBeforeExpirationInMillis(oldTimeout);
     }
   }
@@ -739,9 +750,9 @@ public abstract class TestTTQueue {
     Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue 3 entries
-    int n=3;
-    for (int i=0;i<n;i++) {
-      assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i+1)), transaction).isSuccess());
+    int n = 3;
+    for (int i = 0; i < n; i++) {
+      assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i + 1)), transaction).isSuccess());
     }
 
     // dequeue it with the single consumer and FIFO partitioner
@@ -801,10 +812,10 @@ public abstract class TestTTQueue {
     Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue four entries
-    int n=4;
+    int n = 4;
     EnqueueResult [] results = new EnqueueResult[n];
-    for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(new QueueEntry(Bytes.toBytes(i+1)), transaction);
+    for (int i = 0; i < n; i++) {
+      results[i] = queue.enqueue(new QueueEntry(Bytes.toBytes(i + 1)), transaction);
       assertTrue(results[i].isSuccess());
     }
 
@@ -889,10 +900,10 @@ public abstract class TestTTQueue {
     assertTrue(queue.dequeue(consumers[0], readPointer).isEmpty());
 
     // enqueue three entries
-    n=3;
+    n = 3;
     results = new EnqueueResult[n];
-    for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(new QueueEntry(Bytes.toBytes(i+1)), transaction);
+    for (int i = 0; i < n; i++) {
+      results[i] = queue.enqueue(new QueueEntry(Bytes.toBytes(i + 1)), transaction);
       assertTrue(results[i].isSuccess());
     }
 
@@ -948,10 +959,10 @@ public abstract class TestTTQueue {
     Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue four entries
-    int n=4;
+    int n = 4;
     EnqueueResult [] results = new EnqueueResult[n];
-    for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(new QueueEntry(Bytes.toBytes(i+1)), transaction);
+    for (int i = 0; i < n; i++) {
+      results[i] = queue.enqueue(new QueueEntry(Bytes.toBytes(i + 1)), transaction);
       assertTrue(results[i].isSuccess());
     }
 
@@ -1055,10 +1066,11 @@ public abstract class TestTTQueue {
     Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue one hundred entries
-    int n=100;
+    int n = 100;
     EnqueueResult [] results = new EnqueueResult[n];
-    for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(new QueueEntry(Collections.singletonMap("h", i+1), Bytes.toBytes(i+1)), transaction);
+    for (int i = 0; i < n; i++) {
+      results[i] = queue.enqueue(new QueueEntry(Collections.singletonMap("h", i + 1),
+                                                Bytes.toBytes(i + 1)), transaction);
       assertTrue(results[i].isSuccess());
     }
     // we want to verify at the end of the test we acked every entry
@@ -1074,15 +1086,19 @@ public abstract class TestTTQueue {
     // dequeue all entries for consumer 1 but only ack until the first hole
     boolean ack = true;
     int last = -1;
-    Map<Integer,QueueEntryPointer> consumer1unacked =
-        new TreeMap<Integer,QueueEntryPointer>();
+    Map<Integer, QueueEntryPointer> consumer1unacked =
+        new TreeMap<Integer, QueueEntryPointer>();
     while (true) {
       DequeueResult result = queue.dequeue(consumer1, readPointer);
-      if (result.isEmpty()) break;
+      if (result.isEmpty()) {
+        break;
+      }
       assertTrue(result.isSuccess());
       int value = Bytes.toInt(result.getEntry().getData());
       // System.out.println("Consumer 1 dequeued value = "+ value);
-      if (last > 0 && value != last + 1) ack = false;
+      if (last > 0 && value != last + 1) {
+        ack = false;
+      }
       if (ack) {
         queue.ack(result.getEntryPointer(), consumer1, transaction);
         queue.finalize(result.getEntryPointer(), consumer1, -1, transaction);
@@ -1106,7 +1122,7 @@ public abstract class TestTTQueue {
     }
 
     // iterate back over unacked consumer 1 entries and ack everything
-    for (Map.Entry<Integer,QueueEntryPointer> entry:
+    for (Map.Entry<Integer, QueueEntryPointer> entry:
       consumer1unacked.entrySet()) {
       queue.ack(entry.getValue(), consumer1, transaction);
       queue.finalize(entry.getValue(), consumer1, -1, transaction);
@@ -1119,7 +1135,9 @@ public abstract class TestTTQueue {
 
     // dequeue/ack all entries with consumer 3
     while (true) {
-      if (result.isEmpty()) break;
+      if (result.isEmpty()) {
+        break;
+      }
       assertTrue(result.isSuccess());
       int value = Bytes.toInt(result.getEntry().getData());
       queue.ack(result.getEntryPointer(), consumer3, transaction);
@@ -1129,11 +1147,13 @@ public abstract class TestTTQueue {
     }
 
     // reconfigure again back to 2 and dequeue everything
-    Map<Integer,QueueEntryPointer> consumer2unacked =
-        new TreeMap<Integer,QueueEntryPointer>();
+    Map<Integer, QueueEntryPointer> consumer2unacked =
+        new TreeMap<Integer, QueueEntryPointer>();
     while (true) {
       result = queue.dequeue(consumer2, readPointer);
-      if (result.isEmpty()) break;
+      if (result.isEmpty()) {
+        break;
+      }
       assertTrue(result.isSuccess());
       consumer2unacked.put(Bytes.toInt(result.getEntry().getData()),
           result.getEntryPointer());
@@ -1149,7 +1169,7 @@ public abstract class TestTTQueue {
     }
 
     // ack all entries with consumer 2
-    for (Map.Entry<Integer,QueueEntryPointer> entry:
+    for (Map.Entry<Integer, QueueEntryPointer> entry:
       consumer2unacked.entrySet()) {
       queue.ack(entry.getValue(), consumer2, transaction);
       queue.finalize(entry.getValue(), consumer2, -1, transaction);
@@ -1266,11 +1286,11 @@ public abstract class TestTTQueue {
 
     AtomicLong dequeueReturns = null;
     if (queue instanceof TTQueueOnVCTable) {
-      dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
+      dequeueReturns = ((TTQueueOnVCTable) queue).dequeueReturns;
     } else if (queue instanceof TTQueueOnHBaseNative) {
-      dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
+      dequeueReturns = ((TTQueueOnHBaseNative) queue).dequeueReturns;
     } else if (queue instanceof TTQueueNewOnVCTable) {
-      dequeueReturns = ((TTQueueNewOnVCTable)queue).dequeueReturns;
+      dequeueReturns = ((TTQueueNewOnVCTable) queue).dequeueReturns;
     }
 
     assertNotNull(dequeueReturns);
@@ -1321,7 +1341,7 @@ public abstract class TestTTQueue {
     Thread enqueueThread = new Thread() {
       @Override
       public void run() {
-        for (int i=0; i<n; i++) {
+        for (int i = 0; i < n; i++) {
           try {
             queue.enqueue(new QueueEntry(Bytes.toBytes(i)), transaction);
           } catch (OperationException e) {
@@ -1353,7 +1373,7 @@ public abstract class TestTTQueue {
   // Note: This does not work with round/robin nor fifo - can't guarantee that entry#i has value i
   @Test
   public void testMultiConsumerMultiGroup() throws Exception {
-    final String HASH_KEY = "hkey";
+    final String hashKey = "hkey";
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
@@ -1361,11 +1381,11 @@ public abstract class TestTTQueue {
 
     AtomicLong dequeueReturns = null;
     if (queue instanceof TTQueueOnVCTable) {
-      dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
+      dequeueReturns = ((TTQueueOnVCTable) queue).dequeueReturns;
     } else if (queue instanceof TTQueueOnHBaseNative) {
-      dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
+      dequeueReturns = ((TTQueueOnHBaseNative) queue).dequeueReturns;
     } else if (queue instanceof TTQueueNewOnVCTable) {
-      dequeueReturns = ((TTQueueNewOnVCTable)queue).dequeueReturns;
+      dequeueReturns = ((TTQueueNewOnVCTable) queue).dequeueReturns;
     }
 
     assertNotNull(dequeueReturns);
@@ -1373,27 +1393,27 @@ public abstract class TestTTQueue {
     // Create 4 consumer groups with 4 consumers each
     int n = 4;
     QueueConsumer [][] consumers = new QueueConsumer[n][];
-    for (int i=0; i<n; i++) {
+    for (int i = 0; i < n; i++) {
       consumers[i] = new QueueConsumer[n];
-      for (int j=0; j<n; j++) {
-        consumers[i][j] = new StatefulQueueConsumer(j, i, n, "g" + i, HASH_KEY,
+      for (int j = 0; j < n; j++) {
+        consumers[i][j] = new StatefulQueueConsumer(j, i, n, "g" + i, hashKey,
                                                     new QueueConfig(PartitionerType.HASH, true));
         queue.configure(consumers[i][j], readPointer);
       }
     }
 
     // values are longs
-    byte [][] values = new byte[n*n][];
-    for (int i=0; i<n*n; i++) {
-      values[i] = Bytes.toBytes((long)i);
+    byte [][] values = new byte[n * n][];
+    for (int i = 0; i < n * n; i++) {
+      values[i] = Bytes.toBytes((long) i);
     }
 
 
     // Start a dequeuer for every consumer!
     QueueDequeuer [][] dequeuers = new QueueDequeuer[n][];
-    for (int i=0; i<n; i++) {
+    for (int i = 0; i < n; i++) {
       dequeuers[i] = new QueueDequeuer[n];
-      for (int j=0; j<n; j++) {
+      for (int j = 0; j < n; j++) {
         dequeuers[i][j] = new QueueDequeuer(queue, consumers[i][j], readPointer);
         dequeuers[i][j].start();
         assertTrue(dequeuers[i][j].triggerdequeue());
@@ -1405,16 +1425,16 @@ public abstract class TestTTQueue {
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // verify everyone is empty
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
       }
     }
 
     // no dequeues yet
     long numdequeues = 0L;
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         assertEquals(numdequeues, dequeuers[i][j].dequeues.get());
       }
     }
@@ -1422,19 +1442,19 @@ public abstract class TestTTQueue {
     @SuppressWarnings("unused")
     long numEnqueues = 0;
     // enqueue the first four values
-    for (int i=0; i<n; i++) {
-      assertTrue(queue.enqueue(new QueueEntry(ImmutableMap.of(HASH_KEY, i), values[i]), transaction).isSuccess());
+    for (int i = 0; i < n; i++) {
+      assertTrue(queue.enqueue(new QueueEntry(ImmutableMap.of(hashKey, i), values[i]), transaction).isSuccess());
       numEnqueues++;
     }
 
     // wait for n^2 more queuedequeue() returns
-    expectedQueuedequeues += (n*n);
+    expectedQueuedequeues += (n * n);
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // every dequeuer/consumer should have one result
     numdequeues++;
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         waitForAndAssertCount(numdequeues, dequeuers[i][j].dequeues);
         DequeueResult result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
         assertNotNull(result);
@@ -1444,20 +1464,20 @@ public abstract class TestTTQueue {
 
     // trigger dequeues again, should get the same entries
     numdequeues++;
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         assertTrue(dequeuers[i][j].triggerdequeue());
         waitForAndAssertCount(numdequeues, dequeuers[i][j].dequeues);
       }
     }
 
     // wait for 16 more queuedequeue() returns
-    expectedQueuedequeues += (n*n);
+    expectedQueuedequeues += (n * n);
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // every dequeuer/consumer should have one result
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         DequeueResult result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
         assertNotNull(result);
         assertEquals(j, Bytes.toLong(result.getEntry().getData()));
@@ -1465,8 +1485,8 @@ public abstract class TestTTQueue {
     }
 
     // directly dequeueping should also yield the same result
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         DequeueResult result = queue.dequeue(consumers[i][j], readPointer);
         assertNotNull(result);
         assertTrue(result.isSuccess());
@@ -1475,12 +1495,12 @@ public abstract class TestTTQueue {
     }
 
     // wait for 16 more queuedequeue() returns
-    expectedQueuedequeues += (n*n);
+    expectedQueuedequeues += (n * n);
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // ack it for groups(0,1) consumers(2,3)
-    for (int i=0; i<n/2; i++) {
-      for (int j=n/2; j<n; j++) {
+    for (int i = 0; i < n / 2; i++) {
+      for (int j = n / 2; j < n; j++) {
         DequeueResult result = queue.dequeue(consumers[i][j], readPointer);
         assertNotNull(result);
         assertEquals(j, Bytes.toLong(result.getEntry().getData()));
@@ -1496,8 +1516,8 @@ public abstract class TestTTQueue {
 
     // trigger dequeuers
     numdequeues++;
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         waitForAndAssertCount(numdequeues, dequeuers[i][j].dequeueRunLoop);
         assertTrue(dequeuers[i][j].triggerdequeue());
         waitForAndAssertCount(numdequeues, dequeuers[i][j].triggers);
@@ -1505,13 +1525,13 @@ public abstract class TestTTQueue {
     }
 
     // wait for (n-1)(n) more queuedequeue() returns
-    expectedQueuedequeues += (n*(n-1));
+    expectedQueuedequeues += (n * (n - 1));
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // expect null for groups(0,1) consumers(2,3), same value for others
     // ack everyone not ackd
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         if ((i == 0 || i == 1) && (j == 2 || j == 3)) {
           assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
         } else {
@@ -1531,60 +1551,62 @@ public abstract class TestTTQueue {
     }
 
     // wait for (n*(n-1)) more queuedequeue() returns
-    expectedQueuedequeues += (n*(n-1));
+    expectedQueuedequeues += (n * (n - 1));
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // trigger dequeues again, will get false for groups(0,1) consumers(2,3)
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         boolean dequeueStatus = dequeuers[i][j].triggerdequeue();
         if ((i == 0 || i == 1) && (j == 2 || j == 3)) {
           assertFalse(dequeueStatus);
         } else {
-          if (!dequeueStatus) System.out.println("Failed Trigger dequeue {i=" +
-              i + ", j=" + j + "}");
+          if (!dequeueStatus) {
+            System.out.println("Failed Trigger dequeue {i=" +
+                                 i + ", j=" + j + "}");
+          }
           assertTrue("Expected to be able to trigger a dequeue but was not {i=" +
-              i + ", j=" + j +"}", dequeueStatus);
+              i + ", j=" + j + "}", dequeueStatus);
         }
       }
     }
     // re-align counters so we can keep testing sanely
     // for groups(0,1) consumers(2,3)
-    for (int i=0; i<n/2; i++) {
-      for (int j=n/2; j<n; j++) {
+    for (int i = 0; i < n / 2; i++) {
+      for (int j = n / 2; j < n; j++) {
         dequeuers[i][j].dequeues.incrementAndGet();
       }
     }
 
     // everyone should be empty
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
       }
     }
 
     // enqueue everything!
-    for (int i=0; i<n*n; i++) {
-      assertTrue(queue.enqueue(new QueueEntry(ImmutableMap.of(HASH_KEY, i), values[i]), transaction).isSuccess());
+    for (int i = 0; i < n * n; i++) {
+      assertTrue(queue.enqueue(new QueueEntry(ImmutableMap.of(hashKey, i), values[i]), transaction).isSuccess());
       numEnqueues++;
     }
 
     // wait for n^2 more queuedequeue() wake-ups
-    expectedQueuedequeues += (n*n);
+    expectedQueuedequeues += (n * n);
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
     numdequeues++;
 
     // dequeue and ack everything.  each consumer should have 4 things!
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         long localdequeues = numdequeues;
-        for (int k=0; k<n; k++) {
+        for (int k = 0; k < n; k++) {
           waitForAndAssertCount(localdequeues, dequeuers[i][j].dequeues);
           DequeueResult result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
           assertNotNull(result);
           assertEquals("i=" + i + ", j=" + j + ", k=" + k + ", threadid=" +
               dequeuers[i][j].getId(),
-              (long)(k*n)+j, Bytes.toLong(result.getEntry().getData()));
+              (long) (k * n) + j, Bytes.toLong(result.getEntry().getData()));
           queue.ack(result.getEntryPointer(), consumers[i][j], transaction);
 //          queue.finalize(result.getEntryPointer(), consumers[i][j], -1, transaction);
           dequeuers[i][j].triggerdequeue();
@@ -1594,15 +1616,15 @@ public abstract class TestTTQueue {
     }
 
     // everyone should be empty
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
       }
     }
 
     // everyone should be empty
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<n; j++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
         dequeuers[i][j].shutdown();
       }
     }
@@ -1655,7 +1677,9 @@ public abstract class TestTTQueue {
     }
 
     DequeueResult nonBlockDequeue() {
-      if (this.result == null) return null;
+      if (this.result == null) {
+        return null;
+      }
       DequeueResult ret = this.result;
       this.result = null;
       return ret;
@@ -1663,7 +1687,9 @@ public abstract class TestTTQueue {
 
     DequeueResult blockdequeue(long timeout) {
       DequeueResult result = nonBlockDequeue();
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
       long cur = System.currentTimeMillis();
       long end = cur + timeout;
       while (result == null && cur < end) {
@@ -1710,7 +1736,9 @@ public abstract class TestTTQueue {
             try {
               this.dequeueTrigger.wait();
             } catch (InterruptedException e) {
-              if (this.keepgoing) e.printStackTrace();
+              if (this.keepgoing) {
+                e.printStackTrace();
+              }
             }
           }
           this.triggers.incrementAndGet();

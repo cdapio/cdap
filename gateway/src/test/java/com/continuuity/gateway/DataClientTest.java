@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Tests data client.
+ */
 public class DataClientTest {
 
   private static final Logger LOG = LoggerFactory

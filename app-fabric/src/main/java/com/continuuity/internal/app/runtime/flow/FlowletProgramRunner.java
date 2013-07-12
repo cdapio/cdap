@@ -120,6 +120,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
+    BasicFlowletContext flowletContext = null;
     try {
       // Extract and verify parameters
       String flowletName = options.getName();
@@ -159,15 +160,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
       DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
       DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
-
       // Creates flowlet context
-      BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
-                                                                   runId, instanceCount,
-                                                                   DataSets.createDataSets(dataSetContext,
-                                                                                           flowletDef.getDatasets()),
-                                                                   options.getUserArguments(),
-                                                                   flowletDef.getFlowletSpec(),
-                                                                   flowletClass.isAnnotationPresent(Async.class));
+      flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
+                                               runId, instanceCount,
+                                               DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
+                                               options.getUserArguments(),
+                                               flowletDef.getFlowletSpec(),
+                                               flowletClass.isAnnotationPresent(Async.class));
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
@@ -212,6 +211,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
       return programController(program.getProgramName(), flowletName, flowletContext, driver);
 
     } catch (Exception e) {
+      // something went wrong before the flowlet even started. Make sure we release all resources (datasets, ...)
+      // of the flowlet context.
+      if (flowletContext != null) {
+        flowletContext.close();
+      }
       throw Throwables.propagate(e);
     }
   }
@@ -227,41 +231,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                               final String flowletName,
                                               final BasicFlowletContext flowletContext,
                                               final FlowletProcessDriver driver) {
-    return new AbstractProgramController(programName + ":" + flowletName, flowletContext.getRunId()) {
-      @Override
-      protected void doSuspend() throws Exception {
-        LOG.info("Suspending flowlet: " + flowletContext);
-        driver.suspend();
-        LOG.info("Flowlet suspended: " + flowletContext);
-      }
-
-      @Override
-      protected void doResume() throws Exception {
-        LOG.info("Resuming flowlet: " + flowletContext);
-        driver.resume();
-        LOG.info("Flowlet resumed: " + flowletContext);
-      }
-
-      @Override
-      protected void doStop() throws Exception {
-        LOG.info("Stopping flowlet: " + flowletContext);
-        driver.stopAndWait();
-        LOG.info("Flowlet stopped: " + flowletContext);
-      }
-
-      @Override
-      protected void doCommand(String name, Object value) throws Exception {
-        Preconditions.checkState(getState() == State.SUSPENDED,
-                                 "Cannot change instance count when flowlet is running.");
-        if (!"instances".equals(name) || !(value instanceof Integer)) {
-          return;
-        }
-        int instances = (Integer) value;
-        LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
-        changeInstanceCount(flowletContext, instances);
-        LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
-      }
-    };
+    return new FlowletProgramController(programName, flowletName, flowletContext, driver);
   }
 
   /**
@@ -607,5 +577,52 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private static interface ProcessSpecificationFactory {
     <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType, ProcessMethod method,
                                 QueueInfo queueInfo) throws OperationException;
+  }
+
+  private class FlowletProgramController extends AbstractProgramController {
+    private final BasicFlowletContext flowletContext;
+    private final FlowletProcessDriver driver;
+
+    FlowletProgramController(String programName, String flowletName,
+                             BasicFlowletContext flowletContext, FlowletProcessDriver driver) {
+      super(programName + ":" + flowletName, flowletContext.getRunId());
+      this.flowletContext = flowletContext;
+      this.driver = driver;
+      started();
+    }
+
+    @Override
+    protected void doSuspend() throws Exception {
+      LOG.info("Suspending flowlet: " + flowletContext);
+      driver.suspend();
+      LOG.info("Flowlet suspended: " + flowletContext);
+    }
+
+    @Override
+    protected void doResume() throws Exception {
+      LOG.info("Resuming flowlet: " + flowletContext);
+      driver.resume();
+      LOG.info("Flowlet resumed: " + flowletContext);
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+      LOG.info("Stopping flowlet: " + flowletContext);
+      driver.stopAndWait();
+      LOG.info("Flowlet stopped: " + flowletContext);
+    }
+
+    @Override
+    protected void doCommand(String name, Object value) throws Exception {
+      Preconditions.checkState(getState() == State.SUSPENDED,
+                               "Cannot change instance count when flowlet is running.");
+      if (!"instances".equals(name) || !(value instanceof Integer)) {
+        return;
+      }
+      int instances = (Integer) value;
+      LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
+      changeInstanceCount(flowletContext, instances);
+      LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
+    }
   }
 }

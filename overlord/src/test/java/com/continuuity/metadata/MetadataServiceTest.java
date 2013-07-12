@@ -1,6 +1,7 @@
 package com.continuuity.metadata;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -9,6 +10,7 @@ import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
@@ -58,7 +60,7 @@ public class MetadataServiceTest {
   public void cleanDataFabric() throws OperationException {
     // cleanups data
     injector.getInstance(OperationExecutor.class)
-      .execute(new OperationContext("developer"), new ClearFabric());
+      .execute(new OperationContext(Constants.DEVELOPER_ACCOUNT_ID), new ClearFabric());
   }
 
   /**
@@ -130,7 +132,7 @@ public class MetadataServiceTest {
     // Delete the stream now.
     Assert.assertTrue(mds.deleteStream(account, stream));
     int afterDeleteCount = mds.getStreams(account).size();
-    Assert.assertTrue(count == afterAddCount-1);
+    Assert.assertTrue(count == afterAddCount - 1);
     Assert.assertTrue((afterAddCount - 1) == afterDeleteCount);
   }
 
@@ -149,8 +151,8 @@ public class MetadataServiceTest {
       = mds.getStreams(account);
     int after = streams.size();
     Assert.assertTrue(after == before + 1);
-    for(Stream s : streams) {
-      if(s.getId().equals("id3")) {
+    for (Stream s : streams) {
+      if (s.getId().equals("id3")) {
         Assert.assertTrue("Serious stream".equals(s.getName()));
         Assert.assertTrue("Serious stream. Shutup".equals(s.getDescription()));
       }
@@ -202,6 +204,29 @@ public class MetadataServiceTest {
     List<Query> qlist = mds.getQueries(account);
     Assert.assertTrue(qlist.size() == 0);
     Query query1 = mds.getQuery(account, query);
+    Assert.assertNotNull(query1);
+  }
+
+  @Test
+  public void testCreateMapreduce() throws Exception {
+    Mapreduce query = new Mapreduce("query1", "appX");
+    query.setName("Mapreduce 1");
+    query.setDescription("test dataset");
+    Assert.assertTrue(mds.createMapreduce(account, query));
+    List<Mapreduce> dlist = mds.getMapreduces(account);
+    Assert.assertNotNull(dlist);
+    Assert.assertTrue(dlist.size() > 0);
+  }
+
+  @Test
+  public void testCreateDeleteListMapreduce() throws Exception {
+    testCreateMapreduce(); // creates a dataset.
+    // Now delete it.
+    Mapreduce query = new Mapreduce("query1", "appX");
+    Assert.assertNotNull(mds.deleteMapreduce(account, query));
+    List<Mapreduce> qlist = mds.getMapreduces(account);
+    Assert.assertTrue(qlist.size() == 0);
+    Mapreduce query1 = mds.getMapreduce(account, query);
     Assert.assertNotNull(query1);
   }
 
@@ -283,8 +308,8 @@ public class MetadataServiceTest {
     Collection<Application> applications = mds.getApplications(account);
     int after = applications.size();
     Assert.assertTrue(after == before + 1);
-    for(Application a : applications) {
-      if(a.getId().equals("tapp1")) {
+    for (Application a : applications) {
+      if (a.getId().equals("tapp1")) {
         Assert.assertTrue("Serious App".equals(a.getName()));
         Assert.assertTrue("Serious App. Shutup".equals(a.getDescription()));
       }

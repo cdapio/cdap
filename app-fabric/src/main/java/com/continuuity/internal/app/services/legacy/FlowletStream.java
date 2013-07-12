@@ -6,19 +6,22 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class FlowletStream {
+/**
+ * Helper class to building flowlet queue.
+ */
+public final class FlowletStream {
 
   private static final Logger Log = LoggerFactory.getLogger(FlowStream.class);
 
   /**
    * Build the default URI for an out stream of a flowlet,
-   * which is queue://flowname/flowletname/streamname
+   * which is queue://flowname/flowletname/streamname.
    * @param flowName the name of the flow
    * @param flowletName the name of the flowlet
    * @param streamName the name of the flowlet output stream
    * @return the URI for the stream
    */
-  static public URI defaultURI(String flowName, String flowletName, String streamName) {
+  public static URI defaultURI(String flowName, String flowletName, String streamName) {
     try {
       return new URI("queue", flowName, "/" + flowletName + "/" + streamName, null);
     } catch (URISyntaxException e) {

@@ -6,7 +6,7 @@ package com.continuuity.api.batch;
  */
 public interface MapReduce {
   /**
-   * Configures {@link MapReduce} by returning a {@link MapReduceSpecification}
+   * Configures {@link MapReduce} by returning a {@link MapReduceSpecification}.
    * @return an instance of {@link MapReduceSpecification}
    */
   MapReduceSpecification configure();

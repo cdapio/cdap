@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * This tests whether Flume events are properly transmitted through the Gateway
+ * This tests whether Flume events are properly transmitted through the Gateway.
  */
 public class GatewayFlumeCollectorTest {
 
@@ -118,8 +118,8 @@ public class GatewayFlumeCollectorTest {
     // Authentication configuration
     myConfiguration.setBoolean(Constants.CONFIG_AUTHENTICATION_REQUIRED, true);
     myConfiguration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
-    Map<String,List<String>> keysAndClusters =
-      new TreeMap<String,List<String>>();
+    Map<String, List<String>> keysAndClusters =
+      new TreeMap<String, List<String>>();
     keysAndClusters.put(apiKey, Arrays.asList(cluster));
     theGateway.setPassportClient(new MockedPassportClient(keysAndClusters));
     theGateway.setConsumer(consumer);

@@ -805,10 +805,10 @@ public class HBaseOVCTable extends AbstractOVCTable {
     List<Put> puts = new ArrayList<Put>(columns.length);
     try {
       KeyValue[] kvs = getLatestVisible(row, columns, readPointer);
-      for (int i = 0; i<columns.length; i++) {
+      for (int i = 0; i < columns.length; i++) {
         KeyValue kv = kvs[i];
         long l = amounts[i];
-        if (kv!=null) {
+        if (kv != null) {
           l += Bytes.toLong(removeTypePrefix(kv.getValue()));
         }
         Put put = new Put(row);

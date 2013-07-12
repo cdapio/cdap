@@ -14,10 +14,10 @@ import org.slf4j.LoggerFactory;
  * Test Runner for running AppFabricIntegration Suite.
  */
 public class TestRunner {
-  private static Logger LOG = LoggerFactory.getLogger(TestRunner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TestRunner.class);
   public static void main(String[] args) {
     Result result = JUnitCore.runClasses(AppFabricIntegrationSuite.class);
-    for(Failure failure : result.getFailures()) {
+    for (Failure failure : result.getFailures()) {
       LOG.error(failure.toString());
     }
     LOG.info(result.wasSuccessful() ? "SUCCESS" : "FAILURE");

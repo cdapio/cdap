@@ -12,7 +12,7 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 	 * Joins the arguments as a path string.
 	 * e.g. HTTP.get('metrics', 1, 2, 3) => GET /metrics/1/2/3 HTTP/1.1
 	 */
-	function getPath(args) {
+	function findPath(args) {
 		var path = [];
 		for (var i = 0; i < args.length; i ++) {
 			if (typeof args[i] === 'string') {
@@ -23,17 +23,20 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 	}
 
 	/*
-	 * Finds the object argument based on the second to last argument.
+	 * Finds the object argument based on the last argument.
 	 */
-	function getObject(args) {
-		var object = args[args.length - 2];
+	function findObject(args) {
+		var object = args[args.length - 1];
+		if (typeof object === 'function') {
+			object = args[args.length - 2];
+		}
 		return (!object || typeof object === 'string' ? null : object);
 	}
 
 	/*
 	 * Finds the callback argument based on the last argument.
 	 */
-	function getCallback(args) {
+	function findCallback(args) {
 		var callback = args[args.length - 1];
 		return (typeof callback === 'function' ? callback : function () {
 			Em.debug('No callback provided for HTTP response.');
@@ -42,35 +45,29 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 
 	var Mock = Em.Object.extend({
 
-		"get": function () {
+		get: function () {
 
-			var path = getPath(arguments);
-			var callback = getCallback(arguments);
-			var status = 200;
+			var path = findPath(arguments);
+			var callback = findCallback(arguments);
 			var result = HttpRouter.getResult(path);
 
-			callback(status, result);
+			callback(result, 200);
 
 		},
 
-		"put": function () {
+		rest: function () {
 
-			var path = getPath(arguments);
-			var object = getObject(arguments);
-			var callback = getCallback(arguments);
-
-			callback(500, null);
+			var args = [].slice.call(arguments);
+			args.unshift('rest');
+			this.get.apply(this, args);
 
 		},
 
-		/*
-		 * RPC is executed via POST.
-		 */
-		"post": function () {
+		post: function () {
 
-			var path = getPath(arguments);
-			var object = getObject(arguments);
-			var callback = getCallback(arguments);
+			var path = findPath(arguments);
+			var object = findObject(arguments);
+			var callback = findCallback(arguments);
 			var result = [];
 
 			if (path === '/metrics') {
@@ -97,43 +94,40 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 						}
 
 					}
-					callback(200, result);
+					callback(result, 200);
 
 				} else {
-					callback(500, null);
+					callback(null, 500);
 				}
 
 			} else {
-				callback(500, null);
+
+				var result = HttpRouter.getResult(path);
+				callback(result, 200);
+
 			}
+
+		},
+
+		rpc: function () {
+
+			var args = [].slice.call(arguments);
+			args.unshift('rpc');
+
+			var object = args[args.length - 2];
+			if (typeof object === 'object' && object.length) {
+				args[args.length - 2] = { 'params[]': object };
+			}
+
+			this.post.apply(this, args);
 
 		},
 
 		"delete": function (path) {
 
-			var path = getPath(arguments);
-
-			return {
-				status: 200,
-				result: null
-			};
-
-		},
-
-		"getElements": function (type, callback, appId, arg) {
-
-			var objects = $.extend(true, [], Elements[type].result);
-			var params = [type, callback];
-
-			var i = objects.length, type = params[0];
-
-			while (i--) {
-				objects[i] = C[type].create(objects[i]);
-			}
-
-			if (typeof params[1] === 'function') {
-				callback(objects, arg);
-			}
+			var path = findPath(arguments);
+			var callback = findCallback(arguments);
+			this.post(path + '?_method=DELETE', callback);
 
 		}
 

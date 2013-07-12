@@ -194,19 +194,14 @@ define([], function () {
 
 				var app = flow.get('app');
 				var flow = flow.get('name');
-				var version = flow.version;
+				var version = flow.version || -1;
 				var flowlet = model.name;
 
-				C.get('manager', {
-					method: 'setInstances',
-					params: [app, flow, version, flowlet, instances]
-				}, function (error, response) {
+				this.HTTP.rpc('runnable', 'setInstances', [app, flow, version, flowlet, instances],
+					function (response) {
 
-					/*
-					 * THIS should be moved out of here. Send in an error callback.
-					 */
-					if (error) {
-						C.Modal.show('Container Error', error);
+					if (response.error) {
+						C.Modal.show('Container Error', response.error);
 					} else {
 						model.set('instances', instances);
 					}

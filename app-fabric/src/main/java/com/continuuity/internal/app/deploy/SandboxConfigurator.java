@@ -32,11 +32,11 @@ public final class SandboxConfigurator implements Configurator {
   /**
    * Prefix of temporary file.
    */
-  private final static String PREFIX = "app-specification";
+  private static final String PREFIX = "app-specification";
   /**
    * Extension of temporary.
    */
-  private final static String EXT = ".json";
+  private static final String EXT = ".json";
 
   /**
    * Name of JAR file.
@@ -49,7 +49,7 @@ public final class SandboxConfigurator implements Configurator {
   private Process process;
 
   /**
-   * Constructor
+   * Constructor.
    *
    * @param jarFilename Name of the JAR file.
    */
@@ -59,7 +59,7 @@ public final class SandboxConfigurator implements Configurator {
   }
 
   /**
-   * Helper for simplifying creating {@link SandboxConfigurator}
+   * Helper for simplifying creating {@link SandboxConfigurator}.
    *
    * @param jarFilename Name of the file.
    * @return An instance of {@link ListenableFuture}
@@ -108,7 +108,7 @@ public final class SandboxConfigurator implements Configurator {
                            result, new FutureCallback<ConfigResponse>() {
 
         private void deleteOutput() {
-          if(outputFile.exists()) {
+          if (outputFile.exists()) {
             outputFile.delete();
           }
         }
@@ -123,14 +123,14 @@ public final class SandboxConfigurator implements Configurator {
         public void onFailure(final Throwable t) {
           // In case the future was cancelled, we have to
           // destroy the process.
-          if(result.isCancelled()) {
+          if (result.isCancelled()) {
             process.destroy();
           }
           deleteOutput();
         }
       }
       );
-    } catch(Exception e) {
+    } catch (Exception e) {
       // Returns a {@code ListenableFuture} which has an exception set immediately
       // upon construction.
       return Futures.immediateFailedFuture(e);
@@ -145,12 +145,12 @@ public final class SandboxConfigurator implements Configurator {
           // be shutdown.
           process.waitFor();
           int exit = process.exitValue();
-          if(exit == 0) {
+          if (exit == 0) {
             result.set(new DefaultConfigResponse(0, newFileStream(outputFile)));
           } else {
             result.set(new DefaultConfigResponse(exit, null));
           }
-        } catch(Exception e) {
+        } catch (Exception e) {
           result.setException(e);
         }
       }

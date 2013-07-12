@@ -40,16 +40,16 @@ public class Zip {
 
     // Set advance to move both.
     ZipIterator.Advance advance = ZipIterator.Advance.BOTH;
-    while(itA.hasNext() && itB.hasNext()) {
+    while (itA.hasNext() && itB.hasNext()) {
 
       // Depending on what gets returned from the advance,
       // move the iterators accordingly.
-      if(advance == ZipIterator.Advance.BOTH) {
+      if (advance == ZipIterator.Advance.BOTH) {
         aData = itA.next();
         bData = itB.next();
-      } else if(advance == ZipIterator.Advance.ITER_A) {
+      } else if (advance == ZipIterator.Advance.ITER_A) {
         aData = itA.next();
-      } else if(advance == ZipIterator.Advance.ITER_B) {
+      } else if (advance == ZipIterator.Advance.ITER_B) {
         bData = itB.next();
       }
 
@@ -62,13 +62,13 @@ public class Zip {
 
     // After we are here, one of the list has completed. check which
     // one it is and based on that use the prev value.
-    if(itB.hasNext()) {
-      while(itB.hasNext()) {
+    if (itB.hasNext()) {
+      while (itB.hasNext()) {
         bData = itB.next();
         each.each(aData, bData, ZipIterator.Advance.ITER_B);
       }
-    } else if(itA.hasNext()) {
-      while(itA.hasNext()) {
+    } else if (itA.hasNext()) {
+      while (itA.hasNext()) {
         aData = itA.next();
         each.each(aData, bData, ZipIterator.Advance.ITER_A);
       }

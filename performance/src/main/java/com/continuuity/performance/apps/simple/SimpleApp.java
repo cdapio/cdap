@@ -21,13 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is a sample Continuuity application  that is used for demonstration of performance testing.
+ * This is a sample Continuuity Reactor App that is used for demonstration of performance testing.
  */
 public class SimpleApp implements Application {
 
   private static final Logger LOG = LoggerFactory.getLogger(SimpleApp.class);
 
-  public static final String TABLE_NAME = "writeAndRead";
+  public static final String TABLE_NAME = "SimpleTable";
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
@@ -41,7 +41,7 @@ public class SimpleApp implements Application {
       .setName("SimpleApp")
       .setDescription("Flow that writes key=value then reads back the key")
       .withStreams()
-      .add(new Stream("keyValues"))
+      .add(new Stream("SimpleStream"))
       .withDataSets()
       .add(new KeyValueTable(TABLE_NAME))
       .withFlows()
@@ -55,14 +55,14 @@ public class SimpleApp implements Application {
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("SimpleApp")
+        .setName("SimpleFlow")
         .setDescription("Example flow that writes events from a stream to a data set and then reads them from there.")
         .withFlowlets()
         .add("source", new KeyValueSource())
         .add("writer", new WriterFlowlet())
         .add("reader", new ReaderFlowlet())
         .connect()
-        .fromStream("keyValues").to("source")
+        .fromStream("SimpleStream").to("source")
         .from("source").to("writer")
         .from("writer").to("reader")
         .build();

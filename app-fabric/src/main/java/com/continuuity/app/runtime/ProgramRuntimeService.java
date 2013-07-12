@@ -13,6 +13,9 @@ import java.util.Map;
  */
 public interface ProgramRuntimeService extends Service {
 
+  /**
+   * Represents information of a running program.
+   */
   interface RuntimeInfo {
     ProgramController getController();
 
@@ -22,7 +25,7 @@ public interface ProgramRuntimeService extends Service {
   }
 
   /**
-   * Starts the given program and return a {@link RuntimeInfo} about the running program
+   * Starts the given program and return a {@link RuntimeInfo} about the running program.
    *
    * @param program A {@link Program} to run.
    * @param options {@link ProgramOptions} that are needed by the program.

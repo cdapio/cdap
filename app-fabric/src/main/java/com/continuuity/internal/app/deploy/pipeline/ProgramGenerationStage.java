@@ -51,10 +51,10 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     }
 
     // Now, we iterate through FlowSpecification and generate programs
-    for(FlowSpecification flow : appSpec.getFlows().values()) {
+    for (FlowSpecification flow : appSpec.getFlows().values()) {
       String name = String.format(Locale.ENGLISH, "%s/%s", Type.FLOW.toString(), applicationName);
       Location flowAppDir = newOutputDir.append(name);
-      if(! flowAppDir.exists()) {
+      if (!flowAppDir.exists()) {
         flowAppDir.mkdirs();
       }
       Location output = flowAppDir.append(String.format("%s.jar", flow.getName()));
@@ -64,10 +64,10 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     }
 
     // Iterate through ProcedureSpecification and generate program
-    for(ProcedureSpecification procedure : appSpec.getProcedures().values()) {
+    for (ProcedureSpecification procedure : appSpec.getProcedures().values()) {
       String name = String.format(Locale.ENGLISH, "%s/%s", Type.PROCEDURE.toString(), applicationName);
       Location procedureAppDir = newOutputDir.append(name);
-      if(! procedureAppDir.exists()) {
+      if (!procedureAppDir.exists()) {
         procedureAppDir.mkdirs();
       }
       Location output = procedureAppDir.append(String.format("%s.jar", procedure.getName()));
@@ -77,10 +77,10 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     }
 
     // Iterate through MapReduceSpecification and generate program
-    for(MapReduceSpecification job : appSpec.getMapReduces().values()) {
+    for (MapReduceSpecification job : appSpec.getMapReduces().values()) {
       String name = String.format(Locale.ENGLISH, "%s/%s", Type.MAPREDUCE.toString(), applicationName);
       Location jobAppDir = newOutputDir.append(name);
-      if(! jobAppDir.exists()) {
+      if (!jobAppDir.exists()) {
         jobAppDir.mkdirs();
       }
       Location output = jobAppDir.append(String.format("%s.jar", job.getName()));

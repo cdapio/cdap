@@ -14,12 +14,12 @@ public class DBUtils {
   private static final Logger Log = LoggerFactory.getLogger(DBUtils.class);
 
   /**
-   * Type
+   * Type.
    */
   public enum DBType {
     HSQLDB,
     MYSQL,
-    UNKNOWN;
+    UNKNOWN
   }
 
   /**
@@ -32,11 +32,11 @@ public class DBUtils {
   public static DBType loadDriver(String connectionUrl)
       throws ClassNotFoundException {
     DBType type;
-    if(connectionUrl != null) {
-      if(connectionUrl.contains("hsqldb")) {
+    if (connectionUrl != null) {
+      if (connectionUrl.contains("hsqldb")) {
         Class.forName("org.hsqldb.jdbcDriver");
         type = DBType.HSQLDB;
-      } else if(connectionUrl.contains("mysql")) {
+      } else if (connectionUrl.contains("mysql")) {
         Class.forName("com.mysql.jdbc.Driver");
         type = DBType.MYSQL;
       } else {
@@ -49,10 +49,8 @@ public class DBUtils {
   }
 
   /**
-   * Clears the metrics for a given program
-   * @param connection connection to DB
-   * @param accountId
-   * @param applicationId
+   * Clears the metrics for a given program.
+   *
    * @return true if successful; false otherwise.
    */
   public static boolean clearApplicationMetrics(Connection connection, String accountId, String applicationId) {
@@ -102,7 +100,7 @@ public class DBUtils {
       stmt.setString(1, accountId);
       stmt.setString(2, "-");
       stmt.execute();
-      if(stmt != null) {
+      if (stmt != null) {
         stmt.close();
         stmt = null;
       }
@@ -111,7 +109,7 @@ public class DBUtils {
       stmt.setString(1, accountId);
       stmt.setString(2, "-");
       stmt.execute();
-      if(stmt != null) {
+      if (stmt != null) {
         stmt.close();
         stmt = null;
       }
@@ -121,10 +119,10 @@ public class DBUtils {
       return false;
     } finally {
       try {
-        if(stmt != null) {
+        if (stmt != null) {
           stmt.close();
         }
-        if(connection != null) {
+        if (connection != null) {
           connection.close();
         }
       } catch (SQLException e) {
@@ -140,7 +138,7 @@ public class DBUtils {
   public static boolean createMetricsTables(Connection connection, DBType type) {
 
     // Creates table only when it's of type HyperSQLDB.
-    if(type != DBUtils.DBType.HSQLDB) {
+    if (type != DBUtils.DBType.HSQLDB) {
       return true;
     }
 
@@ -176,7 +174,7 @@ public class DBUtils {
       stmt = connection.prepareStatement(metricsTableCreateDDL);
       stmt.execute();
 
-      if(stmt != null) {
+      if (stmt != null) {
         stmt.close();
         stmt = null;
       }
@@ -186,7 +184,7 @@ public class DBUtils {
                                            "RESULT MEMORY ROWS 1000");
       stmt.execute();
 
-      if(stmt != null) {
+      if (stmt != null) {
         stmt.close();
         stmt = null;
       }
@@ -194,26 +192,26 @@ public class DBUtils {
       stmt = connection.prepareStatement(metricsTimeseriesCreateTableDDL);
       stmt.execute();
 
-      if(stmt != null){
+      if (stmt != null){
         stmt.close();
         stmt = null;
       }
     } catch (SQLException e) {
       // SQL state for determining the duplicate table create exception
       // http://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html
-      if(!e.getSQLState().equalsIgnoreCase("42504")) {
+      if (!e.getSQLState().equalsIgnoreCase("42504")) {
         Log.warn("Failed creating tables. Reason : {}", e.getMessage());
         return false;
       }
     } finally {
       try {
-        if(stmt != null) {
+        if (stmt != null) {
           stmt.close();
         }
-        if(connection != null) {
+        if (connection != null) {
           connection.close();
         }
-      } catch(SQLException e) {
+      } catch (SQLException e) {
         Log.warn("Failed closing connection/statement. Reason : {}",
                  e.getMessage());
       }

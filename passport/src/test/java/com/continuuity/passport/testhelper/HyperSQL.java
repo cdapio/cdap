@@ -26,7 +26,10 @@ public class HyperSQL {
                                                      "dev_suite_downloaded_at TIMESTAMP DEFAULT null," +
                                                      "payment_account_id VARCHAR(30) DEFAULT null,"   +
                                                      "payment_info_provided_at TIMESTAMP DEFAULT null," +
-                                                     "UNIQUE (email_id)" +
+                                                     "org_id VARCHAR(100) DEFAULT null, " +
+                                                     "UNIQUE (email_id), " +
+                                                     "FOREIGN KEY(org_id) " +
+                                                     "REFERENCES organization(id)" +
                                                      ")";
 
   private static final String CREATE_VPC_ACCOUNT_TABLE = "CREATE TABLE vpc_account ( id INTEGER IDENTITY, " +
@@ -39,6 +42,8 @@ public class HyperSQL {
     "account_id INTEGER, role_type INTEGER, role_overrides VARCHAR(100) )";
 
 
+  private static final String CREATE_ORG_TABLE = "CREATE TABLE organization (id VARCHAR(100) PRIMARY KEY, " +
+                                                 "name VARCHAR(100))";
 
   private static final String CREATE_NONCE_TABLE = "CREATE TABLE nonce (nonce_id INTEGER IDENTITY," +
                                                    "id VARCHAR(100), nonce_expires_at TIMESTAMP, UNIQUE (id)" +
@@ -47,6 +52,7 @@ public class HyperSQL {
   private static final String DROP_NONCE_TABLE = "DROP TABLE nonce";
   private static final String DROP_VPC_ACCOUNT_TABLE = "DROP TABLE vpc_account";
   private static final String DROP_VPC_ROLE_TABLE = "DROP TABLE vpc_roles";
+  private static final String DROP_ORG_TABLE = "DROP TABLE organization";
 
 
 
@@ -68,7 +74,7 @@ public class HyperSQL {
     connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
       "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
 
-
+    connection.createStatement().execute(CREATE_ORG_TABLE);
     connection.createStatement().execute(CREATE_ACCOUNT_TABLE);
     connection.createStatement().execute(CREATE_NONCE_TABLE);
     connection.createStatement().execute(CREATE_VPC_ACCOUNT_TABLE);
@@ -79,12 +85,14 @@ public class HyperSQL {
   public static void stopHsqlDB() throws SQLException {
 
     System.out.println("======================================STOP=======================================");
+
     connection.createStatement().execute(DROP_ACCOUNT_TABLE);
     connection.createStatement().execute(DROP_NONCE_TABLE);
     connection.createStatement().execute(DROP_VPC_ACCOUNT_TABLE);
     connection.createStatement().execute(DROP_VPC_ROLE_TABLE);
-
+    connection.createStatement().execute(DROP_ORG_TABLE);
     connection.close();
+
     server.stop();
   }
 

@@ -53,5 +53,4 @@ public class LocalClientProtocolProvider extends ClientProtocolProvider {
   public void close(ClientProtocol clientProtocol) {
     // no clean up required
   }
-
 }

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
@@ -9,4 +9,6 @@
  * comparisons, hash code generation, manufacturing keys for HashMaps or HashSets
  */
 package com.continuuity.api.common;
+
+
 

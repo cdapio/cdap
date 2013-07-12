@@ -1,15 +1,18 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.performance.application;
 
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.test.app.StreamWriter;
+import com.continuuity.test.StreamWriter;
+import com.continuuity.test.internal.StreamWriterFactory;
 
 /**
  * This interface is using Guice assisted inject to create
- * {@link GatewayStreamWriter}.
+ * {@link com.continuuity.performance.gateway.stream.MultiThreadedStreamWriter}.
  */
-public interface BenchmarkStreamWriterFactory {
-
-  StreamWriter create(CConfiguration config,
-                      QueueName queueName);
+public interface BenchmarkStreamWriterFactory extends StreamWriterFactory {
+  StreamWriter create(CConfiguration config, QueueName queueName);
 }

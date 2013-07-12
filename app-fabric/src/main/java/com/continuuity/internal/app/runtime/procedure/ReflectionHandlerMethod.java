@@ -29,7 +29,7 @@ final class ReflectionHandlerMethod implements HandlerMethod {
     this.method = method;
     this.txAgentSupplier = txAgentSupplier;
 
-    if(!this.method.isAccessible()) {
+    if (!this.method.isAccessible()) {
       this.method.setAccessible(true);
     }
   }

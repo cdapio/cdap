@@ -14,6 +14,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
@@ -38,6 +39,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
+import com.continuuity.data.operation.executor.remote.stubs.TTruncateTable;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
@@ -138,7 +140,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public Transaction startTransaction(OperationContext context, boolean trackChanges) throws OperationException, TException {
+  public Transaction startTransaction(OperationContext context, boolean trackChanges)
+    throws OperationException, TException {
 
     MetricsHelper helper = newHelper("startTransaction");
 
@@ -463,6 +466,35 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
+  public void execute(OperationContext context, TruncateTable truncateTable) throws TException, OperationException {
+
+    MetricsHelper helper = newHelper("truncate", truncateTable.getTableName());
+
+    try {
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + truncateTable);
+      }
+      TOperationContext tContext = wrap(context);
+      TTruncateTable tTruncateTable = wrap(truncateTable);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tTruncateTable);
+      }
+      client.truncateTable(tContext, tTruncateTable);
+      if (Log.isTraceEnabled()) {
+        Log.trace("TruncateTable successful.");
+      }
+      helper.success();
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
     throws OperationException, TException {
 
@@ -767,12 +799,18 @@ public class OperationExecutorClient extends ConverterUtils {
     MetricsHelper helper = newHelper("configureGroup", configure.getQueueName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + configure);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + configure);
+      }
       TOperationContext tContext = wrap(context);
       TQueueConfigureGroups tQueueConfigure = wrap(configure);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tQueueConfigure);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tQueueConfigure);
+      }
       client.configureQueueGroups(tContext, tQueueConfigure);
-      if (Log.isTraceEnabled()) Log.trace("QueueConfigureGroups successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("QueueConfigureGroups successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -792,12 +830,18 @@ public class OperationExecutorClient extends ConverterUtils {
     MetricsHelper helper = newHelper("QueueDropInFlight", op.getQueueName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + op);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + op);
+      }
       TOperationContext tContext = wrap(context);
       TQueueDropInflight tOp = wrap(op);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tOp);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tOp);
+      }
       client.queueDropInflight(tContext, tOp);
-      if (Log.isTraceEnabled()) Log.trace("QueueDropInFlight successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("QueueDropInFlight successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {

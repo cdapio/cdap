@@ -107,12 +107,12 @@ public final class InMemoryConfigurator implements Configurator {
     try {
       Application app;
 
-      if(archive != null && application == null) { // Provided Application JAR.
+      if (archive != null && application == null) { // Provided Application JAR.
         // Load the JAR using the JAR class load and load the manifest file.
         Object mainClass = new Archive(id, archive).getMainClass().newInstance();
         // Convert it to the type application.
         app = (Application) mainClass;
-      } else if(application != null && archive == null) {  // Provided Application instance
+      } else if (application != null && archive == null) {  // Provided Application instance
         app = application;
       } else {
         throw new IllegalStateException("Have not specified JAR or Application class or have specified both.");
@@ -128,14 +128,14 @@ public final class InMemoryConfigurator implements Configurator {
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
 
-    } catch(Throwable t) {
+    } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       return Futures.immediateFailedFuture(t);
     } finally {
-      if(writer != null) {
+      if (writer != null) {
         try {
           writer.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
           LOG.debug(StackTraceUtil.toStringStackTrace(e));
           return Futures.immediateFailedFuture(e);
         }

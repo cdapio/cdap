@@ -83,4 +83,31 @@ public abstract class DBAccess {
     }
   }
 
+  /**
+   * Close connection.
+   * @param connection DBConnection to be closed.
+   */
+  public void close(Connection connection) {
+    try {
+      if (connection != null) {
+        connection.close();
+      }
+    } catch (SQLException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Close ResultSet.
+   * @param rs ResultSet.
+   */
+  public void close(ResultSet rs) {
+    try {
+      if (rs != null) {
+        rs.close();
+      }
+    } catch (SQLException e) {
+      throw Throwables.propagate(e);
+    }
+  }
 }

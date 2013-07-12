@@ -437,6 +437,34 @@ h1 span {
 .panel table th, .popup-container table th {
 	padding: 3px 10px 0px;
 }
+
+.quarter {
+	width: 25%;
+	float: left;
+}
+.quarter .panel {
+	margin: 0px 10px 10px 0px;
+	padding: 20px;
+}
+.quarter-title {
+	text-align: center;
+	font-size: 25px;
+	font-family: "HelveticaNeueW01-Thin";
+	padding: 10px 0px 10px;
+}
+.quarter-value {
+	text-align: center;
+	font-size: 20px;
+	font-family: "HelveticaNeueW01-Thin";
+	padding: 0px 0px 20px;
+}
+.quarter-value strong {
+	font-family: "HelveticaNeueW01-75Bold";
+}
+.quarter-chart {
+	height: 100px;
+}
+
 #info {
 	border: 2px solid #fff;
 	margin: 8px 24px 8px;

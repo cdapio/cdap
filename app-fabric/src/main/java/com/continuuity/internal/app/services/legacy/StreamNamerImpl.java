@@ -4,14 +4,12 @@ package com.continuuity.internal.app.services.legacy;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -85,11 +83,13 @@ public final class StreamNamerImpl {
       // first check that the flowlet name is the same,
       // be prepared to see nulls (for flow streams)
       if (this.flowlet == null) {
-        if (other.flowlet != null)
+        if (other.flowlet != null) {
           return false;
+        }
       } else {
-        if (!this.flowlet.equals(other.flowlet))
+        if (!this.flowlet.equals(other.flowlet)) {
           return false;
+        }
       }
       // stream and type can never be null
       return this.stream.equals(other.stream);
@@ -108,10 +108,9 @@ public final class StreamNamerImpl {
    */
   public boolean name(String accountName, FlowDefinition definition) {
     List<ImmutablePair<StreamKey, StreamName>> assignedStreams = Lists.newArrayList();
-    Collection<? extends ConnectionDefinition> connections =
-        definition.getConnections();
+    Collection<? extends ConnectionDefinition> connections = definition.getConnections();
 
-		String name = definition.getMeta().getName();
+    String name = definition.getMeta().getName();
 
     // we will need this to modify the flow definition (to set the stream URIs)
     FlowDefinitionModifier modifier = (FlowDefinitionModifier) definition;
@@ -121,7 +120,7 @@ public final class StreamNamerImpl {
      * the definition till we finish processing through all. This ensures
      * that we don't have definition that is half modified.
      */
-    for(ConnectionDefinition connection : connections) {
+    for (ConnectionDefinition connection : connections) {
       // get the source and destination of this connection
       FlowletStreamDefinition from = connection.getFrom();
       FlowletStreamDefinition to = connection.getTo();
@@ -133,11 +132,11 @@ public final class StreamNamerImpl {
       // 4. (flow stream -> flow stream, is not supported and thus ignored )
 
       if (to.isFlowStream()) {
-				// case 2. or 4. -> this is not supported: log and return error;
-				LOG.error("Unsupported connection to flow stream '{}'.",
+        // case 2. or 4. -> this is not supported: log and return error;
+        LOG.error("Unsupported connection to flow stream '{}'.",
                   new Object[]{connection.getTo().getStream()});
         return false;
-			}	else {
+      } else {
         // case 1. or 3., destination is an input of a flowlet.
         StreamKey toKey = new StreamKey(to.getFlowlet(), to.getStream());
         // based on the source of the connection, determine URI for the stream
@@ -170,7 +169,7 @@ public final class StreamNamerImpl {
       }
     }
     // Now add all the assignments to the flow definition
-    for(ImmutablePair<StreamKey, StreamName> stream : assignedStreams) {
+    for (ImmutablePair<StreamKey, StreamName> stream : assignedStreams) {
       StreamKey streamKey = stream.getFirst();
       StreamName streamName = stream.getSecond();
       modifier.setStreamURI(streamKey.getFlowlet(), streamKey.getStream(),
@@ -188,8 +187,9 @@ public final class StreamNamerImpl {
    */
   private boolean verifyFlowlet(FlowDefinition definition, String flowletName) {
     for (FlowletDefinition flowlet : definition.getFlowlets()) {
-      if (flowletName.equals(flowlet.getName()))
+      if (flowletName.equals(flowlet.getName())) {
         return true;
+      }
     }
     LOG.error("No flowlet with name '{}' is defined in flow.", new Object[]{flowletName});
     return false;

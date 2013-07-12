@@ -52,7 +52,7 @@ class DataSetInputSplit extends InputSplit implements Writable {
       }
       Class<? extends Split> splitClass = (Class<Split>) classLoader.loadClass(Text.readString(in));
       split = new Gson().fromJson(Text.readString(in), splitClass);
-    } catch(ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       throw Throwables.propagate(e);
     }
   }

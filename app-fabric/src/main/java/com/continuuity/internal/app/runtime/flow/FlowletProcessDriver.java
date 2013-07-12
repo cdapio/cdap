@@ -63,7 +63,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private Thread runnerThread;
 
   FlowletProcessDriver(Flowlet flowlet, BasicFlowletContext flowletContext,
-                       Collection<ProcessSpecification> processSpecs, Callback txCallback) {
+                       Collection<ProcessSpecification> processSpecs,
+                       Callback txCallback) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.loggingContext = flowletContext.getLoggingContext();
@@ -108,9 +109,13 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    transactionExecutor.shutdown();
-    if (!transactionExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-      LOG.error("The transaction executor took more than 10 seconds to shutdown: " + flowletContext);
+    try {
+      transactionExecutor.shutdown();
+      if (!transactionExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+        LOG.error("The transaction executor took more than 10 seconds to shutdown: " + flowletContext);
+      }
+    } finally {
+      flowletContext.close();
     }
   }
 
@@ -214,7 +219,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
-            LOG.error(String.format("Fail to invoke process method: %s, %s", entry.getProcessSpec(), flowletContext), t);
+            LOG.error("Fail to invoke process method: {}, {}", entry.getProcessSpec(), flowletContext, t);
           }
         } catch (OperationException e) {
           LOG.error("Queue operation failure: " + flowletContext, e);
@@ -275,7 +280,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
-            LOG.error(String.format("Fail to invoke process method: %s, %s", entry.getProcessSpec(), flowletContext), t);
+            LOG.error("Fail to invoke process method: {}, {}", entry.getProcessSpec(), flowletContext, t);
           }
         } catch (OperationException e) {
           // This should never happen for retry entries

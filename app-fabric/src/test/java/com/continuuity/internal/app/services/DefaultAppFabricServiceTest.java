@@ -24,8 +24,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
-import com.continuuity.test.app.DefaultId;
-import com.continuuity.test.app.TestHelper;
+import com.continuuity.test.internal.DefaultId;
+import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -45,6 +45,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+/**
+ *
+ */
 public class DefaultAppFabricServiceTest {
   private static AppFabricService.Iface server;
   private static LocationFactory lf;
@@ -77,16 +80,18 @@ public class DefaultAppFabricServiceTest {
     try {
       // Call init to get a session identifier - yes, the name needs to be changed.
       AuthToken token = new AuthToken("12345");
-      ResourceIdentifier id = server.init(token, new ResourceInfo(DefaultId.ACCOUNT.getId(),"",deployedJar.getName(),
+      ResourceIdentifier id = server.init(token, new ResourceInfo(DefaultId.ACCOUNT.getId(), "", deployedJar.getName(),
                                                                   123455, 45343));
 
       // Upload the jar file to remote location.
       BufferFileInputStream is =
-        new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
+        new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
       try {
-        while(true) {
+        while (true) {
           byte[] toSubmit = is.read();
-          if(toSubmit.length==0) break;
+          if (toSubmit.length == 0) {
+            break;
+          }
           server.chunk(token, id, ByteBuffer.wrap(toSubmit));
           DeploymentStatus status = server.dstatus(token, id);
           Assert.assertEquals(2, status.getOverall());
@@ -100,7 +105,7 @@ public class DefaultAppFabricServiceTest {
       try {
         server.deploy(token, id);
         status = server.dstatus(token, id).getOverall();
-        while(status == 3) {
+        while (status == 3) {
           status = server.dstatus(token, id).getOverall();
           Thread.sleep(100);
         }

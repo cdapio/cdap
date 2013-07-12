@@ -33,7 +33,6 @@
   <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/third_party/spectrum/spectrum.css">
   <link rel="stylesheet" href="/assets/css/main.css">
-  <link rel="stylesheet" href="/core/lib/nvd3/css/nv.d3.css">
 
 </head>
 <body>
@@ -41,7 +40,7 @@
     <a href="#" id="logo"></a>
     <a href="#" id="product-name"></a>
     <ul>
-      <li class="overview"><a class="nav-link nav-dash" href="#">Dashboard</a></li>
+      <li class="overview"><a class="nav-link nav-dash" href="#">Overview</a></li>
       <li><a class="nav-link nav-streams" href="#/streams">Collect</a></li>
       <li><a class="nav-link nav-flows" href="#/flows">Process</a></li>
       <li><a class="nav-link nav-datasets" href="#/datasets">Store</a></li>
@@ -85,39 +84,39 @@
   <script type="text/x-handlebars" data-template-name="index">
     <div id="title">
       {{view C.Embed.TimeSelector}}
-      <h1>Dashboard</h1>
+      <h1>Overview</h1>
     </div>
     <div id="panels">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Overview</div></div>
-        <table class="dash-app-resources">
-          <tbody>
-            <tr>
-              <td class="dash-app-resource">
-                <a href="#/streams" class="dash-app-resource-stream">{{counts.Stream}}</a>
-              </td>
-              <td class="dash-app-resource">
-                <a href="#/flows" class="dash-app-resource-flow">{{counts.Flow}}</a>
-              </td>
-              <td class="dash-app-resource">
-                <a href="#/datasets" class="dash-app-resource-dataset">{{counts.Dataset}}</a>
-              </td>
-              <td class="dash-app-resource">
-                <a href="#/procedures" class="dash-app-resource-query">{{counts.Procedure}}</a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <table class="table dash-app-trends">
-          <tbody>
-            <tr>
-              <td style="width: 50%;">{{view C.Embed.Chart mode="dash" color="orange" metrics="processed.count"}}</td>
-              <td style="width: 50%;">{{view C.Embed.Chart mode="dash" color="orange" unit="bytes" metrics="storage.trend"}}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="quarter">
+        <div class="panel">
+          <div class="quarter-title">Collecting</div>
+          <div class="quarter-value"><strong>36.2</strong> EPS</div>
+          <div id="collecting-chart" class="quarter-chart"></div>
+        </div>
       </div>
-      <div class="panel">
+      <div class="quarter">
+        <div class="panel">
+          <div class="quarter-title">Processing</div>
+          <div class="quarter-value"><strong>90.11</strong>%</div>
+          <div id="processing-chart" class="quarter-chart"></div>
+        </div>
+      </div>
+      <div class="quarter">
+        <div class="panel">
+          <div class="quarter-title">Storing</div>
+          <div class="quarter-value"><strong>500</strong> MB</div>
+          <div id="storing-chart" class="quarter-chart"></div>
+        </div>
+      </div>
+      <div class="quarter">
+        <div class="panel" style="margin-right: 0;">
+          <div class="quarter-title">Querying</div>
+          <div class="quarter-value"><strong>10.55K</strong> QPS</div>
+          <div id="querying-chart" class="quarter-chart"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="clear: both;">
         <div class="panel-head">
           {{view C.Embed.CreateButton entityType="Application"}}
           <div class="panel-title">Applications</div>
@@ -279,7 +278,7 @@
         <li>{{#linkTo BatchStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Batch.Log model}}Log{{/linkTo}}</li>
       </ul>
-      <h1>{{model.meta.name}} <span>MapReduce</span></h1>
+      <h1>{{model.name}} <span>MapReduce</span></h1>
     </div>
 
     {{outlet}}
@@ -388,9 +387,9 @@
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
           </ul>
 
-          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Stop" ><span class="btn-stop"></span><span>Stop</span></button>
+          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.meta.app"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Stop" ><span class="btn-stop"></span><span>Stop</span></button>
 
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.meta.app"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
           <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
@@ -818,7 +817,7 @@
         <div class="panel-body">
         <table class="analyze-table clearfix">
           <tr>
-            <td style="width: 20%; vertical-align: top"> 
+            <td style="width: 20%; vertical-align: top">
               <ul>
                 {{#each metric in controller.metrics}}
                   <li>

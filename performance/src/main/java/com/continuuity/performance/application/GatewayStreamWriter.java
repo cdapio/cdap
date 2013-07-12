@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.performance.application;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -10,7 +14,7 @@ import com.continuuity.passport.PassportConstants;
 import com.continuuity.performance.gateway.SimpleHttpClient;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.continuuity.test.app.StreamWriter;
+import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

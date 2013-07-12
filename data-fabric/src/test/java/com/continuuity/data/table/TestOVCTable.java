@@ -41,7 +41,7 @@ public abstract class TestOVCTable {
   protected OrderedVersionedColumnarTable table;
   protected OVCTableHandle tableHandle;
 
-  protected static final Random r = new Random();
+  protected static final Random RANDOM = new Random();
 
   protected OVCTableHandle getTableHandle() {
     return this.tableHandle;
@@ -51,16 +51,16 @@ public abstract class TestOVCTable {
   public void initialize() throws OperationException {
     System.out.println("\n\nBeginning test\n\n");
     this.tableHandle = injectTableHandle();
-    this.table = this.tableHandle.getTable(Bytes.toBytes("TestOVCTable" + Math.abs(r.nextInt())));
+    this.table = this.tableHandle.getTable(Bytes.toBytes("TestOVCTable" + Math.abs(RANDOM.nextInt())));
   }
 
   protected abstract OVCTableHandle injectTableHandle();
 
-  protected static final byte [] COL = new byte [] { (byte)0 };
+  protected static final byte [] COL = new byte [] { (byte) 0 };
   protected static final MemoryReadPointer RP_MAX = new MemoryReadPointer(Long.MAX_VALUE);
 
   /**
-   * Every subclass should implement this to verify that injection works and uses the correct table type
+   * Every subclass should implement this to verify that injection works and uses the correct table type.
    */
   @Test
   public abstract void testInjection();
@@ -109,24 +109,27 @@ public abstract class TestOVCTable {
     int ncols = 100;
     assertTrue(ncols % 2 == 0); // needs to be even in this test
     byte [][] columns = new byte[ncols][];
-    for (int i=0;i<ncols;i++) {
+    for (int i = 0; i < ncols; i++) {
       columns[i] = Bytes.toBytes(new Long(i));
     }
     byte [][] values = new byte[ncols][];
-    for (int i=0;i<ncols;i++) values[i] = Bytes.toBytes(Math.abs(r.nextLong()));
+    for (int i = 0; i < ncols; i++) {
+      values[i] = Bytes.toBytes(Math.abs(RANDOM.nextLong()));
+    }
 
     // insert a version of every column, two at a time
     long version = 10L;
-    for (int i=0;i<ncols;i+=2) {
-      this.table.put(row, new byte [][] {columns[i], columns[i+1]}, version, new byte [][] {values[i], values[i+1]});
+    for (int i = 0; i < ncols; i += 2) {
+      this.table.put(row, new byte [][] {columns[i], columns[i + 1]}, 
+                     version, new byte [][] {values[i], values[i + 1]});
     }
 
     // read them all back at once using all the various read apis
 
     // get(row)
-    Map<byte[],byte[]> colMap = this.table.get(row, RP_MAX).getValue();
+    Map<byte[], byte[]> colMap = this.table.get(row, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    int idx=0;
+    int idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -134,14 +137,14 @@ public abstract class TestOVCTable {
     }
 
     // get(row,col)
-    for(int i=0;i<ncols;i++) {
+    for (int i = 0; i < ncols; i++) {
       byte [] value = this.table.get(row, columns[i], RP_MAX).getValue();
       assertTrue(Bytes.equals(value, values[i]));
     }
 
     // getWV(row,col)
-    for(int i=0;i<ncols;i++) {
-      ImmutablePair<byte[],Long> valueAndVersion = this.table.getWithVersion(row, columns[i], RP_MAX).getValue();
+    for (int i = 0; i < ncols; i++) {
+      ImmutablePair<byte[], Long> valueAndVersion = this.table.getWithVersion(row, columns[i], RP_MAX).getValue();
       assertTrue(Bytes.equals(valueAndVersion.getFirst(), values[i]));
       assertEquals(new Long(version), valueAndVersion.getSecond());
     }
@@ -151,7 +154,7 @@ public abstract class TestOVCTable {
     // get(row,start=null,stop=null,unlimited)
     colMap = this.table.get(row, null, null, -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    idx=0;
+    idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -159,10 +162,10 @@ public abstract class TestOVCTable {
     }
 
     // get(row,start=0,stop=ncols+1, limit)
-    colMap = this.table.get(row, Bytes.toBytes((long)0),
-        Bytes.toBytes((long)ncols+1), -1, RP_MAX).getValue();
+    colMap = this.table.get(row, Bytes.toBytes((long) 0),
+        Bytes.toBytes((long) ncols + 1), -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    idx=0;
+    idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -172,7 +175,7 @@ public abstract class TestOVCTable {
     // get(row,cols[ncols])
     colMap = this.table.get(row, columns, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    idx=0;
+    idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -183,7 +186,7 @@ public abstract class TestOVCTable {
     byte [][] subCols = Arrays.copyOfRange(columns, 1, ncols - 1);
     colMap = this.table.get(row, subCols, RP_MAX).getValue();
     assertEquals(ncols - 2, colMap.size());
-    idx=1;
+    idx = 1;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -238,25 +241,27 @@ public abstract class TestOVCTable {
     int ncols = 100;
     assertTrue(ncols % 2 == 0); // needs to be even in this test
     byte [][] columns = new byte[ncols][];
-    for (int i=0;i<ncols;i++) {
+    for (int i = 0; i < ncols; i++) {
       columns[i] = Bytes.toBytes(new Long(i));
     }
     byte [][] values = new byte[ncols][];
-    for (int i=0;i<ncols;i++) values[i] = Bytes.toBytes(Math.abs(r.nextLong()));
+    for (int i = 0; i < ncols; i++) {
+      values[i] = Bytes.toBytes(Math.abs(RANDOM.nextLong()));
+    }
 
     // insert a version of every column, two at a time
     long version = 10L;
-    for (int i=0;i<ncols;i+=2) {
-      this.table.put(row, new byte [][] { columns[i], columns[i+1] }, version,
-          new byte [][] { values[i], values[i+1] });
+    for (int i = 0; i < ncols; i += 2) {
+      this.table.put(row, new byte [][] { columns[i], columns[i + 1] }, version,
+          new byte [][] { values[i], values[i + 1] });
     }
 
     // get(row,startCol,stopCol)
     // get(row,start=null,stop=null, unlimited)
-    Map<byte[],byte[]> colMap =
+    Map<byte[], byte[]> colMap =
         this.table.get(row, null, null, -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    int idx=0;
+    int idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -264,10 +269,10 @@ public abstract class TestOVCTable {
     }
 
     // get(row,start=0,stop=ncols+1, unlimited)
-    colMap = this.table.get(row, Bytes.toBytes((long)0),
-        Bytes.toBytes((long)ncols+1), -1, RP_MAX).getValue();
+    colMap = this.table.get(row, Bytes.toBytes((long) 0),
+        Bytes.toBytes((long) ncols + 1), -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    idx=0;
+    idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -275,10 +280,10 @@ public abstract class TestOVCTable {
     }
 
     // get(row,start=0,stop=ncols+1,limit=12)
-    colMap = this.table.get(row, Bytes.toBytes((long)0),
-        Bytes.toBytes((long)ncols+1), 12, RP_MAX).getValue();
+    colMap = this.table.get(row, Bytes.toBytes((long) 0),
+        Bytes.toBytes((long) ncols + 1), 12, RP_MAX).getValue();
     assertEquals(12, colMap.size());
-    idx=0;
+    idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -286,10 +291,10 @@ public abstract class TestOVCTable {
     }
 
     // get(row,start=1,stop=ncols-1, unlimited) = ncols-2
-    colMap = this.table.get(row, Bytes.toBytes((long)1),
-        Bytes.toBytes((long)ncols-1), -1, RP_MAX).getValue();
+    colMap = this.table.get(row, Bytes.toBytes((long) 1),
+        Bytes.toBytes((long) ncols - 1), -1, RP_MAX).getValue();
     assertEquals(ncols - 2, colMap.size());
-    idx=1;
+    idx = 1;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -297,10 +302,10 @@ public abstract class TestOVCTable {
     }
 
     // get(row,start=10,stop=20, unlimited) = 10
-    colMap = this.table.get(row, Bytes.toBytes((long)10),
-        Bytes.toBytes((long)20), -1, RP_MAX).getValue();
+    colMap = this.table.get(row, Bytes.toBytes((long) 10),
+        Bytes.toBytes((long) 20), -1, RP_MAX).getValue();
     assertEquals(10, colMap.size());
-    idx=10;
+    idx = 10;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -308,10 +313,10 @@ public abstract class TestOVCTable {
     }
 
     // get(row,start=10,stop=20,limit=5) = 5
-    colMap = this.table.get(row, Bytes.toBytes((long)10),
-        Bytes.toBytes((long)20), 5, RP_MAX).getValue();
+    colMap = this.table.get(row, Bytes.toBytes((long) 10),
+        Bytes.toBytes((long) 20), 5, RP_MAX).getValue();
     assertEquals(5, colMap.size());
-    idx=10;
+    idx = 10;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -342,7 +347,7 @@ public abstract class TestOVCTable {
         new byte [][] { three });
 
     // read all columns [A..D[ with latest version and no exclusions
-    Map<byte[],byte[]> colMap =
+    Map<byte[], byte[]> colMap =
         this.table.get(row, colA, colD, -1, RP_MAX).getValue();
     Assert.assertArrayEquals(one, colMap.get(colA));
     Assert.assertArrayEquals(two, colMap.get(colB));
@@ -385,29 +390,33 @@ public abstract class TestOVCTable {
     int ncols = 100;
     assertTrue(ncols % 2 == 0); // needs to be even in this test
     byte [][] columns = new byte[ncols][];
-    for (int i=0;i<ncols;i++) {
+    for (int i = 0; i < ncols; i++) {
       columns[i] = Bytes.toBytes(new Long(i));
     }
 
     // increment the evens individually
     long version = 10;
-    for (int i=0; i<ncols; i+=2) {
+    for (int i = 0; i < ncols; i += 2) {
       assertEquals(1L,
           this.table.increment(row, columns[i], 1, RP_MAX, version));
     }
 
     // increment everything at once
     long [] amounts = new long[ncols];
-    for (int i=0;i<ncols;i++) amounts[i] = (long)i+1;
-    Map<byte[],Long> counters =
+    for (int i = 0; i < ncols; i++) {
+      amounts[i] = (long) i + 1;
+    }
+    Map<byte[], Long> counters =
         this.table.increment(row, columns, amounts, RP_MAX, version);
     assertEquals(ncols, counters.size());
     int idx = 0;
     for (Map.Entry<byte[], Long> counter : counters.entrySet()) {
       assertTrue(Bytes.equals(counter.getKey(), columns[idx]));
       // evens are +1, odds are +0
-      Long expected = idx+1L;
-      if (idx % 2 == 0) expected++;
+      Long expected = idx + 1L;
+      if (idx % 2 == 0) {
+        expected++;
+      }
       assertEquals("idx=" + idx, expected, counter.getValue());
       idx++;
     }
@@ -803,14 +812,14 @@ public abstract class TestOVCTable {
     assertTrue(keys.isEmpty());
 
     // write 10 rows
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       this.table.put(Bytes.toBytes("row" + i), COL, 10, Bytes.toBytes(i));
     }
 
     // get all keys and get all 10 back
     keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
     assertEquals(10, keys.size());
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       assertTrue("On i=" + i + ", got row " + new String(keys.get(i)),
           Bytes.equals(Bytes.toBytes("row" + i), keys.get(i)));
     }
@@ -818,7 +827,7 @@ public abstract class TestOVCTable {
     // try out a smaller limit
     keys = this.table.getKeys(5, 0, RP_MAX);
     assertEquals(5, keys.size());
-    for (int i=0; i<5; i++) {
+    for (int i = 0; i < 5; i++) {
       assertTrue("On i=" + i + ", got row " + new String(keys.get(i)),
           Bytes.equals(Bytes.toBytes("row" + i), keys.get(i)));
     }
@@ -826,8 +835,8 @@ public abstract class TestOVCTable {
     // try out an offset and limit
     keys = this.table.getKeys(5, 2, RP_MAX);
     assertEquals(5, keys.size());
-    for (int i=0; i<5; i++) {
-      String row = "row" + (i+2);
+    for (int i = 0; i < 5; i++) {
+      String row = "row" + (i + 2);
       assertTrue("On i=" + i + ", expected row " + row + ", got row " +
           new String(keys.get(i)),
           Bytes.equals(row.getBytes(), keys.get(i)));
@@ -867,7 +876,9 @@ public abstract class TestOVCTable {
     public void run() {
       while (true) {
         int number = this.trigger.get();
-        if (number == stopSignal) break;
+        if (number == stopSignal) {
+          break;
+        }
         if (number != this.lastCreated) {
           byte[] tableName = Integer.toString(this.trigger.get()).getBytes();
           try {
@@ -897,43 +908,48 @@ public abstract class TestOVCTable {
       int current = trigger.incrementAndGet();
       System.err.println("triggered " + current);
       while (!failed.get() && (t1.getLastCreated() != current || t2
-          .getLastCreated() != current));
-      if (failed.get()) break;
+          .getLastCreated() != current)) {
+        
+      }
+      if (failed.get()) {
+        break;
+      }
       System.err.println("done with " + current);
     }
     trigger.set(-1);
     t1.join();
     t2.join();
-    System.err.println("completed." );
-    if (failed.get())
-      Assert.fail("At least one thread failed");
+    System.err.println("completed.");
+    if (failed.get()){
+      Assert.fail("At least one thread failed");      
+    }
   }
 
   @Test
   public void testDeleteDirty() throws OperationException {
-    final int MAX = 10;
+    final int max = 10;
 
     // Generate row keys
-    byte [] [] rows = new byte[MAX][];
-    for(int i = 0; i < MAX; ++i) {
+    byte [] [] rows = new byte[max][];
+    for (int i = 0; i < max; ++i) {
       rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testDeleteDirty." + i);
       // Verify row[i] dne
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
     }
 
-    for(int i = 0; i < MAX; ++i) {
+    for (int i = 0; i < max; ++i) {
       // Write values 1, 2, 3 @ ts 1, 2, 3
       this.table.put(rows[i], Bytes.toBytes("col1_" + i), 1L, Bytes.toBytes(1L));
-      this.table.put(rows[i], Bytes.toBytes("col2_" + i), 3L, Bytes.toBytes(MAX * 2 + 3L));
-      this.table.put(rows[i], Bytes.toBytes("col3_" + i), 2L, Bytes.toBytes(MAX * 3 + 2L));
+      this.table.put(rows[i], Bytes.toBytes("col2_" + i), 3L, Bytes.toBytes(max * 2 + 3L));
+      this.table.put(rows[i], Bytes.toBytes("col3_" + i), 2L, Bytes.toBytes(max * 3 + 2L));
     }
 
-    for(int i = 0; i < MAX; ++i) {
+    for (int i = 0; i < max; ++i) {
       // Check written values
       Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
       assertEquals(1, Bytes.toLong(colMap.get(Bytes.toBytes("col1_" + i))));
-      assertEquals(MAX * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
-      assertEquals(MAX * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
+      assertEquals(max * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
+      assertEquals(max * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
     }
 
     // Delete 3rd, 6th row
@@ -941,40 +957,40 @@ public abstract class TestOVCTable {
     final byte [][] deletedArray = new byte[][] {Bytes.toBytes(3), Bytes.toBytes(6)};
     this.table.deleteDirty(deletedArray);
     // Assert deleted rows are really deleted
-    for(Integer i : deletedRows) {
+    for (Integer i : deletedRows) {
       assertTrue(this.table.get(Bytes.toBytes(i), RP_MAX).isEmpty());
     }
     // Assert other rows still exist
-    for(int i = 0; i < MAX; ++i) {
-      if(deletedRows.contains(i)) {
+    for (int i = 0; i < max; ++i) {
+      if (deletedRows.contains(i)) {
         continue;
       }
       Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
       assertEquals(1, Bytes.toLong(colMap.get(Bytes.toBytes("col1_" + i))));
-      assertEquals(MAX * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
-      assertEquals(MAX * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
+      assertEquals(max * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
+      assertEquals(max * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
     }
 
     // Delete all rows
-    for(int i = 0; i < MAX; ++i) {
+    for (int i = 0; i < max; ++i) {
       this.table.deleteDirty(new byte[][]{rows[i]});
     }
 
     // Assert all rows are deleted
-    for(int i = 0; i < MAX; ++i) {
+    for (int i = 0; i < max; ++i) {
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
     }
   }
 
   @Test
   public void testMultiRowPut() throws OperationException {
-    final int MAX = 10;
+    final int max = 10;
 
     // Generate row keys, cols, values
-    byte [] [] rows = new byte[MAX][];
-    byte [] [] cols = new byte[MAX][];
-    byte [] [] values = new byte[MAX][];
-    for(int i = 0; i < MAX; ++i) {
+    byte [] [] rows = new byte[max][];
+    byte [] [] cols = new byte[max][];
+    byte [] [] values = new byte[max][];
+    for (int i = 0; i < max; ++i) {
       rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testMultiRowPut." + i);
       // Verify row[i] dne
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
@@ -987,7 +1003,7 @@ public abstract class TestOVCTable {
     this.table.put(rows, cols, 1L, values);
 
     // Verify data
-    for(int i = 0; i < MAX; ++i) {
+    for (int i = 0; i < max; ++i) {
       Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
       // Assert only one col per row is read
       assertEquals(1, colMap.size());
@@ -997,13 +1013,13 @@ public abstract class TestOVCTable {
 
   @Test
   public void testMultiRowMultiColumnPut() throws OperationException {
-    final int MAX = 10;
+    final int max = 10;
 
     // Generate row keys, cols, values
-    byte [] [] rows = new byte[MAX][];
-    byte [] [] [] colsPerRow = new byte[MAX][][];
-    byte [] [] [] valuesPerRow = new byte[MAX][][];
-    for(int i = 0; i < MAX; ++i) {
+    byte [] [] rows = new byte[max][];
+    byte [] [] [] colsPerRow = new byte[max][][];
+    byte [] [] [] valuesPerRow = new byte[max][][];
+    for (int i = 0; i < max; ++i) {
       rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testMultiRowColumnPut." + i);
       // Verify row[i] dne
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
@@ -1019,7 +1035,7 @@ public abstract class TestOVCTable {
     this.table.put(rows, colsPerRow, 1L, valuesPerRow);
 
     // Verify data
-    for(int i = 0; i < MAX; ++i) {
+    for (int i = 0; i < max; ++i) {
       Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
       // Assert only one col per row is read
       assertEquals(i + 1, colMap.size());
@@ -1031,25 +1047,25 @@ public abstract class TestOVCTable {
 
   @Test
   public void testGetAllColumns() throws OperationException {
-    final int MAX = 10;
-    final byte[] COL1 = Bytes.toBytes("col1");
-    final byte[] COL2 = Bytes.toBytes("col2");
+    final int max = 10;
+    final byte[] col1 = Bytes.toBytes("col1");
+    final byte[] col2 = Bytes.toBytes("col2");
 
     // Generate row keys, cols, values
-    byte [] [] rows = new byte[MAX][];
-    byte [] [] cols1 = new byte[MAX][];
-    byte [] [] cols2 = new byte[MAX][];
-    byte [] [] values1 = new byte[MAX][];
-    byte [] [] values2 = new byte[MAX][];
-    for(int i = 0; i < MAX; ++i) {
+    byte [] [] rows = new byte[max][];
+    byte [] [] cols1 = new byte[max][];
+    byte [] [] cols2 = new byte[max][];
+    byte [] [] values1 = new byte[max][];
+    byte [] [] values2 = new byte[max][];
+    for (int i = 0; i < max; ++i) {
       rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns." + i);
       // Verify row[i] dne
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
 
-      cols1[i] = COL1;
-      cols2[i] = COL2;
+      cols1[i] = col1;
+      cols2[i] = col2;
       values1[i] = Bytes.toBytes(i);
-      values2[i] = Bytes.toBytes(MAX + i);
+      values2[i] = Bytes.toBytes (max + i);
     }
 
     // Put data
@@ -1063,11 +1079,12 @@ public abstract class TestOVCTable {
 
 
     // Get data
-    Map<byte[], Map<byte[], byte[]>> valuesMap = this.table.getAllColumns(rows, new byte[][]{COL1, COL2}, RP_MAX).getValue();
+    Map<byte[], Map<byte[], byte[]>> valuesMap = this.table.getAllColumns(rows, new byte[][]{col1, col2},
+                                                                          RP_MAX).getValue();
     assertFalse(valuesMap.isEmpty());
 
     // Verify data
-    for(int i = 0; i < MAX; ++i) {
+    for (int i = 0; i < max; ++i) {
       // Assert two cols per row is read
       assertEquals(2, valuesMap.get(rows[i]).size());
       assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
@@ -1075,11 +1092,11 @@ public abstract class TestOVCTable {
     }
 
     // Get data (single column)
-    valuesMap = this.table.getAllColumns(rows, new byte[][]{COL1}, RP_MAX).getValue();
+    valuesMap = this.table.getAllColumns(rows, new byte[][]{col1}, RP_MAX).getValue();
     assertFalse(valuesMap.isEmpty());
 
     // Verify data
-    for(int i = 0; i < MAX; ++i) {
+    for (int i = 0; i < max; ++i) {
       // Assert one col per row is read
       assertEquals(1, valuesMap.get(rows[i]).size());
       assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
@@ -1090,55 +1107,55 @@ public abstract class TestOVCTable {
   @Test
   public void testCompareAndSwapDirty() throws OperationException {
     // TODO: need to run multi-threaded to test for atomicity.
-    final byte[] ROW = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns");
-    final byte[] COL1 = Bytes.toBytes("col1");
-    final byte[] COL2 = Bytes.toBytes("col2");
+    final byte[] row = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns");
+    final byte[] col1 = Bytes.toBytes("col1");
+    final byte[] col2 = Bytes.toBytes("col2");
 
     final byte[] col2Value = Bytes.toBytes("col2Value");
-    this.table.put(ROW, COL2, TransactionOracle.DIRTY_WRITE_VERSION, col2Value);
+    this.table.put(row, col2, TransactionOracle.DIRTY_WRITE_VERSION, col2Value);
 
-    for(int i = 0; i < 2 ; ++i) {
-      String message = "Iteration " + (i+1);
+    for (int i = 0; i < 2; ++i) {
+      String message = "Iteration " + (i + 1);
       byte[] expected1 = Bytes.toBytes(1);
       byte[] newValue1 = Bytes.toBytes(10);
       // Cell does not exist yet
-      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, expected1, newValue1));
-      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue1));
+      assertFalse(message, this.table.compareAndSwapDirty(row, col1, expected1, newValue1));
+      assertTrue(message, this.table.compareAndSwapDirty(row, col1, null, newValue1));
 
       // Cell has newValue1 now
       byte[] newValue2 = Bytes.toBytes(20);
-      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue2));
-      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue2));
+      assertFalse(message, this.table.compareAndSwapDirty(row, col1, null, newValue2));
+      assertTrue(message, this.table.compareAndSwapDirty(row, col1, newValue1, newValue2));
 
       // Cell has newValue2 now
       byte[] newValue3 = Bytes.toBytes(30);
-      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue3));
-      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue3));
-      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue2, newValue3));
+      assertFalse(message, this.table.compareAndSwapDirty(row, col1, null, newValue3));
+      assertFalse(message, this.table.compareAndSwapDirty(row, col1, newValue1, newValue3));
+      assertTrue(message, this.table.compareAndSwapDirty(row, col1, newValue2, newValue3));
 
       // Cell has newValue3 now
       byte[] newValue4 = null;
-      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue4));
-      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue4));
-      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue2, newValue4));
-      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue3, newValue4));
+      assertFalse(message, this.table.compareAndSwapDirty(row, col1, null, newValue4));
+      assertFalse(message, this.table.compareAndSwapDirty(row, col1, newValue1, newValue4));
+      assertFalse(message, this.table.compareAndSwapDirty(row, col1, newValue2, newValue4));
+      assertTrue(message, this.table.compareAndSwapDirty(row, col1, newValue3, newValue4));
     }
 
-    byte[] actualCol2Value = this.table.get(ROW, COL2, TransactionOracle.DIRTY_READ_POINTER).getValue();
-    assertEquals(Bytes.toString(col2Value), Bytes.toString(actualCol2Value));
+    byte[] actualcol2Value = this.table.get(row, col2, TransactionOracle.DIRTY_READ_POINTER).getValue();
+    assertEquals(Bytes.toString(col2Value), Bytes.toString(actualcol2Value));
   }
 
   @Test
   public void testAtomicIncrementDirtily() throws OperationException {
     byte [] row = Bytes.toBytes("testAtomicIncrementDirtily");
 
-    long val = this.table.incrementAtomicDirtily(row,COL,1L);
+    long val = this.table.incrementAtomicDirtily(row, COL, 1L);
     assertEquals(1L, val);
 
-    val = this.table.incrementAtomicDirtily(row,COL,1L);
+    val = this.table.incrementAtomicDirtily(row, COL, 1L);
     assertEquals(2L, val);
 
-    val = this.table.incrementAtomicDirtily(row,COL,10L);
+    val = this.table.incrementAtomicDirtily(row, COL, 10L);
     assertEquals(12L, val);
 
     // -- this will fail right now in some implementations. Will be addressed in ENG-2170
@@ -1157,7 +1174,7 @@ public abstract class TestOVCTable {
     Thread atomicIncrementThread1 = new Thread() {
       @Override
       public void run() {
-        for( int i = 0 ; i < count; i++){
+        for (int i = 0; i < count; i++){
           try {
            table.incrementAtomicDirtily(row, COL, 1L);
           } catch (OperationException e) {
@@ -1170,9 +1187,9 @@ public abstract class TestOVCTable {
     Thread atomicIncrementThread2 = new Thread() {
       @Override
       public void run() {
-        for( int i = 0 ; i < count; i++){
+        for (int i = 0; i < count; i++){
           try {
-            table.incrementAtomicDirtily(row,COL,1L);
+            table.incrementAtomicDirtily(row, COL, 1L);
           } catch (OperationException e) {
             assertTrue(false); //This case should never occur
           }
@@ -1186,8 +1203,8 @@ public abstract class TestOVCTable {
     atomicIncrementThread2.join();
     atomicIncrementThread1.join();
 
-    long val  = this.table.incrementAtomicDirtily(row,COL,1L);
-    assertEquals(201,val);
+    long val  = this.table.incrementAtomicDirtily(row, COL, 1L);
+    assertEquals(201, val);
   }
 
   @Test
@@ -1402,8 +1419,8 @@ public abstract class TestOVCTable {
     assertEquals(200, secondColEntry);
 
     int count = 1;  //count is set to one since we already read one entry
-    int lastEntryCol1 = -1;
-    int lastEntryCol2 = -1;
+    int lastEntrycol1 = -1;
+    int lastEntrycol2 = -1;
 
     boolean done = false;
     while (!done) {
@@ -1411,16 +1428,16 @@ public abstract class TestOVCTable {
       if (r == null) {
         done = true;
       } else {
-        lastEntryCol1 = Bytes.toInt(r.getSecond().get(col1));
-        lastEntryCol2 = Bytes.toInt(r.getSecond().get(col2));
-        assertEquals(2 * lastEntryCol1, lastEntryCol2);
+        lastEntrycol1 = Bytes.toInt(r.getSecond().get(col1));
+        lastEntrycol2 = Bytes.toInt(r.getSecond().get(col2));
+        assertEquals(2 * lastEntrycol1, lastEntrycol2);
         count++;
       }
     }
 
     assertEquals(50, count);
-    assertEquals(149, lastEntryCol1);
-    assertEquals(2 * 149, lastEntryCol2);
+    assertEquals(149, lastEntrycol1);
+    assertEquals(2 * 149, lastEntrycol2);
   }
 
   @Test
@@ -1556,7 +1573,8 @@ public abstract class TestOVCTable {
     final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
     final byte [] col3 = "c3".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE,
+                                                              Long.MAX_VALUE, new HashSet<Long>()), true);
     long version = 1L;
 
     for (int i = 100; i < 200; i++) {
@@ -1587,11 +1605,11 @@ public abstract class TestOVCTable {
 
     ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
 
-    int firstEntryCol1 = Bytes.toInt(entry.getSecond().get(col1));
-    assertEquals(100, firstEntryCol1);
+    int firstEntrycol1 = Bytes.toInt(entry.getSecond().get(col1));
+    assertEquals(100, firstEntrycol1);
 
-    int firstEntryCol2 = Bytes.toInt(entry.getSecond().get(col2));
-    assertEquals(0, firstEntryCol2);
+    int firstEntrycol2 = Bytes.toInt(entry.getSecond().get(col2));
+    assertEquals(0, firstEntrycol2);
   }
 
   /**
@@ -1606,7 +1624,8 @@ public abstract class TestOVCTable {
     final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
     final byte [] col3 = "c3".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE,
+                                                              Long.MAX_VALUE, new HashSet<Long>()), true);
     long version = 1L;
 
     for (int i = 100; i < 200; i++) {
@@ -1640,8 +1659,8 @@ public abstract class TestOVCTable {
 
     assertTrue(null == entry.getSecond().get(col1));
 
-    int firstEntryCol2 = Bytes.toInt(entry.getSecond().get(col2));
-    assertEquals(1, firstEntryCol2);
+    int firstEntrycol2 = Bytes.toInt(entry.getSecond().get(col2));
+    assertEquals(1, firstEntrycol2);
 
     int firstEntryCol3 = Bytes.toInt(entry.getSecond().get(col3));
     assertEquals(2, firstEntryCol3);
@@ -1675,7 +1694,8 @@ public abstract class TestOVCTable {
     final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
     final byte [] col3 = "c3".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE,
+                                                              Long.MAX_VALUE, new HashSet<Long>()), true);
     long lowVersion = 1L;
 
     for (int i = 100; i < 200; i++) {
@@ -1706,11 +1726,11 @@ public abstract class TestOVCTable {
 
     ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
 
-    int firstEntryCol1 = Bytes.toInt(entry.getSecond().get(col1));
-    assertEquals(0, firstEntryCol1);
+    int firstEntrycol1 = Bytes.toInt(entry.getSecond().get(col1));
+    assertEquals(0, firstEntrycol1);
 
-    int firstEntryCol2 = Bytes.toInt(entry.getSecond().get(col2));
-    assertEquals(1, firstEntryCol2);
+    int firstEntrycol2 = Bytes.toInt(entry.getSecond().get(col2));
+    assertEquals(1, firstEntrycol2);
 
     int firstEntryCol3 = Bytes.toInt(entry.getSecond().get(col3));
     assertEquals(2, firstEntryCol3);
@@ -1763,7 +1783,8 @@ public abstract class TestOVCTable {
     this.table.delete(rowKey, col3, highVersion);
     this.table.deleteAll(rowKey, col1, highVersion);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE,
+                                                              Long.MAX_VALUE, new HashSet<Long>()), true);
 
     Scanner scanner = this.table.scan(tx);
 
@@ -1778,9 +1799,9 @@ public abstract class TestOVCTable {
   }
 
   /**
-   * Write (col1, v1), (col1, v2), (col2, v1), (col2, v2)
-   * Delete (col1, v2), DeleteAll(col2, v2)
-   * Scan -> Should return (col1, v1) and (col2, v2)
+   * Write (col1, v1), (col1, v2), (col2, v1), (col2, v2).
+   * Delete (col1, v2), DeleteAll(col2, v2).
+   * Scan -> Should return (col1, v1) and (col2, v2).
    * @throws OperationException
    */
   @Test @Ignore
@@ -1810,7 +1831,8 @@ public abstract class TestOVCTable {
     this.table.undeleteAll(rowKey, col1, highVersion);
     this.table.undeleteAll(rowKey, col2, highVersion);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE,
+                                                              Long.MAX_VALUE, new HashSet<Long>()), true);
 
     Scanner scanner = this.table.scan(tx);
 
@@ -1822,9 +1844,9 @@ public abstract class TestOVCTable {
   }
 
   /**
-   * Write (col1, v1), (col1, v2), (col2, v1), (col2, v2)
-   * Delete (col1, v2), DeleteAll(col2, v2)
-   * Get (row, [col1, col2]) -> Should return (col1, v1) and (col2, v2)
+   * Write (col1, v1), (col1, v2), (col2, v1), (col2, v2).
+   * Delete (col1, v2), DeleteAll(col2, v2).
+   * Get (row, [col1, col2]) -> Should return (col1, v1) and (col2, v2).
    * @throws OperationException
    */
   @Test @Ignore
@@ -1853,13 +1875,14 @@ public abstract class TestOVCTable {
     this.table.undeleteAll(rowKey, col1, highVersion);
     this.table.undeleteAll(rowKey, col2, highVersion);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE,
+                                                              Long.MAX_VALUE, new HashSet<Long>()), true);
 
-    OperationResult<byte[]> entryCol1 = this.table.get(rowKey, col1,  tx);
-    OperationResult<byte[]> entryCol2 = this.table.get(rowKey, col2,  tx);
+    OperationResult<byte[]> entrycol1 = this.table.get(rowKey, col1,  tx);
+    OperationResult<byte[]> entrycol2 = this.table.get(rowKey, col2,  tx);
 
-    assertTrue(Bytes.equals(entryCol1.getValue(), value));
-    assertTrue(Bytes.equals(entryCol2.getValue(), highValue));
+    assertTrue(Bytes.equals(entrycol1.getValue(), value));
+    assertTrue(Bytes.equals(entrycol2.getValue(), highValue));
 
   }
 

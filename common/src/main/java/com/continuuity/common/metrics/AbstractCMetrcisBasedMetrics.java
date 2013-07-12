@@ -3,13 +3,13 @@ package com.continuuity.common.metrics;
 import com.continuuity.api.metrics.Metrics;
 
 /**
- * Provides handy abstract implementation for metrics collector
+ * Provides handy abstract implementation for metrics collector.
  */
 public abstract class AbstractCMetrcisBasedMetrics implements Metrics {
   private final CMetrics cMetrics;
 
   /**
-   * Constructs the metrics
+   * Constructs the metrics.
    * @param metricsGroup metrics group name
    */
   protected AbstractCMetrcisBasedMetrics(String metricsGroup) {

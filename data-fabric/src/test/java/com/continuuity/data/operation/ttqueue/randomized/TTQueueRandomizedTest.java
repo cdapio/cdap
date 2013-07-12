@@ -53,7 +53,7 @@ public class TTQueueRandomizedTest {
 
   //@Test
   public void runRandomizedTest() throws Exception {
-    for(int i = 0; i < NUM_RUNS; ++i) {
+    for (int i = 0; i < NUM_RUNS; ++i) {
       LOG.info(String.format("**************************** Run %d started *************************************", i));
       testDriver();
       LOG.info(String.format("**************************** Run %d done *************************************", i));
@@ -88,7 +88,7 @@ public class TTQueueRandomizedTest {
     ImmutableList.Builder<Integer> builder = ImmutableList.builder();
     final int numEnqueues = testConfig.getNumberEnqueues();
     LOG.info("Num enqueues=" + numEnqueues);
-    for(int i = 0; i < numEnqueues; ++i) {
+    for (int i = 0; i < numEnqueues; ++i) {
       builder.add(i);
     }
     List<Integer> inputList = builder.build();
@@ -98,7 +98,7 @@ public class TTQueueRandomizedTest {
     Queue<Integer> inputQueue = new ConcurrentLinkedQueue<Integer>(inputList);
     Map<Integer, List<Integer>> enqueuesMap = Maps.newConcurrentMap();
     Map<Integer, List<Integer>> invalidMap = Maps.newConcurrentMap();
-    for(int i = 0; i < numProducers; ++i) {
+    for (int i = 0; i < numProducers; ++i) {
       enqueuesMap.put(i, Lists.<Integer>newArrayList());
       invalidMap.put(i, Lists.<Integer>newArrayList());
       ListenableFuture<?> future = listeningExecutorService.submit(new Producer(i, oracle, testConfig, testController,
@@ -112,7 +112,7 @@ public class TTQueueRandomizedTest {
     List<ListenableFuture<?>> consumerGroupFutures = Lists.newArrayList();
     Map<Integer, Queue<Integer>> dequeueMap = Maps.newConcurrentMap();
     ConsumerGroupControl consumerGroupControl = new ConsumerGroupControl(numConsumerGroups);
-    for(int i = 0; i < numConsumerGroups; ++i) {
+    for (int i = 0; i < numConsumerGroups; ++i) {
       dequeueMap.put(i, new ConcurrentLinkedQueue<Integer>());
       ConsumerGroup consumerGroup = new ConsumerGroup(i, numConsumerGroups, consumerGroupControl,
                                                       oracle, listeningExecutorService, testConfig, testController,
@@ -149,12 +149,12 @@ public class TTQueueRandomizedTest {
     Assert.assertEquals(actualEnqueued.size(), inputList.size() - actualInvalidated.size());
     Assert.assertEquals(inputList, actualProcessed);
 
-    for(int i = 0; i < numProducers; ++i) {
+    for (int i = 0; i < numProducers; ++i) {
       LOG.info("Producer:" + i + " enqueueList=" + enqueuesMap.get(i));
       LOG.info("Producer:" + i + " invalidList=" + invalidMap.get(i));
     }
 
-    for(Map.Entry<Integer, Queue<Integer>> group : dequeueMap.entrySet()) {
+    for (Map.Entry<Integer, Queue<Integer>> group : dequeueMap.entrySet()) {
       List<Integer> dequeuedPerGroup = Lists.newArrayList(group.getValue());
       Collections.sort(dequeuedPerGroup);
       LOG.info(String.format("Group:%d dequeueList=%s", group.getKey(), dequeuedPerGroup));
@@ -165,7 +165,7 @@ public class TTQueueRandomizedTest {
 
     // Verify only non-invalidated entries were dequeued
     // Each consumer group should have dequeued all non-invalid entries independently
-    for(Map.Entry<Integer, Queue<Integer>> group : dequeueMap.entrySet()) {
+    for (Map.Entry<Integer, Queue<Integer>> group : dequeueMap.entrySet()) {
       List<Integer> actualDequeuedPerGroup = Lists.newArrayList(group.getValue());
       Collections.sort(actualDequeuedPerGroup);
       LOG.info(String.format("Verifying dequeues of group %d. Expected size=%d, actual size=%d", group.getKey(),
@@ -188,9 +188,9 @@ public class TTQueueRandomizedTest {
                                                        new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
     ttQueue.configure(consumer, oracle.getReadPointer());
     List<Integer> nonFinalized = Lists.newArrayList();
-    while(true) {
+    while (true) {
       DequeueResult result = ttQueue.dequeue(consumer, TransactionOracle.DIRTY_READ_POINTER);
-      if(result.isEmpty()) {
+      if (result.isEmpty()) {
         break;
       }
       nonFinalized.add(Bytes.toInt(result.getEntry().getData()));
@@ -198,7 +198,7 @@ public class TTQueueRandomizedTest {
                                                                       TransactionOracle.DIRTY_READ_POINTER, true));
     }
     LOG.info("Non-finalized entries - " + nonFinalized);
-    if(nonFinalized.size() == numEnqueues) {
+    if (nonFinalized.size() == numEnqueues) {
       ++numNonFinalizedRuns;
     }
   }

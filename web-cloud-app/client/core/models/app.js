@@ -9,7 +9,6 @@ define([], function () {
 		href: function () {
 			return '#/apps/' + this.get('id');
 		}.property(),
-		storage: '0B',
 		metricData: null,
 		metricNames: null,
 		__loadingData: false,
@@ -79,13 +78,6 @@ define([], function () {
 						data[k] = data[k].value;
 					}
 
-					/*
-					data = data.splice(0, 25);
-					for (var k = data.length; k < 25; k++) {
-						data.unshift(0);
-					}
-					*/
-
 					metric = metric.replace(/\./g, '');
 					self.get('metricData').set(metric, data);
 
@@ -103,17 +95,12 @@ define([], function () {
 		type: 'App',
 		kind: 'Model',
 		find: function(model_id, http) {
+
 			var promise = Ember.Deferred.create();
 
-			C.get('metadata', {
-				method: 'getApplication',
-				params: ['Application', {
-					id: model_id
-				}]
-			}, function (error, response) {
+			http.rest('apps', model_id, function (model, error) {
 
-				var model = C.App.create(response.params);
-
+				model = C.App.create(model);
 				promise.resolve(model);
 
 			});

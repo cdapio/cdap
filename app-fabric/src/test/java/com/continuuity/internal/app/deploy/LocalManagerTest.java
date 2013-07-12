@@ -9,8 +9,8 @@ import com.continuuity.WebCrawlApp;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.test.app.DefaultId;
-import com.continuuity.test.app.TestHelper;
+import com.continuuity.test.internal.DefaultId;
+import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -57,7 +57,7 @@ public class LocalManagerTest {
     );
 
     ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
-    ApplicationWithPrograms input = (ApplicationWithPrograms)p.get();
+    ApplicationWithPrograms input = (ApplicationWithPrograms) p.get();
 
     Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);
     Assert.assertEquals(input.getPrograms().iterator().next().getProcessorType(), Type.FLOW);

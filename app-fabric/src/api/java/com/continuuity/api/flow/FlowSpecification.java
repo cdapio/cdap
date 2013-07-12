@@ -85,7 +85,7 @@ public interface FlowSpecification {
     public final class NameSetter {
 
       /**
-       * Sets the name of the Flow
+       * Sets the name of the Flow.
        * @param name of the flow.
        * @return An instance of {@link DescriptionSetter}
        */
@@ -271,7 +271,7 @@ public interface FlowSpecification {
      */
     public interface MoreConnect extends ConnectFrom {
       /**
-       * Constructs a {@link FlowSpecification}
+       * Constructs a {@link FlowSpecification}.
        * @return An instance of {@link FlowSpecification}
        */
       FlowSpecification build();

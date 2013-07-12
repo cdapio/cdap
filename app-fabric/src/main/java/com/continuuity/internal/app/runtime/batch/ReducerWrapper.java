@@ -22,24 +22,27 @@ public class ReducerWrapper extends Reducer {
   public void run(Context context) throws IOException, InterruptedException {
     MapReduceContextProvider mrContextProvider = new MapReduceContextProvider(context);
     BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
-
-    String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-    Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
-
-    // injecting runtime components, like datasets, etc.
-    basicMapReduceContext.injectFields(delegate);
-
-    LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
-
-    delegate.run(context);
-
-    // transaction is not finished, but we want all operations to be dispatched (some could be buffered in memory by tx
-    // agent
     try {
-      basicMapReduceContext.flushOperations();
-    } catch (OperationException e) {
-      LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext.toString());
-      throw Throwables.propagate(e);
+      String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
+      Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
+
+      // injecting runtime components, like datasets, etc.
+      basicMapReduceContext.injectFields(delegate);
+
+      LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
+
+      delegate.run(context);
+
+      // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
+      // memory by tx agent
+      try {
+        basicMapReduceContext.flushOperations();
+      } catch (OperationException e) {
+        LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext.toString());
+        throw Throwables.propagate(e);
+      }
+    } finally {
+      basicMapReduceContext.close(); // closes all datasets
     }
   }
 

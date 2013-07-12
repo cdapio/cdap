@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Data Client Auth test.
+ */
 public class DataClientAuthTest {
 
   private static final Logger LOG = LoggerFactory
@@ -43,8 +46,8 @@ public class DataClientAuthTest {
 
   CConfiguration configuration = null;
 
-  static final String apiKey = "SampleTestApiKey";
-  static final String cluster = "SampleTestClusterName";
+  static final String API_KEY = "SampleTestApiKey";
+  static final String CLUSTER = "SampleTestClusterName";
 
   /**
    * Set up our data fabric and insert some test key/value pairs.
@@ -88,10 +91,10 @@ public class DataClientAuthTest {
 
     // Authentication configuration
     configuration.setBoolean(Constants.CONFIG_AUTHENTICATION_REQUIRED, true);
-    configuration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
-    Map<String,List<String>> keysAndClusters =
-        new TreeMap<String,List<String>>();
-    keysAndClusters.put(apiKey, Arrays.asList(cluster));
+    configuration.set(Constants.CONFIG_CLUSTER_NAME, CLUSTER);
+    Map<String, List<String>> keysAndClusters =
+        new TreeMap<String, List<String>>();
+    keysAndClusters.put(API_KEY, Arrays.asList(CLUSTER));
 
     // Now create our Gateway with a dummy consumer (we don't run collectors)
     // and make sure to pass the data fabric executor to the gateway.
@@ -281,11 +284,11 @@ public class DataClientAuthTest {
   private String [] addAuth(String [] args) {
     int len = args == null ? 0 : args.length;
     String [] ret = new String[len + 2];
-    for (int i=0; i<len; i++) {
+    for (int i = 0; i < len; i++) {
       ret[i] = args[i];
     }
     ret[ret.length - 2] = "--apikey";
-    ret[ret.length - 1] = apiKey;
+    ret[ret.length - 1] = API_KEY;
     return ret;
   }
 }

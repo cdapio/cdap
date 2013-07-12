@@ -18,7 +18,6 @@ import com.continuuity.internal.DefaultApplicationSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
-
 import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
@@ -40,8 +39,8 @@ public interface ApplicationSpecification {
   String getDescription();
 
   /**
-   * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}
-   *         for {@link Stream}s that are configured for the application.
+   * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}.
+   *         It is for {@link Stream}s that are configured for the application.
    */
   Map<String, StreamSpecification> getStreams();
 
@@ -107,8 +106,8 @@ public interface ApplicationSpecification {
     private final Map<String, ProcedureSpecification> procedures = new HashMap<String, ProcedureSpecification>();
 
     /**
-     * Map from {@link com.continuuity.api.batch.MapReduceSpecification} name to {@link com.continuuity.api.batch.MapReduceSpecification} for all
-     * Hadoop mapreduce jobs defined in this application
+     * Map from {@link MapReduceSpecification} name to {@link MapReduceSpecification}.
+     * It is for all Hadoop mapreduce jobs defined in this application
      */
     private final Map<String, MapReduceSpecification> mapReduces =
       new HashMap<String, MapReduceSpecification>();
@@ -242,7 +241,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Defines what needs to happen after adding a {@link DataSet}
+       * Defines what needs to happen after adding a {@link DataSet}.
        * @return An instance of {@link MoreDataSet}
        */
       @Override
@@ -289,7 +288,7 @@ public interface ApplicationSpecification {
     public final class MoreDataSet implements DataSetAdder, AfterDataSet {
 
       /**
-       * Adds a {@link DataSet} to the {@link Application}
+       * Adds a {@link DataSet} to the {@link Application}.
        * @param dataSet to be added to {@link Application}
        * @return An instance of {@link MoreDataSet}
        */
@@ -302,7 +301,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Defines that {@link Application} has a {@link Flow} that is defined after a {@link DataSet}
+       * Defines that {@link Application} has a {@link Flow} that is defined after a {@link DataSet}.
        * @return An instance of {@link FlowAdder}
        */
       @Override
@@ -311,7 +310,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Defines that {@link Application} has no {@link Flow}
+       * Defines that {@link Application} has no {@link Flow}.
        * @return An instance of {@link AfterFlow}
        */
       @Override
@@ -359,7 +358,7 @@ public interface ApplicationSpecification {
     public final class MoreFlow implements FlowAdder, AfterFlow {
 
       /**
-       * Adds a {@link Flow} to an {@link Application}
+       * Adds a {@link Flow} to an {@link Application}.
        * @param flow The {@link Flow} to be included in the application.
        * @return An instance of {@link MoreFlow} allowing to add more {@link Flow}s to the {@link Application}
        */
@@ -372,7 +371,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Flow} has been added, next step is to add a {@link Procedure}
+       * After {@link Flow} has been added, next step is to add a {@link Procedure}.
        * @return An instance of {@link MoreProcedure}
        */
       @Override
@@ -381,7 +380,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Flow} has been added, next step defines that there are no more {@link Procedure}s
+       * After {@link Flow} has been added, next step defines that there are no more {@link Procedure}s.
        * @return An instance of {@link AfterProcedure} defining next steps in builder.
        */
       @Override
@@ -417,13 +416,13 @@ public interface ApplicationSpecification {
       ApplicationSpecification build();
 
       /**
-       * After {@link Procedure}s were added the next step is to add batch jobs
+       * After {@link Procedure}s were added the next step is to add batch jobs.
        * @return an instance of {@link BatchAdder}
        */
       BatchAdder withBatch();
 
       /**
-       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added
+       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added.
        * @return an instance of {@link AfterBatch}
        */
       AfterBatch noBatch();
@@ -435,7 +434,7 @@ public interface ApplicationSpecification {
     public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
 
       /**
-       * Adds a {@link Procedure} to the {@link Application}
+       * Adds a {@link Procedure} to the {@link Application}.
        * @param procedure The {@link Procedure} to be included in the application.
        * @return An instance of {@link MoreProcedure}
        */
@@ -448,7 +447,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Defines a builder for {@link FlowSpecification}
+       * Defines a builder for {@link FlowSpecification}.
        * @return An instance of {@link FlowSpecification}
        */
       @Deprecated
@@ -459,7 +458,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Procedure}s were added the next step is to add batch jobs
+       * After {@link Procedure}s were added the next step is to add batch jobs.
        * @return an instance of {@link BatchAdder}
        */
       @Override
@@ -468,7 +467,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added
+       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added.
        * @return an instance of {@link AfterBatch}
        */
       @Override
@@ -478,7 +477,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Defines interface for adding batch jobs to the application
+     * Defines interface for adding batch jobs to the application.
      */
     public interface BatchAdder {
       /**
@@ -491,7 +490,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Defines interface for proceeding to the next step after adding batch jobs to the application
+     * Defines interface for proceeding to the next step after adding batch jobs to the application.
      */
     public interface AfterBatch {
       /**
@@ -503,7 +502,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding more batch jobs to the application
+     * Class for adding more batch jobs to the application.
      */
     public final class MoreBatch implements BatchAdder, AfterBatch {
       /**
@@ -533,7 +532,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Builder is created through {@link #with()}
+     * Builder is created through {@link #with()}.
      */
     private Builder() { }
   }

@@ -51,7 +51,7 @@ public final class ReactorClient {
    */
   public static boolean debug = false;
 
-  private static final String DEVELOPER_ACCOUNT_ID = "developer";
+  private static final String DEVELOPER_ACCOUNT_ID = Constants.DEVELOPER_ACCOUNT_ID;
   private static final Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
                                                                         "status", "scale");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";
@@ -152,7 +152,7 @@ public final class ReactorClient {
       if ("start".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier;
-        if( flow != null) {
+        if (flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Starting flow %s for application %s ", flow, application));
@@ -174,10 +174,10 @@ public final class ReactorClient {
 
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier;
-        if( flow != null) {
+        if (flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, flow, 1);
           identifier.setType(EntityType.FLOW);
-          System.out.println(String.format("Stopping flow %s for application %s ",flow, application));
+          System.out.println(String.format("Stopping flow %s for application %s ", flow, application));
         } else if (mapReduce != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
@@ -197,7 +197,7 @@ public final class ReactorClient {
         FlowIdentifier identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, flow, 1);
         identifier.setType(EntityType.FLOW);
         System.out.println(String.format("Changing number of flowlet instances for flowlet %s "
-                                           + "in flow %s of application %s ",flowlet, flow, application));
+                                           + "in flow %s of application %s ", flowlet, flow, application));
         client.setInstances(dummyAuthToken, identifier, flowlet, flowletInstances);
         System.out.println("The number of flowlet instances has been changed.");
         return;
@@ -215,12 +215,11 @@ public final class ReactorClient {
       if ("status".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier;
-        if( flow != null) {
+        if (flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Getting status for flow %s in application %s ", flow, application));
-        }
-        else {
+        } else {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Getting status for procedure %s in application %s ", flow, application));
@@ -411,7 +410,7 @@ public final class ReactorClient {
     System.out.println(String.format("Deploying... :%s", resource));
 
     ResourceIdentifier identifier =
-      client.init(dummyAuthToken, new ResourceInfo(DEVELOPER_ACCOUNT_ID,"", file.getName(), (int)file.getTotalSpace(),
+      client.init(dummyAuthToken, new ResourceInfo(DEVELOPER_ACCOUNT_ID, "", file.getName(), (int) file.getTotalSpace(),
                                                    file.lastModified()));
 
     Preconditions.checkNotNull(identifier, "Resource identifier is null");

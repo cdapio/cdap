@@ -10,11 +10,13 @@ define(['../../helpers/plumber'], function (Plumber) {
     load: function () {
 
       var self = this;
-      self.updateAlerts();
+      //self.updateAlerts();
+
       this.interval = setInterval(function () {
         self.updateStats();
+        // self.updateMetrics();
+        // self.updateAlerts();
         self.updateMetrics();
-        self.updateAlerts();
       }, C.POLLING_INTERVAL);
 
       /*
@@ -23,7 +25,7 @@ define(['../../helpers/plumber'], function (Plumber) {
        */
       setTimeout(function () {
         self.updateStats();
-        self.updateMetrics();
+        // self.updateMetrics();
         self.connectEntities();
       }, C.EMBEDDABLE_DELAY);
     },
@@ -32,17 +34,17 @@ define(['../../helpers/plumber'], function (Plumber) {
       var self = this;
 
       // Update timeseries data for current batch.
-      C.get.apply(C, this.get('model').getUpdateRequest());
+      C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
 
     },
 
-    updateMetrics: function() {
-      C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
-    },
+    // updateMetrics: function() {
+    //   C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
+    // },
 
-    updateAlerts: function() {
-      C.HTTP.get.apply(C, this.get('model').getAlertsRequest());
-    },
+    // updateAlerts: function() {
+    //   C.HTTP.get.apply(C, this.get('model').getAlertsRequest());
+    // },
 
     connectEntities: function() {
       Plumber.connect("batch-start", "batch-map");
@@ -64,19 +66,18 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       var self = this;
       var model = this.get('model');
+      var app = this.get('model.application');
 
       model.set('currentState', 'STARTING');
 
-      C.get('manager', {
-        method: 'start',
-        params: [app, id, version, 'FLOW', config]
-      }, function (error, response) {
+      this.HTTP.rpc('runnable', 'start', [app, id, version, 'FLOW', config],
+        function (response) {
 
-        if (error) {
-          C.Modal.show(error.name, error.message);
-        } else {
-          model.set('lastStarted', new Date().getTime() / 1000);
-        }
+          if (response.error) {
+            C.Modal.show(response.error.name, response.error.message);
+          } else {
+            model.set('lastStarted', new Date().getTime() / 1000);
+          }
 
       });
 
@@ -85,17 +86,16 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       var self = this;
       var model = this.get('model');
+      var app = this.get('model.application');
 
       model.set('currentState', 'STOPPING');
 
-      C.get('manager', {
-        method: 'stop',
-        params: [app, id, version]
-      }, function (error, response) {
+      this.HTTP.rpc('runnable', 'stop', [app, id, version, 'FLOW'],
+        function (response) {
 
-        if (error) {
-          C.Modal.show(error.name, error.message);
-        }
+          if (response.error) {
+            C.Modal.show(response.error.name, response.error.message);
+          }
 
       });
 
@@ -132,24 +132,26 @@ define(['../../helpers/plumber'], function (Plumber) {
 
     "delete": function () {
 
+      var self = this;
+
       C.Modal.show("Delete Batch",
         "Are you sure you would like to delete this Batch? This action is not reversible.",
         $.proxy(function (event) {
 
           var batch = this.get('model');
 
-          C.get('metadata', {
-            method: 'deleteBatch',
-            params: ['Batch', {
-              id: batch.id
-            }]
-          }, function (error, response) {
+          self.HTTP.rpc('runnable', 'remove', [batch.app, batch.name, batch.version],
+            function (response) {
 
-            if (error) {
-              C.Modal.show('Delete Error', error.message);
-            } else {
-              window.history.go(-1);
-            }
+            C.Modal.hide(function () {
+
+              if (response.error) {
+                C.Modal.show('Delete Error', response.error.message || 'No reason given. Please check the logs.');
+              } else {
+                window.history.go(-1);
+              }
+
+            });
 
           });
         }, this));

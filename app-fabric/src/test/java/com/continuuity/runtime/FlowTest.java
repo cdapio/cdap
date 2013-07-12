@@ -23,8 +23,8 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.continuuity.test.app.DefaultId;
-import com.continuuity.test.app.TestHelper;
+import com.continuuity.test.internal.DefaultId;
+import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -64,7 +63,7 @@ public class FlowTest {
     // Only running flow is good. But, in case procedure, we need to send something to procedure as it's lazy
     // load on procedure.
     List<ProgramController> controllers = Lists.newArrayList();
-    for(final Program program : app.getPrograms()) {
+    for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override
@@ -116,6 +115,10 @@ public class FlowTest {
     List<ProgramController> controllers = Lists.newArrayList();
 
     for (final Program program : app.getPrograms()) {
+      // running mapreduce is out of scope of this tests (there's separate unit-test for that)
+      if (program.getProcessorType() == Type.MAPREDUCE) {
+        continue;
+      }
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override

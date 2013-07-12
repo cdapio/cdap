@@ -26,7 +26,7 @@ define([], function () {
 			this.get('metricNames')[name] = 1;
 
 		},
-		getUpdateRequest: function () {
+		getUpdateRequest: function (http) {
 
 			var metrics = [];
 			for (var name in this.get('metricNames')) {
@@ -46,15 +46,11 @@ define([], function () {
 			var storageMetric = 'dataset.storage.' + this.get('id') + '.count';
 			metrics.push(storageMetric);
 
-			C.get('manager', {
-				method: 'status',
-				params: [app_id, flow_id, -1]
-			}, function (error, response) {
-
-				if (response.params) {
-					self.set('currentState', response.params.status);
-				}
-
+			http.rpc('runnable', 'status', [app_id, flow_id, -1],
+				function (response) {
+					if (response.result) {
+						self.set('currentState', response.result.status);
+					}
 			});
 
 			return ['monitor', {
@@ -142,11 +138,11 @@ define([], function () {
 			var self = this;
 
 			// Update timeseries data for current flow.
-			C.get.apply(C, this.get('model').getUpdateRequest());
+			C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
 
 			var flows = this.get('types.DatasetFlow').content;
 			for (var i = 0; i < flows.length; i ++) {
-				C.get.apply(flows[i], flows[i].getUpdateRequest());
+				C.get.apply(flows[i], flows[i].getUpdateRequest(this.HTTP));
 			}
 
 		},

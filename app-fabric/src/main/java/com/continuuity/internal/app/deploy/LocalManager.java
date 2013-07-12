@@ -8,8 +8,6 @@ import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
@@ -17,10 +15,12 @@ import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * This class is concrete implementation of {@link Manager}
+ * This class is concrete implementation of {@link Manager}.
  */
 public class LocalManager implements Manager<Location, ApplicationWithPrograms> {
   private final PipelineFactory<?> pipelineFactory;

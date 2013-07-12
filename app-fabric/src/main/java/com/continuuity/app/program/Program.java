@@ -4,8 +4,8 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
-import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
@@ -102,7 +102,7 @@ public final class Program {
   }
 
   private void check(boolean condition, String fmt, Object... objs) throws IOException {
-    if(!condition) {
+    if (!condition) {
       throw new IOException(String.format(fmt, objs));
     }
   }

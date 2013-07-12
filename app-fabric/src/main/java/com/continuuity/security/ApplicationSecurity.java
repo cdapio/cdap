@@ -49,9 +49,9 @@ public final class ApplicationSecurity extends SecurityManager {
     // Iterate and see if the stack has a call that's coming from
     // the adminClass. If it is, then consider this check coming
     // the admin class.
-    if(adminClass != null) {
-      for(Class<?> k : klasses) {
-        if(k == this.adminClass) {
+    if (adminClass != null) {
+      for (Class<?> k : klasses) {
+        if (k == this.adminClass) {
           isAdminClass = true;
           break;
         }
@@ -59,19 +59,19 @@ public final class ApplicationSecurity extends SecurityManager {
     }
 
     // If admin found on stack, we return, that class is given admin rights.
-    if(isAdminClass) {
+    if (isAdminClass) {
       return;
     }
 
     // If there is a security manager already installed, this method first calls the security manager's
     // checkPermission method with a RuntimePermission("setSecurityManager") permission to ensure it's ok to
     // replace the existing security manager. This may result in throwing a SecurityException.
-    if(permission instanceof RuntimePermission && "setSecurityManager".equals(permission.getName())) {
+    if (permission instanceof RuntimePermission && "setSecurityManager".equals(permission.getName())) {
       throw new SecurityException("Cannot set security manager");
     }
 
     // For all other permissions we check by invoking implies across all the collection.
-    if(permissions.implies(permission)) {
+    if (permissions.implies(permission)) {
       return;
     } else {
       throw new SecurityException(
@@ -100,14 +100,14 @@ public final class ApplicationSecurity extends SecurityManager {
     private Class<?> klass = null;
 
     /**
-     * Invoked by the {@link #builder()}
+     * Invoked by the {@link #builder()}.
      */
     private Builder() {
       perms = new ApplicationPermissionCollection();
     }
 
     /**
-     * Adds a {@link Permission} object to the {@link ApplicationPermissionCollection}
+     * Adds a {@link Permission} object to the {@link ApplicationPermissionCollection}.
      *
      * @param permission the permission to be added.
      * @return this builder.

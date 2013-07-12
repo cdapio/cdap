@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.performance.gateway.stream;
 
 import com.continuuity.performance.gateway.SimpleHttpClient;

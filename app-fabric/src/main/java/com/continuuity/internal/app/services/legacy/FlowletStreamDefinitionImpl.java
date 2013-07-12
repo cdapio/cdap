@@ -18,44 +18,44 @@ public class FlowletStreamDefinitionImpl implements FlowletStreamDefinition {
   public FlowletStreamDefinitionImpl() {
   }
 
-	/**
-	 * Constructor of FlowStreamDefinition by specifying the a stream of a flowlet.
-	 * @param flowlet name of the flowlet
-	 * @param stream  name of the flowlet's stream
-	 */
-	public FlowletStreamDefinitionImpl(String flowlet, String stream) {
-		this.flowlet = flowlet;
-		this.stream = stream;
-	}
+  /**
+   * Constructor of FlowStreamDefinition by specifying the a stream of a flowlet.
+   * @param flowlet name of the flowlet
+   * @param stream  name of the flowlet's stream
+   */
+  public FlowletStreamDefinitionImpl(String flowlet, String stream) {
+    this.flowlet = flowlet;
+    this.stream = stream;
+  }
 
-	/**
-	 * Constructor of FlowStreamDefinition by specifing a stream of the flow`.
-	 * @param stream  name of the stream
-	 */
-	public FlowletStreamDefinitionImpl(String stream) {
-		this.flowlet = null;
-		this.stream = stream;
-	}
+  /**
+   * Constructor of FlowStreamDefinition by specifing a stream of the flow`.
+   * @param stream  name of the stream
+   */
+  public FlowletStreamDefinitionImpl(String stream) {
+    this.flowlet = null;
+    this.stream = stream;
+  }
 
-	@Override
+  @Override
   public String getFlowlet() {
     return flowlet;
   }
 
-	@Override
+  @Override
   public String getStream() {
     return stream;
   }
 
-	@Override
-	public boolean isFlowStream() {
-		return this.flowlet == null;
-	}
+  @Override
+  public boolean isFlowStream() {
+    return this.flowlet == null;
+  }
 
-	@Override
-	public boolean isFlowletStream() {
-		return this.flowlet != null;
-	}
+  @Override
+  public boolean isFlowletStream() {
+    return this.flowlet != null;
+  }
 
   @Override
   public String toString() {

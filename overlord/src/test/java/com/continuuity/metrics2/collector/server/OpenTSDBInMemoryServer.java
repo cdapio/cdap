@@ -40,7 +40,7 @@ public final class OpenTSDBInMemoryServer implements Runnable {
 
   @Override
   public void run() {
-    while(running) {
+    while (running) {
       try {
         System.out.println("Waiting for client(s) to connect.");
         Socket connected = server.accept();
@@ -55,7 +55,7 @@ public final class OpenTSDBInMemoryServer implements Runnable {
       } catch (SocketTimeoutException e) {
         // Received timeout, we will check if we are supposed to be still
         // running. If not then we exit.
-        if(! running) {
+        if (!running) {
           break;
         }
       } catch (IOException e) {

@@ -7,7 +7,7 @@ import com.continuuity.metadata.thrift.Stream;
 
 /**
  * this is for testing and returns exists=true for all streams that do not
- * start with "x"
+ * start with "x".
  */
 public class DummyMDS extends MetadataService {
   DummyMDS() {
@@ -22,8 +22,9 @@ public class DummyMDS extends MetadataService {
 
   @Override
   public Stream getStream(Account account, Stream stream) {
-    if (!allowAll && stream.getId().startsWith("x"))
+    if (!allowAll && stream.getId().startsWith("x")) {
       stream.setExists(false);
+    }
     return stream;
   }
 }

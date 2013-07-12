@@ -1,7 +1,6 @@
 package com.continuuity.common.metrics;
 
 import com.continuuity.common.builder.BuilderException;
-import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
@@ -100,7 +99,7 @@ public class MetricRequest {
   }
 
   private void setType(String requestType) {
-    if("put".equals(requestType)) {
+    if ("put".equals(requestType)) {
       this.requestType = MetricRequestType.PUT;
     }
   }
@@ -237,9 +236,9 @@ public class MetricRequest {
     }
 
     public Builder setMetricType(String type) {
-      if(MetricType.FlowSystem.name().equals(type)) {
+      if (MetricType.FlowSystem.name().equals(type)) {
         metricType = MetricType.FlowSystem;
-      } else if(MetricType.FlowUser.name().equals(type)) {
+      } else if (MetricType.FlowUser.name().equals(type)) {
         metricType = MetricType.FlowUser;
       } else {
         metricType = MetricType.System;
@@ -280,7 +279,7 @@ public class MetricRequest {
     public MetricRequest create() throws BuilderException {
       MetricRequest mpr = new MetricRequest();
 
-      if(! valid) {
+      if (!valid) {
         mpr.setValid(valid);
         return mpr;
       }

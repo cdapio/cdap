@@ -6,7 +6,7 @@ import com.google.common.base.Objects;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * Configures the queue
+ * Configures the queue.
  */
 public class QueueConfigure extends Operation {
 

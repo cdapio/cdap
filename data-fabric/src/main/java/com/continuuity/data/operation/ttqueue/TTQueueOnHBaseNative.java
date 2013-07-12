@@ -59,7 +59,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
     this.oracle = oracle;
     this.shardConfig = new HBQShardConfig(
         conf.getLong("ttqueue.shard.max.entries", 1024),
-        conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024)); // 1GB
+        conf.getLong("ttqueue.shard.max.bytes", 1024 * 1024 * 1024)); // 1GB
     this.expirationConfig = new HBQExpirationConfig(
         conf.getLong("ttqueue.entry.age.max", 120 * 1000), // 120 seconds
         conf.getLong("ttqueue.entry.semiacked.max", 10 * 1000)); // 10 seconds
@@ -77,9 +77,10 @@ public class TTQueueOnHBaseNative implements TTQueue {
   @Override
   public EnqueueResult enqueue(QueueEntry entry, Transaction transaction)
       throws OperationException {
-    if (TRACE)
+    if (trace) {
       log("Enqueueing (data.len=" + entry.getData().length + ", transaction=" +
-          transaction + ")");
+            transaction + ")");
+    }
 
     // Get a read pointer that sees everything (dirty read pointer)
     long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
@@ -111,7 +112,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   public void invalidate(QueueEntryPointer entryPointer,
       long cleanWriteVersion) throws OperationException {
-    if (TRACE) log("Invalidating " + entryPointer);
+    if (trace) {
+      log("Invalidating " + entryPointer);
+    }
     long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     try {
       this.table.invalidate(new HBQInvalidate(this.queueName,
@@ -131,12 +134,13 @@ public class TTQueueOnHBaseNative implements TTQueue {
   private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer) throws OperationException {
 
-    if (TRACE)
+    if (trace) {
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
-          "] (" + consumer + ", " + config + ", " + readPointer + ")");
+            "] (" + consumer + ", " + config + ", " + readPointer + ")");
+    }
 
     // Get access to the clean read pointer and get a dirty read pointer
-    MemoryReadPointer memoryPointer = (MemoryReadPointer)readPointer;
+    MemoryReadPointer memoryPointer = (MemoryReadPointer) readPointer;
 
     // Perform native dequeue operation
     HBQDequeueResult dequeueResult;
@@ -155,7 +159,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
       throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
           "DequeuePayload failed (" + dequeueResult.getFailureMessage() + ")");
     }
-    if (dequeueResult.isSuccess()) dequeueReturns.incrementAndGet();
+    if (dequeueResult.isSuccess()) {
+      dequeueReturns.incrementAndGet();
+    }
     return new DequeueResult(this.queueName, dequeueResult);
   }
 
@@ -172,7 +178,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, Transaction transaction)
       throws OperationException {
-    if (TRACE) log("Acking " + entryPointer);
+    if (trace) {
+      log("Acking " + entryPointer);
+    }
     long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
     long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     try {
@@ -199,7 +207,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups,
                        Transaction transaction) throws OperationException {
-    if (TRACE) log("Finalizing " + entryPointer);
+    if (trace) {
+      log("Finalizing " + entryPointer);
+    }
     long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
     long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     try {
@@ -227,7 +237,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer,
                     @SuppressWarnings("unused") Transaction transaction) throws OperationException {
-    if (TRACE) log("Unacking " + entryPointer);
+    if (trace) {
+      log("Unacking " + entryPointer);
+    }
     long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
     long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     try {
@@ -244,7 +256,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   @Override
   public long getGroupID() throws OperationException {
-    if (TRACE) log("GetGroupId");
+    if (trace) {
+      log("GetGroupId");
+    }
     try {
       return this.table.getGroupID(new HBQMetaOperation(this.queueName,
           MetaOperationType.GET_GROUP_ID));
@@ -257,7 +271,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   @Override
   public QueueInfo getQueueInfo() throws OperationException {
-    if (TRACE) log("GetQueueInfo");
+    if (trace) {
+      log("GetQueueInfo");
+    }
     try {
       HBQQueueMeta queueMeta = this.table.getQueueMeta(
           new HBQMetaOperation(this.queueName,
@@ -290,9 +306,11 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
 // Private helpers
 
-  public static boolean TRACE = false;
+  public static boolean trace = false;
 
   private void log(String msg) {
-    if (TRACE) System.out.println(Thread.currentThread().getId() + " : " + msg);
+    if (trace) {
+      System.out.println(Thread.currentThread().getId() + " : " + msg);
+    }
   }
 }

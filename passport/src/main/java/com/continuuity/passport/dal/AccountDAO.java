@@ -6,6 +6,7 @@ package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
+import com.continuuity.passport.core.exceptions.OrganizationNotFoundException;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Role;
 
@@ -56,6 +57,16 @@ public interface AccountDAO {
    * @return {@code Account}
    */
   public Account getAccount(int accountId);
+
+  /**
+   * Update organization if for the account.
+   * @param accountId account id to be updated.
+   * @param orgId Organization id to be updated.
+   * @throws AccountNotFoundException on account to be updated not found.
+   * @throws OrganizationNotFoundException on organization to be updated not found.
+   */
+  public void updateOrganizationId(int accountId, String orgId)
+    throws AccountNotFoundException, OrganizationNotFoundException;
 
   /**
    * GetAccount based on email id.

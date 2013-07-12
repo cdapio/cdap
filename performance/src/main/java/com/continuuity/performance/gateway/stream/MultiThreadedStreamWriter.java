@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.performance.gateway.stream;
 
 import com.continuuity.app.queue.QueueName;
@@ -8,7 +12,7 @@ import com.continuuity.gateway.util.Util;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.continuuity.test.app.StreamWriter;
+import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;

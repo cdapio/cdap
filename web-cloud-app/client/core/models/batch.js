@@ -54,7 +54,7 @@ define(['lib/date'], function (Datejs) {
       this.get('metricData').set(name, value);
 
     },
-    getUpdateRequest: function () {
+    getUpdateRequest: function (http) {
 
       var self = this;
 
@@ -74,14 +74,12 @@ define(['lib/date'], function (Datejs) {
         return;
       }
 
-      C.get('manager', {
-        method: 'status',
-        params: [app_id, batch_id, -1]
-      }, function (error, response) {
+      http.rpc('runnable', 'status', [app_id, batch_id, -1],
+        function (response) {
 
-        if (response.params) {
-          self.set('currentState', response.params.status);
-        }
+          if (response.result) {
+            self.set('currentState', response.result.status);
+          }
 
       });
 
@@ -135,7 +133,7 @@ define(['lib/date'], function (Datejs) {
 
       var self = this;
 
-      return ['metrics', paths, function(status, result) {
+      return ['metrics', paths, function(result, status) {
 
         if(!result) {
           return;
@@ -236,55 +234,25 @@ define(['lib/date'], function (Datejs) {
 
       var model_id = model_id.split(':');
       var app_id = model_id[0];
-      var batch_id = model_id[1];
+      var mapreduce_id = model_id[1];
 
-      C.HTTP.get('batch/SampleApplicationId:batchid1', function(status, result) {
+      http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
 
-        var model = C.Batch.create(result);
+        model = C.Batch.create(model);
 
-        C.get('manager', {
-          method: 'status',
-          params: [app_id, batch_id, -1]
-        }, function (error, response) {
-          if (response.params) {
-            model.set('currentState', response.params.status);
-          }
-          promise.resolve(model);
+        http.rpc('runnable', 'status', [app_id, mapreduce_id, -1],
+          function (response) {
+
+            if (response.error) {
+              promise.reject(response.error);
+            } else {
+              model.set('currentState', response.result.status);
+              promise.resolve(model);
+            }
 
         });
 
       });
-
-      // C.get('manager', {
-      //   method: 'getBatch',
-      //   params: [app_id, batch_id]
-      // }, function (error, response) {
-      //   if (error || !response.params) {
-      //     promise.reject(error);
-      //     return;
-      //   }
-
-      //   response.params.currentState = 'UNKNOWN';
-      //   response.params.version = -1;
-      //   response.params.type = 'Batch';
-      //   response.params.applicationId = app_id;
-
-      //   var model = C.Batch.create(response.params);
-
-      //   C.get('manager', {
-      //     method: 'status',
-      //     params: [app_id, batch_id, -1]
-      //   }, function (error, response) {
-
-      //     if (response.params) {
-      //       model.set('currentState', response.params.status);
-      //     }
-
-      //     promise.resolve(model);
-
-      //   });
-
-      // });
 
       return promise;
 

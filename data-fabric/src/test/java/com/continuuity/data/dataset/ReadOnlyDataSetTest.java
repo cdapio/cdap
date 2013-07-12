@@ -9,6 +9,9 @@ import org.junit.Test;
 
 import java.util.Collections;
 
+/**
+ * Read-only data set.
+ */
 public class ReadOnlyDataSetTest extends DataSetTestBase {
 
   static KeyValueTable kvTable;
@@ -28,8 +31,8 @@ public class ReadOnlyDataSetTest extends DataSetTestBase {
     kvTable = instantiator.getDataSet("table");
   }
 
-  static final byte[] a = { 'a' };
-  static final byte[] b = { 'b' };
+  private static final byte[] a = { 'a' };
+  private static final byte[] b = { 'b' };
 
   @Test(expected = UnsupportedOperationException.class)
   public void testWriteToReadOnlyTable() throws OperationException {

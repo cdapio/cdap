@@ -80,7 +80,7 @@ public final class FlowletDefinition {
   }
 
   /**
-   * Creates a definition from a copy and overrides the number of instances
+   * Creates a definition from a copy and overrides the number of instances.
    * @param definition definition to copy from
    * @param instances new number of instances
    */
@@ -243,7 +243,7 @@ public final class FlowletDefinition {
 
         // In batch mode, if the first parameter is an iterator then extract the type information from
         // iterator's type parameter
-        if(method.getAnnotation(Batch.class) != null) {
+        if (method.getAnnotation(Batch.class) != null) {
           Preconditions.checkArgument(firstParameter instanceof ParameterizedType,
                                       "Iterator needs to be a ParameterizedType to extract type information");
           ParameterizedType pType = (ParameterizedType) firstParameter;
@@ -280,7 +280,7 @@ public final class FlowletDefinition {
     }
   }
 
-  private <K,V> Map<K, Set<V>> immutableCopyOf(Map<K, Set<V>> map) {
+  private <K, V> Map<K, Set<V>> immutableCopyOf(Map<K, Set<V>> map) {
     Map<K, Set<V>> result = new HashMap<K, Set<V>>();
     for (Map.Entry<K, Set<V>> entry : map.entrySet()) {
       result.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));

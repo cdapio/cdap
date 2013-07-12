@@ -29,7 +29,7 @@ define([], function () {
 			var self = this;
 
 			// Update timeseries data for current flow.
-			C.get.apply(C, this.get('model').getUpdateRequest());
+			C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
 
 		},
 

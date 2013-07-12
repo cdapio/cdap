@@ -27,6 +27,7 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.TableOperation;
+import com.continuuity.data.operation.TruncateTable;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.WriteOperationComparator;
@@ -128,7 +129,7 @@ public class OmidTransactionalOperationExecutor
   // Also runs all queue operations for a single consumer serially.
   private final QueueStateProxy queueStateProxy;
 
-  /** Min table write ops to attempt to batch */
+  // Min table write ops to attempt to batch.
   private final int minTableWriteOpsToBatch;
 
   @Inject
@@ -343,12 +344,20 @@ public class OmidTransactionalOperationExecutor
     };
 
   private void dataSetMetric_read(String dataSetName) {
-    dataSetReadMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
+    // note: we intentionally do not provide table name for some system operations (like talking to MDS) so that
+    //       we can skip writing metrics here. Yes, this looks like a hack. Should be fixed with new metrics system.
+    if (dataSetName != null) {
+      dataSetReadMetric.meter(dataSetName, 1);
+    }
   }
 
   private void dataSetMetric_write(String dataSetName, int dataSize) {
-    dataSetWriteMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
-    dataSetStorageMetric.meter(dataSetName == null ? "null" : dataSetName, dataSize);
+    // note: we intentionally do not provide table name for some system operations (like talking to MDS) so that
+    //       we can skip writing metrics here. Yes, this looks like a hack. Should be fixed with new metrics system.
+    if (dataSetName != null) {
+      dataSetWriteMetric.meter(dataSetName, 1);
+      dataSetStorageMetric.meter(dataSetName, dataSize);
+    }
   }
   
   /* -------------------  end metrics ---------------- */
@@ -668,6 +677,14 @@ public class OmidTransactionalOperationExecutor
     throws OperationException {
     initialize();
     findRandomTable(context, openTable.getTableName());
+  }
+
+  @Override
+  public void execute(OperationContext context, TruncateTable truncateTable)
+    throws OperationException {
+    initialize();
+    OrderedVersionedColumnarTable table = findRandomTable(context, truncateTable.getTableName());
+    table.clear();
   }
 
   // Write batches

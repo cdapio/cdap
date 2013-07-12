@@ -47,16 +47,15 @@ public final class TypeRepresentation implements ParameterizedType {
    */
   public TypeRepresentation(Type type) throws UnsupportedTypeException {
     if (type instanceof Class<?>) {
-      this.rawType = ((Class)type).getCanonicalName();
+      this.rawType = ((Class) type).getCanonicalName();
       this.enclosingType = null;
       this.parameters = null;
       this.isClass = true;
-    }
-    else if (type instanceof ParameterizedType) {
+    } else if (type instanceof ParameterizedType) {
       ParameterizedType pType = (ParameterizedType) type;
       Type raw = pType.getRawType();
       if (raw instanceof Class<?>) {
-        this.rawType = ((Class)raw).getName();
+        this.rawType = ((Class) raw).getName();
       } else {
         throw new UnsupportedTypeException("can't represent type " + type + " (enclosing type is not a class)");
       }
@@ -68,8 +67,7 @@ public final class TypeRepresentation implements ParameterizedType {
         this.parameters[i] = new TypeRepresentation(typeArgs[i]);
       }
       this.isClass = false;
-    }
-    else {
+    } else {
       throw new UnsupportedTypeException("can't represent type " + type + " (must be a class or a parametrized type)");
     }
   }

@@ -108,8 +108,7 @@ public class GatewayRestAccessorTest {
     // Authentication configuration
     configuration.setBoolean(Constants.CONFIG_AUTHENTICATION_REQUIRED, true);
     configuration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
-    Map<String,List<String>> keysAndClusters =
-      new TreeMap<String,List<String>>();
+    Map<String, List<String>> keysAndClusters = new TreeMap<String, List<String>>();
     keysAndClusters.put(apiKey, Arrays.asList(cluster));
     theGateway.setPassportClient(new MockedPassportClient(keysAndClusters));
 

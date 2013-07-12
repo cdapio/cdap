@@ -27,9 +27,30 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -122,10 +143,10 @@ public class Configuration {
   private Set<String> finalParameters = new HashSet<String>();
 
   /**
-   * Configuration objects
+   * Configuration objects.
    */
-  private static final WeakHashMap<Configuration,Object> REGISTRY =
-    new WeakHashMap<Configuration,Object>();
+  private static final WeakHashMap<Configuration, Object> REGISTRY =
+    new WeakHashMap<Configuration, Object>();
 
   private static final Map<ClassLoader, Map<String, Class<?>>>
     CACHE_CLASSES = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
@@ -138,7 +159,7 @@ public class Configuration {
 
   /**
    * Stores the mapping of key to the resource which modifies or loads
-   * the key most recently
+   * the key most recently.
    */
   private HashMap<String, String> updatingResource;
 
@@ -169,19 +190,18 @@ public class Configuration {
      */
     private final String getWarningMessage(String key) {
       String warningMessage;
-      if(customMessage == null) {
+      if (customMessage == null) {
         StringBuilder message = new StringBuilder(key);
         String deprecatedKeySuffix = " is deprecated. Instead, use ";
         message.append(deprecatedKeySuffix);
         for (int i = 0; i < newKeys.length; i++) {
           message.append(newKeys[i]);
-          if(i != newKeys.length-1) {
+          if (i != newKeys.length - 1) {
             message.append(", ");
           }
         }
         warningMessage = message.toString();
-      }
-      else {
+      } else {
         warningMessage = customMessage;
       }
       accessed = true;
@@ -220,7 +240,7 @@ public class Configuration {
                                               String customMessage)} instead
    */
   @Deprecated
-  public synchronized static void addDeprecation(String key, String[] newKeys,
+  public static synchronized void addDeprecation(String key, String[] newKeys,
                                                  String customMessage) {
     if (key == null || key.length() == 0 ||
           newKeys == null || newKeys.length == 0) {
@@ -247,7 +267,7 @@ public class Configuration {
    * @param newKey
    * @param customMessage
    */
-  public synchronized static void addDeprecation(String key, String newKey,
+  public static synchronized void addDeprecation(String key, String newKey,
                                                  String customMessage) {
     addDeprecation(key, new String[] {newKey}, customMessage);
   }
@@ -269,7 +289,7 @@ public class Configuration {
    * @deprecated use {@link #addDeprecation(String key, String newKey)} instead
    */
   @Deprecated
-  public synchronized static void addDeprecation(String key, String[] newKeys) {
+  public static synchronized void addDeprecation(String key, String[] newKeys) {
     addDeprecation(key, newKeys, null);
   }
 
@@ -284,7 +304,7 @@ public class Configuration {
    * @param key Key that is to be deprecated
    * @param newKey key that takes up the value of deprecated key
    */
-  public synchronized static void addDeprecation(String key, String newKey) {
+  public static synchronized void addDeprecation(String key, String newKey) {
     addDeprecation(key, new String[] {newKey}, null);
   }
 
@@ -310,16 +330,16 @@ public class Configuration {
     String oldName, altNames[] = null;
     DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(name);
     if (keyInfo == null) {
-      altNames = (reverseDeprecatedKeyMap.get(name) != null ) ?
+      altNames = (reverseDeprecatedKeyMap.get(name) != null) ?
                    new String [] {reverseDeprecatedKeyMap.get(name)} : null;
-      if(altNames != null && altNames.length > 0) {
+      if (altNames != null && altNames.length > 0) {
         //To help look for other new configs for this deprecated config
         keyInfo = deprecatedKeyMap.get(altNames[0]);
       }
     }
-    if(keyInfo != null && keyInfo.newKeys.length > 0) {
+    if (keyInfo != null && keyInfo.newKeys.length > 0) {
       List<String> list = new ArrayList<String>();
-      if(altNames != null) {
+      if (altNames != null) {
         list.addAll(Arrays.asList(altNames));
       }
       list.addAll(Arrays.asList(keyInfo.newKeys));
@@ -346,15 +366,15 @@ public class Configuration {
       DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(name);
       warnOnceIfDeprecated(name);
       for (String newKey : keyInfo.newKeys) {
-        if(newKey != null) {
+        if (newKey != null) {
           names.add(newKey);
         }
       }
     }
-    if(names.size() == 0) {
+    if (names.size() == 0) {
       names.add(name);
     }
-    for(String n : names) {
+    for (String n : names) {
       String deprecatedKey = reverseDeprecatedKeyMap.get(n);
       if (deprecatedKey != null && !getOverlay().containsKey(n) &&
             getOverlay().containsKey(deprecatedKey)) {
@@ -370,8 +390,8 @@ public class Configuration {
     Set<Object> keys = new HashSet<Object>();
     keys.addAll(getProps().keySet());
     for (Object item: keys) {
-      LOG.debug("Handling deprecation for " + (String)item);
-      handleDeprecation((String)item);
+      LOG.debug("Handling deprecation for " + item);
+      handleDeprecation((String) item);
     }
   }
 
@@ -389,7 +409,7 @@ public class Configuration {
   /** A new configuration. */
   public Configuration() {
     updatingResource = new HashMap<String, String>();
-    synchronized(Configuration.class) {
+    synchronized (Configuration.class) {
       REGISTRY.put(this, null);
     }
   }
@@ -401,21 +421,21 @@ public class Configuration {
    */
   @SuppressWarnings("unchecked")
   public Configuration(Configuration other) {
-    this.resources = (ArrayList)other.resources.clone();
-    synchronized(other) {
+    this.resources = (ArrayList) other.resources.clone();
+    synchronized (other) {
       if (other.properties != null) {
-        this.properties = (Properties)other.properties.clone();
+        this.properties = (Properties) other.properties.clone();
       }
 
-      if (other.overlay!=null) {
-        this.overlay = (Properties)other.overlay.clone();
+      if (other.overlay != null) {
+        this.overlay = (Properties) other.overlay.clone();
       }
 
       this.updatingResource = new HashMap<String, String>(other.updatingResource);
     }
 
     this.finalParameters = new HashSet<String>(other.finalParameters);
-    synchronized(Configuration.class) {
+    synchronized (Configuration.class) {
       REGISTRY.put(this, null);
     }
     this.classLoader = other.classLoader;
@@ -479,26 +499,26 @@ public class Configuration {
     reloadConfiguration();
   }
 
-  private static Pattern varPat = Pattern.compile("\\$\\{[^\\}\\$\u0020]+\\}");
-  private static int MAX_SUBST = 20;
+  private static final Pattern VAR_PAT = Pattern.compile("\\$\\{[^\\}\\$\u0020]+\\}");
+  private static final int MAX_SUBST = 20;
 
   private String substituteVars(String expr) {
     if (expr == null) {
       return null;
     }
-    Matcher match = varPat.matcher("");
+    Matcher match = VAR_PAT.matcher("");
     String eval = expr;
-    for(int s=0; s<MAX_SUBST; s++) {
+    for (int s = 0; s < MAX_SUBST; s++) {
       match.reset(eval);
       if (!match.find()) {
         return eval;
       }
       String var = match.group();
-      var = var.substring(2, var.length()-1); // remove ${ .. }
+      var = var.substring(2, var.length() - 1); // remove ${ .. }
       String val = null;
       try {
         val = System.getProperty(var);
-      } catch(SecurityException se) {
+      } catch (SecurityException se) {
         LOG.warn("Unexpected SecurityException in Configuration", se);
       }
       if (val == null) {
@@ -508,7 +528,7 @@ public class Configuration {
         return eval; // return literal ${var}: var is unbound
       }
       // substitute
-      eval = eval.substring(0, match.start())+val+eval.substring(match.end());
+      eval = eval.substring(0, match.start()) + val + eval.substring(match.end());
     }
     throw new IllegalStateException("Variable substitution depth too large: "
                                       + MAX_SUBST + " " + expr);
@@ -529,7 +549,7 @@ public class Configuration {
   public String get(String name) {
     String[] names = handleDeprecation(name);
     String result = null;
-    for(String n : names) {
+    for (String n : names) {
       result = substituteVars(getProps().getProperty(n));
     }
     return result;
@@ -571,7 +591,7 @@ public class Configuration {
   public String getRaw(String name) {
     String[] names = handleDeprecation(name);
     String result = null;
-    for(String n : names) {
+    for (String n : names) {
       result = getProps().getProperty(n);
     }
     return result;
@@ -594,7 +614,7 @@ public class Configuration {
     updatingResource.put(name, UNKNOWN_RESOURCE);
     String[] altNames = getAlternateNames(name);
     if (altNames != null && altNames.length > 0) {
-      for(String altName : altNames) {
+      for (String altName : altNames) {
         getOverlay().setProperty(altName, value);
         getProps().setProperty(altName, value);
       }
@@ -616,8 +636,8 @@ public class Configuration {
     String[] altNames = getAlternateNames(name);
     getOverlay().remove(name);
     getProps().remove(name);
-    if (altNames !=null && altNames.length > 0) {
-      for(String altName : altNames) {
+    if (altNames != null && altNames.length > 0) {
+      for (String altName : altNames) {
         getOverlay().remove(altName);
         getProps().remove(altName);
       }
@@ -636,8 +656,8 @@ public class Configuration {
   }
 
   private synchronized Properties getOverlay() {
-    if (overlay==null){
-      overlay=new Properties();
+    if (overlay == null){
+      overlay = new Properties();
     }
     return overlay;
   }
@@ -657,7 +677,7 @@ public class Configuration {
   public String get(String name, String defaultValue) {
     String[] names = handleDeprecation(name);
     String result = null;
-    for(String n : names) {
+    for (String n : names) {
       result = substituteVars(getProps().getProperty(n, defaultValue));
     }
     return result;
@@ -678,8 +698,9 @@ public class Configuration {
    */
   public int getInt(String name, int defaultValue) {
     String valueString = getTrimmed(name);
-    if (valueString == null)
+    if (valueString == null) {
       return defaultValue;
+    }
     String hexString = getHexDigits(valueString);
     if (hexString != null) {
       return Integer.parseInt(hexString, 16);
@@ -712,8 +733,9 @@ public class Configuration {
    */
   public long getLong(String name, long defaultValue) {
     String valueString = getTrimmed(name);
-    if (valueString == null)
+    if (valueString == null) {
       return defaultValue;
+    }
     String hexString = getHexDigits(valueString);
     if (hexString != null) {
       return Long.parseLong(hexString, 16);
@@ -737,8 +759,9 @@ public class Configuration {
    */
   public long getLongBytes(String name, long defaultValue) {
     String valueString = getTrimmed(name);
-    if (valueString == null)
+    if (valueString == null) {
       return defaultValue;
+    }
     return StringUtils.TraditionalBinaryPrefix.string2long(valueString);
   }
 
@@ -784,8 +807,9 @@ public class Configuration {
    */
   public float getFloat(String name, float defaultValue) {
     String valueString = getTrimmed(name);
-    if (valueString == null)
+    if (valueString == null) {
       return defaultValue;
+    }
     return Float.parseFloat(valueString);
   }
   /**
@@ -795,7 +819,7 @@ public class Configuration {
    * @param value property value.
    */
   public void setFloat(String name, float value) {
-    set(name,Float.toString(value));
+    set(name, Float.toString(value));
   }
 
   /**
@@ -816,11 +840,13 @@ public class Configuration {
 
     valueString = valueString.toLowerCase();
 
-    if ("true".equals(valueString))
+    if ("true".equals(valueString)) {
       return true;
-    else if ("false".equals(valueString))
+    } else if ("false".equals(valueString)) {
       return false;
-    else return defaultValue;
+    } else {
+      return defaultValue;
+    }
   }
 
   /**
@@ -1008,12 +1034,12 @@ public class Configuration {
     }
 
     /**
-     * Is the given value in the set of ranges
+     * Is the given value in the set of ranges.
      * @param value the value to check
      * @return is the value in the ranges?
      */
     public boolean isIncluded(int value) {
-      for(Range r: ranges) {
+      for (Range r: ranges) {
         if (r.start <= value && value <= r.end) {
           return true;
         }
@@ -1032,7 +1058,7 @@ public class Configuration {
     public String toString() {
       StringBuilder result = new StringBuilder();
       boolean first = true;
-      for(Range r: ranges) {
+      for (Range r: ranges) {
         if (first) {
           first = false;
         } else {
@@ -1053,7 +1079,7 @@ public class Configuration {
   }
 
   /**
-   * Parse the given attribute as a set of integer ranges
+   * Parse the given attribute as a set of integer ranges.
    * @param name the attribute name
    * @param defaultValue the default value if it is not set
    * @return a new set of ranges from the configured value
@@ -1240,11 +1266,12 @@ public class Configuration {
    */
   public Class<?>[] getClasses(String name, Class<?> ... defaultValue) {
     String[] classnames = getTrimmedStrings(name);
-    if (classnames == null)
+    if (classnames == null) {
       return defaultValue;
+    }
     try {
       Class<?>[] classes = new Class<?>[classnames.length];
-      for(int i = 0; i < classnames.length; i++) {
+      for (int i = 0; i < classnames.length; i++) {
         classes[i] = getClassByName(classnames[i]);
       }
       return classes;
@@ -1265,8 +1292,9 @@ public class Configuration {
    */
   public Class<?> getClass(String name, Class<?> defaultValue) {
     String valueString = getTrimmed(name);
-    if (valueString == null)
+    if (valueString == null) {
       return defaultValue;
+    }
     try {
       return getClassByName(valueString);
     } catch (ClassNotFoundException e) {
@@ -1295,12 +1323,13 @@ public class Configuration {
                                          Class<U> xface) {
     try {
       Class<?> theClass = getClass(name, defaultValue);
-      if (theClass != null && !xface.isAssignableFrom(theClass))
-        throw new RuntimeException(theClass+" not "+xface.getName());
-      else if (theClass != null)
+      if (theClass != null && !xface.isAssignableFrom(theClass)) {
+        throw new RuntimeException(theClass + " not " + xface.getName());
+      } else if (theClass != null) {
         return theClass.asSubclass(xface);
-      else
+      } else {
         return null;
+      }
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -1326,7 +1355,7 @@ public class Configuration {
       if (!xface.isAssignableFrom(cl)) {
         throw new RuntimeException(cl + " does not implement " + xface);
       }
-      ret.add((U)ReflectionUtils.newInstance(cl, this));
+      ret.add((U) ReflectionUtils.newInstance(cl, this));
     }
     return ret;
   }
@@ -1344,8 +1373,9 @@ public class Configuration {
    * @param xface the interface implemented by the named class.
    */
   public void setClass(String name, Class<?> theClass, Class<?> xface) {
-    if (!xface.isAssignableFrom(theClass))
-      throw new RuntimeException(theClass+" not "+xface.getName());
+    if (!xface.isAssignableFrom(theClass)) {
+      throw new RuntimeException(theClass + " not " + xface.getName());
+    }
     set(name, theClass.getName());
   }
 
@@ -1364,14 +1394,14 @@ public class Configuration {
     String[] dirs = getTrimmedStrings(dirsProp);
     int hashCode = path.hashCode();
     for (int i = 0; i < dirs.length; i++) {  // try each local dir
-      int index = (hashCode+i & Integer.MAX_VALUE) % dirs.length;
+      int index = (hashCode + i & Integer.MAX_VALUE) % dirs.length;
       File file = new File(dirs[index], path);
       File dir = file.getParentFile();
       if (dir.exists() || dir.mkdirs()) {
         return file;
       }
     }
-    throw new IOException("No valid local directories in property: "+dirsProp);
+    throw new IOException("No valid local directories in property: " + dirsProp);
   }
 
   /**
@@ -1393,7 +1423,7 @@ public class Configuration {
    */
   public InputStream getConfResourceAsInputStream(String name) {
     try {
-      URL url= getResource(name);
+      URL url = getResource(name);
 
       if (url == null) {
         LOG.info(name + " not found");
@@ -1417,7 +1447,7 @@ public class Configuration {
    */
   public Reader getConfResourceAsReader(String name) {
     try {
-      URL url= getResource(name);
+      URL url = getResource(name);
 
       if (url == null) {
         LOG.info(name + " not found");
@@ -1436,9 +1466,9 @@ public class Configuration {
     if (properties == null) {
       properties = new Properties();
       loadResources(properties, resources, quietmode);
-      if (overlay!= null) {
+      if (overlay != null) {
         properties.putAll(overlay);
-        for (Map.Entry<Object,Object> item: overlay.entrySet()) {
+        for (Map.Entry<Object, Object> item: overlay.entrySet()) {
           updatingResource.put((String) item.getKey(), UNKNOWN_RESOURCE);
         }
       }
@@ -1494,7 +1524,7 @@ public class Configuration {
       Element root = null;
 
       if (name instanceof URL) {                  // an URL resource
-        URL url = (URL)name;
+        URL url = (URL) name;
         if (url != null) {
           if (!quiet) {
             LOG.info("parsing " + url);
@@ -1502,7 +1532,7 @@ public class Configuration {
           doc = builder.parse(url.toString());
         }
       } else if (name instanceof String) {        // a CLASSPATH resource
-        URL url = getResource((String)name);
+        URL url = getResource((String) name);
         if (url != null) {
           if (!quiet) {
             LOG.info("parsing " + url);
@@ -1511,52 +1541,60 @@ public class Configuration {
         }
       } else if (name instanceof InputStream) {
         try {
-          doc = builder.parse((InputStream)name);
+          doc = builder.parse((InputStream) name);
         } finally {
-          ((InputStream)name).close();
+          ((InputStream) name).close();
         }
       } else if (name instanceof Element) {
-        root = (Element)name;
+        root = (Element) name;
       }
 
       if (doc == null && root == null) {
-        if (quiet)
+        if (quiet) {
           return;
+        }
         throw new RuntimeException(name + " not found");
       }
 
       if (root == null) {
         root = doc.getDocumentElement();
       }
-      if (!"configuration".equals(root.getTagName()))
+      if (!"configuration".equals(root.getTagName())) {
         LOG.fatal("bad conf file: top-level element not <configuration>");
+      }
       NodeList props = root.getChildNodes();
       for (int i = 0; i < props.getLength(); i++) {
         Node propNode = props.item(i);
-        if (!(propNode instanceof Element))
+        if (!(propNode instanceof Element)) {
           continue;
-        Element prop = (Element)propNode;
+        }
+        Element prop = (Element) propNode;
         if ("configuration".equals(prop.getTagName())) {
           loadResource(properties, prop, quiet);
           continue;
         }
-        if (!"property".equals(prop.getTagName()))
+        if (!"property".equals(prop.getTagName())) {
           LOG.warn("bad conf file: element not <property>");
+        }
         NodeList fields = prop.getChildNodes();
         String attr = null;
         String value = null;
         boolean finalParameter = false;
         for (int j = 0; j < fields.getLength(); j++) {
           Node fieldNode = fields.item(j);
-          if (!(fieldNode instanceof Element))
+          if (!(fieldNode instanceof Element)) {
             continue;
-          Element field = (Element)fieldNode;
-          if ("name".equals(field.getTagName()) && field.hasChildNodes())
-            attr = ((Text)field.getFirstChild()).getData().trim();
-          if ("value".equals(field.getTagName()) && field.hasChildNodes())
-            value = ((Text)field.getFirstChild()).getData();
-          if ("final".equals(field.getTagName()) && field.hasChildNodes())
-            finalParameter = "true".equals(((Text)field.getFirstChild()).getData());
+          }
+          Element field = (Element) fieldNode;
+          if ("name".equals(field.getTagName()) && field.hasChildNodes()) {
+            attr = ((Text) field.getFirstChild()).getData().trim();
+          }
+          if ("value".equals(field.getTagName()) && field.hasChildNodes()) {
+            value = ((Text) field.getFirstChild()).getData();
+          }
+          if ("final".equals(field.getTagName()) && field.hasChildNodes()) {
+            finalParameter = "true".equals(((Text) field.getFirstChild()).getData());
+          }
         }
 
         // Ignore this parameter if it has already been marked as 'final'
@@ -1568,8 +1606,7 @@ public class Configuration {
               // update new keys with deprecated key's value
               loadProperty(properties, name, key, value, finalParameter);
             }
-          }
-          else {
+          } else {
             loadProperty(properties, name, attr, value, finalParameter);
           }
         }
@@ -1597,8 +1634,7 @@ public class Configuration {
         properties.setProperty(attr, value);
         updatingResource.put(attr, name.toString());
       } else {
-        LOG.warn(name+":an attempt to override final parameter: "+attr
-                   +";  Ignoring.");
+        LOG.warn(name + ":an attempt to override final parameter: " + attr + ";  Ignoring.");
       }
     }
     if (finalParameter) {
@@ -1656,12 +1692,12 @@ public class Configuration {
     conf.appendChild(doc.createTextNode("\n"));
     handleDeprecation(); //ensure properties is set and deprecation is handled
     for (Enumeration e = properties.keys(); e.hasMoreElements();) {
-      String name = (String)e.nextElement();
+      String name = (String) e.nextElement();
       Object object = properties.get(name);
       String value = null;
       if (object instanceof String) {
         value = (String) object;
-      }else {
+      } else {
         continue;
       }
       Element propNode = doc.createElement("property");
@@ -1705,7 +1741,7 @@ public class Configuration {
     dumpGenerator.writeStartArray();
     dumpGenerator.flush();
     synchronized (config) {
-      for (Map.Entry<Object,Object> item: config.getProps().entrySet()) {
+      for (Map.Entry<Object, Object> item: config.getProps().entrySet()) {
         dumpGenerator.writeStartObject();
         dumpGenerator.writeStringField("key", (String) item.getKey());
         dumpGenerator.writeStringField("value",
@@ -1780,21 +1816,21 @@ public class Configuration {
   }
 
   /**
-   * get keys matching the the regex
+   * get keys matching the the regex.
    * @param regex
    * @return Map<String,String> with matching keys
    */
-  public Map<String,String> getValByRegex(String regex) {
+  public Map<String, String> getValByRegex(String regex) {
     Pattern p = Pattern.compile(regex);
 
-    Map<String,String> result = new HashMap<String,String>();
+    Map<String, String> result = new HashMap<String, String>();
     Matcher m;
 
-    for(Map.Entry<Object,Object> item: getProps().entrySet()) {
+    for (Map.Entry<Object, Object> item: getProps().entrySet()) {
       if (item.getKey() instanceof String &&
             item.getValue() instanceof String) {
-        m = p.matcher((String)item.getKey());
-        if(m.find()) { // match
+        m = p.matcher((String) item.getKey());
+        if (m.find()) { // match
           result.put((String) item.getKey(), (String) item.getValue());
         }
       }
@@ -1806,5 +1842,5 @@ public class Configuration {
    * A unique class which is used as a sentinel value in the caching
    * for getClassByName. {@see Configuration#getClassByNameOrNull(String)}
    */
-  private static abstract class NegativeCacheSentinel {}
+  private abstract static class NegativeCacheSentinel {}
 }
