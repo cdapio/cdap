@@ -222,6 +222,17 @@ logger.setLevel(LOG_LEVEL);
 
 				break;
 
+				case 'getLogPrev':
+
+					params.unshift(accountID);
+					Monitor.getLogPrev.apply(Monitor, params.concat(done));
+					break;
+
+				case 'getLogNext':
+					params.unshift(accountID);
+					Monitor.getLogNext.apply(Monitor, params.concat(done));
+					break;
+
 				case 'getCounters':
 					flow = new metricsservice_types.FlowArgument({
 						accountId: (params[0] === '-' ? '-' : accountID),
@@ -420,6 +431,7 @@ logger.setLevel(LOG_LEVEL);
 			});
 
 		});
+
 
 		request.on('error', function (e) {
 
