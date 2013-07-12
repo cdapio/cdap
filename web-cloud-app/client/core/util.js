@@ -141,7 +141,7 @@ define([], function () {
 
 		updateAggregates: function (models, http) {
 
-			var j, k, paths = [], metrics, map = {};
+			var j, k, metrics, map = {};
 			var queries = [];
 
 			var max = 60;
@@ -152,10 +152,8 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
-						map[metrics[k]] = models[j];
-
-						paths.push(metrics[k]);
 						metrics[k] += '?aggregate=true';
+						map[metrics[k]] = models[j];
 						queries.push(metrics[k]);
 
 				}
@@ -183,7 +181,7 @@ define([], function () {
 
 		updateTimeSeries: function (models, http) {
 
-			var j, k, paths = [], metrics, map = {};
+			var j, k, metrics, map = {};
 			var queries = [];
 
 			var max = 60;
@@ -206,10 +204,8 @@ define([], function () {
 
 					}
 
-					map[metrics[k]] = models[j];
-
-					paths.push(metrics[k]);
 					metrics[k] += '?count=' + count;
+					map[metrics[k]] = models[j];
 					queries.push(metrics[k]);
 
 				}
