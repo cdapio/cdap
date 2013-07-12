@@ -266,7 +266,7 @@ var singularREST = {
     'apps': 'getApplication',
     'streams': 'getStream',
     'flows': 'getFlow',
-    'mapreduce': 'getMapReduceJob',
+    'mapreduce': 'getMapreduce',
     'datasets': 'getDataset',
     'procedures': 'getQuery'
   };
@@ -275,7 +275,7 @@ var singularREST = {
     'apps': 'getApplications',
     'streams': 'getStreams',
     'flows': 'getFlows',
-    'mapreduce': 'getMapReduceJobs',
+    'mapreduce': 'getMapreduces',
     'datasets': 'getDatasets',
     'procedures': 'getQueries'
   };
@@ -284,7 +284,7 @@ var singularREST = {
     'apps': 'Application',
     'streams': 'Stream',
     'flows': 'Flow',
-    'mapreduce': 'MapReduceJob',
+    'mapreduce': 'Mapreduce',
     'datasets': 'Dataset',
     'procedures': 'Query'
   };
@@ -345,7 +345,7 @@ var singularREST = {
 
     var accountID = 'developer';
 
-    if (method === 'getQuery') {
+    if (method === 'getQuery' || method === 'getMapreduce') {
       params[1].application = ids[0];
     }
 

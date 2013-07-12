@@ -120,6 +120,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
+    BasicFlowletContext flowletContext = null;
     try {
       // Extract and verify parameters
       String flowletName = options.getName();
@@ -159,15 +160,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
       DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
       DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
-
       // Creates flowlet context
-      BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
-                                                                   runId, instanceCount,
-                                                                   DataSets.createDataSets(dataSetContext,
-                                                                                           flowletDef.getDatasets()),
-                                                                   options.getUserArguments(),
-                                                                   flowletDef.getFlowletSpec(),
-                                                                   flowletClass.isAnnotationPresent(Async.class));
+      flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
+                                               runId, instanceCount,
+                                               DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
+                                               options.getUserArguments(),
+                                               flowletDef.getFlowletSpec(),
+                                               flowletClass.isAnnotationPresent(Async.class));
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
@@ -212,6 +211,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
       return programController(program.getProgramName(), flowletName, flowletContext, driver);
 
     } catch (Exception e) {
+      // something went wrong before the flowlet even started. Make sure we release all resources (datasets, ...)
+      // of the flowlet context.
+      if (flowletContext != null) {
+        flowletContext.close();
+      }
       throw Throwables.propagate(e);
     }
   }

@@ -4,13 +4,13 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.Arguments;
-import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.weave.api.RunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -21,6 +21,8 @@ import java.util.Map;
  */
 @Deprecated
 public abstract class AbstractContext {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
+
   private final Program program;
   private final RunId runId;
   private final Map<String, DataSet> datasets;
@@ -104,4 +106,24 @@ public abstract class AbstractContext {
     }
   }
 
+  /**
+   * Release all resources held by this context, for example, datasets. Subclasses should override this
+   * method to release additional resources.
+   */
+  public void close() {
+    for (DataSet ds : datasets.values()) {
+      closeDataSet(ds);
+    }
+  }
+
+  /**
+   * Closes one dataset; logs but otherwise ignores exceptions.
+   */
+  protected void closeDataSet(DataSet ds) {
+    try {
+      ds.close();
+    } catch (Throwable t) {
+      LOG.error("Dataset throws exceptions during close:" + ds.getName() + ", in context: " + this);
+    }
+  }
 }
