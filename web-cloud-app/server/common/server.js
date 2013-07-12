@@ -452,8 +452,8 @@ var singularREST = {
     self.logger.trace('Metrics ', pathList);
 
     var options = {
-      host: self.config['metrics-service-host'],
-      port: self.config['metrics-service-port'],
+      host: self.config['metrics.service.host'],
+      port: self.config['metrics.service.port'],
       path: '/metrics',
       method: 'POST'
     };
