@@ -232,7 +232,7 @@ define([], function () {
 								data[k] = data[k].value;
 							}
 
-							var ts = map[path].get('timeseries').get(path.split('?')[0]);
+							var ts = map[path.split('?')[0]].get('timeseries').get(path.split('?')[0]);
 							ts.shift(data.length);
 							ts = ts.concat(data);
 
