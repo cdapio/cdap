@@ -86,7 +86,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
   public void write(byte[] key, Map<byte[], T> columnValues) throws OperationException {
     // write to key value table
     Map<byte[], byte[]> rawColumnValues = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-    for(Map.Entry<byte[], T> entry : columnValues.entrySet()) {
+    for (Map.Entry<byte[], T> entry : columnValues.entrySet()) {
       rawColumnValues.put(entry.getKey(), encode(entry.getValue()));
     }
     writeRawColumns(key, rawColumnValues);
@@ -103,7 +103,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     ImmutableList.Builder<T> result = new ImmutableList.Builder<T>();
     Map<byte[], byte[]> entries = readRawAll(key);
     if (entries != null) {
-      for(Map.Entry<byte[], byte[]> entry : entries.entrySet()){
+      for (Map.Entry<byte[], byte[]> entry : entries.entrySet()){
         result.add(decode(entry.getValue()));
       }
     }
@@ -233,7 +233,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     public Map<byte[], T> getCurrentValue() throws InterruptedException, OperationException {
       // get the current value as a byte array and decode it into an object of type T
       Map<byte[], T> columnValues = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-      for(Map.Entry<byte[], byte[]> entry : this.reader.getCurrentValue().entrySet()){
+      for (Map.Entry<byte[], byte[]> entry : this.reader.getCurrentValue().entrySet()){
         columnValues.put(entry.getKey(), decode(entry.getValue()));
       }
       return columnValues;

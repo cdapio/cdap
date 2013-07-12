@@ -22,6 +22,8 @@ import java.util.Map;
  * The dataset uses two tables: object store - to store the actual data, and a second table for the index.
  * All the operations are performed asynchronously. The responsibility of pruning the stale index values lies
  * with the user of this data set.
+ *
+ * @param <T> the type of objects in the store
  */
 public class IndexedObjectStore<T> extends ObjectStore<T> {
 
@@ -135,7 +137,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
-    for(byte[] indexValue : indexValues) {
+    for (byte[] indexValue : indexValues) {
       this.index.write(new Write(indexValue, key, EXISTS));
     }
     this.delegate.write(key, object);
