@@ -4,40 +4,37 @@
 package com.continuuity.metrics.guice;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.table.OVCTableHandle;
-import com.continuuity.internal.io.ASMDatumWriterFactory;
-import com.continuuity.internal.io.ASMFieldAccessorFactory;
 import com.continuuity.internal.io.DatumWriter;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.DatumWriterFactory;
+import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.collect.KafkaMetricsCollectionService;
 import com.continuuity.metrics.collect.MetricsCollectionService;
-import com.continuuity.metrics.data.HBaseFilterableOVCTableHandle;
 import com.continuuity.metrics.transport.MetricsRecord;
-import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 
 /**
- * Guice module for creating bindings for metrics system in distributed mode.
+ * Guice module for binding classes for metrics client in distributed runtime mode.
  */
-final class DistributedMetricsModule extends AbstractMetricsModule {
+final class DistributedMetricsClientModule extends PrivateModule {
 
-  private final ZKClient kafkaZKClient;
+  private final KafkaClientService kafkaClient;
 
-  DistributedMetricsModule(ZKClient kafkaZKClient) {
-    this.kafkaZKClient = kafkaZKClient;
+  DistributedMetricsClientModule(KafkaClientService kafkaClient) {
+    this.kafkaClient = kafkaClient;
   }
 
   @Override
-  protected void bindTableHandle() {
-    bind(OVCTableHandle.class).to(HBaseFilterableOVCTableHandle.class).in(Scopes.SINGLETON);
+  protected void configure() {
     bind(MetricsCollectionService.class).to(KafkaMetricsCollectionService.class).in(Scopes.SINGLETON);
+    expose(MetricsCollectionService.class);
   }
 
   @Provides
@@ -47,19 +44,18 @@ final class DistributedMetricsModule extends AbstractMetricsModule {
   }
 
   @Provides
-  public ZKClient providesZKClient() {
-    return kafkaZKClient;
+  public KafkaClientService providesKafkaClient() {
+    return kafkaClient;
   }
 
   @Provides
-  public DatumWriter<MetricsRecord> providesDatumWriter() {
+  public DatumWriter<MetricsRecord> providesDatumWriter(SchemaGenerator schemaGenerator,
+                                                        DatumWriterFactory datumWriterFactory) {
     try {
       TypeToken<MetricsRecord> metricRecordType = TypeToken.of(MetricsRecord.class);
-      Schema schema = new ReflectionSchemaGenerator().generate(metricRecordType.getType());
-      return new ASMDatumWriterFactory(new ASMFieldAccessorFactory()).create(metricRecordType, schema);
+      return datumWriterFactory.create(metricRecordType, schemaGenerator.generate(metricRecordType.getType()));
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }
   }
 }
-

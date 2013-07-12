@@ -1,0 +1,27 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+package com.continuuity.metrics.guice;
+
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.metrics.data.MetricsTableFactory;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+
+/**
+ * Base guice module for binding MetricsTableFactory in different runtime mode.
+ */
+abstract class AbstractMetricsTableModule extends PrivateModule {
+
+  @Override
+  protected final void configure() {
+    bindTableHandle();
+
+    bind(TransactionOracle.class).to(NoopTransactionOracle.class).in(Scopes.SINGLETON);
+    bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
+
+    expose(MetricsTableFactory.class);
+  }
+
+  protected abstract void bindTableHandle();
+}

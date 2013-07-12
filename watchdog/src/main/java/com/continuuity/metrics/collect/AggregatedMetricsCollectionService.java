@@ -57,7 +57,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   @Override
   protected final void runOneIteration() throws Exception {
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    LOG.debug("Start log collection for timestamp {}", timestamp);
+    LOG.trace("Start log collection for timestamp {}", timestamp);
     Iterator<MetricsRecord> metricsItor = getMetrics(timestamp);
 
     try {
@@ -70,7 +70,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     while (metricsItor.hasNext()) {
       metricsItor.next();
     }
-    LOG.debug("Completed log collection for timestamp {}", timestamp);
+    LOG.trace("Completed log collection for timestamp {}", timestamp);
   }
 
   @Override
@@ -96,7 +96,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
         while (iterator.hasNext()) {
           MetricsRecord metricsRecord = iterator.next().emit(timestamp);
           if (metricsRecord.getValue() != 0) {
-            LOG.debug("Emit metric {}", metricsRecord);
+            LOG.trace("Emit metric {}", metricsRecord);
             return metricsRecord;
           }
         }
