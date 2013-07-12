@@ -3,13 +3,13 @@
  */
 package com.continuuity.data.engine.leveldb;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.table.AbstractOVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 import com.google.inject.Inject;
-import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A hybrid {@link com.continuuity.data.table.OVCTableHandle} that primarily uses LevelDB tables, except
