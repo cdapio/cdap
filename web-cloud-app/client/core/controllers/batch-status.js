@@ -66,6 +66,7 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       var self = this;
       var model = this.get('model');
+      var app = this.get('model.application');
 
       model.set('currentState', 'STARTING');
 
@@ -85,6 +86,7 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       var self = this;
       var model = this.get('model');
+      var app = this.get('model.application');
 
       model.set('currentState', 'STOPPING');
 
