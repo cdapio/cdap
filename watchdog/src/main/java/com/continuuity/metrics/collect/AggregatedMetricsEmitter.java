@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.metrics.transport.MetricRecord;
+import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -23,12 +23,14 @@ final class AggregatedMetricsEmitter implements MetricsCollector, MetricsEmitter
   private static final long CACHE_EXPIRE_MINUTES = 1;
 
   private final String context;
+  private final String runId;
   private final String name;
   private final AtomicInteger value;
   private final LoadingCache<String, AtomicInteger> tagValues;
 
-  AggregatedMetricsEmitter(String context, String name) {
+  AggregatedMetricsEmitter(String context, String runId, String name) {
     this.context = context;
+    this.runId = runId;
     this.name = name;
     this.value = new AtomicInteger();
     this.tagValues = CacheBuilder.newBuilder()
@@ -55,12 +57,12 @@ final class AggregatedMetricsEmitter implements MetricsCollector, MetricsEmitter
   }
 
   @Override
-  public MetricRecord emit(long timestamp) {
+  public MetricsRecord emit(long timestamp) {
     ImmutableList.Builder<TagMetric> builder = ImmutableList.builder();
     int value = this.value.getAndSet(0);
     for (Map.Entry<String, AtomicInteger> entry : tagValues.asMap().entrySet()) {
       builder.add(new TagMetric(entry.getKey(), entry.getValue().getAndSet(0)));
     }
-    return new MetricRecord(context, name, builder.build(), timestamp, value);
+    return new MetricsRecord(context, runId, name, builder.build(), timestamp, value);
   }
 }

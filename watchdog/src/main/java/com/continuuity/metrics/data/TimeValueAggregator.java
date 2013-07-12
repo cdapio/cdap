@@ -6,13 +6,14 @@ package com.continuuity.metrics.data;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.MinMaxPriorityQueue;
+import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.primitives.Longs;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Combine values from multiple TimeValue Iterators.
@@ -27,47 +28,50 @@ public final class TimeValueAggregator implements Iterable<TimeValue> {
 
   @Override
   public Iterator<TimeValue> iterator() {
-    final MinMaxPriorityQueue<PeekingIterator<TimeValue>> timeValueQueue =
-      MinMaxPriorityQueue.orderedBy(new TimeValueIteratorComparator())
-                         .expectedSize(timeValues.size())
-                         .create();
+    final List<PeekingIterator<TimeValue>> iterators = Lists.newLinkedList();
 
     for (Iterable<TimeValue> timeValue : timeValues) {
-      timeValueQueue.add(Iterators.peekingIterator(timeValue.iterator()));
+      iterators.add(Iterators.peekingIterator(timeValue.iterator()));
     }
 
     return new AbstractIterator<TimeValue>() {
       @Override
       protected TimeValue computeNext() {
-        // Find the first non empty iterator with the lowest timestamp
-        PeekingIterator<TimeValue> iterator = timeValueQueue.peekFirst();
-        while (!timeValueQueue.isEmpty() && !iterator.hasNext()) {
-          timeValueQueue.removeFirst();
-          iterator = timeValueQueue.peekFirst();
-        }
+        long timestamp = Long.MAX_VALUE;
 
-        if (timeValueQueue.isEmpty()) {
+        // Find the lowest timestamp
+        boolean found = false;
+        Iterator<PeekingIterator<TimeValue>> timeValuesItor = iterators.iterator();
+        while (timeValuesItor.hasNext()) {
+          PeekingIterator<TimeValue> iterator = timeValuesItor.next();
+
+          // Remove iterators that have no values.
+          if (!iterator.hasNext()) {
+            timeValuesItor.remove();
+            continue;
+          }
+
+          long ts = iterator.peek().getTimestamp();
+          if (ts <= timestamp) {
+            timestamp = ts;
+            found = true;
+          }
+        }
+        if (!found) {
           return endOfData();
         }
 
-        timeValueQueue.removeFirst();
-        TimeValue timeValue = iterator.next();
-        timeValueQueue.add(iterator);
-
-        long ts = timeValue.getTimestamp();
-        int aggregate = timeValue.getValue();
-
-        // Aggregate all iterators that has the same timestamp
-        iterator = timeValueQueue.peekFirst();
-        while (iterator.hasNext() && iterator.peek().getTimestamp() == ts) {
-          timeValueQueue.removeFirst();
-          TimeValue tv = iterator.next();
-          timeValueQueue.add(iterator);
-          aggregate += tv.getValue();
-          iterator = timeValueQueue.peekFirst();
+        // Aggregates values from the same timestamp
+        int value = 0;
+        timeValuesItor = iterators.iterator();
+        while (timeValuesItor.hasNext()) {
+          PeekingIterator<TimeValue> iterator = timeValuesItor.next();
+          if (iterator.peek().getTimestamp() == timestamp) {
+            value += iterator.next().getValue();
+          }
         }
 
-        return new TimeValue(ts, aggregate);
+        return new TimeValue(timestamp, value);
       }
     };
   }

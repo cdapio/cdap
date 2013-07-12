@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.metrics.transport.MetricRecord;
+import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
@@ -24,11 +24,11 @@ public class AggregatedMetricsCollectionServiceTest {
 
   @Test
   public void testPublish() throws InterruptedException {
-    final BlockingQueue<MetricRecord> published = new LinkedBlockingQueue<MetricRecord>();
+    final BlockingQueue<MetricsRecord> published = new LinkedBlockingQueue<MetricsRecord>();
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(Iterator<MetricRecord> metrics) {
+      protected void publish(Iterator<MetricsRecord> metrics) {
         Iterators.addAll(published, metrics);
       }
 
@@ -41,12 +41,12 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
     try {
       // Publish couple metrics, they should be aggregated.
-      service.getCollector("context", "metric").gauge(1);
-      service.getCollector("context", "metric").gauge(2);
-      service.getCollector("context", "metric").gauge(3);
-      service.getCollector("context", "metric").gauge(4);
+      service.getCollector("context", "runId", "metric").gauge(1);
+      service.getCollector("context", "runId", "metric").gauge(2);
+      service.getCollector("context", "runId", "metric").gauge(3);
+      service.getCollector("context", "runId", "metric").gauge(4);
 
-      MetricRecord record = published.poll(10, TimeUnit.SECONDS);
+      MetricsRecord record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
       Assert.assertEquals(10, record.getValue());
 
@@ -54,12 +54,12 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector("context", "metric").gauge(1);
+      service.getCollector("context", "runId", "metric").gauge(1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish metrics with tags
-      service.getCollector("context", "metric").gauge(3, "tag1", "tag2");
-      service.getCollector("context", "metric").gauge(4, "tag2", "tag3");
+      service.getCollector("context", "runId", "metric").gauge(3, "tag1", "tag2");
+      service.getCollector("context", "runId", "metric").gauge(4, "tag2", "tag3");
 
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);

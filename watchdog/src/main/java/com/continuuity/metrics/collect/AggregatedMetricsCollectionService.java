@@ -3,8 +3,9 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.metrics.transport.MetricRecord;
+import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.weave.common.Threads;
+import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -37,27 +38,27 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       .build(new CacheLoader<MetricKey, AggregatedMetricsEmitter>() {
         @Override
         public AggregatedMetricsEmitter load(MetricKey key) throws Exception {
-          return new AggregatedMetricsEmitter(key.getContext(), key.getMetric());
+          return new AggregatedMetricsEmitter(key.getContext(), key.getRunId(), key.getMetric());
         }
       });
   }
 
   /**
-   * Publishes the given collection of {@link MetricRecord}. When this method returns, the
+   * Publishes the given collection of {@link com.continuuity.metrics.transport.MetricsRecord}. When this method returns, the
    * given {@link Iterator} will no longer be valid. This method should process the input
    * iterator and returns quickly. Any long operations should be run in a separated thread.
    * This method is guaranteed not to get concurrent calls.
    *
-   * @param metrics collection of {@link MetricRecord} to publish.
+   * @param metrics collection of {@link com.continuuity.metrics.transport.MetricsRecord} to publish.
    * @throws Exception if there is error raised during publish.
    */
-  protected abstract void publish(Iterator<MetricRecord> metrics) throws Exception;
+  protected abstract void publish(Iterator<MetricsRecord> metrics) throws Exception;
 
   @Override
   protected final void runOneIteration() throws Exception {
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.debug("Start log collection for timestamp {}", timestamp);
-    Iterator<MetricRecord> metricsItor = getMetrics(timestamp);
+    Iterator<MetricsRecord> metricsItor = getMetrics(timestamp);
 
     try {
       publish(metricsItor);
@@ -83,20 +84,20 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   @Override
-  public final MetricsCollector getCollector(String context, String metricName) {
-    return collectors.getUnchecked(new MetricKey(context, metricName));
+  public final MetricsCollector getCollector(String context, String runId, String metricName) {
+    return collectors.getUnchecked(new MetricKey(context, runId, metricName));
   }
 
-  private Iterator<MetricRecord> getMetrics(final long timestamp) {
+  private Iterator<MetricsRecord> getMetrics(final long timestamp) {
     final Iterator<? extends MetricsEmitter> iterator = collectors.asMap().values().iterator();
-    return new AbstractIterator<MetricRecord>() {
+    return new AbstractIterator<MetricsRecord>() {
       @Override
-      protected MetricRecord computeNext() {
+      protected MetricsRecord computeNext() {
         while (iterator.hasNext()) {
-          MetricRecord metricRecord = iterator.next().emit(timestamp);
-          if (metricRecord.getValue() != 0) {
-            LOG.debug("Emit metric {}", metricRecord);
-            return metricRecord;
+          MetricsRecord metricsRecord = iterator.next().emit(timestamp);
+          if (metricsRecord.getValue() != 0) {
+            LOG.debug("Emit metric {}", metricsRecord);
+            return metricsRecord;
           }
         }
         return endOfData();
@@ -109,15 +110,21 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    */
   private static final class MetricKey {
     private final String context;
+    private final String runId;
     private final String metric;
 
-    private MetricKey(String context, String metric) {
+    private MetricKey(String context, String runId, String metric) {
       this.context = context;
+      this.runId = runId;
       this.metric = metric;
     }
 
     String getContext() {
       return context;
+    }
+
+    private String getRunId() {
+      return runId;
     }
 
     String getMetric() {
@@ -134,12 +141,15 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       }
 
       MetricKey other = (MetricKey) o;
-      return context.equals(other.context) && metric.equals(other.metric);
+      return Objects.equal(context, other.context)
+        && Objects.equal(metric, other.metric)
+        && Objects.equal(runId, other.runId);
     }
 
     @Override
     public int hashCode() {
       int result = context.hashCode();
+      result = 31 * result + (runId != null ? runId.hashCode() : 0);
       result = 31 * result + metric.hashCode();
       return result;
     }

@@ -14,6 +14,8 @@ dependencies {
     compile libraries.google_gson
     compile libraries.google_guava
     compile libraries.google_guice
+    compile libraries.jsr_305
+    compile libraries.netty
     compile libraries.slf4j_api
     compile libraries.weave_common
     compile libraries.weave_zookeeper

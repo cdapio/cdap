@@ -12,11 +12,11 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.FetchedMessage;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaConsumer;
-import com.continuuity.internal.kafka.client.ZKKafkaClientService;
-import com.continuuity.metrics.transport.MetricRecord;
+import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
 import com.continuuity.weave.internal.utils.Networks;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
@@ -62,9 +62,9 @@ public class KafkaMetricsCollectionServiceTest {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClient);
     kafkaClient.startAndWait();
 
-    final TypeToken<MetricRecord> metricRecordType = TypeToken.of(MetricRecord.class);
+    final TypeToken<MetricsRecord> metricRecordType = TypeToken.of(MetricsRecord.class);
     final Schema schema = new ReflectionSchemaGenerator().generate(metricRecordType.getType());
-    DatumWriter<MetricRecord> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
+    DatumWriter<MetricsRecord> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
       .create(metricRecordType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
@@ -73,7 +73,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
-      collectionService.getCollector("test.context." + i, "processed").gauge(i);
+      collectionService.getCollector("test.context." + i, "runId", "processed").gauge(i);
     }
 
     // Sleep to make sure metrics get published
@@ -82,19 +82,19 @@ public class KafkaMetricsCollectionServiceTest {
     collectionService.stopAndWait();
 
     // Consumer from kafka
-    final Map<String, MetricRecord> metrics = Maps.newHashMap();
+    final Map<String, MetricsRecord> metrics = Maps.newHashMap();
     final Semaphore semaphore = new Semaphore(0);
     kafkaClient.getConsumer().prepare().addFromBeginning("metrics", 0).consume(new KafkaConsumer.MessageCallback() {
 
-      ReflectionDatumReader<MetricRecord> reader = new ReflectionDatumReader<MetricRecord>(schema, metricRecordType);
+      ReflectionDatumReader<MetricsRecord> reader = new ReflectionDatumReader<MetricsRecord>(schema, metricRecordType);
 
       @Override
       public void onReceived(Iterator<FetchedMessage> messages) {
         try {
           while (messages.hasNext()) {
             ByteBuffer payload = messages.next().getPayload();
-            MetricRecord metricRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
-            metrics.put(metricRecord.getContext(), metricRecord);
+            MetricsRecord metricsRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
+            metrics.put(metricsRecord.getContext(), metricsRecord);
             semaphore.release();
           }
         } catch (Exception e) {

@@ -8,33 +8,40 @@ import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaPublisher;
-import com.continuuity.metrics.transport.MetricRecord;
+import com.continuuity.metrics.transport.MetricsRecord;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 /**
- *
+ * A {@link AggregatedMetricsCollectionService} that publish {@link com.continuuity.metrics.transport.MetricsRecord} to kafka. The partition
+ * is determined by the metric context.
  */
+@Singleton
 public final class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
 
   private final KafkaClientService kafkaClient;
   private final String topic;
   private final KafkaPublisher.Ack ack;
-  private final DatumWriter<MetricRecord> recordWriter;
+  private final DatumWriter<MetricsRecord> recordWriter;
   private final ByteArrayOutputStream encoderOutputStream;
   private final Encoder encoder;
 
   private KafkaPublisher publisher;
 
+  @Inject
   public KafkaMetricsCollectionService(KafkaClientService kafkaClient,
-                                       String topic, DatumWriter<MetricRecord> recordWriter) {
+                                       @Named("metrics.kafka.topic") String topic,
+                                       DatumWriter<MetricsRecord> recordWriter) {
     this(kafkaClient, topic, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
   }
 
   public KafkaMetricsCollectionService(KafkaClientService kafkaClient, String topic,
-                                       KafkaPublisher.Ack ack, DatumWriter<MetricRecord> recordWriter) {
+                                       KafkaPublisher.Ack ack, DatumWriter<MetricsRecord> recordWriter) {
     this.kafkaClient = kafkaClient;
     this.topic = topic;
     this.ack = ack;
@@ -51,13 +58,13 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricRecord> metrics) throws Exception {
+  protected void publish(Iterator<MetricsRecord> metrics) throws Exception {
     encoderOutputStream.reset();
 
     KafkaPublisher.Preparer preparer = publisher.prepare(topic);
     while (metrics.hasNext()) {
       // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
-      MetricRecord record = metrics.next();
+      MetricsRecord record = metrics.next();
       recordWriter.encode(record, encoder);
       preparer.add(ByteBuffer.wrap(encoderOutputStream.toByteArray()), record.getContext());
       encoderOutputStream.reset();
