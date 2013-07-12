@@ -167,9 +167,9 @@ define([], function () {
 					var i, k, data, path, label;
 					for (i = 0; i < result.length; i ++) {
 
-						path = result[i].path;
+						path = result[i].path.split('?')[0];
 						label = map[path].get('aggregates')[path];
-						map[path].setMetric(label, result[i].result);
+						map[path].setMetric(label, result[i].result.data);
 
 					}
 
