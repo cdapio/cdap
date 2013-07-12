@@ -298,7 +298,6 @@ var singularREST = {
   /*
    * REST handler
    */
-
   this.app.get('/rest/*', function (req, res) {
 
     var path = req.url.slice(6).split('/');

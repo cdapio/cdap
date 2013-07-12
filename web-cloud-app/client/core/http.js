@@ -80,12 +80,12 @@ define([], function () {
 				data: JSON.stringify(object),
 				type: "POST",
 				contentType: "application/json"
-			}).done(function (response) {
+			}).done(function (response, status) {
 
 				if (response.error && response.error.fatal) {
 					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
 				} else {
-					callback(response.result, response.error);
+					callback(response, status);
 				}
 
 			}).fail(function (xhr) {
@@ -104,7 +104,7 @@ define([], function () {
 			var object = args[args.length - 2];
 
 			if (typeof object === 'object' && object.length) {
-				args[args.length - 2] = object; //{ 'params[]': JSON.stringify(object) };
+				args[args.length - 2] = object;
 			}
 
 			this.post.apply(this, args);

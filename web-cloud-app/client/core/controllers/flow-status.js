@@ -79,44 +79,6 @@ define([], function () {
 			}
 		},
 
-		/*
-		__currentFlowletLabel: 'processed.count',
-
-		__setFlowletLabel: function (flowlet, value) {
-
-			if (!flowlet) {
-				return;
-			}
-
-			var fs = flowlet.streams;
-
-			if (fs) {
-
-				for (var j = 0; j < fs.length; j ++) {
-					fs[j].set('metrics', value);
-				}
-
-			} else {
-				flowlet.set('metrics', value);
-			}
-
-			value = C.Util.number(value);
-			flowlet.set('label', value);
-
-		},
-
-		__resetFlowletLabels: function () {
-
-			var content = this.elements.Flowlet.content;
-			content.forEach(function (item) {
-
-				item.set('label', '0');
-
-			});
-
-		},
-		*/
-
 		updateStats: function () {
 
 			this.get('model').updateState(this.HTTP);
@@ -132,7 +94,6 @@ define([], function () {
 		/**
 		 * Lifecycle
 		 */
-
 		start: function (app, id, version, config) {
 
 			var self = this;
@@ -173,7 +134,6 @@ define([], function () {
 		/**
 		 * Action handlers from the View
 		 */
-
 		config: function () {
 
 			var self = this;

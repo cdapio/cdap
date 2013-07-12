@@ -69,7 +69,9 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 			var path = findPath(arguments);
 			var object = findObject(arguments);
 			var callback = findCallback(arguments);
-			var result = [];
+			var response = [];
+
+			console.log(object);
 
 			if (path === '/metrics') {
 
@@ -82,20 +84,20 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 
 						if (query.count) {
 							TimeSeries(path, query, function (status, metricsResult) {
-								result.push(metricsResult);
+								response.push(metricsResult);
 							});
 						} else if (query.aggregate) {
 							Counters(path, query, function (status, metricsResult) {
-								result.push(metricsResult);
+								response.push(metricsResult);
 							});
 						} else if (query.summary) {
 							Summary(path, query, function (status, metricsResult) {
-								result.push(metricsResult);
+								response.push(metricsResult);
 							});
 						}
 
 					}
-					callback(result, 200);
+					callback(response, 200);
 
 				} else {
 					callback(null, 500);
@@ -103,8 +105,8 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 
 			} else {
 
-				var result = HttpRouter.getResult(path);
-				callback(result, 200);
+				var response = HttpRouter.getResult(path);
+				callback(response, 200);
 
 			}
 
@@ -116,9 +118,6 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 			args.unshift('rpc');
 
 			var object = args[args.length - 2];
-			if (typeof object === 'object' && object.length) {
-				args[args.length - 2] = { 'params[]': object };
-			}
 
 			this.post.apply(this, args);
 

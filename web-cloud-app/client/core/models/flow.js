@@ -148,14 +148,14 @@ define([], function () {
 				model = C.Flow.create(model);
 
 				http.rpc('runnable', 'status', [app_id, flow_id, -1],
-					function (result, error) {
+					function (response, error) {
 
-						if (error) {
+					if (response.error) {
 							promise.reject(error);
-						} else {
-							model.set('currentState', result.status);
+					} else {
+							model.set('currentState', response.result.status);
 							promise.resolve(model);
-						}
+					}
 
 				});
 
