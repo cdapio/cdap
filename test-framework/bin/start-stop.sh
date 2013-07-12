@@ -1,12 +1,15 @@
 #!/bin/sh
-if [ $# -lt 1 ]
+if [ $# -lt 2 ]
 then
-    echo "Usage: start-stop.sh <start|stop>"
+    echo "Usage: start-stop.sh <start|stop>  <APP_HOME>"
     exit 1
 fi
 
+APP_HOME=$2
+
 #setup environment, compile if necessary
 source common.sh
+
 $APP_HOME/bin/reactor-client $1 --application CountAndFilterWords  --flow CountAndFilterWords
 $APP_HOME/bin/reactor-client $1 --application CountCounts --flow CountCounts
 $APP_HOME/bin/reactor-client $1 --application CountOddAndEven --flow CountOddAndEven

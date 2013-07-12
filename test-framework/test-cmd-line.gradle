@@ -1,31 +1,57 @@
 apply from: "test-framework.gradle"
+//apply from: "../gradle/"
 
+
+// TODO: externalize.
 project.ext {
-    if (!project.hasProperty("appHome")) {
-        logger.println("APP_HOME NOT SET.")
-    }
+    appHome = '/Users/alex/distributions/continuuity-developer-suite-1.6.0-SNAPSHOT'
+}
 
-    appHome = project.property("appHome")
+// TODO: check if testing single node, if so compile and deploy in test folder, if running remote, ignore.
+
+// Clear all data from reactor
+task cleanReactor(type: Delete) {
+        delete "${project.ext.appHome}/data"
+}
+
+task stopReactor << {
+    command = ["${project.ext.appHome}/bin/continuuity-reactor stop"]
+
+    if (executeCommand(command) != 0) {
+        throw new GradleScriptException("[ERROR]: Unable to stop reactor", null)
+    }
+    else {
+        logger.println('[INFO]: Reactor stopped.')
+    }
+}
+
+cleanReactor.dependsOn stopReactor
+
+task startReactor << {
+    command = ["${project.ext.appHome}/bin/continuuity-reactor start"]
+
+    if (executeCommand(command) != 0) {
+        throw new GradleScriptException("[ERROR] Unable to start reactor.", null)
+    }
+    else {
+        logger.println('[INFO]: Reactor started.')
+    }
 }
 
 task deployApps << {
+    command = ["${projectDir}/bin/deploy.sh ${project.ext.appHome}"]
 
-    restart = ["$project.ext.appHome/bin/continuuity-reactor restart"]
-
-    if (executeCommand(restart) != 0) {
-        throw new GradleScriptException("Error starting reactor: $restart", null)
-    } else {
-        logger.println('Reactor started')
-    }
-
-    deploy = [
-            "$project.ext.appHome/bin/reactor-client deploy --archive $project.ext.appHome/examples/WordCount/WordCount.jar"
-    ]
-
-    if (executeCommand(deploy) != 0) {
-        throw new GradleScriptException("Error deploying app. Command: $deploy", null)
+    if (executeCommand(command) != 0) {
+        throw new GradleScriptException("[ERROR]: deploying applications. Command: $deploy", null)
     }
     else {
-        logger.println('Application deployed')
+        logger.println('[INFO]: Applications deployed.')
     }
 }
+
+task startApps(dependsOn: ['stopReactor', 'cleanReactor', 'startReactor', 'deployApps'] ) << {
+
+
+}
+
+

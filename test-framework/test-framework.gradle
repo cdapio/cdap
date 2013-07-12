@@ -1,9 +1,5 @@
 // centralized logging properties
 apply plugin: 'java'
-
-
-// This line will enable our plugin for
-// the build that imports this script.
 apply plugin: TestFrameworkPlugin
 
 /**
@@ -32,6 +28,8 @@ class TestFrameworkPluginConvention {
     def executeCommand(command) {
         def runnableCommand = command.join(' ')
         def proc = runnableCommand.execute();
+        proc.in.eachLine {line -> println line}
+        proc.err.eachLine {line -> println '[ERROR]: ' + line}
         proc.waitFor()
         proc.exitValue()
     }
