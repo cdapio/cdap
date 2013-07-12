@@ -85,7 +85,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
   @Override
   public void write(byte[] key, Map<byte[], T> columnValues) throws OperationException {
     // write to key value table
-    Map<byte[], byte[]> rawColumnValues = Maps.newHashMap();
+    Map<byte[], byte[]> rawColumnValues = Maps.newTreeMap(new Bytes.ByteArrayComparator());
     for(Map.Entry<byte[], T> entry : columnValues.entrySet()) {
       rawColumnValues.put(entry.getKey(), encode(entry.getValue()));
     }
@@ -113,14 +113,14 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
   private void writeRaw(byte[] key, byte[] value) throws OperationException {
     // write to table with default Column
-    Map<byte[], byte[]> values = Maps.newHashMap();
+    Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
     values.put(this.KEY_COLUMN, value);
     this.table.write(key, values);
   }
 
   private void writeRawColumn(byte[] key, byte[] col, byte[] value) throws OperationException {
     // write to table with default Column
-    Map<byte[], byte[]> values = Maps.newHashMap();
+    Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
     values.put(col, value);
     this.table.write(key, values);
   }
