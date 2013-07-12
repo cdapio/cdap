@@ -233,7 +233,7 @@ define([], function () {
 
 						} else {
 
-							data = result[i].result.result.data, k = data.length;
+							data = result[i].result.data, k = data.length;
 							while(k --) {
 								data[k] = data[k].value;
 							}
