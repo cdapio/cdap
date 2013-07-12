@@ -225,7 +225,7 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], Map
   }
 
   @Override
-  public SplitReader<byte[],  Map<byte[], T>> createSplitReader(Split split) {
+  public SplitReader<byte[], Map<byte[], T>> createSplitReader(Split split) {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }

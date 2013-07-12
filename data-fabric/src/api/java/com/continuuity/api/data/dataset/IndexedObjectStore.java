@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This dataset extends ObjectStore that can be accessed by an index. Look by the index will return
+ * This dataset extends ObjectStore to support access to objects via indices. Look by the index will return
  * all the objects stored in the object store that has the index value.
  *
  * The dataset uses two tables: object store - to store the actual data, and a second table for the index.
@@ -95,7 +95,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   }
 
   /**
-   * Read all the objects from objectStore via index. Returns all the values that match the value in the indexValue.
+   * Read all the objects from objectStore via index. Returns all the objects that match the indexValue.
    * Returns an empty list if no value is found. Never returns null.
    * @param indexValue value for the lookup.
    * @return List of Objects matching the indexValue.
@@ -151,5 +151,4 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   public void pruneIndex(byte[] key, byte[] index) throws OperationException {
     this.index.write(new Delete(index, key));
   }
-
 }
