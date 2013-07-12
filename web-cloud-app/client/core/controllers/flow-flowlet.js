@@ -26,7 +26,9 @@ define([], function () {
 			for (var i = 0; i < flow.flowlets.length; i ++) {
 
 				if (flow.flowlets[i].name === model.name) {
+					flow.flowlets[i].app = flow.get('app');
 					flow.flowlets[i].flow = flow.get('id');
+
 					this.set('model', C.Flowlet.create(flow.flowlets[i]));
 					break;
 				}
@@ -61,12 +63,18 @@ define([], function () {
 			for (var i in streams) {
 				if (streams[i].second === 'IN') {
 					inputs.push({
-						'name': i,
+						'app': flow.get('app'),
+						'flow': flow.get('id'),
+						'flowlet': model.get('id'),
+						'id': i,
 						'contrib': findContributors('to', model.name, i)
 					});
 				} else if (streams[i].second === 'OUT') {
 					outputs.push({
-						'name': i,
+						'app': flow.get('app'),
+						'flow': flow.get('id'),
+						'flowlet': model.get('id'),
+						'id': i,
 						'contrib': findContributors('from', model.name, i)
 					});
 				}

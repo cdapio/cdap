@@ -432,10 +432,10 @@
                           {{/each}}
                         </td>
                         <td class="flowlet-popup-input">
-                          {{name}}
+                          {{id}}
                         </td>
                         <td class="flowlet-blue">
-                          {{view C.Embed.Chart entityType="Queue" title="Inbound Tuples per Second" width="305" entityIdBinding=name metrics="/process/events/flowlets/ins/{parent}/{id}" classNames="sparkline-flowlet-box"}}
+                          {{view C.Embed.Chart entityType="Queue" title="Inbound Tuples per Second" width="305" entityIdBinding=id metrics="/process/events/{app}/flows/{parent}/{flowlet}/ins/{id}" classNames="sparkline-flowlet-box"}}
                         </td>
                       </tr>
                       {{/each}}
@@ -456,18 +456,18 @@
             <table style="width: 100%">
               <tr>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart entityType="Flowlet" width="305" metrics="/process/events/flowlets/{id}" classNames="sparkline-flowlet-box" title="Processed"}}
+                  {{view C.Embed.Chart entityType="Flowlet" width="305" metrics="/process/events/{app}/flows/{parent}/{id}" classNames="sparkline-flowlet-box" title="Processed"}}
                 </td>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart entityType="Flowlet" width="305" metrics="/store/ops/flows/{parent}/flowlets/{id}" classNames="sparkline-flowlet-box" title="Data Operations"}}
+                  {{view C.Embed.Chart entityType="Flowlet" width="305" metrics="/store/ops/{app}/flows/{parent}/{id}" classNames="sparkline-flowlet-box" title="Data Operations"}}
                 </td>
               </tr>
               <tr>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart entityType="Flowlet" width="305" unit="percent" metrics="/process/busyness/flowlets/{id}" classNames="sparkline-flowlet-box" title="Busyness"}}
+                  {{view C.Embed.Chart entityType="Flowlet" width="305" unit="percent" metrics="/process/busyness/{app}/flows/{parent}/{id}" classNames="sparkline-flowlet-box" title="Busyness"}}
                 </td>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart entityType="Flowlet" width="305" metrics="/process/errors/flowlets/{id}" classNames="sparkline-flowlet-box" title="Errors"}}
+                  {{view C.Embed.Chart entityType="Flowlet" width="305" metrics="/process/errors/{app}/flows/{parent}/{id}" classNames="sparkline-flowlet-box" title="Errors"}}
                 </td>
               </tr>
             </table>
@@ -484,10 +484,10 @@
                       {{#each model.outputs}}
                       <tr>
                       <td class="flowlet-blue">
-                      {{view C.Embed.Chart entityType="Queue" title="Outbound Tuples per Second" width="305" entityIdBinding=name metrics="/process/events/flowlets/outs/{parent}/{id}" classNames="sparkline-flowlet-box"}}
+                      {{view C.Embed.Chart entityType="Queue" title="Outbound Tuples per Second" width="305" entityIdBinding=id metrics="/process/events/{app}/flows/{parent}/{flowlet}/outs/{id}" classNames="sparkline-flowlet-box"}}
                       </td>
                       <td class="flowlet-popup-input">
-                      {{name}}
+                      {{id}}
                       </td>
                       <td>
                       {{#each contrib}}

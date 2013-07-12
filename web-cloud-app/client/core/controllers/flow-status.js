@@ -19,8 +19,6 @@ define([], function () {
 
 				flowlets[i].app = model.get('app');
 
-				console.log(flowlets[i]);
-
 				objects.push(C.Flowlet.create(flowlets[i]));
 				objects[i].trackMetric('/process/events/{app}/flows/{parent}/flowlets/{id}', 'aggregates', 'events');
 
