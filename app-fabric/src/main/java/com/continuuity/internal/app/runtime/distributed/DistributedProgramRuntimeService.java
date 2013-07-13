@@ -132,6 +132,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       case PROCEDURE:
         programController = new ProcedureWeaveProgramController(programId, controller);
         break;
+      case MAPREDUCE:
+        programController = new MapReduceWeaveProgramController(programId, controller);
+        break;
     }
     return programController == null ? null : programController.startListen();
   }
