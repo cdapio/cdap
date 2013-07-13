@@ -107,7 +107,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * Delete an index that is no longer needed. After deleting the index the lookup using the index value will no
    * longer return the object.
    * @param key key for the object.
-   * @param index index to be pruned.
+   * @param indexValue index to be pruned.
    * @throws OperationException incase of errors.
    */
   public void pruneIndex(byte[] key, byte[] indexValue) throws OperationException {
