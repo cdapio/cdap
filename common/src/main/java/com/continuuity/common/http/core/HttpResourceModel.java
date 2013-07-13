@@ -91,7 +91,7 @@ public final class HttpResourceModel {
                             String.format("Problem accessing: %s. Reason: Method Not Allowed", request.getUri()));
       }
     } catch (Throwable e) {
-      LOG.error("Error processing path {} {}", request.getUri(), e);
+      LOG.error("Error processing path {} {}", request.getUri(), e, e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                           String.format("Error in executing path: %s", request.getUri()));
     }
