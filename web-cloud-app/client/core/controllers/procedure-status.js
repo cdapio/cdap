@@ -131,7 +131,7 @@ define([], function () {
 			}
 		},
 
-		"delete": function () {
+		delete: function () {
 
 			if (this.get('model').get('currentState') !== 'STOPPED' &&
 				this.get('model').get('currentState') !== 'DEPLOYED') {

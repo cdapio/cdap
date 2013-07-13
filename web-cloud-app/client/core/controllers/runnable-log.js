@@ -18,6 +18,7 @@ define([], function () {
 			var app = this.get('model').app;
 			var id = this.get('model').name;
 			var self = this;
+			var fromOffset = 0;
 
 			function logInterval () {
 
@@ -27,6 +28,15 @@ define([], function () {
 				}
 
 				resize();
+				C.get('monitor', {
+					method: 'getLogPrev',
+					params: [app, id, fromOffset, 10]
+				}, function(error, response) {
+
+					console.log(error);
+					console.log(response);
+
+				});
 
 				C.get('monitor', {
 					method: 'getLog',
