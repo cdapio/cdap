@@ -60,6 +60,16 @@ final class MetricsRequestParser {
     }
   }
 
+  private enum StoreType {
+    APPS,
+    DATASETS;
+  }
+
+  private enum CollectType {
+    APPS,
+    STREAMS;
+  }
+
   /**
    * Parses the given uri into {@link MetricsRequest}.
    *
@@ -81,13 +91,13 @@ final class MetricsRequestParser {
       // Then, depending on the contextType, the parsing would be different.
       switch (contextType) {
         case COLLECT:
-          // TODO
+          parseCollect(pathParts, builder);
           break;
         case PROCESS:
           parseProgram(metricName, pathParts, builder);
           break;
         case STORE:
-          // TODO
+          parseStore(pathParts, builder);
           break;
         case QUERY:
           parseProgram(metricName, pathParts, builder);
@@ -98,6 +108,35 @@ final class MetricsRequestParser {
     parseQueryString(requestURI, builder);
 
     return builder.build();
+  }
+
+  private static MetricsRequestBuilder parseCollect(Iterator<String> pathParts, MetricsRequestBuilder builder) {
+    // 3. Collection type
+    CollectType collectType = CollectType.valueOf(pathParts.next().toUpperCase());
+
+    if (collectType == CollectType.APPS) {
+      // 4. If it is apps, then it's appId
+      return builder.setContextPrefix(pathParts.next());
+    }
+
+    // 5. Stream Id
+    builder.setTagPrefix(pathParts.next());
+
+    if (!pathParts.hasNext()) {
+      // If no more parts, it's the metric for the whole stream
+      return builder;
+    }
+
+    // 6. App ID
+    String context = pathParts.next();
+
+    // 7. Program type
+    context += "." + ProgramType.valueOf(pathParts.next().toUpperCase()).getId();
+
+    // 7. Program ID
+    context += "." + pathParts.next();
+
+    return builder.setContextPrefix(context);
   }
 
   /**
@@ -154,8 +193,67 @@ final class MetricsRequestParser {
       }
     }
 
-    builder.setContextPrefix(contextPrefix);
-    return builder.setMetricPrefix(metricName);
+    return builder.setContextPrefix(contextPrefix)
+                  .setMetricPrefix(metricName);
+  }
+
+  private static MetricsRequestBuilder parseStore(Iterator<String> pathParts, MetricsRequestBuilder builder) {
+    // 3. Either "apps" or "datasets"
+    StoreType storeType = StoreType.valueOf(pathParts.next().toUpperCase());
+
+    // 4. The id, based on the storeType, it could be AppId or DatasetId
+    String id = pathParts.next();
+
+    if (!pathParts.hasNext()) {
+      return storeType == StoreType.APPS ? builder.setContextPrefix(id) : builder.setTagPrefix(id);
+    }
+
+    // If it is "apps" type query
+    if (storeType == StoreType.APPS) {
+      String context = id;
+      // 5. It must be one of the program type
+      ProgramType programType = ProgramType.valueOf(pathParts.next().toUpperCase());
+      context += "." + programType.getId();
+
+      // 6. Next is the program ID
+      context += "." + pathParts.next();
+
+      if (!pathParts.hasNext()) {
+        // If nothing more, it's the program metrics for all datasets
+        return builder.setContextPrefix(context);
+      }
+
+      if (programType == ProgramType.FLOWS) {
+        // 7. Flowlet ID
+        context += "." + pathParts.next();
+        if (!pathParts.hasNext()) {
+          // If nothing more, it's the flowlet metrics for all datasets
+          return builder.setContextPrefix(context);
+        }
+      }
+
+      // 7/8. It must be "datasets"
+      Preconditions.checkArgument(StoreType.valueOf(pathParts.next().toUpperCase()) == StoreType.DATASETS,
+                                  "It must be \"%s\".", StoreType.DATASETS.name().toLowerCase());
+
+      return builder.setContextPrefix(context)
+                    .setTagPrefix(pathParts.next());
+    }
+
+    // Otherwise, it is "datasets" type query.
+
+    builder.setTagPrefix(id);
+
+    // 5. Next is appID
+    String context = pathParts.next();
+
+    // 6. Program type
+    context += "." + ProgramType.valueOf(pathParts.next().toUpperCase()).getId();
+
+    // 7. Program ID
+    context += "." + pathParts.next();
+
+    return builder.setContextPrefix(context);
   }
 
   /**

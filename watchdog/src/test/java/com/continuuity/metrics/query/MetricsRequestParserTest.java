@@ -63,4 +63,60 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("runId", request.getRunId());
     Assert.assertEquals(MetricsRequest.Type.SUMMARY, request.getType());
   }
+
+  @Test
+  public void testStoreApp() {
+    MetricsRequest request = MetricsRequestParser.parse(URI.create("/store/bytes/apps/app1?aggregate=true"));
+    Assert.assertEquals("app1", request.getContextPrefix());
+    Assert.assertEquals("bytes", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(URI.create("/store/bytes/apps/app1/flows/flowId?aggregate=true"));
+    Assert.assertEquals("app1.f.flowId", request.getContextPrefix());
+
+    request = MetricsRequestParser.parse(
+                        URI.create("/store/bytes/apps/app1/flows/flowId/flowletId/datasets/dataset1?aggregate=true"));
+    Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
+    Assert.assertEquals("bytes", request.getMetricPrefix());
+    Assert.assertEquals("dataset1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+                        URI.create("/store/reads/apps/app1/mapreduce/jobId/datasets/dataset1?aggregate=true"));
+    Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("dataset1", request.getTagPrefix());
+  }
+
+  @Test
+  public void testStoreDataset() {
+    MetricsRequest request = MetricsRequestParser.parse(
+                                      URI.create("/store/reads/datasets/dataset1/app1/flows/flowId?aggregate=true"));
+    Assert.assertEquals("app1.f.flowId", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("dataset1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+                                    URI.create("/store/reads/datasets/dataset2/app1/mapreduce/jobId?aggregate=true"));
+    Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("dataset2", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(URI.create("/store/bytes/datasets/dataset2?aggregate=true"));
+    Assert.assertNull(request.getContextPrefix());
+    Assert.assertEquals("dataset2", request.getTagPrefix());
+  }
+
+  @Test
+  public void testCollect() {
+    MetricsRequest request = MetricsRequestParser.parse(
+                                URI.create("/collect/events/apps/app1?aggregate=true"));
+    Assert.assertEquals("app1", request.getContextPrefix());
+    Assert.assertEquals("events", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(URI.create("/collect/events/streams/stream1?aggregate=true"));
+    Assert.assertNull(request.getContextPrefix());
+    Assert.assertEquals("stream1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(URI.create("/collect/events/streams/stream1/app1/flows/flow1?aggregate=true"));
+    Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
+  }
 }

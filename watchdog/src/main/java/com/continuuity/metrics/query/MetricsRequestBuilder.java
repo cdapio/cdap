@@ -13,6 +13,7 @@ final class MetricsRequestBuilder {
   private String contextPrefix;
   private String runId;
   private String metricPrefix;
+  private String tagPrefix;
   private long startTime;
   private long endTime;
   private MetricsRequest.Type type;
@@ -37,6 +38,11 @@ final class MetricsRequestBuilder {
     return this;
   }
 
+  MetricsRequestBuilder setTagPrefix(String tagPrefix) {
+    this.tagPrefix = tagPrefix;
+    return this;
+  }
+
   MetricsRequestBuilder setStartTime(long startTime) {
     this.startTime = startTime;
     return this;
@@ -58,7 +64,7 @@ final class MetricsRequestBuilder {
   }
 
   MetricsRequest build() {
-    return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricPrefix, startTime, endTime, type, count);
+    return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricPrefix, tagPrefix, startTime, endTime, type, count);
   }
 
   private static class MetricsRequestImpl implements MetricsRequest {
@@ -66,17 +72,19 @@ final class MetricsRequestBuilder {
     private final String contextPrefix;
     private final String runId;
     private final String metricPrefix;
+    private final String tagPrefix;
     private final long startTime;
     private final long endTime;
     private final Type type;
     private final int count;
 
     public MetricsRequestImpl(URI requestURI, String contextPrefix, String runId, String metricPrefix,
-                              long startTime, long endTime, Type type, int count) {
+                              String tagPrefix, long startTime, long endTime, Type type, int count) {
       this.contextPrefix = contextPrefix;
       this.requestURI = requestURI;
       this.runId = runId;
       this.metricPrefix = metricPrefix;
+      this.tagPrefix = tagPrefix;
       this.startTime = startTime;
       this.endTime = endTime;
       this.type = type;
@@ -101,6 +109,11 @@ final class MetricsRequestBuilder {
     @Override
     public String getMetricPrefix() {
       return metricPrefix;
+    }
+
+    @Override
+    public String getTagPrefix() {
+      return tagPrefix;
     }
 
     @Override

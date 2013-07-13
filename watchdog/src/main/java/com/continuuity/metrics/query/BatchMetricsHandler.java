@@ -37,6 +37,7 @@ import java.io.Reader;
 import java.net.URI;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Class for handling batch requests for time series data.
@@ -59,6 +60,10 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
 
   // It's a cache from metric table resolution to MetricsTable
   private final LoadingCache<Integer, MetricsTable> metricsTableCache;
+
+
+  // TODO: For mocking, removing later
+  private final AtomicLong aggregate = new AtomicLong();
 
   @Inject
   public BatchMetricsHandler(final MetricsTableFactory metricsTableFactory) {
@@ -88,19 +93,25 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     // Naive approach, just fire one scan per request
     JsonArray output = new JsonArray();
     for (MetricsRequest metricsRequest : metricsRequests) {
+      Object resultObj = null;
       if (metricsRequest.getType() == MetricsRequest.Type.TIME_SERIES) {
         TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(metricsRequest.getStartTime(),
                                                                         metricsRequest.getEndTime());
         for (int i = 0; i < metricsRequest.getCount(); i++) {
           builder.addData(metricsRequest.getStartTime() + i, new Random().nextInt(80) + 20);
         }
-        JsonObject json = new JsonObject();
-        json.addProperty("path", metricsRequest.getRequestURI().toString());
-        json.add("result", GSON.toJsonTree(builder.build()));
-        json.add("error", JsonNull.INSTANCE);
+        resultObj = builder.build();
 
-        output.add(json);
+      } else if (metricsRequest.getType() == MetricsRequest.Type.AGGREGATE) {
+        resultObj = new AggregateResponse(aggregate.addAndGet(new Random().nextInt(100)));
       }
+
+      JsonObject json = new JsonObject();
+      json.addProperty("path", metricsRequest.getRequestURI().toString());
+      json.add("result", GSON.toJsonTree(resultObj));
+      json.add("error", JsonNull.INSTANCE);
+
+      output.add(json);
     }
 
     LOG.debug("Response: {}", output);

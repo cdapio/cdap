@@ -27,6 +27,8 @@ interface MetricsRequest {
 
   String getMetricPrefix();
 
+  String getTagPrefix();
+
   long getStartTime();
 
   long getEndTime();

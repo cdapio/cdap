@@ -12,7 +12,6 @@ import com.continuuity.metrics.data.HBaseFilterableOVCTableHandle;
 import com.continuuity.metrics.guice.AbstractMetricsTableModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
-import com.continuuity.test.hbase.HBaseTestBase;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -36,6 +35,7 @@ public class BatchMetricsHandlerTest { //extends HBaseTestBase {
   public void testBatchHandler() throws InterruptedException {
     MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
     collectionService.startAndWait();
+
     MetricsQueryService queryService = injector.getInstance(MetricsQueryService.class);
     queryService.startAndWait();
 
@@ -61,8 +61,8 @@ public class BatchMetricsHandlerTest { //extends HBaseTestBase {
     cConf.set("metrics.query.server.port", "56883");
     injector = Guice.createInjector(new ConfigModule(cConf), //, HBaseTestBase.getConfiguration()),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
-                                    new MetricsQueryRuntimeModule().getInMemoryModules(),
-                                    new MetricsClientRuntimeModule().getInMemoryModules());
+                                    new MetricsQueryRuntimeModule().getSingleNodeModules(),
+                                    new MetricsClientRuntimeModule().getSingleNodeModules());
 //                                    new AbstractMetricsQueryModule() {
 //                                      @Override
 //                                      protected void bindMetricsTable() {
