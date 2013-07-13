@@ -20,8 +20,7 @@ import java.util.Map;
  * all the objects stored in the object store that has the index value.
  *
  * The dataset uses two tables: object store - to store the actual data, and a second table for the index.
- * All the operations are performed asynchronously. The responsibility of pruning the stale index values lies
- * with the user of this data set.
+ * The responsibility of pruning the stale index values lies with the user of this data set.
  *
  * @param <T> the type of objects in the store
  */
@@ -45,35 +44,11 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   }
 
   /**
-   * Construct IndexObjectStore with name and type.
-   * @param name name of the dataset
-   * @param type type of the object stored in the dataset
-   * @param table existing table
-   * @throws UnsupportedTypeException if the type cannot be supported
-   */
-  public IndexedObjectStore(String name, Type type, Table table) throws UnsupportedTypeException {
-    super(name, type, table);
-    this.init(name);
-    this.index = new Table(this.indexName);
-  }
-
-  /**
    * Constructor from a data set specification.
    * @param spec the specification
    */
   public IndexedObjectStore(DataSetSpecification spec) {
     super(spec);
-    this.init(spec.getName());
-    this.index = new Table(spec.getSpecificationFor(this.indexName));
-  }
-
-  /**
-   * Constructor from specification and existing table for storing objects.
-   * @param spec the data set specification
-   * @param table existing table
-   */
-  protected IndexedObjectStore(DataSetSpecification spec, Table table) {
-    super(spec, table);
     this.init(spec.getName());
     this.index = new Table(spec.getSpecificationFor(this.indexName));
   }
@@ -88,14 +63,6 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
       create();
   }
 
-  @Override
-  public T read(byte[] key) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.read(key);
-  }
-
   /**
    * Read all the objects from objectStore via index. Returns all the objects that match the indexValue.
    * Returns an empty list if no value is found. Never returns null.
@@ -104,10 +71,6 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * @throws OperationException in case of error.
    */
   public List<T> readAllByIndex(byte[] indexValue) throws OperationException {
-   if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-
     List<T> resultList = Lists.newArrayList();
     //Lookup the index and get all the keys in primary
     Read idxRead = new Read(indexValue, null, null);
@@ -118,7 +81,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
       for (byte[] column : result.getValue().keySet()) {
         if (Arrays.equals(EXISTS, result.getValue().get(column))) {
           // construct a new read with this column as the row key
-          T obj = this.delegate.read(column);
+          T obj = read(column);
           resultList.add(obj);
         }
       }
@@ -134,13 +97,10 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * @throws OperationException incase of errors.
    */
   public void write(byte[] key, T object, byte[][] indexValues) throws OperationException {
-   if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
     for (byte[] indexValue : indexValues) {
       this.index.write(new Write(indexValue, key, EXISTS));
     }
-    this.delegate.write(key, object);
+    write(key, object);
   }
 
   /**
@@ -150,7 +110,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * @param index index to be pruned.
    * @throws OperationException incase of errors.
    */
-  public void pruneIndex(byte[] key, byte[] index) throws OperationException {
-    this.index.write(new Delete(index, key));
+  public void pruneIndex(byte[] key, byte[] indexValue) throws OperationException {
+    this.index.write(new Delete(indexValue, key));
   }
 }
