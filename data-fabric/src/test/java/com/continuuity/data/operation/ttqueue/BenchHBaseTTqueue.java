@@ -17,7 +17,7 @@ public class BenchHBaseTTqueue extends BenchAbstractHBaseTTqueue {
     try {
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+      conf.setBoolean(DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, false);
       injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
       handle = injector.getInstance(OVCTableHandle.class);
     } catch (Exception e) {

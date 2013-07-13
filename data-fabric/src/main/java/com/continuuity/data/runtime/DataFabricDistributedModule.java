@@ -31,10 +31,8 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   private final Configuration hbaseConf;
 
-  public static final String CONF_ENABLE_NATIVE_QUEUES =
-      "fabric.queue.hbase.native";
-  
-  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
+  public static final String CONFIG_ENABLE_NATIVE_HBASE = "data.hbase.xaction.native";
+  private static final boolean DEFAULT_ENABLE_NATIVE_HBASE = false;
 
   /**
    * Create a module with default configuration for HBase and Continuuity.
@@ -89,7 +87,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
     // Check if native hbase queue handle should be used
-    if (conf.getBoolean(CONF_ENABLE_NATIVE_QUEUES, CONF_ENABLE_NATIVE_QUEUES_DEFAULT)) {
+    if (conf.getBoolean(CONFIG_ENABLE_NATIVE_HBASE, DEFAULT_ENABLE_NATIVE_HBASE)) {
       ovcTableHandle = HBaseNativeOVCTableHandle.class;
     }
     Log.info("Table Handle is " + ovcTableHandle.getName());
