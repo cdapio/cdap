@@ -844,7 +844,7 @@
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/collect/events/stream/{id}"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/collect/events/streams/{id}"}}</td>
           </tr>
         {{/each}}
       </tbody>
