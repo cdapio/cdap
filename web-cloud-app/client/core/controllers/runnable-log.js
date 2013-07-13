@@ -4,9 +4,18 @@
 
 define([], function () {
 
+	var ENTITY_MAP = {
+		'FLOW': 1
+	};
+
 	var Controller = Em.Controller.extend({
 
+
 		load: function () {
+			this.set('fromOffset', -1);
+			this.set('maxSize', 100);
+			this.set('initialOffset', null);
+			var self = this;
 
 			function resize () {
 				$('#logView').css({height: ($(window).height() - 240) + 'px'});
@@ -17,8 +26,8 @@ define([], function () {
 			var goneOver = false;
 			var app = this.get('model').app;
 			var id = this.get('model').name;
-			var self = this;
-			var fromOffset = 0;
+			var fromOffset = this.get('fromOffset');
+			var maxSize = this.get('maxSize');
 
 			function logInterval () {
 
@@ -28,49 +37,39 @@ define([], function () {
 				}
 
 				resize();
-				C.get('monitor', {
-					method: 'getLogPrev',
-					params: [app, id, fromOffset, 10]
-				}, function(error, response) {
 
-					console.log(error);
-					console.log(response);
+				self.HTTP.get('logs', 'getLogNext', app, id , ENTITY_MAP['FLOW'],
+					{
+						fromOffset: fromOffset,
+						maxSize: maxSize
+					},
+					function (response) {
 
-				});
-
-				C.get('monitor', {
-					method: 'getLog',
-					params: [app, id, 1024 * 10]
-				}, function (error, response) {
-
-					if (C.currentPath !== self.get('expectedPath')) {
-						clearInterval(self.interval);
-						return;
-					}
-
-					if (error) {
-
-						response = JSON.stringify(error);
-
-					} else {
-
-						var items = response.params;
-						if (items) {
-							for (var i = 0; i < items.length; i ++) {
-								items[i] = '<code>' + items[i] + '</code>';
-							}
-							response = items.join('');
-
-							if (items.length === 0) {
-								response = '[ No Log Messages ]';
-							}
-						} else {
-							response = '[ No Log Messages ]';
+						if (C.currentPath !== self.get('expectedPath')) {
+							clearInterval(self.interval);
+							return;
 						}
 
-					}
+						if(response.error) {
+							response = JSON.stringify(error);
+						}
 
-					$('#logView').html(response);
+
+						if (response.result.length) {
+							for (var i = 0; i < response.result.length; i ++) {
+								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
+								fromOffset = response.result[i].offset > fromOffset ? response.result[i].offset : fromOffset;
+								if (!self.get('initialOffset')) {
+									console.log('got called here')
+									self.set('initialOffset', response.result[i].offset);
+								}
+							}
+							response = response.result.map(function (entry) {
+								return entry.logLine;
+							}).join('');
+
+						}
+						$('#logView').append(response);
 					var textarea = $('#logView');
 
 					setTimeout(function () {
@@ -91,8 +90,12 @@ define([], function () {
 						}
 
 					}, C.EMBEDDABLE_DELAY);
+					}
+				);
 
-				});
+				self.set('fromOffset', fromOffset);
+				self.set('maxSize', maxSize);
+
 			}
 
 			setTimeout(function () {
@@ -108,6 +111,63 @@ define([], function () {
 
 			clearInterval(this.interval);
 
+		},
+
+		logUp: function () {
+			var self = this;
+			var app = this.get('model').app;
+			var id = this.get('model').name;
+			var maxSize = this.get('maxSize');
+			var initialOffset = this.get('initialOffset');
+
+			self.HTTP.get('logs', 'getLogPrev', app, id , ENTITY_MAP['FLOW'],
+					{
+						fromOffset: initialOffset,
+						maxSize: maxSize
+					},
+					function (response) {
+
+						if (C.currentPath !== self.get('expectedPath')) {
+							clearInterval(self.interval);
+							return;
+						}
+
+						if(response.error) {
+							response = JSON.stringify(error);
+						}
+
+
+						if (response.result.length) {
+							for (var i = 0; i < response.result.length; i ++) {
+								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
+								console.log('initial offset is', initialOffset);
+								console.log('this offset is', response.result[i].offset);
+
+								if (response.result[i].offset < initialOffset) {
+									initialOffset =  response.result[i].offset;
+								}
+
+							}
+
+							response = response.result.map(function (entry) {
+								return entry.logLine;
+							}).join('');
+
+						}
+						self.set('initialOffset', initialOffset);
+						console.log('initialdidkdokoffset is', self.get('initialOffset'))
+						$('#logView').prepend(response);
+
+					}
+				);
+		},
+
+		logDown: function() {
+			$("#logView").animate({
+  		  
+  		  scrollTop:$("#logView")[0].scrollHeight - $("#logView").height()
+			
+			}, 200);
 		}
 
 	});
