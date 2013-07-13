@@ -19,6 +19,8 @@ import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.GenericLoggingContext;
+import com.continuuity.logging.filter.Filter;
+import com.continuuity.logging.filter.FilterParser;
 import com.continuuity.logging.read.Callback;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.LogReader;
@@ -303,9 +305,15 @@ public class MonitorRestHandler extends NettyRestHandler {
         helper.finish(Success);
 
       } else if ("logs".equals(query)) {
-        // Parse fromTime and toTime
+        // Parse fromTime, toTime and filter
         long fromTimeMs = parseTimestamp(parameters.get("fromTime"));
         long toTimeMs = parseTimestamp(parameters.get("toTime"));
+
+        String filterStr = "";
+        if (parameters.get("filter") != null && !parameters.get("filter").isEmpty()) {
+          filterStr = parameters.get("filter").get(0);
+        }
+        Filter filter = FilterParser.parse(filterStr);
 
         if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
           respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
@@ -318,7 +326,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         String logPattern = accessor.getConfiguration().get(
           LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
 
-        logReader.getLog(loggingContext, fromTimeMs, toTimeMs,
+        logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter,
                          new NettyLogReaderCallback(message, request, logPattern));
         helper.finish(Success);
       } else {

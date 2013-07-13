@@ -9,11 +9,13 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
+import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -81,16 +83,16 @@ public class SingleNodeLogReader implements LogReader {
 
   @Override
   public Future<?> getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
-                           final Callback callback) {
+                              final Filter filter, final Callback callback) {
     if (fromOffset < 0) {
-      return getLogPrev(loggingContext, -1, maxEvents, callback);
+      return getLogPrev(loggingContext, -1, maxEvents, filter, callback);
     }
 
     return executor.submit(
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
           long fromTimeMs = fromOffset + 1;
           SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
           if (sortedFiles.isEmpty()) {
@@ -129,11 +131,11 @@ public class SingleNodeLogReader implements LogReader {
 
   @Override
   public Future<?> getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
-                           final Callback callback) {
+                              final Filter filter, final Callback callback) {
     return executor.submit(new Runnable() {
       @Override
       public void run() {
-        Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+        Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
         SortedMap<Long, FileStatus> sortedFiles = getFiles(Collections.<Long>reverseOrder());
         if (sortedFiles.isEmpty()) {
           return;
@@ -172,12 +174,12 @@ public class SingleNodeLogReader implements LogReader {
 
   @Override
   public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                       final Callback callback) {
+                          final Filter filter, final Callback callback) {
     return executor.submit(
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
           SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
           if (sortedFiles.isEmpty()) {
             return;

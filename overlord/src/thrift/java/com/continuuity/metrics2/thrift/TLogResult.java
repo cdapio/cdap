@@ -200,7 +200,7 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
       if (value == null) {
         unsetLogLine();
       } else {
-        setLogLine((String) value);
+        setLogLine((String)value);
       }
       break;
 
@@ -208,7 +208,7 @@ public class TLogResult implements org.apache.thrift.TBase<TLogResult, TLogResul
       if (value == null) {
         unsetOffset();
       } else {
-        setOffset((Long) value);
+        setOffset((Long)value);
       }
       break;
 
