@@ -35,6 +35,11 @@ public final class FilterParser {
       tokenizer.nextToken();
       if (tokenizer.ttype == StreamTokenizer.TT_EOF) {
         return Filter.EMPTY_FILTER;
+      } else if (tokenizer.ttype == (int) '\'' || tokenizer.ttype == (int) '"') {
+        // Empty quoted string - '' or ""
+        if (tokenizer.sval.isEmpty()) {
+          return Filter.EMPTY_FILTER;
+        }
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -62,7 +67,20 @@ public final class FilterParser {
     String key = parseString(tokenizer);
     parseEquals(tokenizer);
     String value = parseString(tokenizer);
-    return new MdcExpression(key, value);
+
+    // Generate expression
+    if (key.startsWith(".")) {
+      // System tag
+      return new MdcExpression(key, value);
+    } else if (key.startsWith("MDC:")) {
+      // User MDC tag
+      return new MdcExpression(key, value);
+    } else if (key.equals("loglevel")) {
+      // Log level
+      return new LogLevelExpression(value);
+    } else {
+      throw new IllegalArgumentException(String.format("Unknown expression of type %s", key));
+    }
   }
 
   private static String parseString(StreamTokenizer tokenizer) {
