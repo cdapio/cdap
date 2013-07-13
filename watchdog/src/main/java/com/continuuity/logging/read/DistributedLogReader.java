@@ -14,6 +14,7 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import com.continuuity.logging.context.LoggingContextHelper;
+import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.save.FileMetaDataManager;
@@ -21,6 +22,7 @@ import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
@@ -106,12 +108,12 @@ public final class DistributedLogReader implements LogReader {
 
   @Override
   public Future<?> getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
-                              final Callback callback) {
+                              final Filter filter, final Callback callback) {
     return executor.submit(
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
           int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
 
           KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
@@ -144,12 +146,12 @@ public final class DistributedLogReader implements LogReader {
 
   @Override
   public Future<?> getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
-                              final Callback callback) {
+                              final Filter filter, final Callback callback) {
     return executor.submit(
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
           int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
 
           KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
@@ -183,14 +185,14 @@ public final class DistributedLogReader implements LogReader {
 
   @Override
   public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                          final Callback callback) {
+                          final Filter filter, final Callback callback) {
     return executor.submit(
       new Runnable() {
         @Override
         public void run() {
-          try {
-            Filter logFilter = LoggingContextHelper.createFilter(loggingContext);
+          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
 
+          try {
             SortedMap<Long, Path> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
             Path prevFile = null;
             List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());

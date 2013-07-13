@@ -9,6 +9,8 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
+import com.continuuity.logging.filter.Filter;
+import com.continuuity.logging.filter.FilterParser;
 import com.continuuity.logging.read.Callback;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.LogReader;
@@ -190,7 +192,7 @@ public class MetricsFrontendServiceImpl
     throws MetricsServiceException, TException {
     return Lists.newArrayList(
       Iterables.transform(
-        getLogNext(accountId, applicationId, flowId, TEntityType.FLOW, -1, 200), TLogResultConverter.getConverter()
+        getLogNext(accountId, applicationId, flowId, TEntityType.FLOW, -1, 200, ""), TLogResultConverter.getConverter()
       )
     );
   }
@@ -217,12 +219,14 @@ public class MetricsFrontendServiceImpl
 
   @Override
   public List<TLogResult> getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType,
-                                     long fromOffset, int maxEvents) throws MetricsServiceException, TException {
+                                     long fromOffset, int maxEvents, String filterStr)
+    throws MetricsServiceException, TException {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(accountId, applicationId,
                                                                            entityId, getEntityType(entityType));
     LogCallback logCallback = new LogCallback(maxEvents, logPattern);
     try {
-      logReader.getLogNext(loggingContext, fromOffset, maxEvents, logCallback).get();
+      Filter filter = FilterParser.parse(filterStr);
+      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback).get();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -231,12 +235,14 @@ public class MetricsFrontendServiceImpl
 
   @Override
   public List<TLogResult> getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType,
-                                     long fromOffset, int maxEvents) throws MetricsServiceException, TException {
+                                     long fromOffset, int maxEvents, String filterStr)
+    throws MetricsServiceException, TException {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(accountId, applicationId,
                                                                            entityId, getEntityType(entityType));
     LogCallback logCallback = new LogCallback(maxEvents, logPattern);
     try {
-      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, logCallback).get();
+      Filter filter = FilterParser.parse(filterStr);
+      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback).get();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
