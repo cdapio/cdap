@@ -25,7 +25,7 @@ public class TestHBaseNativeTTQueue extends TestHBaseAbstractTTQueue {
     try {
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
+      conf.setBoolean(DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, true);
       injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
       handle = injector.getInstance(OVCTableHandle.class);
     } catch (Exception e) {
