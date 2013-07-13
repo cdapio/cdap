@@ -27,7 +27,7 @@ define([], function () {
 
 				if (flow.flowlets[i].name === model.name) {
 					flow.flowlets[i].app = flow.get('app');
-					flow.flowlets[i].flow = flow.get('id');
+					flow.flowlets[i].flow = flow.get('name');
 
 					this.set('model', C.Flowlet.create(flow.flowlets[i]));
 					break;
@@ -64,7 +64,7 @@ define([], function () {
 				if (streams[i].second === 'IN') {
 					inputs.push({
 						'app': flow.get('app'),
-						'flow': flow.get('id'),
+						'flow': flow.get('name'),
 						'flowlet': model.get('id'),
 						'id': i,
 						'contrib': findContributors('to', model.name, i)
@@ -72,7 +72,7 @@ define([], function () {
 				} else if (streams[i].second === 'OUT') {
 					outputs.push({
 						'app': flow.get('app'),
-						'flow': flow.get('id'),
+						'flow': flow.get('name'),
 						'flowlet': model.get('id'),
 						'id': i,
 						'contrib': findContributors('from', model.name, i)
