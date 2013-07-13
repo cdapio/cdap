@@ -674,8 +674,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful Requests" metrics="query.success.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed Requests" metrics="query.failure.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful Requests" metrics="/query/requests/{app}/procedures/{id}"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed Requests" metrics="/query/failures/{app}/procedures/{id}"}}</div>
     </div>
     <div id="panels">
 
@@ -960,8 +960,8 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
             </td>
             <td class="app-list-count">1</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/requests/procedures/{id}"}}</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/failures/procedures/{id}"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/requests/{app}/procedures/{id}"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/failures/{app}/procedures/{id}"}}</td>
           </tr>
         {{/each}}
       </tbody>

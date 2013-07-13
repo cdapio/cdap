@@ -40,7 +40,7 @@ define([], function () {
 
 		trackMetric: function (name, type) {
 
-			name = name.replace(/{parent}/, this.get('app'));
+			name = name.replace(/{app}/, this.get('app'));
 			name = name.replace(/{id}/, this.get('name'));
 
 			this.get(type)[name] = [];
