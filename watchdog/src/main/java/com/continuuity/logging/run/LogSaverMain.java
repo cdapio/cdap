@@ -32,8 +32,10 @@ import java.io.Writer;
  */
 public final class LogSaverMain extends DaemonMain {
   private WeaveRunnerService weaveRunnerService;
-  private WeavePreparer weavePreparer;
   private WeaveController weaveController;
+
+  private Configuration hConf;
+  private CConfiguration cConf;
 
   public static void main(String [] args) throws Exception {
     new LogSaverMain().doMain(args);
@@ -41,15 +43,16 @@ public final class LogSaverMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    Configuration hConf = new Configuration();
-    CConfiguration cConf = CConfiguration.create();
+    hConf = new Configuration();
+    cConf = CConfiguration.create();
     weaveRunnerService = new YarnWeaveRunnerService(new YarnConfiguration(),
                                                     cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE));
-    weavePreparer = doInit(weaveRunnerService, hConf, cConf);
   }
 
   @Override
   public void start() {
+    weaveRunnerService.start();
+    WeavePreparer weavePreparer = doInit(weaveRunnerService, hConf, cConf);
     weaveController = weavePreparer.start();
   }
 
@@ -79,7 +82,6 @@ public final class LogSaverMain extends DaemonMain {
       cConfFile.deleteOnExit();
 
       return weaveRunner.prepare(new LogSaverWeaveApplication(partitions, memory, hConfFile, cConfFile))
-        // TODO: write logs to file
         .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
         .withResources(LogSchema.getSchemaURL().toURI());
     } catch (Exception e) {
