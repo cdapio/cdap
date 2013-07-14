@@ -12,7 +12,12 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.weave.filesystem.LocationFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -23,10 +28,12 @@ public class DataFabricImpl implements DataFabric {
 
   private OperationExecutor opex;
   private OperationContext context;
+  private LocationFactory locationFactory;
 
-  public DataFabricImpl(OperationExecutor opex, OperationContext context) {
+  public DataFabricImpl(OperationExecutor opex, LocationFactory locationFactory, OperationContext context) {
     this.opex = opex;
     this.context = context;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -69,5 +76,23 @@ public class DataFabricImpl implements DataFabric {
     this.opex.execute(context, new OpenTable(name));
   }
 
+  @Override
+  public InputStream getInputStream(String path) throws IOException {
+    return this.locationFactory.create(path).getInputStream();
+  }
 
+  @Override
+  public OutputStream getOutputStream(String path) throws IOException {
+    return this.locationFactory.create(path).getOutputStream();
+  }
+
+  @Override
+  public InputStream getInputStream(URI uri) throws IOException {
+    return this.locationFactory.create(uri).getInputStream();
+  }
+
+  @Override
+  public OutputStream getOutputStream(URI uri) throws IOException {
+    return this.locationFactory.create(uri).getOutputStream();
+  }
 }

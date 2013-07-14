@@ -10,6 +10,10 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -96,4 +100,34 @@ public interface DataFabric {
    * @param name the name of the table
    */
   public void openTable(String name) throws OperationException;
+
+  // Provides access to filesystem
+
+  /**
+   * @return An {@link java.io.InputStream} for location.
+   * @param path The path representing the location.
+   * @throws java.io.IOException
+   */
+  InputStream getInputStream(String path) throws IOException;
+
+  /**
+   * @return An {@link java.io.OutputStream} for location.
+   * @param path The path representing the location.
+   * @throws IOException
+   */
+  OutputStream getOutputStream(String path) throws IOException;
+
+  /**
+   * @param uri to the resource on the filesystem.
+   * @return An {@link java.io.InputStream} for location.
+   * @throws java.io.IOException
+   */
+  InputStream getInputStream(URI uri) throws IOException;
+
+  /**
+   * @param uri to the resource on the filesystem.
+   * @return An {@link java.io.OutputStream} for location.
+   * @throws IOException
+   */
+  OutputStream getOutputStream(URI uri) throws IOException;
 }
