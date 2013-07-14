@@ -12,7 +12,8 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
 /**
- *
+ * Implementation of {@link MetricsTableFactory} that reuses the same instance of {@link MetricsEntityCodec} for
+ * creating instances of various type of metrics table.
  */
 public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
@@ -46,6 +47,17 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
       return new TimeSeriesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodec,
                                  resolution, getRollTime(resolution));
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public AggregatesTable createAggregates() {
+    try {
+      String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                   MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
+      return new AggregatesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodec);
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }

@@ -144,6 +144,14 @@ public final class TimeSeriesTable {
   }
 
   /**
+   * Clears the storage table.
+   * @throws OperationException If error in clearing data.
+   */
+  public void clear() throws OperationException {
+    timeSeriesTable.clear();
+  }
+
+  /**
    * Setups all rows, columns and values for updating the metric table.
    */
   private void getUpdates(MetricsRecord record, Table<byte[], byte[], byte[]> table) {
@@ -173,11 +181,11 @@ public final class TimeSeriesTable {
     Preconditions.checkArgument(runId != null, "RunId cannot be null.");
     Preconditions.checkArgument(metric != null, "Metric cannot be null.");
 
-    return concatBytes(entityCodec.encode(MetricsEntityType.CONTEXT, context),
-                       entityCodec.encode(MetricsEntityType.METRIC, metric),
-                       entityCodec.encode(MetricsEntityType.TAG, tag == null ? MetricsConstants.EMPTY_TAG : tag),
-                       Bytes.toBytes(timeBase),
-                       entityCodec.encode(MetricsEntityType.RUN, runId));
+    return Bytes.concat(entityCodec.encode(MetricsEntityType.CONTEXT, context),
+                        entityCodec.encode(MetricsEntityType.METRIC, metric),
+                        entityCodec.encode(MetricsEntityType.TAG, tag == null ? MetricsConstants.EMPTY_TAG : tag),
+                        Bytes.toBytes(timeBase),
+                        entityCodec.encode(MetricsEntityType.RUN, runId));
   }
 
   private byte[] getPaddedKey(String contextPrefix, String runId, String metricPrefix, String tagPrefix,
@@ -186,7 +194,7 @@ public final class TimeSeriesTable {
     Preconditions.checkArgument(metricPrefix != null, "Metric cannot be null.");
 
     // If there is no runId, just applies the padding
-    return concatBytes(
+    return Bytes.concat(
       entityCodec.paddedEncode(MetricsEntityType.CONTEXT, contextPrefix, padding),
       entityCodec.paddedEncode(MetricsEntityType.METRIC, metricPrefix, padding),
       entityCodec.paddedEncode(MetricsEntityType.TAG,
@@ -211,10 +219,10 @@ public final class TimeSeriesTable {
     // For each timbase, construct a fuzzy filter pair
     List<Pair<byte[], byte[]>> fuzzyPairs = Lists.newLinkedList();
     for (long timeBase = startTimeBase; timeBase <= endTimeBase; timeBase += this.rollTimebaseInterval) {
-      fuzzyPairs.add(Pair.newPair(concatBytes(contextPair.getFirst(), metricPair.getFirst(), tagPair.getFirst(),
-                                              Bytes.toBytes((int) timeBase), runIdPair.getFirst()),
-                                  concatBytes(contextPair.getSecond(), metricPair.getSecond(), tagPair.getSecond(),
-                                              FOUR_ZERO_BYTES, runIdPair.getSecond())));
+      fuzzyPairs.add(Pair.newPair(Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), tagPair.getFirst(),
+                                               Bytes.toBytes((int) timeBase), runIdPair.getFirst()),
+                                  Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), tagPair.getSecond(),
+                                               FOUR_ZERO_BYTES, runIdPair.getSecond())));
     }
 
     return new FuzzyRowFilter(fuzzyPairs);
@@ -238,10 +246,6 @@ public final class TimeSeriesTable {
       deltas[i] = Bytes.toBytes((short) i);
     }
     return deltas;
-  }
-
-  private byte[] concatBytes(byte[]...array) {
-    return com.google.common.primitives.Bytes.concat(array);
   }
 
   private ImmutablePair<byte[], byte[]> createDefaultTagFuzzyPair() {

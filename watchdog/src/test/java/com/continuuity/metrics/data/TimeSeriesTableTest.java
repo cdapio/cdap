@@ -6,13 +6,6 @@ package com.continuuity.metrics.data;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
-import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.Transaction;
-import com.continuuity.data.operation.executor.omid.OmidTransactionException;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.operation.executor.omid.TransactionResult;
-import com.continuuity.data.operation.executor.omid.Undo;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -20,10 +13,8 @@ import com.continuuity.test.hbase.HBaseTestBase;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -158,7 +149,7 @@ public class TimeSeriesTableTest {
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, HBaseTestBase.getConfiguration()),
-                                             new MetricModule());
+                                             new HbaseTableTestModule());
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);
   }
@@ -166,53 +157,5 @@ public class TimeSeriesTableTest {
   @AfterClass
   public static void finish() throws Exception {
     HBaseTestBase.stopHBase();
-  }
-
-  private static final class MetricModule extends AbstractModule {
-
-    @Override
-    protected void configure() {
-      bind(OVCTableHandle.class).to(HBaseFilterableOVCTableHandle.class);
-      bind(TransactionOracle.class).to(NoopTransactionOracle.class).in(Scopes.SINGLETON);
-      bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
-    }
-  }
-
-  private static final class NoopTransactionOracle implements TransactionOracle {
-
-    @Override
-    public Transaction startTransaction(boolean trackChanges) {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public void validateTransaction(Transaction tx) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public void addToTransaction(Transaction tx, List<Undo> undos) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public TransactionResult commitTransaction(Transaction tx) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public TransactionResult abortTransaction(Transaction tx) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public void removeTransaction(Transaction tx) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public ReadPointer getReadPointer() {
-      throw new UnsupportedOperationException("Not supported");
-    }
   }
 }

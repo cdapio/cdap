@@ -14,4 +14,10 @@ public interface MetricsTableFactory {
    * @return A new instance of {@link TimeSeriesTable}.
    */
   TimeSeriesTable createTimeSeries(int resolution);
+
+  /**
+   * Creates a new instance of {@link AggregatesTable}.
+   * @return A new instance of {@link AggregatesTable}.
+   */
+  AggregatesTable createAggregates();
 }
