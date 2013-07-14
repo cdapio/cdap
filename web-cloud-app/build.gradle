@@ -35,6 +35,7 @@ task jshint << {
   ]
 
   print command.join(' ');
+
 /* Exluding command to fix build. 
   if(executeCommand(command) != 0) {
     throw new GradleScriptException("JSHint reported errors while building command app", null)
