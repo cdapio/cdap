@@ -75,20 +75,6 @@ define (['core/application'], function (Application) {
 							}
 
 						}
-
-						/*
-						 * Temporary for Backwards Compat.
-						 */
-						if (type === 'Socket') {
-							C.Socket = container.lookup('Socket:main');
-							C.get = function () {
-								C.Socket.request.apply(C.Socket, arguments);
-							};
-						}
-
-						if (type === 'HTTP') {
-							C.HTTP = container.lookup('HTTP:main');
-						}
 					}
 				});
 			}

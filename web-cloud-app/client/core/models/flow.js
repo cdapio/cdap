@@ -118,6 +118,9 @@ define([], function () {
 
 		}.property('currentState'),
 		defaultAction: function () {
+			if (!this.currentState) {
+				return '...';
+			}
 			return {
 				'deployed': 'Start',
 				'stopped': 'Start',

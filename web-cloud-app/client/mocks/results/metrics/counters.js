@@ -52,7 +52,9 @@ define([], function () {
 
     callback(200, {
         path: path,
-        result: sample[path],
+        result: {
+            data: sample[path]
+        },
         error: null
     });
 

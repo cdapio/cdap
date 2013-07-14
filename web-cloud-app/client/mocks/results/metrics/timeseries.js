@@ -278,7 +278,11 @@ define([], function () {
 
     callback(200, {
         path: path,
-        result: $.extend(true, [], series),
+        result: {
+            start: null,
+            end: null,
+            data: $.extend(true, [], series)
+        },
         error: null
     });
 
