@@ -1,6 +1,10 @@
 apply plugin: 'java'
 
 smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
 }
 
 // Specify all the dependencies.
@@ -48,4 +52,25 @@ dependencies {
         exclude group: 'commons-logging'
     }
     testCompile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.5'
+}
+
+/**
+ * Includes API output to main and test source sets.
+ */
+sourceSets {
+    main {
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+    test {
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+}
+
+/**
+ * Generates API javadoc.
+ */
+javadoc {
+    classpath += sourceSets.api.output
 }
