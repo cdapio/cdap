@@ -3,7 +3,6 @@
  */
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
@@ -14,6 +13,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TransactionResult;
 import com.continuuity.data.operation.executor.omid.Undo;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.continuuity.test.hbase.HBaseTestBase;
@@ -34,15 +34,13 @@ import java.util.List;
 /**
  *
  */
-public class MetricsTableTest {
+public class TimeSeriesTableTest {
 
-  private static OVCTableHandle tableHandle;
-  private static EntityTable entityTable;
+  private static MetricsTableFactory tableFactory;
 
   @Test
   public void testAggregate() throws OperationException {
-    MetricsTable metricsTable = new MetricsTable(entityTable,
-                                              tableHandle.getTable(Bytes.toBytes("aggregateMetric")), 1, 300);
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries(1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -53,7 +51,7 @@ public class MetricsTableTest {
       String metric = "input." + i;
 
       // Insert 500 metrics for each flowlet with the same time series.
-      insertMetrics(metricsTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
+      insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
     }
 
     // Insert metrics for procedure
@@ -62,14 +60,14 @@ public class MetricsTableTest {
       String metric = "input." + i;
 
       // Insert 500 metrics for each procedure with the same time series
-      insertMetrics(metricsTable, context, "runId", metric, ImmutableList.<String>of(), time, 0, 500, 100);
+      insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.<String>of(), time, 0, 500, 100);
     }
 
     // Query aggregate for flow. Expect 10 rows scanned (metric per flowlet spreads across 2 rows).
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow")
                                                         .setMetric("input")
                                                         .build(time, time + 1000);
-    assertAggregate(query, metricsTable.scan(query), 500, 10, new Function<Long, Integer>() {
+    assertAggregate(query, timeSeriesTable.scan(query), 500, 10, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
         return (int) ((ts - time) * 5);
@@ -82,7 +80,7 @@ public class MetricsTableTest {
                                         .setMetric("input")
                                         .setTag("test")
                                         .build(time, time + 1000);
-    assertAggregate(query, metricsTable.scan(query), 500, 10, new Function<Long, Integer>() {
+    assertAggregate(query, timeSeriesTable.scan(query), 500, 10, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
         return (int) ((ts - time) * 10);
@@ -93,7 +91,7 @@ public class MetricsTableTest {
     query = new MetricsScanQueryBuilder().setContext("app")
                                         .setMetric("input")
                                         .build(time, time + 1000);
-    assertAggregate(query, metricsTable.scan(query), 500, 20, new Function<Long, Integer>() {
+    assertAggregate(query, timeSeriesTable.scan(query), 500, 20, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
         return (int) ((ts - time) * 10);
@@ -101,7 +99,7 @@ public class MetricsTableTest {
     });
   }
 
-  private void insertMetrics(MetricsTable metricsTable,
+  private void insertMetrics(TimeSeriesTable timeSeriesTable,
                              String context, String runId, String metric, Iterable<String> tags,
                              long startTime, int offset, int count, int batchSize) throws OperationException {
 
@@ -114,7 +112,7 @@ public class MetricsTableTest {
         }
         records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j));
       }
-      metricsTable.save(records);
+      timeSeriesTable.save(records);
       records.clear();
     }
   }
@@ -156,12 +154,13 @@ public class MetricsTableTest {
   @BeforeClass
   public static void init() throws Exception {
     HBaseTestBase.startHBase();
-    Injector injector = Guice.createInjector(new ConfigModule(CConfiguration.create(),
-                                                              HBaseTestBase.getConfiguration()),
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
+
+    Injector injector = Guice.createInjector(new ConfigModule(cConf, HBaseTestBase.getConfiguration()),
                                              new MetricModule());
 
-    tableHandle = injector.getInstance(OVCTableHandle.class);
-    entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes("metricEntity")));
+    tableFactory = injector.getInstance(MetricsTableFactory.class);
   }
 
   @AfterClass
@@ -175,6 +174,7 @@ public class MetricsTableTest {
     protected void configure() {
       bind(OVCTableHandle.class).to(HBaseFilterableOVCTableHandle.class);
       bind(TransactionOracle.class).to(NoopTransactionOracle.class).in(Scopes.SINGLETON);
+      bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
     }
   }
 

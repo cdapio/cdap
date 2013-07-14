@@ -5,7 +5,7 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.metrics.data.MetricsTable;
+import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -59,7 +59,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   };
 
   // It's a cache from metric table resolution to MetricsTable
-  private final LoadingCache<Integer, MetricsTable> metricsTableCache;
+  private final LoadingCache<Integer, TimeSeriesTable> metricsTableCache;
 
 
   // TODO: For mocking, removing later
@@ -67,10 +67,10 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
 
   @Inject
   public BatchMetricsHandler(final MetricsTableFactory metricsTableFactory) {
-    metricsTableCache = CacheBuilder.newBuilder().build(new CacheLoader<Integer, MetricsTable>() {
+    metricsTableCache = CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
       @Override
-      public MetricsTable load(Integer key) throws Exception {
-        return metricsTableFactory.create(key);
+      public TimeSeriesTable load(Integer key) throws Exception {
+        return metricsTableFactory.createTimeSeries(key);
       }
     });
   }

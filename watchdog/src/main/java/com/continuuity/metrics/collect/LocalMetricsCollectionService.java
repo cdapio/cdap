@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.metrics.data.MetricsTable;
+import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.inject.Inject;
@@ -17,14 +17,14 @@ import java.util.Iterator;
 @Singleton
 public final class LocalMetricsCollectionService extends AggregatedMetricsCollectionService {
 
-  private final ThreadLocal<MetricsTable> metricsTable;
+  private final ThreadLocal<TimeSeriesTable> metricsTable;
 
   @Inject
   public LocalMetricsCollectionService(final MetricsTableFactory metricsTableFactory) {
-    this.metricsTable = new ThreadLocal<MetricsTable>() {
+    this.metricsTable = new ThreadLocal<TimeSeriesTable>() {
       @Override
-      protected MetricsTable initialValue() {
-        return metricsTableFactory.create(1);
+      protected TimeSeriesTable initialValue() {
+        return metricsTableFactory.createTimeSeries(1);
       }
     };
   }

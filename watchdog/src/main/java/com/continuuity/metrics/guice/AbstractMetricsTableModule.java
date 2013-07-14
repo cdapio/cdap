@@ -4,6 +4,7 @@
 package com.continuuity.metrics.guice;
 
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;

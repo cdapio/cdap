@@ -1,7 +1,7 @@
 package com.continuuity.metrics.data;
 
 /**
- * Represents a scanning query to the {@link MetricsTable}.
+ * Represents a scanning query to the {@link TimeSeriesTable}.
  */
 public interface MetricsScanQuery {
 

@@ -4,14 +4,14 @@
 package com.continuuity.metrics.data;
 
 /**
- * Factory to encapsulate creation of {@link MetricsTable}.
+ * Factory to encapsulate creation of {@link TimeSeriesTable}.
  */
 public interface MetricsTableFactory {
 
   /**
-   * Creates a new instance of {@link MetricsTable} with the given resolution.
+   * Creates a new instance of {@link TimeSeriesTable} with the given resolution.
    * @param resolution The resolution that the table represents.
-   * @return A new instance of {@link MetricsTable}.
+   * @return A new instance of {@link TimeSeriesTable}.
    */
-  MetricsTable create(int resolution);
+  TimeSeriesTable createTimeSeries(int resolution);
 }

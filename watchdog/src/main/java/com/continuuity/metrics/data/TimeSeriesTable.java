@@ -26,21 +26,27 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Table for storing metric.
+ * Table for storing time series metrics.
  * <p>
  * Row key:
  * {@code context|metricName|tags|timebase|runId}
  * </p>
  * <p>
+ * Columns: offset to timebase of the row.
+ * </p>
+ * <p>
+ * Cell: Value for the metrics specified by the row with at the timestamp of (timbase + offset) * resolution.
+ * </p>
+ * <p>
  * TODO: More doc.
  * </p>
  */
-public final class MetricsTable {
+public final class TimeSeriesTable {
 
   private static final int MAX_ROLL_TIME = 0xfffe;
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
 
-  private final OrderedVersionedColumnarTable metricTable;
+  private final OrderedVersionedColumnarTable timeSeriesTable;
   private final MetricsEntityCodec entityCodec;
   private final boolean isFilterable;
   private final int resolution;
@@ -51,50 +57,22 @@ public final class MetricsTable {
   private final byte[][] deltaCache;
 
   /**
-   * Creates a MetricTable. Same as calling
-   * {@link #MetricsTable(EntityTable, com.continuuity.data.table.OrderedVersionedColumnarTable,
-   * int, int, int, int, int)}
-   * with
-   * <p>
-   * {@code contextDepth = }{@link com.continuuity.metrics.MetricsConstants#DEFAULT_CONTEXT_DEPTH}
-   * </p>
-   * <p>
-   * {@code metricDepth = }{@link com.continuuity.metrics.MetricsConstants#DEFAULT_METRIC_DEPTH}
-   * </p>
-   * <p>
-   * {@code tagDepth = }{@link com.continuuity.metrics.MetricsConstants#DEFAULT_TAG_DEPTH}
-   * </p>
-   */
-  public MetricsTable(EntityTable entityTable, OrderedVersionedColumnarTable metricTable,
-                      int resolution, int rollTime) {
-    this(entityTable, metricTable,
-         MetricsConstants.DEFAULT_CONTEXT_DEPTH,
-         MetricsConstants.DEFAULT_METRIC_DEPTH,
-         MetricsConstants.DEFAULT_TAG_DEPTH,
-         resolution, rollTime);
-  }
-
-  /**
    * Creates a MetricTable.
    *
-   * @param entityTable For lookup from entity name to uniqueID.
-   * @param metricTable A OVC table for storing metric information.
-   * @param contextDepth Maximum level in context
-   * @param metricDepth Maximum level in metric
-   * @param tagDepth Maximum level in tag
+   * @param timeSeriesTable A OVC table for storing metric information.
+   * @param entityCodec The {@link MetricsEntityCodec} for encoding entity.
    * @param resolution Resolution in second of the table
    * @param rollTime Number of resolution for writing to a new row with a new timebase.
    *                 Meaning the differences between timebase of two consecutive rows divided by
    *                 resolution seconds. It essentially defines how many columns per row in the table.
    *                 This value should be < 65535.
    */
-  public MetricsTable(EntityTable entityTable, OrderedVersionedColumnarTable metricTable,
-                      int contextDepth, int metricDepth, int tagDepth,
-                      int resolution, int rollTime) {
+  TimeSeriesTable(OrderedVersionedColumnarTable timeSeriesTable,
+                  MetricsEntityCodec entityCodec, int resolution, int rollTime) {
 
-    this.metricTable = metricTable;
-    this.entityCodec = new MetricsEntityCodec(entityTable, contextDepth, metricDepth, tagDepth);
-    this.isFilterable = metricTable instanceof FilterableOVCTable;
+    this.timeSeriesTable = timeSeriesTable;
+    this.entityCodec = entityCodec;
+    this.isFilterable = timeSeriesTable instanceof FilterableOVCTable;
     this.resolution = resolution;
 
     // Two bytes for column name, which is a delta timestamp
@@ -142,7 +120,7 @@ public final class MetricsTable {
       rowIdx++;
     }
 
-    metricTable.put(rows, columns, System.currentTimeMillis(), values);
+    timeSeriesTable.put(rows, columns, System.currentTimeMillis(), values);
   }
 
   public MetricsScanner scan(MetricsScanQuery query) {
@@ -156,11 +134,11 @@ public final class MetricsTable {
 
     Scanner scanner;
     if (isFilterable) {
-      scanner = ((FilterableOVCTable) metricTable).scan(startRow, endRow,
+      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow,
                                                         MemoryReadPointer.DIRTY_READ,
                                                         getFilter(query, startTimeBase, endTimeBase));
     } else {
-      scanner = metricTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
+      scanner = timeSeriesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
     }
     return new MetricsScanner(query, scanner, entityCodec, resolution);
   }
@@ -225,8 +203,9 @@ public final class MetricsTable {
                                                                               query.getContextPrefix(), 0);
     ImmutablePair<byte[], byte[]> metricPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.METRIC,
                                                                              query.getMetricPrefix(), 0);
-    ImmutablePair<byte[], byte[]> tagPair = (tag == null) ? defaultTagFuzzyPair
-                                                          : entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, tag, 0);
+    ImmutablePair<byte[], byte[]> tagPair = (tag == null)
+                                                ? defaultTagFuzzyPair
+                                                : entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, tag, 0);
     ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, query.getRunId(), 0);
 
     // For each timbase, construct a fuzzy filter pair
