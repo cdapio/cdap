@@ -3,10 +3,10 @@
  */
 package com.continuuity.metrics.guice;
 
+import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.collect.LocalMetricsCollectionService;
-import com.continuuity.api.metrics.MetricsCollectionService;
 import com.google.common.base.Preconditions;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -33,6 +33,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         install(new InMemoryMetricsTableModule());
+        install(new MetricsProcessorModule());
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }
@@ -45,6 +46,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         install(new LocalMetricsTableModule());
+        install(new MetricsProcessorModule());
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }
