@@ -29,22 +29,23 @@ define([], function () {
     '/store/bytes/CountAndFilterWords': 40,
 
     // Flowlets
-    '/process/events/flowlets/number-filter': 10,
-    '/process/events/flowlets/count-all': 10,
-    '/process/events/flowlets/count-number': 10,
-    '/process/events/flowlets/count-lower': 10,
-    '/process/events/flowlets/lower-filter': 10,
-    '/process/events/flowlets/upper-filter': 10,
-    '/process/events/flowlets/source': 10,
-    '/process/events/flowlets/count-upper': 10,
-    '/process/events/flowlets/splitter': 10,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/number-filter': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-all': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-number': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-lower': 50,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/lower-filter': 45,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/upper-filter': 10,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/source': 24,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-upper': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/splitter': 100
+
 
     // Store
     '/store/bytes/datasets/filterTable': 100000,
     '/store/bytes/datasets/uniqueCount': 2000,
     '/store/bytes/datasets/wordAssocs': 2928312,
     '/store/bytes/datasets/wordCounts': 19232,
-    '/store/bytes/datasets/wordStats': 100000
+    '/store/bytes/datasets/wordStats': 100000,
 
   };
 

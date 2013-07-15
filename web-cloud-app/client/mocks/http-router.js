@@ -12,8 +12,6 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
 
   httpRouter.getResult = function(path) {
 
-    console.log(path);
-
     if (path in this.pathRouter) {
 
       var sample = this.pathRouter[path];

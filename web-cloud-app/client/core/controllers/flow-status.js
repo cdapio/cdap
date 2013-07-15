@@ -17,6 +17,7 @@ define([], function () {
 			var objects = [];
 			for (var i = 0; i < flowlets.length; i ++) {
 
+				flowlets[i].flow = model.get('name');
 				flowlets[i].app = model.get('app');
 
 				objects.push(C.Flowlet.create(flowlets[i]));
