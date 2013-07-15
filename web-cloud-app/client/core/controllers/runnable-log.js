@@ -41,7 +41,8 @@ define([], function () {
 				self.HTTP.get('logs', 'getLogNext', app, id , ENTITY_MAP['FLOW'],
 					{
 						fromOffset: fromOffset,
-						maxSize: maxSize
+						maxSize: maxSize,
+						filter: ''
 					},
 					function (response) {
 
@@ -56,13 +57,15 @@ define([], function () {
 
 
 						if (response.result.length) {
+							
 							for (var i = 0; i < response.result.length; i ++) {
 								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
 								fromOffset = response.result[i].offset > fromOffset ? response.result[i].offset : fromOffset;
+								
 								if (!self.get('initialOffset')) {
-									console.log('got called here')
 									self.set('initialOffset', response.result[i].offset);
 								}
+							
 							}
 							response = response.result.map(function (entry) {
 								return entry.logLine;
@@ -123,7 +126,8 @@ define([], function () {
 			self.HTTP.get('logs', 'getLogPrev', app, id , ENTITY_MAP['FLOW'],
 					{
 						fromOffset: initialOffset,
-						maxSize: maxSize
+						maxSize: maxSize,
+						filter: ''
 					},
 					function (response) {
 
@@ -140,8 +144,6 @@ define([], function () {
 						if (response.result.length) {
 							for (var i = 0; i < response.result.length; i ++) {
 								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
-								console.log('initial offset is', initialOffset);
-								console.log('this offset is', response.result[i].offset);
 
 								if (response.result[i].offset < initialOffset) {
 									initialOffset =  response.result[i].offset;
@@ -155,7 +157,7 @@ define([], function () {
 
 						}
 						self.set('initialOffset', initialOffset);
-						console.log('initialdidkdokoffset is', self.get('initialOffset'))
+
 						$('#logView').prepend(response);
 
 					}
