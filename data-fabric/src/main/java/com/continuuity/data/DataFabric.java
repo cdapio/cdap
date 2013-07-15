@@ -105,15 +105,15 @@ public interface DataFabric {
   // Provides access to filesystem
 
   /**
-   * @return a {@link Location} object to access given path.
    * @param path The path representing the location.
+   * @return a {@link Location} object to access given path.
    * @throws java.io.IOException
    */
   Location getLocation(String path) throws IOException;
 
   /**
-   * @return a {@link Location} object to access given path.
    * @param path The path representing the location.
+   * @return a {@link Location} object to access given path.
    * @throws IOException
    */
   Location getLocation(URI path) throws IOException;
