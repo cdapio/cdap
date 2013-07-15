@@ -8,36 +8,33 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 
 /**
- * TODO: fix docs
- * This is the DataSet implementation of named tables. Other DataSets can be
- * defined by embedding instances Table (and other DataSets).
+ * This is the {@link DataSet} implementation of named files. Other DataSets can be
+ * defined by embedding instances of {@link FileDataSet} (and other DataSets).
  *
- * A Table can execute operations on its data, including read, write,
- * delete etc. Internally, the table delegates all operations to the
- * current transaction of the context in which this data set was
- * instantiated (a flowlet, or a procedure). Depending on that context,
- * operations may be executed immediately or deferred until the transaction
- * is committed.
+ * A {@link FileDataSet} provides reading and writing operations for a single file.
  *
- * The Table relies on injection of the data fabric by the execution context.
+ * The {@link FileDataSet} relies on injection of the data fabric by the execution context.
  * (@see DataSet).
  */
 @Beta
 public class FileDataSet extends DataSet {
   private static final String ATTR_FILE_PATH = "filePath";
-  // this is the Table that executed the actual operations. using a delegate
+  // This is the dataset that executes the actual operations. Using a delegate
   // allows us to inject a different implementation.
   private FileDataSet delegate = null;
 
-  private String path;
+  // path to a file
+  private URI path;
 
   /**
    * Constructor by name.
-   * @param name the name of the table
+   * @param name the name of the dataset
+   * @param path the path to the file
    */
-  public FileDataSet(String name, String path) {
+  public FileDataSet(String name, URI path) {
     super(name);
     this.path = path;
   }
@@ -48,32 +45,44 @@ public class FileDataSet extends DataSet {
    */
   public FileDataSet(DataSetSpecification spec) {
     super(spec);
-    this.path = spec.getProperty(ATTR_FILE_PATH);
+    this.path = URI.create(spec.getProperty(ATTR_FILE_PATH));
   }
 
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this)
-      .property(ATTR_FILE_PATH, this.path)
+      .property(ATTR_FILE_PATH, this.path.toString())
       .create();
   }
 
   /**
-   * Helper to return the name of the physical table. Currently the same as
-   * the name of the (Table) data set.
-   * @return the name of the underlying table in the data fabric
-   */
-  protected String tableName() {
-    return this.getName();
-  }
-
-  /**
-   * Sets the Table to which all operations are delegated. This can be used
+   * Sets the {@link FileDataSet} to which all operations are delegated. This can be used
    * to inject different implementations.
    * @param dataSet the implementation to delegate to
    */
   public void setDelegate(FileDataSet dataSet) {
     this.delegate = dataSet;
+  }
+
+  /**
+   * Checks if the this file exists.
+   *
+   * @return true if found; false otherwise.
+   * @throws IOException
+   */
+  public boolean exists() throws IOException {
+    Preconditions.checkState(this.delegate != null, "Not supposed to call runtime methods at configuration time.");
+    return delegate.exists();
+  }
+
+  /**
+   * Deletes the file.
+   *
+   * @return true if and only if the file is successfully deleted; false otherwise.
+   */
+  public boolean delete() throws IOException {
+    Preconditions.checkState(this.delegate != null, "Not supposed to call runtime methods at configuration time.");
+    return delegate.delete();
   }
 
   /**
@@ -97,7 +106,7 @@ public class FileDataSet extends DataSet {
   /**
    * @return path of the file
    */
-  public String getPath() {
+  public URI getPath() {
     return path;
   }
 }

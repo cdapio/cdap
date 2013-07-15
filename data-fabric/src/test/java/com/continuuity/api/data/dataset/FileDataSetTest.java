@@ -2,21 +2,7 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.batch.Split;
-import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.dataset.table.Delete;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Read;
-import com.continuuity.api.data.dataset.table.Swap;
-import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.dataset.DataSetTestBase;
-import com.continuuity.data.operation.StatusCode;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,19 +12,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.SortedSet;
 
 public class FileDataSetTest extends DataSetTestBase {
   @BeforeClass
   public static void configure() throws Exception {
     File file = File.createTempFile("fileDataSetTest", "foo");
-    FileDataSet testFile = new FileDataSet("testFile", file.getAbsolutePath());
-    FileDataSet noFile1 = new FileDataSet("noFile1", file.getAbsolutePath() + "_not_exist1");
-    FileDataSet noFile2 = new FileDataSet("noFile2", file.getAbsolutePath() + "_not_exist2");
+    FileDataSet testFile = new FileDataSet("testFile", file.toURI());
+    FileDataSet noFile1 = new FileDataSet("noFile1", new File(file.getAbsolutePath() + "_not_exist1").toURI());
+    FileDataSet noFile2 = new FileDataSet("noFile2", new File(file.getAbsolutePath() + "_not_exist2").toURI());
     setupInstantiator(Arrays.<DataSet>asList(testFile, noFile1, noFile2));
   }
 
@@ -46,6 +27,18 @@ public class FileDataSetTest extends DataSetTestBase {
   public void testCannotReadNonExistingFile() throws IOException {
     FileDataSet fileDataSet = instantiator.getDataSet("noFile1");
     fileDataSet.getInputStream();
+  }
+
+  @Test
+  public void testCannotDeleteNonExistingFile() throws IOException {
+    FileDataSet fileDataSet = instantiator.getDataSet("noFile1");
+    Assert.assertFalse(fileDataSet.delete());
+  }
+
+  @Test
+  public void testExists() throws IOException {
+    Assert.assertFalse(((FileDataSet) instantiator.getDataSet("noFile1")).exists());
+    Assert.assertTrue(((FileDataSet) instantiator.getDataSet("testFile")).exists());
   }
 
   @Test()

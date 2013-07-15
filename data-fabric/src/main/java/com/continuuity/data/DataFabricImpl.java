@@ -12,6 +12,7 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -77,22 +78,12 @@ public class DataFabricImpl implements DataFabric {
   }
 
   @Override
-  public InputStream getInputStream(String path) throws IOException {
-    return this.locationFactory.create(path).getInputStream();
+  public Location getLocation(String path) throws IOException {
+    return this.locationFactory.create(path);
   }
 
   @Override
-  public OutputStream getOutputStream(String path) throws IOException {
-    return this.locationFactory.create(path).getOutputStream();
-  }
-
-  @Override
-  public InputStream getInputStream(URI uri) throws IOException {
-    return this.locationFactory.create(uri).getInputStream();
-  }
-
-  @Override
-  public OutputStream getOutputStream(URI uri) throws IOException {
-    return this.locationFactory.create(uri).getOutputStream();
+  public Location getLocation(URI uri) throws IOException {
+    return this.locationFactory.create(uri);
   }
 }

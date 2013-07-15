@@ -1,12 +1,8 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.dataset.FileDataSet;
-import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.operation.executor.TransactionProxy;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -73,12 +69,22 @@ public class RuntimeFileDataSet extends FileDataSet {
   }
 
   @Override
+  public boolean exists() throws IOException {
+    return dataFabric.getLocation(getPath()).exists();
+  }
+
+  @Override
+  public boolean delete() throws IOException {
+    return dataFabric.getLocation(getPath()).delete();
+  }
+
+  @Override
   public InputStream getInputStream() throws IOException {
-    return dataFabric.getInputStream(getPath());
+    return dataFabric.getLocation(getPath()).getInputStream();
   }
 
   @Override
   public OutputStream getOutputStream() throws IOException {
-    return dataFabric.getOutputStream(getPath());
+    return dataFabric.getLocation(getPath()).getOutputStream();
   }
 }
