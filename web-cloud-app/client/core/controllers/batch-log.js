@@ -9,7 +9,7 @@ define(['core/controllers/runnable-log'], function (RunnableLogController) {
 		init: function () {
 
 			this.set('expectedPath', 'Batch.Log');
-
+			this.set('entityType', C.ENTITY_MAP['MAP_REDUCE']);
 		}
 
 	});

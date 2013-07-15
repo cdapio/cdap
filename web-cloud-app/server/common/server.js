@@ -385,9 +385,10 @@ var singularREST = {
 
     var offSet = req.query.fromOffset;
     var maxSize = req.query.maxSize;
+    var filter = req.query.filter;
     var method = req.params.method;
     var accountID = 'developer';
-    var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize];
+    var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize, filter];
 
     self.logger.trace('Logs ' + method + ' ' + req.url);
     

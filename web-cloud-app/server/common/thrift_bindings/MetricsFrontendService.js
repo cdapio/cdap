@@ -715,6 +715,7 @@ MetricsFrontendService_getLogNext_args = function(args) {
   this.entityType = null;
   this.fromOffset = null;
   this.maxEvents = null;
+  this.filter = null;
   if (args) {
     if (args.accountId !== undefined) {
       this.accountId = args.accountId;
@@ -733,6 +734,9 @@ MetricsFrontendService_getLogNext_args = function(args) {
     }
     if (args.maxEvents !== undefined) {
       this.maxEvents = args.maxEvents;
+    }
+    if (args.filter !== undefined) {
+      this.filter = args.filter;
     }
   }
 };
@@ -792,6 +796,13 @@ MetricsFrontendService_getLogNext_args.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
+      case 7:
+      if (ftype == Thrift.Type.STRING) {
+        this.filter = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
       default:
         input.skip(ftype);
     }
@@ -831,6 +842,11 @@ MetricsFrontendService_getLogNext_args.prototype.write = function(output) {
   if (this.maxEvents !== null && this.maxEvents !== undefined) {
     output.writeFieldBegin('maxEvents', Thrift.Type.I32, 6);
     output.writeI32(this.maxEvents);
+    output.writeFieldEnd();
+  }
+  if (this.filter !== null && this.filter !== undefined) {
+    output.writeFieldBegin('filter', Thrift.Type.STRING, 7);
+    output.writeString(this.filter);
     output.writeFieldEnd();
   }
   output.writeFieldStop();
@@ -939,6 +955,7 @@ MetricsFrontendService_getLogPrev_args = function(args) {
   this.entityType = null;
   this.fromOffset = null;
   this.maxEvents = null;
+  this.filter = null;
   if (args) {
     if (args.accountId !== undefined) {
       this.accountId = args.accountId;
@@ -957,6 +974,9 @@ MetricsFrontendService_getLogPrev_args = function(args) {
     }
     if (args.maxEvents !== undefined) {
       this.maxEvents = args.maxEvents;
+    }
+    if (args.filter !== undefined) {
+      this.filter = args.filter;
     }
   }
 };
@@ -1016,6 +1036,13 @@ MetricsFrontendService_getLogPrev_args.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
+      case 7:
+      if (ftype == Thrift.Type.STRING) {
+        this.filter = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
       default:
         input.skip(ftype);
     }
@@ -1055,6 +1082,11 @@ MetricsFrontendService_getLogPrev_args.prototype.write = function(output) {
   if (this.maxEvents !== null && this.maxEvents !== undefined) {
     output.writeFieldBegin('maxEvents', Thrift.Type.I32, 6);
     output.writeI32(this.maxEvents);
+    output.writeFieldEnd();
+  }
+  if (this.filter !== null && this.filter !== undefined) {
+    output.writeFieldBegin('filter', Thrift.Type.STRING, 7);
+    output.writeString(this.filter);
     output.writeFieldEnd();
   }
   output.writeFieldStop();
@@ -1346,13 +1378,13 @@ MetricsFrontendServiceClient.prototype.recv_getLog = function(input,mtype,rseqid
   }
   return callback('getLog failed: unknown result');
 };
-MetricsFrontendServiceClient.prototype.getLogNext = function(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, callback) {
+MetricsFrontendServiceClient.prototype.getLogNext = function(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter, callback) {
   this.seqid += 1;
   this._reqs[this.seqid] = callback;
-  this.send_getLogNext(accountId, applicationId, entityId, entityType, fromOffset, maxEvents);
+  this.send_getLogNext(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter);
 };
 
-MetricsFrontendServiceClient.prototype.send_getLogNext = function(accountId, applicationId, entityId, entityType, fromOffset, maxEvents) {
+MetricsFrontendServiceClient.prototype.send_getLogNext = function(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter) {
   var output = new this.pClass(this.output);
   output.writeMessageBegin('getLogNext', Thrift.MessageType.CALL, this.seqid);
   var args = new MetricsFrontendService_getLogNext_args();
@@ -1362,6 +1394,7 @@ MetricsFrontendServiceClient.prototype.send_getLogNext = function(accountId, app
   args.entityType = entityType;
   args.fromOffset = fromOffset;
   args.maxEvents = maxEvents;
+  args.filter = filter;
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
@@ -1388,13 +1421,13 @@ MetricsFrontendServiceClient.prototype.recv_getLogNext = function(input,mtype,rs
   }
   return callback('getLogNext failed: unknown result');
 };
-MetricsFrontendServiceClient.prototype.getLogPrev = function(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, callback) {
+MetricsFrontendServiceClient.prototype.getLogPrev = function(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter, callback) {
   this.seqid += 1;
   this._reqs[this.seqid] = callback;
-  this.send_getLogPrev(accountId, applicationId, entityId, entityType, fromOffset, maxEvents);
+  this.send_getLogPrev(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter);
 };
 
-MetricsFrontendServiceClient.prototype.send_getLogPrev = function(accountId, applicationId, entityId, entityType, fromOffset, maxEvents) {
+MetricsFrontendServiceClient.prototype.send_getLogPrev = function(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter) {
   var output = new this.pClass(this.output);
   output.writeMessageBegin('getLogPrev', Thrift.MessageType.CALL, this.seqid);
   var args = new MetricsFrontendService_getLogPrev_args();
@@ -1404,6 +1437,7 @@ MetricsFrontendServiceClient.prototype.send_getLogPrev = function(accountId, app
   args.entityType = entityType;
   args.fromOffset = fromOffset;
   args.maxEvents = maxEvents;
+  args.filter = filter;
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
@@ -1517,7 +1551,7 @@ MetricsFrontendServiceProcessor.prototype.process_getLogNext = function(seqid, i
   var args = new MetricsFrontendService_getLogNext_args();
   args.read(input);
   input.readMessageEnd();
-  this._handler.getLogNext(args.accountId, args.applicationId, args.entityId, args.entityType, args.fromOffset, args.maxEvents, function (err, result) {
+  this._handler.getLogNext(args.accountId, args.applicationId, args.entityId, args.entityType, args.fromOffset, args.maxEvents, args.filter, function (err, result) {
     var result = new MetricsFrontendService_getLogNext_result((err != null ? err : {success: result}));
     output.writeMessageBegin("getLogNext", Thrift.MessageType.REPLY, seqid);
     result.write(output);
@@ -1530,7 +1564,7 @@ MetricsFrontendServiceProcessor.prototype.process_getLogPrev = function(seqid, i
   var args = new MetricsFrontendService_getLogPrev_args();
   args.read(input);
   input.readMessageEnd();
-  this._handler.getLogPrev(args.accountId, args.applicationId, args.entityId, args.entityType, args.fromOffset, args.maxEvents, function (err, result) {
+  this._handler.getLogPrev(args.accountId, args.applicationId, args.entityId, args.entityType, args.fromOffset, args.maxEvents, args.filter, function (err, result) {
     var result = new MetricsFrontendService_getLogPrev_result((err != null ? err : {success: result}));
     output.writeMessageBegin("getLogPrev", Thrift.MessageType.REPLY, seqid);
     result.write(output);
