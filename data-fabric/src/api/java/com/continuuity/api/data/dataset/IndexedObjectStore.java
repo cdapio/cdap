@@ -8,7 +8,7 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -71,7 +71,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * @throws OperationException in case of error.
    */
   public List<T> readAllByIndex(byte[] indexValue) throws OperationException {
-    List<T> resultList = Lists.newArrayList();
+    ImmutableList.Builder resultList = new ImmutableList.Builder();
     //Lookup the index and get all the keys in primary
     Read idxRead = new Read(indexValue, null, null);
     OperationResult<Map<byte[], byte[]>> result = this.index.read(idxRead);
@@ -86,7 +86,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
         }
       }
     }
-    return resultList;
+    return resultList.build();
   }
 
   /**

@@ -47,11 +47,11 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], Map
   protected final Table table;
 
   // the default column to use for the key
-  protected final byte[] KEY_COLUMN = { 'c' };
+  protected final byte[] DEFAULT_COLUMN = { 'c' };
 
    // this is the dataset that executes the actual operations. using a delegate
    // allows us to inject a different implementation.
-   protected ObjectStore<T> delegate = null;
+   private ObjectStore<T> delegate = null;
 
   /**
    * sets the ObjectStore to which all operations are delegated. This can be used

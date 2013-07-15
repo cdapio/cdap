@@ -79,7 +79,9 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
   @Override
   public void write(byte[] key, byte[] col, T object) throws OperationException {
     // write to key value table
-    writeRawColumn(key, col, encode(object));
+    Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
+    values.put(col, encode(object));
+    writeRawColumns(key, values);
   }
 
   @Override
@@ -110,19 +112,11 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     return result.build();
   }
 
-
   private void writeRaw(byte[] key, byte[] value) throws OperationException {
     // write to table with default Column
     Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-    values.put(this.KEY_COLUMN, value);
-    this.table.write(key, values);
-  }
-
-  private void writeRawColumn(byte[] key, byte[] col, byte[] value) throws OperationException {
-    // write to table with default Column
-    Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-    values.put(col, value);
-    this.table.write(key, values);
+    values.put(DEFAULT_COLUMN, value);
+    writeRawColumns(key, values);
   }
 
   private void writeRawColumns(byte[] key, Map<byte[], byte[]> columnValues) throws OperationException {
@@ -133,11 +127,11 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
   private byte[] readRaw(byte[] key) throws OperationException {
     // read from the underlying table
     OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(key, KEY_COLUMN));
+      this.table.read(new Read(key, DEFAULT_COLUMN));
     if (result.isEmpty()) {
       return null;
     } else {
-      return result.getValue().get(KEY_COLUMN);
+      return result.getValue().get(DEFAULT_COLUMN);
     }
   }
 
