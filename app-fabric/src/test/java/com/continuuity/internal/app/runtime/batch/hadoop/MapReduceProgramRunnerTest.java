@@ -59,7 +59,7 @@ public class MapReduceProgramRunnerTest {
     File outputDir = new File(FileUtils.getTempDirectory().getPath() + "/out_" + System.currentTimeMillis());
     outputDir.deleteOnExit();
 
-    KeyValueTable jobConfigTable = (KeyValueTable) getTable(opex, opCtx, locationFactory,"jobConfig");
+    KeyValueTable jobConfigTable = (KeyValueTable) getTable(opex, opCtx, locationFactory, "jobConfig");
     jobConfigTable.write(tb("inputPath"), tb(inputPath));
     jobConfigTable.write(tb("outputPath"), tb(outputDir.getPath()));
 
