@@ -3,8 +3,8 @@
  */
 
 define(['mocks/results/elements', 'mocks/results/metrics/counters',
-	'mocks/results/rpc', 'mocks/http-router'],
-	function (Elements, Counters, RPC, HttpRouter) {
+	'mocks/results/metrics/timeseries', 'mocks/results/rpc', 'mocks/http-router'],
+	function (Elements, Counters, TimeSeries, RPC, HttpRouter) {
 
 	Em.debug('Loading HTTP Mock');
 
@@ -19,7 +19,7 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 				path.push(args[i]);
 			}
 		}
-		return '/' + path.join('/');
+		return '/' + path.join('/').toLowerCase();
 	}
 
 	/*

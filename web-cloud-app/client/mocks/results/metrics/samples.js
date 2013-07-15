@@ -6,6 +6,16 @@
 define([], function() {
 
   return {
+    "appMetrics": [
+      {
+        'name': 'Events Processed',
+        'path': '/process/events/{id}'
+      },
+      {
+        'name': 'Busyness',
+        'path': '/process/busyness/{id}'
+      }
+    ],
     "flowsByStreamSample": [
       {
         "id": "WordCounter",

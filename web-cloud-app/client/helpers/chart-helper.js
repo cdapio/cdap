@@ -47,15 +47,15 @@ define(['d3'], function () {
    * @param {Array} metrics list of metrics to render.
    * @param {string} divId id of div to insert chart into.
    */
-  chartHelper.Chart = function(data, metrics, divId) {
+  chartHelper.Chart = function(data, metrics, divId, width) {
 
     this.metrics = metrics;
 
     var self = this;
 
     // Boilerplate D3.
-    var margin = {top: 20, right: 80, bottom: 30, left: 80},
-    width = 960 - margin.left - margin.right,
+    var margin = {top: 20, right: 10, bottom: 30, left: 10},
+    width = width - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
     var parseDate = d3.time.format("%Y%m%d").parse;
@@ -90,7 +90,7 @@ define(['d3'], function () {
 
     // Append new svg to specified div.
     var svg = d3.select('#'+divId)
-                .append("svg") 
+                .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
@@ -115,8 +115,8 @@ define(['d3'], function () {
                     .attr("class", "metric");
 
     var div = d3.select('body')
-                .append("div")   
-                .attr("class", "tooltip")               
+                .append("div")
+                .attr("class", "tooltip")
                 .style("opacity", 0);
 
     // Sets limits for x axis.
@@ -151,7 +151,7 @@ define(['d3'], function () {
         .text("Events");
 
     // Draw background dotted grid on x axis.
-    svg.append("g")         
+    svg.append("g")
         .attr("class", "grid")
         .style("stroke-dasharray", ("3, 3"))
         .attr("transform", "translate(0," + height + ")")
@@ -161,7 +161,7 @@ define(['d3'], function () {
         )
 
     // Draw background dotted grid on y axis.
-    svg.append("g")         
+    svg.append("g")
         .attr("class", "grid")
         .style("stroke-dasharray", ("3, 3"))
         .call(yAxis
@@ -173,8 +173,8 @@ define(['d3'], function () {
     metric.append("path")
         .attr("class", "line")
         .attr("d", function(d) { return line(d.values); })
-        .style("stroke", function(d) { 
-          return self.getColorForMetric(d.name) || color(d.name); 
+        .style("stroke", function(d) {
+          return self.getColorForMetric(d.name) || color(d.name);
         })
         .style("stroke-width", '3');
 

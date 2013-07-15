@@ -9,9 +9,9 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       templateName: 'AnalyzeEmbeddable',
 
       didInsertElement: function() {
-        this._super();
 
-        this.renderCharts();
+        this.renderChart();
+
         this.set('overlays', Em.A([
           $("#analyze-add-metric-widget")
         ]));
@@ -22,11 +22,15 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
        * Renders all charts.
        * This observes on controller.data, and changes everytime there is a change in the data.
        */
-      renderCharts: function() {
+      renderChart: function() {
+
         $("#metrics-explorer-widget").empty();
-        var dt = this.get('controller.data');
-        var metrics = this.get('controller.metrics');
-        new chartHelper.Chart(dt, metrics, 'metrics-explorer-widget');
+        var metrics = this.get('controller.selected');
+
+        var width = $(this.get('element')).width();
+
+        new chartHelper.Chart(metrics, metrics, 'metrics-explorer-widget', width);
+
       }.observes('controller.data'),
 
       /**

@@ -35,6 +35,13 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/disk': { free: 1024 },
 
     // REST
+
+    '/rest/metrics/app': Samples.appMetrics,
+    '/rest/metrics/flow': Samples.flowMetrics,
+    '/rest/metrics/stream': Samples.streamMetrics,
+
+    '/rest/all': Samples.applicationsSample,
+
     '/rest/apps': Samples.applicationsSample,
     '/rest/streams': Samples.streamsSample,
     '/rest/flows': Samples.flowsSample,
@@ -75,6 +82,8 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/batch/SampleApplicationId:batchid1': Samples.batchSample,
     '/batch/SampleApplicationId:batchid1?data=metrics': Counters.batchMetrics,
     '/batch/SampleApplicationId:batchid1?data=alerts': Counters.batchAlerts,
+
+    /*
     '/metrics/twitter_scanner/events_in?format=rate&duration=7': TimeSeries.eventsInRateSmall,
     '/metrics/twitter_scanner/events_in?format=count&duration=7': TimeSeries.eventsInCountSmall,
     '/metrics/twitter_scanner/events_in?format=rate&duration=14':  TimeSeries.eventsInRateMedium,
@@ -87,7 +96,7 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/metrics/twitter_scanner/events_out?format=count&duration=7': TimeSeries.eventsOutCountSmall,
     '/metrics/twitter_scanner/events_out?format=count&duration=14': TimeSeries.eventsOutCountMedium,
     '/metrics/twitter_scanner/events_out?format=count&duration=30': TimeSeries.eventsOutCountLarge
-
+    */
   };
 
   /*

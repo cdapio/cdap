@@ -1978,6 +1978,11 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 /** Analyze CSS **/
+
+#metrics-explorer-widget {
+	height: 500px;
+}
+
 #metrics-explorer-widget svg {
 	height: 500px;
 }
@@ -1985,7 +1990,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .axis path,
 .axis line {
   fill: none;
-  stroke: #000;
+  stroke: #ccc;
   shape-rendering: crispEdges;
 }
 
@@ -2018,24 +2023,126 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	margin-left: 10px;
 }
 
-.analyze-table {
+.analyze-selected {
+	float: left;
+	width: 250px;
+	padding: 20px 0px 20px 20px;
+}
+
+.analyze-selected ul {
+	list-style: none;
+}
+
+.analyze-selected-metric, .analyze-selected-metric-add {
+	padding: 8px 0px 8px 8px;
+	border-bottom: 1px dotted #ccc;
+	cursor: pointer;
+	height: 48px;
+}
+
+.analyze-selected-metric-add {
+	border: 0;
+	line-height: 32px;
+}
+
+.analyze-selected-metric-remove {
+	float: right;
+	font-size: 18px;
+	color: #aaa;
+}
+
+.analyze-selected-metric-color {
+	float: left;
+	width: 32px;
+	height: 32px;
+	margin-right: 5px;
+	background-color: #5FAECC;
+}
+
+.analyze-selected-metric-element {
+	margin-left: 40px;
+	font-family: "HelveticaNeueW01-75Bold";
+}
+.analyze-selected-metric-name {
+	font-family: "HelveticaNeueW01-57Cn";
+	font-size: 12px;
+	color: #aaa;
+	text-transform: uppercase;
+	font-weight: normal;
+	letter-spacing: 0.1em;
+	margin-left: 40px;
+	line-height: 10px;
+}
+
+#analyze-configurator {
+	border: 1px solid #ccc;
+	box-shadow: 3px 3px 1px #ccc;
+	padding: 0px 10px;
+	background: white;
+	display: none;
+	position: absolute;
+	width: 230px;
+	top: 28px;
+	left: 22px;
+}
+.analyze-dropdown {
+	margin-right: 32px;
+}
+.analyze-dropdown > .btn {
+	width: 170px !important;
+
+}
+.analyze-color-select {
+	float: right;
+	width: 32px;
+	height: 32px;
+}
+.analyze-color-select > .btn {
+	width: 32px !important;
+	padding: 2px;
+}
+.analyze-color-selected {
+	width: 26px;
+	height: 22px;
+	border-radius: 2px;
+	background-color: orange;
+}
+#analyze-configurator .dropdown button {
 	width: 100%;
-	padding: 10px;
-}
-
-.analyze-table td {
-	vertical-align: top;
-}
-
-.analyze-table td ul {
-	list-style-type: none;
-}
-
-.analyze-table td>ul>li{
-	padding: 5px;
-	margin-left: 10px;
-	border-bottom: 1px #CCC dotted;
 	text-align: left;
+	margin-top: 8px;
+}
+
+#analyze-configurator .dropdown button .caret {
+	float: right;
+}
+
+.analyze-blue-btn, .analyze-gray-btn {
+	background: #5FAECC;
+	border: 0;
+	color: white;
+	font-family: "HelveticaNeueW01-57Cn";
+	text-transform: uppercase;
+	text-align: center;
+	padding: 5px 8px;
+	margin: 8px 0px;
+	cursor: pointer;
+
+	float: left;
+	width: 100px;
+
+}
+
+.analyze-gray-btn {
+	background: #e6e6e6;
+	color: #777;
+	float: left;
+	width: 100px;
+	margin-right: 8px;
+}
+
+.analyze-chart {
+	margin-left: 260px;
 }
 
 .analyze-app-label {
@@ -2043,62 +2150,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	color: #505050;
 }
 
-.analyze-app-label a {
-	font-size: 16px;
-}
-
-.analyze-metric-name {
-	font-family: "HelveticaNeueW01-57Cn";
-	font-size: 12px;
-	color: #77878B;
-	text-transform: uppercase;
-	padding: 2px 4px;
-	font-weight: normal;
-	letter-spacing: 0.1em;
-}
-
-.analyze-blue-btn {
-	background: #5FAECC;
-	border: 0;
-	color: white;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-	font-family: "HelveticaNeueW01-57Cn";
-	text-transform: uppercase;
-	width: 100%;
-	max-width: 200px;
-	padding: 8px;
-	margin-top: 10px;
-}
-
-#analyze-add-metric-widget {
-	border: 1px solid #ccc;
-	box-shadow: 3px 3px 1px #ccc;
-	padding: 10px;
-	background: white;
-}
-
-#analyze-add-metric-widget .dropdown {
-	margin-top: 3px;
-}
-
-#analyze-add-metric-table {
-	border: none;
-	padding: 0;
-}
-
-#analyze-add-metric-table td{
-	border: 0;
-	padding: 2px;
-}
-
-.analyze-metric-color {
-	float: left;
-	width: 20px;
-	height: 20px;
-	margin-right: 5px;
-}
-
-div.tooltip {   
+div.tooltip {
   position: absolute;
   text-align: center;
   padding: 5px;
