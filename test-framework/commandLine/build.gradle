@@ -5,32 +5,22 @@ project.ext {
     appHome = "${buildDir}/continuuity-developer-suite-1.6.0-SNAPSHOT"
 }
 
-task cleanDevSuite(type: Delete) {
+task cleanDevSuite(type: Delete) << {
     logger.println('[INFO]: Deleting previous Reactor...')
     delete "${buildDir}"
 }
 
-task deployDevSuite(type: Copy) {
+task deployDevSuite(type: Copy, dependsOn: 'cleanDevSuite')  {
     println "${rootProject.projectDir}"
     def zipFile = file("${rootProject.projectDir}/../distributions/build/distributions/continuuity-developer-suite-1.6.0-SNAPSHOT.zip")
     def outputDir = file("${buildDir}")
 
     from zipTree(zipFile)
     into outputDir
+    sleep(5000)
 }
 
-deployDevSuite.dependsOn 'cleanDevSuite'
-
-//task collectJars << {
-//    // Collect all examples jars
-//    tree = fileTree(dir: "${appHome}/examples", include: '**/*.jar', exclude: ['**/lib/**', '**/lib-to-package/**'])
-//    tree.each {File file ->
-//        println file.absolutePath
-//    }
-//
-//}
-
-task startReactor << {
+task startReactor(dependsOn: 'deployDevSuite') << {
     command = ["${project.ext.appHome}/bin/continuuity-reactor start"]
 
     if (executeCommand(command) != 0) {
@@ -46,7 +36,7 @@ task startReactor << {
 }
 
 
-task stopReactor << {
+task stopReactor(type: Exec) << {
     command = ["${project.ext.appHome}/bin/continuuity-reactor stop"]
 
     if (executeCommand(command) != 0) {
@@ -58,12 +48,12 @@ task stopReactor << {
 }
 
 // Clear all data from reactor
-task cleanReactor(type: Delete) << {
+task cleanReactor(type: Delete)  << {
     delete "${project.ext.appHome}/data"
 }
 
 
-task compileApps << {
+task compileApps(dependsOn: 'startReactor')  << {
     command = ["ant -f ${appHome}/examples/build.xml"]
 
     if (executeCommand(command) != 0) {
@@ -74,7 +64,7 @@ task compileApps << {
     }
 }
 
-task deployApps  {
+task deployApps(dependsOn: 'compileApps') << {
     // Collect all examples jars
     tree = fileTree(dir: "${appHome}/examples", include: '**/*.jar', exclude: ['**/lib/**', '**/lib-to-package/**'])
 
@@ -91,7 +81,7 @@ task deployApps  {
     }
 }
 
-task startApps << {
+task startApps( dependsOn: 'deployApps') << {
     command = ["${projectDir}/bin/start-stop.sh start ${project.ext.appHome}"]
 
     if (executeCommand(command) != 0) {
@@ -102,14 +92,10 @@ task startApps << {
     }
 }
 
+/*Dependencies startApps->deployApps->compileApps->startReactor->deployDevSuite->cleanReactor */
 
-task testCmdLine << {
-    // dependsOn: [deployDevSuite, startReactor, compileExamples, deployApps, startApps]
-    BuildLogger.println('Testing command line suite..')
-
-    doLast {
-        stopReactor.execute()
-    }
+task testCmdLineDevSuite(dependsOn: 'startApps') << {
+    BuildLogger.println('Testing command line on DevSuite...')
 }
 
 
