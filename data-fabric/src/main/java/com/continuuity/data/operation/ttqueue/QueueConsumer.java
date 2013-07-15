@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.hbase.ttqueue.HBQConsumer;
 import com.google.common.base.Objects;
 
 /**
@@ -120,9 +119,5 @@ public class QueueConsumer {
         .add("partitioningKey", this.partitioningKey)
         .add("stateType", this.stateType)
         .toString();
-  }
-
-  public HBQConsumer toHBQ() {
-    return new HBQConsumer(instanceId, groupId, groupSize);
   }
 }
