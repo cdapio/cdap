@@ -47,7 +47,7 @@ public class LocalHBaseOpexProvider extends OpexProvider {
     }
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(
-        DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES,
+        DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE,
         this.useNativeQueues());
     DataFabricDistributedModule module =
         new DataFabricDistributedModule(hbaseConf, conf);
