@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.guice;
 
+import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.DatumWriterFactory;
@@ -11,7 +12,6 @@ import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.collect.KafkaMetricsCollectionService;
-import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -38,7 +38,7 @@ final class DistributedMetricsClientModule extends PrivateModule {
   }
 
   @Provides
-  @Named("metrics.kafka.topic")
+  @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC)
   public String providesKafkaTopic(CConfiguration cConf) {
     return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC, MetricsConstants.DEFAULT_KAFKA_TOPIC);
   }

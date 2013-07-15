@@ -8,6 +8,7 @@ import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaPublisher;
+import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -18,7 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 /**
- * A {@link AggregatedMetricsCollectionService} that publish {@link com.continuuity.metrics.transport.MetricsRecord} to kafka. The partition
+ * A {@link AggregatedMetricsCollectionService} that publish {@link MetricsRecord} to kafka. The partition
  * is determined by the metric context.
  */
 @Singleton
@@ -35,7 +36,7 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
 
   @Inject
   public KafkaMetricsCollectionService(KafkaClientService kafkaClient,
-                                       @Named("metrics.kafka.topic") String topic,
+                                       @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC) String topic,
                                        DatumWriter<MetricsRecord> recordWriter) {
     this(kafkaClient, topic, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
   }
