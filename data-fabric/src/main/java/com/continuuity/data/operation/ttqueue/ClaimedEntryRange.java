@@ -2,7 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-import com.continuuity.data.operation.ttqueue.internal.TTQueueNewConstants;
+import com.continuuity.data.operation.ttqueue.internal.TTQueueConstants;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
@@ -13,7 +13,7 @@ import java.io.IOException;
  */
 public final class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
 
-  public static final long INVALID_ENTRY_ID = TTQueueNewConstants.INVALID_ENTRY_ID;
+  public static final long INVALID_ENTRY_ID = TTQueueConstants.INVALID_ENTRY_ID;
 
   private long begin;
   private long end;

@@ -26,7 +26,7 @@ public abstract class HBaseNativeMetaDataStoreTest extends MetaDataStoreTest {
   public static void setupOpex() throws Exception {
     HBaseTestBase.startHBase();
     CConfiguration conf = CConfiguration.create();
-    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
+    conf.setBoolean(DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, true);
     DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf);
     injector = Guice.createInjector(module);
     opex = injector.getInstance(Key.get(OperationExecutor.class, Names.named("DataFabricOperationExecutor")));

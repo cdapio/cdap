@@ -29,7 +29,7 @@ public class  TestHBaseOmidTransactionalOperationExecutor  extends TestOmidTrans
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
       // make sure we use vanilla hbase
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+      conf.setBoolean(DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, false);
       injector = Guice.createInjector(
         new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
       executor = (OmidTransactionalOperationExecutor) injector.getInstance(
