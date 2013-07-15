@@ -15,6 +15,8 @@ dependencies {
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
 
+    apiCompile libraries.slf4j_api
+    apiCompile libraries.google_guava
     compile libraries.google_gson
     compile libraries.google_guava
     compile libraries.google_guice
