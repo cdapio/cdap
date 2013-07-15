@@ -165,7 +165,7 @@ public class SingleNodeMain {
    */
   public static boolean nodeExists() {
     try {
-      Process proc = Runtime.getRuntime().exec("node -v");
+      Process proc = Runtime.getRuntime().exec("/usr/local/bin/node -v");
       TimeUnit.SECONDS.sleep(2);
       int exitValue = proc.exitValue();
       if (exitValue != 0) {
