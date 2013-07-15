@@ -37,6 +37,15 @@ function(Components, Embeddables, HTTP, Socket, Util){
 		 */
 		WATCH_LATENCY: false,
 
+		/**
+		 * Entity types and name mapping.
+		 */
+		ENTITY_MAP: {
+			'FLOW': 1,
+			'PROCEDURE': 2,
+			'MAP_REDUCE': 3
+		},
+
 		/*
 		 * Allows us to set the ID of the main view element.
 		 */
