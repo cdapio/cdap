@@ -49,6 +49,23 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rest/datasets': Samples.datasetsSample,
     '/rest/procedures': Samples.proceduresSample,
 
+    '/rest/streams/text': Samples.streamSample,
+
+    '/rest/streams/wordStream': Samples.streamSample,
+    '/rest/streams/wordStream/flows': Samples.flowsSample,
+
+    '/rest/datasets/wordAssocs': Samples.datasetSample,
+    '/rest/datasets/uniqueCount': Samples.datasetSample,
+    '/rest/datasets/wordCounts': Samples.datasetSample,
+    '/rest/datasets/wordStats': Samples.datasetSample,
+    '/rest/datasets/filterTable': Samples.datasetSample,
+
+    '/rest/datasets/wordAssocs/flows': Samples.flowsSample,
+    '/rest/datasets/uniqueCount/flows': Samples.flowsSample,
+    '/rest/datasets/wordCounts/flows': Samples.flowsSample,
+    '/rest/datasets/wordStats/flows': Samples.flowsSample,
+    '/rest/datasets/filterTable/flows': Samples.flowsSample,
+
     '/rest/apps/WordCount': Samples.applicationSample,
     '/rest/apps/WordCount/streams': Samples.streamsSample,
     '/rest/apps/WordCount/flows': Samples.flowsSample,
@@ -59,17 +76,20 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rest/apps/WordCount/flows/WordCounter': Samples.flowDefinitionSample,
     '/rest/apps/WordCount/procedures/RetrieveCounts': Samples.procedureSample,
 
+    '/rest/apps/CountRandom/flows/CountAndFilterWords': Samples.flowDefinitionSample,
+
     '/rest/apps/CountRandom': Samples.applicationSample,
     '/rest/apps/CountRandom/flows/CountRandom': Samples.flowDefinitionSample,
 
     '/rest/apps/CountAndFilterWords': Samples.applicationSample,
     '/rest/apps/CountAndFilterWords/streams': Samples.streamsSample,
     '/rest/apps/CountAndFilterWords/flows': Samples.flowsSample,
+    '/rest/apps/CountAndFilterWords/mapreduce': Samples.batchesSample,
     '/rest/apps/CountAndFilterWords/datasets': Samples.datasetsSample,
     '/rest/apps/CountAndFilterWords/procedures': Samples.proceduresSample,
     '/rest/apps/CountAndFilterWords/flows/CountAndFilterWords': Samples.flowDefinitionSample,
     '/rest/apps/CountAndFilterWords/flows/CountRandom': Samples.flowDefinitionSample,
-
+    '/rest/apps/CountAndFilterWords/mapreduce/batchid1': Samples.batchSample,
     '/rest/apps/CountAndFilterWords/mapreduce/batchsampleid1': Samples.batchSample,
 
     // RPC
@@ -77,26 +97,8 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rpc/runnable/start': { result: true },
     '/rpc/runnable/stop': { result: true },
     '/rpc/runnable/setInstances': { result: true },
-    '/rpc/runnable/getFlowHistory': { params: [] },
+    '/rpc/runnable/getFlowHistory': { params: [] }
 
-    '/batch/SampleApplicationId:batchid1': Samples.batchSample,
-    '/batch/SampleApplicationId:batchid1?data=metrics': Counters.batchMetrics,
-    '/batch/SampleApplicationId:batchid1?data=alerts': Counters.batchAlerts,
-
-    /*
-    '/metrics/twitter_scanner/events_in?format=rate&duration=7': TimeSeries.eventsInRateSmall,
-    '/metrics/twitter_scanner/events_in?format=count&duration=7': TimeSeries.eventsInCountSmall,
-    '/metrics/twitter_scanner/events_in?format=rate&duration=14':  TimeSeries.eventsInRateMedium,
-    '/metrics/twitter_scanner/events_in?format=count&duration=14': TimeSeries.eventsInCountMedium,
-    '/metrics/twitter_scanner/events_in?format=rate&duration=30': TimeSeries.eventsInRateLarge,
-    '/metrics/twitter_scanner/events_in?format=count&duration=30': TimeSeries.eventsInCountLarge,
-    '/metrics/twitter_scanner/events_out?format=rate&duration=7': TimeSeries.eventsOutRateSmall,
-    '/metrics/twitter_scanner/events_out?format=rate&duration=14': TimeSeries.eventsOutRateMedium,
-    '/metrics/twitter_scanner/events_out?format=rate&duration=30': TimeSeries.eventsOutRateLarge,
-    '/metrics/twitter_scanner/events_out?format=count&duration=7': TimeSeries.eventsOutCountSmall,
-    '/metrics/twitter_scanner/events_out?format=count&duration=14': TimeSeries.eventsOutCountMedium,
-    '/metrics/twitter_scanner/events_out?format=count&duration=30': TimeSeries.eventsOutCountLarge
-    */
   };
 
   /*

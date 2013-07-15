@@ -48,7 +48,16 @@ define([], function () {
 			var path = findPath(arguments);
 			var callback = findCallback(arguments);
 
-			$.getJSON(path, callback);
+			$.getJSON(path, callback).fail(function (req) {
+
+				var error = JSON.parse(req.responseText);
+				if (error.fatal) {
+
+					$('#warning').html('<div>' + error.fatal + '</div>').show();
+
+				}
+
+			});
 
 		},
 
@@ -66,7 +75,24 @@ define([], function () {
 			var object = findObject(arguments);
 			var callback = findCallback(arguments);
 
-			$.post(path, object, callback);
+			$.ajax({
+				url: path,
+				data: JSON.stringify(object),
+				type: "POST",
+				contentType: "application/json"
+			}).done(function (response, status) {
+
+				if (response.error && response.error.fatal) {
+					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+				} else {
+					callback(response, status);
+				}
+
+			}).fail(function (xhr) {
+
+				$('#warning').html('<div>Encountered a connection problem.</div>').show();
+
+			});
 
 		},
 
@@ -78,7 +104,7 @@ define([], function () {
 			var object = args[args.length - 2];
 
 			if (typeof object === 'object' && object.length) {
-				args[args.length - 2] = { 'params[]': JSON.stringify(object) };
+				args[args.length - 2] = object;
 			}
 
 			this.post.apply(this, args);

@@ -31,12 +31,14 @@ define([], function () {
 
 		getStats: function () {
 
-			C.get.apply(this.get('model'), this.get('model').getUpdateRequest(this.HTTP));
+			var models = [this.get('model')];
+
+			C.Util.updateAggregates(models, this.HTTP);
+			C.Util.updateTimeSeries(models, this.HTTP);
 
 			var self = this;
-
-			this.__timeout = setTimeout(function () {
-				self.getStats();
+			self.__timeout = setTimeout(function () {
+				self.getStats(self);
 			}, C.POLLING_INTERVAL);
 
 		},
@@ -73,23 +75,18 @@ define([], function () {
 		inject: function () {
 
 			var payload = this.get('injectValue');
-
 			var flow = this.get('controllers').get('FlowStatus').get('model');
-
 			var stream = this.get('model').id;
 
 			this.set('injectValue', '');
 
-			C.get('gateway', {
-				method: 'inject',
-				params: {
-					name: flow,
-					stream: stream,
-					payload: payload
-				}
-			}, function (error, response) {
+			this.HTTP.rpc('gateway', 'inject', {
+				name: flow,
+				stream: stream,
+				payload: payload
+			}, function (response, status) {
 
-				if (error) {
+				if (response && response.error) {
 					C.Modal.show(
 					"Inject Error",
 					"The gateway responded with: " + error.statusCode + '. Info: ' +

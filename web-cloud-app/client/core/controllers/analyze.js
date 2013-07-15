@@ -37,13 +37,25 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       color: DEFAULT_COLOR
     }),
 
+    init: function () {
+
+      /*
+       * Only 'extend' allows computed properties, as above.
+       * Therefore we create / construct here.
+       */
+      this.set('configuring', this.get('configuring').create());
+
+    },
+
     load: function (id) {
 
       var self = this;
 
       this.set('selected', Em.ArrayProxy.create({ content: [] }));
-      this.set('configuring', this.get('configuring').create());
 
+      /*
+       * Prepopulate metrics selection from Local Storage if available.
+       */
       if (window.localStorage) {
 
         var saved = localStorage.getItem(STORED_APP_NAME);
@@ -54,6 +66,9 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
       }
 
+      /*
+       * Get all available Elements for selection.
+       */
       this.HTTP.rest('all', function (models, status) {
 
         var i = models.length;
@@ -65,6 +80,12 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         self.set('elementsList', models);
 
       });
+
+    },
+
+    unload: function () {
+
+      // Unload
 
     },
 
@@ -87,7 +108,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
     showConfigure: function (metric) {
 
-      // TODO: Find metric to edit in place.
+      // TODO: Find metric to allowe editing in place.
 
       var top = $('.analyze-selected-metric-add').position().top;
 

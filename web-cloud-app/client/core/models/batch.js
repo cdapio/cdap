@@ -21,8 +21,8 @@ define(['lib/date'], function (Datejs) {
     init: function() {
       this._super();
 
-      this.set('metricData', Em.Object.create());
-      this.set('metricNames', {});
+      this.set('timeseries', Em.Object.create());
+      this.set('aggregates', Em.Object.create());
 
       this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
@@ -44,37 +44,45 @@ define(['lib/date'], function (Datejs) {
       return new Date(time).toString('hh:mm tt');
     }.property('startTime'),
 
-    addMetricName: function (name) {
+    units: {
+      'mapperRecords': 'number',
+      'mapperBytes': 'bytes',
+      'reducerRecords': 'number',
+      'reducerBytes': 'bytes'
+    },
 
-      this.get('metricNames')[name] = 1;
+    interpolate: function (path) {
+
+      return path.replace(/{parent}/, this.get('app'))
+        .replace(/{id}/, this.get('name'));
 
     },
-    setMetricData: function(name, value) {
 
-      this.get('metricData').set(name, value);
+    trackMetric: function (path, kind, label) {
+
+      this.get(kind).set(path = this.interpolate(path), label || []);
+      return path;
 
     },
-    getUpdateRequest: function (http) {
+
+    setMetric: function (label, value) {
+
+      var unit = this.get('units')[label];
+      value = C.Util[unit](value);
+
+      this.set(label + 'Label', value[0]);
+      this.set(label + 'Units', value[1]);
+
+    },
+
+    updateState: function (http) {
 
       var self = this;
 
       var app_id = this.get('app'),
-        batch_id = this.get('name'),
-        start = C.__timeRange * -1;
+        flow_id = this.get('name');
 
-      var metrics = [];
-      var metricNames = this.get('metricNames');
-      for (var name in metricNames) {
-        if (metricNames[name] === 1) {
-          metrics.push(name);
-        }
-      }
-      if (!metrics.length) {
-        this.set('__loadingData', false);
-        return;
-      }
-
-      http.rpc('runnable', 'status', [app_id, batch_id, -1],
+      http.rpc('runnable', 'status', [app_id, flow_id, -1],
         function (response) {
 
           if (response.result) {
@@ -82,83 +90,6 @@ define(['lib/date'], function (Datejs) {
           }
 
       });
-
-      return ['monitor', {
-        method: 'getTimeSeries',
-        params: [app_id, batch_id, metrics, start, undefined, 'FLOW_LEVEL']
-      }, function (error, response) {
-
-        if (!response.params) {
-          return;
-        }
-
-        var data, points = response.params.points,
-          latest = response.params.latest;
-
-        for (var metric in points) {
-          data = points[metric];
-
-          var k = data.length;
-
-          while(k --) {
-            data[k] = data[k].value;
-          }
-
-          metric = metric.replace(/\./g, '');
-          self.get('metricData').set(metric, data);
-          self.set('__loadingData', false);
-        }
-
-      }];
-
-    },
-    getMetricsRequest: function() {
-
-      // These placeholders names are for Handlebars to render the associated metrics.
-      var placeholderNames = {
-        '/store/bytes/datasets/dataset1?total=true': 'input1',
-        '/store/records/datasets/dataset1?total=true': 'input2',
-        '/process/events/jobs/mappers/job1?total=true': 'mappers1',
-        '/process/bytes/jobs/mappers/job1?total=true': 'mappers2',
-        '/process/events/jobs/reducers/job1?total=true': 'reducers1',
-        '/process/bytes/jobs/reducers/job1?total=true': 'reducers2',
-        '/store/bytes/datasets/dataset2?total=true': 'output1',
-        '/store/records/datasets/dataset2?total=true': 'output2'
-      };
-
-      var paths = [];
-      for (var path in placeholderNames) {
-        paths.push(path);
-      }
-
-      var self = this;
-
-      return ['metrics', paths, function(result, status) {
-
-        if(!result) {
-          return;
-        }
-
-        var i = result.length, metric;
-        while (i--) {
-          metric = placeholderNames[paths[i]];
-          self.setMetricData(metric, result[i]);
-        }
-
-      }];
-
-    },
-
-    getAlertsRequest: function() {
-      var self = this;
-
-      return ['batch/SampleApplicationId:batchid1?data=alerts', function(status, result) {
-        if(!result) {
-          return;
-        }
-
-        self.set('alertCount', result.length);
-      }];
 
     },
 
@@ -213,6 +144,11 @@ define(['lib/date'], function (Datejs) {
 
     }.property('currentState'),
     defaultAction: function () {
+
+      if (!this.currentState) {
+        return '...';
+      }
+
       return {
         'deployed': 'Start',
         'stopped': 'Start',

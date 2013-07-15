@@ -139,6 +139,116 @@ define([], function () {
 			}
 		}),
 
+		updateAggregates: function (models, http) {
+
+			var j, k, metrics, map = {};
+			var queries = [];
+
+			var max = 60;
+
+			for (j = 0; j < models.length; j ++) {
+
+				metrics = Em.keys(models[j].get('aggregates') || {});
+
+				for (var k = 0; k < metrics.length; k ++) {
+
+						map[metrics[k]] = models[j];
+						queries.push(metrics[k] + '?aggregate=true');
+
+				}
+
+			}
+
+			if (queries.length) {
+				http.post('metrics', queries, function (response) {
+
+					var result = response.result;
+
+					var i, k, data, path, label;
+					for (i = 0; i < result.length; i ++) {
+
+						path = result[i].path.split('?')[0];
+						label = map[path].get('aggregates')[path];
+						map[path].setMetric(label, result[i].result.data);
+
+					}
+
+				});
+			}
+
+		},
+
+		updateTimeSeries: function (models, http) {
+
+			var j, k, metrics, map = {};
+			var queries = [];
+
+			var max = 60;
+
+			for (j = 0; j < models.length; j ++) {
+
+				metrics = Em.keys(models[j].get('timeseries') || {});
+
+				for (var k = 0; k < metrics.length; k ++) {
+
+					if (models[j].get('timeseries').get(metrics[k])) {
+
+						count = max - models[j].get('timeseries').get(metrics[k]).length;
+						count = count || 1;
+
+					} else {
+
+						models[j].get('timeseries').set(metrics[k], []);
+						count = max;
+
+					}
+
+					map[metrics[k]] = models[j];
+					queries.push(metrics[k] + '?count=' + count);
+
+				}
+
+			}
+
+			if (queries.length) {
+
+				http.post('metrics', queries, function (response) {
+
+					var result = response.result;
+
+					var i, k, data, path;
+					for (i = 0; i < result.length; i ++) {
+
+						path = result[i].path.split('?')[0];
+
+						if (result[i].error) {
+
+							console.error('TimeSeries', result[i].error);
+
+						} else {
+
+							data = result[i].result.data, k = data.length;
+							while(k --) {
+								data[k] = data[k].value;
+							}
+
+							var mapped = map[path].get('timeseries');
+							var ts = mapped.get(path);
+
+							ts.shift(data.length);
+							ts = ts.concat(data);
+
+							mapped.set(path, ts);
+
+						}
+
+					}
+
+				});
+			}
+
+		},
+
 		sparkline: function (widget, data, w, h, percent) {
 
 			var allData = [], length = 0;
@@ -265,27 +375,30 @@ define([], function () {
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000000000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'B';
+				return [rounded, 'B'];
+
 			} else if (value > 1000000) {
 				var digits = 3 - (Math.round(value / 1000000) + '').length;
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'M';
+				return [rounded, 'M'];
+
 			} else if (value > 1000) {
 				var digits = 3 - (Math.round(value / 1000) + '').length;
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'K';
-			} else {
-				var digits = 3 - (value + '').length;
-				digits = digits < 0 ? 2 : digits;
-				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded;
+				return [rounded, 'K'];
+
 			}
 
-			return value;
+			var digits = 3 - (value + '').length;
+			digits = digits < 0 ? 2 : digits;
+			var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
+
+			return [rounded, ''];
+
 		},
 		bytes: function (value) {
 

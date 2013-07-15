@@ -2,9 +2,10 @@
  * HTTP Mock
  */
 
-define(['mocks/results/elements', 'mocks/results/metrics/counters',
-	'mocks/results/metrics/timeseries', 'mocks/results/rpc', 'mocks/http-router'],
-	function (Elements, Counters, TimeSeries, RPC, HttpRouter) {
+define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
+	'mocks/results/metrics/counters', 'mocks/results/metrics/samples',
+	'mocks/results/rpc', 'mocks/http-router'],
+	function (Elements, TimeSeries, Counters, Samples, RPC, HttpRouter) {
 
 	Em.debug('Loading HTTP Mock');
 
@@ -19,7 +20,7 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 				path.push(args[i]);
 			}
 		}
-		return '/' + path.join('/').toLowerCase();
+		return '/' + path.join('/');
 	}
 
 	/*
@@ -68,7 +69,7 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 			var path = findPath(arguments);
 			var object = findObject(arguments);
 			var callback = findCallback(arguments);
-			var result = [];
+			var response = [];
 
 			if (path === '/metrics') {
 
@@ -81,29 +82,38 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 
 						if (query.count) {
 							TimeSeries(path, query, function (status, metricsResult) {
-								result.push(metricsResult);
+								response.push(metricsResult);
 							});
-						} else if (query.total) {
+						} else if (query.aggregate) {
 							Counters(path, query, function (status, metricsResult) {
-								result.push(metricsResult);
+								response.push(metricsResult);
 							});
 						} else if (query.summary) {
 							Summary(path, query, function (status, metricsResult) {
-								result.push(metricsResult);
+								response.push(metricsResult);
 							});
 						}
 
 					}
-					callback(result, 200);
+					callback({
+						error: null,
+						result: response
+					}, 200);
 
 				} else {
-					callback(null, 500);
+					callback({
+						error: 1,
+						result: null
+					}, 500);
 				}
 
 			} else {
 
-				var result = HttpRouter.getResult(path);
-				callback(result, 200);
+				var response = HttpRouter.getResult(path);
+				callback({
+					result: response,
+					error: null
+				}, 200);
 
 			}
 
@@ -115,9 +125,6 @@ define(['mocks/results/elements', 'mocks/results/metrics/counters',
 			args.unshift('rpc');
 
 			var object = args[args.length - 2];
-			if (typeof object === 'object' && object.length) {
-				args[args.length - 2] = { 'params[]': object };
-			}
 
 			this.post.apply(this, args);
 
