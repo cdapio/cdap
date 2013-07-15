@@ -22,7 +22,7 @@ import java.util.Iterator;
  *
  * <p>
  *   Row key:
- *   {@code context|metric}
+ *   {@code context|metric|runId}
  * </p>
  * <p>
  *   Column:
@@ -58,7 +58,7 @@ public final class AggregatesTable {
   public void update(Iterator<MetricsRecord> records) throws OperationException {
     while (records.hasNext()) {
       MetricsRecord record = records.next();
-      byte[] rowKey = getKey(record.getContext(), record.getName());
+      byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
       byte[][] columns = new byte[record.getTags().size() + 1][];
       long[] increments = new long[record.getTags().size() + 1];
       long writeVersion = System.currentTimeMillis();
@@ -86,7 +86,7 @@ public final class AggregatesTable {
    * @return A {@link AggregatesScanner} for iterating scan over matching rows
    */
   public AggregatesScanner scan(String contextPrefix, String metricPrefix) {
-    return scan(contextPrefix, metricPrefix, MetricsConstants.EMPTY_TAG);
+    return scan(contextPrefix, metricPrefix, null, MetricsConstants.EMPTY_TAG);
   }
 
   /**
@@ -97,20 +97,21 @@ public final class AggregatesTable {
    * @param tagPrefix Prefix of tag to match
    * @return A {@link AggregatesScanner} for iterating scan over matching rows
    */
-  public AggregatesScanner scan(String contextPrefix, String metricPrefix, String tagPrefix) {
-    byte[] startRow = getPaddedKey(contextPrefix, metricPrefix, 0);
-    byte[] endRow = getPaddedKey(contextPrefix, metricPrefix, 0xff);
+  public AggregatesScanner scan(String contextPrefix, String metricPrefix, String runId, String tagPrefix) {
+    byte[] startRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0);
+    byte[] endRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
 
     Scanner scanner;
     if (isFilterable) {
       scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
                                                             MemoryReadPointer.DIRTY_READ,
-                                                            getFilter(contextPrefix, metricPrefix, tagPrefix));
+                                                            getFilter(contextPrefix, metricPrefix, runId));
     } else {
       scanner = aggregatesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
     }
 
-    return new AggregatesScanner(contextPrefix, metricPrefix, tagPrefix, scanner, entityCodec);
+    return new AggregatesScanner(contextPrefix, metricPrefix, runId,
+                                 tagPrefix == null ? MetricsConstants.EMPTY_TAG : tagPrefix, scanner, entityCodec);
   }
 
   /**
@@ -121,33 +122,40 @@ public final class AggregatesTable {
     aggregatesTable.clear();
   }
 
-  private byte[] getKey(String context, String metric) {
+  private byte[] getKey(String context, String metric, String runId) {
+    Preconditions.checkArgument(context != null, "Context cannot be null.");
+    Preconditions.checkArgument(runId != null, "RunId cannot be null.");
+    Preconditions.checkArgument(metric != null, "Metric cannot be null.");
+
     return Bytes.add(entityCodec.encode(MetricsEntityType.CONTEXT, context),
-                     entityCodec.encode(MetricsEntityType.METRIC, metric));
+                     entityCodec.encode(MetricsEntityType.METRIC, metric),
+                     entityCodec.encode(MetricsEntityType.RUN, runId));
 
   }
 
-  private byte[] getPaddedKey(String contextPrefix, String metricPrefix, int padding) {
+  private byte[] getPaddedKey(String contextPrefix, String metricPrefix, String runId, int padding) {
 
     Preconditions.checkArgument(metricPrefix != null, "Metric cannot be null.");
 
     return Bytes.concat(
       entityCodec.paddedEncode(MetricsEntityType.CONTEXT, contextPrefix, padding),
-      entityCodec.paddedEncode(MetricsEntityType.METRIC, metricPrefix, padding)
+      entityCodec.paddedEncode(MetricsEntityType.METRIC, metricPrefix, padding),
+      entityCodec.paddedEncode(MetricsEntityType.RUN, runId, padding)
     );
   }
 
-  private Filter getFilter(String contextPrefix, String metricPrefix, String tagPrefix) {
+  private Filter getFilter(String contextPrefix, String metricPrefix, String runId) {
     // Create fuzzy row filter
     ImmutablePair<byte[], byte[]> contextPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.CONTEXT,
                                                                               contextPrefix, 0);
     ImmutablePair<byte[], byte[]> metricPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.METRIC,
                                                                              metricPrefix, 0);
+    ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, runId, 0);
 
     // Use a FuzzyRowFilter to select the row and the use ColumnPrefixFilter to select tag column.
     return new FuzzyRowFilter(ImmutableList.of(Pair.newPair(
-      Bytes.concat(contextPair.getFirst(), metricPair.getFirst()),
-      Bytes.concat(contextPair.getSecond(), metricPair.getSecond())
+      Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), runIdPair.getFirst()),
+      Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), runIdPair.getSecond())
     )));
   }
 }
