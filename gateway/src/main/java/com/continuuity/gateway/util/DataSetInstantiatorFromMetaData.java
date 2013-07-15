@@ -12,6 +12,7 @@ import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -24,6 +25,8 @@ public final class DataSetInstantiatorFromMetaData {
 
   // the operation executor
   private final OperationExecutor opex;
+  // the location factory
+  private LocationFactory locationFactory;
   // the data set instantiator that will do the actual work
   private final DataSetInstantiationBase instantiator;
   // the meta data service
@@ -35,7 +38,7 @@ public final class DataSetInstantiatorFromMetaData {
    * @param opex the operation executor to use for data access
    * @param mds  the meta data store to use for meta data access
    */
-  public DataSetInstantiatorFromMetaData(OperationExecutor opex,
+  public DataSetInstantiatorFromMetaData(OperationExecutor opex, LocationFactory locationFactory,
                                          MetadataService mds) {
     // set up the data set instantiator
     this.instantiator = new DataSetInstantiationBase();
@@ -45,6 +48,7 @@ public final class DataSetInstantiatorFromMetaData {
     // create an instance of meta data service
     this.mds = mds;
     this.opex = opex;
+    this.locationFactory = locationFactory;
   }
 
   public <T extends DataSet> T getDataSet(String name, OperationContext context)
@@ -86,6 +90,6 @@ public final class DataSetInstantiatorFromMetaData {
     // set the transaction agent to synchronous
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, context));
     // this just gets passed through to the data set instantiator
-    return this.instantiator.getDataSet(name, new DataFabricImpl(opex, context), proxy);
+    return this.instantiator.getDataSet(name, new DataFabricImpl(opex, locationFactory, context), proxy);
   }
 }

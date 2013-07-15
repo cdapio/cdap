@@ -32,6 +32,7 @@ import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.ApplicationBundler;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
@@ -64,6 +65,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final LocationFactory locationFactory;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -71,10 +73,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
-                                OperationExecutor opex) {
+                                OperationExecutor opex, LocationFactory locationFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.opex = opex;
+    this.locationFactory = locationFactory;
   }
 
   @Inject (optional = true)
@@ -113,7 +116,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     TransactionProxy transactionProxy = new TransactionProxy();
     transactionProxy.setTransactionAgent(txAgent);
 
-    DataFabric dataFabric = new DataFabricImpl(opex, opexContext);
+    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, opexContext);
     DataSetInstantiator dataSetContext =
       new DataSetInstantiator(dataFabric, transactionProxy, program.getClassLoader());
     dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));

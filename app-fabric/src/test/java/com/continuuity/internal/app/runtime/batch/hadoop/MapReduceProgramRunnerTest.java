@@ -21,6 +21,7 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
@@ -50,6 +51,7 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 
@@ -57,7 +59,7 @@ public class MapReduceProgramRunnerTest {
     File outputDir = new File(FileUtils.getTempDirectory().getPath() + "/out_" + System.currentTimeMillis());
     outputDir.deleteOnExit();
 
-    KeyValueTable jobConfigTable = (KeyValueTable) getTable(opex, opCtx, "jobConfig");
+    KeyValueTable jobConfigTable = (KeyValueTable) getTable(opex, opCtx, locationFactory, "jobConfig");
     jobConfigTable.write(tb("inputPath"), tb(inputPath));
     jobConfigTable.write(tb("outputPath"), tb(outputDir.getPath()));
 
@@ -86,10 +88,11 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 
-    TimeseriesTable table = (TimeseriesTable) getTable(opex, opCtx, "timeSeries");
+    TimeseriesTable table = (TimeseriesTable) getTable(opex, opCtx, locationFactory, "timeSeries");
 
     fillTestInputData(table);
 
@@ -195,10 +198,12 @@ public class MapReduceProgramRunnerTest {
     return inputDir.getPath();
   }
 
-  private DataSet getTable(OperationExecutor opex, OperationContext opCtx, String tableName) {
+  private DataSet getTable(OperationExecutor opex, OperationContext opCtx,
+                           LocationFactory locationFactory, String tableName) {
     TransactionProxy proxy = new TransactionProxy();
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, opCtx));
-    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, opCtx), proxy,
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, opCtx),
+                                                                      proxy,
                                                                       getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
 
