@@ -1,6 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.weave.filesystem.LocationFactory;
 
 /**
  * This is the base interface for all data accessors. An accessor is a type of
@@ -21,4 +22,17 @@ public interface DataAccessor {
    * @return the operations executor to use
    */
   public OperationExecutor getExecutor();
+
+  /**
+   * Set the location factory to use for data fabric access.
+   *
+   * @param locationFactory the location factory to use
+   */
+  public void setLocationFactory(LocationFactory locationFactory);
+
+  /*
+   * Get the location factory to use for data fabric access.
+   * @return the location factory to use
+   */
+  public LocationFactory getLocationFactory();
 }

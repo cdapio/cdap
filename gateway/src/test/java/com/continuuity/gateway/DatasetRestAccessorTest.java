@@ -32,6 +32,7 @@ import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -70,6 +71,9 @@ public class DatasetRestAccessorTest {
   // this is the executor for all access to the data fabric
   private static OperationExecutor executor;
 
+  // this is the location factory for access to the data fabric
+  private static LocationFactory locationFactory;
+
   // a meta data service
   private static MetadataService mds;
 
@@ -89,8 +93,9 @@ public class DatasetRestAccessorTest {
     Injector injector = Guice.createInjector(
         new DataFabricModules().getInMemoryModules());
     executor = injector.getInstance(OperationExecutor.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
     mds = new MetadataService(executor);
-    instantiator = new DataSetInstantiatorFromMetaData(executor, mds);
+    instantiator = new DataSetInstantiatorFromMetaData(executor, locationFactory, mds);
 
   } // end of setupGateway
 
@@ -130,6 +135,7 @@ public class DatasetRestAccessorTest {
         Constants.CONFIG_PATH_MIDDLE), middle);
     restAccessor.configure(configuration);
     restAccessor.setExecutor(executor);
+    restAccessor.setLocationFactory(locationFactory);
     restAccessor.setMetadataService(mds);
     // start the accessor
     restAccessor.start();

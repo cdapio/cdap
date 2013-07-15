@@ -14,6 +14,7 @@ import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
 import com.continuuity.internal.app.queue.QueueConsumerFactoryImpl;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -32,11 +33,11 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   private final DataSetContext dataSetContext;
 
   @Inject
-  public SmartDataFabricFacade(OperationExecutor opex, @Assisted Program program) {
+  public SmartDataFabricFacade(OperationExecutor opex, LocationFactory locationFactory, @Assisted Program program) {
     this.opex = opex;
     this.program = program;
     this.transactionProxy = new TransactionProxy();
-    this.dataSetContext = createDataSetContext(program, opex, transactionProxy);
+    this.dataSetContext = createDataSetContext(program, opex, locationFactory, transactionProxy);
   }
 
   @Override
@@ -66,10 +67,13 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
                                         singleEntry);
   }
 
-  private DataSetContext createDataSetContext(Program program, OperationExecutor opex, TransactionProxy proxy) {
+  private DataSetContext createDataSetContext(Program program,
+                                              OperationExecutor opex,
+                                              LocationFactory locationFactory,
+                                              TransactionProxy proxy) {
     try {
       OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
-      DataFabric dataFabric = new DataFabricImpl(opex, ctx);
+      DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, ctx);
       DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, proxy,
                                                                         program.getMainClass().getClassLoader());
       dataSetInstantiator.setDataSets(ImmutableList.copyOf(program.getSpecification().getDataSets().values()));

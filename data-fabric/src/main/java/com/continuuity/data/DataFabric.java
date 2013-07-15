@@ -9,7 +9,12 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.weave.filesystem.Location;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -96,4 +101,20 @@ public interface DataFabric {
    * @param name the name of the table
    */
   public void openTable(String name) throws OperationException;
+
+  // Provides access to filesystem
+
+  /**
+   * @param path The path representing the location.
+   * @return a {@link Location} object to access given path.
+   * @throws java.io.IOException
+   */
+  Location getLocation(String path) throws IOException;
+
+  /**
+   * @param path The path representing the location.
+   * @return a {@link Location} object to access given path.
+   * @throws IOException
+   */
+  Location getLocation(URI path) throws IOException;
 }
