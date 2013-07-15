@@ -10,9 +10,7 @@ import java.nio.ByteBuffer;
  */
 public interface FetchedMessage {
 
-  String getTopic();
-
-  int getPartition();
+  TopicPartition getTopicPartition();
 
   ByteBuffer getPayload();
 

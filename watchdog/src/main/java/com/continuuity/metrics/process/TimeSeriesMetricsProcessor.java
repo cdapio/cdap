@@ -1,8 +1,10 @@
 package com.continuuity.metrics.process;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.transport.MetricsRecord;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +20,9 @@ public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
 
   private final TimeSeriesTable timeSeriesTable;
 
-  public TimeSeriesMetricsProcessor(TimeSeriesTable timeSeriesTable) {
-    this.timeSeriesTable = timeSeriesTable;
+  @Inject
+  public TimeSeriesMetricsProcessor(MetricsTableFactory tableFactory) {
+    this.timeSeriesTable = tableFactory.createTimeSeries(1);
   }
 
   @Override
