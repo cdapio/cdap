@@ -17,16 +17,19 @@ define([], function () {
 
     },
 
-    trackMetric: function (name, type, label) {
+    interpolate: function (path) {
 
-      name = name.replace(/{app}/, this.get('app'));
-      name = name.replace(/{flow}/, this.get('flow'));
-      name = name.replace(/{flowlet}/, this.get('flowlet'));
-      name = name.replace(/{id}/, this.get('id'));
+      return path.replace(/{app}/, this.get('app'))
+        .replace(/{flow}/, this.get('flow'))
+        .replace(/{flowlet}/, this.get('flowlet'))
+        .replace(/{id}/, this.get('id'));
 
-      this.get(type)[name] = label;
+    },
 
-      return name;
+    trackMetric: function (path, kind, label) {
+
+      this.get(kind).set(path = this.interpolate(path), label || []);
+      return path;
 
     },
 

@@ -35,7 +35,7 @@ define([], function () {
 			this.HTTP.rpc('runnable', 'getFlowHistory', [model.app, model.name],
 					function (response) {
 
-					var history = response.params;
+					var history = response.result.params;
 
 					for (var i = 0; i < history.length; i ++) {
 

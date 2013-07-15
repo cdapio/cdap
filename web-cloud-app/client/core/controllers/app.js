@@ -58,19 +58,19 @@ define([], function () {
 
 			});
 
-            /*
-             * Load Mapreduces
-             */
-            this.HTTP.get('rest', 'apps', model.id, 'mapreduce', function (objects) {
+      /*
+       * Load Mapreduces
+       */
+      this.HTTP.get('rest', 'apps', model.id, 'mapreduce', function (objects) {
 
-                var i = objects.length;
-                while (i--) {
-                    objects[i] = C.Flow.create(objects[i]);
-                }
-                self.get('elements.Batch').pushObjects(objects);
-                self.__loaded();
+          var i = objects.length;
+          while (i--) {
+              objects[i] = C.Batch.create(objects[i]);
+          }
+          self.get('elements.Batch').pushObjects(objects);
+          self.__loaded();
 
-            });
+      });
 
 			/*
 			 * Load Datasets

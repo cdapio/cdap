@@ -32,14 +32,16 @@ define([], function () {
 			'storage': 'bytes'
 		},
 
-		trackMetric: function (name, type, label) {
+		interpolate: function (path) {
 
-			name = name.replace(/{parent}/, this.get('app'));
-			name = name.replace(/{id}/, this.get('name'));
+			return path.replace(/{id}/, this.get('id'));
 
-			this.get(type)[name] = label;
+		},
 
-			return name;
+		trackMetric: function (path, kind, label) {
+
+			this.get(kind).set(path = this.interpolate(path), label || []);
+			return path;
 
 		},
 

@@ -51,14 +51,17 @@ define(['lib/date'], function (Datejs) {
       'reducerBytes': 'bytes'
     },
 
-    trackMetric: function (name, type, label) {
+    interpolate: function (path) {
 
-      name = name.replace(/{parent}/, this.get('app'));
-      name = name.replace(/{id}/, this.get('name'));
+      return path.replace(/{parent}/, this.get('app'))
+        .replace(/{id}/, this.get('name'));
 
-      this.get(type)[name] = label;
+    },
 
-      return name;
+    trackMetric: function (path, kind, label) {
+
+      this.get(kind).set(path = this.interpolate(path), label || []);
+      return path;
 
     },
 
@@ -89,58 +92,6 @@ define(['lib/date'], function (Datejs) {
       });
 
     },
-
-    /*
-    getMetricsRequest: function() {
-
-      // These placeholders names are for Handlebars to render the associated metrics.
-      var placeholderNames = {
-        '/store/bytes/datasets/dataset1?total=true': 'input1',
-        '/store/records/datasets/dataset1?total=true': 'input2',
-        '/process/events/jobs/mappers/job1?total=true': 'mappers1',
-        '/process/bytes/jobs/mappers/job1?total=true': 'mappers2',
-        '/process/events/jobs/reducers/job1?total=true': 'reducers1',
-        '/process/bytes/jobs/reducers/job1?total=true': 'reducers2',
-        '/store/bytes/datasets/dataset2?total=true': 'output1',
-        '/store/records/datasets/dataset2?total=true': 'output2'
-      };
-
-      var paths = [];
-      for (var path in placeholderNames) {
-        paths.push(path);
-      }
-
-      var self = this;
-
-      return ['metrics', paths, function(result, status) {
-
-        if(!result) {
-          return;
-        }
-
-        var i = result.length, metric;
-        while (i--) {
-          metric = placeholderNames[paths[i]];
-          self.setMetricData(metric, result[i]);
-        }
-
-      }];
-
-    },
-
-    getAlertsRequest: function() {
-      var self = this;
-
-      return ['batch/SampleApplicationId:batchid1?data=alerts', function(status, result) {
-        if(!result) {
-          return;
-        }
-
-        self.set('alertCount', result.length);
-      }];
-
-    },
-    */
 
     getMeta: function () {
       var arr = [];
@@ -193,6 +144,11 @@ define(['lib/date'], function (Datejs) {
 
     }.property('currentState'),
     defaultAction: function () {
+
+      if (!this.currentState) {
+        return '...';
+      }
+
       return {
         'deployed': 'Start',
         'stopped': 'Start',

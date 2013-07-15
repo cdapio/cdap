@@ -35,12 +35,16 @@ define([], function () {
 			'events': 'number'
 		},
 
-		trackMetric: function (name, type, label) {
+		interpolate: function (path) {
 
-			name = name.replace(/{id}/, this.get('id'));
-			this.get(type)[name] = label;
+			return path.replace(/{id}/, this.get('id'));
 
-			return name;
+		},
+
+		trackMetric: function (path, kind, label) {
+
+			this.get(kind).set(path = this.interpolate(path), label || []);
+			return path;
 
 		},
 

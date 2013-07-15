@@ -45,9 +45,18 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rest/streams/text': Samples.streamSample,
 
     '/rest/streams/wordStream': Samples.streamSample,
-    '/rest/datasets/wordAssocs': Samples.datasetSample,
-
     '/rest/streams/wordStream/flows': Samples.flowsSample,
+
+    '/rest/datasets/wordAssocs': Samples.datasetSample,
+    '/rest/datasets/uniqueCount': Samples.datasetSample,
+    '/rest/datasets/wordCounts': Samples.datasetSample,
+    '/rest/datasets/wordStats': Samples.datasetSample,
+    '/rest/datasets/filterTable': Samples.datasetSample,
+
+    '/rest/datasets/wordAssocs/flows': Samples.flowsSample,
+    '/rest/datasets/uniqueCount/flows': Samples.flowsSample,
+    '/rest/datasets/wordCounts/flows': Samples.flowsSample,
+    '/rest/datasets/wordStats/flows': Samples.flowsSample,
     '/rest/datasets/filterTable/flows': Samples.flowsSample,
 
     '/rest/apps/WordCount': Samples.applicationSample,
@@ -68,6 +77,7 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rest/apps/CountAndFilterWords': Samples.applicationSample,
     '/rest/apps/CountAndFilterWords/streams': Samples.streamsSample,
     '/rest/apps/CountAndFilterWords/flows': Samples.flowsSample,
+    '/rest/apps/CountAndFilterWords/mapreduce': Samples.batchesSample,
     '/rest/apps/CountAndFilterWords/datasets': Samples.datasetsSample,
     '/rest/apps/CountAndFilterWords/procedures': Samples.proceduresSample,
     '/rest/apps/CountAndFilterWords/flows/CountAndFilterWords': Samples.flowDefinitionSample,
@@ -80,11 +90,8 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/rpc/runnable/start': { result: true },
     '/rpc/runnable/stop': { result: true },
     '/rpc/runnable/setInstances': { result: true },
-    '/rpc/runnable/getFlowHistory': { params: [] },
+    '/rpc/runnable/getFlowHistory': { params: [] }
 
-    '/batch/SampleApplicationId:batchid1': Samples.batchSample,
-    '/batch/SampleApplicationId:batchid1?data=metrics': Counters.batchMetrics,
-    '/batch/SampleApplicationId:batchid1?data=alerts': Counters.batchAlerts
   };
 
   /*

@@ -28,14 +28,17 @@ define([], function () {
 
 		},
 
-		trackMetric: function (name, type) {
+		interpolate: function (path) {
 
-			name = name.replace(/{parent}/, this.get('app'));
-			name = name.replace(/{id}/, this.get('name'));
+			return path.replace(/{parent}/, this.get('app'))
+				.replace(/{id}/, this.get('name'));
 
-			this.get(type)[name] = [];
+		},
 
-			return name;
+		trackMetric: function (path, kind, label) {
+
+			this.get(kind).set(path = this.interpolate(path), label || []);
+			return path;
 
 		},
 

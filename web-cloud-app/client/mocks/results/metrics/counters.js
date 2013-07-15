@@ -37,8 +37,7 @@ define([], function () {
     '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/upper-filter': 10,
     '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/source': 24,
     '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-upper': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/splitter': 100
-
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/splitter': 100,
 
     // Store
     '/store/bytes/datasets/filterTable': 100000,
