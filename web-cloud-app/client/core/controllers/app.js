@@ -15,7 +15,7 @@ define([], function () {
 			 * This is decremented to know when loading is complete.
 			 * There are 4 things to load. See __loaded below.
 			 */
-			this.__remaining = 4;
+			this.__remaining = 5;
 
 			this.set('elements.Flow', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Batch', Em.ArrayProxy.create({content: []}));
@@ -57,6 +57,20 @@ define([], function () {
 				self.__loaded();
 
 			});
+
+            /*
+             * Load Mapreduces
+             */
+            this.HTTP.get('rest', 'apps', model.id, 'mapreduce', function (objects) {
+
+                var i = objects.length;
+                while (i--) {
+                    objects[i] = C.Flow.create(objects[i]);
+                }
+                self.get('elements.Batch').pushObjects(objects);
+                self.__loaded();
+
+            });
 
 			/*
 			 * Load Datasets

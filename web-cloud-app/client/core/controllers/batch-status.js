@@ -79,6 +79,8 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       model.set('currentState', 'STARTING');
 
+        app = this.get('model').get('application');
+
       this.HTTP.rpc('runnable', 'start', [app, id, version, 'FLOW', config],
         function (response) {
 
