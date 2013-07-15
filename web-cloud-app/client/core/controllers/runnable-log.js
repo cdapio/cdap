@@ -23,12 +23,20 @@ define([], function () {
 				$('#logView').css({height: ($(window).height() - 240) + 'px'});
 			}
 
+			/**
+			 * Monitors changes in log box.
+			 */
 			function logBoxChange () {
+				var logViewData = $('#logView').html();
+				if (!logViewData) {
+					$('#logView').html('[No Log Messages]');
+					return;
+				}
 				afterHTML = $('#logView').html();
 				if (beforeHTML !== afterHTML) {
 					beforeHTML = afterHTML;
 					if (self.get('autoScroll'))
-						self.logDown();
+						self.scrollLogDown();
 				}
 			}
 			
@@ -71,7 +79,10 @@ define([], function () {
 							
 							for (var i = 0; i < response.result.length; i ++) {
 								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
-								fromOffset = response.result[i].offset > fromOffset ? response.result[i].offset : fromOffset;
+								
+								// Determines offset of last line shown in log view.
+								fromOffset = (response.result[i].offset > fromOffset
+								  ? response.result[i].offset : fromOffset);
 								
 								if (!self.get('initialOffset')) {
 									self.set('initialOffset', response.result[i].offset);
@@ -84,26 +95,8 @@ define([], function () {
 
 						}
 						$('#logView').append(response);
-						var textarea = $('#logView');
 
-						setTimeout(function () {
-
-							// Content exceeds height
-							if (textarea[0].scrollHeight > textarea.height()) {
-
-								if (!goneOver) {
-									textarea.scrollTop(textarea[0].scrollHeight);
-									goneOver = true;
-								}
-
-								// Scrolled off the bottom
-								if (textarea[0].scrollTop + textarea.height() > textarea[0].scrollHeight) {
-									textarea.scrollTop(textarea[0].scrollHeight);
-								}
-
-							}
-
-						}, C.EMBEDDABLE_DELAY);
+						// New data fetched, reset scroll position.
 						logBoxChange();
 					}
 				);
@@ -129,7 +122,14 @@ define([], function () {
 
 		},
 
-		logUp: function (firstLine) {
+		/**
+		 * Fetches logs upon scrolling to the top of the logbox div and resets scrolling for smooth
+		 * transitioning.
+		 */
+		logUp: function () {
+			// Marker for first line.
+			var firstLine = $('#logView code:first');
+
 			var self = this;
 			var app = this.get('model').app;
 			var id = this.get('model').name;
@@ -158,6 +158,7 @@ define([], function () {
 							for (var i = 0; i < response.result.length; i ++) {
 								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
 
+								// Reset offset if the current line is older than inital line.
 								if (response.result[i].offset < initialOffset) {
 									initialOffset =  response.result[i].offset;
 								}
@@ -171,6 +172,7 @@ define([], function () {
 						}
 						self.set('initialOffset', initialOffset);
 
+						// Add response to beginning of log view and leave space for readability.
 						$('#logView').prepend(response);
 						console.log(firstLine.offset().top);
 						$('#logView').scrollTop(firstLine.offset().top - READ_BUFFER_HEIGHT);
@@ -178,22 +180,29 @@ define([], function () {
 				);
 		},
 
+		/**
+		 * Determines whether user has scrolled to the bottom of the div and enables/disables auto
+		 * scrolling of logs.
+		 * @param {Object} event passed through event handler.
+		 */
 		setAutoScroll: function (event) {
 			var elem = $(event.currentTarget);
 			var position = elem.scrollTop();
 			if (position < 1) {
-				var firstLine = $('#logView code:first');
-				this.logUp(firstLine);
+				this.logUp();
 			}
-    	if (elem[0].scrollHeight - position - elem.outerHeight() < SCROLL_BUFFER) {
-        this.set('autoScroll', true);
-    	} else {
-    		this.set('autoScroll', false);
-    	}
+			if (elem[0].scrollHeight - position - elem.outerHeight() < SCROLL_BUFFER) {
+				this.set('autoScroll', true);
+			} else {
+				this.set('autoScroll', false);
+			}
 		},
 
-		logDown: function() {
-			$('#logView').scrollTop($("#logView")[0].scrollHeight - $("#logView").height());
+		/**
+		 * Scrolls log view down to the very bottom.
+		 */
+		scrollLogDown: function() {
+			$('#logView').scrollTop($('#logView')[0].scrollHeight - $('#logView').height());
 		}
 
 	});
