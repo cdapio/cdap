@@ -1,9 +1,9 @@
 apply from: "$rootProject.projectDir/gradle/framework.gradle"
 
 // TODO: externalize.
-project.ext {
+//project.ext {
     appHome = "${buildDir}/continuuity-developer-suite-1.6.0-SNAPSHOT"
-}
+//}
 
 task cleanDevSuite(type: Delete) << {
     logger.println('[INFO]: Deleting previous Reactor...')
@@ -21,7 +21,7 @@ task deployDevSuite(type: Copy, dependsOn: 'cleanDevSuite')  {
 }
 
 task startReactor(dependsOn: 'deployDevSuite') << {
-    command = ["${project.ext.appHome}/bin/continuuity-reactor start"]
+    command = ["${appHome}/bin/continuuity-reactor start"]
 
     if (executeCommand(command) != 0) {
         throw new GradleScriptException("[ERROR] Unable to start reactor.", null)
@@ -36,8 +36,8 @@ task startReactor(dependsOn: 'deployDevSuite') << {
 }
 
 
-task stopReactor(type: Exec) << {
-    command = ["${project.ext.appHome}/bin/continuuity-reactor stop"]
+task stopReactor() << {
+    command = ["${appHome}/bin/continuuity-reactor stop"]
 
     if (executeCommand(command) != 0) {
         throw new GradleScriptException("[ERROR]: Unable to stop reactor", null)
@@ -49,7 +49,7 @@ task stopReactor(type: Exec) << {
 
 // Clear all data from reactor
 task cleanReactor(type: Delete)  << {
-    delete "${project.ext.appHome}/data"
+    delete "${appHome}/data"
 }
 
 
@@ -70,7 +70,8 @@ task deployApps(dependsOn: 'compileApps') << {
 
     tree.each {File file ->
         println file.absolutePath
-        command = ["${project.ext.appHome}/bin/reactor-client deploy --archive  ${file.absolutePath}"]
+        command = ["${appHome}/bin/reactor-client deploy --archive  ${file.absolutePath}"]
+        logger.println("Executing deploy command: ${command}")
 
         if (executeCommand(command) != 0) {
             throw new GradleScriptException("[ERROR]: ${command}", null)
@@ -82,7 +83,7 @@ task deployApps(dependsOn: 'compileApps') << {
 }
 
 task startApps( dependsOn: 'deployApps') << {
-    command = ["${projectDir}/bin/start-stop.sh start ${project.ext.appHome}"]
+    command = ["${projectDir}/bin/start-stop.sh start ${appHome}"]
 
     if (executeCommand(command) != 0) {
         throw new GradleScriptException("[ERROR]: Unable to start applications. Command: $deploy", null)
@@ -93,7 +94,6 @@ task startApps( dependsOn: 'deployApps') << {
 }
 
 /*Dependencies startApps->deployApps->compileApps->startReactor->deployDevSuite->cleanReactor */
-
 task testCmdLineDevSuite(dependsOn: 'startApps') << {
     BuildLogger.println('Testing command line on DevSuite...')
 }
