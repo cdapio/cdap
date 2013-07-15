@@ -58,12 +58,16 @@ public final class LogSaverMain extends DaemonMain {
 
   @Override
   public void stop() {
-    weaveController.stopAndWait();
+    if (weaveController != null) {
+      weaveController.stopAndWait();
+    }
   }
 
   @Override
   public void destroy() {
-    weaveRunnerService.stopAndWait();
+    if (weaveRunnerService != null) {
+      weaveRunnerService.stopAndWait();
+    }
   }
 
   static WeavePreparer doInit(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
