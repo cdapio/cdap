@@ -8,7 +8,8 @@ fi
 APP_HOME=$2
 
 #setup environment, compile if necessary
-source common.sh
+#BASEDIR=$(dirname $0)
+#source $BASEDIR/common.sh
 
 $APP_HOME/bin/reactor-client $1 --application CountAndFilterWords  --flow CountAndFilterWords
 $APP_HOME/bin/reactor-client $1 --application CountCounts --flow CountCounts

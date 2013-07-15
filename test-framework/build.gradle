@@ -1,3 +1,34 @@
-apply from: "test-cmd-line.gradle"
+apply from: "../gradle/apply-continuuity-plugin.gradle"
+apply from: "../gradle/elastic.gradle"
+apply from: "../gradle/init-repositories.gradle"
+apply from: "../gradle/dependencies.gradle"
+apply from: "../gradle/maven.gradle"
 
-// provide local artifacts
+buildscript {
+    repositories {
+        maven {
+            credentials {
+                username "gradle"
+                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+            }
+            url "https://repository.continuuity.com/content/groups/smartifacts"
+        }
+    }
+
+    // Changes the resolution strategy for snapshot
+    configurations.classpath {
+        resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    }
+    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+
+    dependencies {
+        classpath 'com.kenshoo:gradle-fpm:0.3'
+    }
+}
+
+subprojects {
+
+}
+evaluationDependsOnChildren()
+
