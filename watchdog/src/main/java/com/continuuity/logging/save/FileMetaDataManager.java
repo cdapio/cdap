@@ -70,10 +70,11 @@ public final class FileMetaDataManager {
     throws OperationException {
     OperationResult<Map<byte[], byte[]>> cols =
       opex.execute(operationContext,
-                   new ReadColumnRange(Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition())),
-                                       Bytes.toBytes(0)));
+                   new ReadColumnRange(table,
+                     Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition())),
+                                       null, null));
 
-    if (cols.isEmpty() || cols.getValue() != null) {
+    if (cols.isEmpty() || cols.getValue() == null) {
       return ImmutableSortedMap.of();
     }
 
