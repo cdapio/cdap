@@ -174,7 +174,6 @@ define([], function () {
 
 						// Add response to beginning of log view and leave space for readability.
 						$('#logView').prepend(response);
-						console.log(firstLine.offset().top);
 						$('#logView').scrollTop(firstLine.offset().top - READ_BUFFER_HEIGHT);
 					}
 				);
