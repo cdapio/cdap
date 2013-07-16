@@ -77,13 +77,17 @@ public final class LoggingContextHelper {
     String accountId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_ACCOUNT_ID).getValue();
     String applId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
 
+    String tagName;
     String entityId;
     if (loggingContext instanceof FlowletLoggingContext) {
-      entityId = loggingContext.getSystemTagsMap().get(FlowletLoggingContext.TAG_FLOW_ID).getValue();
+      tagName = FlowletLoggingContext.TAG_FLOW_ID;
+      entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
     } else if (loggingContext instanceof ProcedureLoggingContext) {
-      entityId = loggingContext.getSystemTagsMap().get(ProcedureLoggingContext.TAG_PROCEDURE_ID).getValue();
+      tagName = ProcedureLoggingContext.TAG_PROCEDURE_ID;
+      entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
     } else if (loggingContext instanceof MapReduceLoggingContext) {
-      entityId = loggingContext.getSystemTagsMap().get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID).getValue();
+      tagName = MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID;
+      entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
     } else if (loggingContext instanceof GenericLoggingContext) {
       entityId = loggingContext.getSystemTagsMap().get(GenericLoggingContext.TAG_ENTITY_ID).getValue();
       return createGenericFilter(accountId, applId, entityId);
@@ -93,7 +97,7 @@ public final class LoggingContextHelper {
     return new AndFilter(
       ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_ACCOUNT_ID, accountId),
                        new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
-                       new MdcExpression(FlowletLoggingContext.TAG_FLOW_ID, entityId)
+                       new MdcExpression(tagName, entityId)
       )
     );
   }
