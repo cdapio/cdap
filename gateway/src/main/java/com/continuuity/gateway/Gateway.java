@@ -14,6 +14,7 @@ import com.continuuity.metadata.MetadataService;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -59,6 +60,13 @@ public class Gateway implements Server {
    */
   @Inject
   private OperationExecutor executor;
+
+  /**
+   * This is the location factory that all accessors will use for the data fabric.
+   * Gateway can not function without a valid location factory.
+   */
+  @Inject
+  private LocationFactory locationFactory;
 
   /**
    * This is the executor that all accessors will use for the data fabric.
@@ -201,6 +209,7 @@ public class Gateway implements Server {
       }
       if (connector instanceof DataAccessor) {
         ((DataAccessor) connector).setExecutor(this.executor);
+        ((DataAccessor) connector).setLocationFactory(this.locationFactory);
       }
       // all connectors get the meta data service
       connector.setMetadataService(this.mds);

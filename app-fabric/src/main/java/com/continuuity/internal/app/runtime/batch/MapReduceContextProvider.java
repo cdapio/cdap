@@ -216,7 +216,7 @@ public final class MapReduceContextProvider {
   }
 
   private CConfiguration getConf() {
-    CConfiguration conf = new CConfiguration();
+    CConfiguration conf = CConfiguration.create();
     conf.addResource(new ByteArrayInputStream(jobContext.getConfiguration().get(HCONF_ATTR_CCONF).getBytes()));
     return conf;
   }
