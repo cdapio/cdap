@@ -5,7 +5,7 @@
 
 define(['../../helpers/chart-helper'], function (chartHelper) {
 
-  // Used for local storage, which is used to store our list of selected metrics.
+  // Used for local storage, which is used to store our metrics selection.
   var STORED_APP_NAME = 'continuuity-analyze';
   var DEFAULT_COLOR = 'orange';
 
@@ -113,13 +113,13 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       var top = $('.analyze-selected-metric-add').position().top;
 
       $('#analyze-configurator').css({ top: (top + 8) + 'px' });
-      $('#analyze-configurator').fadeIn();
+      $('#analyze-configurator').show();
 
     },
 
     hideConfigure: function () {
 
-      $('#analyze-configurator').fadeOut();
+      $('#analyze-configurator').hide();
 
     },
 
@@ -158,8 +158,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       var metric = this.get('configuring.metric');
       var color = this.get('configuring.color');
 
-      // var path = element.interpolate(metric.path);
-      var path = metric.path;
+      var path = element.interpolate(metric.path);
 
       var series = {
         element: element.name,
