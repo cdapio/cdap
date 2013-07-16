@@ -17,6 +17,7 @@ public final class MetricsConstants {
 
     public static final String KAFKA_TOPIC = "metrics.kafka.topic";
     public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
+    public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
 
     public static final String PROCESSING_THREADS = "metrics.process.threads";
   }

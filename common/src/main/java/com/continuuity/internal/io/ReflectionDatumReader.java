@@ -24,7 +24,7 @@ import java.util.UUID;
  *
  * @param <T> type T reader
  */
-public final class ReflectionDatumReader<T> {
+public final class ReflectionDatumReader<T> implements DatumReader<T> {
 
   private final Schema schema;
   private final TypeToken<T> type;
@@ -44,6 +44,7 @@ public final class ReflectionDatumReader<T> {
     this.fieldAccessorFactory = new ReflectionFieldAccessorFactory();
   }
 
+  @Override
   public T read(Decoder decoder, Schema sourceSchema) throws IOException {
     return (T) read(decoder, sourceSchema, schema, type);
   }
