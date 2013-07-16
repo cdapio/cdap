@@ -35,8 +35,9 @@ define([], function () {
 				afterHTML = $('#logView').html();
 				if (beforeHTML !== afterHTML) {
 					beforeHTML = afterHTML;
-					if (self.get('autoScroll'))
+					if (self.get('autoScroll')) {
 						self.scrollLogDown();
+					}
 				}
 			}
 			
@@ -71,7 +72,7 @@ define([], function () {
 						}
 
 						if(response.error) {
-							response = JSON.stringify(error);
+							response = JSON.stringify(response.error);
 						}
 
 
@@ -81,8 +82,8 @@ define([], function () {
 								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
 								
 								// Determines offset of last line shown in log view.
-								fromOffset = (response.result[i].offset > fromOffset
-								  ? response.result[i].offset : fromOffset);
+								fromOffset = (response.result[i].offset > fromOffset ?
+									response.result[i].offset : fromOffset);
 								
 								if (!self.get('initialOffset')) {
 									self.set('initialOffset', response.result[i].offset);
@@ -150,7 +151,7 @@ define([], function () {
 						}
 
 						if(response.error) {
-							response = JSON.stringify(error);
+							response = JSON.stringify(response.error);
 						}
 
 
