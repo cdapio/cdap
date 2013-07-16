@@ -1,7 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.hbase.ttqueue.HBQConfig;
 import com.google.common.base.Objects;
 
 /**
@@ -108,10 +107,5 @@ public class QueueConfig {
     result = 31 * result + batchSize;
     result = 31 * result + (returnBatch ? 1 : 0);
     return result;
-  }
-
-  public HBQConfig toHBQ() {
-    // native HBase queues ignore batching
-    return new HBQConfig(partitionerType.toHBQ(), singleEntry);
   }
 }

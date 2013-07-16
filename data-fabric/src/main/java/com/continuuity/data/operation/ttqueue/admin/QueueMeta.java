@@ -2,7 +2,6 @@ package com.continuuity.data.operation.ttqueue.admin;
 
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
-import com.continuuity.hbase.ttqueue.HBQQueueMeta;
 import com.google.common.base.Objects;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -18,54 +17,6 @@ public class QueueMeta {
   long currentWritePointer;
   GroupState[] groups;
   String jsonString = null;
-
-  public long getGlobalHeadPointer() {
-    return this.globalHeadPointer;
-  }
-
-  public long getCurrentWritePointer() {
-    return this.currentWritePointer;
-  }
-
-  public GroupState [] getGroups() {
-    return this.groups;
-  }
-
-  public String getJSONString() {
-    return this.jsonString;
-  }
-
-  public void setGlobalHeadPointer(long globalHeadPointer) {
-    this.globalHeadPointer = globalHeadPointer;
-  }
-
-  public void setCurrentWritePointer(long currentWritePointer) {
-    this.currentWritePointer = currentWritePointer;
-  }
-
-  public void setGroups(GroupState[] groups) {
-    this.groups = groups;
-  }
-
-  public QueueMeta() { }
-
-  public QueueMeta(long globalHeadPointer, long currentWritePointer, GroupState[] groups) {
-    this.globalHeadPointer = globalHeadPointer;
-    this.currentWritePointer = currentWritePointer;
-    this.groups = groups;
-  }
-
-  public QueueMeta(HBQQueueMeta queueMeta) {
-    try {
-      this.jsonString = queueMeta.toJSON();
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
-  }
-
-  public boolean isHBQMeta() {
-    return this.jsonString != null;
-  }
 
   public String toJSON() throws JSONException {
     if (jsonString != null) {

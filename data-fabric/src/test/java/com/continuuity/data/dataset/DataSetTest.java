@@ -15,6 +15,8 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.util.OperationUtil;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -106,7 +108,8 @@ public class DataSetTest extends DataSetTestBase {
     // setup a dummy opex, transaction proxy and instantiator
     OperationExecutor opex = new DummyOpex();
     TransactionProxy proxy = new TransactionProxy();
-    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, OperationUtil.DEFAULT),
+    LocationFactory locFactory = new LocalLocationFactory();
+    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, locFactory, OperationUtil.DEFAULT),
                                                        proxy, this.getClass().getClassLoader());
 
     // test with a single nested table (KeyValueTable embeds a Table with a modifeied name)

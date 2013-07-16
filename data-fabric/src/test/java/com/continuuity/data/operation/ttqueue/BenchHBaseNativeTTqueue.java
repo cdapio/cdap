@@ -10,14 +10,14 @@ import org.junit.BeforeClass;
 /**
  *
  */
-public class BenchHBaseTTqueue extends BenchAbstractHBaseTTqueue {
+public class BenchHBaseNativeTTqueue extends BenchAbstractHBaseTTqueue {
 
   @BeforeClass
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, false);
+      conf.setBoolean(DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, true);
       injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
       handle = injector.getInstance(OVCTableHandle.class);
     } catch (Exception e) {

@@ -65,9 +65,10 @@ public abstract class AbstractMapReduceContextBuilder {
     Injector injector = createInjector();
 
     // Initializing Program
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
     try {
-      program = loadProgram(programLocation, injector.getInstance(LocationFactory.class));
+      program = loadProgram(programLocation, locationFactory);
     } catch (IOException e) {
       LOG.error("Could not init Program based on location: " + programLocation);
       throw Throwables.propagate(e);
@@ -87,7 +88,7 @@ public abstract class AbstractMapReduceContextBuilder {
       throw Throwables.propagate(e);
     }
     transactionProxy.setTransactionAgent(txAgent);
-    DataFabric dataFabric = new DataFabricImpl(opex, opexContext);
+    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, opexContext);
     DataSetInstantiator dataSetContext =
       new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
     dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));

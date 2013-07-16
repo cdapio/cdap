@@ -16,6 +16,7 @@ import com.continuuity.test.internal.DefaultApplicationManager;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -37,6 +38,7 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
 
   @Inject
   public DefaultBenchmarkManager(OperationExecutor opex,
+                                 LocationFactory locationFactory,
                                  BenchmarkStreamWriterFactory streamWriterFactory,
                                  ProcedureClientFactory procedureClientFactory,
                                  @Assisted AuthToken token,
@@ -45,8 +47,9 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
                                  @Assisted AppFabricService.Iface appFabricServer,
                                  @Assisted Location deployedJar,
                                  @Assisted ApplicationSpecification appSpec) {
-    super(opex, streamWriterFactory, procedureClientFactory, token, accountId, applicationId, appFabricServer,
-          deployedJar, appSpec);
+    super(opex, locationFactory, streamWriterFactory, procedureClientFactory,
+          token, accountId, applicationId,
+          appFabricServer, deployedJar, appSpec);
     benchmarkStreamWriterFactory = streamWriterFactory;
     idAccount = Id.Account.from(accountId);
     streamWriters = Sets.newHashSet();
