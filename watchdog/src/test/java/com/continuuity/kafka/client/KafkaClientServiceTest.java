@@ -61,7 +61,8 @@ public class KafkaClientServiceTest {
           public void onReceived(Iterator<FetchedMessage> messages) {
             while (messages.hasNext()) {
               FetchedMessage message = messages.next();
-              queue.offer(Charsets.UTF_8.decode(message.getPayload()).toString() + " " + message.getPartition());
+              queue.offer(Charsets.UTF_8.decode(message.getPayload()).toString() +
+                            " " + message.getTopicPartition().getPartition());
             }
           }
 

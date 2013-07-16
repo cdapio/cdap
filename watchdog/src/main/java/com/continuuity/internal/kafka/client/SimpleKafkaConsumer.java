@@ -275,7 +275,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
     }
 
     /**
-     * Wrap a given MessageCallback by a executor so that calls are executed in the given execute.
+     * Wrap a given MessageCallback by a executor so that calls are executed in the given executor.
      * By running the calls through the executor, it also block and wait for the task being completed so that
      * it can block the poller thread depending on the rate of processing that the callback can handle.
      */
@@ -334,7 +334,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
       this.startOffset = startOffset;
       this.callback = callback;
       this.running = true;
-      this.fetchedMessage = new BasicFetchedMessage(topicPart.getTopic(), topicPart.getPartition());
+      this.fetchedMessage = new BasicFetchedMessage(topicPart);
     }
 
     @Override

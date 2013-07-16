@@ -3,13 +3,15 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.metrics.data.TimeSeriesTable;
-import com.continuuity.metrics.data.MetricsTableFactory;
+import com.continuuity.metrics.process.MetricsProcessor;
 import com.continuuity.metrics.transport.MetricsRecord;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A {@link com.continuuity.api.metrics.MetricsCollectionService} that writes to MetricsTable directly.
@@ -17,20 +19,18 @@ import java.util.Iterator;
 @Singleton
 public final class LocalMetricsCollectionService extends AggregatedMetricsCollectionService {
 
-  private final ThreadLocal<TimeSeriesTable> metricsTable;
+  private final Set<MetricsProcessor> processors;
 
   @Inject
-  public LocalMetricsCollectionService(final MetricsTableFactory metricsTableFactory) {
-    this.metricsTable = new ThreadLocal<TimeSeriesTable>() {
-      @Override
-      protected TimeSeriesTable initialValue() {
-        return metricsTableFactory.createTimeSeries(1);
-      }
-    };
+  public LocalMetricsCollectionService(Set<MetricsProcessor> processors) {
+    this.processors = processors;
   }
 
   @Override
   protected void publish(Iterator<MetricsRecord> metrics) throws Exception {
-    metricsTable.get().save(metrics);
+    List<MetricsRecord> records = ImmutableList.copyOf(metrics);
+    for (MetricsProcessor processor : processors) {
+      processor.process(records.iterator());
+    }
   }
 }

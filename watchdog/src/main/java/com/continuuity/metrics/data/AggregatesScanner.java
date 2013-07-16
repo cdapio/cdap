@@ -16,6 +16,7 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
 
   private final String contextPrefix;
   private final String metricPrefix;
+  private final String runId;
   private final String tagPrefix;
   private final Scanner scanner;
   private final MetricsEntityCodec entityCodec;
@@ -23,11 +24,12 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
 
   private int rowScanned;
 
-  AggregatesScanner(String contextPrefix, String metricPrefix, String tagPrefix,
+  AggregatesScanner(String contextPrefix, String metricPrefix, String runId, String tagPrefix,
                     Scanner scanner, MetricsEntityCodec entityCodec) {
 
     this.contextPrefix = contextPrefix;
     this.metricPrefix = metricPrefix;
+    this.runId = runId;
     this.tagPrefix = tagPrefix;
     this.scanner = scanner;
     this.entityCodec = entityCodec;
@@ -62,6 +64,7 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
 
       private String context;
       private String metric;
+      private String rid;
       private Iterator<Map.Entry<byte[], byte[]>> currentTag = null;
 
       @Override
@@ -91,6 +94,12 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
             continue;
           }
 
+          offset += entityCodec.getEncodedSize(MetricsEntityType.METRIC);
+          rid = entityCodec.decode(MetricsEntityType.RUN, rowKey, offset);
+          if (runId != null && !runId.equals(rid)) {
+            continue;
+          }
+
           currentTag = rowResult.getSecond().entrySet().iterator();
           result = findNextResult();
           if (result != null) {
@@ -113,7 +122,7 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
           if (MetricsConstants.EMPTY_TAG.equals(tag)) {
             tag = null;
           }
-          return new AggregatesScanResult(context, metric, tag, Bytes.toLong(tagValue.getValue()));
+          return new AggregatesScanResult(context, metric, rid, tag, Bytes.toLong(tagValue.getValue()));
         }
         return null;
       }

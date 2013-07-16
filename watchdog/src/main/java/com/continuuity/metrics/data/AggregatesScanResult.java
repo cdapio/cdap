@@ -9,12 +9,14 @@ public final class AggregatesScanResult {
 
   private final String context;
   private final String metric;
+  private final String runId;
   private final String tag;
   private final long value;
 
-  AggregatesScanResult(String context, String metric, String tag, long value) {
+  AggregatesScanResult(String context, String metric, String runId, String tag, long value) {
     this.context = context;
     this.metric = metric;
+    this.runId = runId;
     this.tag = tag;
     this.value = value;
   }
@@ -25,6 +27,10 @@ public final class AggregatesScanResult {
 
   public String getMetric() {
     return metric;
+  }
+
+  public String getRunId() {
+    return runId;
   }
 
   public String getTag() {
@@ -40,6 +46,7 @@ public final class AggregatesScanResult {
     return Objects.toStringHelper(this)
       .add("context", context)
       .add("metric", metric)
+      .add("runId", runId)
       .add("tag", tag)
       .add("value", value)
       .toString();

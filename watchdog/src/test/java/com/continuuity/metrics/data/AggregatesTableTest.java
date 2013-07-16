@@ -108,7 +108,7 @@ public class AggregatesTableTest {
         ));
       }
 
-      AggregatesScanner scanner = aggregatesTable.scan("context", "metric", "tag.1");
+      AggregatesScanner scanner = aggregatesTable.scan("context", "metric", "runId", "tag.1");
       long value = 0;
       while (scanner.hasNext()) {
         AggregatesScanResult result = scanner.next();

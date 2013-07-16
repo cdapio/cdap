@@ -4,6 +4,7 @@
 package com.continuuity.internal.kafka.client;
 
 import com.continuuity.kafka.client.FetchedMessage;
+import com.continuuity.kafka.client.TopicPartition;
 
 import java.nio.ByteBuffer;
 
@@ -12,14 +13,12 @@ import java.nio.ByteBuffer;
  */
 final class BasicFetchedMessage implements FetchedMessage {
 
-  private final String topic;
-  private final int partition;
+  private final TopicPartition topicPartition;
   private ByteBuffer payload;
   private long nextOffset;
 
-  BasicFetchedMessage(String topic, int partition) {
-    this.topic = topic;
-    this.partition = partition;
+  BasicFetchedMessage(TopicPartition topicPartition) {
+    this.topicPartition = topicPartition;
   }
 
   void setPayload(ByteBuffer payload) {
@@ -31,13 +30,8 @@ final class BasicFetchedMessage implements FetchedMessage {
   }
 
   @Override
-  public String getTopic() {
-    return topic;
-  }
-
-  @Override
-  public int getPartition() {
-    return partition;
+  public TopicPartition getTopicPartition() {
+    return topicPartition;
   }
 
   @Override
