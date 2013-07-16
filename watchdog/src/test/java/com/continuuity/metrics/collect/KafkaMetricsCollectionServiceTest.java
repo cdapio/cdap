@@ -74,7 +74,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
-      collectionService.getCollector("test.context." + i, "runId", "processed").gauge(i);
+      collectionService.getCollector("test.context." + i, "runId").gauge("processed", i);
     }
 
     // Sleep to make sure metrics get published

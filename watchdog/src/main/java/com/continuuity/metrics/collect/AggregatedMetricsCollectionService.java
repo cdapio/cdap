@@ -86,8 +86,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   @Override
-  public final MetricsCollector getCollector(String context, String runId, String metricName) {
-    return collectors.getUnchecked(new MetricKey(context, runId, metricName));
+  public final MetricsCollector getCollector(final String context, final String runId) {
+    return new MetricsCollector() {
+      @Override
+      public void gauge(String metricName, int value, String... tags) {
+        collectors.getUnchecked(new MetricKey(context, runId, metricName)).gauge(value, tags);
+      }
+    };
   }
 
   private Iterator<MetricsRecord> getMetrics(final long timestamp) {

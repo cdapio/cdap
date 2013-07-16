@@ -21,6 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,13 +34,28 @@ public class BatchMetricsHandlerTest { //extends HBaseTestBase {
   @Test
   @Ignore
   public void testBatchHandler() throws InterruptedException {
-    MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
+    final MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
     collectionService.startAndWait();
 
     MetricsQueryService queryService = injector.getInstance(MetricsQueryService.class);
     queryService.startAndWait();
 
     try {
+
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          try {
+            while (!Thread.currentThread().isInterrupted()) {
+              collectionService.getCollector("context", "runId", "metric")
+                               .gauge(new Random().nextInt(10) + 1);
+              TimeUnit.SECONDS.sleep(1);
+            }
+          } catch (InterruptedException e) {
+          }
+        }
+      };
+      t.start();
 
       TimeUnit.SECONDS.sleep(1);
 

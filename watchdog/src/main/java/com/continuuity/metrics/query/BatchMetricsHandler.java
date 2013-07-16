@@ -5,8 +5,10 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.metrics.data.TimeSeriesTable;
+import com.continuuity.metrics.data.AggregatesScanner;
+import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
+import com.continuuity.metrics.data.TimeSeriesTable;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
@@ -60,6 +62,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
 
   // It's a cache from metric table resolution to MetricsTable
   private final LoadingCache<Integer, TimeSeriesTable> metricsTableCache;
+  private final AggregatesTable aggregatesTable;
 
 
   // TODO: For mocking, removing later
@@ -67,12 +70,13 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
 
   @Inject
   public BatchMetricsHandler(final MetricsTableFactory metricsTableFactory) {
-    metricsTableCache = CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
+    this.metricsTableCache = CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
       @Override
       public TimeSeriesTable load(Integer key) throws Exception {
         return metricsTableFactory.createTimeSeries(key);
       }
     });
+    this.aggregatesTable = metricsTableFactory.createAggregates();
   }
 
   @POST
@@ -90,7 +94,12 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
       return;
     }
 
-    // Naive approach, just fire one scan per request
+    AggregatesScanner scanner = aggregatesTable.scan("context", "metric");
+    while (scanner.hasNext()) {
+      System.out.println(scanner.next());
+    }
+    System.out.println("Row scanned: " + scanner.getRowScanned());
+
     JsonArray output = new JsonArray();
     for (MetricsRequest metricsRequest : metricsRequests) {
       Object resultObj = null;

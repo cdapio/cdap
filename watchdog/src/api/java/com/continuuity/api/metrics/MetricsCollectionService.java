@@ -11,11 +11,10 @@ import com.google.common.util.concurrent.Service;
 public interface MetricsCollectionService extends Service {
 
   /**
-   * Returns the metric collector for the give metric name.
+   * Returns the metric collector for the given context.
    * @param context Name of the context that generating the metric.
    * @param runId The Id fo the given run that generating the metric.
-   * @param metricName Name of the metric.
-   * @return A {@link com.continuuity.api.metrics.MetricsCollector} for emitting metrics for the given metric name.
+   * @return A {@link com.continuuity.api.metrics.MetricsCollector} for emitting metrics.
    */
-  MetricsCollector getCollector(String context, String runId, String metricName);
+  MetricsCollector getCollector(String context, String runId);
 }

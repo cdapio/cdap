@@ -41,10 +41,10 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
     try {
       // Publish couple metrics, they should be aggregated.
-      service.getCollector("context", "runId", "metric").gauge(1);
-      service.getCollector("context", "runId", "metric").gauge(2);
-      service.getCollector("context", "runId", "metric").gauge(3);
-      service.getCollector("context", "runId", "metric").gauge(4);
+      service.getCollector("context", "runId").gauge("metric", 1);
+      service.getCollector("context", "runId").gauge("metric", 2);
+      service.getCollector("context", "runId").gauge("metric", 3);
+      service.getCollector("context", "runId").gauge("metric", 4);
 
       MetricsRecord record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
@@ -54,12 +54,12 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector("context", "runId", "metric").gauge(1);
+      service.getCollector("context", "runId").gauge("metric", 1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish metrics with tags
-      service.getCollector("context", "runId", "metric").gauge(3, "tag1", "tag2");
-      service.getCollector("context", "runId", "metric").gauge(4, "tag2", "tag3");
+      service.getCollector("context", "runId").gauge("metric", 3, "tag1", "tag2");
+      service.getCollector("context", "runId").gauge("metric", 4, "tag2", "tag3");
 
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
