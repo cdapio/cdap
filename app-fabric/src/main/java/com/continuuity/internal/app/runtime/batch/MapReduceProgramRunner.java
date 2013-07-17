@@ -47,6 +47,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.TaskCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runs {@link com.continuuity.api.batch.MapReduce} programs
@@ -220,7 +222,23 @@ public class MapReduceProgramRunner implements ProgramRunner {
           LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
           try {
             LOG.info("Submitting mapreduce job {}", context.toString());
-            success = jobConf.waitForCompletion(true);
+
+            // submits job and returns immediately
+            jobConf.submit();
+
+            // until job is complete report stats
+            while (!jobConf.isComplete()) {
+              reportStats();
+
+              // we report to metrics backend every second, so 1 sec is enough here. That's mapreduce job anyways (not
+              // short) ;)
+              TimeUnit.MILLISECONDS.sleep(1000);
+            }
+
+            // NOTE: we want to report the final stats (they may change since last report and before job completed)
+            reportStats();
+
+            success = jobConf.isSuccessful();
           } catch (InterruptedException e) {
             // nothing we can do now: we simply stopped watching for job completion...
             throw Throwables.propagate(e);
@@ -250,6 +268,26 @@ public class MapReduceProgramRunner implements ProgramRunner {
         }
       }
     }.start();
+  }
+
+  @SuppressWarnings("unused")
+  private void reportStats() throws IOException, InterruptedException {
+    // map stats
+    float mapProgress = jobConf.getStatus().getMapProgress();
+    long mapInputRecords = getTaskCounter(jobConf, TaskCounter.MAP_INPUT_RECORDS);
+    long mapOutputRecords = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_RECORDS);
+    long mapOutputBytes = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_BYTES);
+
+    // reduce stats
+    float reduceProgress = jobConf.getStatus().getReduceProgress();
+    long reduceInputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_INPUT_RECORDS);
+    long reduceOutputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_OUTPUT_RECORDS);
+
+    // todo: report to metrics system (see ENG-2965)
+  }
+
+  private long getTaskCounter(Job jobConf, TaskCounter taskCounter) throws IOException, InterruptedException {
+    return jobConf.getCounters().findCounter(TaskCounter.class.getName(), taskCounter.name()).getValue();
   }
 
   private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {

@@ -4,7 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.operation.ttqueue.TTQueueTableNewOnVCTable;
+import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -49,7 +49,7 @@ public abstract class AbstractOVCTableHandle implements OVCTableHandle {
     OrderedVersionedColumnarTable table = getTable(queueOVCTable);
 
     // queueTable = new TTQueueTableOnVCTable(table, oracle, conf);
-    queueTable = new TTQueueTableNewOnVCTable(table, oracle, conf);
+    queueTable = new TTQueueTableOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
@@ -65,7 +65,7 @@ public abstract class AbstractOVCTableHandle implements OVCTableHandle {
     OrderedVersionedColumnarTable table = getTable(streamOVCTable);
 
     // streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
-    streamTable = new TTQueueTableNewOnVCTable(table, oracle, conf);
+    streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
         streamTableName, streamTable);
     return existing != null ? existing : streamTable;

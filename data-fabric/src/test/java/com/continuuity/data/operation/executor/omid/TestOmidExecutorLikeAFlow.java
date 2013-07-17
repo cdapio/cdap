@@ -19,8 +19,6 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
-import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
-import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
@@ -271,7 +269,6 @@ public abstract class TestOmidExecutorLikeAFlow {
     
     byte [] queueName = Bytes.toBytes("testWriteBatchJustAck");
 
-    TTQueueOnVCTable.trace = true;
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     this.executor.execute(context, new QueueConfigure(queueName, consumer));
@@ -288,8 +285,6 @@ public abstract class TestOmidExecutorLikeAFlow {
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(context, dequeue);
     assertDequeueResultSuccess(result, Bytes.toBytes(1L));
-
-    TTQueueOnVCTable.trace = false;
 
     // Ack it
     this.executor.commit(context, batch(new QueueAck(queueName, result.getEntryPointer(), consumer)));
@@ -668,14 +663,6 @@ public abstract class TestOmidExecutorLikeAFlow {
           System.out.println("Dequeuer stopped before it finished!");
           long lastEntryId = dequeued.size();
           System.out.println("Last success was entry id " + lastEntryId);
-          try {
-            printQueueInfo(queueName, 0);
-            printEntryInfo(queueName, lastEntryId);
-            printEntryInfo(queueName, lastEntryId + 1);
-            printEntryInfo(queueName, lastEntryId + 2);
-          } catch (OperationException e) {
-            fail();
-          }
         }
       }
     };
@@ -852,7 +839,6 @@ public abstract class TestOmidExecutorLikeAFlow {
                              Bytes.toInt(enqueuedValue) + ", entrynum=" +
                              Bytes.toInt(enqueuedValue, 4));
       }
-      printQueueInfo(this.threadedQueueName, 0);
     }
     assertEquals(expectedDequeues, groupOneTotal);
     if (expectedDequeues != groupTwoTotal) {
@@ -869,25 +855,10 @@ public abstract class TestOmidExecutorLikeAFlow {
                              Bytes.toInt(enqueuedValue) + ", entrynum=" +
                              Bytes.toInt(enqueuedValue, 4));
       }
-      printQueueInfo(this.threadedQueueName, 1);
     }
     assertEquals(expectedDequeues, groupTwoTotal);
 
     OmidTransactionalOperationExecutor.disableQueuePayloads = false;
-  }
-
-  private TTQueueTable getQueueTable() throws OperationException {
-    return this.handle.getQueueTable(Bytes.toBytes("queues"));
-  }
-
-  private void printQueueInfo(byte[] queueName, int groupId)
-      throws OperationException {
-    System.out.println(getQueueTable().getGroupInfo(queueName, groupId));
-  }
-
-  private void printEntryInfo(byte[] queueName, long entryId)
-      throws OperationException {
-    System.out.println(getQueueTable().getEntryInfo(queueName, entryId));
   }
 
   class Producer extends Thread {
