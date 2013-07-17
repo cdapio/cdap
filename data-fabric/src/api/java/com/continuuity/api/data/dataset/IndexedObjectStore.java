@@ -109,7 +109,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
     for (byte[] indexValue : indexValues) {
       //update the index.
       index.write(new Write(indexValue, key, EXISTS));
-      //store for the key the current index the key has. This will be used while deleting old index values.
+      //for each key store the indexValue of the key. This will be used while deleting old index values.
       index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EXISTS));
     }
     writeToObjectStore(key, object);
