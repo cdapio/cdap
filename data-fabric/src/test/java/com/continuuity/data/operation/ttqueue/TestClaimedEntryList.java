@@ -43,14 +43,14 @@ public class TestClaimedEntryList {
     }
 
     try {
-      new ClaimedEntryRange(TTQueueNewOnVCTable.INVALID_ENTRY_ID, 2);
+      new ClaimedEntryRange(TTQueueOnVCTable.INVALID_ENTRY_ID, 2);
       fail("Should throw exception");
     } catch (IllegalArgumentException e) {
       // Expected
     }
 
     try {
-      new ClaimedEntryRange(3, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+      new ClaimedEntryRange(3, TTQueueOnVCTable.INVALID_ENTRY_ID);
       fail("Should throw exception");
     } catch (IllegalArgumentException e) {
       // Expected
@@ -76,10 +76,10 @@ public class TestClaimedEntryList {
     verifyClaimedEntryListIncrementMove(claimedEntryList, 11, 20);
     assertFalse(claimedEntryList.getClaimedEntry().isValid());
 
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(TTQueueOnVCTable.INVALID_ENTRY_ID, TTQueueOnVCTable.INVALID_ENTRY_ID);
     claimedEntryList.add(6, 6);
     claimedEntryList.add(8, 30);
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(TTQueueOnVCTable.INVALID_ENTRY_ID, TTQueueOnVCTable.INVALID_ENTRY_ID);
     claimedEntryList.add(3, 4);
     claimedEntryList.add(1, 2);
     verifyClaimedEntryListIncrementMove(claimedEntryList, 1, 2);
@@ -159,10 +159,10 @@ public class TestClaimedEntryList {
     claimedEntryList.add(5, 5);
     verifyClaimedEntryListEncode(claimedEntryList);
 
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(TTQueueOnVCTable.INVALID_ENTRY_ID, TTQueueOnVCTable.INVALID_ENTRY_ID);
     claimedEntryList.add(6, 6);
     claimedEntryList.add(15, 30);
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(TTQueueOnVCTable.INVALID_ENTRY_ID, TTQueueOnVCTable.INVALID_ENTRY_ID);
     claimedEntryList.add(7, 10);
     claimedEntryList.add(1, 4);
     verifyClaimedEntryListEncode(claimedEntryList);

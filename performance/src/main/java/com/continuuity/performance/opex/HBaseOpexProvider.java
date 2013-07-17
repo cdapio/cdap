@@ -32,7 +32,7 @@ public class HBaseOpexProvider extends OpexProvider {
     }
     hbaseConf.set("hbase.defaults.for.version.skip", "true");
     CConfiguration conf = CConfiguration.create();
-    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+    conf.setBoolean(DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, false);
     Module module = new DataFabricDistributedModule(hbaseConf, conf);
     Injector injector = Guice.createInjector(module);
     return injector.getInstance(Key.get(OperationExecutor.class,

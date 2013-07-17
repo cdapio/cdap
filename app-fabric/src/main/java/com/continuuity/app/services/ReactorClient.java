@@ -437,7 +437,8 @@ public final class ReactorClient {
     if (DeployStatus.DEPLOYED.getCode() == status.getOverall()) {
       System.out.println("Deployed");
     } else if (DeployStatus.FAILED.getCode() == status.getOverall()) {
-      System.out.println("Deployment failed: ");
+      System.out.println(String.format("Deployment failed: %s. Check Reactor log file for more details.",
+                                       DeployStatus.FAILED.getMessage()));
     } else {
       System.out.println("Deployment taking more than 5 seconds. Please check the Reactor Dashboard for status");
     }

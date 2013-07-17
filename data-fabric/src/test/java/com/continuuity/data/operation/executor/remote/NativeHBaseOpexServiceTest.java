@@ -32,7 +32,7 @@ public class NativeHBaseOpexServiceTest extends OperationExecutorServiceTest {
     Configuration hbaseConf = HBaseTestBase.getConfiguration();
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(
-        DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
+        DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, true);
     DataFabricDistributedModule module =
         new DataFabricDistributedModule(hbaseConf, conf);
     injector = Guice.createInjector(module);
