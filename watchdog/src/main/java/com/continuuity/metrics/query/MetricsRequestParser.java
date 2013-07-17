@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
@@ -165,26 +166,25 @@ final class MetricsRequestParser {
       return builder.setContextPrefix(contextPrefix);
     }
 
-    // 6. RunId for Map Reduce job or flowlet Id.
+    // 6. Subtype ("mappers/reducers") for Map Reduce job or flowlet Id.
+    String part = pathParts.next();
     if (programType == ProgramType.MAPREDUCE) {
-      builder.setRunId(pathParts.next());
+      contextPrefix += "." + MapReduceType.valueOf(part.toUpperCase()).getId();
     } else {
-      // flowlet Id
-      contextPrefix += "." + pathParts.next();
-    }
-
-    if (!pathParts.hasNext()) {
-      // Metrics for a given map reduce run or a flowlet
-      return builder.setContextPrefix(contextPrefix);
-    }
-
-    // 7. Subtype for jobs program type.
-    if (programType == ProgramType.MAPREDUCE) {
-      contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
-
       if (pathParts.hasNext()) {
-        // The mapper or reducer id
-        contextPrefix += "." + pathParts.next();
+        // flowlet Id
+        contextPrefix += "." + part;
+      } else {
+        // Suffix of metrics
+        return builder.setContextPrefix(contextPrefix)
+                      .setMetricPrefix(metricName + "." + part);
+      }
+    }
+
+    // 7. Subtype ID for map reduce job or flowlet metric suffix
+    if (programType == ProgramType.MAPREDUCE) {
+      if (pathParts.hasNext()) {
+        contextPrefix += "." + part;
       }
     } else {
       // It gives the suffix of the metric
@@ -269,7 +269,8 @@ final class MetricsRequestParser {
         int count = Integer.parseInt(queryParams.get(COUNT).get(0));
         long endTime = queryParams.containsKey(END_TIME)
                           ? Integer.parseInt(queryParams.get(END_TIME).get(0))
-                          : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+                          : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) -
+                                MetricsConstants.QUERY_SECOND_DELAY;
 
         builder.setCount(count);
         builder.setStartTime(queryParams.containsKey(START_TIME)

@@ -10,6 +10,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -217,7 +218,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(InetAddress.class).annotatedWith(Names.named("config.hostname")).toInstance(context.getHost());
+        bind(InetAddress.class).annotatedWith(Names.named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS))
+          .toInstance(context.getHost());
 
         bind(LocationFactory.class).toInstance(new LocalLocationFactory(new File(System.getProperty("user.dir"))));
 

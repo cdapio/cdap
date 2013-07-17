@@ -9,9 +9,9 @@ import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.io.DatumWriter;
+import com.continuuity.internal.io.Schema;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -80,6 +80,8 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
 
     flowletContext.getSystemMetrics().counter(queueName.getSimpleName() + FlowletDefinition.OUTPUT_ENDPOINT_POSTFIX +
                                                 ".stream.out", outputs.size());
+    flowletContext.getSystemMetricsCollector().gauge("events.outs." + queueName.getSimpleName(), outputs.size());
+
 
     if (outputs.isEmpty()) {
       // Nothing to submit

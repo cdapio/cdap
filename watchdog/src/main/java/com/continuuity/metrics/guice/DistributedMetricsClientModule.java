@@ -23,7 +23,7 @@ import com.google.inject.name.Named;
 /**
  * Guice module for binding classes for metrics client in distributed runtime mode.
  */
-final class DistributedMetricsClientModule extends PrivateModule {
+public final class DistributedMetricsClientModule extends PrivateModule {
 
   private final KafkaClientService kafkaClient;
 

@@ -34,8 +34,7 @@ public final class MetricsScanQueryBuilder {
 
   public MetricsScanQuery build(final long startTime, final long endTime) {
     Preconditions.checkArgument(startTime <= endTime, "Invalid time range.");
-    Preconditions.checkState(contextPrefix != null, "Context prefix not set.");
-    Preconditions.checkState(metricPrefix != null, "Tag prefix not set.");
+    Preconditions.checkState(metricPrefix != null, "Metrics prefix not set.");
 
     final String finalContextPrefix = contextPrefix;
     final String finalRunId = runId;

@@ -4,6 +4,8 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.metrics.Metrics;
+import com.continuuity.api.metrics.MetricsCollectionService;
+import com.continuuity.api.metrics.MetricsCollector;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
@@ -37,9 +39,12 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private final FlowletMetrics flowletMetrics;
   private final Arguments runtimeArguments;
 
+  private final MetricsCollector systemMetricsCollector;
+
   BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId, int instanceCount,
                       Map<String, DataSet> datasets, Arguments runtimeArguments,
-                      FlowletSpecification flowletSpec, boolean asyncMode) {
+                      FlowletSpecification flowletSpec, boolean asyncMode,
+                      MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
     this.flowId = program.getProgramName();
     this.flowletId = flowletId;
@@ -55,6 +60,8 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.systemMetrics = new CMetrics(MetricType.FlowSystem, getMetricName());
     this.flowletMetrics = new FlowletMetrics(getAccountId(), getApplicationId(),
                                              flowId, flowletId, runId.toString(), instanceId);
+
+    this.systemMetricsCollector = getSystemMetricsCollector(metricsCollectionService, getMetricContext(), runId);
   }
 
   @Override
@@ -89,6 +96,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
       arguments.put(it.next());
     }
     return arguments.build();
+  }
+
+  public MetricsCollector getSystemMetricsCollector() {
+    return systemMetricsCollector;
   }
 
   public CMetrics getSystemMetrics() {
@@ -140,5 +151,12 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                          getRunId(),
                          getFlowletId(),
                          getInstanceId());
+  }
+
+  private String getMetricContext() {
+    return String.format("%s.f.%s.%s",
+                         getApplicationId(),
+                         getFlowId(),
+                         getFlowletId());
   }
 }

@@ -3,13 +3,17 @@
  */
 package com.continuuity.metrics.query;
 
-import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.data.HBaseFilterableOVCTableHandle;
+import com.continuuity.metrics.data.MetricsScanQueryBuilder;
+import com.continuuity.metrics.data.MetricsScanner;
+import com.continuuity.metrics.data.MetricsTableFactory;
+import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.guice.AbstractMetricsTableModule;
+import com.continuuity.metrics.guice.LocalMetricsTableModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
 import com.google.inject.Guice;
@@ -21,9 +25,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
 /**
  *
  */
@@ -34,34 +35,32 @@ public class BatchMetricsHandlerTest { //extends HBaseTestBase {
   @Test
   @Ignore
   public void testBatchHandler() throws InterruptedException {
-    final MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
-    collectionService.startAndWait();
+//    final MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
+//    collectionService.startAndWait();
+//
+//    MetricsQueryService queryService = injector.getInstance(MetricsQueryService.class);
+//    queryService.startAndWait();
+//
+//    try {
+//
+//      TimeUnit.SECONDS.sleep(1);
+//
+//    } finally {
+//      queryService.stopAndWait();
+//    }
 
-    MetricsQueryService queryService = injector.getInstance(MetricsQueryService.class);
-    queryService.startAndWait();
+    MetricsTableFactory tableFactory = Guice.createInjector(new LocalMetricsTableModule())
+                                                   .getInstance(MetricsTableFactory.class);
 
-    try {
-
-      Thread t = new Thread() {
-        @Override
-        public void run() {
-          try {
-            while (!Thread.currentThread().isInterrupted()) {
-              collectionService.getCollector("context", "runId", "metric")
-                               .gauge(new Random().nextInt(10) + 1);
-              TimeUnit.SECONDS.sleep(1);
-            }
-          } catch (InterruptedException e) {
-          }
-        }
-      };
-      t.start();
-
-      TimeUnit.SECONDS.sleep(1);
-
-    } finally {
-      queryService.stopAndWait();
+    TimeSeriesTable timeSeries = tableFactory.createTimeSeries(1);
+    MetricsScanner scanner = timeSeries.scan(new MetricsScanQueryBuilder()
+                                                .setMetric("tuples.attempt.read")
+                                                .build(0, System.currentTimeMillis() / 1000));
+    while (scanner.hasNext()) {
+      scanner.next();
     }
+
+    System.out.println(scanner.getRowScanned());
   }
 
   @BeforeClass
@@ -74,7 +73,6 @@ public class BatchMetricsHandlerTest { //extends HBaseTestBase {
       }
     };
     CConfiguration cConf = CConfiguration.create();
-    cConf.set("metrics.query.server.port", "56883");
     injector = Guice.createInjector(new ConfigModule(cConf), //, HBaseTestBase.getConfiguration()),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new MetricsQueryRuntimeModule().getSingleNodeModules(),
