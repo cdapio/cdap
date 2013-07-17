@@ -2,6 +2,13 @@ package com.continuuity.test.app;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.test.AppFabricTestBase;
+import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.MapReduceManager;
+import com.continuuity.test.ProcedureClient;
+import com.continuuity.test.ProcedureManager;
+import com.continuuity.test.RuntimeMetrics;
+import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
@@ -36,9 +43,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
       s2.send("testing 2");
       s3.send("testing 3");
 
-      RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti",
-                                                                     "JoinMultiFlow",
-                                                                     "Terminal");
+      RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti", "JoinMultiFlow", "Terminal");
 
       terminalMetrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 

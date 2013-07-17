@@ -1,5 +1,6 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.Split;
@@ -21,6 +22,7 @@ import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.table.Scanner;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
 import java.util.Collections;
@@ -211,6 +213,14 @@ public abstract class RuntimeTable extends Table {
 
     byte[] getStop() {
       return stop;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+                    .add("start", Bytes.toString(start))
+                    .add("stop", Bytes.toString(stop))
+                    .toString();
     }
   }
 

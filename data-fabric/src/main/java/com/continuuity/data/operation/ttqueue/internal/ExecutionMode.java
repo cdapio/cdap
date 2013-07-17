@@ -1,8 +1,5 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
-import com.continuuity.data.operation.ttqueue.QueueConfig;
-import com.google.common.base.Objects;
-
 /**
  * The execution mode of a {@link com.continuuity.data.operation.ttqueue.QueueConsumer}s within a group.
  */
@@ -27,25 +24,5 @@ public enum ExecutionMode {
       }
     }
     throw new RuntimeException("Invalid deserialization of ExecutionMode");
-  }
-
-  public static ExecutionMode fromQueueConfig(QueueConfig config) {
-    return config.isSingleEntry() ? SINGLE_ENTRY : MULTI_ENTRY;
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("mode", this.name())
-        .toString();
-  }
-
-  public static ExecutionMode fromHBQ(
-      com.continuuity.hbase.ttqueue.internal.ExecutionMode mode) {
-    if (mode ==
-        com.continuuity.hbase.ttqueue.internal.ExecutionMode.SINGLE_ENTRY) {
-      return ExecutionMode.SINGLE_ENTRY;
-    }
-    return ExecutionMode.MULTI_ENTRY;
   }
 }

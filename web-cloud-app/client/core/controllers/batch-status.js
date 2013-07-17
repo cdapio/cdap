@@ -10,9 +10,12 @@ define(['../../helpers/plumber'], function (Plumber) {
     load: function () {
 
       var self = this;
+      //self.updateAlerts();
 
       this.interval = setInterval(function () {
         self.updateStats();
+        // self.updateMetrics();
+        // self.updateAlerts();
         self.updateMetrics();
       }, C.POLLING_INTERVAL);
 
@@ -22,7 +25,7 @@ define(['../../helpers/plumber'], function (Plumber) {
        */
       setTimeout(function () {
         self.updateStats();
-        self.updateMetrics();
+        // self.updateMetrics();
         self.connectEntities();
       }, C.EMBEDDABLE_DELAY);
     },
@@ -35,9 +38,13 @@ define(['../../helpers/plumber'], function (Plumber) {
 
     },
 
-    updateMetrics: function() {
-      C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
-    },
+    // updateMetrics: function() {
+    //   C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
+    // },
+
+    // updateAlerts: function() {
+    //   C.HTTP.get.apply(C, this.get('model').getAlertsRequest());
+    // },
 
     connectEntities: function() {
       Plumber.connect("batch-start", "batch-map");
@@ -59,8 +66,11 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       var self = this;
       var model = this.get('model');
+      var app = this.get('model.application');
 
       model.set('currentState', 'STARTING');
+
+        app = this.get('model').get('application');
 
       this.HTTP.rpc('runnable', 'start', [app, id, version, 'FLOW', config],
         function (response) {
@@ -78,6 +88,7 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       var self = this;
       var model = this.get('model');
+      var app = this.get('model.application');
 
       model.set('currentState', 'STOPPING');
 

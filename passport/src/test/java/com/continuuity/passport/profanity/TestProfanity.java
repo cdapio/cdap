@@ -20,12 +20,21 @@ public class TestProfanity {
 
     ProfanityFilterFileAccess profanityFilter = new ProfanityFilterFileAccess(profanePath);
 
-    assertFalse(profanityFilter.isFiltered("data"));
+    //Host names that should be filtered. Does'nt match regex or has black listed words.
     assertTrue(profanityFilter.isFiltered("d23@#@"));
     assertTrue(profanityFilter.isFiltered("fuck"));
     assertTrue(profanityFilter.isFiltered("fuck123"));
     assertTrue(profanityFilter.isFiltered("212fuck"));
     assertTrue(profanityFilter.isFiltered("f1u1c1k"));
+    assertTrue(profanityFilter.isFiltered("-no-start-with-hyphen"));
+    assertTrue(profanityFilter.isFiltered("-9"));
+    assertTrue(profanityFilter.isFiltered("------"));
+    assertTrue(profanityFilter.isFiltered("no-last-char-hyphen-"));
+
+    //Hostnames should should not be filtered.
+    assertFalse(profanityFilter.isFiltered("data"));
+    assertFalse(profanityFilter.isFiltered("this-is-valid"));
+
 
   }
 }

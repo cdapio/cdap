@@ -75,7 +75,7 @@ public class TestLocalModeTTQueuePerf {
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
     MemoryReadPointer memoryReadPointer = new MemoryReadPointer(version, version, null);
-    Transaction transaction = new Transaction(memoryReadPointer, memoryReadPointer);
+    Transaction transaction = new Transaction(version, memoryReadPointer, true);
 
     // first test it with the intra-flow queues
     TTQueueTable queueTable = handle.getQueueTable(queueName);

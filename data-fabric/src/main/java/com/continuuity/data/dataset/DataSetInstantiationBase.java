@@ -3,6 +3,7 @@ package com.continuuity.data.dataset;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
@@ -210,6 +211,11 @@ public class DataSetInstantiationBase {
     if (obj instanceof ObjectStore<?> && !(obj instanceof RuntimeObjectStore)) {
       RuntimeObjectStore.setImplementation((ObjectStore<?>) obj, this.classLoader);
       // but do not return yet, continue to inject data fabric into the runtime
+    }
+
+    // Inject runtime into FileDataSet
+    if (obj instanceof FileDataSet && !(obj instanceof RuntimeFileDataSet)) {
+      RuntimeFileDataSet.setRuntimeFileDataSet((FileDataSet) obj, fabric, metricName);
     }
 
     // otherwise recur through all fields of type DataSet of this class and its super classes

@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.procedure.Procedure;
-import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
@@ -55,21 +54,28 @@ final class ProcedureHandlerMethod implements HandlerMethod {
                                         options.getUserArguments(),
                                         procedureSpec);
 
-    TypeToken<? extends Procedure> procedureType
-      = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
-    procedure = new InstantiatorFactory(false).get(procedureType).create();
-    context.injectFields(procedure);
-    handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
+    try {
+      TypeToken<? extends Procedure> procedureType
+        = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
+      procedure = new InstantiatorFactory(false).get(procedureType).create();
+      context.injectFields(procedure);
+      handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
 
-    // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
-    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+      // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
+      LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+
+    } catch (Throwable t) {
+      // make sure the context releases all resources, datasets, ...
+      context.close();
+      throw Throwables.propagate(t);
+    }
   }
 
   public Procedure getProcedure() {
     return procedure;
   }
 
-  public ProcedureContext getContext() {
+  public BasicProcedureContext getContext() {
     return context;
   }
 
@@ -80,6 +86,8 @@ final class ProcedureHandlerMethod implements HandlerMethod {
       LOG.info("Procedure initialized: " + context);
     } catch (Throwable t) {
       LOG.error("Procedure throws exception during init.", t);
+      // make sure the context releases all resources, datasets, ...
+      context.close();
       throw Throwables.propagate(t);
     }
   }
