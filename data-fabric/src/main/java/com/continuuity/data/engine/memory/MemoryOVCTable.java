@@ -186,12 +186,11 @@ public class MemoryOVCTable extends AbstractOVCTable {
   public void deleteDirty(byte[][] rows) throws OperationException {
     for (byte[] row : rows) {
       RowLockTable.Row r = new RowLockTable.Row(row);
-      getAndLockRow(r);
       try {
         // this row is gone, remove it from the table and also from the lock table
         this.map.remove(r); // safe to remove because we have the lock
       } finally {
-        this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
+        this.locks.removeLock(r); // now remove, invalidate and unlock the lock
       }
     }
   }

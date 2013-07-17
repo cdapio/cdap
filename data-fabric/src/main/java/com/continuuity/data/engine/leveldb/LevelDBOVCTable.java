@@ -463,6 +463,8 @@ public class LevelDBOVCTable extends AbstractOVCTable {
           }
           db.delete(nextKey);
         }
+        // we don't want to keep row locks for rows that are not around any more
+        locks.removeLock(new RowLockTable.Row(row));
       }
     } catch (DBException dbe) {
       throw createOperationException(dbe, "delete");

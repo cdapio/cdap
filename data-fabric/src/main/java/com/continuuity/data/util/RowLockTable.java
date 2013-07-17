@@ -125,6 +125,19 @@ public class RowLockTable {
   }
 
   /**
+   * Delete a (and invalidate) the locks for a single row.
+   * @param row the row to delete
+   */
+  public void removeLock(Row row) {
+    Preconditions.checkNotNull(row, "row cannot be null");
+    RowLock lock = locks.get(row);
+    if (lock != null) {
+      lock.invalidate();
+      locks.remove(row);
+    }
+  }
+
+  /**
    * Delete a (and invalidate) the locks for a consecutive range of rows.
    * @param start the first row to delete
    * @param stop the first row not to delete. If null, delete all rows greater than start.
