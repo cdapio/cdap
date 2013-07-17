@@ -98,9 +98,9 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         urls.push(item.path + '?count=60');
       });
 
-      this.HTTP.post('metrics', urls, function (result, status) {
+      this.HTTP.post('metrics', urls, function (response, status) {
 
-        // Noop
+        self.set('data', response.result[0].result.data);
 
       });
 

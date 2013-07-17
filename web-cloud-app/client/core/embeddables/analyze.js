@@ -25,11 +25,13 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       renderChart: function() {
 
         $("#metrics-explorer-widget").empty();
-        var metrics = this.get('controller.selected');
+
+        var data = this.get('controller.data');
+        var series = this.get('controller.series.content');
 
         var width = $(this.get('element')).width();
 
-        new chartHelper.Chart(metrics, metrics, 'metrics-explorer-widget', width);
+        new chartHelper.Chart(data, series, 'metrics-explorer-widget', width);
 
       }.observes('controller.data'),
 
