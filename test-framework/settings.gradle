@@ -1,2 +1,0 @@
-include 'commandLine', 'data-fabric', 'rest-api'
-//project(':singlenode').buildFileName = 'package.gradle'
