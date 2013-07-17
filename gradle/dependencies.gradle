@@ -85,7 +85,7 @@ libraries.hadoop_minicluster = "org.apache.hadoop:hadoop-minicluster:$versions.h
 libraries.hadoop_auth = "org.apache.hadoop:hadoop-auth:$versions.hadoopVersion"
 libraries.hadoop_yarn = "org.apache.hadoop:hadoop-yarn:$versions.hadoopVersion"
 
-// HaBase
+// HBase
 libraries.hbase = "org.apache.hbase:hbase:$versions.hbaseVersion"
 libraries.hbase_test = "org.apache.hbase:hbase:$versions.hbaseVersion:tests"
 
