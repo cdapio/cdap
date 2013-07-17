@@ -469,7 +469,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 dataFabricFacade.createQueueConsumerFactory(
                   flowletContext.getInstanceId(),
                   flowletContext.getGroupId(),
-                  flowletContext.getMetricName(),
+                  flowletContext.getQueueProducerName(),
                   queueName, queueInfo,
                   !flowletContext.isAsyncMode()
                 ),

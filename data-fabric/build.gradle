@@ -11,6 +11,8 @@ smartyFacts {
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'watchdog', classifier: 'api', version: "${version}", changing: true], "watchdog")
+
     apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
 
     compile libraries.slf4j_api
@@ -33,11 +35,13 @@ dependencies {
     compile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity') {
         exclude module: 'junit'
         exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
     }
 
     testCompile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity:tests') {
         exclude module: 'junit'
         exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
     }
     testCompile libraries.hadoop_minicluster
 }

@@ -37,6 +37,8 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -53,6 +55,7 @@ import java.util.List;
 @Path("/metrics")
 public final class BatchMetricsHandler extends AbstractHttpHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BatchMetricsHandler.class);
   private static final String CONTENT_TYPE_JSON = "application/json";
   private static final Gson GSON = new Gson();
 
@@ -94,6 +97,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
       return;
     }
 
+    // Pretty ugly logic now. Need to refactor
     JsonArray output = new JsonArray();
     for (MetricsRequest metricsRequest : metricsRequests) {
       Object resultObj = null;
@@ -187,7 +191,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
       List<URI> uris = GSON.fromJson(reader, new TypeToken<List<URI>>() {}.getType());
-      System.out.println(uris);
+      LOG.trace("Requests: {}", uris);
       return ImmutableList.copyOf(Iterables.transform(uris, URI_TO_METRIC_REQUEST));
     } finally {
       reader.close();

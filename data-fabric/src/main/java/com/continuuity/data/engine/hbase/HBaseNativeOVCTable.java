@@ -183,7 +183,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       writeTable = getWriteTable();
       Delete delete = new Delete(row);
       for (byte[] column : columns) {
-        delete.undeleteColumns(this.family, column, version);
+//        delete.undeleteColumns(this.family, column, version);
       }
       writeTable.delete(delete);
     } catch (IOException e) {
@@ -466,7 +466,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       Increment increment = new Increment(row);
       increment.addColumn(this.family, column, amount);
       increment.setTimeRange(0, getMaxStamp(readPointer));
-      increment.setWriteVersion(writeVersion);
+//      increment.setWriteVersion(writeVersion);
       Result result = this.readTable.increment(increment);
       if (result.isEmpty()) {
         return 0L;
@@ -491,7 +491,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     try {
       Increment increment = new Increment(row);
       increment.setTimeRange(0, getMaxStamp(readPointer));
-      increment.setWriteVersion(writeVersion);
+//      increment.setWriteVersion(writeVersion);
       for (int i = 0; i < columns.length; i++) {
         increment.addColumn(this.family, columns[i], amounts[i]);
       }
@@ -510,23 +510,23 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   public void compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer, long writeVersion)
     throws OperationException {
-    try {
-      if (newValue == null) {
-        Delete delete = new Delete(row);
-        delete.deleteColumns(this.family, column, writeVersion);
-        if (!this.readTable.checkAndDelete(row, this.family, column, expectedValue, readPointer.getMaximum(), delete)) {
-          throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
-        }
-      } else {
-        Put put = new Put(row);
-        put.add(this.family, column, writeVersion, newValue);
-        if (!this.readTable.checkAndPut(row, this.family, column, expectedValue, readPointer.getMaximum(), put)) {
-          throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
-        }
-      }
-    } catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    }
+//    try {
+//      if (newValue == null) {
+//        Delete delete = new Delete(row);
+//        delete.deleteColumns(this.family, column, writeVersion);
+//        if (!this.readTable.checkAndDelete(row, this.family, column, expectedValue, readPointer.getMaximum(), delete)) {
+//          throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+//        }
+//      } else {
+//        Put put = new Put(row);
+//        put.add(this.family, column, writeVersion, newValue);
+//        if (!this.readTable.checkAndPut(row, this.family, column, expectedValue, readPointer.getMaximum(), put)) {
+//          throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+//        }
+//      }
+//    } catch (IOException e) {
+//      this.exceptionHandler.handle(e);
+//    }
   }
 
   @Override

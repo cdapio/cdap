@@ -78,7 +78,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   }
 
   private String getMetricsContext() {
-    return String.format("%s.p.%s", getApplicationId(), getProcedureId());
+    return String.format("%s.p.%s.%d", getApplicationId(), getProcedureId(), getInstanceId());
   }
 
   /**

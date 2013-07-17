@@ -3,7 +3,6 @@
  */
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
@@ -22,6 +21,12 @@ public interface FilterableOVCTable extends OrderedVersionedColumnarTable {
    * Similar to {@link #scan(byte[], byte[], ReadPointer)} but with filtering applied on rows it scans.
    */
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer, Filter filter);
+
+  /**
+   * Similar to {@link #scan(byte[], byte[], byte[][], com.continuuity.data.operation.executor.ReadPointer)}
+   * but with filtering applied on rows it scans.
+   */
+  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer, Filter filter);
 
   /**
    * Similar to {@link #scan(ReadPointer)} but with filtering applied on rows it scans.
