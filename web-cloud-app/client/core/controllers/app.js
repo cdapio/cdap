@@ -140,7 +140,7 @@ define([], function () {
 
 			if (this.get('model')) {
 
-				var i; models = [this.get('model')];
+				var i, models = [this.get('model')];
 				for (i = 0; i < types.length; i ++) {
 					models = models.concat(this.get('elements').get(types[i]).get('content'));
 				}

@@ -19,10 +19,10 @@ define([], function () {
 
     interpolate: function (path) {
 
-      return path.replace(/{app}/, this.get('app'))
-        .replace(/{flow}/, this.get('flow'))
-        .replace(/{flowlet}/, this.get('flowlet'))
-        .replace(/{id}/, this.get('id'));
+      return path.replace(/\{app\}/, this.get('app'))
+        .replace(/\{flow\}/, this.get('flow'))
+        .replace(/\{flowlet\}/, this.get('flowlet'))
+        .replace(/\{id\}/, this.get('id'));
 
     },
 

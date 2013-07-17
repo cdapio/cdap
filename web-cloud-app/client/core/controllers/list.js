@@ -73,7 +73,7 @@ define([], function () {
 			/*
 			 * Hax until we have a pub/sub system for state.
 			 */
-			i = models.length;
+			var i = models.length;
 			while (i--) {
 				if (typeof models.updateState === 'function') {
 					models.updateState(this.HTTP);

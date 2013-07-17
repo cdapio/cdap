@@ -29,15 +29,15 @@ define([], function () {
     '/store/bytes/CountAndFilterWords': 40,
 
     // Flowlets
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/number-filter': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-all': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-number': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-lower': 50,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/lower-filter': 45,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/upper-filter': 10,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/source': 24,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-upper': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/splitter': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/number-filter': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-all': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-number': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-lower': 50,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/lower-filter': 45030304,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/upper-filter': 10,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/source': 24,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-upper': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/splitter': 100,
 
     // Store
     '/store/bytes/datasets/filterTable': 100000,

@@ -5,100 +5,68 @@
 define([
   ], function () {
 
+    var x, y;
+
+    // create a line object that represents the SVN line we're creating
+    var line = d3.svg.line()
+    // assign the X function to plot our line as we wish
+    .x(function(d,i) {
+      // verbose logging to show what's actually being done
+      //console.log('Plotting X value for data point: ' + d + ' using index: ' + i + ' to be at: ' + x(i) + ' using our xScale.');
+      // return the X coordinate where we want to plot this datapoint
+      return x(i);
+    })
+    .y(function(d) {
+      // verbose logging to show what's actually being done
+      //console.log('Plotting Y value for data point: ' + d + ' to be at: ' + y(d) + " using our yScale.");
+      // return the Y coordinate where we want to plot this datapoint
+      return y(d.value);
+    })
+    .interpolate("basis");
+
   var Embeddable = Em.View.extend({
     classNames: ['dash-chart'],
 
-    build: function (w, h, data) {
+    build: function (width, height, data) {
 
-      var x = d3.scale.linear()
-        .domain([0, 1])
-        .range([0, w / data.length]);
-      var y = d3.scale.linear()
-        .domain([0, 100])
-        .rangeRound([0, h]);
+      var graph = d3.select(this.get('element')).append("svg:svg").attr("width", "100%").attr("height", "100%");
 
-      this.set('x', x);
-      this.set('y', y);
+      this.set('built', true);
 
-      var chart = d3.select(this.get('element')).append("svg")
-        .attr("class", "chart")
-        .attr("width", w)
-        .attr("height", h);
-
-      /*
-      chart.append("line")
-        .attr("x1", 0)
-        .attr("x2", w)
-        .attr("y1", h - .5)
-        .attr("y2", h - .5)
-        .style("stroke", "#000");
-      */
-
-      w = w / data.length;
-
-      chart.selectAll("rect")
-        .data(data)
-        .enter().append("rect")
-          .attr("x", function(d, i) { return x(i) - .5; })
-          .attr("y", function(d) { return h - y(d.value) - .5; })
-          .attr("width", w)
-          .attr("height", function(d) { return y(d.value); });
-
-      return chart;
+      return graph;
 
     },
 
     render: function () {
 
       var kind = this.get('controller.timeseries.' + this.get('kind'));
+      var width = this.get('width');
+      var height = this.get('height');
+
+      if (!this.get('built')) {
+        this.set('graph', this.build(width, height));
+      }
+
+      // X scale will fit values from 0-10 within pixels 0-100
+      x = d3.scale.linear().domain([0, 48]).range([-5, width]); // starting point is -5 so the first value doesn't show and slides off the edge as part of the transition
+      // Y scale will fit values from 0-10 within pixels 0-100
+      y = d3.scale.linear().domain([0, 10]).range([0, height]);
+
+
+      var graph = this.get('graph');
 
       if (kind) {
 
         var data = kind.slice(0);
 
-        var w = this.get('width');
-        var h = this.get('height');
-
-        var chart = this.get('chart');
-        if (!chart) {
-          this.set('chart', chart = this.build(w, h, data));
-        }
-
-        var x = this.get('x');
-        var y = this.get('y');
-
-        chart.selectAll("rect")
-          .data(data)
-          .transition()
-          .duration(1000)
-          .attr("y", function(d) { return h - y(d.value) - .5; })
-          .attr("height", function(d) { return y(d.value); });
-
-        return;
-
-        var rect = chart.selectAll("rect")
-          .data(data, function(d) { return d.timestamp; });
-
-
-        w = Math.floor(w / data.length);
-
-        rect.enter().insert("rect", "line")
-          .attr("x", function(d, i) { return x(i + 1) - .5; })
-          .attr("y", function(d) { return h - y(d.value) - .5; })
-          .attr("width", w)
-          .attr("height", function(d) { return y(d.value); })
-        .transition().duration(1000)
-          .attr("x", function(d, i) { return x(i) - .5; });
-
-        rect.transition()
-          .duration(1000)
-          .attr("x", function(d, i) { return x(i) - .5; });
-
-        rect.exit().transition()
-          .duration(1000)
-          .attr("x", function(d, i) { return x(i - 1) - .5; })
-          .remove();
-
+        graph.selectAll("path")
+          .data([data]) // set the new data
+          .attr("transform", "translate(" + x(1) + ")") // set the transform to the right by x(1) pixels (6 for the scale we've set) to hide the new value
+          .attr("d", line) // apply the new data values ... but the new value is hidden at this point off the right of the canvas
+          .transition() // start a transition to bring the new value into view
+          .ease("linear")
+          .duration(1000) // for this demo we want a continual slide so set this to the same as the setInterval amount below
+          .attr("transform", "translate(" + x(0) + ")"); // animate a slide to the left back to x(0) pixels to reveal the new value
       }
 
     },
@@ -112,7 +80,7 @@ define([
       this.set('width', w);
       this.set('height', h);
 
-      this.addObserver('controller.timeseries.' + kind, this, this.render);
+      // this.addObserver('controller.timeseries.' + kind, this, this.render);
 
     }
   });

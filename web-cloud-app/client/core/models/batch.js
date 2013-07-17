@@ -53,8 +53,8 @@ define(['lib/date'], function (Datejs) {
 
     interpolate: function (path) {
 
-      return path.replace(/{parent}/, this.get('app'))
-        .replace(/{id}/, this.get('name'));
+      return path.replace(/\{parent\}/, this.get('app'))
+        .replace(/\{id\}/, this.get('name'));
 
     },
 

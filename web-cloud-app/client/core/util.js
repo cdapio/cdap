@@ -180,7 +180,7 @@ define([], function () {
 
 		updateTimeSeries: function (models, http) {
 
-			var j, k, metrics, map = {};
+			var j, k, metrics, count, map = {};
 			var queries = [];
 
 			var max = 60;
