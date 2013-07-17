@@ -1,5 +1,6 @@
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
@@ -20,16 +21,22 @@ import java.util.Map;
  * all the objects stored in the object store that has the index value.
  *
  * The dataset uses two tables: object store - to store the actual data, and a second table for the index.
- * The responsibility of pruning the stale index values lies with the user of this data set.
- *
  * @param <T> the type of objects in the store
  */
 public class IndexedObjectStore<T> extends ObjectStore<T> {
 
+  //IndexedObjectStore stores the following mappings
+  // 1. ObjectStore
+  //    (primaryKey to Object)
+  // 2. Index table
+  //    (indexValue to primaryKey)
+  //    (prefixedPrimaryKey to indexValue)
   private Table index;
   private String indexName;
 
   private static final byte[] EXISTS = { 'x' };
+  //KEY_PREFIX is used to prefix primary key when it stores PrimaryKey -> Categories mapping.
+  private static final byte[] KEY_PREFIX = Bytes.toBytes("_keyToIndexValues");
 
   /**
    * Construct IndexObjectStore with name and type.
@@ -90,17 +97,48 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   }
 
   /**
-   * Write to the dataset and update the corresponding indices.
+   * Write to the data set, deletes older indexValues corresponding the key and updates the indexTable with the
+   * indexValues that is passed.
    * @param key key for storing the object.
    * @param object object to be stored.
    * @param indexValues indices that can be used to lookup the object.
    * @throws OperationException incase of errors.
    */
   public void write(byte[] key, T object, byte[][] indexValues) throws OperationException {
+    deleteIndexValues(key);
     for (byte[] indexValue : indexValues) {
-      this.index.write(new Write(indexValue, key, EXISTS));
+      //update the index.
+      index.write(new Write(indexValue, key, EXISTS));
+      //store for the key the current index the key has. This will be used while deleting old index values.
+      index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EXISTS));
     }
-    write(key, object);
+    writeToObjectStore(key, object);
+  }
+
+  private void writeToObjectStore(byte[] key, T object) throws OperationException {
+    super.write(key, object);
+  }
+
+  @Override
+  public void write(byte[] key, T object) throws OperationException {
+    deleteIndexValues(key);
+    writeToObjectStore(key, object);
+  }
+
+  private void deleteIndexValues(byte[] key) throws OperationException{
+    OperationResult<Map<byte[], byte[]>> existingIndexValues = index.read(new Read(getPrefixedPrimaryKey(key)));
+    if (!existingIndexValues.isEmpty()){
+      for (Map.Entry<byte[], byte[]> entry : existingIndexValues.getValue().entrySet()){
+        //delete the category to key mapping.
+        index.write(new Delete(entry.getKey(), key));
+        //delete the key to category mapping.
+        index.write(new Delete(getPrefixedPrimaryKey(key), entry.getKey()));
+      }
+    }
+  }
+
+  private byte[] getPrefixedPrimaryKey(byte[] key){
+    return Bytes.add(KEY_PREFIX, key);
   }
 
   /**
@@ -112,5 +150,17 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    */
   public void pruneIndex(byte[] key, byte[] indexValue) throws OperationException {
     this.index.write(new Delete(indexValue, key));
+    this.index.write(new Delete(getPrefixedPrimaryKey(key), indexValue));
+  }
+
+  /**
+   * Update index value for an existing key. This will not delete the old indexValues.
+   * @param key key for the object.
+   * @param indexValue index to be pruned.
+   * @throws OperationException incase of errors.
+   */
+  public void updateIndex(byte[] key, byte[] indexValue) throws OperationException {
+    this.index.write(new Write(indexValue, key, EXISTS));
+    this.index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EXISTS));
   }
 }

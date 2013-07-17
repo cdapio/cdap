@@ -56,6 +56,40 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
+  public void testIndexRewrites() throws Exception {
+
+    indexedFeed = instantiator.getDataSet("index");
+    newTransaction(Mode.Sync);
+
+    List<String> categories1 = ImmutableList.of("big data", "startup");
+    List<String> categories2 = ImmutableList.of("hadoop");
+
+    Feed feed1 =  new Feed("c1", "http://continuuity.com", categories1);
+    byte[] key1 = Bytes.toBytes(feed1.getId());
+
+    indexedFeed.write(key1, feed1, getCategories(categories1));
+
+    List<Feed> feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("big data"));
+    Assert.assertEquals(1, feedResult.size());
+
+    // re-write with new index values
+    indexedFeed.write(key1, feed1, getCategories(categories2));
+
+    //Should not return based on old index values
+    feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("big data"));
+    Assert.assertEquals(0, feedResult.size());
+
+    feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("hadoop"));
+    //Should return based on new indexValue
+    Assert.assertEquals(1, feedResult.size());
+
+    //Update with no index value. Lookup by any indexValue should not return the old entries
+    indexedFeed.write(key1, feed1);
+    feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("hadoop"));
+    Assert.assertEquals(0, feedResult.size());
+  }
+
+  @Test
   public void testIndexPruning() throws Exception{
 
     indexedFeed = instantiator.getDataSet("index");
@@ -74,6 +108,27 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     feeds = indexedFeed.readAllByIndex(Bytes.toBytes("drinking"));
     Assert.assertEquals(0, feeds.size());
 
+  }
+
+  @Test
+  public void testIndexUpdates() throws Exception {
+    indexedFeed = instantiator.getDataSet("index");
+    newTransaction(Mode.Sync);
+
+    List<String> categories1 = ImmutableList.of("big data");
+
+    Feed feed1 =  new Feed("a1", "http://apple.com", categories1);
+    byte[] key1 = Bytes.toBytes(feed1.getId());
+
+    indexedFeed.write(key1, feed1, getCategories(categories1));
+
+    List<Feed> feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("big data"));
+    Assert.assertEquals(1, feedResult.size());
+
+    indexedFeed.updateIndex(key1, Bytes.toBytes("startup"));
+
+    feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("startup"));
+    Assert.assertEquals(1, feedResult.size());
   }
 
 
