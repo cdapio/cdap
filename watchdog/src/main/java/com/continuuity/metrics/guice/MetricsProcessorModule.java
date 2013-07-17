@@ -19,7 +19,7 @@ import com.google.inject.name.Names;
  * Guice module for creating bindings for {@link MetricsProcessor}. Intends to be installed by other modules,
  * preferably private module.
  */
-final class MetricsProcessorModule extends AbstractModule {
+public final class MetricsProcessorModule extends AbstractModule {
 
   private final Predicate<MetricsRecord> aggregatesFilter;
 

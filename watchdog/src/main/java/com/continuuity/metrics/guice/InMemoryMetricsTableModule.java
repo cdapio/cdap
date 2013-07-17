@@ -9,7 +9,7 @@ import com.continuuity.data.table.OVCTableHandle;
 /**
  *
  */
-final class InMemoryMetricsTableModule extends AbstractMetricsTableModule {
+public final class InMemoryMetricsTableModule extends AbstractMetricsTableModule {
 
   @Override
   protected void bindTableHandle() {

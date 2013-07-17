@@ -91,6 +91,10 @@ public final class TimeSeriesTable {
   }
 
   public void save(Iterator<MetricsRecord> records) throws OperationException {
+    if (!records.hasNext()) {
+      return;
+    }
+
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
     Table<byte[], byte[], byte[]> table = TreeBasedTable.create(Bytes.BYTES_COMPARATOR, Bytes.BYTES_COMPARATOR);
 
@@ -164,13 +168,22 @@ public final class TimeSeriesTable {
     // delta is guaranteed to be 2 bytes.
     byte[] column = deltaCache[(int) (timestamp - timeBase)];
 
-    table.put(rowKey, column, Bytes.toBytes(record.getValue()));
+    addValue(rowKey, column, table, record.getValue());
 
     // Save tags metrics
     for (TagMetric tag : record.getTags()) {
       rowKey = getKey(record.getContext(), record.getRunId(), record.getName(), tag.getTag(), timeBase);
-      table.put(rowKey, column, Bytes.toBytes(tag.getValue()));
+      addValue(rowKey, column, table, tag.getValue());
     }
+  }
+
+  private void addValue(byte[] rowKey, byte[] column, Table<byte[], byte[], byte[]> table, int value) {
+    byte[] oldValue = table.get(rowKey, column);
+    int newValue = value;
+    if (oldValue != null) {
+      newValue = Bytes.toInt(oldValue) + value;
+    }
+    table.put(rowKey, column, Bytes.toBytes(newValue));
   }
 
   /**

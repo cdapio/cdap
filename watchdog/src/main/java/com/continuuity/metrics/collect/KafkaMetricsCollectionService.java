@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.DatumWriter;
@@ -26,7 +27,7 @@ import java.util.Iterator;
 public final class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
 
   private final KafkaClientService kafkaClient;
-  private final String topic;
+  private final String topicPrefix;
   private final KafkaPublisher.Ack ack;
   private final DatumWriter<MetricsRecord> recordWriter;
   private final ByteArrayOutputStream encoderOutputStream;
@@ -36,15 +37,15 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
 
   @Inject
   public KafkaMetricsCollectionService(KafkaClientService kafkaClient,
-                                       @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC) String topic,
+                                       @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                        DatumWriter<MetricsRecord> recordWriter) {
-    this(kafkaClient, topic, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
+    this(kafkaClient, topicPrefix, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
   }
 
-  public KafkaMetricsCollectionService(KafkaClientService kafkaClient, String topic,
+  public KafkaMetricsCollectionService(KafkaClientService kafkaClient, String topicPrefix,
                                        KafkaPublisher.Ack ack, DatumWriter<MetricsRecord> recordWriter) {
     this.kafkaClient = kafkaClient;
-    this.topic = topic;
+    this.topicPrefix = topicPrefix;
     this.ack = ack;
     this.recordWriter = recordWriter;
 
@@ -59,10 +60,10 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricsRecord> metrics) throws Exception {
+  protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
     encoderOutputStream.reset();
 
-    KafkaPublisher.Preparer preparer = publisher.prepare(topic);
+    KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix + "." + scope.name());
     while (metrics.hasNext()) {
       // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
       MetricsRecord record = metrics.next();

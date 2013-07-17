@@ -23,7 +23,7 @@ import com.google.inject.name.Named;
 /**
  * Guice module for binding classes for metrics client in distributed runtime mode.
  */
-final class DistributedMetricsClientModule extends PrivateModule {
+public final class DistributedMetricsClientModule extends PrivateModule {
 
   private final KafkaClientService kafkaClient;
 
@@ -38,9 +38,9 @@ final class DistributedMetricsClientModule extends PrivateModule {
   }
 
   @Provides
-  @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC)
+  @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX)
   public String providesKafkaTopic(CConfiguration cConf) {
-    return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC, MetricsConstants.DEFAULT_KAFKA_TOPIC);
+    return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX, MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
   }
 
   @Provides

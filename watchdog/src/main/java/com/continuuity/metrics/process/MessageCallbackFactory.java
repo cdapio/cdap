@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.process;
 
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.kafka.client.KafkaConsumer;
 
 /**
@@ -11,5 +12,5 @@ import com.continuuity.kafka.client.KafkaConsumer;
  */
 public interface MessageCallbackFactory {
 
-  KafkaConsumer.MessageCallback create();
+  KafkaConsumer.MessageCallback create(MetricsScope scope);
 }

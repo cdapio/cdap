@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
@@ -21,6 +22,10 @@ final class MetricsRequestParser {
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
   private static final String END_TIME = "end";
+
+  // Events path parse is slightly different. If there is no "ins" or "outs", it's default to "processed".
+  private static final String EVENTS = "events";
+  private static final String PROCESSED = "processed";
 
   private enum ContextType {
     COLLECT,
@@ -162,35 +167,40 @@ final class MetricsRequestParser {
 
     if (!pathParts.hasNext()) {
       // Metrics for the program.
+      if (EVENTS.equals(metricName)) {    // Special handling for events
+        builder.setMetricPrefix(metricName + "." + PROCESSED);
+      }
       return builder.setContextPrefix(contextPrefix);
     }
 
-    // 6. RunId for Map Reduce job or flowlet Id.
+    // 6. Subtype ("mappers/reducers") for Map Reduce job or flowlet Id.
     if (programType == ProgramType.MAPREDUCE) {
-      builder.setRunId(pathParts.next());
+      contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
     } else {
       // flowlet Id
       contextPrefix += "." + pathParts.next();
     }
 
     if (!pathParts.hasNext()) {
-      // Metrics for a given map reduce run or a flowlet
+      // Metrics for the program component.
+      if (EVENTS.equals(metricName)) {    // Special handling for events
+        builder.setMetricPrefix(metricName + "." + PROCESSED);
+      }
       return builder.setContextPrefix(contextPrefix);
     }
 
-    // 7. Subtype for jobs program type.
+    // 7. Subtype ID for map reduce job or flowlet metric suffix
     if (programType == ProgramType.MAPREDUCE) {
-      contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
-
-      if (pathParts.hasNext()) {
-        // The mapper or reducer id
-        contextPrefix += "." + pathParts.next();
-      }
+      contextPrefix += "." + pathParts.next();
     } else {
       // It gives the suffix of the metric
       while (pathParts.hasNext()) {
         metricName += "." + pathParts.next();
       }
+    }
+
+    if (EVENTS.equals(metricName)) {
+      metricName += "." + PROCESSED;
     }
 
     return builder.setContextPrefix(contextPrefix)
@@ -269,7 +279,8 @@ final class MetricsRequestParser {
         int count = Integer.parseInt(queryParams.get(COUNT).get(0));
         long endTime = queryParams.containsKey(END_TIME)
                           ? Integer.parseInt(queryParams.get(END_TIME).get(0))
-                          : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+                          : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) -
+                                MetricsConstants.QUERY_SECOND_DELAY;
 
         builder.setCount(count);
         builder.setStartTime(queryParams.containsKey(START_TIME)

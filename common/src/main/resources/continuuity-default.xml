@@ -556,4 +556,17 @@
         <description>Sets the environment the appfabric is in.</description>
     </property>
 
+    <!-- New Metrics system settings -->
+    <property>
+        <name>metrics.query.server.address</name>
+        <value>localhost</value>
+        <description>Host address where the metrics query server is started.</description>
+    </property>
+
+    <property>
+        <name>metrics.query.server.port</name>
+        <value>45005</value>
+        <description>Port for metrics query server to listen on.</description>
+    </property>
+
 </configuration>

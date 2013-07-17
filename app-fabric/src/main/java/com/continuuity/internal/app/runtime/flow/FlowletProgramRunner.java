@@ -24,6 +24,7 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -99,18 +100,21 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DatumWriterFactory datumWriterFactory;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
+  private final MetricsCollectionService metricsCollectionService;
 
   private volatile List<QueueConsumerSupplier> queueConsumerSuppliers;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
                               DataFabricFacadeFactory txAgentSupplierFactory,
-                              QueueReaderFactory queueReaderFactory) {
+                              QueueReaderFactory queueReaderFactory,
+                              MetricsCollectionService metricsCollectionService) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
-    queueConsumerSuppliers = ImmutableList.of();
+    this.queueConsumerSuppliers = ImmutableList.of();
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Inject(optional = true)
@@ -166,7 +170,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
                                                options.getUserArguments(),
                                                flowletDef.getFlowletSpec(),
-                                               flowletClass.isAnnotationPresent(Async.class));
+                                               flowletClass.isAnnotationPresent(Async.class),
+                                               metricsCollectionService);
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =

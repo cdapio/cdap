@@ -37,7 +37,7 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     try {
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+      conf.setBoolean(DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE, false);
       injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
     } catch (Exception e) {
       throw new RuntimeException(e);

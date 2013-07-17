@@ -11,7 +11,7 @@ import com.google.inject.Scopes;
  * Guice module for binding Metrics table access in distributed mode. This module is intend for installed by
  * other private module in this package.
  */
-final class DistributedMetricsTableModule extends AbstractMetricsTableModule {
+public final class DistributedMetricsTableModule extends AbstractMetricsTableModule {
 
   @Override
   protected void bindTableHandle() {

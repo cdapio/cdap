@@ -51,8 +51,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.txAgent = txAgent;
     this.systemMapperMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Mapper"));
     this.systemReducerMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Reducer"));
-    this.metrics = new MapReduceMetrics(getAccountId(), getApplicationId(),
-                                        getProgramName(), getRunId().toString(), getInstanceId());
+    // TODO
+//    this.metrics = new MapReduceMetrics(collectionService, getApplicationId(),
+//                                        getProgramName(), MapReduceMetrics.TaskType.Mapper);
+    this.metrics = null;
     this.loggingContext = new MapReduceLoggingContext(getAccountId(), getApplicationId(), getProgramName());
     this.spec = spec;
   }

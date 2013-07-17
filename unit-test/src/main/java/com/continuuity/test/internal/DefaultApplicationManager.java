@@ -26,6 +26,7 @@ import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -57,6 +58,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Inject
   public DefaultApplicationManager(OperationExecutor opex,
+                                   LocationFactory locationFactory,
                                    StreamWriterFactory streamWriterFactory,
                                    ProcedureClientFactory procedureClientFactory,
                                    @Assisted AuthToken token,
@@ -73,7 +75,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.procedureClientFactory = procedureClientFactory;
 
     OperationContext ctx = new OperationContext(accountId, applicationId);
-    DataFabric dataFabric = new DataFabricImpl(opex, ctx);
+    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, ctx);
     TransactionProxy proxy = new TransactionProxy();
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, ctx));
 

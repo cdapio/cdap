@@ -17,6 +17,7 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
@@ -39,7 +40,7 @@ public class DataFabricModules extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
 
-      return new AbstractModule() {
+      return new PrivateModule() {
       @Override
       protected void configure() {
         CConfiguration conf = CConfiguration.create();
@@ -52,6 +53,8 @@ public class DataFabricModules extends RuntimeModule {
         conf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
           .toInstance(conf);
+
+        expose(OperationExecutor.class);
       }
     };
   }

@@ -8,7 +8,11 @@ package com.continuuity.api.metrics;
  */
 public interface MetricsCollector {
 
-  String getName();
-
-  void gauge(int value, String...tags);
+  /**
+   * Log a metric value at the current time.
+   * @param metricName Name of the metric.
+   * @param value value of the metric.
+   * @param tags Tags associated with the metric.
+   */
+  void gauge(String metricName, int value, String...tags);
 }

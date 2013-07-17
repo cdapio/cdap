@@ -84,7 +84,7 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
           // Decode context and metric from key
           int offset = 0;
           context = entityCodec.decode(MetricsEntityType.CONTEXT, rowKey, offset);
-          if (!context.startsWith(contextPrefix)) {
+          if (contextPrefix != null && !context.startsWith(contextPrefix)) {
             continue;
           }
 

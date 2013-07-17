@@ -2,7 +2,6 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-import com.continuuity.hbase.ttqueue.HBQPartitioner.HBQPartitionerType;
 import com.google.common.base.Objects;
 
 import java.io.IOException;
@@ -39,14 +38,6 @@ public interface QueuePartitioner {
         case ROUND_ROBIN: return PARTITIONER_ROUND_ROBIN;
         case FIFO: return PARTITIONER_FIFO;
         default: return PARTITIONER_FIFO;
-      }
-    }
-
-    public HBQPartitionerType toHBQ() {
-      switch (this) {
-        case FIFO: return HBQPartitionerType.RANDOM; // TODO whatever we do with HBQ, rename this too
-        case HASH: return HBQPartitionerType.HASH_ON_VALUE; // TODO: Not 100% the same !!!
-        default: return HBQPartitionerType.RANDOM;
       }
     }
 

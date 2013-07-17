@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.metrics.process.MetricsProcessor;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.collect.ImmutableList;
@@ -27,10 +28,10 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricsRecord> metrics) throws Exception {
+  protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
     List<MetricsRecord> records = ImmutableList.copyOf(metrics);
     for (MetricsProcessor processor : processors) {
-      processor.process(records.iterator());
+      processor.process(scope, records.iterator());
     }
   }
 }

@@ -1,5 +1,6 @@
 package com.continuuity.metrics.process;
 
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 
 import java.util.Iterator;
@@ -9,5 +10,5 @@ import java.util.Iterator;
  */
 public interface MetricsProcessor {
 
-  void process(Iterator<MetricsRecord> records);
+  void process(MetricsScope scope, Iterator<MetricsRecord> records);
 }
