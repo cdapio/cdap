@@ -4,6 +4,7 @@
 package com.continuuity.metrics.collect;
 
 import com.continuuity.api.metrics.MetricsCollectionService;
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ASMDatumWriterFactory;
 import com.continuuity.internal.io.ASMFieldAccessorFactory;
@@ -74,7 +75,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
-      collectionService.getCollector("test.context." + i, "runId").gauge("processed", i);
+      collectionService.getCollector(MetricsScope.USER, "test.context." + i, "runId").gauge("processed", i);
     }
 
     // Sleep to make sure metrics get published

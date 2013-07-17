@@ -74,7 +74,7 @@ public final class MetricsScanner implements Iterator<MetricsScanResult> {
           // Decode context and metric from key
           int offset = 0;
           String context = entityCodec.decode(MetricsEntityType.CONTEXT, rowKey, offset);
-          if (!context.startsWith(query.getContextPrefix())) {
+          if (query.getContextPrefix() != null && !context.startsWith(query.getContextPrefix())) {
             continue;
           }
 

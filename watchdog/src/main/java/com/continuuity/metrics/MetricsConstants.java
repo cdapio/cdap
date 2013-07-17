@@ -16,7 +16,7 @@ public final class MetricsConstants {
     public static final String THREAD_POOL_SIZE = "metrics.query.thread.pool.size";
     public static final String KEEP_ALIVE_SECONDS = "metrics.query.keepAlive.seconds";
 
-    public static final String KAFKA_TOPIC = "metrics.kafka.topic";
+    public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
     public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
     public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
 
@@ -32,7 +32,7 @@ public final class MetricsConstants {
   public static final String DEFAULT_METRIC_TABLE_PREFIX = "MetricsTable";
   public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
 
-  public static final String DEFAULT_KAFKA_TOPIC = "metrics";
+  public static final String DEFAULT_KAFKA_TOPIC_PREFIX = "metrics";
   public static final int DEFAULT_KAFKA_PARTITION_SIZE = 10;
 
   public static final int DEFAULT_PROCESSING_THREADS = 1;

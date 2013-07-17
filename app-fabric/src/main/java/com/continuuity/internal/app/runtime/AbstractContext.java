@@ -5,8 +5,8 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.metrics.MetricsCollectionService;
 import com.continuuity.api.metrics.MetricsCollector;
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.weave.api.RunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -98,10 +98,10 @@ public abstract class AbstractContext {
     }
   }
 
-  protected final MetricsCollector getSystemMetricsCollector(MetricsCollectionService collectionService,
-                                                             String context, RunId runId) {
-    // RunId is only needed for mapreduce job. Not needed for flow or procedure.
-    return collectionService.getCollector(context, program.getProcessorType() == Type.MAPREDUCE ? runId.getId() : "0");
+  protected final MetricsCollector getMetricsCollector(MetricsScope scope,
+                                                       MetricsCollectionService collectionService, String context) {
+    // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
+    return collectionService.getCollector(scope, context, "0");
   }
 
   private void setField(Object setTo, Field field, Object value) {

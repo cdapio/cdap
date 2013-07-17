@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.process;
 
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.internal.io.DatumReader;
 import com.continuuity.internal.io.DatumReaderFactory;
 import com.continuuity.internal.io.Schema;
@@ -48,8 +49,8 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   }
 
   @Override
-  public KafkaConsumer.MessageCallback create() {
+  public KafkaConsumer.MessageCallback create(MetricsScope scope) {
     return new PersistedMessageCallback(
-      new MetricsMessageCallback(processors, datumReader, recordSchema), metaTable, persistThreshold);
+      new MetricsMessageCallback(scope, processors, datumReader, recordSchema), metaTable, persistThreshold);
   }
 }

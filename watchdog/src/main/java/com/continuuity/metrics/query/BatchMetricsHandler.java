@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.metrics.data.AggregatesScanner;
@@ -47,7 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Class for handling batch requests for time series data.
+ * Class for handling batch requests for metrics data of the {@link MetricsScope#REACTOR} scope.
  */
 @Path("/metrics")
 public final class BatchMetricsHandler extends AbstractHttpHandler {
@@ -72,10 +73,10 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     this.metricsTableCache = CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
       @Override
       public TimeSeriesTable load(Integer key) throws Exception {
-        return metricsTableFactory.createTimeSeries(key);
+        return metricsTableFactory.createTimeSeries(MetricsScope.REACTOR.name(), key);
       }
     });
-    this.aggregatesTable = metricsTableFactory.createAggregates();
+    this.aggregatesTable = metricsTableFactory.createAggregates(MetricsScope.REACTOR.name());
   }
 
   @POST

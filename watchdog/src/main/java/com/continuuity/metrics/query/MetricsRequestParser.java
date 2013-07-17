@@ -23,6 +23,10 @@ final class MetricsRequestParser {
   private static final String START_TIME = "start";
   private static final String END_TIME = "end";
 
+  // Events path parse is slightly different. If there is no "ins" or "outs", it's default to "processed".
+  private static final String EVENTS = "events";
+  private static final String PROCESSED = "processed";
+
   private enum ContextType {
     COLLECT,
     PROCESS,
@@ -163,34 +167,40 @@ final class MetricsRequestParser {
 
     if (!pathParts.hasNext()) {
       // Metrics for the program.
+      if (EVENTS.equals(metricName)) {    // Special handling for events
+        builder.setMetricPrefix(metricName + "." + PROCESSED);
+      }
       return builder.setContextPrefix(contextPrefix);
     }
 
     // 6. Subtype ("mappers/reducers") for Map Reduce job or flowlet Id.
-    String part = pathParts.next();
     if (programType == ProgramType.MAPREDUCE) {
-      contextPrefix += "." + MapReduceType.valueOf(part.toUpperCase()).getId();
+      contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
     } else {
-      if (pathParts.hasNext()) {
-        // flowlet Id
-        contextPrefix += "." + part;
-      } else {
-        // Suffix of metrics
-        return builder.setContextPrefix(contextPrefix)
-                      .setMetricPrefix(metricName + "." + part);
+      // flowlet Id
+      contextPrefix += "." + pathParts.next();
+    }
+
+    if (!pathParts.hasNext()) {
+      // Metrics for the program component.
+      if (EVENTS.equals(metricName)) {    // Special handling for events
+        builder.setMetricPrefix(metricName + "." + PROCESSED);
       }
+      return builder.setContextPrefix(contextPrefix);
     }
 
     // 7. Subtype ID for map reduce job or flowlet metric suffix
     if (programType == ProgramType.MAPREDUCE) {
-      if (pathParts.hasNext()) {
-        contextPrefix += "." + part;
-      }
+      contextPrefix += "." + pathParts.next();
     } else {
       // It gives the suffix of the metric
       while (pathParts.hasNext()) {
         metricName += "." + pathParts.next();
       }
+    }
+
+    if (EVENTS.equals(metricName)) {
+      metricName += "." + PROCESSED;
     }
 
     return builder.setContextPrefix(contextPrefix)

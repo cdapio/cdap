@@ -16,5 +16,5 @@ public interface MetricsCollectionService extends Service {
    * @param runId The Id fo the given run that generating the metric.
    * @return A {@link com.continuuity.api.metrics.MetricsCollector} for emitting metrics.
    */
-  MetricsCollector getCollector(String context, String runId);
+  MetricsCollector getCollector(MetricsScope scope, String context, String runId);
 }

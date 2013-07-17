@@ -40,10 +40,11 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   }
 
   @Override
-  public TimeSeriesTable createTimeSeries(int resolution) {
+  public TimeSeriesTable createTimeSeries(String namespace, int resolution) {
     try {
-      String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                   MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+      String tableName = namespace + "." +
+                          cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                    MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
 
       return new TimeSeriesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodec,
                                  resolution, getRollTime(resolution));
@@ -53,10 +54,11 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   }
 
   @Override
-  public AggregatesTable createAggregates() {
+  public AggregatesTable createAggregates(String namespace) {
     try {
-      String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                   MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
+      String tableName = namespace + "." +
+                          cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                    MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
       return new AggregatesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodec);
     } catch (OperationException e) {
       throw Throwables.propagate(e);

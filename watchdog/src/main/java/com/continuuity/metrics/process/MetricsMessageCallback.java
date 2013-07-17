@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.process;
 
+import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumReader;
@@ -30,13 +31,16 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsMessageCallback.class);
 
+  private final MetricsScope scope;
   private final DatumReader<MetricsRecord> recordReader;
   private final Schema recordSchema;
   private final Set<MetricsProcessor> processors;
 
-  public MetricsMessageCallback(Set<MetricsProcessor> processors,
+  public MetricsMessageCallback(MetricsScope scope,
+                                Set<MetricsProcessor> processors,
                                 DatumReader<MetricsRecord> recordReader,
                                 Schema recordSchema) {
+    this.scope = scope;
     this.processors = processors;
     this.recordReader = recordReader;
     this.recordSchema = recordSchema;
@@ -61,7 +65,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
     // Invoke processors one by one.
     for (MetricsProcessor processor : processors) {
-      processor.process(records.iterator());
+      processor.process(scope, records.iterator());
     }
   }
 
