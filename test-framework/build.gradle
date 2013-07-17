@@ -1,0 +1,10 @@
+apply from: "$rootProject.projectDir/gradle/apply-continuuity-plugin.gradle"
+apply from: "$rootProject.projectDir/gradle/elastic.gradle"
+apply from: "$rootProject.projectDir/gradle/init-repositories.gradle"
+apply from: "$rootProject.projectDir/gradle/dependencies.gradle"
+apply from: "$rootProject.projectDir/gradle/maven.gradle"
+
+subprojects {
+version = rootProject.version 
+}
+evaluationDependsOnChildren()
