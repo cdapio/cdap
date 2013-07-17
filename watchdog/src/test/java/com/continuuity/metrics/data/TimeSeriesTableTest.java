@@ -31,7 +31,7 @@ public class TimeSeriesTableTest {
 
   @Test
   public void testAggregate() throws OperationException {
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("", 1);
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("test", 1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -102,6 +102,7 @@ public class TimeSeriesTableTest {
           tagMetrics.add(new TagMetric(tag, j * 2));
         }
         records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j));
+        tagMetrics.clear();
       }
       timeSeriesTable.save(records);
       records.clear();
