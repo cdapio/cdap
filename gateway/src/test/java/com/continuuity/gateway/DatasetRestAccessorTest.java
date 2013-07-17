@@ -23,7 +23,6 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
@@ -90,8 +89,7 @@ public class DatasetRestAccessorTest {
   public static void setup() {
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+    Injector injector = Guice.createInjector(new GatewayTestModule(new CConfiguration()));
     executor = injector.getInstance(OperationExecutor.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     mds = new MetadataService(executor);
