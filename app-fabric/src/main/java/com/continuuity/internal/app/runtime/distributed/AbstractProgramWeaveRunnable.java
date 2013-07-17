@@ -29,6 +29,7 @@ import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnable;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
 import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.filesystem.HDFSLocationFactory;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
@@ -39,10 +40,14 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -120,8 +125,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
       injector = Guice.createInjector(createModule(context));
       try {
-        program = new Program(injector.getInstance(LocationFactory.class)
-                                .create(cmdLine.getOptionValue(RunnableOptions.JAR)));
+        program = injector.getInstance(ProgramFactory.class).create(cmdLine.getOptionValue(RunnableOptions.JAR));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -221,7 +225,10 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         bind(InetAddress.class).annotatedWith(Names.named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS))
           .toInstance(context.getHost());
 
-        bind(LocationFactory.class).toInstance(new LocalLocationFactory(new File(System.getProperty("user.dir"))));
+        bind(LocationFactory.class).toInstance(new HDFSLocationFactory(hConf));
+
+        // For program loading
+        install(createProgramFactoryModule());
 
         // For binding DataSet transaction stuff
         install(createFactoryModule(DataFabricFacadeFactory.class,
@@ -259,6 +266,37 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                   .build(factoryClass));
       }
     };
+  }
+
+  private Module createProgramFactoryModule() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(LocationFactory.class)
+          .annotatedWith(Names.named("program.location.factory"))
+          .toInstance(new LocalLocationFactory(new File(System.getProperty("user.dir"))));
+        bind(ProgramFactory.class).in(Scopes.SINGLETON);
+        expose(ProgramFactory.class);
+      }
+    };
+  }
+
+  /**
+   * A private factory for creating instance of Program.
+   * It's needed so that we can inject different LocationFactory just for loading program.
+   */
+  private static final class ProgramFactory {
+
+    private final LocationFactory locationFactory;
+
+    @Inject
+    ProgramFactory(@Named("program.location.factory") LocationFactory locationFactory) {
+      this.locationFactory = locationFactory;
+    }
+
+    public Program create(String path) throws IOException {
+      return new Program(locationFactory.create(path));
+    }
   }
 }
 
