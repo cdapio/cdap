@@ -21,7 +21,7 @@ define([], function () {
 				flowlets[i].app = model.get('app');
 
 				objects.push(C.Flowlet.create(flowlets[i]));
-				objects[i].trackMetric('/process/events/{app}/flows/{flow}/flowlets/{id}', 'aggregates', 'events');
+				objects[i].trackMetric('/process/events/{app}/flows/{flow}/{id}', 'aggregates', 'events');
 
 			}
 			this.set('elements.Flowlet', Em.ArrayProxy.create({content: objects}));
