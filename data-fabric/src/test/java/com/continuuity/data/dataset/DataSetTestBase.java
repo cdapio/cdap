@@ -13,7 +13,10 @@ import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.util.OperationUtil;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -54,10 +57,17 @@ public class DataSetTestBase {
   public static void setupDataFabric() {
     // use Guice to inject an in-memory opex
     final Injector injector =
-      Guice.createInjector(new DataFabricModules().getInMemoryModules());
+      Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               bind(LocationFactory.class).to(LocalLocationFactory.class);
+                             }
+                           });
     opex = injector.getInstance(OperationExecutor.class);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     // and create a data fabric with the default operation context
-    fabric = new DataFabricImpl(opex, OperationUtil.DEFAULT);
+    fabric = new DataFabricImpl(opex, locationFactory, OperationUtil.DEFAULT);
   }
 
   /**

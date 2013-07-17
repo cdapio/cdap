@@ -18,7 +18,7 @@ public class EvictionHelper {
   // Map of transaction write version to min ack entry of that transaction
   private Map<Long, Long> txnMinAckEntryMap;
   // Max (min committed entry) of committed and cleaned up transactions
-  private long maxCommittedCleanedUpEntry = TTQueueNewConstants.FIRST_ENTRY_ID - 1;
+  private long maxCommittedCleanedUpEntry = TTQueueConstants.FIRST_ENTRY_ID - 1;
 
   public EvictionHelper() {
     this.txnMinAckEntryMap = Maps.newHashMap();
@@ -57,7 +57,7 @@ public class EvictionHelper {
 
     long minUnCommittedAckEntry = Long.MAX_VALUE;
     long maxMinCommittedAckEntry = maxCommittedCleanedUpEntry > minLegalEvictEntry ?
-      TTQueueNewConstants.FIRST_ENTRY_ID - 1 : maxCommittedCleanedUpEntry;
+      TTQueueConstants.FIRST_ENTRY_ID - 1 : maxCommittedCleanedUpEntry;
 
     for (Map.Entry<Long, Long> entry : txnMinAckEntryMap.entrySet()) {
       if (entry.getValue() > minLegalEvictEntry) {
@@ -80,10 +80,10 @@ public class EvictionHelper {
 
     if (minUnCommittedAckEntry != Long.MAX_VALUE) {
       return minUnCommittedAckEntry - 1;
-    } else if (maxMinCommittedAckEntry >= TTQueueNewConstants.FIRST_ENTRY_ID) {
+    } else if (maxMinCommittedAckEntry >= TTQueueConstants.FIRST_ENTRY_ID) {
       return maxMinCommittedAckEntry;
     } else {
-      return TTQueueNewConstants.INVALID_ENTRY_ID;
+      return TTQueueConstants.INVALID_ENTRY_ID;
     }
   }
 
@@ -94,7 +94,7 @@ public class EvictionHelper {
   public void cleanup(Transaction transaction) {
     ReadPointer readPointer = transaction.getReadPointer();
 
-    long maxMinCommittedAckEntry = TTQueueNewConstants.FIRST_ENTRY_ID - 1;
+    long maxMinCommittedAckEntry = TTQueueConstants.FIRST_ENTRY_ID - 1;
 
     Iterator<Map.Entry<Long, Long>> iterator = txnMinAckEntryMap.entrySet().iterator();
     while (iterator.hasNext()) {

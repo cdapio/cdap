@@ -1,0 +1,38 @@
+apply plugin:'java'
+apply from: "$rootProject.projectDir/gradle/apply-continuuity-plugin.gradle"
+apply from: "$rootProject.projectDir/gradle/elastic.gradle"
+apply from: "$rootProject.projectDir/gradle/init-repositories.gradle"
+apply from: "$rootProject.projectDir/gradle/dependencies.gradle"
+apply from: "$rootProject.projectDir/gradle/maven.gradle"
+
+project.evaluationDependsOn(':app-fabric')
+
+dependencies {
+   compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+   compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true],"app-fabric")
+   compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
+   compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
+   compile elastic([group: 'com.continuuity', name: 'gateway', classifier: 'api', version: "${version}", changing: true], "gateway")
+   compile elastic([group: 'com.continuuity', name: 'unit-test', version: "${version}", changing: true], "unit-test")
+   compile elastic([group: 'com.continuuity', name: 'unit-test', classifier: 'api', version: "${version}", changing: true], "unit-test")
+   clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}"], "data-fabric")
+   testCompile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity:tests') { exclude module: 'junit' }
+   testCompile libraries.hadoop_minicluster
+   compile libraries.slf4j_api
+   compile libraries.logback_core
+   compile libraries.logback_classic
+   compile libraries.google_guice
+   compile libraries.weave_common
+   compile libraries.weave_discovery_api
+   compile libraries.weave_discovery_core
+
+   testCompile libraries.mockito_core
+   testCompile libraries.junit
+}
+
+/**
+ * Exclude any config xml from jar
+ */
+jar.exclude '*.xml'

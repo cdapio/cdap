@@ -1,6 +1,6 @@
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':unit-test')
-evaluationDependsOn(':performance')
+evaluationDependsOn(':test-framework:performance')
 evaluationDependsOn(':passport')
 
 apply plugin:'maven'

@@ -7,6 +7,7 @@ import com.continuuity.gateway.DataAccessor;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import com.continuuity.gateway.util.NettyRequestHandlerFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -33,6 +34,11 @@ public class RestCollector extends Collector
    */
   protected OperationExecutor executor;
 
+  /**
+   * the data fabric location factory to use for data access.
+   */
+  protected LocationFactory locationFactory;
+
   @Override
   public void setExecutor(OperationExecutor executor) {
     this.executor = executor;
@@ -41,6 +47,16 @@ public class RestCollector extends Collector
   @Override
   public OperationExecutor getExecutor() {
     return this.executor;
+  }
+
+  @Override
+  public void setLocationFactory(LocationFactory locationFactory) {
+    this.locationFactory = locationFactory;
+  }
+
+  @Override
+  public LocationFactory getLocationFactory() {
+    return this.locationFactory;
   }
 
   /**
