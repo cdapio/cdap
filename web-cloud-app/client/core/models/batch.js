@@ -20,7 +20,7 @@ define(['lib/date'], function (Datejs) {
 
     init: function() {
       this._super();
-
+      console.log(this.get('http'));
       this.set('metricData', Em.Object.create());
       this.set('metricNames', {});
 
@@ -149,19 +149,6 @@ define(['lib/date'], function (Datejs) {
 
     },
 
-    getAlertsRequest: function() {
-      var self = this;
-
-      return ['batch/SampleApplicationId:batchid1?data=alerts', function(status, result) {
-        if(!result) {
-          return;
-        }
-
-        self.set('alertCount', result.length);
-      }];
-
-    },
-
     getMeta: function () {
       var arr = [];
       for (var m in this.meta) {
@@ -230,6 +217,7 @@ define(['lib/date'], function (Datejs) {
     type: 'Batch',
     kind: 'Model',
     find: function(model_id, http) {
+      this.set('http', http);
       var promise = Ember.Deferred.create();
 
       var model_id = model_id.split(':');

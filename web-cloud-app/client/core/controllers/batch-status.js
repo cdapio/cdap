@@ -38,13 +38,9 @@ define(['../../helpers/plumber'], function (Plumber) {
 
     },
 
-    // updateMetrics: function() {
-    //   C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
-    // },
-
-    // updateAlerts: function() {
-    //   C.HTTP.get.apply(C, this.get('model').getAlertsRequest());
-    // },
+    updateMetrics: function() {
+      C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
+    },
 
     connectEntities: function() {
       Plumber.connect("batch-start", "batch-map");
