@@ -100,7 +100,7 @@ define([], function () {
 
 		},
 
-		delete: function () {
+		'delete': function () {
 
 			var path = findPath(arguments);
 			var callback = findCallback(arguments);
