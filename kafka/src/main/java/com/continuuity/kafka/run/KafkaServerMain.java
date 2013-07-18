@@ -4,7 +4,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
+import com.continuuity.weave.zookeeper.ZKClientService;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +29,9 @@ public class KafkaServerMain extends DaemonMain {
   private Properties kafkaProperties;
   private EmbeddedKafkaServer kafkaServer;
 
+  private String zkConnectStr;
+  private String zkNamespace;
+
   public static void main(String [] args) throws Exception {
     new KafkaServerMain().doMain(args);
   }
@@ -42,15 +48,27 @@ public class KafkaServerMain extends DaemonMain {
     int brokerId = Integer.parseInt(args[0]);
 
     CConfiguration cConf = CConfiguration.create();
-    String zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
-    String zkNamespace = cConf.get(KAFKA_ZOOKEEPER_NAMESPACE_CONFIG);
-    if (zkNamespace != null) {
-      zkConnectStr = String.format("%s/%s", zkConnectStr, zkNamespace);
-    }
+    zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    zkNamespace = cConf.get(KAFKA_ZOOKEEPER_NAMESPACE_CONFIG);
+
     int port = cConf.getInt(KAFKA_PORT_CONFIG, -1);
     String hostname = cConf.get(KAFKA_HOSTNAME_CONFIG);
     int numPartitions = cConf.getInt(KAFKA_NUM_PARTITIONS_CONFIG, 1);
     String logDir = cConf.get(KAFKA_LOG_DIR_CONFIG);
+
+    if (zkNamespace != null) {
+      ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
+      try {
+        client.startAndWait();
+        client.create("/" + zkNamespace, null, CreateMode.PERSISTENT).get();
+        client.stopAndWait();
+        zkConnectStr = String.format("%s/%s", zkConnectStr, zkNamespace);
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      } finally {
+        client.stopAndWait();
+      }
+    }
 
     kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions, logDir);
   }
