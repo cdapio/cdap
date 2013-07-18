@@ -1,0 +1,33 @@
+apply plugin:'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+}
+
+dependencies {
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    compile libraries.google_guice
+}
+
+javadoc {
+    classpath += sourceSets.api.output
+}
+
+test {
+    jvmArgs '-Xmx3048m'
+}
+
+
+/**
+ * Exclude any config xml from jar task
+ */
+jar.exclude '*.xml'
