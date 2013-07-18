@@ -10,8 +10,10 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -60,6 +62,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -221,7 +224,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(InetAddress.class).annotatedWith(Names.named("config.hostname")).toInstance(context.getHost());
+        bind(InetAddress.class).annotatedWith(Names.named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS))
+                               .toInstance(context.getHost());
 
         bind(LocationFactory.class).toInstance(new HDFSLocationFactory(hConf));
 

@@ -42,7 +42,8 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   @Inject
   public AppFabricServer(AppFabricService.Iface service, CConfiguration configuration,
-                         DiscoveryService discoveryService, @Named("config.hostname") InetAddress hostname) {
+                         DiscoveryService discoveryService,
+                         @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS) InetAddress hostname) {
     this.conf = configuration;
     this.hostname = hostname;
     this.service = service;
