@@ -84,10 +84,11 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 						if (query.count) {
 
 							TimeSeries(path, query, function (status, metricsResult) {
-
 								response.push(metricsResult);
 							});
+
 						} else if (query.aggregate) {
+
 							Counters(path, query, function (status, metricsResult) {
 								response.push(metricsResult);
 							});
@@ -97,7 +98,7 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 							Summary(path, query, function (status, metricsResult) {
 								response.push(metricsResult);
 							});
-							
+
 						}
 
 					}

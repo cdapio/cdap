@@ -5,21 +5,21 @@
 define(['lib/date'], function (Datejs) {
 
   var METRICS_PATHS = {
-    '/process/busyness/{{appId}}/mapreduce/{{jobId}}?count=30': 'busyness',
-    '/process/completion/{{appId}}/mapreduce/{{jobId}}/mappers?aggregate=true': 'mappersCompletion',
-    '/process/completion/{{appId}}/mapreduce/{{jobId}}/reducers?aggregate=true': 'reducersCompletion',
-    '/process/bytes/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
+    //'/process/busyness/{{appId}}/mapreduce/{{jobId}}?count=30': 'busyness',
+    '/process/completion/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersCompletion',
+    '/process/completion/{{appId}}/mapreduce/{{jobId}}/reducers?count=30': 'reducersCompletion',
+    //'/process/bytes/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
     '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/ins?aggregate=true': 'mappersEntriesIn',
     '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/outs?aggregate=true': 'mappersEntriesOut',
     '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/ins?aggregate=true': 'reducersEntriesIn',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut',
+    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut'
   };
 
   var METRIC_TYPES = {
-    'busyness': 'number',
-    'mappersCompletion': 'float',
-    'reducersCompletion': 'float',
-    'mappersBytesProcessed': 'bytes',
+    //'busyness': 'number',
+    'mappersCompletion': 'number',
+    'reducersCompletion': 'number',
+    //'mappersBytesProcessed': 'bytes',
     'mappersEntriesIn': 'number',
     'mappersEntriesOut': 'number',
     'reducersEntriesIn': 'number',
@@ -32,7 +32,6 @@ define(['lib/date'], function (Datejs) {
       return '#/batches/' + this.get('id');
     }.property('id'),
     metricNames: null,
-    __loadingData: false,
     instances: 0,
     type: 'Batch',
     plural: 'Batches',
@@ -46,7 +45,7 @@ define(['lib/date'], function (Datejs) {
 
       this.set('metricData', Em.Object.create({
         busyness: 0,
-        mappersCompletion: 10,
+        mappersCompletion: 0,
         reducersCompletion: 0,
         mappersBytesProcessed: 0,
         mappersEntriesIn: 0,
@@ -65,6 +64,7 @@ define(['lib/date'], function (Datejs) {
       if (this.get('meta')) {
         this.set('startTime', this.get('meta').startTime);
       }
+
     },
 
     getStartDate: function() {
@@ -103,12 +103,13 @@ define(['lib/date'], function (Datejs) {
 
     },
 
-    setMetric: function (metric, data) {
-      var self = this;
-          metric = metric.replace(/\./g, '');
+    setMetric: function (label, value) {
 
-          self.get('metricData').set(metric, data);
-          self.set('__loadingData', false);
+      var unit = this.get('units')[label];
+      value = C.Util[unit](value);
+
+      this.set(label + 'Label', value[0]);
+      this.set(label + 'Units', value[1]);
 
     },
 
@@ -128,7 +129,7 @@ define(['lib/date'], function (Datejs) {
         });
     },
 
-  getMetricsRequest: function(http) { 
+    getMetricsRequest: function(http) {
 
       var appId = this.get('app');
       var jobId = this.get('name');
@@ -137,7 +138,7 @@ define(['lib/date'], function (Datejs) {
       var paths = [];
       var pathMap = {};
       for (var path in METRICS_PATHS) {
-        var url = S(path).template({'appId': appId, 'jobId': jobId}).s;
+        var url = new S(path).template({'appId': appId, 'jobId': jobId}).s;
         paths.push(url);
         pathMap[url.split('?')[0]] = METRICS_PATHS[path];
       }
@@ -152,7 +153,7 @@ define(['lib/date'], function (Datejs) {
 
         var result = response.result;
         var i = result.length, metric;
-        
+
         while (i--) {
 
           metric = pathMap[result[i]['path']];
@@ -165,12 +166,21 @@ define(['lib/date'], function (Datejs) {
                 return entry.value;
               });
 
-              self.setMetricData(metric, result[i]['result']['data']);
+              // Hax for current value of completion.
+              if (metric === 'mappersCompletion' ||
+                  metric === 'reducersCompletion') {
 
-              self.set('__loadingData', false);
+                var data = result[i]['result']['data'];
+                self.setMetricData(metric, data[data.length - 1]);
+
+              } else {
+
+                self.setMetricData(metric, result[i]['result']['data']);
+
+              }
 
             }
-            else if (metric in METRIC_TYPES && METRIC_TYPES[metric] == 'number') {
+            else if (metric in METRIC_TYPES && METRIC_TYPES[metric] === 'number') {
 
               self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
 
