@@ -275,7 +275,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }.start();
   }
 
-  @SuppressWarnings("unused")
   private void reportStats(BasicMapReduceContext context) throws IOException, InterruptedException {
     // map stats
     float mapProgress = jobConf.getStatus().getMapProgress();
