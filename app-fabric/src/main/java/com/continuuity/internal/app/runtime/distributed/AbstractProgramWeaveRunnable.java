@@ -245,6 +245,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);
 
         // For publishing logs
+        bind(CConfiguration.class).toInstance(cConf);
+        bind(Configuration.class).toInstance(hConf);
         install(new ConfigModule(cConf, hConf));
         install(new LoggingModules().getDistributedModules());
 
