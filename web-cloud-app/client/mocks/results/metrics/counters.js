@@ -7,18 +7,12 @@ define([], function () {
   var sample = {
 
     // MapReduce
-    '/store/bytes/datasets/dataset1': 37.34,
-    '/store/records/datasets/dataset1': 117,
-    '/process/completion/jobs/mappers/job1': 75,
-    '/process/events/jobs/mappers/job1': 100,
-    '/process/bytes/jobs/mappers/job1': 30.00,
-    '/process/completion/jobs/reducers/job1': 0,
-    '/process/events/jobs/reducers/job1': 0,
-    '/process/bytes/jobs/reducers/job1': 0,
-    '/store/bytes/datasets/dataset2': 0,
-    '/store/records/datasets/dataset2': 0,
-
-    // Overview
+    "/process/completion/CountAndFilterWords/mapreduce/batchid1/mappers": 29,
+    "/process/completion/CountAndFilterWords/mapreduce/batchid1/reducers": 30,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/mappers/ins": 3752,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/mappers/outs": 35654,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/reducers/ins": 21,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/reducers/outs": 25632
   };
 
   return function (path, query, callback) {

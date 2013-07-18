@@ -18,6 +18,7 @@
   <script type="text/javascript" src="/core/lib/jquery.timeago.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
   <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
+    <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
   <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
@@ -294,42 +295,40 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Processed Count" metrics="processed.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Busyness" metrics="busyness" unit="percent"}}</div>
-      <div class="info-box"><span class="sparkline-box-title" style="padding: 4px 0px;">Start</span>
+      <!-- <div class="info-box"><span class="sparkline-box-title" style="padding: 4px 0px;">Start</span>
         <div class="emphasized-letters gf3-font">{{model.getStartHours}}</div>
         <div class="gf3-font">{{model.getStartDate}}</div>
       </div>
+      -->
     </div>
     <div id="panels">
       <div id="informer"></div>
       <div class="panel">
-        <div id="flowviz-container">
+        <div id="batchviz-container">
           <div id="batchviz" class="clearfix chart">
-            <div id="batch-start" class="batch-start batch-icon">
-              <div class="info-window">
-                <div class="stream-icon"></div>
-                <div>{{model.metricData.input1}}KB</div>
+            <div class="batch-item">
+              <div class="sparkline-box-title">Mappers: {{model.metricData.mappersCompletion}}%</div>
+              <progress {{bindAttr value="model.metricData.mappersCompletion" }} max="100"></progress>
+              <br />
+              <div id="batch-map" class="batch-icon batch-map">
+                <div class="info-window">
+                  <div class="mapper-icon"></div>
+                  <div>{{model.metricData.mappersEntriesIn}} IN</div>
+                  <div>{{model.metricData.mappersEntriesOut}} OUT</div>
+                </div>
               </div>
             </div>
-            <div id="batch-map" class="batch-icon batch-map">
-              <div class="info-window">
-                <div class="mapper-icon"></div>
-                <div>{{model.metricData.mappers1}}KB</div>
-                <div>{{model.metricData.mappers2}}R</div>
-              </div>
-            </div>
-            <div id="batch-reduce" class="batch-icon batch-reduce">
-              <div class="info-window">
-                <div class="reducer-icon"></div>
-                <div>{{model.metricData.reducers1}}KB</div>
-                <div>{{model.metricData.reducers2}}R</div>
-              </div>
-            </div>
-            <div id="batch-end" class="batch-icon batch-end">
-              <div class="info-window">
-                <div class="end-icon"></div>
-                <div>{{model.metricData.output1}}B</div>
+            <div class="batch-item">
+              <div class="sparkline-box-title">Reducers: {{model.metricData.reducersCompletion}}%</div>
+              <progress {{bindAttr value="model.metricData.reducersCompletion" }} max="100"></progress>
+              <br />
+              <div id="batch-reduce" class="batch-icon batch-reduce">
+                <div class="info-window">
+                  <div class="reducer-icon"></div>
+                  <div>{{model.metricData.reducersEntriesIn}} IN</div>
+                  <div>{{model.metricData.reducersEntriesOut}} OUT</div>
+                </div>
               </div>
             </div>
           </div>

@@ -422,10 +422,50 @@ var singularREST = {
    */
   this.app.post('/metrics', function (req, res) {
 
-    var params = req.body.params;
+    var pathList = req.body;
     var accountID = 'developer';
 
-    self.logger.trace('Metrics ', params);
+    self.logger.trace('Metrics ', pathList);
+
+    var content = JSON.stringify(pathList);
+
+    var options = {
+      host: self.config['metrics.service.host'],
+      port: self.config['metrics.service.port'],
+      path: '/metrics',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': content.length
+      }
+    };
+
+    var request = http.request(options, function(response) {
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
+      });
+
+      response.on('end', function () {
+
+        res.send({ result: JSON.parse(data), error: null });
+
+      });
+    });
+
+    request.on('error', function(e) {
+
+      res.send({
+        result: null,
+        error: {
+          fatal: 'MetricsService: ' + e.code
+        }
+      });
+
+    });
+
+    request.write(content);
+    request.end();
 
   });
 

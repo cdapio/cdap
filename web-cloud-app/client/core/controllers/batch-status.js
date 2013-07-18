@@ -13,9 +13,6 @@ define(['../../helpers/plumber'], function (Plumber) {
       //self.updateAlerts();
 
       this.interval = setInterval(function () {
-        self.updateStats();
-        // self.updateMetrics();
-        // self.updateAlerts();
         self.updateMetrics();
       }, C.POLLING_INTERVAL);
 
@@ -24,28 +21,17 @@ define(['../../helpers/plumber'], function (Plumber) {
        * themselves before updating.
        */
       setTimeout(function () {
-        self.updateStats();
-        // self.updateMetrics();
+        self.updateMetrics();
         self.connectEntities();
       }, C.EMBEDDABLE_DELAY);
     },
 
-    updateStats: function () {
-      var self = this;
-
-      // Update timeseries data for current batch.
-      C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
-
-    },
-
     updateMetrics: function() {
-      C.HTTP.post.apply(C, this.get('model').getMetricsRequest());
+      this.get('model').getMetricsRequest(this.HTTP);
     },
 
     connectEntities: function() {
-      Plumber.connect("batch-start", "batch-map");
       Plumber.connect("batch-map", "batch-reduce");
-      Plumber.connect("batch-reduce", "batch-end");
     },
 
     unload: function () {
@@ -80,6 +66,7 @@ define(['../../helpers/plumber'], function (Plumber) {
       });
 
     },
+
     stop: function (app, id, version) {
 
       var self = this;
@@ -144,7 +131,8 @@ define(['../../helpers/plumber'], function (Plumber) {
             C.Modal.hide(function () {
 
               if (response.error) {
-                C.Modal.show('Delete Error', response.error.message || 'No reason given. Please check the logs.');
+                C.Modal.show('Delete Error',
+                  response.error.message || 'No reason given. Please check the logs.');
               } else {
                 window.history.go(-1);
               }
