@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
  * Creates and sets the logback log appender.
  */
 public class LogAppenderInitializer {
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LogAppenderInitializer.class);
   private final LogAppender logAppender;
 
   @Inject
@@ -19,6 +20,8 @@ public class LogAppenderInitializer {
   }
 
   public void initialize() {
+    LOG.info("Initializing log appender {}", logAppender.getName());
+
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
     // Display any errors during initialization of log appender to console
