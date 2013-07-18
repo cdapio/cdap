@@ -5,9 +5,9 @@
 package com.continuuity.performance.runner;
 
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
-import com.continuuity.test.app.ApplicationManager;
-import com.continuuity.test.app.FlowManager;
-import com.continuuity.test.app.StreamWriter;
+import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.FlowManager;
+import com.continuuity.test.StreamWriter;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

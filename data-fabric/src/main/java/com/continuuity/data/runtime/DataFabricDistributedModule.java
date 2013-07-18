@@ -1,7 +1,6 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.hbase.HBaseNativeOVCTableHandle;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -31,11 +30,6 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   private final Configuration hbaseConf;
 
-  public static final String CONF_ENABLE_NATIVE_QUEUES =
-      "fabric.queue.hbase.native";
-  
-  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
-
   /**
    * Create a module with default configuration for HBase and Continuuity.
    */
@@ -51,16 +45,6 @@ public class DataFabricDistributedModule extends AbstractModule {
   public DataFabricDistributedModule(Configuration conf) {
     this.hbaseConf = new Configuration(conf);
     this.conf = loadConfiguration();
-  }
-
-  /**
-   * Create a module with separate, custom configurations for HBase
-   * and for Continuuity.
-   */
-  public DataFabricDistributedModule(Configuration conf,
-                                     CConfiguration cconf) {
-    this.hbaseConf = new Configuration(conf);
-    this.conf = cconf;
   }
 
   /**
@@ -88,10 +72,6 @@ public class DataFabricDistributedModule extends AbstractModule {
   public void configure() {
 
     Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
-    // Check if native hbase queue handle should be used
-    if (conf.getBoolean(CONF_ENABLE_NATIVE_QUEUES, CONF_ENABLE_NATIVE_QUEUES_DEFAULT)) {
-      ovcTableHandle = HBaseNativeOVCTableHandle.class;
-    }
     Log.info("Table Handle is " + ovcTableHandle.getName());
 
     // Bind our implementations

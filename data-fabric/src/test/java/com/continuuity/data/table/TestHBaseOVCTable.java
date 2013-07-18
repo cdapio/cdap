@@ -1,7 +1,6 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.hbase.HBaseOVCTable;
 import com.continuuity.data.hbase.HBaseTestBase;
@@ -36,9 +35,7 @@ public class  TestHBaseOVCTable extends TestOVCTable {
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

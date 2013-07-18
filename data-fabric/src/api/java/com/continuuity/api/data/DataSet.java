@@ -56,4 +56,12 @@ public abstract class DataSet {
    *         instantiation
    */
   public abstract DataSetSpecification configure();
+
+  /**
+   * This method is called at runtime to release all resources that the dataset may have acquired.
+   * After this is called, it is guaranteed that this instance of the dataset will not be used any more.
+   * The base implementation is to do nothing.
+   */
+  public void close() {
+  }
 }

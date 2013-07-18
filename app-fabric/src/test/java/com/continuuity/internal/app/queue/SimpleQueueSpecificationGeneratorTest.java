@@ -9,7 +9,7 @@ import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.app.Id;
-import com.continuuity.test.app.DefaultId;
+import com.continuuity.test.internal.DefaultId;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;

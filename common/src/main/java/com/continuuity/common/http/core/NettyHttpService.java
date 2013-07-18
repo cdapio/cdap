@@ -3,7 +3,6 @@
  */
 package com.continuuity.common.http.core;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -12,11 +11,14 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpContentCompressor;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
@@ -41,6 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class NettyHttpService extends AbstractIdleService {
 
   private static final Logger LOG  = LoggerFactory.getLogger(NettyHttpService.class);
+  private static final int MAX_INPUT_SIZE = 128 * 1024;
 
   private ServerBootstrap bootstrap;
   private Channel channel;
@@ -119,7 +122,7 @@ public final class NettyHttpService extends AbstractIdleService {
    */
   private void bootStrap(int threadPoolSize, long threadKeepAliveSecs, Iterable<HttpHandler> httpHandlers){
 
-    ExecutionHandler executionHandler = createExecutionHandler(threadPoolSize, threadKeepAliveSecs);
+    final ExecutionHandler executionHandler = createExecutionHandler(threadPoolSize, threadKeepAliveSecs);
 
     Executor bossExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                                                                 .setDaemon(true)
@@ -137,7 +140,7 @@ public final class NettyHttpService extends AbstractIdleService {
     resourceHandler = new HttpResourceHandler(httpHandlers);
     resourceHandler.init(handlerContext);
 
-    ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
+    final ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
                                                   @Override
                                                   public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
                                                     throws Exception {
@@ -146,14 +149,23 @@ public final class NettyHttpService extends AbstractIdleService {
                                                   }
                                                 };
 
-    ChannelPipeline pipeline = bootstrap.getPipeline();
-    pipeline.addLast("tracker", connectionTracker);
-    pipeline.addLast("decoder", new HttpRequestDecoder());
-    pipeline.addLast("encoder", new HttpResponseEncoder());
-    pipeline.addLast("compressor", new HttpContentCompressor());
-    pipeline.addLast("executor", executionHandler);
-    //TODO: Add chunker
-    pipeline.addLast("dispatcher", new HttpDispatcher(resourceHandler));
+    bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+      @Override
+      public ChannelPipeline getPipeline() throws Exception {
+        ChannelPipeline pipeline = Channels.pipeline();
+
+        pipeline.addLast("tracker", connectionTracker);
+        pipeline.addLast("decoder", new HttpRequestDecoder());
+        pipeline.addLast("aggregator", new HttpChunkAggregator(MAX_INPUT_SIZE));
+        pipeline.addLast("encoder", new HttpResponseEncoder());
+        pipeline.addLast("compressor", new HttpContentCompressor());
+        pipeline.addLast("executor", executionHandler);
+        //TODO: Add chunker
+        pipeline.addLast("dispatcher", new HttpDispatcher(resourceHandler));
+
+        return pipeline;
+      }
+    });
   }
 
   public static Builder builder() {

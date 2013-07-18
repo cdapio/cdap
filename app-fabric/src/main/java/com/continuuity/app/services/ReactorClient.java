@@ -51,7 +51,7 @@ public final class ReactorClient {
    */
   public static boolean debug = false;
 
-  private static final String DEVELOPER_ACCOUNT_ID = com.continuuity.data.Constants.DEVELOPER_ACCOUNT_ID;
+  private static final String DEVELOPER_ACCOUNT_ID = Constants.DEVELOPER_ACCOUNT_ID;
   private static final Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
                                                                         "status", "scale");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";
@@ -437,7 +437,8 @@ public final class ReactorClient {
     if (DeployStatus.DEPLOYED.getCode() == status.getOverall()) {
       System.out.println("Deployed");
     } else if (DeployStatus.FAILED.getCode() == status.getOverall()) {
-      System.out.println("Deployment failed: ");
+      System.out.println(String.format("Deployment failed: %s. Check Reactor log file for more details.",
+                                       DeployStatus.FAILED.getMessage()));
     } else {
       System.out.println("Deployment taking more than 5 seconds. Please check the Reactor Dashboard for status");
     }

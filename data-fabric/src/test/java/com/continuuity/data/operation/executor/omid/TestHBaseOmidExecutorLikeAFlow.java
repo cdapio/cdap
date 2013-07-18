@@ -30,9 +30,7 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
       executor = (OmidTransactionalOperationExecutor) injector.getInstance(
           Key.get(OperationExecutor.class,
               Names.named("DataFabricOperationExecutor")));

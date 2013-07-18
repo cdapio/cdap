@@ -13,7 +13,7 @@
 atlassian-ide-plugin.xml
 out/
 .DS_Store
-lib/
+./lib/
 .idea
 
 # Gradle Files & Dir #

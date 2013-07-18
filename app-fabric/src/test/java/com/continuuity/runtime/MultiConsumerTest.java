@@ -26,8 +26,9 @@ import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
-import com.continuuity.test.app.DefaultId;
-import com.continuuity.test.app.TestHelper;
+import com.continuuity.test.internal.DefaultId;
+import com.continuuity.test.internal.TestHelper;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
@@ -160,12 +161,14 @@ public class MultiConsumerTest {
     TimeUnit.SECONDS.sleep(4);
 
     OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
+    LocationFactory locationFactory = TestHelper.getInjector().getInstance(LocationFactory.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 
     TransactionProxy proxy = new TransactionProxy();
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, opCtx));
-    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, opCtx), proxy,
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, opCtx),
+                                                                      proxy,
                                                                       getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new MultiApp().configure().getDataSets().values()));
 

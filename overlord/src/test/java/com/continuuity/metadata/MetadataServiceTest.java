@@ -1,7 +1,7 @@
 package com.continuuity.metadata;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.Constants;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;

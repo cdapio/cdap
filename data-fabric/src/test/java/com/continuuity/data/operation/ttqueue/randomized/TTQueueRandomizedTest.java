@@ -10,7 +10,7 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
-import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable;
+import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -37,7 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- *
+ * A "randomized" test to try all kinds of combinations and sequences of queue operations.
  */
 public class TTQueueRandomizedTest {
   private static final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
@@ -67,8 +67,8 @@ public class TTQueueRandomizedTest {
   public void testDriver() throws Exception {
     CConfiguration cConfiguration = new CConfiguration();
     // Run eviction on every call to finalize
-    cConfiguration.setLong(TTQueueNewOnVCTable.TTQUEUE_EVICT_INTERVAL_SECS, -1);
-    cConfiguration.setInt(TTQueueNewOnVCTable.TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 40);
+    cConfiguration.setLong(TTQueueOnVCTable.TTQUEUE_EVICT_INTERVAL_SECS, -1);
+    cConfiguration.setInt(TTQueueOnVCTable.TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 40);
     // TODO: delete queue data in the end
     TTQueue ttQueue = createQueue(cConfiguration);
 
@@ -177,8 +177,8 @@ public class TTQueueRandomizedTest {
   }
 
   private TTQueue createQueue(CConfiguration conf) {
-    return new TTQueueNewOnVCTable(
-      new MemoryOVCTable(Bytes.toBytes("TestMemoryNewTTQueue")),
+    return new TTQueueOnVCTable(
+      new MemoryOVCTable(Bytes.toBytes("TestMemoryTTQueue")),
       Bytes.toBytes(this.getClass().getCanonicalName() + "-" + new Random(System.currentTimeMillis()).nextLong()),
       oracle, conf);
   }

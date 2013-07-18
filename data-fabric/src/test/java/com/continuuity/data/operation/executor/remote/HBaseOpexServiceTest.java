@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -25,10 +24,7 @@ public class HBaseOpexServiceTest extends OperationExecutorServiceTest {
   @BeforeClass
   public static void startService() throws Exception {
     HBaseTestBase.startHBase();
-    CConfiguration conf = CConfiguration.create();
-    // make sure we use vanilla hbase
-    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-    DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf);
+    DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
     injector = Guice.createInjector(module);
     OperationExecutorServiceTest.startService(
       module.getConfiguration(), injector.getInstance(Key.get(OperationExecutor.class,

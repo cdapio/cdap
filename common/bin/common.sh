@@ -43,16 +43,17 @@ set_java ()
         export JAVA="$JAVA_HOME/bin/java"
     fi
     if [ ! -x "$JAVA" ] ; then
-        die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+        echo "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
 
 Please set the JAVA_HOME variable in your environment to match the
-location of your Java installation."
+location of your Java installation." >&2
+        exit 1
     fi
 else
     export JAVA="java"
-    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+    which java >/dev/null 2>&1 || { echo "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
 Please set the JAVA_HOME variable in your environment to match the
-location of your Java installation."
+location of your Java installation." >&2 ; exit 1; }
 fi
 }
 
