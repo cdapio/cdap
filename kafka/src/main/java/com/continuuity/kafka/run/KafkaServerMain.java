@@ -22,12 +22,6 @@ import java.util.Properties;
 public class KafkaServerMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaServerMain.class);
 
-  private static final String KAFKA_PORT_CONFIG = "kafka.port";
-  private static final String KAFKA_NUM_PARTITIONS_CONFIG = "kafka.num.partitions";
-  private static final String KAFKA_LOG_DIR_CONFIG = "kafka.log.dir";
-  private static final String KAFKA_HOSTNAME_CONFIG = "kafka.bind.hostname";
-  private static final String KAFKA_ZOOKEEPER_NAMESPACE_CONFIG = "kafka.zookeeper.namespace";
-
   private Properties kafkaProperties;
   private EmbeddedKafkaServer kafkaServer;
 
@@ -51,12 +45,13 @@ public class KafkaServerMain extends DaemonMain {
 
     CConfiguration cConf = CConfiguration.create();
     zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
-    zkNamespace = cConf.get(KAFKA_ZOOKEEPER_NAMESPACE_CONFIG);
+    zkNamespace = cConf.get(KafkaConstants.ConfigKeys.KAFKA_ZOOKEEPER_NAMESPACE_CONFIG);
 
-    int port = cConf.getInt(KAFKA_PORT_CONFIG, -1);
-    String hostname = cConf.get(KAFKA_HOSTNAME_CONFIG);
-    int numPartitions = cConf.getInt(KAFKA_NUM_PARTITIONS_CONFIG, 1);
-    String logDir = cConf.get(KAFKA_LOG_DIR_CONFIG);
+    int port = cConf.getInt(KafkaConstants.ConfigKeys.KAFKA_PORT_CONFIG, -1);
+    String hostname = cConf.get(KafkaConstants.ConfigKeys.KAFKA_HOSTNAME_CONFIG);
+    int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.KAFKA_NUM_PARTITIONS_CONFIG,
+                                     KafkaConstants.DEFAULT_NUM_PARTITIONS);
+    String logDir = cConf.get(KafkaConstants.ConfigKeys.KAFKA_LOG_DIR_CONFIG);
 
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
