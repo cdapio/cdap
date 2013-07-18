@@ -10,11 +10,11 @@ public final class KafkaConstants {
    */
   public static final class ConfigKeys {
 
-    public static final String KAFKA_PORT_CONFIG = "kafka.port";
-    public static final String KAFKA_NUM_PARTITIONS_CONFIG = "kafka.num.partitions";
-    public static final String KAFKA_LOG_DIR_CONFIG = "kafka.log.dir";
-    public static final String KAFKA_HOSTNAME_CONFIG = "kafka.bind.hostname";
-    public static final String KAFKA_ZOOKEEPER_NAMESPACE_CONFIG = "kafka.zookeeper.namespace";
+    public static final String PORT_CONFIG = "kafka.port";
+    public static final String NUM_PARTITIONS_CONFIG = "kafka.num.partitions";
+    public static final String LOG_DIR_CONFIG = "kafka.log.dir";
+    public static final String HOSTNAME_CONFIG = "kafka.bind.hostname";
+    public static final String ZOOKEEPER_NAMESPACE_CONFIG = "kafka.zookeeper.namespace";
   }
 
   public static final int DEFAULT_NUM_PARTITIONS = 1;

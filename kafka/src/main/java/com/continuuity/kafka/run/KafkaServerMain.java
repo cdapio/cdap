@@ -45,13 +45,13 @@ public class KafkaServerMain extends DaemonMain {
 
     CConfiguration cConf = CConfiguration.create();
     zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
-    zkNamespace = cConf.get(KafkaConstants.ConfigKeys.KAFKA_ZOOKEEPER_NAMESPACE_CONFIG);
+    zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
-    int port = cConf.getInt(KafkaConstants.ConfigKeys.KAFKA_PORT_CONFIG, -1);
-    String hostname = cConf.get(KafkaConstants.ConfigKeys.KAFKA_HOSTNAME_CONFIG);
-    int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.KAFKA_NUM_PARTITIONS_CONFIG,
+    int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);
+    String hostname = cConf.get(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG);
+    int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
                                      KafkaConstants.DEFAULT_NUM_PARTITIONS);
-    String logDir = cConf.get(KafkaConstants.ConfigKeys.KAFKA_LOG_DIR_CONFIG);
+    String logDir = cConf.get(KafkaConstants.ConfigKeys.LOG_DIR_CONFIG);
 
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
