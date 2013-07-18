@@ -4,6 +4,8 @@
 
 define([], function () {
 
+	var DASH_CHART_COUNT = 60;
+
 	var Controller = Em.Controller.extend({
 
 		elements: Em.Object.create(),
@@ -117,8 +119,6 @@ define([], function () {
 
 			// Scans models for aggregate metrics and udpates them.
 			C.Util.updateAggregates(models, this.HTTP);
-
-			var DASH_CHART_COUNT = 16;
 
 			var queries = [
 				'/collect/events?count=' + DASH_CHART_COUNT,
