@@ -16,6 +16,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -68,6 +69,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
+  private final MetricsCollectionService metricsCollectionService;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -75,11 +77,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
-                                OperationExecutor opex, LocationFactory locationFactory) {
+                                OperationExecutor opex, LocationFactory locationFactory,
+                                MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.opex = opex;
     this.locationFactory = locationFactory;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Inject (optional = true)
@@ -127,7 +131,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
       RunId runId = RunIds.generate();
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, options.getUserArguments(), txAgent,
-                                  DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
+                                  DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec,
+                                  metricsCollectionService);
 
       try {
         MapReduce job = (MapReduce) program.getMainClass().newInstance();
@@ -228,7 +233,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
             // until job is complete report stats
             while (!jobConf.isComplete()) {
-              reportStats();
+              reportStats(context);
 
               // we report to metrics backend every second, so 1 sec is enough here. That's mapreduce job anyways (not
               // short) ;)
@@ -236,7 +241,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
             }
 
             // NOTE: we want to report the final stats (they may change since last report and before job completed)
-            reportStats();
+            reportStats(context);
 
             success = jobConf.isSuccessful();
           } catch (InterruptedException e) {
@@ -271,19 +276,27 @@ public class MapReduceProgramRunner implements ProgramRunner {
   }
 
   @SuppressWarnings("unused")
-  private void reportStats() throws IOException, InterruptedException {
+  private void reportStats(BasicMapReduceContext context) throws IOException, InterruptedException {
     // map stats
     float mapProgress = jobConf.getStatus().getMapProgress();
     long mapInputRecords = getTaskCounter(jobConf, TaskCounter.MAP_INPUT_RECORDS);
     long mapOutputRecords = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_RECORDS);
     long mapOutputBytes = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_BYTES);
 
+    // current metrics API only supports int, cast it for now. Need another rev to support long.
+    context.getSystemMapperMetrics().gauge("completion", (int) (mapProgress * 100));
+    context.getSystemMapperMetrics().gauge("entries.ins", (int) mapInputRecords);
+    context.getSystemMapperMetrics().gauge("entries.outs", (int) mapOutputRecords);
+    context.getSystemMapperMetrics().gauge("bytes", (int) mapOutputBytes);
+
     // reduce stats
     float reduceProgress = jobConf.getStatus().getReduceProgress();
     long reduceInputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_INPUT_RECORDS);
     long reduceOutputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_OUTPUT_RECORDS);
 
-    // todo: report to metrics system (see ENG-2965)
+    context.getSystemReducerMetrics().gauge("completion", (int) (reduceProgress * 100));
+    context.getSystemReducerMetrics().gauge("entries.ins", (int) reduceInputRecords);
+    context.getSystemReducerMetrics().gauge("entries.outs", (int) reduceOutputRecords);
   }
 
   private long getTaskCounter(Job jobConf, TaskCounter taskCounter) throws IOException, InterruptedException {
