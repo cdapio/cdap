@@ -231,7 +231,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       @Override
       protected void configure() {
         bind(InetAddress.class).annotatedWith(Names.named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS))
-          .toInstance(context.getHost());
+                               .toInstance(context.getHost());
 
         bind(LocationFactory.class).toInstance(new HDFSLocationFactory(hConf));
 

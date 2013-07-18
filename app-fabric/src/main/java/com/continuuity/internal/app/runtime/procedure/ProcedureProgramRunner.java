@@ -2,8 +2,6 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -14,6 +12,8 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.weave.api.RunId;
