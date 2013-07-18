@@ -348,7 +348,7 @@ define([], function () {
 						var area = d3.svg.area().interpolate("basis")
 							.x(line.x())
 							.y1(line.y())
-							.y0(y(0));
+							.y0(y(-100));
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])

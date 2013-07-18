@@ -44,6 +44,7 @@ define([], function () {
 
 				self.set('elements.' + type, Em.ArrayProxy.create({content: objects}));
 
+				clearInterval(self.interval);
 				self.interval = setInterval(function () {
 					self.updateStats();
 				}, C.POLLING_INTERVAL);
