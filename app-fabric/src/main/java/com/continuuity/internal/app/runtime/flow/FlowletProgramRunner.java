@@ -365,7 +365,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
           Schema schema = schemaGenerator.generate(dataType.getType());
 
           ProcessMethod processMethod = processMethodFactory.create(method);
-          result.add(processSpecFactory.create(inputNames, schema, dataType, processMethod, queueInfo));
+          ProcessSpecification processSpec = processSpecFactory.create(inputNames, schema, dataType,
+                                                                       processMethod, queueInfo);
+          if (processSpec != null) {
+            result.add(processSpec);
+          }
         } catch (UnsupportedTypeException e) {
           throw Throwables.propagate(e);
         }
@@ -480,6 +484,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
           }
         }
 
+        // If inputs is needed but there is no available input queue, return null
+        if (!inputNames.isEmpty() && queueReaders.isEmpty()) {
+          return null;
+        }
         return new ProcessSpecification<T>(new RoundRobinQueueReader(queueReaders),
                                         createInputDatumDecoder(dataType, schema, schemaCache),
                                         method);
@@ -580,6 +588,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface ProcessSpecificationFactory {
+    /**
+     * Returns a {@link ProcessSpecification} for invoking the given process method. {@code null} is returned if
+     * no input is available for the given method.
+     */
     <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType, ProcessMethod method,
                                 QueueInfo queueInfo) throws OperationException;
   }
