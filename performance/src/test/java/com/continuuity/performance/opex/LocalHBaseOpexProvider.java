@@ -1,6 +1,5 @@
 package com.continuuity.performance.opex;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -32,11 +31,6 @@ public class LocalHBaseOpexProvider extends OpexProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(LocalHBaseOpexProvider.class);
 
-  /** Override this to enable native queues. */
-  protected boolean useNativeQueues() {
-    return false;
-  }
-
   @Override
   OperationExecutor create() throws BenchmarkException {
     try {
@@ -45,13 +39,7 @@ public class LocalHBaseOpexProvider extends OpexProvider {
       throw new BenchmarkException(
           "Unable to start HBase: " + e.getMessage(), e);
     }
-    CConfiguration conf = CConfiguration.create();
-    conf.setBoolean(
-        DataFabricDistributedModule.CONFIG_ENABLE_NATIVE_HBASE,
-        this.useNativeQueues());
-    DataFabricDistributedModule module =
-        new DataFabricDistributedModule(hbaseConf, conf);
-    Injector injector = Guice.createInjector(module);
+    Injector injector = Guice.createInjector(new DataFabricDistributedModule(hbaseConf));
     return injector.getInstance(Key.get(OperationExecutor.class,
         Names.named("DataFabricOperationExecutor")));
   }
