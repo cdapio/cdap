@@ -44,11 +44,5 @@ public final class ConfigModule extends AbstractModule {
     bind(CConfiguration.class).toInstance(cConf);
     bind(Configuration.class).toInstance(hConf);
     bind(YarnConfiguration.class).toInstance(new YarnConfiguration(hConf));
-
-    // Cross Guice module properties binding can be provided below
-    // Only constant type bindings are allowed.
-    InetAddress hostname = Networks.resolve(cConf.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS),
-                                            new InetSocketAddress("localhost", 0).getAddress());
-    bind(InetAddress.class).annotatedWith(Names.named("config.hostname")).toInstance(hostname);
   }
 }

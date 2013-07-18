@@ -8,6 +8,7 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.CMetrics;
@@ -70,7 +71,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
                                 ServiceAnnouncer serviceAnnouncer,
-                                @Named("config.hostname") InetAddress hostname) {
+                                @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS) InetAddress hostname) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
