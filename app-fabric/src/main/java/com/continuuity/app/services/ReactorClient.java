@@ -53,7 +53,7 @@ public final class ReactorClient {
 
   private static final String DEVELOPER_ACCOUNT_ID = Constants.DEVELOPER_ACCOUNT_ID;
   private static final Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
-                                                                        "status", "scale");
+                                                                        "status", "scale", "delete");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";
   private static final String APPLICATION_LONG_OPT_ARG = "application";
   private static final String PROCEDURE_LONG_OPT_ARG = "procedure";
@@ -100,6 +100,7 @@ public final class ReactorClient {
     out.println("  reactor-client status    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
     out.println("  reactor-client scale     --application <id> --flow <id> --flowlet <id> --instances <number>");
     out.println("  reactor-client promote   --application <id> --host <hostname> --apikey <key>");
+    out.println("  reactor-client delete    --application <id>");
     out.println("  reactor-client help");
 
     out.println("Options:");
@@ -147,6 +148,11 @@ public final class ReactorClient {
 
       if ("deploy".equals(command)) {
         deploy(client);
+      }
+
+      if ("delete".equals(command)) {
+        AuthToken dummyAuthToken = new AuthToken("ReactorClient");
+        client.removeApplication(dummyAuthToken, new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, "", 1));
       }
 
       if ("start".equals(command)) {
@@ -276,9 +282,13 @@ public final class ReactorClient {
         Preconditions.checkArgument(commandLine.hasOption(ARCHIVE_LONG_OPT_ARG),
                                     "deploy command should have archive argument");
         resource = commandLine.getOptionValue(ARCHIVE_LONG_OPT_ARG);
-      }
 
-      if ("start".equals(command)) {
+      } else if ("delete".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
+          "application argument");
+        application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
+
+      } else if ("start".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
@@ -290,9 +300,8 @@ public final class ReactorClient {
         procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
         mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
-      }
 
-      if ("stop".equals(command)) {
+      } else if ("stop".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
@@ -304,9 +313,8 @@ public final class ReactorClient {
         procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
         mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
-      }
 
-      if ("status".equals(command)) {
+      } else if ("status".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
@@ -318,9 +326,8 @@ public final class ReactorClient {
         procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
         mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
-      }
 
-      if ("scale".equals(command)) {
+      } else if ("scale".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(FLOW_LONG_OPT_ARG),
@@ -336,9 +343,8 @@ public final class ReactorClient {
 
         flowletInstances = Short.parseShort(commandLine.getOptionValue(FLOWLET_INSTANCES_LONG_OPT_ARG));
         Preconditions.checkArgument(flowletInstances > 0, "number of flowlet instances needs to be greater than 0");
-      }
 
-      if ("promote".equals(command)) {
+      } else if ("promote".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(HOSTNAME_LONG_OPT_ARG), "promote command should have" +
           "vpc argument");
         Preconditions.checkArgument(commandLine.hasOption(APIKEY_LONG_OPT_ARG), "promote command should " +
