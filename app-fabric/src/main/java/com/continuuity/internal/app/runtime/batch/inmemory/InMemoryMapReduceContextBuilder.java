@@ -11,6 +11,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
+import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
@@ -59,6 +60,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
+      new LoggingModules().getInMemoryModules(),
       // Every mr task talks to datastore directly bypassing oracle
       NoOracleOpexModule.INSTANCE
     );
@@ -76,6 +78,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       Constants.InMemoryPersistenceType.LEVELDB == persistenceType ?
         new DataFabricLevelDBModule(cConf) : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
+      new LoggingModules().getSingleNodeModules(),
       // Every mr task talks to datastore directly bypassing oracle
       NoOracleOpexModule.INSTANCE
     );
