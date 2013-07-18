@@ -5,9 +5,11 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
 import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKOperations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +62,14 @@ public class KafkaServerMain extends DaemonMain {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
       try {
         client.startAndWait();
-        client.create("/" + zkNamespace, null, CreateMode.PERSISTENT).get();
+
+        String path = "/" + zkNamespace;
+        LOG.info(String.format("Creating zookeeper namespace %s", path));
+
+        ZKOperations.ignoreError(
+          client.create(path, null, CreateMode.PERSISTENT),
+          KeeperException.NodeExistsException.class, path).get();
+
         client.stopAndWait();
         zkConnectStr = String.format("%s/%s", zkConnectStr, zkNamespace);
       } catch (Exception e) {
