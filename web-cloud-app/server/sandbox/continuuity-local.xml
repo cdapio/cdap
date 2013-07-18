@@ -93,4 +93,14 @@
 		<value>not-a-cookie</value>
 	</property>
 
+	<property>
+		<name>metrics.service.host</name>
+		<value>localhost</value>
+	</property>
+
+	<property>
+		<name>metrics.service.port</name>
+		<value>45005</value>
+	</property>
+
 </configuration>
