@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.guice;
 
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.data.HBaseFilterableOVCTableHandle;
 import com.google.inject.Scopes;
@@ -15,6 +16,10 @@ public final class DistributedMetricsTableModule extends AbstractMetricsTableMod
 
   @Override
   protected void bindTableHandle() {
-    bind(OVCTableHandle.class).to(HBaseFilterableOVCTableHandle.class).in(Scopes.SINGLETON);
+    // In distributed mode, this module won't be created with the data-fabric one, hence needs to provide a
+    // TransactionOracle.
+    bind(TransactionOracle.class).to(NoopTransactionOracle.class).in(Scopes.SINGLETON);
+    bind(OVCTableHandle.class).annotatedWith(MetricsAnnotation.class).
+      to(HBaseFilterableOVCTableHandle.class).in(Scopes.SINGLETON);
   }
 }

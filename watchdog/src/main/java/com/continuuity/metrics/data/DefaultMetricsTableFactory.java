@@ -8,6 +8,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.MetricsConstants;
+import com.continuuity.metrics.guice.MetricsAnnotation;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
@@ -22,7 +23,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   private final MetricsEntityCodec entityCodec;
 
   @Inject
-  public DefaultMetricsTableFactory(CConfiguration cConf, OVCTableHandle tableHandle) {
+  public DefaultMetricsTableFactory(CConfiguration cConf, @MetricsAnnotation OVCTableHandle tableHandle) {
     try {
       this.cConf = cConf;
       this.tableHandle = tableHandle;

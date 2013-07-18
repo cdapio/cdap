@@ -81,7 +81,8 @@ final class ZKBrokerService extends AbstractIdleService implements BrokerService
         brokerInfos.invalidate(key);
       }
     }, BrokerInfo.class));
-    this.partitionInfos = CacheBuilder.newBuilder().build(createCacheLoader(new CacheInvalidater<KeyPathTopicPartition>() {
+    this.partitionInfos = CacheBuilder.newBuilder().build(createCacheLoader(
+      new CacheInvalidater<KeyPathTopicPartition>() {
       @Override
       public void invalidate(KeyPathTopicPartition key) {
         partitionInfos.invalidate(key);
