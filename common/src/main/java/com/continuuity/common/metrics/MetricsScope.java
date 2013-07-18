@@ -1,4 +1,4 @@
-package com.continuuity.api.metrics;
+package com.continuuity.common.metrics;
 
 /**
  * Define scopes of metrics.

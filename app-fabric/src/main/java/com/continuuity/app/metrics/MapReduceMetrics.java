@@ -1,7 +1,7 @@
 package com.continuuity.app.metrics;
 
-import com.continuuity.api.metrics.MetricsCollectionService;
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsScope;
 
 /**
  * Metrics collector for MapReduce job

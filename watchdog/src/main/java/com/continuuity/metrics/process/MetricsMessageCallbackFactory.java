@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.process;
 
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.io.DatumReader;
 import com.continuuity.internal.io.DatumReaderFactory;
 import com.continuuity.internal.io.Schema;

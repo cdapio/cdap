@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.api.metrics;
+package com.continuuity.common.metrics;
 
 /**
  * A MetricCollector allows client publish counter metrics.

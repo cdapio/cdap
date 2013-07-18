@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.metrics.data.AggregatesScanner;

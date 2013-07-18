@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.process.MetricsProcessor;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.collect.ImmutableList;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A {@link com.continuuity.api.metrics.MetricsCollectionService} that writes to MetricsTable directly.
+ * A {@link com.continuuity.common.metrics.MetricsCollectionService} that writes to MetricsTable directly.
  */
 @Singleton
 public final class LocalMetricsCollectionService extends AggregatedMetricsCollectionService {

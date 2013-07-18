@@ -1,8 +1,8 @@
 package com.continuuity.app.metrics;
 
 import com.continuuity.api.metrics.Metrics;
-import com.continuuity.api.metrics.MetricsCollectionService;
-import com.continuuity.api.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
 
 /**
  * Base class for defining implementation of {@link Metrics} for different type of runtime context.

@@ -5,6 +5,7 @@ import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -51,8 +52,12 @@ public class OpexServiceMain {
       return;
     }
 
+
+
     DataFabricDistributedModule module = new DataFabricDistributedModule();
-    Injector injector = Guice.createInjector(module);
+    Injector injector = Guice.createInjector(
+//      new MetricsClientRuntimeModule().getDistributedModules(),
+      module);
 
     // start an opex service
     final OperationExecutorService opexService =

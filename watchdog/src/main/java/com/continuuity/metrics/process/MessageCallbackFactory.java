@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.process;
 
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.kafka.client.KafkaConsumer;
 
 /**

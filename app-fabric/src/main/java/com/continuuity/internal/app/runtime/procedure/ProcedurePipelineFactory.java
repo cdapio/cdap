@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.api.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsCollector;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelFutureListener;
