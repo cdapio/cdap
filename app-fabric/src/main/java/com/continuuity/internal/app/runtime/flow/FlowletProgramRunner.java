@@ -24,7 +24,7 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -469,7 +469,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 dataFabricFacade.createQueueConsumerFactory(
                   flowletContext.getInstanceId(),
                   flowletContext.getGroupId(),
-                  flowletContext.getMetricName(),
+                  flowletContext.getQueueProducerName(),
                   queueName, queueInfo,
                   !flowletContext.isAsyncMode()
                 ),

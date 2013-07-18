@@ -14,6 +14,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -48,6 +49,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
+      new MetricsClientRuntimeModule().getNoopModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

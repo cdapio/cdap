@@ -5,6 +5,9 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.CMetrics;
@@ -57,13 +60,13 @@ import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
+import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.yammer.metrics.core.MetricName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,8 +135,14 @@ public class OmidTransactionalOperationExecutor
   // Min table write ops to attempt to batch.
   private final int minTableWriteOpsToBatch;
 
+  // Metrics collectors
+//  private final MetricsCollector dataFabricMetrics;
+  private final MetricsCollector streamMetrics;
+  private final MetricsCollector dataSetMetrics;
+
   @Inject
-  public OmidTransactionalOperationExecutor(TransactionOracle oracle, OVCTableHandle tableHandle, CConfiguration conf) {
+  public OmidTransactionalOperationExecutor(TransactionOracle oracle, OVCTableHandle tableHandle, CConfiguration conf,
+                                            MetricsCollectionService metricsCollectionService) {
     this.oracle = oracle;
     this.tableHandle = tableHandle;
     this.minTableWriteOpsToBatch = conf.getInt(Constants.CFG_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE,
@@ -142,6 +151,10 @@ public class OmidTransactionalOperationExecutor
     queueStateProxy = new QueueStateProxy(
       conf.getLongBytes(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES,
                         Constants.DEAFULT_CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES));
+
+//    this.dataFabricMetrics =
+    this.streamMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, "-.stream", "0");
+    this.dataSetMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, "-.dataset", "0");
   }
 
   // Metrics
@@ -280,27 +293,28 @@ public class OmidTransactionalOperationExecutor
 
 
   /* -------------------  (global) stream metrics ---------------- */
-  private CMetrics streamMetric = // we use a global flow group
-      new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0");
+  private ConcurrentMap<byte[], String> streamMetricNames =
+    new ConcurrentSkipListMap<byte[], String>(Bytes.BYTES_COMPARATOR);
 
-  private ConcurrentMap<byte[], ImmutablePair<String, String>>
-      streamMetricNames = new ConcurrentSkipListMap<byte[],
-      ImmutablePair<String, String>>(Bytes.BYTES_COMPARATOR);
-
-  private ImmutablePair<String, String> getStreamMetricNames(byte[] stream) {
-    ImmutablePair<String, String> names = streamMetricNames.get(stream);
-    if (names == null) {
-      String name = new String(stream).replace(":", "");
-      streamMetricNames.putIfAbsent(stream, new ImmutablePair<String, String>(
-        "stream.enqueue." + name, "stream.storage." + name));
-      names = streamMetricNames.get(stream);
-      Log.trace("using metric name '" + names.getFirst() + "' and '"
-          + names.getSecond() + "' for stream '" + new String(stream) + "'");
-      //System.err.println("using metric name '" + names.getFirst() + "' and '"
-      //    + names.getSecond() + "' for stream '" + new String(stream) + "'");
+  private String getStreamMetricName(byte[] stream) {
+    String name = streamMetricNames.get(stream);
+    if (name != null) {
+      return name;
     }
-    return names;
+    name = new String(stream, Charsets.UTF_8);
+
+    // HACKY: Currently frontend doesn't requests metrics with accountId, hence we need to use simple name of stream
+    // This class and metrics for data-fabric is getting refactor pretty soon, so not spending time to make it perfect.
+    int idx = name.lastIndexOf('/');
+    name = name.substring(idx + 1);
+    if (name.isEmpty()) {
+      name = "-";
+    }
+    String oldName = streamMetricNames.putIfAbsent(stream, name);
+
+    return oldName == null ? name : oldName;
   }
+
 
   private boolean isStream(byte[] queueName) {
     return Bytes.startsWith(queueName, TTQueue.STREAM_NAME_PREFIX);
@@ -312,42 +326,42 @@ public class OmidTransactionalOperationExecutor
   }
 
   private void streamMetric(byte[] streamName, int dataSize, int numEntries) {
-    ImmutablePair<String, String> names = getStreamMetricNames(streamName);
-    streamMetric.meter(names.getFirst(), 1);
-    streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, dataSize, numEntries));
+    String metricName = getStreamMetricName(streamName);
+    streamMetrics.gauge("events", 1, metricName);
+    streamMetrics.gauge("bytes", streamSizeEstimate(streamName, dataSize, numEntries), metricName);
   }
 
   // By using this we reduce amount of strings to concat for super-freq operations, which (shown in tests) reduces
   // mem allocation by at least 10% and cpu time by at least 10% at the moment of change
-  private CMetrics dataSetReadMetric = // we use a global flow group
-    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
-      @Override
-      protected MetricName getMetricName(Class<?> scope, String metricName) {
-        return super.getMetricName(scope, "dataset.read." + metricName);
-      }
-    };
-
-  private CMetrics dataSetWriteMetric = // we use a global flow group
-    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
-      @Override
-      protected MetricName getMetricName(Class<?> scope, String metricName) {
-        return super.getMetricName(scope, "dataset.write." + metricName);
-      }
-    };
-
-  private CMetrics dataSetStorageMetric = // we use a global flow group
-    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
-      @Override
-      protected MetricName getMetricName(Class<?> scope, String metricName) {
-        return super.getMetricName(scope, "dataset.storage." + metricName);
-      }
-    };
+//  private CMetrics dataSetReadMetric = // we use a global flow group
+//    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
+//      @Override
+//      protected MetricName getMetricName(Class<?> scope, String metricName) {
+//        return super.getMetricName(scope, "dataset.read." + metricName);
+//      }
+//    };
+//
+//  private CMetrics dataSetWriteMetric = // we use a global flow group
+//    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
+//      @Override
+//      protected MetricName getMetricName(Class<?> scope, String metricName) {
+//        return super.getMetricName(scope, "dataset.write." + metricName);
+//      }
+//    };
+//
+//  private CMetrics dataSetStorageMetric = // we use a global flow group
+//    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
+//      @Override
+//      protected MetricName getMetricName(Class<?> scope, String metricName) {
+//        return super.getMetricName(scope, "dataset.storage." + metricName);
+//      }
+//    };
 
   private void dataSetMetric_read(String dataSetName) {
     // note: we intentionally do not provide table name for some system operations (like talking to MDS) so that
     //       we can skip writing metrics here. Yes, this looks like a hack. Should be fixed with new metrics system.
     if (dataSetName != null) {
-      dataSetReadMetric.meter(dataSetName, 1);
+      dataSetMetrics.gauge("reads", 1, dataSetName);
     }
   }
 
@@ -355,8 +369,8 @@ public class OmidTransactionalOperationExecutor
     // note: we intentionally do not provide table name for some system operations (like talking to MDS) so that
     //       we can skip writing metrics here. Yes, this looks like a hack. Should be fixed with new metrics system.
     if (dataSetName != null) {
-      dataSetWriteMetric.meter(dataSetName, 1);
-      dataSetStorageMetric.meter(dataSetName, dataSize);
+      dataSetMetrics.gauge("writes", 1, dataSetName);
+      dataSetMetrics.gauge("bytes", dataSize, dataSetName);
     }
   }
   

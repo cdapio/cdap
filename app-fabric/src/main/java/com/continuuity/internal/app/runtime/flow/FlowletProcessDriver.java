@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
@@ -48,7 +47,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
   private static final int BACKOFF_EXP = 2;
   private static final int PROCESS_MAX_RETRY = 10;
-  private static final String INPUT_METRIC_POSTFIX = FlowletDefinition.INPUT_ENDPOINT_POSTFIX + ".stream.in";
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -316,7 +314,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getMetrics().count("processed", 1);
           flowletContext.getSystemMetrics().gauge("events.processed", 1);
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
@@ -334,7 +331,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         LOG.info("Process failure. " + reason.getMessage() + ", input: " + input, reason.getCause().getCause());
         FailurePolicy failurePolicy;
         try {
-          flowletContext.getMetrics().count("flowlet.failure", 1);
           flowletContext.getSystemMetrics().gauge("errors", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {
@@ -359,7 +355,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getMetrics().count("processed", 1);
             flowletContext.getSystemMetrics().gauge("events.processed", 1);
             inputAcknowledger.ack();
           } catch (OperationException e) {

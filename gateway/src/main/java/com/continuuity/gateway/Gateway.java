@@ -10,6 +10,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
+import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
@@ -85,6 +86,9 @@ public class Gateway implements Server {
 
   @Inject
   private DiscoveryServiceClient discoveryServiceClient;
+
+  @Inject
+  private LogReader logReader;
 
   private GatewayMetrics gatewayMetrics = new GatewayMetrics();
 
@@ -210,6 +214,9 @@ public class Gateway implements Server {
       if (connector instanceof DataAccessor) {
         ((DataAccessor) connector).setExecutor(this.executor);
         ((DataAccessor) connector).setLocationFactory(this.locationFactory);
+      }
+      if (connector instanceof LogReaderAware) {
+        ((LogReaderAware) connector).setLogReader(logReader);
       }
       // all connectors get the meta data service
       connector.setMetadataService(this.mds);

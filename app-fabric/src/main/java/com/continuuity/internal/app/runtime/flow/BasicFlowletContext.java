@@ -4,16 +4,16 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.metrics.Metrics;
-import com.continuuity.api.metrics.MetricsCollectionService;
-import com.continuuity.api.metrics.MetricsCollector;
-import com.continuuity.api.metrics.MetricsScope;
-import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.weave.api.RunId;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -53,7 +53,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.asyncMode = asyncMode;
 
     this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
-    this.queueProducer = new QueueProducer(getMetricName());
+    this.queueProducer = new QueueProducer(getQueueProducerName());
 
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
     this.systemMetricsCollector = getMetricsCollector(MetricsScope.REACTOR,
@@ -135,7 +135,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     return   0xffffffffL & gid;
   }
 
-  public String getMetricName() {
+  public String getQueueProducerName() {
     return String.format("%s.%s.%s.%s.%s.%d",
                          getAccountId(),
                          getApplicationId(),
@@ -146,9 +146,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   }
 
   private String getMetricContext() {
-    return String.format("%s.f.%s.%s",
+    return String.format("%s.f.%s.%s.%d",
                          getApplicationId(),
                          getFlowId(),
-                         getFlowletId());
+                         getFlowletId(),
+                         getInstanceId());
   }
 }

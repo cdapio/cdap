@@ -51,6 +51,11 @@ public class HBaseFilterableOVCTable extends HBaseOVCTable implements Filterable
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer, Filter filter) {
+    return scan(startRow, stopRow, null, readPointer, filter);
+  }
+
+  @Override
+  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer, Filter filter) {
     try {
       Scan scan =  new Scan();
       if (startRow != null) {
@@ -58,6 +63,11 @@ public class HBaseFilterableOVCTable extends HBaseOVCTable implements Filterable
       }
       if (stopRow != null) {
         scan.setStopRow(stopRow);
+      }
+      if (columns != null) {
+        for (byte[] column : columns) {
+          scan.addColumn(family, column);
+        }
       }
       if (filter != null) {
         scan.setFilter(filter);

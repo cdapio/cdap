@@ -3,9 +3,9 @@
  */
 package com.continuuity.metrics.query;
 
-import com.continuuity.api.metrics.MetricsScope;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsScanQuery;
@@ -17,6 +17,7 @@ import com.continuuity.metrics.data.TimeValue;
 import com.continuuity.metrics.data.TimeValueAggregator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -30,13 +31,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -53,6 +55,7 @@ import java.util.List;
 @Path("/metrics")
 public final class BatchMetricsHandler extends AbstractHttpHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BatchMetricsHandler.class);
   private static final String CONTENT_TYPE_JSON = "application/json";
   private static final Gson GSON = new Gson();
 
@@ -60,7 +63,12 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   private static final Function<URI, MetricsRequest> URI_TO_METRIC_REQUEST = new Function<URI, MetricsRequest>() {
     @Override
     public MetricsRequest apply(URI input) {
-      return MetricsRequestParser.parse(input);
+      try {
+        return MetricsRequestParser.parse(input);
+      } catch (IllegalArgumentException e) {
+        LOG.error("Failed to parse request: {}", input, e);
+        throw Throwables.propagate(e);
+      }
     }
   };
 
@@ -89,11 +97,12 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     List<MetricsRequest> metricsRequests;
     try {
       metricsRequests = decodeRequests(request.getContent());
-    } catch (JsonSyntaxException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid json request: " + e.getMessage());
+    } catch (Throwable t) {
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid request: " + t.getMessage());
       return;
     }
 
+    // Pretty ugly logic now. Need to refactor
     JsonArray output = new JsonArray();
     for (MetricsRequest metricsRequest : metricsRequests) {
       Object resultObj = null;
@@ -187,7 +196,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
       List<URI> uris = GSON.fromJson(reader, new TypeToken<List<URI>>() {}.getType());
-      System.out.println(uris);
+      LOG.trace("Requests: {}", uris);
       return ImmutableList.copyOf(Iterables.transform(uris, URI_TO_METRIC_REQUEST));
     } finally {
       reader.close();

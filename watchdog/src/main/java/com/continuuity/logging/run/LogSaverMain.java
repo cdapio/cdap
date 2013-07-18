@@ -6,9 +6,9 @@ package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.logging.LoggingConfiguration;
-import com.continuuity.common.logging.logback.serialize.LogSchema;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
@@ -16,6 +16,7 @@ import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
@@ -25,15 +26,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.URISyntaxException;
 
 /**
  * Wrapper class to run LogSaver as a process.
  */
 public final class LogSaverMain extends DaemonMain {
   private WeaveRunnerService weaveRunnerService;
-  private WeavePreparer weavePreparer;
   private WeaveController weaveController;
+
+  private Configuration hConf;
+  private CConfiguration cConf;
 
   public static void main(String [] args) throws Exception {
     new LogSaverMain().doMain(args);
@@ -41,33 +43,39 @@ public final class LogSaverMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    Configuration hConf = new Configuration();
-    CConfiguration cConf = CConfiguration.create();
+    hConf = new Configuration();
+    cConf = CConfiguration.create();
     weaveRunnerService = new YarnWeaveRunnerService(new YarnConfiguration(),
                                                     cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE));
-    weavePreparer = doInit(weaveRunnerService, hConf, cConf);
   }
 
   @Override
   public void start() {
+    weaveRunnerService.start();
+    WeavePreparer weavePreparer = doInit(weaveRunnerService, hConf, cConf);
     weaveController = weavePreparer.start();
   }
 
   @Override
   public void stop() {
-    weaveController.stopAndWait();
+    if (weaveController != null) {
+      weaveController.stopAndWait();
+    }
   }
 
   @Override
   public void destroy() {
-    weaveRunnerService.stopAndWait();
+    if (weaveRunnerService != null) {
+      weaveRunnerService.stopAndWait();
+    }
   }
 
   static WeavePreparer doInit(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
     int partitions = cConf.getInt(LoggingConfiguration.NUM_PARTITIONS,  -1);
-    if (partitions < 1) {
-      throw new IllegalArgumentException("log.publish.partitions should be at least 1");
-    }
+    Preconditions.checkArgument(partitions > 0, "log.publish.partitions should be at least 1, got %s", partitions);
+
+    int memory = cConf.getInt(LoggingConfiguration.LOG_SAVER_RUN_MEMORY_MB, 1024);
+    Preconditions.checkArgument(memory > 0, "Got invalid memory value for log saver %s", memory);
 
     File hConfFile;
     File cConfFile;
@@ -76,16 +84,11 @@ public final class LogSaverMain extends DaemonMain {
       hConfFile.deleteOnExit();
       cConfFile = saveCConf(cConf, File.createTempFile("cConf", ".xml"));
       cConfFile.deleteOnExit();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
 
-    try {
-      return weaveRunner.prepare(new LogSaverWeaveApplication(partitions, hConfFile, cConfFile))
-        // TODO: write logs to file
+      return weaveRunner.prepare(new LogSaverWeaveApplication(partitions, memory, hConfFile, cConfFile))
         .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
         .withResources(LogSchema.getSchemaURL().toURI());
-    } catch (URISyntaxException e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }

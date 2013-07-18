@@ -3,7 +3,7 @@
  */
 package com.continuuity;
 
-import com.continuuity.api.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
@@ -20,6 +20,8 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
@@ -60,8 +62,11 @@ public class SingleNodeMain {
   private final MetricsFrontendServerInterface overloadFrontend;
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
+
   private final MetricsCollectionService metricsCollectionService;
   private final MetricsQueryService metricsQueryService;
+
+  private final LogAppenderInitializer logAppenderInitializer;
 
   private InMemoryZKServer zookeeper;
 
@@ -75,6 +80,7 @@ public class SingleNodeMain {
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
+    logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -96,6 +102,8 @@ public class SingleNodeMain {
    * Start the service.
    */
   protected void startUp(String[] args) throws Exception {
+    logAppenderInitializer.initialize();
+
     File zkDir = new File(ZOOKEEPER_DATA_DIR);
     zkDir.mkdir();
     zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
@@ -117,7 +125,7 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
-//    webCloudAppService.start(args, configuration);
+    webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor (tm) started successfully");
@@ -244,8 +252,9 @@ public class SingleNodeMain {
     try {
       main.startUp(args);
     } catch (Exception e) {
-      main.shutDown();
       System.err.println("Failed to start server. " + e.getMessage());
+      LOG.error("Failed to start server", e);
+      main.shutDown();
       System.exit(-2);
     }
   }
@@ -266,7 +275,8 @@ public class SingleNodeMain {
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new MetricsQueryRuntimeModule().getInMemoryModules()
+      new MetricsQueryRuntimeModule().getInMemoryModules(),
+      new LoggingModules().getInMemoryModules()
     );
   }
 
@@ -306,7 +316,9 @@ public class SingleNodeMain {
       useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new MetricsQueryRuntimeModule().getSingleNodeModules()
+      new MetricsQueryRuntimeModule().getSingleNodeModules(),
+      new MetadataModules().getSingleNodeModules(),
+      new LoggingModules().getSingleNodeModules()
     );
   }
 }

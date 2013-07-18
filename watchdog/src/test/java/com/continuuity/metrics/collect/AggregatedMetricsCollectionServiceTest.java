@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.collect.ImmutableMap;

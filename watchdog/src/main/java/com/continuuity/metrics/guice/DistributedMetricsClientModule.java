@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.guice;
 
-import com.continuuity.api.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.DatumWriterFactory;

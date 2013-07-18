@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.DatumWriter;

@@ -131,6 +131,18 @@ public final class TimeSeriesTable {
     int startTimeBase = getTimeBase(query.getStartTime());
     int endTimeBase = getTimeBase(query.getEndTime());
 
+    byte[][] columns = null;
+    if (startTimeBase == endTimeBase) {
+      // If on the same timebase, we only need subset of columns
+      int startCol = (int) (query.getStartTime() - startTimeBase) / resolution;
+      int endCol = (int) (query.getEndTime() - endTimeBase) / resolution;
+      columns = new byte[endCol - startCol + 1][];
+
+      for (int i = 0; i < columns.length; i++) {
+        columns[i] = Bytes.toBytes(startCol + i);
+      }
+    }
+
     byte[] startRow = getPaddedKey(query.getContextPrefix(), query.getRunId(),
                                    query.getMetricPrefix(), query.getTagPrefix(), startTimeBase, 0);
     byte[] endRow = getPaddedKey(query.getContextPrefix(), query.getRunId(),
@@ -138,11 +150,11 @@ public final class TimeSeriesTable {
 
     Scanner scanner;
     if (isFilterable) {
-      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow,
+      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
                                                         MemoryReadPointer.DIRTY_READ,
                                                         getFilter(query, startTimeBase, endTimeBase));
     } else {
-      scanner = timeSeriesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
+      scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ);
     }
     return new MetricsScanner(query, scanner, entityCodec, resolution);
   }

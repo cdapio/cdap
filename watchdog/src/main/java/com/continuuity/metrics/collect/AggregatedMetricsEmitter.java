@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A {@link com.continuuity.api.metrics.MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
+ * A {@link com.continuuity.common.metrics.MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
  * during collection and emit the aggregated values when emit.
  */
 final class AggregatedMetricsEmitter implements MetricsEmitter {

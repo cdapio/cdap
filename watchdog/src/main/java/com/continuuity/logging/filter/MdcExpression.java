@@ -1,6 +1,7 @@
 package com.continuuity.logging.filter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.base.Objects;
 
 /**
  * Represents an expression that can match a key,value in MDC.
@@ -26,5 +27,13 @@ public class MdcExpression implements Filter {
 
   public String getValue() {
     return value;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("key", key)
+      .add("value", value)
+      .toString();
   }
 }

@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.process;
 
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumReader;

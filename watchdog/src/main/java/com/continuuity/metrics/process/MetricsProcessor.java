@@ -1,6 +1,6 @@
 package com.continuuity.metrics.process;
 
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 
 import java.util.Iterator;

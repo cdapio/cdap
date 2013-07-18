@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;

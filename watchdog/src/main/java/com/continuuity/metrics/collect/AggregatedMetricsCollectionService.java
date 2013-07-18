@@ -3,9 +3,9 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.api.metrics.MetricsCollectionService;
-import com.continuuity.api.metrics.MetricsCollector;
-import com.continuuity.api.metrics.MetricsScope;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Objects;

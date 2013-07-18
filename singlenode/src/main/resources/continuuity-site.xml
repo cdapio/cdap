@@ -99,4 +99,31 @@
         <value>104857600</value>
         <description>Specifies cache size (in bytes)</description>
     </property>
+
+    <!--
+        Logging Configuration
+    -->
+    <property>
+        <name>log.publish.num.partitions</name>
+        <value>1</value>
+        <description>Number of Kafka partitions to publish the logs to</description>
+    </property>
+
+    <property>
+        <name>log.base.dir</name>
+        <value>logs/avro</value>
+        <description>Base log directory</description>
+    </property>
+
+    <property>
+        <name>log.retention.duration.days</name>
+        <value>7</value>
+        <description>Log file retention duration in days</description>
+    </property>
+
+    <property>
+        <name>log.file.rotation.interval.mins</name>
+        <value>1440</value>
+        <description>Log file rotation interval (for single node only)</description>
+    </property>
 </configuration>

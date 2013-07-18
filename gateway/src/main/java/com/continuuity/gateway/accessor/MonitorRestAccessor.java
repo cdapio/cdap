@@ -2,9 +2,11 @@ package com.continuuity.gateway.accessor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Accessor;
+import com.continuuity.gateway.LogReaderAware;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import com.continuuity.gateway.util.NettyRequestHandlerFactory;
+import com.continuuity.logging.read.LogReader;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -19,7 +21,7 @@ import java.util.concurrent.Executors;
  * Accessor for retrieving monitoring status of Reactor.
  */
 public class MonitorRestAccessor
-  extends Accessor implements NettyRequestHandlerFactory {
+  extends Accessor implements NettyRequestHandlerFactory, LogReaderAware {
 
   private static final Logger LOG = LoggerFactory
     .getLogger(MonitorRestAccessor.class);
@@ -50,6 +52,16 @@ public class MonitorRestAccessor
    * this is the active Netty server channel.
    */
   private Channel serverChannel;
+
+  private LogReader logReader;
+
+  public LogReader getLogReader() {
+    return logReader;
+  }
+
+  public void setLogReader(LogReader logReader) {
+    this.logReader = logReader;
+  }
 
   @Override
   public void configure(CConfiguration configuration) throws Exception {
@@ -97,8 +109,14 @@ public class MonitorRestAccessor
   public void stop() {
     LOG.info("Stopping " + this);
     // closing the channel stops the service
-    if (this.serverChannel != null) {
-      this.serverChannel.close();
+    try {
+      if (this.serverChannel != null) {
+        this.serverChannel.close();
+      }
+    } finally {
+      if ((this.logReader != null)) {
+        this.logReader.close();
+      }
     }
     LOG.info("Stopped " + this);
   }
