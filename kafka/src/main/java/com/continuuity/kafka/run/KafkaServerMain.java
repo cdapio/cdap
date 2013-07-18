@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Properties;
 
 /**
@@ -31,6 +32,8 @@ public class KafkaServerMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
+    LOG.info(String.format("Got args - %s", Arrays.toString(args)));
+
     if (args.length != 1) {
       String name = KafkaServerMain.class.getSimpleName();
       throw new IllegalArgumentException(String.format("Usage: %s <brokerId>", name));
@@ -60,7 +63,9 @@ public class KafkaServerMain extends DaemonMain {
   @Override
   public void stop() {
     LOG.info("Stopping embedded kafka server...");
-    kafkaServer.stopAndWait();
+    if (kafkaServer != null) {
+      kafkaServer.stopAndWait();
+    }
   }
 
   @Override
