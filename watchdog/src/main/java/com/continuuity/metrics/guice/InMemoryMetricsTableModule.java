@@ -13,6 +13,6 @@ public final class InMemoryMetricsTableModule extends AbstractMetricsTableModule
 
   @Override
   protected void bindTableHandle() {
-    bind(OVCTableHandle.class).toInstance(MemoryOVCTableHandle.getInstance());
+    bind(OVCTableHandle.class).annotatedWith(MetricsAnnotation.class).toInstance(MemoryOVCTableHandle.getInstance());
   }
 }

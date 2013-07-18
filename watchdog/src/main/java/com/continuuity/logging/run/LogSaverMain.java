@@ -51,7 +51,7 @@ public final class LogSaverMain extends DaemonMain {
 
   @Override
   public void start() {
-    weaveRunnerService.start();
+    weaveRunnerService.startAndWait();
     WeavePreparer weavePreparer = doInit(weaveRunnerService, hConf, cConf);
     weaveController = weavePreparer.start();
   }

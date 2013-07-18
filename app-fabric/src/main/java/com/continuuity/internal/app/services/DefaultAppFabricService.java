@@ -1031,19 +1031,20 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * account.
    */
   private void deleteMetrics(String account) throws AppFabricServiceException {
-    try {
-      LOG.info("Deleting all metrics for account '" + account + "'.");
-      MetricsFrontendServiceImpl mfs =
-        new MetricsFrontendServiceImpl(configuration);
-      mfs.reset(account);
-      LOG.info("All metrics for account '" + account + "'deleted.");
-    } catch (Throwable throwable) {
-      String message = String.format("Error clearing the metrics for " +
-                                       "account '%s': %s. At %s", account, throwable.getMessage(),
-                                     StackTraceUtil.toStringStackTrace(throwable));
-      LOG.error(message, throwable);
-      throw new AppFabricServiceException(message);
-    }
+    // Note: This is commented out and Sree merge will fix it.
+//    try {
+//      LOG.info("Deleting all metrics for account '" + account + "'.");
+//      MetricsFrontendServiceImpl mfs =
+//        new MetricsFrontendServiceImpl(configuration);
+//      mfs.reset(account);
+//      LOG.info("All metrics for account '" + account + "'deleted.");
+//    } catch (Throwable throwable) {
+//      String message = String.format("Error clearing the metrics for " +
+//                                       "account '%s': %s. At %s", account, throwable.getMessage(),
+//                                     StackTraceUtil.toStringStackTrace(throwable));
+//      LOG.error(message, throwable);
+//      throw new AppFabricServiceException(message);
+//    }
   }
 
   /**

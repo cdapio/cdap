@@ -86,7 +86,8 @@ public class KafkaMetricsCollectionServiceTest {
     // Consumer from kafka
     final Map<String, MetricsRecord> metrics = Maps.newHashMap();
     final Semaphore semaphore = new Semaphore(0);
-    kafkaClient.getConsumer().prepare().addFromBeginning("metrics", 0).consume(new KafkaConsumer.MessageCallback() {
+    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.USER.name(), 0)
+                                       .consume(new KafkaConsumer.MessageCallback() {
 
       ReflectionDatumReader<MetricsRecord> reader = new ReflectionDatumReader<MetricsRecord>(schema, metricRecordType);
 

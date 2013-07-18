@@ -26,7 +26,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testSimpleAggregates() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("");
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
 
     try {
       // Insert 10 metrics.
@@ -64,7 +64,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testRowFilter() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("");
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
 
     try {
       // Insert 20 different metrics from the same context.
@@ -93,7 +93,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testTags() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("");
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
 
     try {
       // Insert 10 metrics, each with 20 tags.

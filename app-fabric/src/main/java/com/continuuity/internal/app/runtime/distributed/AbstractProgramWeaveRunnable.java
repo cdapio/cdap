@@ -11,6 +11,7 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -253,8 +254,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);
 
         // For publishing logs
-        bind(CConfiguration.class).toInstance(cConf);
-        bind(Configuration.class).toInstance(hConf);
+        install(new ConfigModule(cConf, hConf));
         install(new LoggingModules().getDistributedModules());
 
         bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
