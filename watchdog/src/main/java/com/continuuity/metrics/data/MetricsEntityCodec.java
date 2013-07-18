@@ -54,6 +54,23 @@ final class MetricsEntityCodec {
   }
 
   /**
+   * Encodes a dot separated entity into bytes without padding.
+   * @param type Type of the entity.
+   * @param entity Value of the entity.
+   * @return byte[] representing the given entity.
+   */
+  public byte[] encodeWithoutPadding(MetricsEntityType type, String entity){
+    int idSize = entityTable.getIdSize();
+    String[] entityParts = entity == null ? EMPTY_STRINGS : ENTITY_SPLITTER.split(entity);
+    byte[] result = new byte[entityParts.length * idSize];
+
+    for (int i = 0; i < entityParts.length; i++) {
+      idToBytes(entityTable.getId(type.getType() + i, entityParts[i]), idSize, result, i * idSize);
+    }
+    return result;
+  }
+
+  /**
    * Encodes a '.' separated entity into bytes. If the entity has less than the given parts or {@code null},
    * the remaining bytes would be padded by the given padding.
    * @param type Type of the entity.
