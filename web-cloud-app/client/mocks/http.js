@@ -71,6 +71,7 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 			var callback = findCallback(arguments);
 			var response = [];
 
+
 			if (path === '/metrics') {
 
 				if (typeof object === 'object' && object.length) {
@@ -81,17 +82,22 @@ define(['mocks/results/elements', 'mocks/results/metrics/timeseries',
 						query = C.Util.parseQueryString(object[i]);
 
 						if (query.count) {
+
 							TimeSeries(path, query, function (status, metricsResult) {
+
 								response.push(metricsResult);
 							});
 						} else if (query.aggregate) {
 							Counters(path, query, function (status, metricsResult) {
 								response.push(metricsResult);
 							});
+
 						} else if (query.summary) {
+
 							Summary(path, query, function (status, metricsResult) {
 								response.push(metricsResult);
 							});
+							
 						}
 
 					}

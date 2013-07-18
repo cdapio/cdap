@@ -407,6 +407,10 @@ define([], function () {
 			return [rounded, ''];
 
 		},
+		numberArrayToString: function(value) {
+			return this.number(value).join('');
+		},
+
 		bytes: function (value) {
 
 			if (value > 1073741824) {

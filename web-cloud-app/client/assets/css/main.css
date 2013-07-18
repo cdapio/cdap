@@ -63,6 +63,25 @@ body {
 	text-rendering: optimizeLegibility;
 }
 
+progress {
+	background-color: #f3f3f3;
+	border: 0;
+	height: 30px;
+	border-radius: 0;
+}
+
+progress::-webkit-progress-bar {
+	background-color: #f3f3f3;
+}
+
+progress::-webkit-progress-value {
+	background: #173154;
+}
+
+progress::-moz-progress-bar {
+	background-color: #173154;
+}
+
 .gf3-font {
 	font-family: "HelveticaNeueW01-57Cn";
 	color: #555;
@@ -1869,14 +1888,32 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	width: 120px;
 	height: 120px;
 	display: inline-table;
-	margin: 30px;
-	float: left;
 }
 
 #batchviz {
-	width: 800px;
 	margin: 0px auto;
 	margin-top: 40px;
+	width: 600px;
+}
+
+#batchviz-container {
+	margin-bottom: 12px;
+	overflow: auto;
+	overflow-y: hidden;
+	padding: 16px 0px 16px 16px;
+	text-align: center;
+}
+
+.batch-item {
+	max-width: 200px;
+	float: left;
+	margin: 30px;
+	margin-left: 60px;
+	margin-right: 60px;
+}
+
+.batch-item progress {
+	margin-bottom: 10px;
 }
 
 .batch-start {
