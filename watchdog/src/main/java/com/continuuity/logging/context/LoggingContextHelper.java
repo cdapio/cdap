@@ -31,7 +31,7 @@ public final class LoggingContextHelper {
   public static LoggingContext getLoggingContext(Map<String, String> tags) {
     // Tags are empty, cannot determine logging context.
     if (tags == null || tags.isEmpty()) {
-      return null;
+      throw new IllegalArgumentException("Tags are empty, cannot determine logging context");
     }
 
     String accountId = tags.get(AccountLoggingContext.TAG_ACCOUNT_ID);
@@ -39,7 +39,7 @@ public final class LoggingContextHelper {
 
     // No account id or application id present.
     if (accountId == null || applicationId == null) {
-      return null;
+      throw new IllegalArgumentException("No account id or application id present");
     }
 
     if (tags.containsKey(FlowletLoggingContext.TAG_FLOW_ID)) {
@@ -56,7 +56,7 @@ public final class LoggingContextHelper {
                                          tags.get(ProcedureLoggingContext.TAG_PROCEDURE_ID));
     }
 
-    return null;
+    throw new IllegalArgumentException("Unsupported logging context");
   }
 
   public static LoggingContext getLoggingContext(String accountId, String applicationId, String entityId,

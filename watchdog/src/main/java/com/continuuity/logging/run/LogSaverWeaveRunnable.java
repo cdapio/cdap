@@ -105,6 +105,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       runLatch.await();
     } catch (InterruptedException e) {
       LOG.error("Waiting on latch interrupted");
+      Thread.currentThread().interrupt();
     }
   }
 

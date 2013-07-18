@@ -164,6 +164,7 @@ public final class LogSaver extends AbstractIdleService {
         TimeUnit.MILLISECONDS.sleep(200);
       } catch (InterruptedException e) {
         LOG.warn("Caught exception while waiting for service to start", e);
+        Thread.currentThread().interrupt();
       }
     }
   }
@@ -201,6 +202,7 @@ public final class LogSaver extends AbstractIdleService {
             } catch (InterruptedException e1) {
               LOG.error(String.format("Caught InterruptedException for topic %s, partition %d",
                                       topic, partition), e1);
+              Thread.currentThread().interrupt();
             }
           }
         }
@@ -220,24 +222,24 @@ public final class LogSaver extends AbstractIdleService {
 
     @Override
     public void handle(long offset, ByteBuffer msgBuffer) {
-      GenericRecord genericRecord = serializer.toGenericRecord(msgBuffer);
-      ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
-      if (loggingContext == null) {
-        LOG.debug(String.format("Logging context is not set for event %s. Skipping it.", event));
-        return;
-      }
+      try {
+        GenericRecord genericRecord = serializer.toGenericRecord(msgBuffer);
+        ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
+        LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
 
-      synchronized (messageTable) {
-        long key = event.getTimeStamp() / eventProcessingDelayMs;
-        List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
-        if (msgList == null) {
-          msgList = Lists.newArrayList();
-          messageTable.put(key, loggingContext.getLogPathFragment(), msgList);
+        synchronized (messageTable) {
+          long key = event.getTimeStamp() / eventProcessingDelayMs;
+          List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
+          if (msgList == null) {
+            msgList = Lists.newArrayList();
+            messageTable.put(key, loggingContext.getLogPathFragment(), msgList);
+          }
+          msgList.add(new KafkaLogEvent(genericRecord, event, loggingContext, offset));
         }
-        msgList.add(new KafkaLogEvent(genericRecord, event, loggingContext, offset));
+        lastOffset = offset;
+      } catch (Exception e) {
+        LOG.debug(String.format("Exception while processing message with offset %d. Skipping it.", offset));
       }
-      lastOffset = offset;
     }
   }
 
@@ -299,6 +301,7 @@ public final class LogSaver extends AbstractIdleService {
             } catch (InterruptedException e1) {
               LOG.error(String.format("Caught InterruptedException for topic %s, partition %d",
                                       topic, partition), e1);
+              Thread.currentThread().interrupt();
             }
           }
         }
