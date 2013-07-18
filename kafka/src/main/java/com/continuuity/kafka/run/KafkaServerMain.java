@@ -20,6 +20,7 @@ public class KafkaServerMain extends DaemonMain {
   private static final String KAFKA_PORT_CONFIG = "kafka.port";
   private static final String KAFKA_NUM_PARTITIONS_CONFIG = "kafka.num.partitions";
   private static final String KAFKA_LOG_DIR_CONFIG = "kafka.log.dir";
+  private static final String KAFKA_HOSTNAME = "kafka.bind.hostname";
 
   private static final String ZOOKEEPER_NAMESPACE = "continuuity.kafka";
 
@@ -44,10 +45,11 @@ public class KafkaServerMain extends DaemonMain {
     CConfiguration cConf = CConfiguration.create();
     String zkConnectStr = String.format("%s/%s", cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE), ZOOKEEPER_NAMESPACE);
     int port = cConf.getInt(KAFKA_PORT_CONFIG, -1);
+    String hostname = cConf.get(KAFKA_HOSTNAME);
     int numPartitions = cConf.getInt(KAFKA_NUM_PARTITIONS_CONFIG, 1);
     String logDir = cConf.get(KAFKA_LOG_DIR_CONFIG);
 
-    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, port, numPartitions, logDir);
+    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions, logDir);
   }
 
   @Override
@@ -76,13 +78,16 @@ public class KafkaServerMain extends DaemonMain {
     // Nothing to do
   }
 
-  private Properties generateKafkaConfig(int brokerId, String zkConnectStr, int port, int numPartitions,
-                                         String logDir) {
+  private Properties generateKafkaConfig(int brokerId, String zkConnectStr, String hostname, int port,
+                                         int numPartitions, String logDir) {
     Preconditions.checkState(port > 0, "Failed to get random port.");
     Preconditions.checkState(numPartitions > 0, "Num partitions should be greater than zero.");
 
     Properties prop = new Properties();
     prop.setProperty("broker.id", Integer.toString(brokerId));
+    if (hostname != null) {
+      prop.setProperty("host.name", hostname);
+    }
     prop.setProperty("port", Integer.toString(port));
     prop.setProperty("socket.send.buffer.bytes", "1048576");
     prop.setProperty("socket.receive.buffer.bytes", "1048576");
