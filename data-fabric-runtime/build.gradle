@@ -31,3 +31,13 @@ test {
  * Exclude any config xml from jar task
  */
 jar.exclude '*.xml'
+
+// Override base packaging.gradle to set the name as 'data-fabric'
+packaging {
+  extraOptions['--name'] = "continuuity-data-fabric"
+}
+
+rpm.doFirst {
+  packaging.extraOptions['--name'] = "continuuity-data-fabric"
+}
+
