@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -348,6 +349,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
       Scan scan = new Scan();
       scan.setTimeRange(0, HConstants.LATEST_TIMESTAMP);
       scan.setMaxVersions(1); // we only need to see one version of each row
+      scan.setFilter(new FirstKeyOnlyFilter()); // we only need to see the first column (=key) of each row
       scan.setStartRow(startRow);
       if (stopRow != null) {
         scan.setStopRow(stopRow);
