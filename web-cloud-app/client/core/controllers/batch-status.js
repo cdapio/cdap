@@ -12,25 +12,10 @@ define(['../../helpers/plumber'], function (Plumber) {
     load: function () {
 
       var self = this;
-      var model = this.get('model');
-
-      model.trackMetric('/process/events/jobs/mappers/{id}', 'aggregates', 'mapperRecords');
-      model.trackMetric('/process/bytes/jobs/mappers/{id}', 'aggregates', 'mapperBytes');
-      model.trackMetric('/process/events/jobs/reducers/{id}', 'aggregates', 'reducerRecords');
-      model.trackMetric('/process/bytes/jobs/reducers/{id}', 'aggregates', 'reducerBytes');
-
-      var input = model.get('streams')[0];
-      input = C.Stream.create({ id: input });
-      input.trackMetric('/collect/bytes/streams/{id}', 'aggregates', 'storage');
-      this.set('input', input);
-
-      var output = model.get('datasets')[0];
-      output = C.Stream.create({ id: output });
-      output.trackMetric('/store/bytes/datasets/{id}', 'aggregates', 'storage');
-      this.set('output', output);
 
       this.interval = setInterval(function () {
         self.updateStats();
+        self.updateMetrics();
       }, C.POLLING_INTERVAL);
 
       /*
@@ -39,6 +24,7 @@ define(['../../helpers/plumber'], function (Plumber) {
        */
       setTimeout(function () {
         self.updateStats();
+        self.updateMetrics();
         self.connectEntities();
       }, C.EMBEDDABLE_DELAY);
     },
@@ -47,16 +33,18 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       this.get('model').updateState(this.HTTP);
 
-      C.Util.updateTimeSeries([this.get('model')], this.HTTP);
-      C.Util.updateAggregates([this.get('model'),
-        this.get('input'), this.get('output')], this.HTTP);
+      // C.Util.updateTimeSeries([this.get('model')], this.HTTP);
+      // C.Util.updateAggregates([this.get('model'),
+      //   this.get('input'), this.get('output')], this.HTTP);
 
     },
 
+    updateMetrics: function() {
+      this.get('model').getMetricsRequest(this.HTTP);
+    },
+
     connectEntities: function() {
-      Plumber.connect("batch-start", "batch-map");
       Plumber.connect("batch-map", "batch-reduce");
-      Plumber.connect("batch-reduce", "batch-end");
     },
 
     unload: function () {
@@ -93,6 +81,7 @@ define(['../../helpers/plumber'], function (Plumber) {
       });
 
     },
+
     stop: function (app, id, version) {
 
       var self = this;
@@ -157,7 +146,8 @@ define(['../../helpers/plumber'], function (Plumber) {
             C.Modal.hide(function () {
 
               if (response.error) {
-                C.Modal.show('Delete Error', response.error.message || 'No reason given. Please check the logs.');
+                C.Modal.show('Delete Error',
+                  response.error.message || 'No reason given. Please check the logs.');
               } else {
                 window.history.go(-1);
               }

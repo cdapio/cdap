@@ -478,9 +478,12 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
     request.on('error', function(e) {
 
-      res.send({ result: null, error: {
-        fatal: 'MetricsService: ' + e.code
-      } });
+      res.send({
+        result: null,
+        error: {
+          fatal: 'MetricsService: ' + e.code
+        }
+      });
 
     });
 

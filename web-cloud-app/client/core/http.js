@@ -13,11 +13,31 @@ define([], function () {
 	function findPath(args) {
 		var path = [];
 		for (var i = 0; i < args.length; i ++) {
-			if (typeof args[i] === 'string') {
+			if (typeof args[i] === 'string' || typeof args[i] === 'number') {
 				path.push(args[i]);
 			}
 		}
 		return '/' + path.join('/');
+	}
+
+	/**
+	 * Iterates over arguments to find an object that should be mapped as a query string. This is not
+	 * recursive and reaches only 1 level depth of recursion.
+	 * eg: HTTP.get('metrics', 1, 2, {'count': 'total', 'foo': 'bar'}) => count=total&foo=bar
+	 * @param {Array} args arguments.
+	 * @returns {string} query string part of url.
+	 */
+	function findQueryString(args) {
+		var query = {};
+
+		args = Array.prototype.slice.call(args);
+		for (var i = 0, len = args.length; i < len; i++) {
+			if(Object.prototype.toString.call(args[i]) === "[object Object]") {
+				$.extend(query, args[i]);
+			}
+		}
+
+		return $.param(query);
 	}
 
 	/*
@@ -46,7 +66,9 @@ define([], function () {
 		get: function () {
 
 			var path = findPath(arguments);
+			var queryString = findQueryString(arguments);
 			var callback = findCallback(arguments);
+			path = queryString ? path + '?' + queryString : path;
 
 			$.getJSON(path, callback).fail(function (req) {
 
@@ -111,7 +133,7 @@ define([], function () {
 
 		},
 
-		"delete": function () {
+		delete: function () {
 
 			var path = findPath(arguments);
 			var callback = findCallback(arguments);
