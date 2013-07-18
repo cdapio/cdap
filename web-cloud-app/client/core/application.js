@@ -56,24 +56,26 @@ function(Components, Embeddables, HTTP, Socket, Util){
 
 				Em.debug('Routing started');
 
-				/*
-				 * Do version check.
-				 */
-				this.HTTP.get('version', function (version) {
+				if (C.Env.location !== 'remote') {
+					/*
+					 * Do version check.
+					 */
+					this.HTTP.get('version', function (version) {
 
-					if (version && version.current !== 'UNKNOWN') {
+						if (version && version.current !== 'UNKNOWN') {
 
-						if (version.current !== version.newest) {
+							if (version.current !== version.newest) {
 
-							$('#warning').html('<div>New version available: ' + version.current + ' » ' +
-								version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
-								'Click here to download</a>.</div>').show();
+								$('#warning').html('<div>New version available: ' + version.current + ' » ' +
+									version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
+									'Click here to download</a>.</div>').show();
+
+							}
 
 						}
 
-					}
-
-				});
+					});
+				}
 			}
 		}),
 

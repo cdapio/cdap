@@ -133,23 +133,27 @@ define([], function () {
 
 			this.HTTP.post('metrics', queries, function (response) {
 
-				var result = response.result;
+				if (response.result) {
 
-				self.set('timeseries.collect', result[0].result.data);
-				self.set('timeseries.process', result[1].result.data);
-				self.set('timeseries.store', result[2].result.data);
-				self.set('timeseries.query', result[3].result.data);
+					var result = response.result;
 
-				self.set('value.collect', lastValue(result[0].result.data));
-				self.set('value.query', lastValue(result[3].result.data));
+					self.set('timeseries.collect', result[0].result.data);
+					self.set('timeseries.process', result[1].result.data);
+					self.set('timeseries.store', result[2].result.data);
+					self.set('timeseries.query', result[3].result.data);
 
-				self.set('value.process', lastValue(result[1].result.data));
+					self.set('value.collect', lastValue(result[0].result.data));
+					self.set('value.query', lastValue(result[3].result.data));
 
-				var store = C.Util.bytes(lastValue(result[2].result.data));
-				self.set('value.store', {
-					label: store[0],
-					unit: store[1]
-				});
+					self.set('value.process', lastValue(result[1].result.data));
+
+					var store = C.Util.bytes(lastValue(result[2].result.data));
+					self.set('value.store', {
+						label: store[0],
+						unit: store[1]
+					});
+
+				}
 
 			});
 

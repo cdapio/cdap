@@ -162,14 +162,18 @@ define([], function () {
 			if (queries.length) {
 				http.post('metrics', queries, function (response) {
 
-					var result = response.result;
+					if (response.result) {
 
-					var i, k, data, path, label;
-					for (i = 0; i < result.length; i ++) {
+						var result = response.result;
 
-						path = result[i].path.split('?')[0];
-						label = map[path].get('aggregates')[path];
-						map[path].setMetric(label, result[i].result.data);
+						var i, k, data, path, label;
+						for (i = 0; i < result.length; i ++) {
+
+							path = result[i].path.split('?')[0];
+							label = map[path].get('aggregates')[path];
+							map[path].setMetric(label, result[i].result.data);
+
+						}
 
 					}
 
@@ -214,34 +218,37 @@ define([], function () {
 
 				http.post('metrics', queries, function (response) {
 
-					var result = response.result;
+					if (response.result) {
 
-					var i, k, data, path;
-					for (i = 0; i < result.length; i ++) {
+						var result = response.result;
 
-						path = result[i].path.split('?')[0];
+						var i, k, data, path;
+						for (i = 0; i < result.length; i ++) {
 
-						if (result[i].error) {
+							path = result[i].path.split('?')[0];
 
-							console.error('TimeSeries', result[i].error);
+							if (result[i].error) {
 
-						} else {
+								console.error('TimeSeries', result[i].error);
 
-							data = result[i].result.data, k = data.length;
-							while(k --) {
-								data[k] = data[k].value;
+							} else {
+
+								data = result[i].result.data, k = data.length;
+								while(k --) {
+									data[k] = data[k].value;
+								}
+
+								var mapped = map[path].get('timeseries');
+								var ts = mapped.get(path);
+
+								ts.shift(data.length);
+								ts = ts.concat(data);
+
+								mapped.set(path, ts);
+
 							}
 
-							var mapped = map[path].get('timeseries');
-							var ts = mapped.get(path);
-
-							ts.shift(data.length);
-							ts = ts.concat(data);
-
-							mapped.set(path, ts);
-
 						}
-
 					}
 
 				});

@@ -261,8 +261,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
     return false;
   }
 
-
-var singularREST = {
+  var singularREST = {
     'apps': 'getApplication',
     'streams': 'getStream',
     'flows': 'getFlow',
