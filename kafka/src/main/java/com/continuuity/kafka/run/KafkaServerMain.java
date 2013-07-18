@@ -25,6 +25,10 @@ public class KafkaServerMain extends DaemonMain {
   private Properties kafkaProperties;
   private EmbeddedKafkaServer kafkaServer;
 
+  public static void main(String [] args) throws Exception {
+    new KafkaServerMain().doMain(args);
+  }
+
   @Override
   public void init(String[] args) {
     if (args.length != 1) {
