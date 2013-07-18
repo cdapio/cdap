@@ -187,7 +187,11 @@ define([], function () {
 			var j, k, metrics, count, map = {};
 			var queries = [];
 
-			var max = 60;
+			var max = 60, start;
+			var now = new Date().getTime();
+
+			start = now - (C.__timeRange * 1000);
+			start = Math.floor(start / 1000);
 
 			for (j = 0; j < models.length; j ++) {
 
@@ -208,7 +212,7 @@ define([], function () {
 					}
 
 					map[metrics[k]] = models[j];
-					queries.push(metrics[k] + '?count=' + count);
+					queries.push(metrics[k] + '?start=' + start + '&count=60');// + count);
 
 				}
 
@@ -222,6 +226,8 @@ define([], function () {
 
 						var result = response.result;
 
+
+
 						var i, k, data, path;
 						for (i = 0; i < result.length; i ++) {
 
@@ -234,9 +240,15 @@ define([], function () {
 							} else {
 
 								data = result[i].result.data, k = data.length;
+
 								while(k --) {
 									data[k] = data[k].value;
 								}
+
+								map[path].get('timeseries').set(path, data);
+
+								/*
+								TODO: Use count to reduce traffic.
 
 								var mapped = map[path].get('timeseries');
 								var ts = mapped.get(path);
@@ -245,6 +257,7 @@ define([], function () {
 								ts = ts.concat(data);
 
 								mapped.set(path, ts);
+								*/
 
 							}
 

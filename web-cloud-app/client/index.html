@@ -136,8 +136,8 @@
       <div class="info-box" style="float: right;border: 0;padding-right: 0;">
         {{view C.Embed.DropZone uploadType="Update"}}
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/bytes/{id}"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/busyness/{id}" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/events/{id}" title="Processed"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/busyness/{id}" unit="percent" title="Busyness"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top: 19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
@@ -280,28 +280,32 @@
         <div id="batchviz-container">
           <div id="batchviz" class="clearfix chart">
             <div class="batch-item">
-              <div class="sparkline-box-title">Mapping ({{model.metricData.mappersCompletion}}%)</div>
-              <progress {{bindAttr value="model.metricData.mappersCompletion" }} max="100"></progress>
-              <br />
               <div id="batch-map" class="batch-icon batch-map">
                 <div class="info-window">
+                  <div class="label">MAP</div>
                   <div class="mapper-icon"></div>
                   <div>{{model.metricData.mappersEntriesIn}} IN</div>
                   <div>{{model.metricData.mappersEntriesOut}} OUT</div>
                 </div>
               </div>
+              {{#if model.isRunning}}
+
+              <progress {{bindAttr value="model.metricData.mappersCompletion" }} max="100"></progress>
+              {{/if}}
             </div>
             <div class="batch-item">
-              <div class="sparkline-box-title">Reducing ({{model.metricData.reducersCompletion}})</div>
-              <progress {{bindAttr value="model.metricData.reducersCompletion" }} max="100"></progress>
-              <br />
               <div id="batch-reduce" class="batch-icon batch-reduce">
                 <div class="info-window">
+                  <div class="label">REDUCE</div>
                   <div class="reducer-icon"></div>
                   <div>{{model.metricData.reducersEntriesIn}} IN</div>
                   <div>{{model.metricData.reducersEntriesOut}} OUT</div>
                 </div>
               </div>
+              {{#if model.isRunning}}
+
+              <progress {{bindAttr value="model.metricData.reducersCompletion" }} max="100"></progress>
+              {{/if}}
             </div>
           </div>
         </div>
@@ -670,8 +674,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful Requests" metrics="/query/requests/{app}/procedures/{id}"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed Requests" metrics="/query/failures/{app}/procedures/{id}"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful Requests" metrics="/query/requests/{parent}/procedures/{id}"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed Requests" metrics="/query/failures/{parent}/procedures/{id}"}}</div>
     </div>
     <div id="panels">
 
@@ -861,7 +865,6 @@
       <table class="table">
         <thead>
           <th style="padding-left: 14px;">Flows</th>
-          <th style="width: 100px;text-align: center;">Instances</th>
           <th style="width: 262px;">Processing Rate</th>
           <th style="width: 262px;">Busyness</th>
         </thead>
@@ -871,7 +874,6 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
             </td>
-            <td class="app-list-count">{{instances}}</td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/process/events/{parent}/flows/{id}"}}</td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/process/busyness/{parent}/flows/{id}" unit="percent"}}</td>
           </tr>
@@ -890,9 +892,8 @@
       <table class="table">
           <thead>
             <th style="padding-left: 14px;">MapReduce</th>
-            <th style="width: 100px;text-align: center;">Instances</th>
-            <th style="width: 262px;">Processing Rate</th>
-            <th style="width: 262px;">Busyness</th>
+            <th style="width: 262px;">Mapping Status</th>
+            <th style="width: 262px;">Reducing Status</th>
           </thead>
           <tbody>
           {{#each elements.Batch.content }}
@@ -900,9 +901,8 @@
               <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
               </td>
-              <td class="app-list-count">{{instances}}</td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/events/{parent}/flows/{id}"}}</td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/busyness/{parent}/flows/{id}" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduce/{id}/mappers" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduce/{id}/reducers" unit="percent"}}</td>
             </tr>
           {{/each}}
           </tbody>
@@ -956,8 +956,8 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
             </td>
             <td class="app-list-count">1</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/requests/{app}/procedures/{id}"}}</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/failures/{app}/procedures/{id}"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/requests/{parent}/procedures/{id}"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/failures/{parent}/procedures/{id}"}}</td>
           </tr>
         {{/each}}
       </tbody>

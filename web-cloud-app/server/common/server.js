@@ -471,7 +471,13 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
       response.on('end', function () {
 
-        res.send({ result: JSON.parse(data), error: null });
+        try {
+          data = JSON.parse(data);
+          res.send({ result: data, error: null });
+        } catch (e) {
+          self.logger.error('Parsing Error', data);
+          res.send({ result: null, error: 'Parsing Error' });
+        }
 
       });
     });

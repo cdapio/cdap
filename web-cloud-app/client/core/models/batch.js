@@ -124,7 +124,7 @@ define(['lib/date'], function (Datejs) {
         function (response) {
 
           if (response.result) {
-            self.set('currentState', response.result.result.status);
+            self.set('currentState', response.result.status);
           }
         });
     },

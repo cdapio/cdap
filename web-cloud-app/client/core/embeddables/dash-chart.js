@@ -49,7 +49,7 @@ define([
 
             var widget = d3.select(this.get('container')[0]);
             var sparkline = C.Util.sparkline(widget, [],
-              this.get('width'), this.get('height'), this.get('unit') === 'percent');
+              this.get('width'), this.get('height'), true);
 
             this.set('sparkline', sparkline);
 

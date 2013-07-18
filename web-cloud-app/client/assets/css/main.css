@@ -461,6 +461,9 @@ h1 span {
 	width: 25%;
 	float: left;
 }
+.quarter path.sparkline-area {
+	fill: #f4f5f5;
+}
 .quarter .panel {
 	margin: 0px 10px 10px 0px;
 	padding: 16px;
@@ -471,6 +474,7 @@ h1 span {
 	font-size: 25px;
 	font-family: "HelveticaNeueW01-Thin";
 	padding: 10px 0px 10px;
+	color: #505050;
 }
 .quarter-value {
 	text-align: center;
@@ -478,6 +482,7 @@ h1 span {
 	min-height: 42px;
 	font-family: "HelveticaNeueW01-Thin";
 	padding: 0px 0px 20px;
+	color: #505050;
 }
 .quarter-value strong {
 	font-family: "HelveticaNeueW01-75Bold";
@@ -492,12 +497,7 @@ h1 span {
 	fill: #40AFD0;
 	stroke: white;
 }
-.dash-chart path {
-	stroke-width: 3 !important;
-}
-.dash-chart-container {
-	margin-right: -32px;
-}
+
 #info {
 	border: 2px solid #fff;
 	margin: 8px 24px 8px;
@@ -1256,7 +1256,7 @@ a strong {
 #flowviz {
 	margin: 0 auto;
 	position: relative;
-	padding: 24px 0px 48px;
+	padding: 36px 0px;
 	clear: left;
 }
 .flowviz-fade {
@@ -1921,7 +1921,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .batch-item progress {
-	margin-bottom: 10px;
+	margin-top: 10px;
 }
 .batch-item .sparkline-box-title {
 	color: #555;
@@ -1993,21 +1993,25 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .batch-start>.info-window {
 	text-align: left;
 	margin-left: 25px;
-	margin-top: 30px;
+	margin-top: 12px;
 }
 
 .batch-map>.info-window {
-	margin-top: 30px;
+	margin-top: 12px;
 }
 
 .batch-reduce>.info-window {
-	margin-top: 30px;
+	margin-top: 12px;
 	color: #40AECF;
 }
 
 .batch-end>.info-window {
-	margin-top: 30px;
+	margin-top: 12px;
 	color: #40AECF;
+}
+
+.info-window .label {
+	margin-bottom: 8px;
 }
 
 .emphasized-letters {

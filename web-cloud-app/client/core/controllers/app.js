@@ -150,8 +150,8 @@ define([], function () {
 				 */
 				i = models.length;
 				while (i--) {
-					if (typeof models.updateState === 'function') {
-						models.updateState(this.HTTP);
+					if (typeof models[i].updateState === 'function') {
+						models[i].updateState(this.HTTP);
 					}
 				}
 				/*
