@@ -56,8 +56,8 @@ public class TimeSeriesTableTest {
 
     // Query aggregate for flow. Expect 10 rows scanned (metric per flowlet spreads across 2 rows).
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow")
-                                                        .setMetric("input")
-                                                        .build(time, time + 1000);
+      .setMetric("input")
+      .build(time, time + 1000);
     assertAggregate(query, timeSeriesTable.scan(query), 500, 10, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
@@ -68,9 +68,9 @@ public class TimeSeriesTableTest {
     // Query aggregate for flow with tag.
     // Expected 10 rows scanned (metric per flowlet spreads across 2 rows and it shouldn't see the empty tag rows).
     query = new MetricsScanQueryBuilder().setContext("app.f.flow")
-                                        .setMetric("input")
-                                        .setTag("test")
-                                        .build(time, time + 1000);
+      .setMetric("input")
+      .setTag("test")
+      .build(time, time + 1000);
     assertAggregate(query, timeSeriesTable.scan(query), 500, 10, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
@@ -80,8 +80,8 @@ public class TimeSeriesTableTest {
 
     // Query aggregate for app. Expected 20 rows scanned.
     query = new MetricsScanQueryBuilder().setContext("app")
-                                        .setMetric("input")
-                                        .build(time, time + 1000);
+      .setMetric("input")
+      .build(time, time + 1000);
     assertAggregate(query, timeSeriesTable.scan(query), 500, 20, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
@@ -107,6 +107,68 @@ public class TimeSeriesTableTest {
       timeSeriesTable.save(records);
       records.clear();
     }
+  }
+
+  @Test
+  public void testDelete() throws OperationException {
+
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testDelete", 1);
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // Insert metrics for app id1 flow.
+    for (int i = 0; i < 5; i++) {
+      String context = "app.id1.flow.flowlet" + i;
+      String metric = "input." + i;
+
+      // Insert 500 metrics for each flowlet with the same time series.
+      insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
+    }
+
+    //Insert metrics for app id2 flow
+
+    for (int i = 0; i < 5; i++) {
+      String context = "app.id2.flow.flowlet" + i;
+      String metric = "input." + i;
+
+      // Insert 500 metrics for each flowlet with the same time series.
+      insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
+    }
+
+    // Query aggregate for flow. Expect 10 rows scanned (metric per flowlet spreads across 2 rows).
+    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.id1.flow")
+      .setMetric("input")
+      .build(time, time + 1000);
+    assertAggregate(query, timeSeriesTable.scan(query), 500, 10, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return (int) ((ts - time) * 5);
+      }
+    });
+
+    //delete app1 metrics
+    timeSeriesTable.delete("app.id1");
+
+    //Scan and verify 0 results for app id1
+    MetricsScanner scanner = timeSeriesTable.scan(query);
+    Assert.assertEquals(0, scanner.getRowScanned());
+
+    while(scanner.hasNext()){
+      MetricsScanResult result = scanner.next();
+      Assert.assertTrue(false);
+    }
+
+    //App id2 should still have all entries.
+    query = new MetricsScanQueryBuilder().setContext("app.id2.flow")
+      .setMetric("input")
+      .build(time, time + 1000);
+    assertAggregate(query, timeSeriesTable.scan(query), 500, 10, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return (int) ((ts - time) * 5);
+      }
+    });
   }
 
   /**

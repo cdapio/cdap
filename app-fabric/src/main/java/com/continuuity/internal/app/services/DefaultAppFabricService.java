@@ -65,8 +65,12 @@ import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -165,6 +169,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private final ProgramRuntimeService runtimeService;
 
   /**
+   * Discovery service client to discover other services.
+   */
+  private final DiscoveryServiceClient discoveryServiceClient;
+
+  /**
    * Store manages non-runtime lifecycle.
    */
   private final Store store;
@@ -180,19 +189,25 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
   /**
+   * Timeout to get response from metrics system.
+   */
+  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
+
+  /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
   public DefaultAppFabricService(CConfiguration configuration, OperationExecutor opex,
                                  LocationFactory locationFactory, ManagerFactory managerFactory,
-                                 AuthorizationFactory authFactory, StoreFactory storeFactory, ProgramRuntimeService
-    runtimeService) {
+                                 AuthorizationFactory authFactory, StoreFactory storeFactory,
+                                 ProgramRuntimeService runtimeService, DiscoveryServiceClient discoveryServiceClient) {
     this.opex = opex;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.authFactory = authFactory;
     this.runtimeService = runtimeService;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.store = storeFactory.create();
     this.archiveDir = configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir"))
                                           + "/archive";
@@ -960,9 +975,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
       Location appArchive = store.getApplicationArchiveLocation(appId);
       appArchive.delete();
+      deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
       store.removeApplication(appId);
-      MetricsFrontendServiceImpl mfs = new MetricsFrontendServiceImpl(configuration);
-      mfs.clear(accountId.getId(), appId.getId());
     } catch (Throwable  throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
       throw new AppFabricServiceException("Fail to delete program " + throwable.getMessage());
@@ -1026,24 +1040,43 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   /**
    * Deletes metrics for a given account.
    *
-   * @param account for which the metrics need to be reset.
-   * @throws AppFabricServiceException throw due to issue in reseting metrics for
-   * account.
+   * @param accountId for which the metrics need to be reset.
+   * @throws IOException throw due to issue in reseting metrics for
+   * @throws TException on thrift errors while talking to thrift service
+   * @throws MetadataServiceException on errors from metadata service
    */
-  private void deleteMetrics(String account) throws AppFabricServiceException {
-    try {
-      LOG.info("Deleting all metrics for account '" + account + "'.");
-      MetricsFrontendServiceImpl mfs =
-        new MetricsFrontendServiceImpl(configuration);
-      mfs.reset(account);
-      LOG.info("All metrics for account '" + account + "'deleted.");
-    } catch (Throwable throwable) {
-      String message = String.format("Error clearing the metrics for " +
-                                       "account '%s': %s. At %s", account, throwable.getMessage(),
-                                     StackTraceUtil.toStringStackTrace(throwable));
-      LOG.error(message, throwable);
-      throw new AppFabricServiceException(message);
+  private void deleteMetrics(String accountId) throws IOException, TException, MetadataServiceException {
+
+    List<Application> applications = this.mds.getApplications(new Account(accountId));
+    Discoverable discoverable = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS).iterator().next();
+
+    for (Application application : applications){
+      String url = String.format("http://%s:%d/metrics/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 application.getId());
+      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        .setUrl(url)
+        .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+        .build();
+
+      client.delete();
     }
+  }
+
+
+  private void deleteMetrics(String account, String application) throws IOException {
+    Discoverable discoverable = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS).iterator().next();
+    String url = String.format("http://%s:%d/metrics/%s",
+                                    discoverable.getSocketAddress().getHostName(),
+                                    discoverable.getSocketAddress().getPort(),
+                                    application);
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+      .build();
+
+    client.delete();
   }
 
   /**
