@@ -85,8 +85,7 @@ public final class AggregatesTable {
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix) throws OperationException {
-    //TODO: Add delete when the OVCT delete is up and working
-    aggregatesTable.delete(entityCodec.encode(MetricsEntityType.CONTEXT, contextPrefix), (byte[]) null, 1L);
+    aggregatesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
   }
 
   /**
