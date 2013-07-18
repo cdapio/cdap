@@ -53,6 +53,13 @@ public abstract class AbstractLoggingContext implements LoggingContext {
     return Collections.unmodifiableMap(systemTags);
   }
 
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("systemTags", systemTags)
+      .toString();
+  }
+
   private static final class SystemTagImpl implements SystemTag {
     private final String name;
     private final String value;
