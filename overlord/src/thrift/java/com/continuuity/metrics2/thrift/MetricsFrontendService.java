@@ -7,26 +7,22 @@
 package com.continuuity.metrics2.thrift;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MetricsFrontendService {
 
@@ -76,6 +72,32 @@ public class MetricsFrontendService {
      */
     public List<String> getLog(String accountId, String applicationId, String flowId, int size) throws MetricsServiceException, org.apache.thrift.TException;
 
+    /**
+     * Returns log lines after given offset. -1 as fromOffset returns the latest log lines.
+     * 
+     * @param accountId
+     * @param applicationId
+     * @param entityId
+     * @param entityType
+     * @param fromOffset
+     * @param maxEvents
+     * @param filter
+     */
+    public List<TLogResult> getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter) throws MetricsServiceException, org.apache.thrift.TException;
+
+    /**
+     * Returns log lines before given offset. -1 as fromOffset returns the latest log lines.
+     * 
+     * @param accountId
+     * @param applicationId
+     * @param entityId
+     * @param entityType
+     * @param fromOffset
+     * @param maxEvents
+     * @param filter
+     */
+    public List<TLogResult> getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter) throws MetricsServiceException, org.apache.thrift.TException;
+
   }
 
   public interface AsyncIface {
@@ -89,6 +111,10 @@ public class MetricsFrontendService {
     public void reset(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.reset_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getLog(String accountId, String applicationId, String flowId, int size, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLog_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLogNext_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLogPrev_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -238,6 +264,70 @@ public class MetricsFrontendService {
         throw result.e;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getLog failed: unknown result");
+    }
+
+    public List<TLogResult> getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter) throws MetricsServiceException, org.apache.thrift.TException
+    {
+      send_getLogNext(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter);
+      return recv_getLogNext();
+    }
+
+    public void send_getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter) throws org.apache.thrift.TException
+    {
+      getLogNext_args args = new getLogNext_args();
+      args.setAccountId(accountId);
+      args.setApplicationId(applicationId);
+      args.setEntityId(entityId);
+      args.setEntityType(entityType);
+      args.setFromOffset(fromOffset);
+      args.setMaxEvents(maxEvents);
+      args.setFilter(filter);
+      sendBase("getLogNext", args);
+    }
+
+    public List<TLogResult> recv_getLogNext() throws MetricsServiceException, org.apache.thrift.TException
+    {
+      getLogNext_result result = new getLogNext_result();
+      receiveBase(result, "getLogNext");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getLogNext failed: unknown result");
+    }
+
+    public List<TLogResult> getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter) throws MetricsServiceException, org.apache.thrift.TException
+    {
+      send_getLogPrev(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter);
+      return recv_getLogPrev();
+    }
+
+    public void send_getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter) throws org.apache.thrift.TException
+    {
+      getLogPrev_args args = new getLogPrev_args();
+      args.setAccountId(accountId);
+      args.setApplicationId(applicationId);
+      args.setEntityId(entityId);
+      args.setEntityType(entityType);
+      args.setFromOffset(fromOffset);
+      args.setMaxEvents(maxEvents);
+      args.setFilter(filter);
+      sendBase("getLogPrev", args);
+    }
+
+    public List<TLogResult> recv_getLogPrev() throws MetricsServiceException, org.apache.thrift.TException
+    {
+      getLogPrev_result result = new getLogPrev_result();
+      receiveBase(result, "getLogPrev");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getLogPrev failed: unknown result");
     }
 
   }
@@ -430,6 +520,106 @@ public class MetricsFrontendService {
       }
     }
 
+    public void getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter, org.apache.thrift.async.AsyncMethodCallback<getLogNext_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getLogNext_call method_call = new getLogNext_call(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getLogNext_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String accountId;
+      private String applicationId;
+      private String entityId;
+      private TEntityType entityType;
+      private long fromOffset;
+      private int maxEvents;
+      private String filter;
+      public getLogNext_call(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter, org.apache.thrift.async.AsyncMethodCallback<getLogNext_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.accountId = accountId;
+        this.applicationId = applicationId;
+        this.entityId = entityId;
+        this.entityType = entityType;
+        this.fromOffset = fromOffset;
+        this.maxEvents = maxEvents;
+        this.filter = filter;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getLogNext", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getLogNext_args args = new getLogNext_args();
+        args.setAccountId(accountId);
+        args.setApplicationId(applicationId);
+        args.setEntityId(entityId);
+        args.setEntityType(entityType);
+        args.setFromOffset(fromOffset);
+        args.setMaxEvents(maxEvents);
+        args.setFilter(filter);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<TLogResult> getResult() throws MetricsServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getLogNext();
+      }
+    }
+
+    public void getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter, org.apache.thrift.async.AsyncMethodCallback<getLogPrev_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getLogPrev_call method_call = new getLogPrev_call(accountId, applicationId, entityId, entityType, fromOffset, maxEvents, filter, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getLogPrev_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String accountId;
+      private String applicationId;
+      private String entityId;
+      private TEntityType entityType;
+      private long fromOffset;
+      private int maxEvents;
+      private String filter;
+      public getLogPrev_call(String accountId, String applicationId, String entityId, TEntityType entityType, long fromOffset, int maxEvents, String filter, org.apache.thrift.async.AsyncMethodCallback<getLogPrev_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.accountId = accountId;
+        this.applicationId = applicationId;
+        this.entityId = entityId;
+        this.entityType = entityType;
+        this.fromOffset = fromOffset;
+        this.maxEvents = maxEvents;
+        this.filter = filter;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getLogPrev", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getLogPrev_args args = new getLogPrev_args();
+        args.setAccountId(accountId);
+        args.setApplicationId(applicationId);
+        args.setEntityId(entityId);
+        args.setEntityType(entityType);
+        args.setFromOffset(fromOffset);
+        args.setMaxEvents(maxEvents);
+        args.setFilter(filter);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<TLogResult> getResult() throws MetricsServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getLogPrev();
+      }
+    }
+
   }
 
   public static class Processor<I extends Iface> extends org.apache.thrift.TBaseProcessor<I> implements org.apache.thrift.TProcessor {
@@ -448,6 +638,8 @@ public class MetricsFrontendService {
       processMap.put("clear", new clear());
       processMap.put("reset", new reset());
       processMap.put("getLog", new getLog());
+      processMap.put("getLogNext", new getLogNext());
+      processMap.put("getLogPrev", new getLogPrev());
       return processMap;
     }
 
@@ -544,6 +736,46 @@ public class MetricsFrontendService {
         getLog_result result = new getLog_result();
         try {
           result.success = iface.getLog(args.accountId, args.applicationId, args.flowId, args.size);
+        } catch (MetricsServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class getLogNext<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getLogNext_args> {
+      public getLogNext() {
+        super("getLogNext");
+      }
+
+      protected getLogNext_args getEmptyArgsInstance() {
+        return new getLogNext_args();
+      }
+
+      protected getLogNext_result getResult(I iface, getLogNext_args args) throws org.apache.thrift.TException {
+        getLogNext_result result = new getLogNext_result();
+        try {
+          result.success = iface.getLogNext(args.accountId, args.applicationId, args.entityId, args.entityType, args.fromOffset, args.maxEvents, args.filter);
+        } catch (MetricsServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class getLogPrev<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getLogPrev_args> {
+      public getLogPrev() {
+        super("getLogPrev");
+      }
+
+      protected getLogPrev_args getEmptyArgsInstance() {
+        return new getLogPrev_args();
+      }
+
+      protected getLogPrev_result getResult(I iface, getLogPrev_args args) throws org.apache.thrift.TException {
+        getLogPrev_result result = new getLogPrev_result();
+        try {
+          result.success = iface.getLogPrev(args.accountId, args.applicationId, args.entityId, args.entityType, args.fromOffset, args.maxEvents, args.filter);
         } catch (MetricsServiceException e) {
           result.e = e;
         }
@@ -4958,6 +5190,3012 @@ public class MetricsFrontendService {
               String _elem59; // required
               _elem59 = iprot.readString();
               struct.success.add(_elem59);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetricsServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getLogNext_args implements org.apache.thrift.TBase<getLogNext_args, getLogNext_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getLogNext_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField APPLICATION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("applicationId", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField ENTITY_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("entityId", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField ENTITY_TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("entityType", org.apache.thrift.protocol.TType.I32, (short)4);
+    private static final org.apache.thrift.protocol.TField FROM_OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("fromOffset", org.apache.thrift.protocol.TType.I64, (short)5);
+    private static final org.apache.thrift.protocol.TField MAX_EVENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("maxEvents", org.apache.thrift.protocol.TType.I32, (short)6);
+    private static final org.apache.thrift.protocol.TField FILTER_FIELD_DESC = new org.apache.thrift.protocol.TField("filter", org.apache.thrift.protocol.TType.STRING, (short)7);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getLogNext_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getLogNext_argsTupleSchemeFactory());
+    }
+
+    private String accountId; // required
+    private String applicationId; // required
+    private String entityId; // required
+    private TEntityType entityType; // required
+    private long fromOffset; // required
+    private int maxEvents; // required
+    private String filter; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT_ID((short)1, "accountId"),
+      APPLICATION_ID((short)2, "applicationId"),
+      ENTITY_ID((short)3, "entityId"),
+      /**
+       * 
+       * @see TEntityType
+       */
+      ENTITY_TYPE((short)4, "entityType"),
+      FROM_OFFSET((short)5, "fromOffset"),
+      MAX_EVENTS((short)6, "maxEvents"),
+      FILTER((short)7, "filter");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT_ID
+            return ACCOUNT_ID;
+          case 2: // APPLICATION_ID
+            return APPLICATION_ID;
+          case 3: // ENTITY_ID
+            return ENTITY_ID;
+          case 4: // ENTITY_TYPE
+            return ENTITY_TYPE;
+          case 5: // FROM_OFFSET
+            return FROM_OFFSET;
+          case 6: // MAX_EVENTS
+            return MAX_EVENTS;
+          case 7: // FILTER
+            return FILTER;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __FROMOFFSET_ISSET_ID = 0;
+    private static final int __MAXEVENTS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.APPLICATION_ID, new org.apache.thrift.meta_data.FieldMetaData("applicationId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.ENTITY_ID, new org.apache.thrift.meta_data.FieldMetaData("entityId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.ENTITY_TYPE, new org.apache.thrift.meta_data.FieldMetaData("entityType", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TEntityType.class)));
+      tmpMap.put(_Fields.FROM_OFFSET, new org.apache.thrift.meta_data.FieldMetaData("fromOffset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.MAX_EVENTS, new org.apache.thrift.meta_data.FieldMetaData("maxEvents", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+      tmpMap.put(_Fields.FILTER, new org.apache.thrift.meta_data.FieldMetaData("filter", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getLogNext_args.class, metaDataMap);
+    }
+
+    public getLogNext_args() {
+    }
+
+    public getLogNext_args(
+      String accountId,
+      String applicationId,
+      String entityId,
+      TEntityType entityType,
+      long fromOffset,
+      int maxEvents,
+      String filter)
+    {
+      this();
+      this.accountId = accountId;
+      this.applicationId = applicationId;
+      this.entityId = entityId;
+      this.entityType = entityType;
+      this.fromOffset = fromOffset;
+      setFromOffsetIsSet(true);
+      this.maxEvents = maxEvents;
+      setMaxEventsIsSet(true);
+      this.filter = filter;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getLogNext_args(getLogNext_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      if (other.isSetAccountId()) {
+        this.accountId = other.accountId;
+      }
+      if (other.isSetApplicationId()) {
+        this.applicationId = other.applicationId;
+      }
+      if (other.isSetEntityId()) {
+        this.entityId = other.entityId;
+      }
+      if (other.isSetEntityType()) {
+        this.entityType = other.entityType;
+      }
+      this.fromOffset = other.fromOffset;
+      this.maxEvents = other.maxEvents;
+      if (other.isSetFilter()) {
+        this.filter = other.filter;
+      }
+    }
+
+    public getLogNext_args deepCopy() {
+      return new getLogNext_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.accountId = null;
+      this.applicationId = null;
+      this.entityId = null;
+      this.entityType = null;
+      setFromOffsetIsSet(false);
+      this.fromOffset = 0;
+      setMaxEventsIsSet(false);
+      this.maxEvents = 0;
+      this.filter = null;
+    }
+
+    public String getAccountId() {
+      return this.accountId;
+    }
+
+    public void setAccountId(String accountId) {
+      this.accountId = accountId;
+    }
+
+    public void unsetAccountId() {
+      this.accountId = null;
+    }
+
+    /** Returns true if field accountId is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccountId() {
+      return this.accountId != null;
+    }
+
+    public void setAccountIdIsSet(boolean value) {
+      if (!value) {
+        this.accountId = null;
+      }
+    }
+
+    public String getApplicationId() {
+      return this.applicationId;
+    }
+
+    public void setApplicationId(String applicationId) {
+      this.applicationId = applicationId;
+    }
+
+    public void unsetApplicationId() {
+      this.applicationId = null;
+    }
+
+    /** Returns true if field applicationId is set (has been assigned a value) and false otherwise */
+    public boolean isSetApplicationId() {
+      return this.applicationId != null;
+    }
+
+    public void setApplicationIdIsSet(boolean value) {
+      if (!value) {
+        this.applicationId = null;
+      }
+    }
+
+    public String getEntityId() {
+      return this.entityId;
+    }
+
+    public void setEntityId(String entityId) {
+      this.entityId = entityId;
+    }
+
+    public void unsetEntityId() {
+      this.entityId = null;
+    }
+
+    /** Returns true if field entityId is set (has been assigned a value) and false otherwise */
+    public boolean isSetEntityId() {
+      return this.entityId != null;
+    }
+
+    public void setEntityIdIsSet(boolean value) {
+      if (!value) {
+        this.entityId = null;
+      }
+    }
+
+    /**
+     * 
+     * @see TEntityType
+     */
+    public TEntityType getEntityType() {
+      return this.entityType;
+    }
+
+    /**
+     * 
+     * @see TEntityType
+     */
+    public void setEntityType(TEntityType entityType) {
+      this.entityType = entityType;
+    }
+
+    public void unsetEntityType() {
+      this.entityType = null;
+    }
+
+    /** Returns true if field entityType is set (has been assigned a value) and false otherwise */
+    public boolean isSetEntityType() {
+      return this.entityType != null;
+    }
+
+    public void setEntityTypeIsSet(boolean value) {
+      if (!value) {
+        this.entityType = null;
+      }
+    }
+
+    public long getFromOffset() {
+      return this.fromOffset;
+    }
+
+    public void setFromOffset(long fromOffset) {
+      this.fromOffset = fromOffset;
+      setFromOffsetIsSet(true);
+    }
+
+    public void unsetFromOffset() {
+      __isset_bit_vector.clear(__FROMOFFSET_ISSET_ID);
+    }
+
+    /** Returns true if field fromOffset is set (has been assigned a value) and false otherwise */
+    public boolean isSetFromOffset() {
+      return __isset_bit_vector.get(__FROMOFFSET_ISSET_ID);
+    }
+
+    public void setFromOffsetIsSet(boolean value) {
+      __isset_bit_vector.set(__FROMOFFSET_ISSET_ID, value);
+    }
+
+    public int getMaxEvents() {
+      return this.maxEvents;
+    }
+
+    public void setMaxEvents(int maxEvents) {
+      this.maxEvents = maxEvents;
+      setMaxEventsIsSet(true);
+    }
+
+    public void unsetMaxEvents() {
+      __isset_bit_vector.clear(__MAXEVENTS_ISSET_ID);
+    }
+
+    /** Returns true if field maxEvents is set (has been assigned a value) and false otherwise */
+    public boolean isSetMaxEvents() {
+      return __isset_bit_vector.get(__MAXEVENTS_ISSET_ID);
+    }
+
+    public void setMaxEventsIsSet(boolean value) {
+      __isset_bit_vector.set(__MAXEVENTS_ISSET_ID, value);
+    }
+
+    public String getFilter() {
+      return this.filter;
+    }
+
+    public void setFilter(String filter) {
+      this.filter = filter;
+    }
+
+    public void unsetFilter() {
+      this.filter = null;
+    }
+
+    /** Returns true if field filter is set (has been assigned a value) and false otherwise */
+    public boolean isSetFilter() {
+      return this.filter != null;
+    }
+
+    public void setFilterIsSet(boolean value) {
+      if (!value) {
+        this.filter = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT_ID:
+        if (value == null) {
+          unsetAccountId();
+        } else {
+          setAccountId((String)value);
+        }
+        break;
+
+      case APPLICATION_ID:
+        if (value == null) {
+          unsetApplicationId();
+        } else {
+          setApplicationId((String)value);
+        }
+        break;
+
+      case ENTITY_ID:
+        if (value == null) {
+          unsetEntityId();
+        } else {
+          setEntityId((String)value);
+        }
+        break;
+
+      case ENTITY_TYPE:
+        if (value == null) {
+          unsetEntityType();
+        } else {
+          setEntityType((TEntityType)value);
+        }
+        break;
+
+      case FROM_OFFSET:
+        if (value == null) {
+          unsetFromOffset();
+        } else {
+          setFromOffset((Long)value);
+        }
+        break;
+
+      case MAX_EVENTS:
+        if (value == null) {
+          unsetMaxEvents();
+        } else {
+          setMaxEvents((Integer)value);
+        }
+        break;
+
+      case FILTER:
+        if (value == null) {
+          unsetFilter();
+        } else {
+          setFilter((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT_ID:
+        return getAccountId();
+
+      case APPLICATION_ID:
+        return getApplicationId();
+
+      case ENTITY_ID:
+        return getEntityId();
+
+      case ENTITY_TYPE:
+        return getEntityType();
+
+      case FROM_OFFSET:
+        return Long.valueOf(getFromOffset());
+
+      case MAX_EVENTS:
+        return Integer.valueOf(getMaxEvents());
+
+      case FILTER:
+        return getFilter();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT_ID:
+        return isSetAccountId();
+      case APPLICATION_ID:
+        return isSetApplicationId();
+      case ENTITY_ID:
+        return isSetEntityId();
+      case ENTITY_TYPE:
+        return isSetEntityType();
+      case FROM_OFFSET:
+        return isSetFromOffset();
+      case MAX_EVENTS:
+        return isSetMaxEvents();
+      case FILTER:
+        return isSetFilter();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getLogNext_args)
+        return this.equals((getLogNext_args)that);
+      return false;
+    }
+
+    public boolean equals(getLogNext_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_accountId = true && this.isSetAccountId();
+      boolean that_present_accountId = true && that.isSetAccountId();
+      if (this_present_accountId || that_present_accountId) {
+        if (!(this_present_accountId && that_present_accountId))
+          return false;
+        if (!this.accountId.equals(that.accountId))
+          return false;
+      }
+
+      boolean this_present_applicationId = true && this.isSetApplicationId();
+      boolean that_present_applicationId = true && that.isSetApplicationId();
+      if (this_present_applicationId || that_present_applicationId) {
+        if (!(this_present_applicationId && that_present_applicationId))
+          return false;
+        if (!this.applicationId.equals(that.applicationId))
+          return false;
+      }
+
+      boolean this_present_entityId = true && this.isSetEntityId();
+      boolean that_present_entityId = true && that.isSetEntityId();
+      if (this_present_entityId || that_present_entityId) {
+        if (!(this_present_entityId && that_present_entityId))
+          return false;
+        if (!this.entityId.equals(that.entityId))
+          return false;
+      }
+
+      boolean this_present_entityType = true && this.isSetEntityType();
+      boolean that_present_entityType = true && that.isSetEntityType();
+      if (this_present_entityType || that_present_entityType) {
+        if (!(this_present_entityType && that_present_entityType))
+          return false;
+        if (!this.entityType.equals(that.entityType))
+          return false;
+      }
+
+      boolean this_present_fromOffset = true;
+      boolean that_present_fromOffset = true;
+      if (this_present_fromOffset || that_present_fromOffset) {
+        if (!(this_present_fromOffset && that_present_fromOffset))
+          return false;
+        if (this.fromOffset != that.fromOffset)
+          return false;
+      }
+
+      boolean this_present_maxEvents = true;
+      boolean that_present_maxEvents = true;
+      if (this_present_maxEvents || that_present_maxEvents) {
+        if (!(this_present_maxEvents && that_present_maxEvents))
+          return false;
+        if (this.maxEvents != that.maxEvents)
+          return false;
+      }
+
+      boolean this_present_filter = true && this.isSetFilter();
+      boolean that_present_filter = true && that.isSetFilter();
+      if (this_present_filter || that_present_filter) {
+        if (!(this_present_filter && that_present_filter))
+          return false;
+        if (!this.filter.equals(that.filter))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_accountId = true && (isSetAccountId());
+      builder.append(present_accountId);
+      if (present_accountId)
+        builder.append(accountId);
+
+      boolean present_applicationId = true && (isSetApplicationId());
+      builder.append(present_applicationId);
+      if (present_applicationId)
+        builder.append(applicationId);
+
+      boolean present_entityId = true && (isSetEntityId());
+      builder.append(present_entityId);
+      if (present_entityId)
+        builder.append(entityId);
+
+      boolean present_entityType = true && (isSetEntityType());
+      builder.append(present_entityType);
+      if (present_entityType)
+        builder.append(entityType.getValue());
+
+      boolean present_fromOffset = true;
+      builder.append(present_fromOffset);
+      if (present_fromOffset)
+        builder.append(fromOffset);
+
+      boolean present_maxEvents = true;
+      builder.append(present_maxEvents);
+      if (present_maxEvents)
+        builder.append(maxEvents);
+
+      boolean present_filter = true && (isSetFilter());
+      builder.append(present_filter);
+      if (present_filter)
+        builder.append(filter);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getLogNext_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getLogNext_args typedOther = (getLogNext_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccountId()).compareTo(typedOther.isSetAccountId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccountId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.accountId, typedOther.accountId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetApplicationId()).compareTo(typedOther.isSetApplicationId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetApplicationId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.applicationId, typedOther.applicationId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetEntityId()).compareTo(typedOther.isSetEntityId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEntityId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.entityId, typedOther.entityId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetEntityType()).compareTo(typedOther.isSetEntityType());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEntityType()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.entityType, typedOther.entityType);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFromOffset()).compareTo(typedOther.isSetFromOffset());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFromOffset()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.fromOffset, typedOther.fromOffset);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMaxEvents()).compareTo(typedOther.isSetMaxEvents());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMaxEvents()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.maxEvents, typedOther.maxEvents);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFilter()).compareTo(typedOther.isSetFilter());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFilter()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.filter, typedOther.filter);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getLogNext_args(");
+      boolean first = true;
+
+      sb.append("accountId:");
+      if (this.accountId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.accountId);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("applicationId:");
+      if (this.applicationId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.applicationId);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("entityId:");
+      if (this.entityId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.entityId);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("entityType:");
+      if (this.entityType == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.entityType);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("fromOffset:");
+      sb.append(this.fromOffset);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("maxEvents:");
+      sb.append(this.maxEvents);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("filter:");
+      if (this.filter == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.filter);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getLogNext_argsStandardSchemeFactory implements SchemeFactory {
+      public getLogNext_argsStandardScheme getScheme() {
+        return new getLogNext_argsStandardScheme();
+      }
+    }
+
+    private static class getLogNext_argsStandardScheme extends StandardScheme<getLogNext_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getLogNext_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.accountId = iprot.readString();
+                struct.setAccountIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // APPLICATION_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.applicationId = iprot.readString();
+                struct.setApplicationIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // ENTITY_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.entityId = iprot.readString();
+                struct.setEntityIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 4: // ENTITY_TYPE
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.entityType = TEntityType.findByValue(iprot.readI32());
+                struct.setEntityTypeIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 5: // FROM_OFFSET
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.fromOffset = iprot.readI64();
+                struct.setFromOffsetIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 6: // MAX_EVENTS
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.maxEvents = iprot.readI32();
+                struct.setMaxEventsIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 7: // FILTER
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.filter = iprot.readString();
+                struct.setFilterIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getLogNext_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.accountId != null) {
+          oprot.writeFieldBegin(ACCOUNT_ID_FIELD_DESC);
+          oprot.writeString(struct.accountId);
+          oprot.writeFieldEnd();
+        }
+        if (struct.applicationId != null) {
+          oprot.writeFieldBegin(APPLICATION_ID_FIELD_DESC);
+          oprot.writeString(struct.applicationId);
+          oprot.writeFieldEnd();
+        }
+        if (struct.entityId != null) {
+          oprot.writeFieldBegin(ENTITY_ID_FIELD_DESC);
+          oprot.writeString(struct.entityId);
+          oprot.writeFieldEnd();
+        }
+        if (struct.entityType != null) {
+          oprot.writeFieldBegin(ENTITY_TYPE_FIELD_DESC);
+          oprot.writeI32(struct.entityType.getValue());
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldBegin(FROM_OFFSET_FIELD_DESC);
+        oprot.writeI64(struct.fromOffset);
+        oprot.writeFieldEnd();
+        oprot.writeFieldBegin(MAX_EVENTS_FIELD_DESC);
+        oprot.writeI32(struct.maxEvents);
+        oprot.writeFieldEnd();
+        if (struct.filter != null) {
+          oprot.writeFieldBegin(FILTER_FIELD_DESC);
+          oprot.writeString(struct.filter);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getLogNext_argsTupleSchemeFactory implements SchemeFactory {
+      public getLogNext_argsTupleScheme getScheme() {
+        return new getLogNext_argsTupleScheme();
+      }
+    }
+
+    private static class getLogNext_argsTupleScheme extends TupleScheme<getLogNext_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getLogNext_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccountId()) {
+          optionals.set(0);
+        }
+        if (struct.isSetApplicationId()) {
+          optionals.set(1);
+        }
+        if (struct.isSetEntityId()) {
+          optionals.set(2);
+        }
+        if (struct.isSetEntityType()) {
+          optionals.set(3);
+        }
+        if (struct.isSetFromOffset()) {
+          optionals.set(4);
+        }
+        if (struct.isSetMaxEvents()) {
+          optionals.set(5);
+        }
+        if (struct.isSetFilter()) {
+          optionals.set(6);
+        }
+        oprot.writeBitSet(optionals, 7);
+        if (struct.isSetAccountId()) {
+          oprot.writeString(struct.accountId);
+        }
+        if (struct.isSetApplicationId()) {
+          oprot.writeString(struct.applicationId);
+        }
+        if (struct.isSetEntityId()) {
+          oprot.writeString(struct.entityId);
+        }
+        if (struct.isSetEntityType()) {
+          oprot.writeI32(struct.entityType.getValue());
+        }
+        if (struct.isSetFromOffset()) {
+          oprot.writeI64(struct.fromOffset);
+        }
+        if (struct.isSetMaxEvents()) {
+          oprot.writeI32(struct.maxEvents);
+        }
+        if (struct.isSetFilter()) {
+          oprot.writeString(struct.filter);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getLogNext_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(7);
+        if (incoming.get(0)) {
+          struct.accountId = iprot.readString();
+          struct.setAccountIdIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.applicationId = iprot.readString();
+          struct.setApplicationIdIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.entityId = iprot.readString();
+          struct.setEntityIdIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.entityType = TEntityType.findByValue(iprot.readI32());
+          struct.setEntityTypeIsSet(true);
+        }
+        if (incoming.get(4)) {
+          struct.fromOffset = iprot.readI64();
+          struct.setFromOffsetIsSet(true);
+        }
+        if (incoming.get(5)) {
+          struct.maxEvents = iprot.readI32();
+          struct.setMaxEventsIsSet(true);
+        }
+        if (incoming.get(6)) {
+          struct.filter = iprot.readString();
+          struct.setFilterIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getLogNext_result implements org.apache.thrift.TBase<getLogNext_result, getLogNext_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getLogNext_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getLogNext_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getLogNext_resultTupleSchemeFactory());
+    }
+
+    private List<TLogResult> success; // required
+    private MetricsServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TLogResult.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getLogNext_result.class, metaDataMap);
+    }
+
+    public getLogNext_result() {
+    }
+
+    public getLogNext_result(
+      List<TLogResult> success,
+      MetricsServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getLogNext_result(getLogNext_result other) {
+      if (other.isSetSuccess()) {
+        List<TLogResult> __this__success = new ArrayList<TLogResult>();
+        for (TLogResult other_element : other.success) {
+          __this__success.add(new TLogResult(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new MetricsServiceException(other.e);
+      }
+    }
+
+    public getLogNext_result deepCopy() {
+      return new getLogNext_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<TLogResult> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(TLogResult elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<TLogResult>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<TLogResult> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<TLogResult> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public MetricsServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(MetricsServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<TLogResult>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetricsServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getLogNext_result)
+        return this.equals((getLogNext_result)that);
+      return false;
+    }
+
+    public boolean equals(getLogNext_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getLogNext_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getLogNext_result typedOther = (getLogNext_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getLogNext_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getLogNext_resultStandardSchemeFactory implements SchemeFactory {
+      public getLogNext_resultStandardScheme getScheme() {
+        return new getLogNext_resultStandardScheme();
+      }
+    }
+
+    private static class getLogNext_resultStandardScheme extends StandardScheme<getLogNext_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getLogNext_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list60 = iprot.readListBegin();
+                  struct.success = new ArrayList<TLogResult>(_list60.size);
+                  for (int _i61 = 0; _i61 < _list60.size; ++_i61)
+                  {
+                    TLogResult _elem62; // required
+                    _elem62 = new TLogResult();
+                    _elem62.read(iprot);
+                    struct.success.add(_elem62);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetricsServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getLogNext_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (TLogResult _iter63 : struct.success)
+            {
+              _iter63.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getLogNext_resultTupleSchemeFactory implements SchemeFactory {
+      public getLogNext_resultTupleScheme getScheme() {
+        return new getLogNext_resultTupleScheme();
+      }
+    }
+
+    private static class getLogNext_resultTupleScheme extends TupleScheme<getLogNext_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getLogNext_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (TLogResult _iter64 : struct.success)
+            {
+              _iter64.write(oprot);
+            }
+          }
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getLogNext_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list65 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<TLogResult>(_list65.size);
+            for (int _i66 = 0; _i66 < _list65.size; ++_i66)
+            {
+              TLogResult _elem67; // required
+              _elem67 = new TLogResult();
+              _elem67.read(iprot);
+              struct.success.add(_elem67);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetricsServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getLogPrev_args implements org.apache.thrift.TBase<getLogPrev_args, getLogPrev_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getLogPrev_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField APPLICATION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("applicationId", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField ENTITY_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("entityId", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField ENTITY_TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("entityType", org.apache.thrift.protocol.TType.I32, (short)4);
+    private static final org.apache.thrift.protocol.TField FROM_OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("fromOffset", org.apache.thrift.protocol.TType.I64, (short)5);
+    private static final org.apache.thrift.protocol.TField MAX_EVENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("maxEvents", org.apache.thrift.protocol.TType.I32, (short)6);
+    private static final org.apache.thrift.protocol.TField FILTER_FIELD_DESC = new org.apache.thrift.protocol.TField("filter", org.apache.thrift.protocol.TType.STRING, (short)7);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getLogPrev_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getLogPrev_argsTupleSchemeFactory());
+    }
+
+    private String accountId; // required
+    private String applicationId; // required
+    private String entityId; // required
+    private TEntityType entityType; // required
+    private long fromOffset; // required
+    private int maxEvents; // required
+    private String filter; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT_ID((short)1, "accountId"),
+      APPLICATION_ID((short)2, "applicationId"),
+      ENTITY_ID((short)3, "entityId"),
+      /**
+       * 
+       * @see TEntityType
+       */
+      ENTITY_TYPE((short)4, "entityType"),
+      FROM_OFFSET((short)5, "fromOffset"),
+      MAX_EVENTS((short)6, "maxEvents"),
+      FILTER((short)7, "filter");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT_ID
+            return ACCOUNT_ID;
+          case 2: // APPLICATION_ID
+            return APPLICATION_ID;
+          case 3: // ENTITY_ID
+            return ENTITY_ID;
+          case 4: // ENTITY_TYPE
+            return ENTITY_TYPE;
+          case 5: // FROM_OFFSET
+            return FROM_OFFSET;
+          case 6: // MAX_EVENTS
+            return MAX_EVENTS;
+          case 7: // FILTER
+            return FILTER;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __FROMOFFSET_ISSET_ID = 0;
+    private static final int __MAXEVENTS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.APPLICATION_ID, new org.apache.thrift.meta_data.FieldMetaData("applicationId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.ENTITY_ID, new org.apache.thrift.meta_data.FieldMetaData("entityId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.ENTITY_TYPE, new org.apache.thrift.meta_data.FieldMetaData("entityType", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TEntityType.class)));
+      tmpMap.put(_Fields.FROM_OFFSET, new org.apache.thrift.meta_data.FieldMetaData("fromOffset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.MAX_EVENTS, new org.apache.thrift.meta_data.FieldMetaData("maxEvents", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+      tmpMap.put(_Fields.FILTER, new org.apache.thrift.meta_data.FieldMetaData("filter", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getLogPrev_args.class, metaDataMap);
+    }
+
+    public getLogPrev_args() {
+    }
+
+    public getLogPrev_args(
+      String accountId,
+      String applicationId,
+      String entityId,
+      TEntityType entityType,
+      long fromOffset,
+      int maxEvents,
+      String filter)
+    {
+      this();
+      this.accountId = accountId;
+      this.applicationId = applicationId;
+      this.entityId = entityId;
+      this.entityType = entityType;
+      this.fromOffset = fromOffset;
+      setFromOffsetIsSet(true);
+      this.maxEvents = maxEvents;
+      setMaxEventsIsSet(true);
+      this.filter = filter;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getLogPrev_args(getLogPrev_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      if (other.isSetAccountId()) {
+        this.accountId = other.accountId;
+      }
+      if (other.isSetApplicationId()) {
+        this.applicationId = other.applicationId;
+      }
+      if (other.isSetEntityId()) {
+        this.entityId = other.entityId;
+      }
+      if (other.isSetEntityType()) {
+        this.entityType = other.entityType;
+      }
+      this.fromOffset = other.fromOffset;
+      this.maxEvents = other.maxEvents;
+      if (other.isSetFilter()) {
+        this.filter = other.filter;
+      }
+    }
+
+    public getLogPrev_args deepCopy() {
+      return new getLogPrev_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.accountId = null;
+      this.applicationId = null;
+      this.entityId = null;
+      this.entityType = null;
+      setFromOffsetIsSet(false);
+      this.fromOffset = 0;
+      setMaxEventsIsSet(false);
+      this.maxEvents = 0;
+      this.filter = null;
+    }
+
+    public String getAccountId() {
+      return this.accountId;
+    }
+
+    public void setAccountId(String accountId) {
+      this.accountId = accountId;
+    }
+
+    public void unsetAccountId() {
+      this.accountId = null;
+    }
+
+    /** Returns true if field accountId is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccountId() {
+      return this.accountId != null;
+    }
+
+    public void setAccountIdIsSet(boolean value) {
+      if (!value) {
+        this.accountId = null;
+      }
+    }
+
+    public String getApplicationId() {
+      return this.applicationId;
+    }
+
+    public void setApplicationId(String applicationId) {
+      this.applicationId = applicationId;
+    }
+
+    public void unsetApplicationId() {
+      this.applicationId = null;
+    }
+
+    /** Returns true if field applicationId is set (has been assigned a value) and false otherwise */
+    public boolean isSetApplicationId() {
+      return this.applicationId != null;
+    }
+
+    public void setApplicationIdIsSet(boolean value) {
+      if (!value) {
+        this.applicationId = null;
+      }
+    }
+
+    public String getEntityId() {
+      return this.entityId;
+    }
+
+    public void setEntityId(String entityId) {
+      this.entityId = entityId;
+    }
+
+    public void unsetEntityId() {
+      this.entityId = null;
+    }
+
+    /** Returns true if field entityId is set (has been assigned a value) and false otherwise */
+    public boolean isSetEntityId() {
+      return this.entityId != null;
+    }
+
+    public void setEntityIdIsSet(boolean value) {
+      if (!value) {
+        this.entityId = null;
+      }
+    }
+
+    /**
+     * 
+     * @see TEntityType
+     */
+    public TEntityType getEntityType() {
+      return this.entityType;
+    }
+
+    /**
+     * 
+     * @see TEntityType
+     */
+    public void setEntityType(TEntityType entityType) {
+      this.entityType = entityType;
+    }
+
+    public void unsetEntityType() {
+      this.entityType = null;
+    }
+
+    /** Returns true if field entityType is set (has been assigned a value) and false otherwise */
+    public boolean isSetEntityType() {
+      return this.entityType != null;
+    }
+
+    public void setEntityTypeIsSet(boolean value) {
+      if (!value) {
+        this.entityType = null;
+      }
+    }
+
+    public long getFromOffset() {
+      return this.fromOffset;
+    }
+
+    public void setFromOffset(long fromOffset) {
+      this.fromOffset = fromOffset;
+      setFromOffsetIsSet(true);
+    }
+
+    public void unsetFromOffset() {
+      __isset_bit_vector.clear(__FROMOFFSET_ISSET_ID);
+    }
+
+    /** Returns true if field fromOffset is set (has been assigned a value) and false otherwise */
+    public boolean isSetFromOffset() {
+      return __isset_bit_vector.get(__FROMOFFSET_ISSET_ID);
+    }
+
+    public void setFromOffsetIsSet(boolean value) {
+      __isset_bit_vector.set(__FROMOFFSET_ISSET_ID, value);
+    }
+
+    public int getMaxEvents() {
+      return this.maxEvents;
+    }
+
+    public void setMaxEvents(int maxEvents) {
+      this.maxEvents = maxEvents;
+      setMaxEventsIsSet(true);
+    }
+
+    public void unsetMaxEvents() {
+      __isset_bit_vector.clear(__MAXEVENTS_ISSET_ID);
+    }
+
+    /** Returns true if field maxEvents is set (has been assigned a value) and false otherwise */
+    public boolean isSetMaxEvents() {
+      return __isset_bit_vector.get(__MAXEVENTS_ISSET_ID);
+    }
+
+    public void setMaxEventsIsSet(boolean value) {
+      __isset_bit_vector.set(__MAXEVENTS_ISSET_ID, value);
+    }
+
+    public String getFilter() {
+      return this.filter;
+    }
+
+    public void setFilter(String filter) {
+      this.filter = filter;
+    }
+
+    public void unsetFilter() {
+      this.filter = null;
+    }
+
+    /** Returns true if field filter is set (has been assigned a value) and false otherwise */
+    public boolean isSetFilter() {
+      return this.filter != null;
+    }
+
+    public void setFilterIsSet(boolean value) {
+      if (!value) {
+        this.filter = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT_ID:
+        if (value == null) {
+          unsetAccountId();
+        } else {
+          setAccountId((String)value);
+        }
+        break;
+
+      case APPLICATION_ID:
+        if (value == null) {
+          unsetApplicationId();
+        } else {
+          setApplicationId((String)value);
+        }
+        break;
+
+      case ENTITY_ID:
+        if (value == null) {
+          unsetEntityId();
+        } else {
+          setEntityId((String)value);
+        }
+        break;
+
+      case ENTITY_TYPE:
+        if (value == null) {
+          unsetEntityType();
+        } else {
+          setEntityType((TEntityType)value);
+        }
+        break;
+
+      case FROM_OFFSET:
+        if (value == null) {
+          unsetFromOffset();
+        } else {
+          setFromOffset((Long)value);
+        }
+        break;
+
+      case MAX_EVENTS:
+        if (value == null) {
+          unsetMaxEvents();
+        } else {
+          setMaxEvents((Integer)value);
+        }
+        break;
+
+      case FILTER:
+        if (value == null) {
+          unsetFilter();
+        } else {
+          setFilter((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT_ID:
+        return getAccountId();
+
+      case APPLICATION_ID:
+        return getApplicationId();
+
+      case ENTITY_ID:
+        return getEntityId();
+
+      case ENTITY_TYPE:
+        return getEntityType();
+
+      case FROM_OFFSET:
+        return Long.valueOf(getFromOffset());
+
+      case MAX_EVENTS:
+        return Integer.valueOf(getMaxEvents());
+
+      case FILTER:
+        return getFilter();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT_ID:
+        return isSetAccountId();
+      case APPLICATION_ID:
+        return isSetApplicationId();
+      case ENTITY_ID:
+        return isSetEntityId();
+      case ENTITY_TYPE:
+        return isSetEntityType();
+      case FROM_OFFSET:
+        return isSetFromOffset();
+      case MAX_EVENTS:
+        return isSetMaxEvents();
+      case FILTER:
+        return isSetFilter();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getLogPrev_args)
+        return this.equals((getLogPrev_args)that);
+      return false;
+    }
+
+    public boolean equals(getLogPrev_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_accountId = true && this.isSetAccountId();
+      boolean that_present_accountId = true && that.isSetAccountId();
+      if (this_present_accountId || that_present_accountId) {
+        if (!(this_present_accountId && that_present_accountId))
+          return false;
+        if (!this.accountId.equals(that.accountId))
+          return false;
+      }
+
+      boolean this_present_applicationId = true && this.isSetApplicationId();
+      boolean that_present_applicationId = true && that.isSetApplicationId();
+      if (this_present_applicationId || that_present_applicationId) {
+        if (!(this_present_applicationId && that_present_applicationId))
+          return false;
+        if (!this.applicationId.equals(that.applicationId))
+          return false;
+      }
+
+      boolean this_present_entityId = true && this.isSetEntityId();
+      boolean that_present_entityId = true && that.isSetEntityId();
+      if (this_present_entityId || that_present_entityId) {
+        if (!(this_present_entityId && that_present_entityId))
+          return false;
+        if (!this.entityId.equals(that.entityId))
+          return false;
+      }
+
+      boolean this_present_entityType = true && this.isSetEntityType();
+      boolean that_present_entityType = true && that.isSetEntityType();
+      if (this_present_entityType || that_present_entityType) {
+        if (!(this_present_entityType && that_present_entityType))
+          return false;
+        if (!this.entityType.equals(that.entityType))
+          return false;
+      }
+
+      boolean this_present_fromOffset = true;
+      boolean that_present_fromOffset = true;
+      if (this_present_fromOffset || that_present_fromOffset) {
+        if (!(this_present_fromOffset && that_present_fromOffset))
+          return false;
+        if (this.fromOffset != that.fromOffset)
+          return false;
+      }
+
+      boolean this_present_maxEvents = true;
+      boolean that_present_maxEvents = true;
+      if (this_present_maxEvents || that_present_maxEvents) {
+        if (!(this_present_maxEvents && that_present_maxEvents))
+          return false;
+        if (this.maxEvents != that.maxEvents)
+          return false;
+      }
+
+      boolean this_present_filter = true && this.isSetFilter();
+      boolean that_present_filter = true && that.isSetFilter();
+      if (this_present_filter || that_present_filter) {
+        if (!(this_present_filter && that_present_filter))
+          return false;
+        if (!this.filter.equals(that.filter))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_accountId = true && (isSetAccountId());
+      builder.append(present_accountId);
+      if (present_accountId)
+        builder.append(accountId);
+
+      boolean present_applicationId = true && (isSetApplicationId());
+      builder.append(present_applicationId);
+      if (present_applicationId)
+        builder.append(applicationId);
+
+      boolean present_entityId = true && (isSetEntityId());
+      builder.append(present_entityId);
+      if (present_entityId)
+        builder.append(entityId);
+
+      boolean present_entityType = true && (isSetEntityType());
+      builder.append(present_entityType);
+      if (present_entityType)
+        builder.append(entityType.getValue());
+
+      boolean present_fromOffset = true;
+      builder.append(present_fromOffset);
+      if (present_fromOffset)
+        builder.append(fromOffset);
+
+      boolean present_maxEvents = true;
+      builder.append(present_maxEvents);
+      if (present_maxEvents)
+        builder.append(maxEvents);
+
+      boolean present_filter = true && (isSetFilter());
+      builder.append(present_filter);
+      if (present_filter)
+        builder.append(filter);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getLogPrev_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getLogPrev_args typedOther = (getLogPrev_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccountId()).compareTo(typedOther.isSetAccountId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccountId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.accountId, typedOther.accountId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetApplicationId()).compareTo(typedOther.isSetApplicationId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetApplicationId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.applicationId, typedOther.applicationId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetEntityId()).compareTo(typedOther.isSetEntityId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEntityId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.entityId, typedOther.entityId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetEntityType()).compareTo(typedOther.isSetEntityType());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEntityType()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.entityType, typedOther.entityType);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFromOffset()).compareTo(typedOther.isSetFromOffset());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFromOffset()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.fromOffset, typedOther.fromOffset);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMaxEvents()).compareTo(typedOther.isSetMaxEvents());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMaxEvents()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.maxEvents, typedOther.maxEvents);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFilter()).compareTo(typedOther.isSetFilter());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFilter()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.filter, typedOther.filter);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getLogPrev_args(");
+      boolean first = true;
+
+      sb.append("accountId:");
+      if (this.accountId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.accountId);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("applicationId:");
+      if (this.applicationId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.applicationId);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("entityId:");
+      if (this.entityId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.entityId);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("entityType:");
+      if (this.entityType == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.entityType);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("fromOffset:");
+      sb.append(this.fromOffset);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("maxEvents:");
+      sb.append(this.maxEvents);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("filter:");
+      if (this.filter == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.filter);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getLogPrev_argsStandardSchemeFactory implements SchemeFactory {
+      public getLogPrev_argsStandardScheme getScheme() {
+        return new getLogPrev_argsStandardScheme();
+      }
+    }
+
+    private static class getLogPrev_argsStandardScheme extends StandardScheme<getLogPrev_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getLogPrev_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.accountId = iprot.readString();
+                struct.setAccountIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // APPLICATION_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.applicationId = iprot.readString();
+                struct.setApplicationIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // ENTITY_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.entityId = iprot.readString();
+                struct.setEntityIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 4: // ENTITY_TYPE
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.entityType = TEntityType.findByValue(iprot.readI32());
+                struct.setEntityTypeIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 5: // FROM_OFFSET
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.fromOffset = iprot.readI64();
+                struct.setFromOffsetIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 6: // MAX_EVENTS
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.maxEvents = iprot.readI32();
+                struct.setMaxEventsIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 7: // FILTER
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.filter = iprot.readString();
+                struct.setFilterIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getLogPrev_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.accountId != null) {
+          oprot.writeFieldBegin(ACCOUNT_ID_FIELD_DESC);
+          oprot.writeString(struct.accountId);
+          oprot.writeFieldEnd();
+        }
+        if (struct.applicationId != null) {
+          oprot.writeFieldBegin(APPLICATION_ID_FIELD_DESC);
+          oprot.writeString(struct.applicationId);
+          oprot.writeFieldEnd();
+        }
+        if (struct.entityId != null) {
+          oprot.writeFieldBegin(ENTITY_ID_FIELD_DESC);
+          oprot.writeString(struct.entityId);
+          oprot.writeFieldEnd();
+        }
+        if (struct.entityType != null) {
+          oprot.writeFieldBegin(ENTITY_TYPE_FIELD_DESC);
+          oprot.writeI32(struct.entityType.getValue());
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldBegin(FROM_OFFSET_FIELD_DESC);
+        oprot.writeI64(struct.fromOffset);
+        oprot.writeFieldEnd();
+        oprot.writeFieldBegin(MAX_EVENTS_FIELD_DESC);
+        oprot.writeI32(struct.maxEvents);
+        oprot.writeFieldEnd();
+        if (struct.filter != null) {
+          oprot.writeFieldBegin(FILTER_FIELD_DESC);
+          oprot.writeString(struct.filter);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getLogPrev_argsTupleSchemeFactory implements SchemeFactory {
+      public getLogPrev_argsTupleScheme getScheme() {
+        return new getLogPrev_argsTupleScheme();
+      }
+    }
+
+    private static class getLogPrev_argsTupleScheme extends TupleScheme<getLogPrev_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getLogPrev_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccountId()) {
+          optionals.set(0);
+        }
+        if (struct.isSetApplicationId()) {
+          optionals.set(1);
+        }
+        if (struct.isSetEntityId()) {
+          optionals.set(2);
+        }
+        if (struct.isSetEntityType()) {
+          optionals.set(3);
+        }
+        if (struct.isSetFromOffset()) {
+          optionals.set(4);
+        }
+        if (struct.isSetMaxEvents()) {
+          optionals.set(5);
+        }
+        if (struct.isSetFilter()) {
+          optionals.set(6);
+        }
+        oprot.writeBitSet(optionals, 7);
+        if (struct.isSetAccountId()) {
+          oprot.writeString(struct.accountId);
+        }
+        if (struct.isSetApplicationId()) {
+          oprot.writeString(struct.applicationId);
+        }
+        if (struct.isSetEntityId()) {
+          oprot.writeString(struct.entityId);
+        }
+        if (struct.isSetEntityType()) {
+          oprot.writeI32(struct.entityType.getValue());
+        }
+        if (struct.isSetFromOffset()) {
+          oprot.writeI64(struct.fromOffset);
+        }
+        if (struct.isSetMaxEvents()) {
+          oprot.writeI32(struct.maxEvents);
+        }
+        if (struct.isSetFilter()) {
+          oprot.writeString(struct.filter);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getLogPrev_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(7);
+        if (incoming.get(0)) {
+          struct.accountId = iprot.readString();
+          struct.setAccountIdIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.applicationId = iprot.readString();
+          struct.setApplicationIdIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.entityId = iprot.readString();
+          struct.setEntityIdIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.entityType = TEntityType.findByValue(iprot.readI32());
+          struct.setEntityTypeIsSet(true);
+        }
+        if (incoming.get(4)) {
+          struct.fromOffset = iprot.readI64();
+          struct.setFromOffsetIsSet(true);
+        }
+        if (incoming.get(5)) {
+          struct.maxEvents = iprot.readI32();
+          struct.setMaxEventsIsSet(true);
+        }
+        if (incoming.get(6)) {
+          struct.filter = iprot.readString();
+          struct.setFilterIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getLogPrev_result implements org.apache.thrift.TBase<getLogPrev_result, getLogPrev_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getLogPrev_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getLogPrev_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getLogPrev_resultTupleSchemeFactory());
+    }
+
+    private List<TLogResult> success; // required
+    private MetricsServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TLogResult.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getLogPrev_result.class, metaDataMap);
+    }
+
+    public getLogPrev_result() {
+    }
+
+    public getLogPrev_result(
+      List<TLogResult> success,
+      MetricsServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getLogPrev_result(getLogPrev_result other) {
+      if (other.isSetSuccess()) {
+        List<TLogResult> __this__success = new ArrayList<TLogResult>();
+        for (TLogResult other_element : other.success) {
+          __this__success.add(new TLogResult(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new MetricsServiceException(other.e);
+      }
+    }
+
+    public getLogPrev_result deepCopy() {
+      return new getLogPrev_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<TLogResult> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(TLogResult elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<TLogResult>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<TLogResult> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<TLogResult> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public MetricsServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(MetricsServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<TLogResult>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetricsServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getLogPrev_result)
+        return this.equals((getLogPrev_result)that);
+      return false;
+    }
+
+    public boolean equals(getLogPrev_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getLogPrev_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getLogPrev_result typedOther = (getLogPrev_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getLogPrev_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getLogPrev_resultStandardSchemeFactory implements SchemeFactory {
+      public getLogPrev_resultStandardScheme getScheme() {
+        return new getLogPrev_resultStandardScheme();
+      }
+    }
+
+    private static class getLogPrev_resultStandardScheme extends StandardScheme<getLogPrev_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getLogPrev_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list68 = iprot.readListBegin();
+                  struct.success = new ArrayList<TLogResult>(_list68.size);
+                  for (int _i69 = 0; _i69 < _list68.size; ++_i69)
+                  {
+                    TLogResult _elem70; // required
+                    _elem70 = new TLogResult();
+                    _elem70.read(iprot);
+                    struct.success.add(_elem70);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetricsServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getLogPrev_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (TLogResult _iter71 : struct.success)
+            {
+              _iter71.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getLogPrev_resultTupleSchemeFactory implements SchemeFactory {
+      public getLogPrev_resultTupleScheme getScheme() {
+        return new getLogPrev_resultTupleScheme();
+      }
+    }
+
+    private static class getLogPrev_resultTupleScheme extends TupleScheme<getLogPrev_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getLogPrev_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (TLogResult _iter72 : struct.success)
+            {
+              _iter72.write(oprot);
+            }
+          }
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getLogPrev_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list73 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<TLogResult>(_list73.size);
+            for (int _i74 = 0; _i74 < _list73.size; ++_i74)
+            {
+              TLogResult _elem75; // required
+              _elem75 = new TLogResult();
+              _elem75.read(iprot);
+              struct.success.add(_elem75);
             }
           }
           struct.setSuccessIsSet(true);

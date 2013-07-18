@@ -51,7 +51,8 @@ define([], function () {
 					if (response.result) {
 						self.set('currentState', response.result.status);
 					}
-			});
+				}
+			);
 
 			return ['monitor', {
 				method: 'getTimeSeries',

@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 smartyFacts {
     api {
@@ -9,6 +10,7 @@ smartyFacts {
 
 // Specify all the dependencies.
 dependencies {
+
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
 
@@ -21,7 +23,18 @@ dependencies {
     compile libraries.netty
     compile libraries.slf4j_api
     compile libraries.weave_common
+    compile libraries.weave_core
+    compile (libraries.weave_yarn) {
+        exclude group: 'org.apache.hadoop'
+    }
     compile libraries.weave_zookeeper
+
+    compile libraries.hadoop_annotations
+    compile libraries.hadoop_auth
+    compile libraries.hadoop_common
+    compile libraries.hadoop_yarn_api
+    compile libraries.hadoop_yarn_client
+    compile libraries.hadoop_yarn_common
 
     compile('org.apache.hbase:hbase:0.94.6-cdh4.3.0') {
         exclude module: 'junit'
@@ -43,7 +56,6 @@ dependencies {
     compile group: 'kafka', name: 'kafka', version: '0.8.0'
     compile group: 'org.scala-lang', name: 'scala-library', version: '2.8.0'
     compile group: 'com.101tec', name: 'zkclient', version: '0.2'
-
 
     testCompile libraries.junit
     testCompile libraries.hadoop_minicluster
