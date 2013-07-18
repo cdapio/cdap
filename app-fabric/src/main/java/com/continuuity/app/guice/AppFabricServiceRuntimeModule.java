@@ -26,6 +26,7 @@ import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
@@ -69,7 +70,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     @Provides
     @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS)
-    public java.net.InetAddress providesHostname(CConfiguration cConf) {
+    public InetAddress providesHostname(CConfiguration cConf) {
       return Networks.resolve(cConf.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
     }
