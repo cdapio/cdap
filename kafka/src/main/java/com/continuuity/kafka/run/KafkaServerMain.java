@@ -21,7 +21,7 @@ public class KafkaServerMain extends DaemonMain {
   private static final String KAFKA_NUM_PARTITIONS_CONFIG = "kafka.num.partitions";
   private static final String KAFKA_LOG_DIR_CONFIG = "kafka.log.dir";
 
-  private static final String ZOOKEEPER_NAMESPACE = "continuuity/kafka";
+  private static final String ZOOKEEPER_NAMESPACE = "continuuity.kafka";
 
   private Properties kafkaProperties;
   private EmbeddedKafkaServer kafkaServer;
@@ -56,6 +56,9 @@ public class KafkaServerMain extends DaemonMain {
 
     kafkaServer = new EmbeddedKafkaServer(KafkaServerMain.class.getClassLoader(), kafkaProperties);
     kafkaServer.startAndWait();
+    if (!kafkaServer.isRunning()) {
+      throw new IllegalStateException("Cannot start Kafka Server");
+    }
 
     LOG.info("Embedded kafka server started successfully.");
   }
