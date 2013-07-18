@@ -20,6 +20,13 @@ define([], function () {
 		return '/' + path.join('/');
 	}
 
+	/**
+	 * Iterates over arguments to find an object that should be mapped as a query string. This is not
+	 * recursive and reaches only 1 level depth of recursion.
+	 * eg: HTTP.get('metrics', 1, 2, {'count': 'total', 'foo': 'bar'}) => count=total&foo=bar
+	 * @param {Array} args arguments.
+	 * @returns {string} query string part of url.
+	 */
 	function findQueryString(args) {
 		var query = {};
 
@@ -63,7 +70,16 @@ define([], function () {
 			var callback = findCallback(arguments);
 			path = queryString ? path + '?' + queryString : path;
 
-			$.getJSON(path, callback);
+			$.getJSON(path, callback).fail(function (req) {
+
+				var error = JSON.parse(req.responseText);
+				if (error.fatal) {
+
+					$('#warning').html('<div>' + error.fatal + '</div>').show();
+
+				}
+
+			});
 
 		},
 
@@ -81,7 +97,24 @@ define([], function () {
 			var object = findObject(arguments);
 			var callback = findCallback(arguments);
 
-			$.post(path, object, callback);
+			$.ajax({
+				url: path,
+				data: JSON.stringify(object),
+				type: "POST",
+				contentType: "application/json"
+			}).done(function (response, status) {
+
+				if (response.error && response.error.fatal) {
+					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+				} else {
+					callback(response, status);
+				}
+
+			}).fail(function (xhr) {
+
+				$('#warning').html('<div>Encountered a connection problem.</div>').show();
+
+			});
 
 		},
 
@@ -93,14 +126,14 @@ define([], function () {
 			var object = args[args.length - 2];
 
 			if (typeof object === 'object' && object.length) {
-				args[args.length - 2] = { 'params[]': JSON.stringify(object) };
+				args[args.length - 2] = object;
 			}
 
 			this.post.apply(this, args);
 
 		},
 
-		'delete': function () {
+		delete: function () {
 
 			var path = findPath(arguments);
 			var callback = findCallback(arguments);

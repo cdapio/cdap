@@ -43,7 +43,7 @@ logger.setLevel(LOG_LEVEL);
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  logger.error('Uncaught Exception', err);
+	logger.error('Uncaught Exception', err);
 });
 
 /**
@@ -416,7 +416,7 @@ fs.readFile(configPath, function (error, result) {
 				});
 
 				/**
-				 * FAR request. Requires an  accountID.
+				 * FAR request. Requires an	accountID.
 				 */
 				socket.on('far', function (request) {
 
@@ -480,6 +480,238 @@ fs.readFile(configPath, function (error, result) {
 			});
 
 		}
+
+		var singularREST = {
+			'apps': 'getApplication',
+			'streams': 'getStream',
+			'flows': 'getFlow',
+			'mapreduce': 'getMapreduce',
+			'datasets': 'getDataset',
+			'procedures': 'getQuery'
+		};
+
+		var pluralREST = {
+			'apps': 'getApplications',
+			'streams': 'getStreams',
+			'flows': 'getFlows',
+			'mapreduce': 'getMapreduces',
+			'datasets': 'getDatasets',
+			'procedures': 'getQueries'
+		};
+
+		var typesREST = {
+			'apps': 'Application',
+			'streams': 'Stream',
+			'flows': 'Flow',
+			'mapreduce': 'Mapreduce',
+			'datasets': 'Dataset',
+			'procedures': 'Query'
+		};
+
+		var selectiveREST = {
+			'apps': 'ByApplication',
+			'streams': 'ByStream',
+			'datasets': 'ByDataset'
+		};
+
+		/*
+		 * REST handler
+		 */
+		app.get('/rest/*', function (req, res) {
+
+			var path = req.url.slice(6).split('/');
+			var hierarchy = {};
+
+			logger.trace('GET ' + req.url);
+
+			if (!path[path.length - 1]) {
+				path = path.slice(0, path.length - 1);
+			}
+
+			var methods = [], ids = [];
+			for (var i = 0; i < path.length; i ++) {
+				if (i % 2) {
+					ids.push(path[i]);
+				} else {
+					methods.push(path[i]);
+				}
+			}
+
+			var method = null, params = [];
+
+			if ((methods[0] === 'apps' || methods[0] === 'streams' ||
+				methods[0] === 'datasets') && methods[1]) {
+
+				if (ids[1]) {
+					method = singularREST[methods[1]];
+					params = [typesREST[methods[1]], { id: ids[1] }];
+				} else {
+					method = pluralREST[methods[1]] + selectiveREST[methods[0]];
+					params = [ids[0]];
+				}
+
+			} else {
+
+				if (ids[0]) {
+					method = singularREST[methods[0]];
+					params = [typesREST[methods[0]], { id: ids[0] } ];
+				} else {
+					method = pluralREST[methods[0]];
+					params = [];
+				}
+
+			}
+
+			var accountID = 'developer';
+
+			if (method === 'getQuery' || method === 'getMapreduce') {
+				params[1].application = ids[0];
+			}
+
+			if (method === 'getFlow') {
+
+				Api.manager(accountID, 'getFlowDefinition', [ids[0], ids[1]],
+					function (error, response) {
+
+						if (error) {
+							logger.error(error);
+							res.status(500);
+							res.send({
+								error: error
+							});
+						} else {
+							res.send(response);
+						}
+
+				});
+
+			} else {
+
+				Api.metadata(accountID, method, params, function (error, response) {
+
+						if (error) {
+							logger.error(error);
+							res.status(500);
+							res.send({
+								error: error
+							});
+						} else {
+							res.send(response);
+						}
+
+				});
+
+			}
+
+
+		});
+
+		/*
+		 * RPC Handler
+		 */
+		app.post('/rpc/:type/:method', function (req, res) {
+
+			try {
+
+				var type = req.params.type;
+				var method = req.params.method;
+				var params = req.body
+				var accountID = 'developer';
+
+			} catch (e) {
+
+				logger.error(e, req.body);
+				res.send({ result: null, error: 'Malformed request' });
+
+				return;
+
+			}
+
+			logger.trace('RPC ' + type + ':' + method, params);
+
+			switch (type) {
+
+				case 'runnable':
+					Api.manager(accountID, method, params, function (error, result) {
+						if (error) {
+							logger.error(error);
+						}
+						res.send({ result: result, error: error });
+					});
+					break;
+
+				case 'fabric':
+					Api.far(accountID, method, params, function (error, result) {
+						if (error) {
+							logger.error(error);
+						}
+						res.send({ result: result, error: error });
+					});
+					break;
+
+				case 'gateway':
+					Api.gateway(accountID, method, params, function (error, result) {
+						if (error) {
+							logger.error(error);
+						}
+						res.send({ result: result, error: error });
+					});
+			}
+
+		});
+
+		/*
+		 * Metrics Handler
+		 */
+		app.post('/metrics', function (req, res) {
+
+			var pathList = req.body;
+			var accountID = 'developer';
+
+			logger.trace('Metrics ', pathList);
+
+			var content = JSON.stringify(pathList);
+
+			var options = {
+				host: config['metrics.service.host'],
+				port: config['metrics.service.port'],
+				path: '/metrics',
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Content-Length': content.length
+				}
+			};
+
+			var request = http.request(options, function(response) {
+				var data = '';
+				response.on('data', function (chunk) {
+					data += chunk;
+				});
+
+				response.on('end', function () {
+
+					if (data) {
+						res.send({ result: JSON.parse(data), error: null });
+					} else {
+						res.send({ result: null, error: 'No Data' });
+					}
+
+				});
+			});
+
+			request.on('error', function(e) {
+
+				res.send({ result: null, error: {
+					fatal: 'MetricsService: ' + e.code
+				} });
+
+			});
+
+			request.write(content);
+			request.end();
+
+		});
 
 		/**
 		 * HTTP handlers.
