@@ -1,4 +1,4 @@
-package com.continuuity.data.runtime;
+package com.continuuity.data.runtime.main;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -52,7 +52,7 @@ public class NoOpexServiceMain {
     }
 
     OperationExecutorService opexService =
-        new OperationExecutorService(new NoOperationExecutor());
+      new OperationExecutorService(new NoOperationExecutor());
 
     if (START == command) {
 
@@ -63,12 +63,12 @@ public class NoOpexServiceMain {
       System.out.flush();
       InMemoryZookeeper zkCluster = new InMemoryZookeeper();
       System.out.println("running at " + zkCluster
-          .getConnectionString() + ".");
+        .getConnectionString() + "");
 
       // Add ZK info to conf
       CConfiguration configuration = CConfiguration.create();
       configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
-          zkCluster.getConnectionString());
+                        zkCluster.getConnectionString());
 
       System.out.println("Starting Operation Executor Service...");
       // start it. start is blocking, hence main won't terminate
@@ -87,8 +87,8 @@ public class NoOpexServiceMain {
 
   private static File getRandomTempDir() {
     File file = new File(System.getProperty("java.io.tmpdir"),
-        Integer.toString(Math.abs(
-            new Random(System.currentTimeMillis()).nextInt())));
+                         Integer.toString(Math.abs(
+                           new Random(System.currentTimeMillis()).nextInt())));
     if (!file.mkdir()) {
       throw new RuntimeException("Unable to create temp directory");
     }

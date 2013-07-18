@@ -1,9 +1,10 @@
-package com.continuuity.data.runtime;
+package com.continuuity.data.runtime.main;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
+import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -55,7 +56,7 @@ public class OpexServiceMain {
 
     // start an opex service
     final OperationExecutorService opexService =
-        injector.getInstance(OperationExecutorService.class);
+      injector.getInstance(OperationExecutorService.class);
 
     if (START == command) {
 

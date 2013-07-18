@@ -1,5 +1,4 @@
 apply plugin:'java'
-apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 smartyFacts {
     api {
@@ -32,13 +31,13 @@ dependencies {
     compile libraries.kryo
     compile libraries.hsql
     compile libraries.jcl_over_slf4j
-    compile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity') {
+
+    compile(libraries.hbase) {
         exclude module: 'junit'
         exclude group: 'commons-logging'
         exclude group: 'org.apache.thrift'
     }
-
-    testCompile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity:tests') {
+    testCompile(libraries.hbase_test) {
         exclude module: 'junit'
         exclude group: 'commons-logging'
         exclude group: 'org.apache.thrift'
