@@ -16,6 +16,8 @@ dependencies {
 
     apiCompile libraries.slf4j_api
 
+    apiCompile libraries.slf4j_api
+    apiCompile libraries.google_guava
     compile libraries.google_gson
     compile libraries.google_guava
     compile libraries.google_guice
