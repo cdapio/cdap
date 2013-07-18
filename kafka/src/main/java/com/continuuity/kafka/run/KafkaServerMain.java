@@ -88,9 +88,6 @@ public class KafkaServerMain extends DaemonMain {
 
     kafkaServer = new EmbeddedKafkaServer(KafkaServerMain.class.getClassLoader(), kafkaProperties);
     kafkaServer.startAndWait();
-    if (!kafkaServer.isRunning()) {
-      throw new IllegalStateException("Cannot start Kafka Server");
-    }
 
     LOG.info("Embedded kafka server started successfully.");
   }
