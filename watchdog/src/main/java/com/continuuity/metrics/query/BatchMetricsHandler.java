@@ -191,17 +191,18 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     return new TimeValueAggregator(timeValues).iterator();
   }
 
+
+  @Path("{app-id}")
   @DELETE
-  @PathParam("{appId}")
-  public void deleteAppMetrics(HttpRequest request, HttpResponder responder, String appId) throws IOException{
+  public void deleteAppMetrics(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") String appId) throws IOException{
     try {
-      //delete entries in all resolution.
-      for (Map.Entry<Integer, TimeSeriesTable> entry : metricsTableCache.asMap().entrySet()){
-        entry.getValue().delete(appId);
-      }
+      LOG.debug("Request to delete metrics for application {}", appId);
+      metricsTableCache.getUnchecked(1).delete(appId);
       aggregatesTable.delete(appId);
       responder.sendString(HttpResponseStatus.OK, "OK");
     } catch (OperationException e) {
+      LOG.debug("Caught exception while deleting metrics {}", e.getMessage(), e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting application");
     }
   }
