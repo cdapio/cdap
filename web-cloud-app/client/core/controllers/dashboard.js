@@ -70,7 +70,7 @@ define([], function () {
 					self.updateStats();
 				}, C.EMBEDDABLE_DELAY);
 
-				this.interval = setInterval(function () {
+				self.interval = setInterval(function () {
 					self.updateStats();
 				}, C.POLLING_INTERVAL);
 

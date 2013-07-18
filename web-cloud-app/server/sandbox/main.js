@@ -611,12 +611,14 @@ fs.readFile(configPath, function (error, result) {
 		 */
 		app.post('/rpc/:type/:method', function (req, res) {
 
+			var type, method, params, accountID;
+
 			try {
 
-				var type = req.params.type;
-				var method = req.params.method;
-				var params = req.body
-				var accountID = 'developer';
+				type = req.params.type;
+				method = req.params.method;
+				params = req.body;
+				accountID = 'developer';
 
 			} catch (e) {
 

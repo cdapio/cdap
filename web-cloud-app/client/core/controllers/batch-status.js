@@ -33,6 +33,8 @@ define(['../../helpers/plumber'], function (Plumber) {
 
       this.get('model').updateState(this.HTTP);
 
+      C.Util.updateTimeSeries([this.get('model')], this.HTTP);
+
       // C.Util.updateTimeSeries([this.get('model')], this.HTTP);
       // C.Util.updateAggregates([this.get('model'),
       //   this.get('input'), this.get('output')], this.HTTP);

@@ -18,7 +18,7 @@
   <script type="text/javascript" src="/core/lib/jquery.timeago.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
   <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
-    <script type="text/javascript" src="/core/lib/string.min.js"></script>
+  <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
   <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
@@ -270,12 +270,9 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Busyness" metrics="busyness" unit="percent"}}</div>
-      <!-- <div class="info-box"><span class="sparkline-box-title" style="padding: 4px 0px;">Start</span>
-        <div class="emphasized-letters gf3-font">{{model.getStartHours}}</div>
-        <div class="gf3-font">{{model.getStartDate}}</div>
-      </div>
-      -->
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduce/{id}/reducers" title="Mapping" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduce/{id}/reducers" title="Reducing" unit="percent"}}</div>
+
     </div>
     <div id="panels">
       <div id="informer"></div>
@@ -283,7 +280,7 @@
         <div id="batchviz-container">
           <div id="batchviz" class="clearfix chart">
             <div class="batch-item">
-              <div class="sparkline-box-title">Mappers: {{model.metricData.mappersCompletion}}%</div>
+              <div class="sparkline-box-title">Mapping ({{model.metricData.mappersCompletion}}%)</div>
               <progress {{bindAttr value="model.metricData.mappersCompletion" }} max="100"></progress>
               <br />
               <div id="batch-map" class="batch-icon batch-map">
@@ -295,7 +292,7 @@
               </div>
             </div>
             <div class="batch-item">
-              <div class="sparkline-box-title">Reducers: {{model.metricData.reducersCompletion}}%</div>
+              <div class="sparkline-box-title">Reducing ({{model.metricData.reducersCompletion}})</div>
               <progress {{bindAttr value="model.metricData.reducersCompletion" }} max="100"></progress>
               <br />
               <div id="batch-reduce" class="batch-icon batch-reduce">
@@ -541,7 +538,7 @@
             <td class="app-list-count">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
             <td class="app-list-count">{{model.unconsumed}}<br /><span>Events</span></td>
             <td>
-            {{view C.Embed.Chart entityType="Stream" width="318" mode="singular" metrics="/collect/events/streams/{id}"}}
+            {{view C.Embed.Chart entityType="Stream" width="340" mode="singular" metrics="/collect/events/streams/{id}"}}
             </td>
             </tr>
             </tbody>

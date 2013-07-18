@@ -27,46 +27,53 @@ define([
   var Embeddable = Em.View.extend({
     classNames: ['dash-chart'],
 
-    build: function (width, height, data) {
-
-      var graph = d3.select(this.get('element')).append("svg:svg").attr("width", "100%").attr("height", "100%");
-
-      this.set('built', true);
-
-      return graph;
-
-    },
-
-    render: function () {
+    render: function (redraw) {
 
       var kind = this.get('controller.timeseries.' + this.get('kind'));
-      var width = this.get('width');
-      var height = this.get('height');
-
-      if (!this.get('built')) {
-        this.set('graph', this.build(width, height));
-      }
-
-      // X scale will fit values from 0-10 within pixels 0-100
-      x = d3.scale.linear().domain([0, 48]).range([-5, width]); // starting point is -5 so the first value doesn't show and slides off the edge as part of the transition
-      // Y scale will fit values from 0-10 within pixels 0-100
-      y = d3.scale.linear().domain([0, 10]).range([0, height]);
-
-
-      var graph = this.get('graph');
 
       if (kind) {
 
-        var data = kind.slice(0);
+        kind = kind.slice(0);
 
-        graph.selectAll("path")
-          .data([data]) // set the new data
-          .attr("transform", "translate(" + x(1) + ")") // set the transform to the right by x(1) pixels (6 for the scale we've set) to hide the new value
-          .attr("d", line) // apply the new data values ... but the new value is hidden at this point off the right of the canvas
-          .transition() // start a transition to bring the new value into view
-          .ease("linear")
-          .duration(1000) // for this demo we want a continual slide so set this to the same as the setInterval amount below
-          .attr("transform", "translate(" + x(0) + ")"); // animate a slide to the left back to x(0) pixels to reveal the new value
+        var data  =[];
+        var i = kind.length;
+        while (i--) {
+          data.unshift(kind[i].value);
+        }
+
+        if (data && data.length) {
+          if ((typeof redraw === 'boolean' && redraw) || !this.get('sparkline')) {
+
+            this.get('container').html('');
+            this.get('container').css({margin: ''});
+
+            var widget = d3.select(this.get('container')[0]);
+            var sparkline = C.Util.sparkline(widget, [],
+              this.get('width'), this.get('height'), this.get('unit') === 'percent');
+
+            this.set('sparkline', sparkline);
+
+          }
+        }
+
+        this.get('sparkline').update('A', data);
+
+      }
+
+    },
+
+    fillContainer: function (rerender) {
+
+      var width = $(this.get('container')).outerWidth();
+      var height = this.get('height') || $(this.get('container')).outerHeight();
+
+      width += 64;
+
+      this.set('width', width);
+      this.set('height', height);
+
+      if (rerender) {
+        this.render(true);
       }
 
     },
@@ -77,10 +84,28 @@ define([
       var w = this.get('width') || $(this.get('element')).outerWidth();
       var h = this.get('height') || $(this.get('element')).outerHeight();
 
+      var container = $('<div class="dash-chart-container"></div>');
+      this.set('container', container);
+      $(this.get('element')).append(container);
+
       this.set('width', w);
       this.set('height', h);
 
-      // this.addObserver('controller.timeseries.' + kind, this, this.render);
+      this.addObserver('controller.timeseries.' + kind, this, this.render);
+
+      var self = this;
+
+      C.addResizeHandler(kind, function () {
+        self.fillContainer(true);
+      });
+
+      this.fillContainer();
+
+    },
+    willDestroyElement: function () {
+
+      var kind = this.get('kind');
+      C.removeResizeHandler(kind);
 
     }
   });
