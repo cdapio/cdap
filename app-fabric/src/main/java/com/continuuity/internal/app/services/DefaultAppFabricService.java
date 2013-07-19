@@ -1014,13 +1014,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       accountId = Id.Account.from(account);
 
       // Check if any program is still running
-      Preconditions.checkState(anyRunning(new Predicate<Id.Program>() {
+      Preconditions.checkState(!anyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
-          return programId.getAccountId().equals(accountId);
+          return programId.getAccountId().equals(accountId.getId());
         }
       }, Type.values()), "There are program still running under account " + accountId.getId());
-
 
       deleteMetrics(account);
       // delete all meta data
