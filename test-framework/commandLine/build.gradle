@@ -1,104 +1,45 @@
-apply from: "$rootProject.projectDir/gradle/framework.gradle"
+apply from: "$rootProject.projectDir/gradle/test-framework.gradle"
 
-// TODO: externalize.
-//project.ext {
-    appHome = "${buildDir}/continuuity-developer-suite-1.6.0-SNAPSHOT"
-//}
+ext.finalRelease = project.hasProperty("iterations")
 
-task cleanDevSuite(type: Delete) << {
+def iterations = 1000
+
+if (iterations) {
+   iterations = project.ext.properties.containsKey("iterations")
+}
+
+defaultTasks 'testDevSuite'
+
+task cleanDevSuite(type: Delete) {
     logger.println('[INFO]: Deleting previous Reactor...')
     delete "${buildDir}"
 }
 
-task deployDevSuite(type: Copy, dependsOn: 'cleanDevSuite')  {
-    println "${rootProject.projectDir}"
-    def zipFile = file("${rootProject.projectDir}/../distributions/build/distributions/continuuity-developer-suite-1.6.0-SNAPSHOT.zip")
-    def outputDir = file("${buildDir}")
+task testDevSuite(type: Copy) {
 
+    println "[INFO]: Deploying devSuite to ${buildDir}"
+    def zipFile = file("${rootProject.projectDir}/distributions/build/distributions/continuuity-developer-suite-${version}.zip")
+    def outputDir = file("${buildDir}")
     from zipTree(zipFile)
     into outputDir
-    sleep(5000)
-}
 
-task startReactor(dependsOn: 'deployDevSuite') << {
-    command = ["${appHome}/bin/continuuity-reactor start"]
+    doLast {
+        println("[INFO]: Starting test for Command Line")
 
-    if (executeCommand(command) != 0) {
-        throw new GradleScriptException("[ERROR] Unable to start reactor.", null)
-    }
-    else {
-        logger.println('[INFO]: Reactor started.')
-    }
+        def binDir = "${project.projectDir}/bin"
 
-    logger.println 'Waiting for instance startup...'
-    sleep(5000)
-    logger.println 'Reactor ready.'
-}
-
-
-task stopReactor() << {
-    command = ["${appHome}/bin/continuuity-reactor stop"]
-
-    if (executeCommand(command) != 0) {
-        throw new GradleScriptException("[ERROR]: Unable to stop reactor", null)
-    }
-    else {
-        logger.println('[INFO]: Reactor stopped.')
-    }
-}
-
-// Clear all data from reactor
-task cleanReactor(type: Delete)  << {
-    delete "${appHome}/data"
-}
-
-
-task compileApps(dependsOn: 'startReactor')  << {
-    command = ["ant -f ${appHome}/examples/build.xml"]
-
-    if (executeCommand(command) != 0) {
-        throw new GradleScriptException("[ERROR]: Unable to build examples: ${command}", null)
-    }
-    else {
-        logger.println('[INFO]: Example apps compiled.')
-    }
-}
-
-task deployApps(dependsOn: 'compileApps') << {
-    // Collect all examples jars
-    tree = fileTree(dir: "${appHome}/examples", include: '**/*.jar', exclude: ['**/lib/**', '**/lib-to-package/**'])
-
-    tree.each {File file ->
-        println file.absolutePath
-        command = ["${appHome}/bin/reactor-client deploy --archive  ${file.absolutePath}"]
-        logger.println("Executing deploy command: ${command}")
-
+        // Command <APP_HOME>
+        def command = ["${binDir}/test-dev-suite.sh  ${buildDir}/continuuity-developer-suite-${version} ${iterations}"]
+        println("${command}")
         if (executeCommand(command) != 0) {
-            throw new GradleScriptException("[ERROR]: ${command}", null)
+            throw new GradleScriptException("[ERROR]: command line test failed.", null)
+        } else {
+            logger.println('[INFO]: Command line test completed.')
         }
-        else {
-            logger.println("[INFO]: Applications deployed: ${file.absolutePath}")
-        }
     }
 }
-
-task startApps( dependsOn: 'deployApps') << {
-    command = ["${projectDir}/bin/start-stop.sh start ${appHome}"]
-
-    if (executeCommand(command) != 0) {
-        throw new GradleScriptException("[ERROR]: Unable to start applications. Command: $deploy", null)
-    }
-    else {
-        logger.println('[INFO]: Applications deployed.')
-    }
-}
-
-/*Dependencies startApps->deployApps->compileApps->startReactor->deployDevSuite->cleanReactor */
-task testCmdLineDevSuite(dependsOn: 'startApps') << {
-    BuildLogger.println('Testing command line on DevSuite...')
-}
-
-
+testDevSuite.dependsOn('cleanDevSuite')
+testDevSuite.dependsOn(":distributions:developer_suite_dist")
 
 
 

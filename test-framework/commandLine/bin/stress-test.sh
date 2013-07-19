@@ -1,14 +1,14 @@
 #!/bin/sh
 
-: ${APP_HOME?"not set."}
-
-if [ $# -lt 1 ]
+if [ $# -lt 2 ]
 then
-    echo "usage test-stress-rest.sh <number of iterations>"
+    echo "Usage: stress-test.sh <num_iteration>  <APP_HOME>"
     exit 1
 fi
 
-echo "Starting Count..."
+APP_HOME=$2
+
+echo "Starting wordCount stress run..."
 $APP_HOME/bin/reactor-client start --archive $APP_HOME/examples/WordCount/WordCount.jar
 sleep 3
 
@@ -18,3 +18,4 @@ msg=`date`;
 curl -q -d "today $msg" http://localhost:10000/stream/wordStream;
 echo "sending: $msg"
 done
+echo "Stress run completed."

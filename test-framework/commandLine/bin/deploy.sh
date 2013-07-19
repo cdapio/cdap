@@ -1,6 +1,4 @@
 #!/bin/sh
-
-#!/bin/sh
 if [ $# -lt 1 ]
 then
     echo "Usage: deploy.sh  <APP_HOME>"
@@ -8,10 +6,7 @@ then
 fi
 
 APP_HOME=$1
-
 BASEDIR=$(dirname $0)
-
-source $BASEDIR/common.sh
 
 echo "deploying samples..."
 $APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/CountCounts/CountCounts.jar

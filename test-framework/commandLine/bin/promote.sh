@@ -1,14 +1,14 @@
 #!/bin/sh
+# example:
 # hostname: alexg.continuuity.net
 # apikey: 1bedb6e1f195e5390b25bfe6167d80b773685a82
 
-: ${APP_HOME?"not set."}
-
-if [ $# -lt 1 ]
+if [ $# -lt 3 ]
 then
-    echo "usage test-promote.sh <hostname> <apikey>"
+    echo "usage test-promote.sh <hostname> <apikey> <APP_HOME>"
     exit 1
 fi
+
 
 echo "Using hostname: $1"
 echo "Using API key: $2"

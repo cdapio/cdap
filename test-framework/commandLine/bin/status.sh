@@ -1,6 +1,12 @@
 #!/bin/sh
 
-: ${APP_HOME?"not set."}
+if [ $# -lt 2 ]
+then
+    echo "Usage: status.sh <start|stop>  <APP_HOME>"
+    exit 1
+fi
+
+APP_HOME=$2
 
 echo "Status for all apps, all flows..."
 $APP_HOME/bin/reactor-client status --application AggregateMetrics  --flow AggMetricsByTag

@@ -1,12 +1,13 @@
 #!/bin/sh
 
-: ${APP_HOME?"not set."}
-
-if [ $# -lt 1 ]
+#!/bin/sh
+if [ $# -lt 2 ]
 then
-    echo "usage test-procedure.sh <start|stop>"
+    echo "Usage: procedure.sh <start|stop> <APP_HOME>"
     exit 1
 fi
+
+APP_HOME=$1
 
 echo "Starting/stopping all procedures..."
 $APP_HOME/bin/reactor-client $1 --application CountCounts --procedure CountCountProcedure

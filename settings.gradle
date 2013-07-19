@@ -6,4 +6,4 @@ include 'unit-test', 'overlord', 'passport', 'watchdog'
 project(':singlenode').buildFileName = 'package.gradle'
 
 // Test framework
-include 'test-framework', 'test-framework:performance'
+include 'test-framework', 'test-framework:performance', 'test-framework:commandLine'
