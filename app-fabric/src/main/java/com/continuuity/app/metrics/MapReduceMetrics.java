@@ -8,6 +8,9 @@ import com.continuuity.common.metrics.MetricsScope;
  */
 public final class MapReduceMetrics extends AbstractProgramMetrics {
 
+  /**
+   * Type of map reduce task.
+   */
   public enum TaskType {
     Mapper("m"),
     Reducer("r");
