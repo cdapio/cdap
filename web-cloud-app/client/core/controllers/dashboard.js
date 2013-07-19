@@ -115,7 +115,9 @@ define([], function () {
 			var models = this.get('elements.App').get('content');
 
 			var now = new Date().getTime();
-			var start = now - (C.__timeRange * 1000);
+
+			// Add a two second buffer to make sure we have a full response.
+			var start = now - ((C.__timeRange + 2) * 1000);
 			start = Math.floor(start / 1000);
 
 			// Scans models for timeseries metrics and updates them.
