@@ -89,9 +89,11 @@ public class MetricsFrontendServiceImpl
   private DBUtils.DBType type;
 
   /**
-   * Log reader.
+   * Log reader. Marked as optional injection as currently log reader is piggy-backing on metricsfrontend service
+   * We should remove it.
+   * TODO: ENG-3102
    */
-  @Inject
+  @Inject(optional = true)
   private LogReader logReader;
   private final String logPattern;
 
