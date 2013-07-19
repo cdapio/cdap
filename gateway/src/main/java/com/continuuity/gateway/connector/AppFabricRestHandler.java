@@ -126,6 +126,9 @@ public class AppFabricRestHandler extends NettyRestHandler {
                 put(FLOW_START_STOP_PATH,
                     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST),
                                                                  Pattern.compile(FLOW_START_STOP_PATH))).
+                put(FLOW_STATUS_PATH,
+                    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                                 Pattern.compile(FLOW_STATUS_PATH))).
                 put(FLOWLET_INSTANCES_PATH,
                      new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
                                                                   Pattern.compile(FLOWLET_INSTANCES_PATH))).
