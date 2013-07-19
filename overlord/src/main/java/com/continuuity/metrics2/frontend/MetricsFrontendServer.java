@@ -68,7 +68,9 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
     if (server != null) {
       server.stop();
     }
-    executorService.shutdown();
+    if (executorService != null) {
+      executorService.shutdown();
+    }
   }
 
   /**
