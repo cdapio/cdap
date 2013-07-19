@@ -103,7 +103,7 @@ public class KafkaServerMain extends DaemonMain {
 
   private Properties generateKafkaConfig(int brokerId, String zkConnectStr, String hostname, int port,
                                          int numPartitions, String logDir) {
-    Preconditions.checkState(port > 0, "Failed to get random port.");
+    Preconditions.checkState(port > 0, "Port number is invalid.");
     Preconditions.checkState(numPartitions > 0, "Num partitions should be greater than zero.");
 
     Properties prop = new Properties();
@@ -117,6 +117,7 @@ public class KafkaServerMain extends DaemonMain {
     prop.setProperty("socket.request.max.bytes", "104857600");
     prop.setProperty("log.dir", logDir);
     prop.setProperty("num.partitions", Integer.toString(numPartitions));
+    prop.setProperty("log.retention.hours", "24");
     prop.setProperty("log.flush.interval.messages", "10000");
     prop.setProperty("log.flush.interval.ms", "1000");
     prop.setProperty("log.segment.bytes", "536870912");

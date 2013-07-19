@@ -26,6 +26,7 @@ public final class LoggingConfiguration {
   public static final String LOG_SAVER_RUN_MEMORY_MB = "log.saver.run.memory.megs";
   public static final String LOG_RETENTION_DURATION_DAYS = "log.retention.duration.days";
   public static final String LOG_MAX_FILE_SIZE_BYTES = "log.max.file.size.bytes";
+  public static final String KAFKA_PRODUCER_TYPE = "kafka.producer.type";
 
   // Used only in Single Node mode
   public static final String LOG_FILE_ROTATION_INTERVAL_MINS = "log.file.rotation.interval.mins";
@@ -33,8 +34,10 @@ public final class LoggingConfiguration {
   // Constants
   // Table used to store log metadata
   public static final String LOG_META_DATA_TABLE = "__log_meta";
-  // Default log pattern
+  // Defaults
   public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n";
+  public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
+  public static final String DEFAULT_NUM_PARTITIONS = "1";
 
   private LoggingConfiguration() {}
 
