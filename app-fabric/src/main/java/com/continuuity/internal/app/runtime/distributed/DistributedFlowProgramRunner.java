@@ -56,6 +56,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     WeavePreparer preparer = weaveRunner.prepare(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile))
                .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
 
+    // TODO (ENG-3101): escape more special characters
     String escapedRuntimeArgs =
       "'" + new Gson().toJson(options.getUserArguments()).replace("\"", "\\\"").replace(" ", "\\ ") + "'";
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
