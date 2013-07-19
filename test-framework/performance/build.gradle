@@ -1,9 +1,13 @@
 apply plugin:'java'
+apply from: "$rootProject.projectDir/gradle/apply-continuuity-plugin.gradle"
+apply from: "$rootProject.projectDir/gradle/elastic.gradle"
+apply from: "$rootProject.projectDir/gradle/init-repositories.gradle"
+apply from: "$rootProject.projectDir/gradle/dependencies.gradle"
+apply from: "$rootProject.projectDir/gradle/maven.gradle"
 
 project.evaluationDependsOn(':app-fabric')
 
 dependencies {
-
    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
@@ -27,6 +31,7 @@ dependencies {
    testCompile libraries.mockito_core
    testCompile libraries.junit
 }
+
 /**
  * Exclude any config xml from jar
  */

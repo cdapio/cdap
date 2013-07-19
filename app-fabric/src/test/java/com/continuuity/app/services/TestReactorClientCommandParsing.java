@@ -5,6 +5,7 @@ import com.continuuity.common.utils.UsageException;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -22,10 +23,10 @@ public class TestReactorClientCommandParsing {
     assertTrue("deploy".equals(client.getCommand()));
   }
 
-  @Test(expected = UsageException.class)
   public void testUnknownCommands() throws ParseException {
     ReactorClient client = new ReactorClient();
-    client.parseArguments(new String[]{"Foobaz", "-jar", "jar"}, CConfiguration.create());
+    String command = client.parseArguments(new String[]{"Foobaz", "-jar", "jar"}, CConfiguration.create());
+    assertEquals("help", command);
   }
 
   @Test(expected = UsageException.class)
@@ -40,10 +41,11 @@ public class TestReactorClientCommandParsing {
     client.parseArguments(new String[]{"delete"}, CConfiguration.create());
   }
 
-  @Test(expected = UsageException.class)
   public void testValidInvalidStartArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
-    client.parseArguments(new String[]{"SomeRandomCommand", "--application", "args"}, CConfiguration.create());
+    String command = client.parseArguments(new String[]{"SomeRandomCommand", "--application", "args"},
+                                           CConfiguration.create());
+    assertEquals("help", command);
   }
 
   @Test(expected = UsageException.class)

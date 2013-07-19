@@ -1,0 +1,41 @@
+apply from: "$rootProject.projectDir/gradle/test-framework.gradle"
+
+defaultTasks 'testDevSuite'
+
+task cleanDevSuite(type: Delete) {
+    logger.println('[INFO]: Deleting previous Reactor...')
+    delete "${buildDir}"
+}
+
+task testDevSuite(type: Copy) {
+
+    println "[INFO]: Deploying devSuite to ${buildDir}"
+    def zipFile = file("${rootProject.projectDir}/distributions/build/distributions/continuuity-developer-suite-${version}.zip")
+    def outputDir = file("${buildDir}")
+    from zipTree(zipFile)
+    into outputDir
+
+    doLast {
+        println("[INFO]: Starting test for Command Line")
+
+        def binDir = "${project.projectDir}/bin"
+
+        // Command <APP_HOME>
+        def command = ["${binDir}/test-dev-suite.sh  ${buildDir}/continuuity-developer-suite-${version}"]
+        println("${command}")
+        if (executeCommand(command) != 0) {
+            throw new GradleScriptException("[ERROR]: command line test failed.", null)
+        } else {
+            logger.println('[INFO]: Command line test completed.')
+        }
+    }
+}
+testDevSuite.dependsOn('cleanDevSuite')
+testDevSuite.dependsOn(":distributions:developer_suite_dist")
+
+
+
+
+
+
+
