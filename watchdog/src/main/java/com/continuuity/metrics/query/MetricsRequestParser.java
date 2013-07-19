@@ -283,8 +283,8 @@ final class MetricsRequestParser {
                                 MetricsConstants.QUERY_SECOND_DELAY;
 
         long startTime = queryParams.containsKey(START_TIME)
-          ? Integer.parseInt(queryParams.get(START_TIME).get(0))
-          : endTime - count;
+                          ? Integer.parseInt(queryParams.get(START_TIME).get(0))
+                          : endTime - count;
 
         if (startTime + count != endTime) {
           endTime = startTime + count;
