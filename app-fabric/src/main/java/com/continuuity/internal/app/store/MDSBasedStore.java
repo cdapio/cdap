@@ -464,6 +464,9 @@ public class MDSBasedStore implements Store {
     ApplicationSpecification appSpec = getApplication(id);
     Preconditions.checkNotNull(appSpec, "No such application: %s", id.getId());
     removeApplicationFromAppSpec(id.getAccount(), appSpec);
+    // make sure to also delete the "application" entry of MDS (by-passing MDS here). this will go away with MDS
+    metaDataStore.delete(context, id.getId(), null, com.continuuity.metadata.FieldTypes.Application.ID,
+                         appSpec.getName());
     return appSpec;
   }
 
