@@ -150,8 +150,8 @@ define([], function () {
 				 */
 				i = models.length;
 				while (i--) {
-					if (typeof models.updateState === 'function') {
-						models.updateState(this.HTTP);
+					if (typeof models[i].updateState === 'function') {
+						models[i].updateState(this.HTTP);
 					}
 				}
 				/*
@@ -426,6 +426,8 @@ define([], function () {
 
 		"delete": function () {
 
+			var self = this;
+
 			C.Modal.show(
 				"Delete Application",
 				"Are you sure you would like to delete this Application? This action is not reversible.",
@@ -433,24 +435,15 @@ define([], function () {
 
 					var app = this.get('model');
 
-					C.get('metadata', {
-						method: 'deleteApplication',
-						params: ['Application', {
-							id: app.id
-						}]
-					}, function (error, response) {
+					C.get('far', {
+						method: 'remove',
+						params: [app.id]
+					}, function () {
 
-						C.Modal.hide(function () {
-
-							if (error) {
-								C.Modal.show('Error Deleting', error.message);
-							} else {
-								window.history.go(-1);
-							}
-
-						});
+						self.transitionToRoute('index');
 
 					});
+
 				}, this));
 
 		},

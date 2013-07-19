@@ -80,6 +80,15 @@ public final class AggregatesTable {
   }
 
   /**
+   * Deletes all the row keys which match the context prefix.
+   * @param contextPrefix Prefix of the context to match.
+   * @throws OperationException if there is an error in deleting entries.
+   */
+  public void delete(String contextPrefix) throws OperationException {
+    aggregatesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
+  }
+
+  /**
    * Scans the aggregate table for metrics without tag.
    * @param contextPrefix Prefix of context to match
    * @param metricPrefix Prefix of metric to match

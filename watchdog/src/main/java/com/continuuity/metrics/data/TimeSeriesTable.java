@@ -160,6 +160,16 @@ public final class TimeSeriesTable {
   }
 
   /**
+   * Deletes all the row keys which match the context prefix.
+   * @param contextPrefix Prefix of the context to match.
+   * @throws OperationException if there is an error in deleting entries.
+   */
+  public void delete(String contextPrefix) throws OperationException {
+    timeSeriesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
+  }
+
+
+  /**
    * Clears the storage table.
    * @throws OperationException If error in clearing data.
    */

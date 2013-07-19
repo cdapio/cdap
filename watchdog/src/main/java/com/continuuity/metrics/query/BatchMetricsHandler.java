@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
@@ -40,14 +41,17 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Class for handling batch requests for metrics data of the {@link MetricsScope#REACTOR} scope.
@@ -185,6 +189,22 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     }
 
     return new TimeValueAggregator(timeValues).iterator();
+  }
+
+
+  @Path("{app-id}")
+  @DELETE
+  public void deleteAppMetrics(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") String appId) throws IOException{
+    try {
+      LOG.debug("Request to delete metrics for application {}", appId);
+      metricsTableCache.getUnchecked(1).delete(appId);
+      aggregatesTable.delete(appId);
+      responder.sendString(HttpResponseStatus.OK, "OK");
+    } catch (OperationException e) {
+      LOG.debug("Caught exception while deleting metrics {}", e.getMessage(), e);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting application");
+    }
   }
 
   /**
