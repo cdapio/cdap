@@ -264,7 +264,7 @@ public final class ReactorClient {
     }
 
     if (!AVAILABLE_COMMANDS.contains(command)) {
-      usage(false);
+      usage(true);
       System.out.println(String.format("Unsupported command: %s", command));
       return "help";
     }
