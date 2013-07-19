@@ -438,7 +438,7 @@ define([], function () {
 				return [((Math.round(value * 10) / 10)), 'KB'];
 			}
 
-			return [value, 'BYTES'];
+			return [value, 'B'];
 		},
 		reset: function () {
 			C.Modal.show(
