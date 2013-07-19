@@ -1071,6 +1071,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                     discoverable.getSocketAddress().getHostName(),
                                     discoverable.getSocketAddress().getPort(),
                                     application);
+    LOG.debug("Deleting metrics for application {}", application);
     SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
       .setUrl(url)
       .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
