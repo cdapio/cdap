@@ -166,7 +166,7 @@ public final class AvroFileWriter implements Closeable {
       return;
     }
 
-    long checkpointOffset = Long.MAX_VALUE;
+    long checkpointOffset = -1;
     Set<String> files = Sets.newHashSetWithExpectedSize(fileMap.size());
     for (Iterator<Map.Entry<String, AvroFile>> it = fileMap.entrySet().iterator(); it.hasNext();) {
       AvroFile avroFile = it.next().getValue();
@@ -179,12 +179,12 @@ public final class AvroFileWriter implements Closeable {
       }
 
       files.add(avroFile.getPath().toUri().toString());
-      if (checkpointOffset > avroFile.getMaxOffsetSeen()) {
+      if (checkpointOffset < avroFile.getMaxOffsetSeen()) {
         checkpointOffset = avroFile.getMaxOffsetSeen();
       }
     }
 
-    if (checkpointOffset != Long.MAX_VALUE) {
+    if (checkpointOffset != -1) {
       LOG.info(String.format("Saving checkpoint offset %d with files %d", checkpointOffset, files.size()));
       checkpointManager.saveCheckpoint(new CheckpointInfo(checkpointOffset, files));
     }
