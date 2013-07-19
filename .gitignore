@@ -28,4 +28,4 @@ npm-*.log
 logs/
 
 # Singlenode run files. 
-./data/
+/data/

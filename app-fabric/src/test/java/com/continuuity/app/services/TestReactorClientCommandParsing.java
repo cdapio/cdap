@@ -35,6 +35,12 @@ public class TestReactorClientCommandParsing {
   }
 
   @Test(expected = UsageException.class)
+  public void testValidInvalidDeleteArgs() throws ParseException {
+    ReactorClient client = new ReactorClient();
+    client.parseArguments(new String[]{"delete"}, CConfiguration.create());
+  }
+
+  @Test(expected = UsageException.class)
   public void testValidInvalidStartArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
     client.parseArguments(new String[]{"SomeRandomCommand", "--application", "args"}, CConfiguration.create());
@@ -64,6 +70,9 @@ public class TestReactorClientCommandParsing {
   public void testValidArguments() throws ParseException {
     ReactorClient client = new ReactorClient();
     assertTrue("help".equals(client.parseArguments(new String[]{"help"}, CConfiguration.create())));
+
+    assertTrue("delete".equals(client.parseArguments(new String[]{"delete", "--application", "appId"},
+                                                     CConfiguration.create())));
 
     assertTrue("deploy".equals(client.parseArguments(new String[]{"deploy", "--archive", "jar"},
                                                      CConfiguration.create())));

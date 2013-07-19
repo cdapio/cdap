@@ -139,7 +139,137 @@ define([], function () {
 			}
 		}),
 
-		sparkline: function (widget, data, w, h, percent) {
+		updateAggregates: function (models, http) {
+
+			var j, k, metrics, map = {};
+			var queries = [];
+
+			var max = 60;
+
+			for (j = 0; j < models.length; j ++) {
+
+				metrics = Em.keys(models[j].get('aggregates') || {});
+
+				for (var k = 0; k < metrics.length; k ++) {
+
+						map[metrics[k]] = models[j];
+						queries.push(metrics[k] + '?aggregate=true');
+
+				}
+
+			}
+
+			if (queries.length) {
+				http.post('metrics', queries, function (response) {
+
+					if (response.result) {
+
+						var result = response.result;
+
+						var i, k, data, path, label;
+						for (i = 0; i < result.length; i ++) {
+
+							path = result[i].path.split('?')[0];
+							label = map[path].get('aggregates')[path];
+							map[path].setMetric(label, result[i].result.data);
+
+						}
+
+					}
+
+				});
+			}
+
+		},
+
+		updateTimeSeries: function (models, http) {
+
+			var j, k, metrics, count, map = {};
+			var queries = [];
+
+			var max = 60, start;
+			var now = new Date().getTime();
+
+			start = now - (C.__timeRange * 1000);
+			start = Math.floor(start / 1000);
+
+			for (j = 0; j < models.length; j ++) {
+
+				metrics = Em.keys(models[j].get('timeseries') || {});
+
+				for (var k = 0; k < metrics.length; k ++) {
+
+					if (models[j].get('timeseries').get(metrics[k])) {
+
+						count = max - models[j].get('timeseries').get(metrics[k]).length;
+						count = count || 1;
+
+					} else {
+
+						models[j].get('timeseries').set(metrics[k], []);
+						count = max;
+
+					}
+
+					map[metrics[k]] = models[j];
+					queries.push(metrics[k] + '?start=' + start + '&count=60');// + count);
+
+				}
+
+			}
+
+			if (queries.length) {
+
+				http.post('metrics', queries, function (response) {
+
+					if (response.result) {
+
+						var result = response.result;
+
+
+
+						var i, k, data, path;
+						for (i = 0; i < result.length; i ++) {
+
+							path = result[i].path.split('?')[0];
+
+							if (result[i].error) {
+
+								console.error('TimeSeries', result[i].error);
+
+							} else {
+
+								data = result[i].result.data, k = data.length;
+
+								while(k --) {
+									data[k] = data[k].value;
+								}
+
+								map[path].get('timeseries').set(path, data);
+
+								/*
+								TODO: Use count to reduce traffic.
+
+								var mapped = map[path].get('timeseries');
+								var ts = mapped.get(path);
+
+								ts.shift(data.length);
+								ts = ts.concat(data);
+
+								mapped.set(path, ts);
+								*/
+
+							}
+
+						}
+					}
+
+				});
+			}
+
+		},
+
+		sparkline: function (widget, data, w, h, percent, shade) {
 
 			var allData = [], length = 0;
 			for (var i in this.series) {
@@ -170,7 +300,7 @@ define([], function () {
 				.x(function(d,i) { return x(i); })
 				.y(function(d) { return y(d); });
 
-			if (percent) {
+			if (percent || shade) {
 				var area = d3.svg.area()
 					.x(line.x())
 					.y1(line.y())
@@ -183,6 +313,7 @@ define([], function () {
 			return {
 				g: g,
 				percent: percent,
+				shade: shade,
 				series: {}, // Need to store to track data boundaries
 				update: function (name, data) {
 
@@ -227,11 +358,11 @@ define([], function () {
 						.x(function(d,i) { return x(i); })
 						.y(function(d) { return y(d); });
 
-					if (this.percent) {
+					if (this.percent || this.shade) {
 						var area = d3.svg.area().interpolate("basis")
 							.x(line.x())
 							.y1(line.y())
-							.y0(y(0));
+							.y0(y(-100));
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
@@ -265,28 +396,35 @@ define([], function () {
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000000000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'B';
+				return [rounded, 'B'];
+
 			} else if (value > 1000000) {
 				var digits = 3 - (Math.round(value / 1000000) + '').length;
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'M';
+				return [rounded, 'M'];
+
 			} else if (value > 1000) {
 				var digits = 3 - (Math.round(value / 1000) + '').length;
 				digits = digits < 0 ? 2 : digits;
 				value = value / 1000;
 				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded + 'K';
-			} else {
-				var digits = 3 - (value + '').length;
-				digits = digits < 0 ? 2 : digits;
-				var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
-				value = rounded;
+				return [rounded, 'K'];
+
 			}
 
-			return value;
+			var digits = 3 - (value + '').length;
+			digits = digits < 0 ? 2 : digits;
+			var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
+
+			return [rounded, ''];
+
 		},
+		numberArrayToString: function(value) {
+			return this.number(value).join('');
+		},
+
 		bytes: function (value) {
 
 			if (value > 1073741824) {
@@ -300,7 +438,7 @@ define([], function () {
 				return [((Math.round(value * 10) / 10)), 'KB'];
 			}
 
-			return [value, 'BYTES'];
+			return [value, 'B'];
 		},
 		reset: function () {
 			C.Modal.show(

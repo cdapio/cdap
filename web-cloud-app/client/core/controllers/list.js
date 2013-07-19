@@ -44,6 +44,7 @@ define([], function () {
 
 				self.set('elements.' + type, Em.ArrayProxy.create({content: objects}));
 
+				clearInterval(self.interval);
 				self.interval = setInterval(function () {
 					self.updateStats();
 				}, C.POLLING_INTERVAL);
@@ -62,22 +63,32 @@ define([], function () {
 
 		updateStats: function () {
 
-			var content, self = this;
+			var content, self = this, models = [];
 			for (var j=0; j<this.entityTypes.length; j++) {
 				var objects = this.get('elements.' + this.entityTypes[j]);
-
 				if (objects) {
-
-					content = objects.get('content');
-
-					for (var i = 0; i < content.length; i ++) {
-						if (typeof content[i].getUpdateRequest === 'function') {
-							C.get.apply(C, content[i].getUpdateRequest(this.HTTP));
-						}
-					}
-
+					models = models.concat(objects.content);
 				}
 			}
+
+			/*
+			 * Hax until we have a pub/sub system for state.
+			 */
+			var i = models.length;
+			while (i--) {
+				if (typeof models[i].updateState === 'function') {
+					models[i].updateState(this.HTTP);
+				}
+			}
+			/*
+			 * End hax
+			 */
+
+			// Scans models for timeseries metrics and updates them.
+			C.Util.updateTimeSeries(models, this.HTTP);
+
+			// Scans models for aggregate metrics and udpates them.
+			C.Util.updateAggregates(models, this.HTTP);
 
 		},
 

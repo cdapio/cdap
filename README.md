@@ -1,3 +1,3 @@
 Continuuity Reactor (TM)
 ========================
-Local, Sandbox and Enterprise Reactors
+Local, Sandbox and Enterprise Continuuity Reactors

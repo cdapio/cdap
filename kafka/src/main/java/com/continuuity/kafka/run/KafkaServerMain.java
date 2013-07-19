@@ -2,6 +2,7 @@ package com.continuuity.kafka.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
 import com.continuuity.weave.zookeeper.ZKClientService;

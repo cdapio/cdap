@@ -9,6 +9,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -229,6 +230,37 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
         ps.setBytes(1, rows[i]);
         ps.executeUpdate();
       }
+    } catch (SQLException e) {
+      throw createOperationException(e, "delete");
+    } finally {
+      if (ps != null) {
+        try {
+          ps.close();
+        } catch (SQLException e) {
+          throw createOperationException(e, "close");
+        }
+      }
+    }
+  }
+
+  @Override
+  public void deleteRowsDirtily(byte[] startRow, byte[] stopRow) throws OperationException {
+    Preconditions.checkNotNull(startRow, "start row cannot be null");
+    PreparedStatement ps = null;
+    StringBuilder stmnt = new StringBuilder("DELETE FROM ");
+    stmnt.append(this.quotedTableName);
+    stmnt.append(" WHERE rowkey >= ?");
+    if (stopRow != null) {
+      stmnt.append(" AND rowkey < ?");
+    }
+    stmnt.append(";");
+    try {
+      ps = this.connection.prepareStatement(stmnt.toString());
+      ps.setBytes(1, startRow);
+      if (stopRow != null) {
+        ps.setBytes(2, stopRow);
+      }
+      ps.executeUpdate();
     } catch (SQLException e) {
       throw createOperationException(e, "delete");
     } finally {

@@ -1,6 +1,7 @@
 package com.continuuity.data.util;
 
 
+import com.continuuity.api.common.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -150,6 +151,28 @@ public class LockTableTest {
     t2.join();
     t3.join();
     Assert.assertEquals(3 * rounds, counter);
+  }
+
+  @Test(timeout = 2000)
+  public void testDeleteRangeOfLock() {
+    RowLockTable locks = new RowLockTable();
+    RowLockTable.RowLock[] rowLocks = new RowLockTable.RowLock[100];
+    for (int i = 0; i < 100; i++) {
+      rowLocks[i] = locks.lock(new RowLockTable.Row(Bytes.toBytes(i)));
+    }
+    locks.removeRange(new RowLockTable.Row(Bytes.toBytes(20)), new RowLockTable.Row(Bytes.toBytes(50)));
+    locks.removeRange(new RowLockTable.Row(Bytes.toBytes(80)), null);
+    for (int i = 0; i < 100; i++) {
+      if (i >= 20 && i < 50 || i >= 80) {
+        // these locks were removed
+        locks.lock(new RowLockTable.Row(Bytes.toBytes(i)));
+        Assert.assertFalse(rowLocks[i].isValid());
+      } else {
+        // these are still valid, unlock and check validity
+        locks.unlock(new RowLockTable.Row(Bytes.toBytes(i)));
+        Assert.assertTrue(rowLocks[i].isValid());
+      }
+    }
   }
 }
 

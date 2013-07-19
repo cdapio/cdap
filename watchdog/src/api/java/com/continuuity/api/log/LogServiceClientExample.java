@@ -9,6 +9,9 @@ import java.util.Arrays;
 import static com.continuuity.api.log.LogMarkerFilterList.Operator.*;
 import static com.continuuity.api.log.LogMessage.LogLevel.*;
 
+/**
+ *
+ */
 public class LogServiceClientExample {
   public static void main(String[] args) throws UnsupportedLogQueryException, LogServiceException {
     LogService logService = null;

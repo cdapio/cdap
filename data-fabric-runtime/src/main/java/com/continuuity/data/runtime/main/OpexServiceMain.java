@@ -1,10 +1,22 @@
 package com.continuuity.data.runtime.main;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.conf.KafkaConstants;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.internal.kafka.client.ZKKafkaClientService;
+import com.continuuity.kafka.client.KafkaClientService;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.weave.common.Services;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -52,16 +64,40 @@ public class OpexServiceMain {
     }
 
     DataFabricDistributedModule module = new DataFabricDistributedModule();
-    Injector injector = Guice.createInjector(module);
+    CConfiguration configuration = module.getConfiguration();
+
+    ZKClientService zkClientService =
+      ZKClientServices.delegate(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE))
+                                   .setSessionTimeout(10000)
+                                   .build(),
+            RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
+          )
+        )
+      );
+    String kafkaZKNamespace = configuration.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    KafkaClientService kafkaClientService = new ZKKafkaClientService(
+      kafkaZKNamespace == null
+        ? zkClientService
+        : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
+    );
+
+    Injector injector = Guice.createInjector(
+      new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
+      module);
 
     // start an opex service
     final OperationExecutorService opexService =
       injector.getInstance(OperationExecutorService.class);
 
     if (START == command) {
+      // Starts metrics collection
+      MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+      Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
 
       // enable metrics collection
-      CConfiguration configuration = module.getConfiguration();
       OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, configuration);
 
       Copyright.print(System.out);

@@ -68,6 +68,14 @@ define([], function() {
         "exists": true
      }
     ],
+    "streamSample": {
+      "id": "wordStream",
+      "name": "wordStream",
+      "description": null,
+      "capacityInBytes": null,
+      "expiryInSeconds": null,
+      "exists": true
+    },
     "flowSample": {
           "meta": {
             "name": "CountAndFilterWords",
@@ -194,6 +202,13 @@ define([], function() {
           "exists": true
       }
     ],
+    "datasetSample": {
+          "id": "filterTable",
+          "name": "filterTable",
+          "description": "",
+          "type": "com.continuuity.api.data.dataset.KeyValueTable",
+          "exists": true
+      },
     "streamsByApplicationSample": [
       {
           "id": "wordStream",

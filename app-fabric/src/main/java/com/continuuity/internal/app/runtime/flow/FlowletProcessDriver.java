@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
@@ -20,7 +19,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +47,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
   private static final int BACKOFF_EXP = 2;
   private static final int PROCESS_MAX_RETRY = 10;
-  private static final String INPUT_METRIC_POSTFIX = FlowletDefinition.INPUT_ENDPOINT_POSTFIX + ".stream.in";
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -104,7 +101,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       transactionExecutor = MoreExecutors.sameThreadExecutor();
     }
     runnerThread = Thread.currentThread();
-    flowletContext.getSystemMetrics().counter("instance", 1);
+    flowletContext.getSystemMetrics().gauge("instance", 1);
   }
 
   @Override
@@ -196,7 +193,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
           if (processMethod.needsInput()) {
-            flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.attempt.read", 1);
+            flowletContext.getSystemMetrics().gauge("tuples.attempt.read", 1);
           }
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
           if (!input.needProcess()) {
@@ -240,11 +237,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private <T> Function<ByteBuffer, T> wrapInputDatumDecoder(final InputDatum input,
                                                             final Function<ByteBuffer, T> inputDatumDecoder) {
     return new Function<ByteBuffer, T>() {
-      @Nullable
       @Override
-      public T apply(@Nullable ByteBuffer byteBuffer) {
-        flowletContext.getSystemMetrics().counter(input.getInputContext().getOrigin() + INPUT_METRIC_POSTFIX, 1);
-        flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
+      public T apply(ByteBuffer byteBuffer) {
+        flowletContext.getSystemMetrics().gauge("events.ins." + input.getInputContext().getOrigin(), 1);
+        flowletContext.getSystemMetrics().gauge("tuples.read", 1);
         return inputDatumDecoder.apply(byteBuffer);
       }
     };
@@ -272,7 +268,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.attempt.read", 1);
+          flowletContext.getSystemMetrics().gauge("tuples.attempt.read", 1);
 
           try {
             // Call the process method and commit the transaction
@@ -318,7 +314,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getMetrics().count("processed", 1);
+          flowletContext.getSystemMetrics().gauge("events.processed", 1);
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.info("Exception on onSuccess call: " + flowletContext, t);
@@ -335,7 +331,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         LOG.info("Process failure. " + reason.getMessage() + ", input: " + input, reason.getCause().getCause());
         FailurePolicy failurePolicy;
         try {
-          flowletContext.getMetrics().count("flowlet.failure", 1);
+          flowletContext.getSystemMetrics().gauge("errors", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {
           LOG.error("Exception on onFailure call: " + flowletContext, t);
@@ -359,7 +355,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getMetrics().count("processed", 1);
+            flowletContext.getSystemMetrics().gauge("events.processed", 1);
             inputAcknowledger.ack();
           } catch (OperationException e) {
             LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);

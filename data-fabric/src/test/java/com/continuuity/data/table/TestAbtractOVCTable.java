@@ -47,6 +47,7 @@ public class TestAbtractOVCTable {
     // all splits should have about the same length - we verify that by looking at only the
     // first byte of each start and stop
     Set<Integer> lengths = new HashSet<Integer>();
+    Assert.assertNotNull(first.getStart());
     int prev = first.getStart()[0] & 0xff;
     for (int i = 1; i < splits.size(); i++) {
       int cur = splits.get(i).getStart()[0] & 0xff;
@@ -84,5 +85,22 @@ public class TestAbtractOVCTable {
     testPrimitiveSplits(1, new byte[] { 'A', 'B', 'C' }, new byte[] { 'B', '1', '2' });
     testPrimitiveSplits(10, new byte[] { 'A', 'B', 'C' }, new byte[] { 'B', '1', '2' });
     testPrimitiveSplits(10, Bytes.toBytes(1L), Bytes.toBytes(2L));
+  }
+
+  @Test
+  public void testKeyAfterPrefix() {
+    final byte oxFF = (byte) 0xFF;
+    final byte[][] tests = {
+      { },                  null,
+      { 0x00 },             { 0x01 },
+      { 0x42, oxFF },       { 0x43 },
+      { 0x42, oxFF, oxFF},  { 0x43 },
+      { 0x42, oxFF, 0x17},  { 0x42, oxFF, 0x18 },
+      { oxFF, oxFF, oxFF},  null
+    };
+    for (int i = 0; i < tests.length / 2; i++) {
+      Assert.assertArrayEquals("Failed for " + i, tests[i * 2 + 1], AbstractOVCTable.keyAfterPrefix(tests[i * 2]));
+
+    }
   }
 }
