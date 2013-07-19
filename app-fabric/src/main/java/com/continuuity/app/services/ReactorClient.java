@@ -63,6 +63,7 @@ public final class ReactorClient {
   private static final String MAPREDUCE_LONG_OPT_ARG = "mapreduce";
   private static final String HOSTNAME_LONG_OPT_ARG = "host";
   private static final String APIKEY_LONG_OPT_ARG = "apikey";
+  private static final String DEBUG_LONG_OPT_ARG = "debug";
 
   private String resource;
   private String application;
@@ -257,7 +258,9 @@ public final class ReactorClient {
     }
 
     if (!AVAILABLE_COMMANDS.contains(command)) {
-      usage("Unsupported command '" + command + "'.");
+      usage(false);
+      System.out.println(String.format("Unsupported command: %s", command));
+      return "help";
     }
 
     CommandLineParser commandLineParser = new GnuParser();
@@ -273,9 +276,11 @@ public final class ReactorClient {
     options.addOption("l", FLOWLET_LONG_OPT_ARG, true, "Flowlet Id.");
     options.addOption("i", FLOWLET_INSTANCES_LONG_OPT_ARG, true, "Flowlet Instances.");
     options.addOption("m", MAPREDUCE_LONG_OPT_ARG, true, "MapReduce job Id.");
+    options.addOption("d", DEBUG_LONG_OPT_ARG, false, "Debug");
 
     try {
       CommandLine commandLine = commandLineParser.parse(options, Arrays.copyOfRange(args, 1, args.length));
+      debug = commandLine.getOptionValue(DEBUG_LONG_OPT_ARG) == null ? false : true;
 
       //Check if the appropriate args are passed in for each of the commands
       if ("deploy".equals(command)) {
