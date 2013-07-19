@@ -19,8 +19,7 @@ public final class MetricsConstants {
     public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
     public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
     public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
-
-    public static final String PROCESSING_THREADS = "metrics.process.threads";
+    public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
   }
 
   public static final String EMPTY_TAG = "-";
@@ -32,10 +31,11 @@ public final class MetricsConstants {
   public static final String DEFAULT_METRIC_TABLE_PREFIX = "MetricsTable";
   public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
 
+  public static final String DEFAULT_KAFKA_META_TABLE = "MetricsMeta";
   public static final String DEFAULT_KAFKA_TOPIC_PREFIX = "metrics";
-  public static final int DEFAULT_KAFKA_PARTITION_SIZE = 10;
 
-  public static final int DEFAULT_PROCESSING_THREADS = 1;
+  public static final int DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD = 100;
+  public static final int DEFAULT_KAFKA_PARTITION_SIZE = 1;
 
   // Number of seconds to subtract from current timestamp when query without "end" time.
   public static final long QUERY_SECOND_DELAY = 2;

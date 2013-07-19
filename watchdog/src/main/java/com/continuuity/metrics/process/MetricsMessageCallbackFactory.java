@@ -28,19 +28,17 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   private final DatumReader<MetricsRecord> datumReader;
   private final Schema recordSchema;
   private final Set<MetricsProcessor> processors;
-  private final KafkaConsumerMetaTable metaTable;
   private final int persistThreshold;
 
   @Inject
   public MetricsMessageCallbackFactory(SchemaGenerator schemaGenerator, DatumReaderFactory readerFactory,
-                                       KafkaConsumerMetaTable metaTable, Set<MetricsProcessor> processors,
+                                       Set<MetricsProcessor> processors,
                                        @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
                                        int persistThreshold) {
     try {
       this.recordSchema = schemaGenerator.generate(MetricsRecord.class);
       this.datumReader = readerFactory.create(TypeToken.of(MetricsRecord.class), recordSchema);
       this.processors = processors;
-      this.metaTable = metaTable;
       this.persistThreshold = persistThreshold;
 
     } catch (UnsupportedTypeException e) {
@@ -49,7 +47,7 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   }
 
   @Override
-  public KafkaConsumer.MessageCallback create(MetricsScope scope) {
+  public KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsScope scope) {
     return new PersistedMessageCallback(
       new MetricsMessageCallback(scope, processors, datumReader, recordSchema), metaTable, persistThreshold);
   }

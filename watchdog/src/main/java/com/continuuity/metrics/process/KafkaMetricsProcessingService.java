@@ -6,6 +6,7 @@ import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.metrics.MetricsConstants.ConfigKeys;
+import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.weave.common.Cancellable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractService;
@@ -24,32 +25,31 @@ public final class KafkaMetricsProcessingService extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessingService.class);
 
   private final KafkaClientService kafkaClient;
-  private final KafkaConsumerMetaTable metaTable;
+  private final MetricsTableFactory tableFactory;
   private final MessageCallbackFactory callbackFactory;
   private final String topicPrefix;
   private final int partitionSize;
-  private final int threadPoolSize;
   private final List<Cancellable> unsubscribes;
+  private KafkaConsumerMetaTable metaTable;
 
   @Inject
   public KafkaMetricsProcessingService(KafkaClientService kafkaClient,
-                                       KafkaConsumerMetaTable metaTable,
+                                       MetricsTableFactory tableFactory,
                                        MessageCallbackFactory callbackFactory,
                                        @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
-                                       @Named(ConfigKeys.KAFKA_PARTITION_SIZE) int partitionSize,
-                                       @Named(ConfigKeys.PROCESSING_THREADS) int threadPoolSize) {
+                                       @Named(ConfigKeys.KAFKA_PARTITION_SIZE) int partitionSize) {
     this.kafkaClient = kafkaClient;
-    this.metaTable = metaTable;
+    this.tableFactory = tableFactory;
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
     this.partitionSize = partitionSize;
-    this.threadPoolSize = threadPoolSize;
     this.unsubscribes = Lists.newArrayList();
   }
 
   @Override
   protected void doStart() {
     try {
+      metaTable = tableFactory.createKafkaConsumerMeta("default");
       subscribe();
       notifyStarted();
     } catch (Throwable t) {
@@ -80,7 +80,7 @@ public final class KafkaMetricsProcessingService extends AbstractService {
         }
       }
 
-      unsubscribes.add(preparer.consume(callbackFactory.create(scope)));
+      unsubscribes.add(preparer.consume(callbackFactory.create(metaTable, scope)));
       LOG.info("Consumer created for topic {}", topic);
     }
   }
