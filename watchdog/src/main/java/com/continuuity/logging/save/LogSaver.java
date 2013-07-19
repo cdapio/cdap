@@ -16,7 +16,6 @@ import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
-import com.continuuity.logging.kafka.OffsetOutOfRange;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
@@ -26,6 +25,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import kafka.common.OffsetOutOfRangeException;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -194,7 +194,7 @@ public final class LogSaver extends AbstractIdleService {
 
             LOG.info(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
                                    msgCount, topic, partition, lastOffset));
-          } catch (OffsetOutOfRange e) {
+          } catch (OffsetOutOfRangeException e) {
 
             // Reset offset to earliest available
             long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);

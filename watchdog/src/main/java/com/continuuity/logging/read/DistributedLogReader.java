@@ -231,26 +231,22 @@ public final class DistributedLogReader implements LogReader {
 
   private void fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, long startOffset, long latestOffset,
                               int maxEvents, Callback callback) {
-    try {
-      KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, maxEvents, callback);
+    KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, maxEvents, callback);
 
-      long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
-      if (startOffset < earliestOffset) {
-        startOffset = earliestOffset;
+    long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
+    if (startOffset < earliestOffset) {
+      startOffset = earliestOffset;
+    }
+
+    while (kafkaCallback.getCount() < maxEvents && startOffset < latestOffset) {
+      kafkaConsumer.fetchMessages(startOffset, kafkaCallback);
+      long lastOffset = kafkaCallback.getLastOffset();
+
+      // No more Kafka messages
+      if (lastOffset == -1) {
+        break;
       }
-
-      while (kafkaCallback.getCount() < maxEvents && startOffset < latestOffset) {
-        kafkaConsumer.fetchMessages(startOffset, kafkaCallback);
-        long lastOffset = kafkaCallback.getLastOffset();
-
-        // No more Kafka messages
-        if (lastOffset == -1) {
-          break;
-        }
-        startOffset = kafkaCallback.getLastOffset() + 1;
-      }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+      startOffset = kafkaCallback.getLastOffset() + 1;
     }
   }
 
