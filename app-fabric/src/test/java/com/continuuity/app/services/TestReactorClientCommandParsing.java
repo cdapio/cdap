@@ -43,7 +43,8 @@ public class TestReactorClientCommandParsing {
 
   public void testValidInvalidStartArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
-    String command = client.parseArguments(new String[]{"SomeRandomCommand", "--application", "args"}, CConfiguration.create());
+    String command = client.parseArguments(new String[]{"SomeRandomCommand", "--application", "args"},
+                                           CConfiguration.create());
     assertEquals("help", command);
   }
 
