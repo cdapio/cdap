@@ -23,14 +23,14 @@ public final class MetricsProcessorModule extends AbstractModule {
 
   private final Predicate<MetricsRecord> aggregatesFilter;
 
-  MetricsProcessorModule() {
+  public MetricsProcessorModule() {
     this(Predicates.<MetricsRecord>alwaysTrue());
   }
 
   /**
    * Creates a module with the given filter used for filtering MetricsRecord to get aggregated.
    */
-  MetricsProcessorModule(Predicate<MetricsRecord> filter) {
+  public MetricsProcessorModule(Predicate<MetricsRecord> filter) {
     this.aggregatesFilter = filter;
   }
 

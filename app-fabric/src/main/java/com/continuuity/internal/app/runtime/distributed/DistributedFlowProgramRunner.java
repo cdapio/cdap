@@ -17,7 +17,6 @@ import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +56,9 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     WeavePreparer preparer = weaveRunner.prepare(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile))
                .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
 
-    String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
+    // TODO (ENG-3101): escape more special characters
+    String escapedRuntimeArgs =
+      "'" + new Gson().toJson(options.getUserArguments()).replace("\"", "\\\"").replace(" ", "\\ ") + "'";
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       preparer.withArguments(entry.getKey(),
                              String.format("--%s", RunnableOptions.JAR), program.getProgramJarLocation().getName());

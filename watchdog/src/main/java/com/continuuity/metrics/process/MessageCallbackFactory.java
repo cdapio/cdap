@@ -12,5 +12,5 @@ import com.continuuity.kafka.client.KafkaConsumer;
  */
 public interface MessageCallbackFactory {
 
-  KafkaConsumer.MessageCallback create(MetricsScope scope);
+  KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsScope scope);
 }

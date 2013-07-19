@@ -1,4 +1,4 @@
-package com.continuuity.kafka.run;
+package com.continuuity.common.conf;
 
 /**
  * Configuration parameters for Kafka server.

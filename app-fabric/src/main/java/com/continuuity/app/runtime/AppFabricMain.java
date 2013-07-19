@@ -62,7 +62,6 @@ public final class AppFabricMain extends DaemonMain {
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
-//      new MetricsClientRuntimeModule().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new AbstractModule() {
