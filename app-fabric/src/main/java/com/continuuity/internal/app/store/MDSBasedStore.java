@@ -541,6 +541,9 @@ public class MDSBasedStore implements Store {
     removeAllMapreducesFromMetadataStore(id, appSpec);
     removeAllProceduresFromMetadataStore(id, appSpec);
     metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
+    // make sure to also delete the "application" entry of MDS (by-passing MDS here). this will go away with MDS
+    metaDataStore.delete(context, id.getId(), null, com.continuuity.metadata.FieldTypes.Application.ID,
+                         appSpec.getName());
   }
 
   private ApplicationSpecification getAppSpecSafely(Id.Program id) throws OperationException {
