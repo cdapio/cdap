@@ -222,6 +222,17 @@ logger.setLevel(LOG_LEVEL);
 
 				break;
 
+				case 'getLogPrev':
+
+					params.unshift(accountID);
+					Monitor.getLogPrev.apply(Monitor, params.concat(done));
+					break;
+
+				case 'getLogNext':
+					params.unshift(accountID);
+					Monitor.getLogNext.apply(Monitor, params.concat(done));
+					break;
+
 				case 'getCounters':
 					flow = new metricsservice_types.FlowArgument({
 						accountId: (params[0] === '-' ? '-' : accountID),
@@ -311,7 +322,7 @@ logger.setLevel(LOG_LEVEL);
 
 					identifier = new appfabricservice_types.FlowIdentifier({
 						applicationId: params[0],
-						flowId: '',
+						flowId: 'NONE',
 						version: -1,
 						accountId: accountID
 					});
@@ -421,6 +432,7 @@ logger.setLevel(LOG_LEVEL);
 
 		});
 
+
 		request.on('error', function (e) {
 
 			done({
@@ -460,7 +472,7 @@ logger.setLevel(LOG_LEVEL);
 				protocol: tprotocol.TBinaryProtocol
 			});
 			conn.on('error', function (error) {
-			logger.warn('Could not connect to AppFabricService (Upload).');
+				logger.error('Could not connect to AppFabricService (Upload).', error);
 				socket.emit('upload', {'status': 'failed', 'step': 4, 'message': 'Could not connect to AppFabricService'});
 			});
 

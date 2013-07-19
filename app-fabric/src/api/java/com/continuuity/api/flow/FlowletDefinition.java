@@ -42,8 +42,6 @@ import java.util.Set;
 public final class FlowletDefinition {
   public static final String PROCESS_METHOD_PREFIX = "process";
   public static final String DEFAULT_OUTPUT = "queue";
-  public static final String INPUT_ENDPOINT_POSTFIX = "_in";
-  public static final String OUTPUT_ENDPOINT_POSTFIX = "_out";
   public static final String ANY_INPUT = "";
 
   private final FlowletSpecification flowletSpec;

@@ -1,0 +1,22 @@
+apply plugin: 'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
+smartyFacts {
+}
+
+// Specify all the dependencies.
+dependencies {
+    // Internal dependencies.
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+
+    compile libraries.slf4j_api
+    compile libraries.google_guava
+    compile libraries.weave_core
+    compile libraries.weave_zookeeper
+
+    // Kafka dependencies
+    compile group: 'kafka', name: 'kafka', version: '0.8.0'
+    compile group: 'org.scala-lang', name: 'scala-library', version: '2.8.0'
+    compile group: 'com.101tec', name: 'zkclient', version: '0.2'
+    compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.5'
+}

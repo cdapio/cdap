@@ -4,24 +4,55 @@
 
 define(['lib/date'], function (Datejs) {
 
+  var METRICS_PATHS = {
+    //'/process/busyness/{{appId}}/mapreduce/{{jobId}}?count=30': 'busyness',
+    '/process/completion/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersCompletion',
+    '/process/completion/{{appId}}/mapreduce/{{jobId}}/reducers?count=30': 'reducersCompletion',
+    //'/process/bytes/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
+    '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/ins?aggregate=true': 'mappersEntriesIn',
+    '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/outs?aggregate=true': 'mappersEntriesOut',
+    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/ins?aggregate=true': 'reducersEntriesIn',
+    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut'
+  };
+
+  var METRIC_TYPES = {
+    //'busyness': 'number',
+    'mappersCompletion': 'number',
+    'reducersCompletion': 'number',
+    //'mappersBytesProcessed': 'bytes',
+    'mappersEntriesIn': 'number',
+    'mappersEntriesOut': 'number',
+    'reducersEntriesIn': 'number',
+    'reducersEntriesOut': 'number'
+  };
+
   var Model = Em.Object.extend({
 
     href: function () {
       return '#/batches/' + this.get('id');
     }.property('id'),
-    metricData: null,
     metricNames: null,
-    __loadingData: false,
     instances: 0,
     type: 'Batch',
     plural: 'Batches',
     startTime: null,
-    alertCount: 0,
 
     init: function() {
       this._super();
 
-      this.set('metricData', Em.Object.create());
+      this.set('timeseries', Em.Object.create());
+      this.set('aggregates', Em.Object.create());
+
+      this.set('metricData', Em.Object.create({
+        busyness: 0,
+        mappersCompletion: 0,
+        reducersCompletion: 0,
+        mappersBytesProcessed: 0,
+        mappersEntriesIn: 0,
+        mappersEntriesOut: 0,
+        reducersEntriesIn: 0,
+        reducersEntriesOut: 0
+      }));
       this.set('metricNames', {});
 
       this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
@@ -29,9 +60,11 @@ define(['lib/date'], function (Datejs) {
       this.set('app', this.get('applicationId') || this.get('application'));
       this.set('id', this.get('app') + ':' +
         (this.get('flowId') || this.get('id') || this.get('meta').name));
+
       if (this.get('meta')) {
         this.set('startTime', this.get('meta').startTime);
       }
+
     },
 
     getStartDate: function() {
@@ -49,118 +82,122 @@ define(['lib/date'], function (Datejs) {
       this.get('metricNames')[name] = 1;
 
     },
+
     setMetricData: function(name, value) {
 
       this.get('metricData').set(name, value);
 
     },
-    getUpdateRequest: function (http) {
+
+    interpolate: function (path) {
+
+      return path.replace(/\{parent\}/, this.get('app'))
+        .replace(/\{id\}/, this.get('name'));
+
+    },
+
+    trackMetric: function (path, kind, label) {
+
+      this.get(kind).set(path = this.interpolate(path), label || []);
+      return path;
+
+    },
+
+    setMetric: function (label, value) {
+
+      var unit = this.get('units')[label];
+      value = C.Util[unit](value);
+
+      this.set(label + 'Label', value[0]);
+      this.set(label + 'Units', value[1]);
+
+    },
+
+    updateState: function (http) {
 
       var self = this;
 
       var app_id = this.get('app'),
-        batch_id = this.get('name'),
-        start = C.__timeRange * -1;
+        flow_id = this.get('name');
 
-      var metrics = [];
-      var metricNames = this.get('metricNames');
-      for (var name in metricNames) {
-        if (metricNames[name] === 1) {
-          metrics.push(name);
-        }
-      }
-      if (!metrics.length) {
-        this.set('__loadingData', false);
-        return;
-      }
-
-      http.rpc('runnable', 'status', [app_id, batch_id, -1],
+      http.rpc('runnable', 'status', [app_id, flow_id, -1],
         function (response) {
 
           if (response.result) {
             self.set('currentState', response.result.status);
           }
-
-      });
-
-      return ['monitor', {
-        method: 'getTimeSeries',
-        params: [app_id, batch_id, metrics, start, undefined, 'FLOW_LEVEL']
-      }, function (error, response) {
-
-        if (!response.params) {
-          return;
-        }
-
-        var data, points = response.params.points,
-          latest = response.params.latest;
-
-        for (var metric in points) {
-          data = points[metric];
-
-          var k = data.length;
-
-          while(k --) {
-            data[k] = data[k].value;
-          }
-
-          metric = metric.replace(/\./g, '');
-          self.get('metricData').set(metric, data);
-          self.set('__loadingData', false);
-        }
-
-      }];
-
+        });
     },
-    getMetricsRequest: function() {
 
-      // These placeholders names are for Handlebars to render the associated metrics.
-      var placeholderNames = {
-        '/store/bytes/datasets/dataset1?total=true': 'input1',
-        '/store/records/datasets/dataset1?total=true': 'input2',
-        '/process/events/jobs/mappers/job1?total=true': 'mappers1',
-        '/process/bytes/jobs/mappers/job1?total=true': 'mappers2',
-        '/process/events/jobs/reducers/job1?total=true': 'reducers1',
-        '/process/bytes/jobs/reducers/job1?total=true': 'reducers2',
-        '/store/bytes/datasets/dataset2?total=true': 'output1',
-        '/store/records/datasets/dataset2?total=true': 'output2'
-      };
+    getMetricsRequest: function(http) {
+
+      var appId = this.get('app');
+      var jobId = this.get('name');
+      var datasetId = this.get('datasets')[0];
 
       var paths = [];
-      for (var path in placeholderNames) {
-        paths.push(path);
+      var pathMap = {};
+      for (var path in METRICS_PATHS) {
+        var url = new S(path).template({'appId': appId, 'jobId': jobId}).s;
+        paths.push(url);
+        pathMap[url.split('?')[0]] = METRICS_PATHS[path];
       }
 
       var self = this;
 
-      return ['metrics', paths, function(result, status) {
+      http.post('metrics', paths, function(response, status) {
 
-        if(!result) {
+        if(!response.result) {
           return;
         }
 
+        var result = response.result;
         var i = result.length, metric;
+
         while (i--) {
-          metric = placeholderNames[paths[i]];
-          self.setMetricData(metric, result[i]);
+
+          metric = pathMap[result[i]['path']];
+
+          if (metric) {
+
+            if (result[i]['result']['data'] instanceof Array) {
+
+              result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
+                return entry.value;
+              });
+
+              // Hax for current value of completion.
+              if (metric === 'mappersCompletion' ||
+                  metric === 'reducersCompletion') {
+
+                var data = result[i]['result']['data'];
+                self.setMetricData(metric, data[data.length - 1]);
+
+              } else {
+
+                self.setMetricData(metric, result[i]['result']['data']);
+
+              }
+
+            }
+            else if (metric in METRIC_TYPES && METRIC_TYPES[metric] === 'number') {
+
+              self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
+
+            } else {
+
+              self.setMetricData(metric, result[i]['result']['data']);
+
+            }
+
+          }
+          metric = null;
         }
 
-      }];
+      });
 
     },
 
-    getAlertsRequest: function() {
-      var self = this;
-
-      return ['batch/SampleApplicationId:batchid1?data=alerts', function(status, result) {
-        if(!result) {
-          return;
-        }
-
-        self.set('alertCount', result.length);
-      }];
-
-    },
 
     getMeta: function () {
       var arr = [];
@@ -172,17 +209,21 @@ define(['lib/date'], function (Datejs) {
       }
       return arr;
     }.property('meta'),
+
     isRunning: function() {
 
       return this.get('currentState') === 'RUNNING';
 
     }.property('currentState'),
+
     started: function () {
       return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
     }.property('timeTrigger'),
+
     stopped: function () {
       return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'No Date';
     }.property('timeTrigger'),
+
     actionIcon: function () {
 
       if (this.currentState === 'RUNNING' ||
@@ -193,6 +234,7 @@ define(['lib/date'], function (Datejs) {
       }
 
     }.property('currentState').cacheable(false),
+
     stopDisabled: function () {
 
       if (this.currentState === 'RUNNING') {
@@ -201,6 +243,7 @@ define(['lib/date'], function (Datejs) {
       return true;
 
     }.property('currentState'),
+
     startPauseDisabled: function () {
 
       if (this.currentState !== 'STOPPED' &&
@@ -212,7 +255,13 @@ define(['lib/date'], function (Datejs) {
       return false;
 
     }.property('currentState'),
+
     defaultAction: function () {
+
+      if (!this.currentState) {
+        return '...';
+      }
+
       return {
         'deployed': 'Start',
         'stopped': 'Start',
@@ -230,6 +279,7 @@ define(['lib/date'], function (Datejs) {
     type: 'Batch',
     kind: 'Model',
     find: function(model_id, http) {
+
       var promise = Ember.Deferred.create();
 
       var model_id = model_id.split(':');
@@ -239,7 +289,6 @@ define(['lib/date'], function (Datejs) {
       http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
 
         model = C.Batch.create(model);
-
         http.rpc('runnable', 'status', [app_id, mapreduce_id, -1],
           function (response) {
 

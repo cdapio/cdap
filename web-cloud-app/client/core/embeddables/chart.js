@@ -13,10 +13,9 @@ define([], function () {
 			for (var i = 0; i < metrics.length; i ++) {
 				var metric = metrics[i];
 
-				if (this.get('model') && this.get('model').metricData) {
+				if (this.get('model') && this.get('model').timeseries) {
 
-					metric = metric.replace(/\./g, '');
-					var data = this.get('model').metricData[metric];
+					var data = this.get('model').timeseries[metric];
 
 					if (data && data.length) {
 						if ((typeof redraw === 'boolean' && redraw) || !this.get('sparkline')) {
@@ -62,56 +61,18 @@ define([], function () {
 
 			}
 
-			if (typeof this.get('model').addMetricName === 'function') {
+			if (typeof this.get('model').trackMetric === 'function') {
 
 				var metrics = this.get('metrics');
 				var i = metrics.length, metric;
 
-				var entityId = this.get('model').id;
-
-				// ** hax for StreamFlow **//
-				if (this.get('model').get('streamId')) {
-					entityId = this.get('model').get('streamId');
-				}
-
-				// ** hax for DatasetFlow **//
-				if (this.get('model').get('datasetId')) {
-					entityId = this.get('model').get('datasetId');
-				}
-
-				var account_id = C.Env.user.id;
-
-				while (i--) {
-					metrics[i] = metrics[i].replace(/\{id\}/g, entityId);
-					metrics[i] = metrics[i].replace(/\{account_id\}/g, account_id);
-				}
-
-				// Hax for flowlet Queue
-				if (this.get('streamId')) {
-
-					var flow = this.get('controller').get('controllers').get('FlowStatus').get('model');
-					var flowlet = this.get('controller').get('model');
-
-					var flowId = flow.id;
-					var flowletId = flowlet.id;
-
-					i = metrics.length;
-					while (i--) {
-						metrics[i] = metrics[i].replace(/\{streamId\}/g, this.get('streamId'))
-							.replace(/\{flowletId\}/g, flowletId)
-							.replace(/\{flowId\}/g, flowId);
-					}
-
-				}
-
-				var i = metrics.length;
-
 				while (i--) {
 
-					metric = metrics[i];
-					this.get('model').addMetricName(metric);
-					metric = metric.replace(/\./g, '');
-					this.addObserver('model.metricData.' + metric, this, this.updateData);
+					metrics[i] = this.get('model').trackMetric(metrics[i],
+						'timeseries') || metrics[i];
+
+					this.addObserver('model.timeseries.' + metrics[i], this, this.updateData);
+
 				}
 
 			}
@@ -156,7 +117,8 @@ define([], function () {
 				value = C.Util.bytes(value);
 				return value[0] + (this.get('listMode') ? '' : '<br /><span>' + value[1] + '</span>');
 			} else {
-				return C.Util.number(value) + (this.get('listMode') ? '' : '<br /><span>TPS</span>');
+				value = C.Util.number(value);
+				return value[0] + value[1] + (this.get('listMode') ? '' : '<br /><span>TPS</span>');
 			}
 		},
 		fillContainer: function (rerender) {
@@ -166,7 +128,7 @@ define([], function () {
 
 			if (rerender) {
 				width = $(this.get('container')).outerWidth();
-				width += width * 0.08;
+				width *= 1.1;
 			} else {
 				width -= this.get('overlapX') || 0;
 			}
@@ -195,7 +157,7 @@ define([], function () {
 
 			var label, container;
 
-			if (entityType === "Flowlet") {
+			if (entityType === "Queue" || entityType === "Flowlet") {
 
 				$(this.get('element')).addClass('white');
 				label = $('<div class="sparkline-flowlet-value" />').appendTo(this.get('element'));

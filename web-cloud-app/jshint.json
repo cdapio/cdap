@@ -41,6 +41,6 @@
 	"indent"       : 4,
 	"smarttabs"	   : true,
 	"predef"       : [
-		"C", "App", "Ember", "Em", "io", "define", "jsPlumb", "d3"
+		"C", "App", "Ember", "Em", "io", "define", "jsPlumb", "d3", "S"
 	]
 }

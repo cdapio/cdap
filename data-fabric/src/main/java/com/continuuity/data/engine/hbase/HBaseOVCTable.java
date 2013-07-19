@@ -15,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
@@ -29,6 +30,7 @@ import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +45,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -337,6 +337,47 @@ public class HBaseOVCTable extends AbstractOVCTable {
       }
     }
   }
+
+  @Override
+  public void deleteRowsDirtily(byte[] startRow, byte[] stopRow) throws OperationException {
+    final int deletesPerRound = 1024;
+    List<Delete> deletes = Lists.newArrayListWithCapacity(deletesPerRound);
+    HTable writeTable = null;
+    // repeatedly scan 1024 rows to find out about the row keys, then delete all 1024 in a single call.
+    try {
+      writeTable = getWriteTable();
+      Scan scan = new Scan();
+      scan.setTimeRange(0, HConstants.LATEST_TIMESTAMP);
+      scan.setMaxVersions(1); // we only need to see one version of each row
+      scan.setFilter(new FirstKeyOnlyFilter()); // we only need to see the first column (=key) of each row
+      scan.setStartRow(startRow);
+      if (stopRow != null) {
+        scan.setStopRow(stopRow);
+      }
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      while ((result = scanner.next()) != null) {
+        byte[] rowKey = result.getRow();
+        deletes.add(new Delete(rowKey));
+        // every 1024 iterations we perform the outstanding deletes
+        if (deletes.size() >= deletesPerRound) {
+          writeTable.delete(deletes);
+          deletes.clear();
+        }
+      }
+      // perform any outstanding deletes
+      if (deletes.size() > 0) {
+        writeTable.delete(deletes);
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
 
   @Override
   public void undeleteAll(byte[] row, byte[] column, long version) throws OperationException {

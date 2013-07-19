@@ -1,10 +1,13 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,6 +22,28 @@ public abstract class AbstractOVCTable implements OrderedVersionedColumnarTable 
   @Override
   public List<KeyRange> getSplits(int numSplits, byte[] start, byte[] stop, byte[][] columns, ReadPointer pointer) {
     return primitiveGetSplits(numSplits, start, stop);
+  }
+
+  @Override
+  public void deleteRowsDirtily(byte[] prefix) throws OperationException {
+    deleteRowsDirtily(prefix, keyAfterPrefix(prefix));
+  }
+
+  /**
+   * Given a key prefix, return the smallest key that is greater than all keys starting with that prefix.
+   */
+  static byte[] keyAfterPrefix(byte[] prefix) {
+    Preconditions.checkNotNull("prefix must not be null", prefix);
+    for (int i = prefix.length - 1; i >= 0; i--) {
+      if (prefix[i] != (byte) 0xff) {
+        // i is at the position of the last byte that is not xFF and thus can be incremented
+        byte[] after = Arrays.copyOf(prefix, i + 1);
+        ++after[i];
+        return after;
+      }
+    }
+    // all bytes are xFF -> there is no upper bound
+    return null;
   }
 
   /**

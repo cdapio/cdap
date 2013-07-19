@@ -5,12 +5,15 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
-import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.weave.api.RunId;
@@ -57,6 +60,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
+  private final MetricsCollectionService metricsCollectionService;
 
   private ProcedureHandlerMethodFactory handlerMethodFactory;
 
@@ -70,15 +74,24 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
                                 ServiceAnnouncer serviceAnnouncer,
-                                @Named("config.hostname") InetAddress hostname) {
+                                @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS) InetAddress hostname,
+                                MetricsCollectionService metricsCollectionService) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Inject(optional = true)
   void setLogWriter(LogWriter logWriter) {
     CAppender.logWriter = logWriter;
+  }
+
+  private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId,
+                                                            Arguments userArgs, ProcedureSpecification procedureSpec) {
+
+    return new BasicProcedureContextFactory(program, runId, instanceId, userArgs,
+                                            procedureSpec, metricsCollectionService);
   }
 
   @Override
@@ -98,13 +111,16 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "0"));
 
       RunId runId = RunIds.generate();
+
+      BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId,
+                                                                         options.getUserArguments(), procedureSpec);
+
       // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
       procedureContext = new BasicProcedureContext(program, runId, instanceId, ImmutableMap.<String, DataSet>of(),
-                                                   options.getUserArguments(), procedureSpec);
+                                                   options.getUserArguments(), procedureSpec, metricsCollectionService);
 
-      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, runId, instanceId, options,
-                                                               txAgentSupplierFactory);
+      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, txAgentSupplierFactory, contextFactory);
       handlerMethodFactory.startAndWait();
 
       channelGroup = new DefaultChannelGroup();
@@ -130,7 +146,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private ServerBootstrap createBootstrap(Program program, ExecutionHandler executionHandler,
                                           HandlerMethodFactory handlerMethodFactory,
-                                          CMetrics metrics,
+                                          MetricsCollector metrics,
                                           ChannelGroup channelGroup) {
     // Single thread for boss thread
     Executor bossExecutor = Executors.newSingleThreadExecutor(

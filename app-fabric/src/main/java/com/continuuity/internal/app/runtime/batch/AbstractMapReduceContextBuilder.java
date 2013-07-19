@@ -20,6 +20,7 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Throwables;
@@ -117,6 +118,10 @@ public abstract class AbstractMapReduceContextBuilder {
     if (injector.getBindings().containsKey(Key.get(LogWriter.class))) {
       CAppender.logWriter = injector.getInstance(LogWriter.class);
     }
+
+    // Initialize log appender
+    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
 
     return context;
   }
