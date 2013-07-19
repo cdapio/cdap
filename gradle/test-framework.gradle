@@ -1,0 +1,36 @@
+// centralized logging properties
+apply plugin: 'java'
+apply plugin: TestFrameworkPlugin
+
+/**
+ * This is a plugin.
+ */
+class TestFrameworkPlugin implements Plugin {
+
+    def void apply(project) {
+        project.convention.plugins.utilities =
+            new TestFrameworkPluginConvention(project)
+    }
+}
+
+/**
+ * Plugin convention class.
+ */
+class TestFrameworkPluginConvention {
+
+    private Project project
+
+    public TestFrameworkPluginConvention(Project project) {
+        this.project = project
+    }
+
+    /* DEFINE YOUR UTILITY METHODS HERE */
+    def executeCommand(command) {
+        def runnableCommand = command.join(' ')
+        def proc = runnableCommand.execute();
+        proc.in.eachLine {line -> println line}
+        proc.err.eachLine {line -> println '[ERROR]: ' + line}
+        proc.waitFor()
+        proc.exitValue()
+    }
+}
