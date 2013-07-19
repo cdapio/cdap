@@ -269,7 +269,7 @@ define([], function () {
 
 		},
 
-		sparkline: function (widget, data, w, h, percent) {
+		sparkline: function (widget, data, w, h, percent, shade) {
 
 			var allData = [], length = 0;
 			for (var i in this.series) {
@@ -300,7 +300,7 @@ define([], function () {
 				.x(function(d,i) { return x(i); })
 				.y(function(d) { return y(d); });
 
-			if (percent) {
+			if (percent || shade) {
 				var area = d3.svg.area()
 					.x(line.x())
 					.y1(line.y())
@@ -313,6 +313,7 @@ define([], function () {
 			return {
 				g: g,
 				percent: percent,
+				shade: shade,
 				series: {}, // Need to store to track data boundaries
 				update: function (name, data) {
 
@@ -357,7 +358,7 @@ define([], function () {
 						.x(function(d,i) { return x(i); })
 						.y(function(d) { return y(d); });
 
-					if (this.percent) {
+					if (this.percent || this.shade) {
 						var area = d3.svg.area().interpolate("basis")
 							.x(line.x())
 							.y1(line.y())

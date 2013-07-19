@@ -124,7 +124,8 @@ define([], function () {
 				'/collect/events?count=' + DASH_CHART_COUNT,
 				'/process/busyness?count=' + DASH_CHART_COUNT,
 				'/store/bytes?count=' + DASH_CHART_COUNT,
-				'/query/requests?count=' + DASH_CHART_COUNT
+				'/query/requests?count=' + DASH_CHART_COUNT,
+				'/store/bytes?aggregate=true'
 			], self = this;
 
 			function lastValue(arr) {
@@ -147,7 +148,7 @@ define([], function () {
 
 					self.set('value.process', lastValue(result[1].result.data));
 
-					var store = C.Util.bytes(lastValue(result[2].result.data));
+					var store = C.Util.bytes(result[4].result.data);
 					self.set('value.store', {
 						label: store[0],
 						unit: store[1]

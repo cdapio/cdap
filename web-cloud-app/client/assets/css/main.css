@@ -491,7 +491,7 @@ h1 span {
 	height: 100px;
 	overflow: hidden;
 	border: 1px solid #eff0f0;
-	background-color: #fcfcfc;
+	background-color: #fdfdfd;
 }
 .dash-chart rect {
 	fill: #40AFD0;
@@ -640,8 +640,6 @@ path.sparkline-data {
 }
 path.sparkline-area {
 	fill: #e4e4e4;
-	stroke: #e4e4e4;
-	stroke-width: 2px;
 }
 .blue path.sparkline-data {
 	stroke: #40AFD0;
