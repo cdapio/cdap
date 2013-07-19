@@ -154,7 +154,7 @@ public class TimeSeriesTableTest {
     MetricsScanner scanner = timeSeriesTable.scan(query);
     Assert.assertEquals(0, scanner.getRowScanned());
 
-    while(scanner.hasNext()){
+    while (scanner.hasNext()){
       MetricsScanResult result = scanner.next();
       Assert.assertTrue(false);
     }

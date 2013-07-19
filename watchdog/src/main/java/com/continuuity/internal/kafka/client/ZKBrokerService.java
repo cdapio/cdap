@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A {@link com.continuuity.kafka.client.BrokerService} that watches kafka zk nodes for updates of broker lists and leader for
+ * A {@link BrokerService} that watches kafka zk nodes for updates of broker lists and leader for
  * each topic partition.
  */
 final class ZKBrokerService extends AbstractIdleService implements BrokerService {

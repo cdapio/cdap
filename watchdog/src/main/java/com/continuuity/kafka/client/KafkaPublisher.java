@@ -8,7 +8,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.nio.ByteBuffer;
 
 /**
- * This interface is for publishing data to Kafka
+ * This interface is for publishing data to Kafka.
  */
 public interface KafkaPublisher {
 

@@ -64,7 +64,8 @@ final class MetricsRequestBuilder {
   }
 
   MetricsRequest build() {
-    return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricPrefix, tagPrefix, startTime, endTime, type, count);
+    return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricPrefix,
+                                  tagPrefix, startTime, endTime, type, count);
   }
 
   private static class MetricsRequestImpl implements MetricsRequest {

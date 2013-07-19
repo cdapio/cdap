@@ -188,11 +188,12 @@ public abstract class HBaseTestBase {
 
   public static HRegion createHRegion(byte[] tableName, byte[] startKey,
                                       byte[] stopKey, String callingMethod, Configuration conf,
-                                      byte[]... families)
-    throws IOException {
-    if (conf == null) conf = new Configuration();
+                                      byte[]... families) throws IOException {
+    if (conf == null) {
+      conf = new Configuration();
+    }
     HTableDescriptor htd = new HTableDescriptor(tableName);
-    for(byte [] family : families) {
+    for (byte[] family : families) {
       htd.addFamily(new HColumnDescriptor(family));
     }
     HRegionInfo info = new HRegionInfo(htd.getName(), startKey, stopKey, false);

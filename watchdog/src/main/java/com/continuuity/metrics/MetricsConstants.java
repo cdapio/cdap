@@ -5,6 +5,9 @@ package com.continuuity.metrics;
  */
 public final class MetricsConstants {
 
+  /**
+   * Define constants for metrics configuration keys.
+   */
   public static final class ConfigKeys {
 
     public static final String ENTITY_TABLE_NAME = "metrics.data.entity.tableName";

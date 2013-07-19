@@ -39,23 +39,23 @@ public class EntityTableTest {
 
     // Make sure it is created sequentially
     for (int i = 1; i <= 10; i++) {
-      Assert.assertEquals((long)i, entityTable.getId("app", "app" + i));
+      Assert.assertEquals((long) i, entityTable.getId("app", "app" + i));
     }
 
     // It should get the same value (from cache)
     for (int i = 1; i <= 10; i++) {
-      Assert.assertEquals((long)i, entityTable.getId("app", "app" + i));
+      Assert.assertEquals((long) i, entityTable.getId("app", "app" + i));
     }
 
     // Construct another entityTable, it should load from storage.
     entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes("testGetId")));
     for (int i = 1; i <= 10; i++) {
-      Assert.assertEquals((long)i, entityTable.getId("app", "app" + i));
+      Assert.assertEquals((long) i, entityTable.getId("app", "app" + i));
     }
 
     // ID for different type should have ID starts from 1 again.
     for (int i = 1; i <= 10; i++) {
-      Assert.assertEquals((long)i, entityTable.getId("flow", "flow" + i));
+      Assert.assertEquals((long) i, entityTable.getId("flow", "flow" + i));
     }
   }
 
@@ -65,7 +65,7 @@ public class EntityTableTest {
 
     // Create some entities.
     for (int i = 1; i <= 10; i++) {
-      Assert.assertEquals((long)i, entityTable.getId("app", "app" + i));
+      Assert.assertEquals((long) i, entityTable.getId("app", "app" + i));
     }
 
     // Reverse lookup

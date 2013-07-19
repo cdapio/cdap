@@ -4,5 +4,8 @@
 
 package com.continuuity.api.log;
 
+/**
+ *
+ */
 public interface LogMarkerFilter {
 }
