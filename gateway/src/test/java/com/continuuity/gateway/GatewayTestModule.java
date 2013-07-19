@@ -11,6 +11,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.inject.AbstractModule;
 
 /**
@@ -29,6 +30,7 @@ public final class GatewayTestModule extends AbstractModule {
     install(new DataFabricModules().getInMemoryModules());
     install(new ConfigModule(configuration));
     install(new IOModule());
+    install(new MetricsClientRuntimeModule().getNoopModules());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new LocationRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
