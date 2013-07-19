@@ -1,82 +1,108 @@
 #!/bin/sh
 if [ $# -lt 1 ]
 then
-    echo "Usage: testCmdLine.sh  <APP_HOME> <num_iterations>"
+    echo "Usage: testCmdLine.sh  <APP_HOME>"
     exit 1
 fi
 
 APP_HOME=$1
-BASEDIR=$(dirname $0)
+NUM_ITERATIONS=100
+
+jars[0]="CountCounts/CountCounts.jar"
+jars[1]="CountAndFilterWords/CountAndFilterWords.jar"
+jars[2]="CountOddAndEven/CountOddAndEven.jar"
+jars[3]="CountRandom/CountRandom.jar"
+jars[4]="CountTokens/CountTokens.jar"
+jars[5]="HelloWorld/HelloWorld.jar"
+jars[6]="SimpleWriteAndRead/SimpleWriteAndRead.jar"
+jars[7]="WordCount/WordCount.jar"
+jars[8]="Purchase/PurchaseApp.jar"
+
+#apps, flows
+apps[0]="CountAndFilterWords" flows[0]="CountAndFilterWords"
+apps[1]="CountCounts"         flows[1]="CountCounts"
+apps[2]="CountOddAndEven"     flows[2]="CountOddAndEven"
+apps[3]="CountRandom"         flows[3]="CountRandom"
+apps[4]="CountTokens"         flows[4]="CountTokens"
+apps[5]="HelloWorld"          flows[5]="whoFlow"
+apps[6]="SimpleWriteAndRead"  flows[6]="SimpleWriteAndRead"
+apps[7]="WordCount"           flows[7]="WordCount"
+apps[8]="PurchaseHistory"     flows[8]="PurchaseFlow"
 
 #compile all apps
+compile() {
 ant -f $APP_HOME/examples/build.xml
+}
 
-# start reactor
-$APP_HOME/bin/continuuity-reactor restart
-echo "[INFO]: Deploying all Apps"
-# deploy all apps
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/CountCounts/CountCounts.jar
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/CountAndFilterWords/CountAndFilterWords.jar
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/CountOddAndEven/CountOddAndEven.jar
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/CountRandom/CountRandom.jar
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/CountTokens/CountTokens.jar
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/HelloWorld/HelloWorld.jar
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/SimpleWriteAndRead/SimpleWriteAndRead.jar
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/WordCount/WordCount.jar
-$APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/Purchase/PurchaseApp.jar
+start_reactor() {
+  $APP_HOME/bin/continuuity-reactor start
+}
 
-# Starting all Apps
-echo "[INFO]: Starting all Apps"
-$APP_HOME/bin/reactor-client start --application CountAndFilterWords  --flow CountAndFilterWords
-$APP_HOME/bin/reactor-client start --application CountCounts --flow CountCounts
-$APP_HOME/bin/reactor-client start --application CountOddAndEven --flow CountOddAndEven
-$APP_HOME/bin/reactor-client start --application CountRandom --flow CountRandom
-$APP_HOME/bin/reactor-client start --application CountTokens --flow CountTokens
-$APP_HOME/bin/reactor-client start --application HelloWorld --flow whoFlow
-$APP_HOME/bin/reactor-client start --application SimpleWriteAndRead --flow SimpleWriteAndRead
-$APP_HOME/bin/reactor-client start --application WordCount --flow WordCounter
-$APP_HOME/bin/reactor-client start --application PurchaseHistory  --flow PurchaseFlow
+deploy_apps() {
+ for (( i=0; i<=8; i++ )); do
+    $APP_HOME/bin/reactor-client deploy --archive $APP_HOME/examples/${jars[i]}
+  done
+}
 
+start_apps() {
+  for ((i=0; i<=8; i++)); do
+    $APP_HOME/bin/reactor-client start --application ${apps[i]} --flow ${flows[i]}
+  done
+}
+
+start_procedure() {
 echo "[INFO]: Starting all procedures..."
-$APP_HOME/bin/reactor-client $1 --application CountCounts --procedure CountCountProcedure
-$APP_HOME/bin/reactor-client $1 --application HelloWorld --procedure whoFlow
-$APP_HOME/bin/reactor-client $1 --application PurchaseHistory  --procedure PurchaseQuery
-$APP_HOME/bin/reactor-client $1 --application WordCount --procedure WordCounter
+$APP_HOME/bin/reactor-client start --application CountCounts --procedure CountCountProcedure
+$APP_HOME/bin/reactor-client start --application HelloWorld --procedure whoFlow
+$APP_HOME/bin/reactor-client start --application PurchaseHistory  --procedure PurchaseQuery
+$APP_HOME/bin/reactor-client start --application WordCount --procedure WordCounter
 echo "All applications started"
+}
 
+check_status() {
+for ((i=0; i<=8; i++)); do
+    $APP_HOME/bin/reactor-client status --application ${apps[i]} --flow ${flow[i]}
+  done
+}
 
-# Check all Apps statuses
-echo "[INFO]: Check for apps status"
-$APP_HOME/bin/reactor-client status --application CountAndFilterWords  --flow CountAndFilterWords
-$APP_HOME/bin/reactor-client status --application CountCounts --flow CountCounts
-$APP_HOME/bin/reactor-client status --application CountOddAndEven --flow CountOddAndEven
-$APP_HOME/bin/reactor-client status --application CountRandom --flow CountRandom
-$APP_HOME/bin/reactor-client status --application CountTokens --flow CountTokens
-$APP_HOME/bin/reactor-client status --application HelloWorld --flow whoFlow
-$APP_HOME/bin/reactor-client status --application SimpleWriteAndRead --flow SimpleWriteAndRead
-$APP_HOME/bin/reactor-client status --application WordCount --flow WordCounter
-
+start_mr() {
 #echo "Starting PurchaseHistory:PurchaseHistoryBuilder MapReduce"
 $APP_HOME/bin/reactor-client start --application PurchaseHistory  --mapreduce PurchaseHistoryBuilder
-sleep 10
+}
 
+check_mr_status() {
 echo "Check status: PurchaseHistory::PurchaseHistoryBuilder "
 $APP_HOME/bin/reactor-client status --application PurchaseHistory --mapReduce PurchaseHistoryBuilder
+}
 
-#Stress Test rest api
-echo "[INFO]: Start Stress, number of iterations: "$2
-for (( i=0; i<$2; i++ )); do
-msg=`date`;
-curl -q -d "today $msg" http://localhost:10000/stream/wordStream;
-echo "sending: $msg"
-done
-echo "Stress run completed."
+test_rest() {
+  echo "Stress testing rest api. Number of iterations" ${NUM_ITERATIONS}
+  for (( i=0; i<$NUM_ITERATIONS; i++ )); do
+    msg=`date`;
+    curl -q -d "today $msg" http://localhost:10000/stream/wordStream;
+    #echo "sending: $msg"
+  done
+  echo "Stress run completed."
+}
 
-@echo "[INFO]: Stopping reactor
+stop_reactor() {
+echo "[INFO]: Stopping reactor"
 $APP_HOME/bin/continuuity-reactor stop
+}
 
-#clean reactor
-echo "[INFO]: cleaning reactor"
-rm -r $APP_HOME/data
+clean_reactor() {
+rm -r $APP_HOME/data/
+}
+
+start_reactor
+compile
+deploy_apps
+#start_apps
+#check_status
+#start_mr
+#check_mr_status
+#test_rest
+#stop_reactor
+#clean_reactor
 
 exit 0

@@ -1,13 +1,5 @@
 apply from: "$rootProject.projectDir/gradle/test-framework.gradle"
 
-ext.finalRelease = project.hasProperty("iterations")
-
-def iterations = 1000
-
-if (iterations) {
-   iterations = project.ext.properties.containsKey("iterations")
-}
-
 defaultTasks 'testDevSuite'
 
 task cleanDevSuite(type: Delete) {
@@ -29,7 +21,7 @@ task testDevSuite(type: Copy) {
         def binDir = "${project.projectDir}/bin"
 
         // Command <APP_HOME>
-        def command = ["${binDir}/test-dev-suite.sh  ${buildDir}/continuuity-developer-suite-${version} ${iterations}"]
+        def command = ["${binDir}/test-dev-suite.sh  ${buildDir}/continuuity-developer-suite-${version}"]
         println("${command}")
         if (executeCommand(command) != 0) {
             throw new GradleScriptException("[ERROR]: command line test failed.", null)
