@@ -101,17 +101,23 @@ public final class AvroFileWriter implements Closeable {
 
   @Override
   public void close() throws IOException {
-    // Close all files
-    LOG.info("Closing all files");
-    for (Map.Entry<String, AvroFile> entry : fileMap.entrySet()) {
-      entry.getValue().close();
-    }
-    fileMap.clear();
+    // First checkpoint state
     try {
       checkPoint(true);
     } catch (OperationException e) {
-      LOG.error("Caught exception while closing", e);
+      LOG.error("Caught exception while checkpointing", e);
     }
+
+    // Close all files
+    LOG.info("Closing all files");
+    for (Map.Entry<String, AvroFile> entry : fileMap.entrySet()) {
+      try {
+        entry.getValue().close();
+      } catch (Throwable e) {
+        LOG.error(String.format("Caught exception while closing file %s", entry.getValue().getPath()), e);
+      }
+    }
+    fileMap.clear();
   }
 
   private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws IOException, OperationException {
@@ -147,6 +153,7 @@ public final class AvroFileWriter implements Closeable {
   private void rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws IOException,
     OperationException {
     if (avroFile.getPos() > maxFileSize) {
+      LOG.info(String.format("Rotating file %s", avroFile.getPath()));
       avroFile.close();
       createAvroFile(loggingContext, timestamp);
       checkPoint(true);
@@ -159,25 +166,27 @@ public final class AvroFileWriter implements Closeable {
       return;
     }
 
-    long checkpointOffset = Long.MAX_VALUE;
+    // Get the max checkpoint seen
+    long checkpointOffset = -1L;
     Set<String> files = Sets.newHashSetWithExpectedSize(fileMap.size());
     for (Iterator<Map.Entry<String, AvroFile>> it = fileMap.entrySet().iterator(); it.hasNext();) {
       AvroFile avroFile = it.next().getValue();
       avroFile.flush();
+
+      files.add(avroFile.getPath().toUri().toString());
+      if (avroFile.getMaxOffsetSeen() > checkpointOffset) {
+        checkpointOffset = avroFile.getMaxOffsetSeen();
+      }
 
       // Close inactive files
       if (currentTs - avroFile.getLastModifiedTs() > inactiveIntervalMs) {
         avroFile.close();
         it.remove();
       }
-
-      files.add(avroFile.getPath().toUri().toString());
-      if (checkpointOffset > avroFile.getMaxOffsetSeen()) {
-        checkpointOffset = avroFile.getMaxOffsetSeen();
-      }
     }
 
-    if (checkpointOffset != Long.MAX_VALUE) {
+    if (checkpointOffset != -1) {
+      LOG.info(String.format("Saving checkpoint offset %d with files %d", checkpointOffset, files.size()));
       checkpointManager.saveCheckpoint(new CheckpointInfo(checkpointOffset, files));
     }
     lastCheckpointTime = currentTs;
@@ -241,11 +250,14 @@ public final class AvroFileWriter implements Closeable {
 
     @Override
     public void close() throws IOException {
-      if (dataFileWriter != null) {
-        dataFileWriter.close();
-      }
-      if (outputStream != null) {
-        outputStream.close();
+      try {
+        if (dataFileWriter != null) {
+          dataFileWriter.close();
+        }
+      } finally {
+        if (outputStream != null) {
+          outputStream.close();
+        }
       }
     }
   }
