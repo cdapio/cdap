@@ -105,6 +105,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       runLatch.await();
     } catch (InterruptedException e) {
       LOG.error("Waiting on latch interrupted");
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -118,7 +119,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        if (cConf.getBoolean("logging.app.run.opex.remote", true)) {
+        if (cConf.getBoolean("log.saver.run.opex.remote", true)) {
           // Bind remote operation executor
           bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
           bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);

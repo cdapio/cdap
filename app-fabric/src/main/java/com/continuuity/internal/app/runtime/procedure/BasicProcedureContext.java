@@ -4,7 +4,6 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.app.logging.ProcedureLoggingContext;
 import com.continuuity.app.metrics.ProcedureMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
@@ -12,6 +11,7 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.logging.context.ProcedureLoggingContext;
 import com.continuuity.weave.api.RunId;
 import com.google.common.collect.ImmutableMap;
 

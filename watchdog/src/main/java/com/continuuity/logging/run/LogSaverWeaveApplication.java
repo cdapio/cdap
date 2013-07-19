@@ -15,11 +15,13 @@ import java.io.File;
  */
 public class LogSaverWeaveApplication implements WeaveApplication {
   private final int partitions;
+  private final int memoryMb;
   private final File hConfig;
   private final File cConfig;
 
-  public LogSaverWeaveApplication(int partitions, File hConfig, File cConfig) {
+  public LogSaverWeaveApplication(int partitions, int memoryMb, File hConfig, File cConfig) {
     this.partitions = partitions;
+    this.memoryMb = memoryMb;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
   }
@@ -33,7 +35,7 @@ public class LogSaverWeaveApplication implements WeaveApplication {
     ResourceSpecification spec = ResourceSpecification.Builder
       .with()
       .setCores(2)
-      .setMemory(1, ResourceSpecification.SizeUnit.GIGA)
+      .setMemory(memoryMb, ResourceSpecification.SizeUnit.MEGA)
       .setInstances(partitions)
       .build();
 

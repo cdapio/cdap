@@ -13,8 +13,6 @@ import java.util.Iterator;
  */
 public final class NullInputDatum implements InputDatum {
 
-  private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.allocate(0);
-
   @Override
   public void submitAck(TransactionAgent txAgent) {
     // no-op
@@ -27,7 +25,7 @@ public final class NullInputDatum implements InputDatum {
 
   @Override
   public Iterator<ByteBuffer> getData() {
-    return Iterators.singletonIterator(EMPTY_BUFFER);
+    return Iterators.emptyIterator();
   }
 
   @Override

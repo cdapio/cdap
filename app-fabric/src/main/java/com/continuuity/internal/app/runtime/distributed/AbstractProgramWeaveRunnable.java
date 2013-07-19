@@ -11,9 +11,9 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -24,6 +24,8 @@ import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
+import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.weave.api.Command;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.api.WeaveContext;
@@ -62,7 +64,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -126,6 +127,11 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, cConf);
 
       injector = Guice.createInjector(createModule(context));
+
+      // Initialize log appender
+      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer.initialize();
+
       try {
         program = injector.getInstance(ProgramFactory.class).create(cmdLine.getOptionValue(RunnableOptions.JAR));
       } catch (IOException e) {
@@ -246,6 +252,10 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         // Bind remote operation executor
         bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
         bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);
+
+        // For publishing logs
+        install(new ConfigModule(cConf, hConf));
+        install(new LoggingModules().getDistributedModules());
 
         bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
           @Override
