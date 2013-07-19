@@ -128,7 +128,7 @@ define([], function () {
 
 			if (rerender) {
 				width = $(this.get('container')).outerWidth();
-				width += width * 0.08;
+				width *= 1.1;
 			} else {
 				width -= this.get('overlapX') || 0;
 			}

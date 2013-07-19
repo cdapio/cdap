@@ -211,8 +211,11 @@ define([], function () {
 
 					}
 
+					// Hax. Server treats end = start + count (no downsample yet)
+					count = C.__timeRange;
+
 					map[metrics[k]] = models[j];
-					queries.push(metrics[k] + '?start=' + start + '&count=60');// + count);
+					queries.push(metrics[k] + '?start=' + start + '&count=' + count);
 
 				}
 
@@ -225,8 +228,6 @@ define([], function () {
 					if (response.result) {
 
 						var result = response.result;
-
-
 
 						var i, k, data, path;
 						for (i = 0; i < result.length; i ++) {

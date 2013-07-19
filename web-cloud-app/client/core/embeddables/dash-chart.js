@@ -52,7 +52,7 @@ define([
       var width = $(this.get('container')).outerWidth();
       var height = this.get('height') || $(this.get('container')).outerHeight();
 
-      width += 64;
+      width *= 1.1;
 
       this.set('width', width);
       this.set('height', height);

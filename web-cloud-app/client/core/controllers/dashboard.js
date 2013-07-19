@@ -114,17 +114,22 @@ define([], function () {
 
 			var models = this.get('elements.App').get('content');
 
+			var now = new Date().getTime();
+			var start = now - (C.__timeRange * 1000);
+			start = Math.floor(start / 1000);
+
 			// Scans models for timeseries metrics and updates them.
 			C.Util.updateTimeSeries(models, this.HTTP);
 
 			// Scans models for aggregate metrics and udpates them.
 			C.Util.updateAggregates(models, this.HTTP);
 
+			// Hax. Count is timerange because server treats end = start + count (no downsample yet)
 			var queries = [
-				'/collect/events?count=' + DASH_CHART_COUNT,
-				'/process/busyness?count=' + DASH_CHART_COUNT,
-				'/store/bytes?count=' + DASH_CHART_COUNT,
-				'/query/requests?count=' + DASH_CHART_COUNT
+				'/collect/events?count=' + C.__timeRange + '&start=' + start,
+				'/process/busyness?count=' + C.__timeRange + '&start=' + start,
+				'/store/bytes?count=' + C.__timeRange + '&start=' + start,
+				'/query/requests?count=' + C.__timeRange + '&start=' + start
 			], self = this;
 
 			function lastValue(arr) {

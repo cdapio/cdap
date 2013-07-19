@@ -472,7 +472,7 @@ logger.setLevel(LOG_LEVEL);
 				protocol: tprotocol.TBinaryProtocol
 			});
 			conn.on('error', function (error) {
-			logger.warn('Could not connect to AppFabricService (Upload).');
+				logger.error('Could not connect to AppFabricService (Upload).', error);
 				socket.emit('upload', {'status': 'failed', 'step': 4, 'message': 'Could not connect to AppFabricService'});
 			});
 
