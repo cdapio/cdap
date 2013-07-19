@@ -101,17 +101,23 @@ public final class AvroFileWriter implements Closeable {
 
   @Override
   public void close() throws IOException {
-    // Close all files
-    LOG.info("Closing all files");
-    for (Map.Entry<String, AvroFile> entry : fileMap.entrySet()) {
-      entry.getValue().close();
-    }
-    fileMap.clear();
+    // First checkpoint state
     try {
       checkPoint(true);
     } catch (OperationException e) {
-      LOG.error("Caught exception while closing", e);
+      LOG.error("Caught exception while checkpointing", e);
     }
+
+    // Close all files
+    LOG.info("Closing all files");
+    for (Map.Entry<String, AvroFile> entry : fileMap.entrySet()) {
+      try {
+        entry.getValue().close();
+      } catch (Throwable e) {
+        LOG.error(String.format("Caught exception while closing file %s", entry.getValue().getPath()), e);
+      }
+    }
+    fileMap.clear();
   }
 
   private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws IOException, OperationException {
@@ -147,6 +153,7 @@ public final class AvroFileWriter implements Closeable {
   private void rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws IOException,
     OperationException {
     if (avroFile.getPos() > maxFileSize) {
+      LOG.info(String.format("Rotating file %s", avroFile.getPath()));
       avroFile.close();
       createAvroFile(loggingContext, timestamp);
       checkPoint(true);
@@ -178,6 +185,7 @@ public final class AvroFileWriter implements Closeable {
     }
 
     if (checkpointOffset != Long.MAX_VALUE) {
+      LOG.info(String.format("Saving checkpoint offset %d with files %d", checkpointOffset, files.size()));
       checkpointManager.saveCheckpoint(new CheckpointInfo(checkpointOffset, files));
     }
     lastCheckpointTime = currentTs;
@@ -241,11 +249,14 @@ public final class AvroFileWriter implements Closeable {
 
     @Override
     public void close() throws IOException {
-      if (dataFileWriter != null) {
-        dataFileWriter.close();
-      }
-      if (outputStream != null) {
-        outputStream.close();
+      try {
+        if (dataFileWriter != null) {
+          dataFileWriter.close();
+        }
+      } finally {
+        if (outputStream != null) {
+          outputStream.close();
+        }
       }
     }
   }
