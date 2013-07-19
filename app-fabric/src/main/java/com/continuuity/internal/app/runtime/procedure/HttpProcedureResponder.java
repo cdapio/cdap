@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -24,7 +23,7 @@ import java.io.OutputStreamWriter;
 /**
  *
  */
-final class HttpProcedureResponder implements ProcedureResponder {
+final class HttpProcedureResponder extends AbstractProcedureResponder {
 
   private final Channel channel;
   private ProcedureResponse.Writer writer;
