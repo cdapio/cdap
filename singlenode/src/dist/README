@@ -2,7 +2,6 @@ Continuuity (tm) Developer Suite
 
 Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 ================================================================================
-
 Continuuity Developer Suite includes a Local Reactor: a fully functioning single
 node edition of the Continuuity Reactor runtime. You can use this edition to
 write, debug and test your Big Data applications, before deploying them to a
@@ -10,7 +9,6 @@ remote staging or production Reactor.
 
 Installation
 ============
-
 To install and use Reactor and the included examples there are a few simple
 prerequisites:
 
@@ -71,6 +69,5 @@ continuuity-developer-suite-1.6.0
 
 Further Information
 ===================
-
 Further information covering the core concepts for developing applications for
 the Reactor platform can be found in Continuuity-Reactor-Developer-Guide.pdf.
