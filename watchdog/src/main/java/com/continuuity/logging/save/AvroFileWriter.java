@@ -174,8 +174,6 @@ public final class AvroFileWriter implements Closeable {
       avroFile.flush();
 
       files.add(avroFile.getPath().toUri().toString());
-      LOG.info(String.format("MaxOffsetSeen of file %s is %d. Checkpoint offset=%d",
-                             avroFile.getPath(), avroFile.getMaxOffsetSeen(), checkpointOffset));
       if (avroFile.getMaxOffsetSeen() > checkpointOffset) {
         checkpointOffset = avroFile.getMaxOffsetSeen();
       }
