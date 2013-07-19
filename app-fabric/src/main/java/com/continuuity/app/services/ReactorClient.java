@@ -112,6 +112,7 @@ public final class ReactorClient {
     out.println("  --mapreduce <id> \t MapReduce job of in the application.");
     out.println("  --host <hostname> \t Hostname to push the application to.");
     out.println("  --apikey <key> \t Apikey of the account.");
+    out.flush();
     if (error) {
       throw new UsageException();
     }
@@ -264,7 +265,7 @@ public final class ReactorClient {
     }
 
     if (!AVAILABLE_COMMANDS.contains(command)) {
-      usage(true);
+      usage(false);
       System.out.println(String.format("Unsupported command: %s", command));
       return "help";
     }
