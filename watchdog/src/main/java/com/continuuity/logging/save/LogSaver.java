@@ -186,8 +186,6 @@ public final class LogSaver extends AbstractIdleService {
           try {
             int msgCount = kafkaConsumer.fetchMessages(lastOffset + 1, this);
             if (msgCount == 0) {
-              LOG.info(String.format("No more messages in topic %s, partition %d. Will sleep for %d ms",
-                                     topic, partition, kafkaEmptySleepMs));
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
             }
 
@@ -284,8 +282,6 @@ public final class LogSaver extends AbstractIdleService {
               }
             }
             if (writeLists.isEmpty()) {
-              LOG.info(String.format("No more messages to save for topic %s, partition %d. Will sleep for %d ms",
-                                     topic, partition, kafkaEmptySleepMs));
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
             }
 
@@ -313,8 +309,11 @@ public final class LogSaver extends AbstractIdleService {
         LOG.info(String.format("Stopping LogWriter for topic %s, partition %d.", topic, partition));
       } finally {
         try {
-          avroFileWriter.close();
-          fileSystem.close();
+          try {
+            avroFileWriter.close();
+          } finally {
+            fileSystem.close();
+          }
         } catch (IOException e) {
           LOG.error(String.format("Caught exception while closing objects for topic %s, partition %d:",
                                   topic, partition), e);
