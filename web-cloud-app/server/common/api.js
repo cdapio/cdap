@@ -311,7 +311,7 @@ logger.setLevel(LOG_LEVEL);
 
 					identifier = new appfabricservice_types.FlowIdentifier({
 						applicationId: params[0],
-						flowId: '',
+						flowId: 'NONE',
 						version: -1,
 						accountId: accountID
 					});
