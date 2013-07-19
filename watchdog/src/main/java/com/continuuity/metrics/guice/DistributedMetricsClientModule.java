@@ -39,7 +39,7 @@ public final class DistributedMetricsClientModule extends PrivateModule {
 
   @Provides
   @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX)
-  public String providesKafkaTopic(CConfiguration cConf) {
+  public String providesKafkaTopicPrefix(CConfiguration cConf) {
     return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX, MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
   }
 

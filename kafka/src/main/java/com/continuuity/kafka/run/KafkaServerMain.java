@@ -2,12 +2,15 @@ package com.continuuity.kafka.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
 import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKOperations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,12 +22,6 @@ import java.util.Properties;
  */
 public class KafkaServerMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaServerMain.class);
-
-  private static final String KAFKA_PORT_CONFIG = "kafka.port";
-  private static final String KAFKA_NUM_PARTITIONS_CONFIG = "kafka.num.partitions";
-  private static final String KAFKA_LOG_DIR_CONFIG = "kafka.log.dir";
-  private static final String KAFKA_HOSTNAME_CONFIG = "kafka.bind.hostname";
-  private static final String KAFKA_ZOOKEEPER_NAMESPACE_CONFIG = "kafka.zookeeper.namespace";
 
   private Properties kafkaProperties;
   private EmbeddedKafkaServer kafkaServer;
@@ -49,18 +46,26 @@ public class KafkaServerMain extends DaemonMain {
 
     CConfiguration cConf = CConfiguration.create();
     zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
-    zkNamespace = cConf.get(KAFKA_ZOOKEEPER_NAMESPACE_CONFIG);
+    zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
-    int port = cConf.getInt(KAFKA_PORT_CONFIG, -1);
-    String hostname = cConf.get(KAFKA_HOSTNAME_CONFIG);
-    int numPartitions = cConf.getInt(KAFKA_NUM_PARTITIONS_CONFIG, 1);
-    String logDir = cConf.get(KAFKA_LOG_DIR_CONFIG);
+    int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);
+    String hostname = cConf.get(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG);
+    int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
+                                     KafkaConstants.DEFAULT_NUM_PARTITIONS);
+    String logDir = cConf.get(KafkaConstants.ConfigKeys.LOG_DIR_CONFIG);
 
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
       try {
         client.startAndWait();
-        client.create("/" + zkNamespace, null, CreateMode.PERSISTENT).get();
+
+        String path = "/" + zkNamespace;
+        LOG.info(String.format("Creating zookeeper namespace %s", path));
+
+        ZKOperations.ignoreError(
+          client.create(path, null, CreateMode.PERSISTENT),
+          KeeperException.NodeExistsException.class, path).get();
+
         client.stopAndWait();
         zkConnectStr = String.format("%s/%s", zkConnectStr, zkNamespace);
       } catch (Exception e) {
@@ -79,9 +84,6 @@ public class KafkaServerMain extends DaemonMain {
 
     kafkaServer = new EmbeddedKafkaServer(KafkaServerMain.class.getClassLoader(), kafkaProperties);
     kafkaServer.startAndWait();
-    if (!kafkaServer.isRunning()) {
-      throw new IllegalStateException("Cannot start Kafka Server");
-    }
 
     LOG.info("Embedded kafka server started successfully.");
   }

@@ -265,20 +265,22 @@ public final class LogSaver extends AbstractIdleService {
       try {
         while (isRunning()) {
           int messages = 0;
-          writeLists.clear();
           try {
-            long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventProcessingDelayMs;
-            synchronized (messageTable) {
-              for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
-                   it.hasNext(); ) {
-                Table.Cell<Long, String, List<KafkaLogEvent>> cell = it.next();
-                // Process only messages older than eventProcessingDelayMs
-                if (cell.getRowKey() >= processKey) {
-                  continue;
+            // Read new messages only if previous write was successful.
+            if (writeLists.isEmpty()) {
+              long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventProcessingDelayMs;
+              synchronized (messageTable) {
+                for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
+                     it.hasNext(); ) {
+                  Table.Cell<Long, String, List<KafkaLogEvent>> cell = it.next();
+                  // Process only messages older than eventProcessingDelayMs
+                  if (cell.getRowKey() >= processKey) {
+                    continue;
+                  }
+                  writeLists.add(cell.getValue());
+                  it.remove();
+                  messages += cell.getValue().size();
                 }
-                writeLists.add(cell.getValue());
-                it.remove();
-                messages += cell.getValue().size();
               }
             }
             if (writeLists.isEmpty()) {
@@ -289,8 +291,10 @@ public final class LogSaver extends AbstractIdleService {
 
             LOG.info(String.format("Got %d log messages to save for topic %s, partition %s",
                                    messages, topic, partition));
-            for (List<KafkaLogEvent> list : writeLists) {
-              avroFileWriter.append(list);
+            for (Iterator<List<KafkaLogEvent>> it = writeLists.iterator(); it.hasNext(); ) {
+              avroFileWriter.append(it.next());
+              // Remove successfully written message
+              it.remove();
             }
           } catch (Throwable e) {
             LOG.error(

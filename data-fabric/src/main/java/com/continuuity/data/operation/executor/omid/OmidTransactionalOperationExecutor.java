@@ -5,13 +5,13 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.MetricsCollector;
-import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
@@ -136,13 +136,11 @@ public class OmidTransactionalOperationExecutor
   private final int minTableWriteOpsToBatch;
 
   // Metrics collectors
-//  private final MetricsCollector dataFabricMetrics;
-  private final MetricsCollector streamMetrics;
-  private final MetricsCollector dataSetMetrics;
+  private MetricsCollector streamMetrics;
+  private MetricsCollector dataSetMetrics;
 
   @Inject
-  public OmidTransactionalOperationExecutor(TransactionOracle oracle, OVCTableHandle tableHandle, CConfiguration conf,
-                                            MetricsCollectionService metricsCollectionService) {
+  public OmidTransactionalOperationExecutor(TransactionOracle oracle, OVCTableHandle tableHandle, CConfiguration conf) {
     this.oracle = oracle;
     this.tableHandle = tableHandle;
     this.minTableWriteOpsToBatch = conf.getInt(Constants.CFG_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE,
@@ -152,9 +150,24 @@ public class OmidTransactionalOperationExecutor
       conf.getLongBytes(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES,
                         Constants.DEAFULT_CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES));
 
-//    this.dataFabricMetrics =
+    this.streamMetrics = createNoopMetricsCollector();
+    this.dataSetMetrics = createNoopMetricsCollector();
+  }
+
+  // Optional injection of MetricsCollectionService
+  @Inject(optional = true)
+  void setMetricsCollectionService(MetricsCollectionService metricsCollectionService) {
     this.streamMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, "-.stream", "0");
     this.dataSetMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, "-.dataset", "0");
+  }
+
+  private MetricsCollector createNoopMetricsCollector() {
+    return new MetricsCollector() {
+      @Override
+      public void gauge(String metricName, int value, String... tags) {
+        // No-op
+      }
+    };
   }
 
   // Metrics

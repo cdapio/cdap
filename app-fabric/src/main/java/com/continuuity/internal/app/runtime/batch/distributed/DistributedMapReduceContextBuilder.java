@@ -14,6 +14,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
+import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.AbstractModule;
@@ -72,6 +73,9 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           // Every mr task talks to datastore directly bypassing oracle
           bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
             .toInstance(false);
+
+          // For log publishing
+          install(new LoggingModules().getDistributedModules());
         }
       }
     );

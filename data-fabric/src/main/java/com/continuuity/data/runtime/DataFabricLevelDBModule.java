@@ -15,6 +15,7 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
+import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
@@ -24,7 +25,7 @@ import java.io.File;
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
  */
-public class DataFabricLevelDBModule extends PrivateModule {
+public class DataFabricLevelDBModule extends AbstractModule {
 
   private final String basePath;
   private final Integer blockSize;
@@ -101,7 +102,5 @@ public class DataFabricLevelDBModule extends PrivateModule {
     bind(CConfiguration.class)
       .annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
       .toInstance(conf);
-
-    expose(OperationExecutor.class);
   }
 }

@@ -3,6 +3,8 @@
  */
 package com.continuuity.metrics.data;
 
+import com.continuuity.metrics.process.KafkaConsumerMetaTable;
+
 /**
  * Factory to encapsulate creation of {@link TimeSeriesTable}.
  */
@@ -22,4 +24,11 @@ public interface MetricsTableFactory {
    * @return A new instance of {@link AggregatesTable}.
    */
   AggregatesTable createAggregates(String namespace);
+
+  /**
+   * Creates a new instance of {@link KafkaConsumerMetaTable}.
+   * @param namespace Name prefix of the table name
+   * @return A new instance of {@link KafkaConsumerMetaTable}.
+   */
+  KafkaConsumerMetaTable createKafkaConsumerMeta(String namespace);
 }

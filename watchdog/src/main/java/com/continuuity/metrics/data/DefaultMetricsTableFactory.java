@@ -8,6 +8,8 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.MetricsConstants;
+import com.continuuity.metrics.guice.MetricsAnnotation;
+import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
@@ -22,7 +24,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   private final MetricsEntityCodec entityCodec;
 
   @Inject
-  public DefaultMetricsTableFactory(CConfiguration cConf, OVCTableHandle tableHandle) {
+  public DefaultMetricsTableFactory(CConfiguration cConf, @MetricsAnnotation OVCTableHandle tableHandle) {
     try {
       this.cConf = cConf;
       this.tableHandle = tableHandle;
@@ -60,6 +62,18 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
       return new AggregatesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodec);
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public KafkaConsumerMetaTable createKafkaConsumerMeta(String namespace) {
+    try {
+      String tableName = namespace + "." + cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
+                                                     MetricsConstants.DEFAULT_KAFKA_META_TABLE);
+      return new KafkaConsumerMetaTable(tableHandle.getTable(Bytes.toBytes(tableName)));
+
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }

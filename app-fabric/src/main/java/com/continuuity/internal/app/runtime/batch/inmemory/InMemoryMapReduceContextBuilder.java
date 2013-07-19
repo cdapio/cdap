@@ -12,6 +12,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
+import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -67,6 +68,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
+      new LoggingModules().getInMemoryModules(),
       // Every mr task talks to datastore directly bypassing oracle
       NoOracleOpexModule.INSTANCE
     );
@@ -86,6 +88,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
         new DataFabricLevelDBModule(cConf) : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
+      new LoggingModules().getSingleNodeModules(),
       // Every mr task talks to datastore directly bypassing oracle
       NoOracleOpexModule.INSTANCE
     );
