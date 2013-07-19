@@ -148,15 +148,19 @@ public final class ReactorClient {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       if ("deploy".equals(command)) {
+        System.out.println("Deploying the app...");
         deploy(client);
       }
 
       if ("delete".equals(command)) {
+        System.out.println("Deleting the app...");
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         client.removeApplication(dummyAuthToken, new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, "", 1));
+        System.out.println("Deleted.");
       }
 
       if ("start".equals(command)) {
+        System.out.println("Starting...");
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier;
         if (flow != null) {
@@ -178,7 +182,7 @@ public final class ReactorClient {
       }
 
       if ("stop".equals(command)) {
-
+        System.out.println("Stopping...");
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier;
         if (flow != null) {
@@ -200,6 +204,7 @@ public final class ReactorClient {
       }
 
       if ("scale".equals(command)) {
+        System.out.println("Scaling...");
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, flow, 1);
         identifier.setType(EntityType.FLOW);
@@ -211,6 +216,7 @@ public final class ReactorClient {
       }
 
       if ("promote".equals(command)) {
+        System.out.println("Promoting to the cloud...");
         ResourceIdentifier identifier = new ResourceIdentifier(DEVELOPER_ACCOUNT_ID, application, "noresource", 1);
         boolean status = client.promote(new AuthToken(authToken), identifier, hostname);
         if (status) {
