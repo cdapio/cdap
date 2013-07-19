@@ -34,7 +34,7 @@ define([
 
             var widget = d3.select(this.get('container')[0]);
             var sparkline = C.Util.sparkline(widget, [],
-              this.get('width'), this.get('height'), true);
+              this.get('width'), this.get('height'), false, true);
 
             this.set('sparkline', sparkline);
 
@@ -67,7 +67,7 @@ define([
 
       var kind = this.get('kind');
       var w = this.get('width') || $(this.get('element')).outerWidth();
-      var h = this.get('height') || $(this.get('element')).outerHeight();
+      var h = 102;
 
       var container = $('<div class="dash-chart-container"></div>');
       this.set('container', container);
