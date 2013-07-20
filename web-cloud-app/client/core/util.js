@@ -463,6 +463,7 @@ define([], function () {
 							}, 1000);
 
 						} else {
+							window.location.href = '/';
 							window.location.reload();
 						}
 
