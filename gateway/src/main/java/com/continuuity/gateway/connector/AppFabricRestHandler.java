@@ -133,7 +133,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
                      new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
                                                                   Pattern.compile(FLOWLET_INSTANCES_PATH))).
                 put(DELETE_APP_PATH,
-                     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST),
+                     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.DELETE),
                                                                   Pattern.compile(DELETE_APP_PATH))).
                 build();
 
@@ -303,7 +303,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
           m.find();
           //Note: remove application needs to be refactored. for now, the remove app uses just the appId.
           FlowIdentifier flowIdent = new FlowIdentifier(accountId, m.group(1), "", 1);
-          client.remove(token, flowIdent);
+          client.removeApplication(token, flowIdent);
+
           respondSuccess(message.getChannel(), request);
           return;
         }
