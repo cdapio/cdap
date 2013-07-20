@@ -974,6 +974,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       }, Type.values()), "There are program still running for application " + appId.getId());
 
       Location appArchive = store.getApplicationArchiveLocation(appId);
+      Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
       appArchive.delete();
       deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
       store.removeApplication(appId);
