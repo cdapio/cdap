@@ -282,11 +282,17 @@ final class MetricsRequestParser {
                           : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) -
                                 MetricsConstants.QUERY_SECOND_DELAY;
 
-        builder.setCount(count);
-        builder.setStartTime(queryParams.containsKey(START_TIME)
-                               ? Integer.parseInt(queryParams.get(START_TIME).get(0))
-                               : endTime - count);
+        long startTime = queryParams.containsKey(START_TIME)
+                          ? Integer.parseInt(queryParams.get(START_TIME).get(0))
+                          : endTime - count;
+
+        if (startTime + count != endTime) {
+          endTime = startTime + count;
+        }
+
+        builder.setStartTime(startTime);
         builder.setEndTime(endTime);
+        builder.setCount(count);
         builder.setType(MetricsRequest.Type.TIME_SERIES);
       } catch (Exception e) {
         throw new IllegalArgumentException(e);

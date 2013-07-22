@@ -59,7 +59,7 @@ define([], function () {
 			var app_id = this.get('app'),
 				procedure_id = this.get('name');
 
-			http.rpc('runnable', 'status', [app_id, procedure_id, -1],
+			http.rpc('runnable', 'status', [app_id, procedure_id, -1, 'QUERY'],
 				function (response) {
 
 					if (response.result) {
