@@ -3,7 +3,6 @@ package com.continuuity.metrics2.frontend;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
@@ -37,9 +36,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.thrift.TException;
-import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,16 +76,6 @@ public class MetricsFrontendServiceImpl
 
 
   /**
-   * Connection string to connect to database.
-   */
-  private String connectionUrl;
-
-  /**
-   * Type of Database we are configured with.
-   */
-  private DBUtils.DBType type;
-
-  /**
    * Log reader. Marked as optional injection as currently log reader is piggy-backing on metricsfrontend service
    * We should remove it.
    * TODO: ENG-3102
@@ -115,31 +102,7 @@ public class MetricsFrontendServiceImpl
   private static DBConnectionPoolManager poolManager;
 
   @Inject
-  public MetricsFrontendServiceImpl(CConfiguration configuration)
-    throws ClassNotFoundException, SQLException {
-    /*
-    Connection string to connect to database.
-   */
-    String connectionUrl = configuration.get(Constants.CFG_METRICS_CONNECTION_URL,
-                                             Constants.DEFAULT_METIRCS_CONNECTION_URL);
-    /*
-    Type of Database we are configured with.
-   */
-    DBUtils.DBType type = DBUtils.loadDriver(connectionUrl);
-
-    // Creates a pooled data source.
-    if (type == DBUtils.DBType.MYSQL) {
-      MysqlConnectionPoolDataSource mysqlDataSource =
-        new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(mysqlDataSource, 1000);
-    } else if (type == DBUtils.DBType.HSQLDB) {
-      JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
-      jdbcDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(jdbcDataSource, 1000);
-    }
-
-    DBUtils.createMetricsTables(getConnection(), this.type);
+  public MetricsFrontendServiceImpl(CConfiguration configuration) {
 
     this.logPattern = configuration.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
   }
