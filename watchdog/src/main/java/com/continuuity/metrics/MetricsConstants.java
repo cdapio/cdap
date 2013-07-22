@@ -14,6 +14,9 @@ public final class MetricsConstants {
     public static final String METRICS_TABLE_PREFIX = "metrics.data.table.prefix";
     public static final String TIME_SERIES_TABLE_ROLL_TIME = "metrics.data.table.ts.rollTime";
 
+    // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
+    public static final String RETENTION_HOURS = "metrics.data.table.retention";
+
     public static final String SERVER_ADDRESS = "metrics.query.server.address";
     public static final String SERVER_PORT = "metrics.query.server.port";
     public static final String THREAD_POOL_SIZE = "metrics.query.thread.pool.size";
@@ -33,6 +36,7 @@ public final class MetricsConstants {
   public static final String DEFAULT_ENTITY_TABLE_NAME = "MetricsEntity";
   public static final String DEFAULT_METRIC_TABLE_PREFIX = "MetricsTable";
   public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
+  public static final long DEFAULT_RETENTION_HOURS = 2;
 
   public static final String DEFAULT_KAFKA_META_TABLE = "MetricsMeta";
   public static final String DEFAULT_KAFKA_TOPIC_PREFIX = "metrics";

@@ -569,6 +569,12 @@
         <description>Port for metrics query server to listen on.</description>
     </property>
 
+    <property>
+        <name>metrics.data.table.retention.1</name>
+        <value>2</value>
+        <description>Retention hours for the resolution 1 sec table.</description>
+    </property>
+
     <!--
         Logging Configuration
     -->
