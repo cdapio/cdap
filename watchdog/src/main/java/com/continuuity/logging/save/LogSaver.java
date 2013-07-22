@@ -99,7 +99,9 @@ public final class LogSaver extends AbstractIdleService {
     Preconditions.checkNotNull(account, "Account cannot be null");
 
     this.topic = KafkaTopic.getTopic();
+    LOG.info(String.format("Kafka topic is %s", this.topic));
     this.partition = partition;
+    LOG.info(String.format("Kafka partition is %d", partition));
     this.serializer = new LoggingEventSerializer();
 
     this.hConfig = hConfig;
@@ -112,6 +114,7 @@ public final class LogSaver extends AbstractIdleService {
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
     this.logBaseDir = new Path(baseDir);
+    LOG.info(String.format("Log base dir is %s", logBaseDir));
 
     long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, -1);
     Preconditions.checkArgument(retentionDurationDays > 0,
@@ -189,12 +192,12 @@ public final class LogSaver extends AbstractIdleService {
           try {
             int msgCount = kafkaConsumer.fetchMessages(lastOffset + 1, this);
             if (msgCount == 0) {
+              LOG.debug("Got 0 messages from Kafka, sleeping...");
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
-              continue;
+            } else {
+              LOG.info(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
+                                     msgCount, topic, partition, lastOffset));
             }
-
-            LOG.info(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
-                                   msgCount, topic, partition, lastOffset));
           } catch (OffsetOutOfRangeException e) {
 
             // Reset offset to earliest available
@@ -294,11 +297,12 @@ public final class LogSaver extends AbstractIdleService {
               }
             }
             if (writeLists.isEmpty()) {
+              LOG.debug("Got 0 messages to save, sleeping...");
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
+            } else {
+              LOG.info(String.format("Got %d log messages to save for topic %s, partition %s",
+                                     messages, topic, partition));
             }
-
-            LOG.info(String.format("Got %d log messages to save for topic %s, partition %s",
-                                   messages, topic, partition));
             for (Iterator<List<KafkaLogEvent>> it = writeLists.iterator(); it.hasNext(); ) {
               avroFileWriter.append(it.next());
               // Remove successfully written message
