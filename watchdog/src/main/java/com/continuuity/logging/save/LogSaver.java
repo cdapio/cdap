@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import kafka.common.OffsetOutOfRangeException;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -180,17 +181,27 @@ public final class LogSaver extends AbstractIdleService {
       try {
         CheckpointInfo checkpointInfo = checkpointManager.getCheckpoint();
         lastOffset = checkpointInfo == null ? -1 : checkpointInfo.getOffset();
-        LOG.info(String.format("Starting LogCollector for topic %s, partition %d.", topic, partition));
+        LOG.info(String.format("Starting LogCollector for topic %s, partition %d, offset %d.",
+                               topic, partition, lastOffset));
 
         while (isRunning()) {
           try {
             int msgCount = kafkaConsumer.fetchMessages(lastOffset + 1, this);
             if (msgCount == 0) {
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
+              continue;
             }
 
-            LOG.info(String.format("Got %d log messages from Kafka for topic %s, partition %s",
-                                   msgCount, topic, partition));
+            LOG.info(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
+                                   msgCount, topic, partition, lastOffset));
+          } catch (OffsetOutOfRangeException e) {
+
+            // Reset offset to earliest available
+            long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
+            LOG.warn(String.format("Offset %d is out of range. Resetting to earliest available offset %d",
+                                   lastOffset + 1, earliestOffset));
+            lastOffset = earliestOffset - 1;
+
           } catch (Throwable e) {
             LOG.error(
               String.format("Caught exception during fetch of topic %s, partition %d, will try again after %d ms:",
