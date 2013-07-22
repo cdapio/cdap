@@ -36,7 +36,7 @@ public final class LoggingConfiguration {
   public static final String LOG_META_DATA_TABLE = "__log_meta";
   // Defaults
   public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n";
-  public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
+  public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "sync";
   public static final String DEFAULT_NUM_PARTITIONS = "1";
 
   private LoggingConfiguration() {}

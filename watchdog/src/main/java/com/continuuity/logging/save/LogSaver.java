@@ -93,6 +93,7 @@ public final class LogSaver extends AbstractIdleService {
       "Kafka seed brokers config is not available");
     this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(kafkaSeedBrokers);
     Preconditions.checkNotNull(this.seedBrokers, "Not able to parse Kafka seed brokers");
+    LOG.info(String.format("Kafka seed brokers are %s", kafkaSeedBrokers));
 
     String account = cConfig.get(LoggingConfiguration.LOG_RUN_ACCOUNT);
     Preconditions.checkNotNull(account, "Account cannot be null");
