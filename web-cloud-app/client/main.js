@@ -3,12 +3,6 @@
  * Defines routes and attaches mocks
  */
 
-require.config({
-	paths: {
-		"core": "../core"
-	}
-});
-
 define (['core/application'], function (Application) {
 
 	/*
@@ -387,4 +381,5 @@ define (['core/application'], function (Application) {
 
 	});
 
+	return C;
 });

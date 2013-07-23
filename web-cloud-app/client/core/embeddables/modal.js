@@ -3,7 +3,7 @@
  */
 
 define([
-	'lib/text!../partials/modal.html'
+	'../lib/text!../partials/modal.html'
 	], function (Template) {
 
 		var Embeddable = Em.View.extend({
