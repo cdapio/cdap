@@ -647,4 +647,10 @@
         <description>ZK namespace for Kafka</description>
     </property>
 
+    <property>
+        <name>kafka.default.replication.factor</name>
+        <value>2</value>
+        <description>Kafka replication factor</description>
+    </property>
+
 </configuration>
