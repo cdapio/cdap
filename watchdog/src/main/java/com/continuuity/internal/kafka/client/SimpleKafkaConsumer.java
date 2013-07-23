@@ -61,6 +61,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
   private static final long CONSUMER_EXPIRE_MINUTES = 1L;   // close consumer if not used for 1 minute.
   private static final int MAX_FAILURE_RETRY = 5;           // Maximum number of retries if there is error.
   private static final long FAILURE_RETRY_INTERVAL = 100L;  // Sleep for 100 ms before retry again.
+  private static final long CONSUMER_FAILER_RETRY_INTERVAL = 5000L; // Sleep for 5 seconds if failure in consumer.
   private static final long EMPTY_FETCH_WAIT = 500L;        // Sleep for 500 ms if no message is fetched.
 
   private final BrokerService brokerService;
@@ -243,9 +244,11 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
           }
           consumerCancels.remove(this);
 
+          LOG.info("Requesting stop of all consumer threads.");
           for (ConsumerThread consumerThread : pollers) {
             consumerThread.terminate();
           }
+          LOG.info("Wait for all consumer threads to stop.");
           for (ConsumerThread consumerThread : pollers) {
             try {
               consumerThread.join();
@@ -253,6 +256,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
               LOG.warn("Interrupted exception while waiting for thread to complete.", e);
             }
           }
+          LOG.info("All consumer threads stopped.");
           // Use shutdown so that submitted task still has chance to execute, which is important for finished to get
           // called.
           executor.shutdown();
@@ -346,8 +350,12 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
 
       while (running) {
         if (consumerEntry == null && (consumerEntry = getConsumerEntry()) == null) {
-          LOG.error("Failed to get consumer for {}. Retry in {} ms", topicPart, FAILURE_RETRY_INTERVAL);
-          Uninterruptibles.sleepUninterruptibly(FAILURE_RETRY_INTERVAL, TimeUnit.MILLISECONDS);
+          try {
+            TimeUnit.MICROSECONDS.sleep(CONSUMER_FAILER_RETRY_INTERVAL);
+          } catch (InterruptedException e) {
+            // OK to ignore this, as interrupt would be caused by thread termination.
+            LOG.debug("Consumer sleep interrupted.", e);
+          }
           continue;
         }
 
