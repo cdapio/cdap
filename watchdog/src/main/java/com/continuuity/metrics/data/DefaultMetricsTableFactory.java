@@ -7,6 +7,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsAnnotation;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
@@ -47,9 +48,17 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
       String tableName = namespace + "." +
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+      int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-      return new TimeSeriesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodec,
-                                 resolution, getRollTime(resolution));
+      OrderedVersionedColumnarTable table;
+      if (ttl > 0 && tableHandle instanceof TimeToLiveOVCTableHandle) {
+        // If TTL exists and the table handle supports it, use the TTL as well.
+        table = ((TimeToLiveOVCTableHandle) tableHandle).getTable(Bytes.toBytes(tableName), ttl);
+      } else {
+        table = tableHandle.getTable(Bytes.toBytes(tableName));
+      }
+
+      return new TimeSeriesTable(table, entityCodec, resolution, getRollTime(resolution));
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
@@ -77,6 +86,11 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public boolean isTTLSupported() {
+    return tableHandle instanceof TimeToLiveOVCTableHandle;
   }
 
   private int getRollTime(int resolution) {

@@ -27,11 +27,11 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("bytes", request.getMetricPrefix());
     Assert.assertEquals(60, request.getCount());
 
-    request = MetricsRequestParser.parse(URI.create("/process/bytes/app1/flows/flowId?count=60&start=1&end=2"));
+    request = MetricsRequestParser.parse(URI.create("/process/bytes/app1/flows/flowId?count=60&start=1&end=61"));
     Assert.assertEquals("app1.f.flowId", request.getContextPrefix());
     Assert.assertEquals("bytes", request.getMetricPrefix());
     Assert.assertEquals(1, request.getStartTime());
-    Assert.assertEquals(2, request.getEndTime());
+    Assert.assertEquals(61, request.getEndTime());
 
     request = MetricsRequestParser.parse(URI.create("/process/bytes/app1/flows/flowId/flowletId?summary=true"));
     Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
