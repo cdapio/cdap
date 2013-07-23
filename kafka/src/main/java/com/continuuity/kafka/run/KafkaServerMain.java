@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 /**
@@ -45,6 +47,20 @@ public class KafkaServerMain extends DaemonMain {
 
     int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);
     String hostname = cConf.get(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG);
+
+    // Convert wildcard address to proper hostname
+    if (hostname != null) {
+      InetSocketAddress socketAddress = new InetSocketAddress(hostname, 0);
+      InetAddress address = socketAddress.getAddress();
+      if (address.isAnyLocalAddress()) {
+        try {
+          hostname = InetAddress.getLocalHost().getCanonicalHostName();
+        } catch (UnknownHostException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    }
+
     int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
                                      KafkaConstants.DEFAULT_NUM_PARTITIONS);
     String logDir = cConf.get(KafkaConstants.ConfigKeys.LOG_DIR_CONFIG);
