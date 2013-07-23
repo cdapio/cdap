@@ -91,6 +91,7 @@ public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle implement
   protected OrderedVersionedColumnarTable createNewTable(byte[] tableName, int ttl) throws OperationException {
     try {
       createTable(tableName, FAMILY, ttl);
+      alterTableTTL(tableName, ttl);
       return createOVCTable(tableName, ttl);
     } catch (IOException e) {
       exceptionHandler.handle(e);
@@ -134,7 +135,6 @@ public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle implement
         }
       }
       if (exists) {
-        alterTableTTL(tableName, ttl);
         LOG.info("Table '" + new String(tableName) + "' exists now. Assuming " +
                  "that another process concurrently created it. ");
       } else {
