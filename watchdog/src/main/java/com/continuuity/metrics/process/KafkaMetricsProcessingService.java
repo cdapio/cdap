@@ -9,7 +9,7 @@ import com.continuuity.metrics.MetricsConstants.ConfigKeys;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.weave.common.Cancellable;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Service for processing metrics by consuming metrics being published to kafka.
  */
-public final class KafkaMetricsProcessingService extends AbstractService {
+public final class KafkaMetricsProcessingService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessingService.class);
 
@@ -47,25 +47,24 @@ public final class KafkaMetricsProcessingService extends AbstractService {
   }
 
   @Override
-  protected void doStart() {
-    try {
-      metaTable = tableFactory.createKafkaConsumerMeta("default");
-      subscribe();
-      notifyStarted();
-    } catch (Throwable t) {
-      notifyFailed(t);
-    }
+  protected void startUp() {
+    LOG.info("Starting Metrics Processing Service.");
+    metaTable = tableFactory.createKafkaConsumerMeta("default");
+    subscribe();
+    LOG.info("Metrics Processing Service started.");
   }
 
   @Override
-  protected void doStop() {
+  protected void shutDown() {
+    LOG.info("Stopping Metrics Processing Service.");
     for (Cancellable cancel : unsubscribes) {
       cancel.cancel();
     }
-    notifyStopped();
+    LOG.info("Metrics Processing Service stopped.");
   }
 
   private void subscribe() {
+    LOG.info("Prepare to subscribe.");
     // Assuming there is only one process that pulling in all metrics.
     KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
@@ -81,16 +80,21 @@ public final class KafkaMetricsProcessingService extends AbstractService {
       }
 
       unsubscribes.add(preparer.consume(callbackFactory.create(metaTable, scope)));
-      LOG.info("Consumer created for topic {}", topic);
+      LOG.info("Consumer created for topic {}, partition size {}", topic, partitionSize);
     }
+
+    LOG.info("Subscription ready.");
   }
 
   private long getOffset(String topic, int partition) {
+    LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
     try {
-      return metaTable.get(new TopicPartition(topic, partition));
+      long offset = metaTable.get(new TopicPartition(topic, partition));
+      LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
+      return offset;
     } catch (OperationException e) {
       LOG.error("Failed to get offset from meta table. Defaulting to beginning. {}", e.getMessage(), e);
     }
-    return -1;
+    return -1L;
   }
 }

@@ -3,6 +3,8 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.common.utils.Copyright;
@@ -86,6 +88,8 @@ public class OpexServiceMain {
 
     Injector injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
+      new IOModule(),
+      new ConfigModule(),
       module);
 
     // start an opex service
