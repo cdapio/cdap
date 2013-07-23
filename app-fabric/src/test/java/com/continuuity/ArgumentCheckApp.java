@@ -84,6 +84,10 @@ public class ArgumentCheckApp implements Application {
         throw new IllegalArgumentException("User argument from prev flowlet not passed");
       }
     }
+
+    public void process(int i) {
+      // A dummy process method that has no matching upstream.
+    }
   }
 
   private class SimpleProcedure extends AbstractProcedure {

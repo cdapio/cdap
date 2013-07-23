@@ -7,7 +7,7 @@
 
 var express = require('express'),
   io = require('socket.io'),
-  Int64 = require('node-int64').Int64,
+  Int64 = require('node-int64'),
   fs = require('fs'),
   log4js = require('log4js'),
   http = require('http'),
@@ -261,8 +261,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
     return false;
   }
 
-
-var singularREST = {
+  var singularREST = {
     'apps': 'getApplication',
     'streams': 'getStream',
     'flows': 'getFlow',
@@ -387,6 +386,35 @@ var singularREST = {
 
   });
 
+  this.app.get('/logs/:method/:appId/:entityId/:entityType', function (req, res) {
+    
+    if (!req.params.method || !req.params.appId || !req.params.entityId || !req.params.entityType) {
+      res.send('incorrect request');
+    }
+
+    var offSet = req.query.fromOffset;
+    var maxSize = req.query.maxSize;
+    var filter = req.query.filter;
+    var method = req.params.method;
+    var accountID = 'developer';
+    var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize, filter];
+
+    self.logger.trace('Logs ' + method + ' ' + req.url);
+    
+    self.Api.monitor(accountID, method, params, function (error, result) {
+      if (error) {
+        self.logger.error(error);
+      }
+      result.map(function (item) {
+        item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset));
+        return item;
+      });
+
+      res.send({result: result, error: error});
+    });
+
+  });
+
   /*
    * RPC Handler
    */
@@ -472,16 +500,25 @@ var singularREST = {
 
       response.on('end', function () {
 
-        res.send({ result: JSON.parse(data), error: null });
+        try {
+          data = JSON.parse(data);
+          res.send({ result: data, error: null });
+        } catch (e) {
+          self.logger.error('Parsing Error', data);
+          res.send({ result: null, error: 'Parsing Error' });
+        }
 
       });
     });
 
     request.on('error', function(e) {
 
-      res.send({ result: null, error: {
-        fatal: 'MetricsService: ' + e.code
-      } });
+      res.send({
+        result: null,
+        error: {
+          fatal: 'MetricsService: ' + e.code
+        }
+      });
 
     });
 

@@ -90,7 +90,9 @@ define([], function () {
 
 			for (var id in streams) {
 				streams[i].id = id;
-				streams[i].flowlet = this.get('model').get('id');
+				streams[i].flowlet = model.get('id');
+				streams[i].app = flow.get('app');
+				streams[i].flow = flow.get('name');
 				queues.push(C.Queue.create(streams[i]));
 			}
 			this.get('elements.Queue').pushObjects(queues);

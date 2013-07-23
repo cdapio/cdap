@@ -2,8 +2,10 @@ package com.continuuity.common.guice;
 
 import com.continuuity.internal.io.ASMDatumWriterFactory;
 import com.continuuity.internal.io.ASMFieldAccessorFactory;
+import com.continuuity.internal.io.DatumReaderFactory;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.FieldAccessorFactory;
+import com.continuuity.internal.io.ReflectionDatumReaderFactory;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.SchemaGenerator;
 import com.google.inject.PrivateModule;
@@ -25,5 +27,7 @@ public class IOModule extends PrivateModule {
     expose(DatumWriterFactory.class);
 
     // Note: Need to add the DatumReader counter parts when those are refactored to use ASM as well.
+    bind(DatumReaderFactory.class).to(ReflectionDatumReaderFactory.class).in(Scopes.SINGLETON);
+    expose(DatumReaderFactory.class);
   }
 }

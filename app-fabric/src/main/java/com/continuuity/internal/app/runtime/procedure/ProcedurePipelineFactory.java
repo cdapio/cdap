@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsCollector;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -33,7 +33,7 @@ final class ProcedurePipelineFactory implements ChannelPipelineFactory {
 
   ProcedurePipelineFactory(ExecutionHandler executionHandler,
                            HandlerMethodFactory handlerMethodFactory,
-                           CMetrics metrics,
+                           MetricsCollector metrics,
                            final ChannelGroup channelGroup) {
     this.executionHandler = executionHandler;
     this.dispatcher = new ProcedureDispatcher(handlerMethodFactory, metrics);

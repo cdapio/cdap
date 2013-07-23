@@ -8,97 +8,57 @@ define([
   var Embeddable = Em.View.extend({
     classNames: ['dash-chart'],
 
-    build: function (w, h, data) {
-
-      var x = d3.scale.linear()
-        .domain([0, 1])
-        .range([0, w / data.length]);
-      var y = d3.scale.linear()
-        .domain([0, 100])
-        .rangeRound([0, h]);
-
-      this.set('x', x);
-      this.set('y', y);
-
-      var chart = d3.select(this.get('element')).append("svg")
-        .attr("class", "chart")
-        .attr("width", w)
-        .attr("height", h);
-
-      /*
-      chart.append("line")
-        .attr("x1", 0)
-        .attr("x2", w)
-        .attr("y1", h - .5)
-        .attr("y2", h - .5)
-        .style("stroke", "#000");
-      */
-
-      w = w / data.length;
-
-      chart.selectAll("rect")
-        .data(data)
-        .enter().append("rect")
-          .attr("x", function(d, i) { return x(i) - .5; })
-          .attr("y", function(d) { return h - y(d.value) - .5; })
-          .attr("width", w)
-          .attr("height", function(d) { return y(d.value); });
-
-      return chart;
-
-    },
-
-    render: function () {
+    render: function (redraw) {
 
       var kind = this.get('controller.timeseries.' + this.get('kind'));
 
       if (kind) {
 
-        var data = kind.slice(0);
+        kind = kind.slice(0);
 
-        var w = this.get('width');
-        var h = this.get('height');
-
-        var chart = this.get('chart');
-        if (!chart) {
-          this.set('chart', chart = this.build(w, h, data));
+        var data  =[];
+        var i = kind.length;
+        while (i--) {
+          data.unshift(kind[i].value);
         }
 
-        var x = this.get('x');
-        var y = this.get('y');
+        if (data && data.length) {
+          if ((typeof redraw === 'boolean' && redraw) || !this.get('sparkline')) {
 
-        chart.selectAll("rect")
-          .data(data)
-          .transition()
-          .duration(1000)
-          .attr("y", function(d) { return h - y(d.value) - .5; })
-          .attr("height", function(d) { return y(d.value); });
+            if (!this.get('container').html) {
+              return;
+            }
 
-        return;
+            this.get('container').html('');
+            this.get('container').css({margin: ''});
 
-        var rect = chart.selectAll("rect")
-          .data(data, function(d) { return d.timestamp; });
+            var widget = d3.select(this.get('container')[0]);
+            var sparkline = C.Util.sparkline(widget, [],
+              this.get('width'), this.get('height'), false, true);
 
+            this.set('sparkline', sparkline);
 
-        w = Math.floor(w / data.length);
+          }
+        }
 
-        rect.enter().insert("rect", "line")
-          .attr("x", function(d, i) { return x(i + 1) - .5; })
-          .attr("y", function(d) { return h - y(d.value) - .5; })
-          .attr("width", w)
-          .attr("height", function(d) { return y(d.value); })
-        .transition().duration(1000)
-          .attr("x", function(d, i) { return x(i) - .5; });
+        this.get('sparkline').update('A', data);
 
-        rect.transition()
-          .duration(1000)
-          .attr("x", function(d, i) { return x(i) - .5; });
+      }
 
-        rect.exit().transition()
-          .duration(1000)
-          .attr("x", function(d, i) { return x(i - 1) - .5; })
-          .remove();
+    },
 
+    fillContainer: function (rerender) {
+
+      var width = $(this.get('container')).outerWidth();
+      var height = this.get('height') || $(this.get('container')).outerHeight();
+
+      width *= 1.1;
+
+      this.set('width', width);
+      this.set('height', height);
+
+      if (rerender) {
+        this.render(true);
       }
 
     },
@@ -107,12 +67,30 @@ define([
 
       var kind = this.get('kind');
       var w = this.get('width') || $(this.get('element')).outerWidth();
-      var h = this.get('height') || $(this.get('element')).outerHeight();
+      var h = 102;
+
+      var container = $('<div class="dash-chart-container"></div>');
+      this.set('container', container);
+      $(this.get('element')).append(container);
 
       this.set('width', w);
       this.set('height', h);
 
       this.addObserver('controller.timeseries.' + kind, this, this.render);
+
+      var self = this;
+
+      C.addResizeHandler(kind, function () {
+        self.fillContainer(true);
+      });
+
+      this.fillContainer();
+
+    },
+    willDestroyElement: function () {
+
+      var kind = this.get('kind');
+      C.removeResizeHandler(kind);
 
     }
   });

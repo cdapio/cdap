@@ -44,6 +44,7 @@ define([], function () {
 
 				self.set('elements.' + type, Em.ArrayProxy.create({content: objects}));
 
+				clearInterval(self.interval);
 				self.interval = setInterval(function () {
 					self.updateStats();
 				}, C.POLLING_INTERVAL);
@@ -73,10 +74,10 @@ define([], function () {
 			/*
 			 * Hax until we have a pub/sub system for state.
 			 */
-			i = models.length;
+			var i = models.length;
 			while (i--) {
-				if (typeof models.updateState === 'function') {
-					models.updateState(this.HTTP);
+				if (typeof models[i].updateState === 'function') {
+					models[i].updateState(this.HTTP);
 				}
 			}
 			/*

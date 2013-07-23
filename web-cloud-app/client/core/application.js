@@ -37,6 +37,15 @@ function(Components, Embeddables, HTTP, Socket, Util){
 		 */
 		WATCH_LATENCY: false,
 
+		/**
+		 * Entity types and name mapping.
+		 */
+		ENTITY_MAP: {
+			'FLOW': 1,
+			'PROCEDURE': 2,
+			'MAP_REDUCE': 3
+		},
+
 		/*
 		 * Allows us to set the ID of the main view element.
 		 */
@@ -56,24 +65,26 @@ function(Components, Embeddables, HTTP, Socket, Util){
 
 				Em.debug('Routing started');
 
-				/*
-				 * Do version check.
-				 */
-				this.HTTP.get('version', function (version) {
+				if (C.Env.location !== 'remote') {
+					/*
+					 * Do version check.
+					 */
+					this.HTTP.get('version', function (version) {
 
-					if (version && version.current !== 'UNKNOWN') {
+						if (version && version.current !== 'UNKNOWN') {
 
-						if (version.current !== version.newest) {
+							if (version.current !== version.newest) {
 
-							$('#warning').html('<div>New version available: ' + version.current + ' » ' +
-								version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
-								'Click here to download</a>.</div>').show();
+								$('#warning').html('<div>New version available: ' + version.current + ' » ' +
+									version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
+									'Click here to download</a>.</div>').show();
+
+							}
 
 						}
 
-					}
-
-				});
+					});
+				}
 			}
 		}),
 
@@ -138,7 +149,9 @@ function(Components, Embeddables, HTTP, Socket, Util){
 		setTimeRange: function (millis) {
 			this.set('__timeRange', millis);
 			this.set('__timeLabel', {
+				/*
 				86400: 'Last 24 Hours',
+				*/
 				3600: 'Last 1 Hour',
 				600: 'Last 10 Minutes',
 				60: 'Last 1 Minute'

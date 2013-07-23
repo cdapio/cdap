@@ -162,14 +162,18 @@ define([], function () {
 			if (queries.length) {
 				http.post('metrics', queries, function (response) {
 
-					var result = response.result;
+					if (response.result) {
 
-					var i, k, data, path, label;
-					for (i = 0; i < result.length; i ++) {
+						var result = response.result;
 
-						path = result[i].path.split('?')[0];
-						label = map[path].get('aggregates')[path];
-						map[path].setMetric(label, result[i].result.data);
+						var i, k, data, path, label;
+						for (i = 0; i < result.length; i ++) {
+
+							path = result[i].path.split('?')[0];
+							label = map[path].get('aggregates')[path];
+							map[path].setMetric(label, result[i].result.data);
+
+						}
 
 					}
 
@@ -180,10 +184,15 @@ define([], function () {
 
 		updateTimeSeries: function (models, http) {
 
-			var j, k, metrics, map = {};
+			var j, k, metrics, count, map = {};
 			var queries = [];
 
-			var max = 60;
+			var max = 60, start;
+			var now = new Date().getTime();
+
+			// Add a two second buffer to make sure we have a full response.
+			start = now - ((C.__timeRange + 2) * 1000);
+			start = Math.floor(start / 1000);
 
 			for (j = 0; j < models.length; j ++) {
 
@@ -203,8 +212,11 @@ define([], function () {
 
 					}
 
+					// Hax. Server treats end = start + count (no downsample yet)
+					count = C.__timeRange;
+
 					map[metrics[k]] = models[j];
-					queries.push(metrics[k] + '?count=' + count);
+					queries.push(metrics[k] + '?start=' + start + '&count=' + count);
 
 				}
 
@@ -214,34 +226,44 @@ define([], function () {
 
 				http.post('metrics', queries, function (response) {
 
-					var result = response.result;
+					if (response.result) {
 
-					var i, k, data, path;
-					for (i = 0; i < result.length; i ++) {
+						var result = response.result;
 
-						path = result[i].path.split('?')[0];
+						var i, k, data, path;
+						for (i = 0; i < result.length; i ++) {
 
-						if (result[i].error) {
+							path = result[i].path.split('?')[0];
 
-							console.error('TimeSeries', result[i].error);
+							if (result[i].error) {
 
-						} else {
+								console.error('TimeSeries', result[i].error);
 
-							data = result[i].result.data, k = data.length;
-							while(k --) {
-								data[k] = data[k].value;
+							} else {
+
+								data = result[i].result.data, k = data.length;
+
+								while(k --) {
+									data[k] = data[k].value;
+								}
+
+								map[path].get('timeseries').set(path, data);
+
+								/*
+								TODO: Use count to reduce traffic.
+
+								var mapped = map[path].get('timeseries');
+								var ts = mapped.get(path);
+
+								ts.shift(data.length);
+								ts = ts.concat(data);
+
+								mapped.set(path, ts);
+								*/
+
 							}
 
-							var mapped = map[path].get('timeseries');
-							var ts = mapped.get(path);
-
-							ts.shift(data.length);
-							ts = ts.concat(data);
-
-							mapped.set(path, ts);
-
 						}
-
 					}
 
 				});
@@ -249,7 +271,7 @@ define([], function () {
 
 		},
 
-		sparkline: function (widget, data, w, h, percent) {
+		sparkline: function (widget, data, w, h, percent, shade) {
 
 			var allData = [], length = 0;
 			for (var i in this.series) {
@@ -280,7 +302,7 @@ define([], function () {
 				.x(function(d,i) { return x(i); })
 				.y(function(d) { return y(d); });
 
-			if (percent) {
+			if (percent || shade) {
 				var area = d3.svg.area()
 					.x(line.x())
 					.y1(line.y())
@@ -293,6 +315,7 @@ define([], function () {
 			return {
 				g: g,
 				percent: percent,
+				shade: shade,
 				series: {}, // Need to store to track data boundaries
 				update: function (name, data) {
 
@@ -337,11 +360,11 @@ define([], function () {
 						.x(function(d,i) { return x(i); })
 						.y(function(d) { return y(d); });
 
-					if (this.percent) {
+					if (this.percent || this.shade) {
 						var area = d3.svg.area().interpolate("basis")
 							.x(line.x())
 							.y1(line.y())
-							.y0(y(0));
+							.y0(y(-100));
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
@@ -400,6 +423,10 @@ define([], function () {
 			return [rounded, ''];
 
 		},
+		numberArrayToString: function(value) {
+			return this.number(value).join('');
+		},
+
 		bytes: function (value) {
 
 			if (value > 1073741824) {
@@ -413,7 +440,7 @@ define([], function () {
 				return [((Math.round(value * 10) / 10)), 'KB'];
 			}
 
-			return [value, 'BYTES'];
+			return [value, 'B'];
 		},
 		reset: function () {
 			C.Modal.show(
@@ -436,6 +463,7 @@ define([], function () {
 							}, 1000);
 
 						} else {
+							window.location.href = '/';
 							window.location.reload();
 						}
 

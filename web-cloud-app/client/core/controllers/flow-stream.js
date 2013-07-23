@@ -89,8 +89,8 @@ define([], function () {
 				if (response && response.error) {
 					C.Modal.show(
 					"Inject Error",
-					"The gateway responded with: " + error.statusCode + '. Info: ' +
-						JSON.stringify(error.response),
+					"The gateway responded with: " + response.error.statusCode + '. Info: ' +
+						JSON.stringify(response.error.response),
 					true, true);
 				}
 

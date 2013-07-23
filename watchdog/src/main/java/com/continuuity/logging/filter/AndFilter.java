@@ -1,6 +1,7 @@
 package com.continuuity.logging.filter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -23,5 +24,12 @@ public class AndFilter implements Filter {
       }
     }
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("expressions", expressions)
+      .toString();
   }
 }

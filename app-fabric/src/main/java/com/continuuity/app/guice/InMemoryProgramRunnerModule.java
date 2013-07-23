@@ -8,6 +8,7 @@ import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -124,7 +125,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     @Inject
     private DiscoveryServiceAnnouncer(DiscoveryService discoveryService,
-                                      @Named("config.hostname") InetAddress hostname) {
+                                      @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS) InetAddress hostname) {
       this.discoveryService = discoveryService;
       this.hostname = hostname;
     }

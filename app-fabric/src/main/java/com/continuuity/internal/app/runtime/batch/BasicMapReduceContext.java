@@ -8,15 +8,16 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.metrics.Metrics;
-import com.continuuity.app.logging.MapReduceLoggingContext;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricType;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.logging.context.MapReduceLoggingContext;
 import com.continuuity.weave.api.RunId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
@@ -32,27 +33,39 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MapReduceSpecification spec;
   private Job job;
 
-  private final MapReduceMetrics metrics;
   private final MapReduceLoggingContext loggingContext;
 
   private BatchReadable inputDataset;
   private List<Split> inputDataSelection;
   private BatchWritable outputDataset;
-  private final CMetrics systemMapperMetrics;
-  private final CMetrics systemReducerMetrics;
+  private final MetricsCollector systemMapperMetrics;
+  private final MetricsCollector systemReducerMetrics;
   private final TransactionAgent txAgent;
   private final Arguments runtimeArguments;
 
   public BasicMapReduceContext(Program program, RunId runId, Arguments runtimeArguments,
                                TransactionAgent txAgent, Map<String, DataSet> datasets,
                                MapReduceSpecification spec) {
+    this(program, runId, runtimeArguments, txAgent, datasets, spec, null);
+  }
+
+
+  public BasicMapReduceContext(Program program, RunId runId, Arguments runtimeArguments,
+                               TransactionAgent txAgent, Map<String, DataSet> datasets,
+                               MapReduceSpecification spec, MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
     this.runtimeArguments = runtimeArguments;
     this.txAgent = txAgent;
-    this.systemMapperMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Mapper"));
-    this.systemReducerMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Reducer"));
-    this.metrics = new MapReduceMetrics(getAccountId(), getApplicationId(),
-                                        getProgramName(), getRunId().toString(), getInstanceId());
+
+    if (metricsCollectionService != null) {
+      this.systemMapperMetrics = getMetricsCollector(MetricsScope.REACTOR, metricsCollectionService,
+                                                     getMetricContext(MapReduceMetrics.TaskType.Mapper));
+      this.systemReducerMetrics = getMetricsCollector(MetricsScope.REACTOR, metricsCollectionService,
+                                                      getMetricContext(MapReduceMetrics.TaskType.Reducer));
+    } else {
+      this.systemMapperMetrics = null;
+      this.systemReducerMetrics = null;
+    }
     this.loggingContext = new MapReduceLoggingContext(getAccountId(), getApplicationId(), getProgramName());
     this.spec = spec;
   }
@@ -93,26 +106,24 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return 0;
   }
 
-  private String getMetricName(String task) {
-    return String.format("%s.%s.%s.%s.%s.%d",
-                         getAccountId(),
+  private String getMetricContext(MapReduceMetrics.TaskType type) {
+    return String.format("%s.b.%s.%s.%d",
                          getApplicationId(),
                          getProgramName(),
-                         getRunId(),
-                         task,
+                         type.getId(),
                          getInstanceId());
   }
 
   @Override
   public Metrics getMetrics() {
-    return metrics;
+    throw new UnsupportedOperationException("User metrics should be emitted through the MR framework.");
   }
 
-  public CMetrics getSystemMapperMetrics() {
+  public MetricsCollector getSystemMapperMetrics() {
     return systemMapperMetrics;
   }
 
-  public CMetrics getSystemReducerMetrics() {
+  public MetricsCollector getSystemReducerMetrics() {
     return systemReducerMetrics;
   }
 

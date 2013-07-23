@@ -7,6 +7,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
@@ -1883,7 +1884,62 @@ public abstract class TestOVCTable {
 
     assertTrue(Bytes.equals(entrycol1.getValue(), value));
     assertTrue(Bytes.equals(entrycol2.getValue(), highValue));
-
   }
 
+  @Test
+  public void testDeleteRowsDirty() throws OperationException {
+    final byte[][] prefixes = { { (byte) 0xfb }, { (byte) 0xfc }, { (byte) 0xfd }, { (byte) 0xfe }, {(byte) 0xff } };
+    Random rand = new Random(0); // pseudo random - because of fixed seed it is reproducible
+    for (int i = 0; i < 20; i++) {
+      int numCols = rand.nextInt(10) + 1;
+      for (int j = 0; j < numCols; j++) {
+        byte[] col = Bytes.toBytes(rand.nextInt());
+        int numVersions = rand.nextInt(5) + 1;
+        for (int k = 0; k < numVersions; k++) {
+          byte[] val = Bytes.toBytes(rand.nextInt());
+          long writeVersion = rand.nextLong() % 20L;
+          this.table.put(Bytes.add(prefixes[i / 4], Bytes.toBytes(i)), col, writeVersion, val);
+        }
+      }
+    }
+    // now we have 20 rows with varying number of columns, each with varying number of versions
+    // delete number 5-9
+    this.table.deleteRowsDirtily(Bytes.add(prefixes[5 / 4], Bytes.toBytes(5)),
+                                 Bytes.add(prefixes[10 / 4], Bytes.toBytes(10)));
+    // try to read all rows 5-9. [fc05-fd09] should be gone, rest should be there
+    for (int i = 0; i < 20; i++) {
+      byte[] rowKey = Bytes.add(prefixes[i / 4], Bytes.toBytes(i));
+      OperationResult<Map<byte[], byte[]>> res = this.table.get(rowKey, MemoryOracle.DIRTY_READ_POINTER);
+      if (i >= 5 && i < 10) {
+        Assert.assertTrue("row " + Bytes.toStringBinary(rowKey) + " should be empty", res.isEmpty());
+      } else {
+        Assert.assertFalse("row " + Bytes.toStringBinary(rowKey) + " should not be empty", res.isEmpty());
+      }
+    }
+    // delete number 10-11 (prefix fd)
+    this.table.deleteRowsDirtily(prefixes[2]);
+    // try to read all rows 5-9. fd[05-14] should be gone, rest should be there
+    for (int i = 0; i < 20; i++) {
+      byte[] rowKey = Bytes.add(prefixes[i / 4], Bytes.toBytes(i));
+      OperationResult<Map<byte[], byte[]>> res = this.table.get(rowKey, MemoryOracle.DIRTY_READ_POINTER);
+      if (i >= 5 && i < 12) {
+        Assert.assertTrue("row " + Bytes.toStringBinary(rowKey) + " should be empty", res.isEmpty());
+      } else {
+        Assert.assertFalse("row " + Bytes.toStringBinary(rowKey) + " should not be empty", res.isEmpty());
+      }
+    }
+    // delete number 16-19 (prefix ff)
+    this.table.deleteRowsDirtily(prefixes[4]);
+    // try to read all rows. fc05-fd11 and ff16-ff19 should be gone, rest should be there
+    for (int i = 0; i < 20; i++) {
+      byte[] rowKey = Bytes.add(prefixes[i / 4], Bytes.toBytes(i));
+      OperationResult<Map<byte[], byte[]>> res = this.table.get(rowKey, MemoryOracle.DIRTY_READ_POINTER);
+      if (i >= 5 && i < 12 || i >= 16) {
+        Assert.assertTrue("row " + Bytes.toStringBinary(rowKey) + " should be empty", res.isEmpty());
+      } else {
+        Assert.assertFalse("row " + Bytes.toStringBinary(rowKey) + " should not be empty", res.isEmpty());
+      }
+    }
+
+  }
 }

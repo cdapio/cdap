@@ -3,9 +3,10 @@ package com.continuuity.internal.io;
 import com.continuuity.common.io.Encoder;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 /**
+ * Represents writer for encoding object.
+ *
  * @param <T> type T to serialized.
  */
 public interface DatumWriter<T> {

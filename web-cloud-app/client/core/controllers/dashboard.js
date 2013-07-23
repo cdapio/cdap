@@ -4,6 +4,8 @@
 
 define([], function () {
 
+	var DASH_CHART_COUNT = 60;
+
 	var Controller = Em.Controller.extend({
 
 		elements: Em.Object.create(),
@@ -70,7 +72,7 @@ define([], function () {
 					self.updateStats();
 				}, C.EMBEDDABLE_DELAY);
 
-				this.interval = setInterval(function () {
+				self.interval = setInterval(function () {
 					self.updateStats();
 				}, C.POLLING_INTERVAL);
 
@@ -112,19 +114,24 @@ define([], function () {
 
 			var models = this.get('elements.App').get('content');
 
+			var now = new Date().getTime();
+
+			// Add a two second buffer to make sure we have a full response.
+			var start = now - ((C.__timeRange + 2) * 1000);
+			start = Math.floor(start / 1000);
+
 			// Scans models for timeseries metrics and updates them.
 			C.Util.updateTimeSeries(models, this.HTTP);
 
 			// Scans models for aggregate metrics and udpates them.
 			C.Util.updateAggregates(models, this.HTTP);
 
-			var DASH_CHART_COUNT = 16;
-
+			// Hax. Count is timerange because server treats end = start + count (no downsample yet)
 			var queries = [
-				'/collect/events?count=' + DASH_CHART_COUNT,
-				'/process/busyness?count=' + DASH_CHART_COUNT,
-				'/store/bytes?count=' + DASH_CHART_COUNT,
-				'/query/requests?count=' + DASH_CHART_COUNT
+				'/collect/events?count=' + C.__timeRange + '&start=' + start,
+				'/process/busyness?count=' + C.__timeRange + '&start=' + start,
+				'/store/bytes?count=' + C.__timeRange + '&start=' + start,
+				'/query/requests?count=' + C.__timeRange + '&start=' + start
 			], self = this;
 
 			function lastValue(arr) {
@@ -133,23 +140,27 @@ define([], function () {
 
 			this.HTTP.post('metrics', queries, function (response) {
 
-				var result = response.result;
+				if (response.result) {
 
-				self.set('timeseries.collect', result[0].result.data);
-				self.set('timeseries.process', result[1].result.data);
-				self.set('timeseries.store', result[2].result.data);
-				self.set('timeseries.query', result[3].result.data);
+					var result = response.result;
 
-				self.set('value.collect', lastValue(result[0].result.data));
-				self.set('value.query', lastValue(result[3].result.data));
+					self.set('timeseries.collect', result[0].result.data);
+					self.set('timeseries.process', result[1].result.data);
+					self.set('timeseries.store', result[2].result.data);
+					self.set('timeseries.query', result[3].result.data);
 
-				self.set('value.process', lastValue(result[1].result.data));
+					self.set('value.collect', lastValue(result[0].result.data));
+					self.set('value.query', lastValue(result[3].result.data));
 
-				var store = C.Util.bytes(lastValue(result[2].result.data));
-				self.set('value.store', {
-					label: store[0],
-					unit: store[1]
-				});
+					self.set('value.process', lastValue(result[1].result.data));
+
+					var store = C.Util.bytes(lastValue(result[2].result.data));
+					self.set('value.store', {
+						label: store[0],
+						unit: store[1]
+					});
+
+				}
 
 			});
 

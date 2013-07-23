@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * A {@link ProcedureResponse} that handle transaction finish/abort and forward output requests
  * to a delegated {@link ProcedureResponder}.
  */
-final class TransactionResponder implements ProcedureResponder {
+final class TransactionResponder extends AbstractProcedureResponder {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionResponder.class);
 

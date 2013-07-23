@@ -1,0 +1,30 @@
+apply from: "$rootProject.projectDir/gradle/apply-continuuity-plugin.gradle"
+apply from: "$rootProject.projectDir/gradle/elastic.gradle"
+apply from: "$rootProject.projectDir/gradle/init-repositories.gradle"
+apply from: "$rootProject.projectDir/gradle/dependencies.gradle"
+apply from: "$rootProject.projectDir/gradle/maven.gradle"
+
+apply plugin: 'java'
+
+/**
+ * Building of API archive
+ */
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+    thrift
+}
+
+/**
+ * Specify all the dependencies for smartyFacts & main.
+ */
+dependencies {
+
+}
+
+subprojects {
+version = rootProject.version 
+}
+evaluationDependsOnChildren()

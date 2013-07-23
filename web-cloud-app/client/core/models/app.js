@@ -34,7 +34,7 @@ define([], function () {
 
 		interpolate: function (path) {
 
-			return path.replace(/{id}/, this.get('id'));
+			return path.replace(/\{id\}/, this.get('id'));
 
 		},
 
@@ -51,7 +51,7 @@ define([], function () {
 			value = C.Util[unit](value);
 
 			this.set(label + 'Label', value[0]);
-			this.set(label + 'Units', value[1])
+			this.set(label + 'Units', value[1]);
 
 		}
 

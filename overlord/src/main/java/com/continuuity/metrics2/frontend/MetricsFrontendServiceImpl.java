@@ -1,10 +1,19 @@
 package com.continuuity.metrics2.frontend;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.PatternLayout;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.common.logging.LogCollector;
+import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.logging.context.LoggingContextHelper;
+import com.continuuity.logging.filter.Filter;
+import com.continuuity.logging.filter.FilterParser;
+import com.continuuity.logging.read.Callback;
+import com.continuuity.logging.read.LogEvent;
+import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics2.common.DBUtils;
 import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.continuuity.metrics2.temporaldb.Timeseries;
@@ -16,27 +25,31 @@ import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import com.continuuity.metrics2.thrift.MetricsServiceException;
 import com.continuuity.metrics2.thrift.Point;
 import com.continuuity.metrics2.thrift.Points;
+import com.continuuity.metrics2.thrift.TEntityType;
+import com.continuuity.metrics2.thrift.TLogResult;
 import com.continuuity.metrics2.thrift.TimeseriesRequest;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -46,6 +59,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static com.continuuity.logging.context.LoggingContextHelper.EntityType;
 
 /**
  * MetricsService provides a readonly service for metrics.
@@ -62,7 +77,25 @@ public class MetricsFrontendServiceImpl
 
   private static int MAX_THREAD_POOL_SIZE = 50;
 
-  private LogCollector collector;
+
+  /**
+   * Connection string to connect to database.
+   */
+  private String connectionUrl;
+
+  /**
+   * Type of Database we are configured with.
+   */
+  private DBUtils.DBType type;
+
+  /**
+   * Log reader. Marked as optional injection as currently log reader is piggy-backing on metricsfrontend service
+   * We should remove it.
+   * TODO: ENG-3102
+   */
+  @Inject(optional = true)
+  private LogReader logReader;
+  private final String logPattern;
 
   // Thread pool of size max MAX_THREAD_POOL_SIZE.
   // 60 seconds wait time before killing idle threads.
@@ -81,6 +114,7 @@ public class MetricsFrontendServiceImpl
    */
   private static DBConnectionPoolManager poolManager;
 
+  @Inject
   public MetricsFrontendServiceImpl(CConfiguration configuration)
     throws ClassNotFoundException, SQLException {
     /*
@@ -104,12 +138,10 @@ public class MetricsFrontendServiceImpl
       jdbcDataSource.setUrl(connectionUrl);
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 1000);
     }
-    DBUtils.createMetricsTables(getConnection(), type);
-    // It seems like not a good idea to pass hadoop config that way.
-    // But using log collector here is bad anyways: overlord should not use logCollector
-    // as a library, but rather should talk to it thru remote API.
-    // This is going to be extracted anyways
-    collector = new LogCollector(configuration, new Configuration());
+
+    DBUtils.createMetricsTables(getConnection(), this.type);
+
+    this.logPattern = configuration.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
   }
 
   /**
@@ -160,21 +192,114 @@ public class MetricsFrontendServiceImpl
   public List<String> getLog(final String accountId, final String applicationId,
                              final String flowId, int size)
     throws MetricsServiceException, TException {
+    return Lists.newArrayList(
+      Iterables.transform(
+        getLogNext(accountId, applicationId, flowId, TEntityType.FLOW, -1, 200, ""), TLogResultConverter.getConverter()
+      )
+    );
+  }
 
-    String logTag = String.format("%s:%s:%s", accountId, applicationId, flowId);
+  /**
+   * Converts TLogResult into String.
+   */
+  private static class TLogResultConverter implements Function<TLogResult, String> {
+    private static final TLogResultConverter CONVERTER = new TLogResultConverter();
 
-    if (size < 0) {
-      size = 10 * 1024;
+    public static TLogResultConverter getConverter() {
+      return CONVERTER;
     }
 
-    List<String> lines = null;
+    @Nullable
+    @Override
+    public String apply(@Nullable TLogResult input) {
+      if (input == null) {
+        return null;
+      }
+      return input.getLogLine();
+    }
+  }
+
+  @Override
+  public List<TLogResult> getLogNext(String accountId, String applicationId, String entityId, TEntityType entityType,
+                                     long fromOffset, int maxEvents, String filterStr)
+    throws MetricsServiceException, TException {
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(accountId, applicationId,
+                                                                           entityId, getEntityType(entityType));
+    LogCallback logCallback = new LogCallback(maxEvents, logPattern);
     try {
-      lines = collector.tail(logTag, size);
-      return lines;
-    } catch (IOException e) {
-      LOG.warn("Failed to tail log file. Tag {}. Reason : {}",
-               logTag, e.getMessage());
-      throw new MetricsServiceException(e.getMessage());
+      Filter filter = FilterParser.parse(filterStr);
+      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback).get();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+    return logCallback.getLogResults();
+  }
+
+  @Override
+  public List<TLogResult> getLogPrev(String accountId, String applicationId, String entityId, TEntityType entityType,
+                                     long fromOffset, int maxEvents, String filterStr)
+    throws MetricsServiceException, TException {
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(accountId, applicationId,
+                                                                           entityId, getEntityType(entityType));
+    LogCallback logCallback = new LogCallback(maxEvents, logPattern);
+    try {
+      Filter filter = FilterParser.parse(filterStr);
+      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback).get();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+    return logCallback.getLogResults();
+  }
+
+  /**
+   * Callback to handle log events from LogReader.
+   */
+  private static class LogCallback implements Callback {
+    private final List<TLogResult> logResults;
+    private final PatternLayout patternLayout;
+
+    private LogCallback(int maxEvents, String logPattern) {
+      logResults = Lists.newArrayListWithExpectedSize(maxEvents);
+
+      ch.qos.logback.classic.Logger rootLogger =
+        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+      LoggerContext loggerContext = rootLogger.getLoggerContext();
+
+      patternLayout = new PatternLayout();
+      patternLayout.setContext(loggerContext);
+      patternLayout.setPattern(logPattern);
+    }
+
+    @Override
+    public void init() {
+      patternLayout.start();
+    }
+
+    @Override
+    public void handle(LogEvent event) {
+      logResults.add(new TLogResult(patternLayout.doLayout(event.getLoggingEvent()), event.getOffset()));
+    }
+
+    @Override
+    public void close() {
+      patternLayout.stop();
+    }
+
+    public List<TLogResult> getLogResults() {
+      return Collections.unmodifiableList(logResults);
+    }
+  }
+
+  private EntityType getEntityType(TEntityType tEntityType) {
+    switch (tEntityType) {
+      case FLOW:
+        return EntityType.FLOW;
+      case PROCEDURE:
+        return EntityType.PROCEDURE;
+      case MAP_REDUCE:
+        return EntityType.MAP_REDUCE;
+      default:
+        throw new IllegalArgumentException(String.format("Illegal TEntityType %s", tEntityType));
     }
   }
 

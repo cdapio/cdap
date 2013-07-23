@@ -13,6 +13,7 @@ import com.continuuity.data.operation.executor.remote.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
@@ -74,6 +75,7 @@ public class Main {
         new IOModule(),
         new LocationRuntimeModule().getDistributedModules(),
         new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+        new LoggingModules().getDistributedModules(),
         new AbstractModule() {
           @Override
           protected void configure() {

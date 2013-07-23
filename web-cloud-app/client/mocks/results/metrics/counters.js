@@ -29,15 +29,15 @@ define([], function () {
     '/store/bytes/CountAndFilterWords': 40,
 
     // Flowlets
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/number-filter': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-all': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-number': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-lower': 50,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/lower-filter': 45,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/upper-filter': 10,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/source': 24,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/count-upper': 100,
-    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/flowlets/splitter': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/number-filter': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-all': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-number': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-lower': 50,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/lower-filter': 45030304,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/upper-filter': 10,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/source': 24,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-upper': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/splitter': 100,
 
     // Store
     '/store/bytes/datasets/filterTable': 100000,
@@ -46,6 +46,12 @@ define([], function () {
     '/store/bytes/datasets/wordCounts': 19232,
     '/store/bytes/datasets/wordStats': 100000,
 
+    "/process/completion/CountAndFilterWords/mapreduce/batchid1/mappers": 29,
+    "/process/completion/CountAndFilterWords/mapreduce/batchid1/reducers": 30,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/mappers/ins": 3752,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/mappers/outs": 35654,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/reducers/ins": 21,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/reducers/outs": 25632
   };
 
   return function (path, query, callback) {

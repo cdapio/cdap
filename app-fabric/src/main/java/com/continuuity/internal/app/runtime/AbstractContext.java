@@ -3,6 +3,9 @@ package com.continuuity.internal.app.runtime;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.app.program.Program;
 import com.continuuity.weave.api.RunId;
 import com.google.common.base.Preconditions;
@@ -93,6 +96,12 @@ public abstract class AbstractContext {
         }
       }
     }
+  }
+
+  protected final MetricsCollector getMetricsCollector(MetricsScope scope,
+                                                       MetricsCollectionService collectionService, String context) {
+    // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
+    return collectionService.getCollector(scope, context, "0");
   }
 
   private void setField(Object setTo, Field field, Object value) {

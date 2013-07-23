@@ -7,13 +7,26 @@ package_name="<%= project %>"
 version="<%= @version %>"
 
 case "$1" in
-    remove|upgrade|deconfigure)
+    remove)
       for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
-        sudo -u continuuity /etc/init.d/svc-$svcname stop > /dev/null 2>&1 ||:
+        # stop each service
+        if [ -x "/etc/init.d/continuuity-$svcname" ]; then
+            invoke-rc.d continuuity-$svcname stop || :
+        fi
         if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
           unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
         fi
         rm -f /opt/continuuity/$package_name/version ||:
+      done
+    ;;
+
+    upgrade|deconfigure)
+      for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
+        if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
+          unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
+        fi
+        rm -f /opt/continuuity/$package_name/version ||:
+        # services will be condrestarted on new package postinstall
       done
     ;;
 
