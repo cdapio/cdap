@@ -65,6 +65,10 @@ public class KafkaServerMain extends DaemonMain {
                                      KafkaConstants.DEFAULT_NUM_PARTITIONS);
     String logDir = cConf.get(KafkaConstants.ConfigKeys.LOG_DIR_CONFIG);
 
+    int replicationFactor = cConf.getInt(KafkaConstants.ConfigKeys.REPLICATION_FACTOR,
+                                         KafkaConstants.DEFAULT_REPLICATION_FACTOR);
+    LOG.info("Using replication factor {}", replicationFactor);
+
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
       try {
@@ -86,7 +90,8 @@ public class KafkaServerMain extends DaemonMain {
       }
     }
 
-    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions, logDir);
+    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions,
+                                          replicationFactor, logDir);
   }
 
   @Override
@@ -113,7 +118,7 @@ public class KafkaServerMain extends DaemonMain {
   }
 
   private Properties generateKafkaConfig(int brokerId, String zkConnectStr, String hostname, int port,
-                                         int numPartitions, String logDir) {
+                                         int numPartitions, int replicationFactor, String logDir) {
     Preconditions.checkState(port > 0, "Port number is invalid.");
     Preconditions.checkState(numPartitions > 0, "Num partitions should be greater than zero.");
 
@@ -134,6 +139,7 @@ public class KafkaServerMain extends DaemonMain {
     prop.setProperty("log.segment.bytes", "536870912");
     prop.setProperty("zookeeper.connect", zkConnectStr);
     prop.setProperty("zookeeper.connection.timeout.ms", "1000000");
+    prop.setProperty("default.replication.factor", Integer.toString(replicationFactor));
     return prop;
   }
 
