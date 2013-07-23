@@ -69,6 +69,7 @@ public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle implement
     OrderedVersionedColumnarTable existing =
       this.openTables.putIfAbsent(tableName, table);
 
+    // The assumption is that within the same process, they reads the same TTL setting, hence it's ok to return it.
     return existing != null ? existing : table;
   }
 
