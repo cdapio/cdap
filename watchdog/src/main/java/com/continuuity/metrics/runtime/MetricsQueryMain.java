@@ -19,6 +19,8 @@ import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +39,7 @@ public final class MetricsQueryMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     CConfiguration cConf = CConfiguration.create();
+    Configuration hConf = HBaseConfiguration.create();
 
     // Zookeeper for discovery service
     zkClientService =
@@ -50,7 +53,7 @@ public final class MetricsQueryMain extends DaemonMain {
       );
 
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       new MetricsQueryRuntimeModule().getDistributedModules()
