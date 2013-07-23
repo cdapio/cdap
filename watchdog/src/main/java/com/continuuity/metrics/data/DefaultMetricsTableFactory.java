@@ -14,8 +14,6 @@ import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Implementation of {@link MetricsTableFactory} that reuses the same instance of {@link MetricsEntityCodec} for
  * creating instances of various type of metrics table.
@@ -50,12 +48,11 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
       String tableName = namespace + "." +
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
-      int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_HOURS + "." + resolution, -1);
+      int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
       OrderedVersionedColumnarTable table;
       if (ttl > 0 && tableHandle instanceof TimeToLiveOVCTableHandle) {
         // If TTL exists and the table handle supports it, use the TTL as well.
-        ttl = (int) TimeUnit.SECONDS.convert(ttl, TimeUnit.HOURS);
         table = ((TimeToLiveOVCTableHandle) tableHandle).getTable(Bytes.toBytes(tableName), ttl);
       } else {
         table = tableHandle.getTable(Bytes.toBytes(tableName));
@@ -89,6 +86,11 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public boolean isTTLSupported() {
+    return tableHandle instanceof TimeToLiveOVCTableHandle;
   }
 
   private int getRollTime(int resolution) {

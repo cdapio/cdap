@@ -7,6 +7,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseOVCTable;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -38,20 +39,26 @@ public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle implement
 
   @Override
   protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
-    return new HBaseFilterableOVCTable(conf, hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
+    return new HBaseFilterableOVCTable(conf, hConf, tableName, FAMILY, new HBaseIOExceptionHandler(), -1);
+  }
+
+  protected HBaseOVCTable createOVCTable(byte[] tableName, int ttl) throws OperationException {
+    return new HBaseFilterableOVCTable(conf, hConf, tableName, FAMILY, new HBaseIOExceptionHandler(), ttl);
   }
 
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName, int ttl) throws OperationException {
+    // Get the table from in memory cache.
     OrderedVersionedColumnarTable table = this.openTables.get(tableName);
 
     // we currently have an open table for this name
     if (table != null) {
+      alterTableTTL(tableName, ttl);
       return table;
     }
 
     // the table is not open, but it may exist in the data fabric
-    table = openTable(tableName);
+    table = openTable(tableName, ttl);
 
     // table could not be opened, try to create it
     if (table == null) {
@@ -65,17 +72,33 @@ public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle implement
     return existing != null ? existing : table;
   }
 
+  protected OrderedVersionedColumnarTable openTable(byte[] tableName, int ttl) throws OperationException {
+    try {
+      if (this.admin.tableExists(tableName)) {
+        // Since the support of TTL is a hack right now and only TimeSeriesTable in the metric system is using it,
+        // it's ok to do the reset of TTL in here.
+        // Ideally it should be done by admin table interface.
+        alterTableTTL(tableName, ttl);
+        return createOVCTable(tableName, ttl);
+      }
+    } catch (IOException e) {
+      exceptionHandler.handle(e);
+    }
+    return null;
+
+  }
+
   protected OrderedVersionedColumnarTable createNewTable(byte[] tableName, int ttl) throws OperationException {
     try {
       createTable(tableName, FAMILY, ttl);
-      return createOVCTable(tableName);
+      return createOVCTable(tableName, ttl);
     } catch (IOException e) {
       exceptionHandler.handle(e);
     }
     return null;
   }
 
-  protected HTable createTable(byte [] tableName, byte [] family, int ttl) throws IOException {
+  protected HTable createTable(byte [] tableName, byte [] family, int ttl) throws IOException, OperationException {
     if (this.admin.tableExists(tableName)) {
       LOG.debug("Attempt to creating table '" + tableName + "', which already exists. Opening existing table instead.");
       return new HTable(this.hConf, tableName);
@@ -111,14 +134,32 @@ public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle implement
         }
       }
       if (exists) {
+        alterTableTTL(tableName, ttl);
         LOG.info("Table '" + new String(tableName) + "' exists now. Assuming " +
-                   "that another process concurrently created it. ");
+                 "that another process concurrently created it. ");
       } else {
-        com.esotericsoftware.minlog.Log.error("Table '" + new String(tableName) + "' does not exist after" +
-                                                " waiting " + waitAtMost + " ms. Giving up. ");
+        LOG.error("Table '" + new String(tableName) + "' does not exist after waiting " +
+                  waitAtMost + " ms. Giving up. ");
         throw e;
       }
     }
     return new HTable(this.hConf, tableName);
+  }
+
+  /**
+   * Alters a table TTL setting.
+   */
+  private void alterTableTTL(byte[] tableName, int ttl) throws OperationException {
+    try {
+      HTableDescriptor tableDescriptor = this.admin.getTableDescriptor(tableName);
+      HColumnDescriptor family = tableDescriptor.getFamily(FAMILY);
+      if (family.getTimeToLive() != ttl) {
+        this.admin.disableTable(tableName);
+        this.admin.modifyColumn(tableName, family);
+        this.admin.enableTable(tableName);
+      }
+    } catch (IOException e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
   }
 }

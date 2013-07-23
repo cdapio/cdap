@@ -59,18 +59,23 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   protected void startUp() throws Exception {
     super.startUp();
 
-    scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
-    long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_HOURS + ".1",
-                                   MetricsConstants.DEFAULT_RETENTION_HOURS);
+    // Only do cleanup if the underlying table doesn't supports TTL.
+    if (!tableFactory.isTTLSupported()) {
+      scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
+      long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".1.seconds",
+                                     MetricsConstants.DEFAULT_RETENTION_HOURS);
 
-    scheduler.scheduleAtFixedRate(
-      createCleanupTask(TimeUnit.SECONDS.convert(retention, TimeUnit.HOURS)), 0, 1, TimeUnit.HOURS);
+
+      scheduler.scheduleAtFixedRate(createCleanupTask(retention), 0, 1, TimeUnit.HOURS);
+    }
   }
 
   @Override
   protected void shutDown() throws Exception {
+    if (scheduler != null) {
+      scheduler.shutdownNow();
+    }
     super.shutDown();
-    scheduler.shutdownNow();
   }
 
   /**

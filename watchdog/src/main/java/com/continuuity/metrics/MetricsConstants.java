@@ -15,7 +15,7 @@ public final class MetricsConstants {
     public static final String TIME_SERIES_TABLE_ROLL_TIME = "metrics.data.table.ts.rollTime";
 
     // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
-    public static final String RETENTION_HOURS = "metrics.data.table.retention";
+    public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution";
 
     public static final String SERVER_ADDRESS = "metrics.query.server.address";
     public static final String SERVER_PORT = "metrics.query.server.port";
