@@ -32,7 +32,11 @@ public final class SimpleKafkaProducer {
     props.setProperty("key.serializer.class", "kafka.serializer.StringEncoder");
     props.setProperty("partitioner.class", "com.continuuity.logging.appender.kafka.StringPartitioner");
     props.setProperty("request.required.acks", "1");
-    props.setProperty(LoggingConfiguration.NUM_PARTITIONS, configuration.get(LoggingConfiguration.NUM_PARTITIONS));
+    props.setProperty("producer.type", configuration.get(LoggingConfiguration.KAFKA_PRODUCER_TYPE,
+                                                         LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_TYPE));
+    props.setProperty(LoggingConfiguration.NUM_PARTITIONS,
+                      configuration.get(LoggingConfiguration.NUM_PARTITIONS,
+                                        LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
 
     ProducerConfig config = new ProducerConfig(props);
 

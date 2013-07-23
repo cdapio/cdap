@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import kafka.common.OffsetOutOfRangeException;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -92,12 +93,15 @@ public final class LogSaver extends AbstractIdleService {
       "Kafka seed brokers config is not available");
     this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(kafkaSeedBrokers);
     Preconditions.checkNotNull(this.seedBrokers, "Not able to parse Kafka seed brokers");
+    LOG.info(String.format("Kafka seed brokers are %s", kafkaSeedBrokers));
 
     String account = cConfig.get(LoggingConfiguration.LOG_RUN_ACCOUNT);
     Preconditions.checkNotNull(account, "Account cannot be null");
 
     this.topic = KafkaTopic.getTopic();
+    LOG.info(String.format("Kafka topic is %s", this.topic));
     this.partition = partition;
+    LOG.info(String.format("Kafka partition is %d", partition));
     this.serializer = new LoggingEventSerializer();
 
     this.hConfig = hConfig;
@@ -110,6 +114,7 @@ public final class LogSaver extends AbstractIdleService {
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
     this.logBaseDir = new Path(baseDir);
+    LOG.info(String.format("Log base dir is %s", logBaseDir));
 
     long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, -1);
     Preconditions.checkArgument(retentionDurationDays > 0,
@@ -180,17 +185,27 @@ public final class LogSaver extends AbstractIdleService {
       try {
         CheckpointInfo checkpointInfo = checkpointManager.getCheckpoint();
         lastOffset = checkpointInfo == null ? -1 : checkpointInfo.getOffset();
-        LOG.info(String.format("Starting LogCollector for topic %s, partition %d.", topic, partition));
+        LOG.info(String.format("Starting LogCollector for topic %s, partition %d, offset %d.",
+                               topic, partition, lastOffset));
 
         while (isRunning()) {
           try {
             int msgCount = kafkaConsumer.fetchMessages(lastOffset + 1, this);
             if (msgCount == 0) {
+              LOG.debug("Got 0 messages from Kafka, sleeping...");
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
+            } else {
+              LOG.info(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
+                                     msgCount, topic, partition, lastOffset));
             }
+          } catch (OffsetOutOfRangeException e) {
 
-            LOG.info(String.format("Got %d log messages from Kafka for topic %s, partition %s",
-                                   msgCount, topic, partition));
+            // Reset offset to earliest available
+            long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
+            LOG.warn(String.format("Offset %d is out of range. Resetting to earliest available offset %d",
+                                   lastOffset + 1, earliestOffset));
+            lastOffset = earliestOffset - 1;
+
           } catch (Throwable e) {
             LOG.error(
               String.format("Caught exception during fetch of topic %s, partition %d, will try again after %d ms:",
@@ -282,11 +297,12 @@ public final class LogSaver extends AbstractIdleService {
               }
             }
             if (writeLists.isEmpty()) {
+              LOG.debug("Got 0 messages to save, sleeping...");
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
+            } else {
+              LOG.info(String.format("Got %d log messages to save for topic %s, partition %s",
+                                     messages, topic, partition));
             }
-
-            LOG.info(String.format("Got %d log messages to save for topic %s, partition %s",
-                                   messages, topic, partition));
             for (Iterator<List<KafkaLogEvent>> it = writeLists.iterator(); it.hasNext(); ) {
               avroFileWriter.append(it.next());
               // Remove successfully written message

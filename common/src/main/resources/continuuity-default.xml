@@ -569,6 +569,12 @@
         <description>Port for metrics query server to listen on.</description>
     </property>
 
+    <property>
+        <name>metrics.data.table.retention.resolution.1.seconds</name>
+        <value>7200</value>
+        <description>Retention hours for the resolution 1 sec table.</description>
+    </property>
+
     <!--
         Logging Configuration
     -->
@@ -613,13 +619,13 @@
     -->
     <property>
         <name>kafka.bind.hostname</name>
-        <value>localhost</value>
+        <value>0.0.0.0</value>
         <description>Kafka server hostname to bind to</description>
     </property>
 
     <property>
         <name>kafka.port</name>
-        <value>9095</value>
+        <value>9092</value>
         <description>Kafka server port</description>
     </property>
 
@@ -639,6 +645,12 @@
         <name>kafka.zookeeper.namespace</name>
         <value>continuuity_kafka</value>
         <description>ZK namespace for Kafka</description>
+    </property>
+
+    <property>
+        <name>kafka.default.replication.factor</name>
+        <value>2</value>
+        <description>Kafka replication factor</description>
     </property>
 
 </configuration>

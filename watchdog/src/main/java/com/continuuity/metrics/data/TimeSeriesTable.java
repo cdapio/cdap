@@ -168,6 +168,40 @@ public final class TimeSeriesTable {
     timeSeriesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
   }
 
+  /**
+   * Deletes all row keys that has timestamp before the given time.
+   * @param beforeTime All data before this timestamp will be removed (exclusive).
+   */
+  public void deleteBefore(long beforeTime) throws OperationException {
+    // End time base is the last time base that is smaller than endTime.
+    int endTimeBase = getTimeBase(beforeTime);
+
+    Scanner scanner = timeSeriesTable.scan(MemoryReadPointer.DIRTY_READ);
+
+    // Loop through the scanner entries and collect rows to be deleted
+    List<byte[]> rows = Lists.newArrayList();
+    ImmutablePair<byte[], Map<byte[], byte[]>> nextEntry;
+    while ((nextEntry = scanner.next()) != null) {
+      byte[] rowKey = nextEntry.getFirst();
+
+      // Decode timestamp
+      int offset = entityCodec.getEncodedSize(MetricsEntityType.CONTEXT) +
+                   entityCodec.getEncodedSize(MetricsEntityType.METRIC) +
+                   entityCodec.getEncodedSize(MetricsEntityType.TAG);
+      int timeBase = Bytes.toInt(rowKey, offset, 4);
+      if (timeBase < endTimeBase) {
+        rows.add(rowKey);
+      }
+    }
+    scanner.close();
+
+    // If there is any row collected, delete them
+    if (!rows.isEmpty()) {
+      byte[][] deleteRows = new byte[rows.size()][];
+      timeSeriesTable.deleteDirty(rows.toArray(deleteRows));
+    }
+  }
+
 
   /**
    * Clears the storage table.
@@ -226,9 +260,7 @@ public final class TimeSeriesTable {
   private byte[] getPaddedKey(String contextPrefix, String runId, String metricPrefix, String tagPrefix,
                               int timeBase, int padding) {
 
-    Preconditions.checkArgument(metricPrefix != null, "Metric cannot be null.");
-
-    // If there is no runId, just applies the padding
+    // If there is no contextPrefix, metricPrefix or runId, just applies the padding
     return Bytes.concat(
       entityCodec.paddedEncode(MetricsEntityType.CONTEXT, contextPrefix, padding),
       entityCodec.paddedEncode(MetricsEntityType.METRIC, metricPrefix, padding),

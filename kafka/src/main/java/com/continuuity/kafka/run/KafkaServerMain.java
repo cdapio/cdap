@@ -9,12 +9,15 @@ import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKOperations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.net.InetAddresses;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 /**
@@ -35,14 +38,8 @@ public class KafkaServerMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    LOG.info(String.format("Got args - %s", Arrays.toString(args)));
-
-    if (args.length != 1) {
-      String name = KafkaServerMain.class.getSimpleName();
-      throw new IllegalArgumentException(String.format("Usage: %s <brokerId>", name));
-    }
-
-    int brokerId = Integer.parseInt(args[0]);
+    int brokerId = generateBrokerId();
+    LOG.info(String.format("Initializing server with broker id %d", brokerId));
 
     CConfiguration cConf = CConfiguration.create();
     zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
@@ -50,9 +47,27 @@ public class KafkaServerMain extends DaemonMain {
 
     int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);
     String hostname = cConf.get(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG);
+
+    // Convert wildcard address to proper hostname
+    if (hostname != null) {
+      InetSocketAddress socketAddress = new InetSocketAddress(hostname, 0);
+      InetAddress address = socketAddress.getAddress();
+      if (address.isAnyLocalAddress()) {
+        try {
+          hostname = InetAddress.getLocalHost().getCanonicalHostName();
+        } catch (UnknownHostException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    }
+
     int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
                                      KafkaConstants.DEFAULT_NUM_PARTITIONS);
     String logDir = cConf.get(KafkaConstants.ConfigKeys.LOG_DIR_CONFIG);
+
+    int replicationFactor = cConf.getInt(KafkaConstants.ConfigKeys.REPLICATION_FACTOR,
+                                         KafkaConstants.DEFAULT_REPLICATION_FACTOR);
+    LOG.info("Using replication factor {}", replicationFactor);
 
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
@@ -75,7 +90,8 @@ public class KafkaServerMain extends DaemonMain {
       }
     }
 
-    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions, logDir);
+    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions,
+                                          replicationFactor, logDir);
   }
 
   @Override
@@ -102,8 +118,8 @@ public class KafkaServerMain extends DaemonMain {
   }
 
   private Properties generateKafkaConfig(int brokerId, String zkConnectStr, String hostname, int port,
-                                         int numPartitions, String logDir) {
-    Preconditions.checkState(port > 0, "Failed to get random port.");
+                                         int numPartitions, int replicationFactor, String logDir) {
+    Preconditions.checkState(port > 0, "Port number is invalid.");
     Preconditions.checkState(numPartitions > 0, "Num partitions should be greater than zero.");
 
     Properties prop = new Properties();
@@ -117,11 +133,21 @@ public class KafkaServerMain extends DaemonMain {
     prop.setProperty("socket.request.max.bytes", "104857600");
     prop.setProperty("log.dir", logDir);
     prop.setProperty("num.partitions", Integer.toString(numPartitions));
+    prop.setProperty("log.retention.hours", "24");
     prop.setProperty("log.flush.interval.messages", "10000");
     prop.setProperty("log.flush.interval.ms", "1000");
     prop.setProperty("log.segment.bytes", "536870912");
     prop.setProperty("zookeeper.connect", zkConnectStr);
     prop.setProperty("zookeeper.connection.timeout.ms", "1000000");
+    prop.setProperty("default.replication.factor", Integer.toString(replicationFactor));
     return prop;
+  }
+
+  private static int generateBrokerId() {
+    try {
+      return Math.abs(InetAddresses.coerceToInteger(InetAddress.getLocalHost()));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }
