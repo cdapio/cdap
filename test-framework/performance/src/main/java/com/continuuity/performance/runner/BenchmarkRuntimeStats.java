@@ -39,9 +39,7 @@ public final class BenchmarkRuntimeStats {
 
   private static final MetricsClient metricsClient = getMetricsClient();
 
-  /**
-   * Timeout to get response from metrics system.
-   */
+  // Timeout to get response from metrics system.
   private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
 
   private static final int REQUEST_TIMEOUT = 1000;
@@ -88,8 +86,7 @@ public final class BenchmarkRuntimeStats {
       @Override
       public void waitForProcessed(long count, long timeout, TimeUnit timeoutUnit)
         throws TimeoutException, InterruptedException {
-        waitFor(aggregatedFlowletEvents, count, timeout,
-                timeoutUnit);
+        waitFor(aggregatedFlowletEvents, count, timeout, timeoutUnit);
       }
 
       // Waits until metrics counter has reached given count number.
@@ -114,41 +111,8 @@ public final class BenchmarkRuntimeStats {
   }
 
   /**
-   * Waits until metrics counter for flowlet has reached the given count number.
-   * @param pattern Counter pattern
-   * @param type Metrics type {@link Metric.Type}
-   * @param applicationId Application id
-   * @param flowId Flow id
-   * @param flowletId Flowlet id
-   * @param count Count to wait for
-   * @param timeout Maximum time to wait for
-   * @param timeoutUnit {@link TimeUnit} for the timeout time.
-   * @throws TimeoutException if the timeout time passed and still not seeing that many counts.
-   */
-  @SuppressWarnings(value = "unused")
-  public static void waitForCounter(String pattern, Metric.Type type, String applicationId,
-                                    String flowId, String flowletId, long count, long timeout, TimeUnit timeoutUnit)
-    throws TimeoutException, InterruptedException {
-
-    Counter c = getCounter(pattern, type, new String[] {applicationId, flowId, flowletId});
-    if (c == null) {
-      throw new RuntimeException("No counter with pattern " + pattern + " found for application " + applicationId
-                                   + " ,flow " + flowId + " and flowlet " + flowletId + ".");
-    }
-    Long value = c.getValue();
-    while (timeout > 0 && (value < count)) {
-      timeoutUnit.sleep(1);
-      value = getCounter(pattern, type, new String[] {applicationId, flowId, flowletId}).getValue();
-      timeout--;
-    }
-    if (timeout == 0 && (value < count)) {
-      throw new TimeoutException("Time limit reached.");
-    }
-  }
-
-  /**
    * Waits until metrics counter has reached the given count number.
-   * @param counterPath Counter path
+   * @param counterPath Full path of counter
    * @param count Count to wait for
    * @param timeout Maximum time to wait for
    * @param timeoutUnit {@link TimeUnit} for the timeout time.
@@ -175,7 +139,7 @@ public final class BenchmarkRuntimeStats {
 
   /**
    * Gets metrics counter object for a given counter path.
-   * @param counterPath Full path of Counter
+   * @param counterPath Full path of counter
    * @return Counter
    */
   public static Counter getCounter(String counterPath) {
@@ -183,23 +147,27 @@ public final class BenchmarkRuntimeStats {
   }
 
   /**
-   * Gets metrics counter object for a given counter path.
-   * @param metric Full path of Counter
+   * Gets metrics counter object for a given metric.
+   * @param metric Metric that contains full path of counter
    * @return Counter
    */
   public static Counter getCounter(Metric metric) {
     return metricsClient.getCounter(metric);
   }
 
-  public static Counter getCounter(String pattern, Metric.Type type, String applicationId, String flowId,
-                                   String flowletId) {
-    return metricsClient.getCounter(pattern, type, new String[] {applicationId, flowId, flowletId});
-  }
-
+  /**
+   * Gets metrics counter object for a given counter pattern and parameters.
+   * @param pattern Counter pattern
+   * @param type Metrics type {@link Metric.Type}
+   * @param params Counter parameters
+   * @return Counter
+   */
+  @SuppressWarnings(value = "unused")
   public static Counter getCounter(String pattern, Metric.Type type, String[] params) {
     return metricsClient.getCounter(pattern, type, params);
   }
 
+  // Gets new metrics client for retrieving metrics from metrics system.
   private static MetricsClient getMetricsClient() {
     CConfiguration config = CConfiguration.create();
 
@@ -219,6 +187,7 @@ public final class BenchmarkRuntimeStats {
       this.path = path;
       this.value = value;
     }
+    @SuppressWarnings(value = "unused")
     public String getPath() {
       return path;
     }
@@ -227,7 +196,8 @@ public final class BenchmarkRuntimeStats {
     }
   }
 
-  static class MetricsClient {
+  // Metrics client that connects to metrics system.
+  private static final class MetricsClient {
 
     private static final Gson GSON = new Gson();
 
@@ -235,14 +205,13 @@ public final class BenchmarkRuntimeStats {
     private final int port;
     private final String url;
 
-    MetricsClient(String hostname, int port) {
+    private MetricsClient(String hostname, int port) {
       this.hostname = hostname;
       this.port = port;
       this.url = String.format("http://%s:%d/metrics", hostname, port);
     }
 
-    public Counter getCounter(Metric metric) {
-
+    private Counter getCounter(Metric metric) {
       if (metric.getType() == Metric.Type.AGGREGATE) {
         String json = "[ \"" + metric.getPath() + "\" ]";
         String response = sendJSonPostRequest(url, json, null);
@@ -262,7 +231,7 @@ public final class BenchmarkRuntimeStats {
       }
     }
 
-    public Counter getCounter(String pattern, Metric.Type type, String[] params) {
+    private Counter getCounter(String pattern, Metric.Type type, String[] params) {
       if (type == Metric.Type.AGGREGATE) {
         String json = "[ \"" + String.format(pattern, (Object[]) params) + "\" ]";
         String response = sendJSonPostRequest(url, json, null);
@@ -282,7 +251,7 @@ public final class BenchmarkRuntimeStats {
       }
     }
 
-    public Counter getCounter(String counterPath) {
+    private Counter getCounter(String counterPath) {
       String json = "[ \"" + counterPath + "\" ]";
       LOG.info(" JSON:" + json);
       String response = sendJSonPostRequest(String.format("http://%s:%d/metrics", hostname, port), json, null);
@@ -299,7 +268,7 @@ public final class BenchmarkRuntimeStats {
       return new Counter(responseData.get(0).getPath(), responseData.get(0).getResult().getData());
     }
 
-    static final class MetricsResponse {
+    private static final class MetricsResponse {
       private final String path;
       private final AggregateResult result;
 
@@ -307,24 +276,25 @@ public final class BenchmarkRuntimeStats {
         this.path = path;
         this.result = result;
       }
-      public String getPath() {
+      String getPath() {
         return path;
       }
-      public AggregateResult getResult() {
+      AggregateResult getResult() {
         return result;
       }
     }
-    static final class AggregateResult {
+    private static final class AggregateResult {
       private final long data;
       AggregateResult(long data) {
         this.data = data;
       }
-      public long getData() {
+      long getData() {
         return data;
       }
     }
   }
 
+  // Sends Metrics request as REST call to metrics systems.
   private static String sendJSonPostRequest(String url, String json, Map<String, String> headers) {
     SimpleAsyncHttpClient.Builder builder = new SimpleAsyncHttpClient.Builder()
       .setUrl(url)
