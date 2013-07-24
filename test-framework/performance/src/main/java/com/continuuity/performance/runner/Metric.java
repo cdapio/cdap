@@ -108,7 +108,7 @@ public class Metric {
   }
 
   /**
-   * Returns the compiled path of the metric
+   * Returns the compiled path of the metric.
    * @return String
    */
   public String getPath() {
@@ -116,7 +116,7 @@ public class Metric {
   }
 
   /**
-   * Returns the type of the metric
+   * Returns the type of the metric.
    * @return Type
    */
   public Type getType() {
@@ -124,7 +124,7 @@ public class Metric {
   }
 
   /**
-   * Returns the value for a provided parameter name
+   * Returns the value for a provided parameter name.
    * @return String
    */
   public String getParameter(Parameter name) {

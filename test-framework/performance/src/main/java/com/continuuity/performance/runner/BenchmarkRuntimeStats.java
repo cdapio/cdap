@@ -4,11 +4,12 @@
 
 package com.continuuity.performance.runner;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.metrics.MetricsConstants;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
+import com.continuuity.weave.discovery.Discoverable;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.ning.http.client.Response;
@@ -18,10 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -147,11 +146,24 @@ public final class BenchmarkRuntimeStats {
 
   // Gets new metrics client for retrieving metrics from metrics system.
   private static MetricsClient getMetricsClient() {
-    CConfiguration config = CConfiguration.create();
-
-    String hostname = config.get(MetricsConstants.ConfigKeys.SERVER_ADDRESS, "localhost");
-    int port = config.getInt(MetricsConstants.ConfigKeys.SERVER_PORT, 45005);
-    return new MetricsClient(hostname, port);
+    int attempts = 0;
+    Iterable<Discoverable> it =
+      PerformanceTestRunner.getDiscoveryServiceClient().discover(Constants.SERVICE_METRICS);
+    while (Iterables.isEmpty(it) && (attempts++ < 10)) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(1000);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(String.format("Interrupted when trying to locate service '%s'",
+                                                 Constants.SERVICE_METRICS));
+      }
+    }
+    if (!Iterables.isEmpty(it)) {
+      Discoverable discoverable = it.iterator().next();
+      return new MetricsClient(discoverable.getSocketAddress().getHostName(),
+                               discoverable.getSocketAddress().getPort());
+    } else {
+      throw new RuntimeException(String.format("Could not locate service '%s'", Constants.SERVICE_METRICS));
+    }
   }
 
   /**
@@ -260,13 +272,7 @@ public final class BenchmarkRuntimeStats {
         throw new RuntimeException("Status code " + response.getStatusCode() + ":" + body);
       }
       return body;
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    } catch (InterruptedException e) {
-      throw Throwables.propagate(e);
-    } catch (ExecutionException e) {
-      throw Throwables.propagate(e);
-    } catch (TimeoutException e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
       asyncClient.close();

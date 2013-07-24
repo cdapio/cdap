@@ -28,6 +28,7 @@ import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.performance.application.BenchmarkManagerFactory;
 import com.continuuity.performance.application.BenchmarkStreamWriterFactory;
@@ -41,9 +42,16 @@ import com.continuuity.test.StreamWriter;
 import com.continuuity.test.internal.DefaultProcedureClient;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.TestHelper;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -84,6 +92,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runner for performance tests. This class is using lots of classes and code from JUnit framework.
@@ -96,12 +105,22 @@ public final class PerformanceTestRunner {
   private static Injector injector;
   private static String accountId = "developer";
   private static DiscoveryServiceClient discoveryServiceClient;
+  private static ZKClientService zkClientService;
 
   private TestClass testClass;
   private final CConfiguration config;
 
+
   private PerformanceTestRunner() {
     config = CConfiguration.create();
+  }
+
+  /**
+   * Providing discovery service client that can be used to locate metrics client.
+   * @return DiscoveryServiceClient
+   */
+  public static DiscoveryServiceClient getDiscoveryServiceClient() {
+    return discoveryServiceClient;
   }
 
   // Parsing the command line options.
@@ -298,36 +317,84 @@ public final class PerformanceTestRunner {
     }
 
     Module dataFabricModule;
-    if (config.get("perf.datafabric.mode") != null
-      && config.get("perf.datafabric.mode").equals("distributed")) {
-      dataFabricModule = new DataFabricModules().getDistributedModules();
-    } else {
-      dataFabricModule = new DataFabricModules().getSingleNodeModules();
-    }
+    Module discoveryServiceModule;
+    Module locationModule;
+    Module programRunnerModule;
+    Module metricsClientModule;
 
     try {
+      if (config.get("perf.reactor.mode") != null
+        && config.get("perf.reactor.mode").equals("distributed")) {
+        dataFabricModule = new DataFabricModules().getDistributedModules();
+        locationModule = new LocationRuntimeModule().getDistributedModules();
+        programRunnerModule = new ProgramRunnerRuntimeModule().getDistributedModules();
+        metricsClientModule = new MetricsClientRuntimeModule().getInMemoryModules();
+        zkClientService =
+          ZKClientServices.delegate(
+            ZKClients.reWatchOnExpire(
+              ZKClients.retryOnFailure(
+                ZKClientService.Builder.of(
+                  config.get(Constants.CFG_ZOOKEEPER_ENSEMBLE)).setSessionTimeout(10000).build(),
+                RetryStrategies.fixDelay(2, TimeUnit.SECONDS))));
+        discoveryServiceModule = new DiscoveryRuntimeModule(zkClientService).getDistributedModules();
+      } else {
+        dataFabricModule = new DataFabricModules().getSingleNodeModules();
+        locationModule = new LocationRuntimeModule().getInMemoryModules();
+        programRunnerModule = new ProgramRunnerRuntimeModule().getInMemoryModules();
+        metricsClientModule = new MetricsClientRuntimeModule().getInMemoryModules();
+        discoveryServiceModule = new AbstractModule() {
+          @Override
+          protected void configure() {
+            final String host = config.get(MetricsConstants.ConfigKeys.SERVER_ADDRESS, "localhost");
+            final int port = config.getInt(MetricsConstants.ConfigKeys.SERVER_PORT, 45005);
+
+            bind(DiscoveryServiceClient.class).toInstance(new DiscoveryServiceClient() {
+              @Override
+              public Iterable<Discoverable> discover(final String name) {
+                if (Constants.SERVICE_METRICS.equals(name)) {
+                  return ImmutableList.<Discoverable>of(new Discoverable() {
+                    @Override
+                    public String getName() {
+                      return name;
+                    }
+
+                    @Override
+                    public InetSocketAddress getSocketAddress() {
+                      return new InetSocketAddress(host, port);
+                    }
+                  });
+                } else {
+                  return ImmutableList.of();
+                }
+              }
+            });
+            bind(DiscoveryService.class).toInstance(new InMemoryDiscoveryService());
+          }
+        };
+      }
+
       injector = Guice
         .createInjector(dataFabricModule,
+                        discoveryServiceModule,
                         new ConfigModule(config),
                         new IOModule(),
-                        new LocationRuntimeModule().getInMemoryModules(),
-                        new DiscoveryRuntimeModule().getInMemoryModules(),
-                        new ProgramRunnerRuntimeModule().getInMemoryModules(),
-                        new MetricsClientRuntimeModule().getInMemoryModules(),
+                        locationModule,
+                        programRunnerModule,
+                        metricsClientModule,
                         new AbstractModule() {
-            @Override
-            protected void configure() {
-              install(new FactoryModuleBuilder().implement(ApplicationManager.class,
-                                                           DefaultBenchmarkManager.class).build
-                (BenchmarkManagerFactory.class));
-              install(new FactoryModuleBuilder().implement(StreamWriter.class,
-                                                           MultiThreadedStreamWriter.class).build
-                (BenchmarkStreamWriterFactory.class));
-              install(new FactoryModuleBuilder().implement(ProcedureClient.class,
-                                                           DefaultProcedureClient.class).build
-                (ProcedureClientFactory.class));
-            }
-          }, new Module() {
+                          @Override
+                          protected void configure() {
+                            install(new FactoryModuleBuilder().implement(ApplicationManager.class,
+                                                                         DefaultBenchmarkManager.class).build
+                              (BenchmarkManagerFactory.class));
+                            install(new FactoryModuleBuilder().implement(StreamWriter.class,
+                                                                         MultiThreadedStreamWriter.class).build
+                              (BenchmarkStreamWriterFactory.class));
+                            install(new FactoryModuleBuilder().implement(ProcedureClient.class,
+                                                                         DefaultProcedureClient.class).build
+                              (ProcedureClientFactory.class));
+                          }
+                        }, new Module() {
             @Override
             public void configure(Binder binder) {
               binder.bind(new TypeLiteral<PipelineFactory<?>>() {
@@ -344,6 +411,7 @@ public final class PerformanceTestRunner {
             }
             @Provides
             @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS)
+            @SuppressWarnings(value = "unused")
             public InetAddress providesHostname(CConfiguration cConf) {
               return Networks.resolve(cConf.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS),
                                       new InetSocketAddress("localhost", 0).getAddress());
@@ -351,10 +419,9 @@ public final class PerformanceTestRunner {
           }
         );
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Failure during initial bind and injection : " + e.getMessage(), e);
+      Throwables.propagate(e);
     }
-
-
     locationFactory = injector.getInstance(LocationFactory.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
   }
@@ -362,7 +429,7 @@ public final class PerformanceTestRunner {
   // Get an AppFabricClient for communication with the AppFabric of a local or remote Reactor.
   private static AppFabricService.Client getAppFabricClient(CConfiguration config) throws TTransportException  {
     String  appFabricServerHost = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
-                                       Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
+                                             Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
     int  appFabricServerPort = config.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT,
                                              Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
     LOG.debug("Connecting with AppFabric Server at {}:{}", appFabricServerHost, appFabricServerPort);
@@ -399,6 +466,9 @@ public final class PerformanceTestRunner {
         }
         Context.report(metricList, tags, interval);
       }
+    }
+    if (zkClientService != null) {
+      zkClientService.startAndWait();
     }
   }
 
@@ -484,6 +554,9 @@ public final class PerformanceTestRunner {
       }
       for (MensaMetricsReporter reporter : getInstance().mensaReporters) {
         reporter.shutdown();
+      }
+      if (zkClientService != null) {
+        zkClientService.stopAndWait();
       }
     }
   }
