@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -146,23 +147,20 @@ public final class BenchmarkRuntimeStats {
 
   // Gets new metrics client for retrieving metrics from metrics system.
   private static MetricsClient getMetricsClient() {
-    int attempts = 0;
     Iterable<Discoverable> it =
       PerformanceTestRunner.getDiscoveryServiceClient().discover(Constants.SERVICE_METRICS);
-    while (Iterables.isEmpty(it) && (attempts++ < 10)) {
+    for (int attempts = 0; Iterables.isEmpty(it) && (attempts++ < 10); attempts++) {
       try {
-        TimeUnit.MILLISECONDS.sleep(1000);
+        TimeUnit.MILLISECONDS.sleep(200);
       } catch (InterruptedException e) {
         throw new RuntimeException(String.format("Interrupted when trying to locate service '%s'",
                                                  Constants.SERVICE_METRICS));
       }
     }
-    if (!Iterables.isEmpty(it)) {
-      Discoverable discoverable = it.iterator().next();
-      return new MetricsClient(discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort());
-    } else {
-      throw new RuntimeException(String.format("Could not locate service '%s'", Constants.SERVICE_METRICS));
+    try {
+      return new MetricsClient(it.iterator().next().getSocketAddress());
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Could not locate service '%s'", Constants.SERVICE_METRICS), e);
     }
   }
 
@@ -193,8 +191,8 @@ public final class BenchmarkRuntimeStats {
 
     private final String url;
 
-    private MetricsClient(String hostname, int port) {
-      this.url = String.format("http://%s:%d/metrics", hostname, port);
+    private MetricsClient(InetSocketAddress socketAddress) {
+      this.url = String.format("http://%s:%d/metrics", socketAddress.getHostName(), socketAddress.getPort());
     }
 
     private Counter getCounter(Metric metric) {

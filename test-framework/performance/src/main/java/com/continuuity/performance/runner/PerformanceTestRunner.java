@@ -251,9 +251,11 @@ public final class PerformanceTestRunner {
   }
 
   // Deploys a provided Continuuity Reactor App by the name of its class.
+  @SuppressWarnings(value = "unchecked")
   public static ApplicationManager deployApplication(String applicationClass) {
     Preconditions.checkArgument(StringUtils.isNotEmpty(applicationClass),
                                 "Application cannot be null or empty String.");
+
     try {
       return deployApplication((Class<? extends Application>) Class.forName(applicationClass));
     } catch (ClassNotFoundException e) {
