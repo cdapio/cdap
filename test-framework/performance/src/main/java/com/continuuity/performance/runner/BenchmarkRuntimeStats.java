@@ -195,7 +195,9 @@ public final class BenchmarkRuntimeStats {
 
     private Counter getCounter(String counterPath) {
       String json = "[ \"" + counterPath + "\" ]";
-      LOG.info(" JSON:" + json);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Retrieving metric '{}' from metrics system", json);
+      }
       String response = sendJSonPostRequest(url, json, null);
       List<MetricsResponse> responseData = GSON.fromJson(response,
                                                          new TypeToken<List<MetricsResponse>>(){}.getType());
