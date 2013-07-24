@@ -283,19 +283,19 @@ public class MapReduceProgramRunner implements ProgramRunner {
     long mapOutputBytes = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_BYTES);
 
     // current metrics API only supports int, cast it for now. Need another rev to support long.
-    context.getSystemMapperMetrics().gauge("completion", (int) (mapProgress * 100));
-    context.getSystemMapperMetrics().gauge("entries.ins", (int) mapInputRecords);
-    context.getSystemMapperMetrics().gauge("entries.outs", (int) mapOutputRecords);
-    context.getSystemMapperMetrics().gauge("bytes", (int) mapOutputBytes);
+    context.getSystemMapperMetrics().gauge("process.completion", (int) (mapProgress * 100));
+    context.getSystemMapperMetrics().gauge("process.entries.ins", (int) mapInputRecords);
+    context.getSystemMapperMetrics().gauge("process.entries.outs", (int) mapOutputRecords);
+    context.getSystemMapperMetrics().gauge("process.bytes", (int) mapOutputBytes);
 
     // reduce stats
     float reduceProgress = jobConf.getStatus().getReduceProgress();
     long reduceInputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_INPUT_RECORDS);
     long reduceOutputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_OUTPUT_RECORDS);
 
-    context.getSystemReducerMetrics().gauge("completion", (int) (reduceProgress * 100));
-    context.getSystemReducerMetrics().gauge("entries.ins", (int) reduceInputRecords);
-    context.getSystemReducerMetrics().gauge("entries.outs", (int) reduceOutputRecords);
+    context.getSystemReducerMetrics().gauge("process.completion", (int) (reduceProgress * 100));
+    context.getSystemReducerMetrics().gauge("process.entries.ins", (int) reduceInputRecords);
+    context.getSystemReducerMetrics().gauge("process.entries.outs", (int) reduceOutputRecords);
   }
 
   private long getTaskCounter(Job jobConf, TaskCounter taskCounter) throws IOException, InterruptedException {
