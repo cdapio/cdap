@@ -334,6 +334,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
     private volatile boolean running;
 
     private ConsumerThread(TopicPartition topicPart, long startOffset, MessageCallback callback) {
+      super(String.format("Kafka-Consumer-%s-%d", topicPart.getTopic(), topicPart.getPartition()));
       this.topicPart = topicPart;
       this.startOffset = startOffset;
       this.callback = callback;
@@ -397,6 +398,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
     }
 
     public void terminate() {
+      LOG.info("Terminate requested {}", getName());
       running = false;
       interrupt();
     }
@@ -416,6 +418,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
       FetchRequest request = new FetchRequestBuilder()
         .clientId(consumer.clientId())
         .addFetch(topicPart.getTopic(), topicPart.getPartition(), offset, FETCH_SIZE)
+        .maxWait(1000)
         .build();
       return consumer.fetch(request);
     }
