@@ -18,6 +18,13 @@ import org.apache.hadoop.hbase.filter.Filter;
 public interface FilterableOVCTable extends OrderedVersionedColumnarTable {
 
   /**
+   * Tells if the given filter is supported by this table.
+   * @param filterClass The class of filter.
+   * @return {@code true} if the filter is supported, otherwise {@code false}.
+   */
+  public boolean isFilterSupported(Class<?> filterClass);
+
+  /**
    * Similar to {@link #scan(byte[], byte[], ReadPointer)} but with filtering applied on rows it scans.
    */
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer, Filter filter);

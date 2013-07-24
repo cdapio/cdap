@@ -13,8 +13,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -22,34 +25,44 @@ import java.io.IOException;
 public class HBaseFilterableOVCTable extends HBaseOVCTable implements FilterableOVCTable, TimeToLiveOVCTable {
 
   private final int ttl;
+  private final boolean supportsFuzzyRowFilter;
 
-  public HBaseFilterableOVCTable(CConfiguration cConf, Configuration conf, byte[] tableName, byte[] family,
-                                 IOExceptionHandler exceptionHandler, int ttl) throws OperationException {
+  public HBaseFilterableOVCTable(CConfiguration cConf, Configuration conf,
+                                 byte[] tableName, byte[] family,
+                                 IOExceptionHandler exceptionHandler,
+                                 int ttl, String hbaseVersion) throws OperationException {
     super(cConf, conf, tableName, family, exceptionHandler);
     this.ttl = ttl;
+    Matcher matcher = Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+).*").matcher(hbaseVersion);
+    if (matcher.matches()) {
+      // Fuzzy row filter is support for hbase >= 0.94.6
+      if (Integer.parseInt(matcher.group(1)) > 0) {
+        supportsFuzzyRowFilter = true;
+      } else {
+        if (Integer.parseInt(matcher.group(2)) > 94) {
+          supportsFuzzyRowFilter = true;
+        } else {
+          supportsFuzzyRowFilter = Integer.parseInt(matcher.group(2)) == 94 && Integer.parseInt(matcher.group(3)) >= 6;
+        }
+      }
+    } else {
+      supportsFuzzyRowFilter = false;
+    }
   }
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
-    try {
-      Scan scan =  new Scan();
-      if (startRow != null) {
-        scan.setStartRow(startRow);
-      }
-      if (stopRow != null) {
-        scan.setStopRow(stopRow);
-      }
-      if (columns != null) {
-        for (int i = 0; i < columns.length; i++) {
-          scan.addColumn(family, columns[i]);
-        }
-      }
-      scan.setTimeRange(0, getMaxStamp(readPointer));
-      scan.setMaxVersions();
-      return new HBaseScanner(this.readTable.getScanner(scan), readPointer){};
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
+    return scan(startRow, stopRow, columns, readPointer, null);
+  }
+
+  @Override
+  public boolean isFilterSupported(Class<?> filterClass) {
+    // The current logic is hacky as it assumes all filter are supported, except the FuzzyRowFilter is only
+    // supported by version >= 0.94.6
+    if (FuzzyRowFilter.class.equals(filterClass)) {
+      return supportsFuzzyRowFilter;
     }
+    return true;
   }
 
   @Override
