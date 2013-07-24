@@ -371,8 +371,6 @@ public final class PerformanceTestRunner {
                         new ConfigModule(config),
                         new IOModule(),
                         locationModule,
-//                        programRunnerModule,
-//                        metricsClientModule,
                         new AbstractModule() {
                           @Override
                           protected void configure() {
