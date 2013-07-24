@@ -111,7 +111,7 @@ public final class AggregatesTable {
     byte[] endRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
 
     Scanner scanner;
-    if (isFilterable) {
+    if (isFilterable && ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
       scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(contextPrefix, metricPrefix, runId));
