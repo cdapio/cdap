@@ -19,11 +19,14 @@ import java.io.IOException;
 /**
  *
  */
-public class HBaseFilterableOVCTable extends HBaseOVCTable implements FilterableOVCTable {
+public class HBaseFilterableOVCTable extends HBaseOVCTable implements FilterableOVCTable, TimeToLiveOVCTable {
+
+  private final int ttl;
 
   public HBaseFilterableOVCTable(CConfiguration cConf, Configuration conf, byte[] tableName, byte[] family,
-                                 IOExceptionHandler exceptionHandler) throws OperationException {
+                                 IOExceptionHandler exceptionHandler, int ttl) throws OperationException {
     super(cConf, conf, tableName, family, exceptionHandler);
+    this.ttl = ttl;
   }
 
   @Override
@@ -94,5 +97,10 @@ public class HBaseFilterableOVCTable extends HBaseOVCTable implements Filterable
   // Copied from parent class, since it is private
   private synchronized void returnWriteTable(HTable table) {
     this.writeTables.add(table);
+  }
+
+  @Override
+  public int getTTL() {
+    return ttl;
   }
 }

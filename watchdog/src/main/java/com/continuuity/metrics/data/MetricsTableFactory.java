@@ -31,4 +31,9 @@ public interface MetricsTableFactory {
    * @return A new instance of {@link KafkaConsumerMetaTable}.
    */
   KafkaConsumerMetaTable createKafkaConsumerMeta(String namespace);
+
+  /**
+   * Returns whether the underlying table supports TTL.
+   */
+  boolean isTTLSupported();
 }
