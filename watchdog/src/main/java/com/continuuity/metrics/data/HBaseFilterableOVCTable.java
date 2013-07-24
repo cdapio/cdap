@@ -33,9 +33,9 @@ public class HBaseFilterableOVCTable extends HBaseOVCTable implements Filterable
                                  int ttl, String hbaseVersion) throws OperationException {
     super(cConf, conf, tableName, family, exceptionHandler);
     this.ttl = ttl;
+    // This is a hacky way to detect if FuzzyRowFilter is supported by assuming version >= 0.94.6
     Matcher matcher = Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+).*").matcher(hbaseVersion);
     if (matcher.matches()) {
-      // Fuzzy row filter is support for hbase >= 0.94.6
       if (Integer.parseInt(matcher.group(1)) > 0) {
         supportsFuzzyRowFilter = true;
       } else {
