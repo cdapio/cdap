@@ -65,10 +65,11 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService {
 
   private void subscribe() {
     LOG.info("Prepare to subscribe.");
-    // Assuming there is only one process that pulling in all metrics.
-    KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
     for (MetricsScope scope : MetricsScope.values()) {
+      // Assuming there is only one process that pulling in all metrics.
+      KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
+
       String topic = topicPrefix + "." + scope.name();
       for (int i = 0; i < partitionSize; i++) {
         long offset = getOffset(topic, i);

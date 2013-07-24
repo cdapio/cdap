@@ -3,8 +3,8 @@
  */
 package com.continuuity.metrics.process;
 
-import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumReader;
 import com.continuuity.internal.io.Schema;
@@ -35,6 +35,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   private final DatumReader<MetricsRecord> recordReader;
   private final Schema recordSchema;
   private final Set<MetricsProcessor> processors;
+  private long recordProcessed;
 
   public MetricsMessageCallback(MetricsScope scope,
                                 Set<MetricsProcessor> processors,
@@ -63,9 +64,19 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       }
     }), Predicates.notNull()));
 
+    if (records.isEmpty()) {
+      LOG.info("No records to process.");
+      return;
+    }
     // Invoke processors one by one.
     for (MetricsProcessor processor : processors) {
       processor.process(scope, records.iterator());
+    }
+
+    recordProcessed += records.size();
+    if (recordProcessed % 1000 == 0) {
+      LOG.info("{} metrics of {} records processed", scope, recordProcessed);
+      LOG.info("Last record time: {}", records.get(records.size() - 1).getTimestamp());
     }
   }
 
