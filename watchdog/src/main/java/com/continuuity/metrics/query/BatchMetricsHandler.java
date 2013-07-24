@@ -51,7 +51,6 @@ import java.io.Reader;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Class for handling batch requests for metrics data of the {@link MetricsScope#REACTOR} scope.
@@ -114,17 +113,17 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
         TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(metricsRequest.getStartTime(),
                                                                         metricsRequest.getEndTime());
         // Busyness is a special case that computes from multiple timeseries.
-        if ("busyness".equals(metricsRequest.getMetricPrefix())) {
+        if ("process.busyness".equals(metricsRequest.getMetricPrefix())) {
           MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
             .setContext(metricsRequest.getContextPrefix())
-            .setMetric("tuples.read")
+            .setMetric("process.tuples.read")
             .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
 
           PeekingIterator<TimeValue> tuplesReadItor = Iterators.peekingIterator(queryTimeSeries(scanQuery));
 
           scanQuery = new MetricsScanQueryBuilder()
             .setContext(metricsRequest.getContextPrefix())
-            .setMetric("events.processed")
+            .setMetric("process.events.processed")
             .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
 
           PeekingIterator<TimeValue> eventsProcessedItor = Iterators.peekingIterator(queryTimeSeries(scanQuery));
@@ -140,7 +139,8 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
               eventProcessed = eventsProcessedItor.next().getValue();
             }
             if (eventProcessed != 0) {
-              builder.addData(resultTime, (int) ((float) tupleRead / eventProcessed * 100));
+              int busyness = (int) ((float) tupleRead / eventProcessed * 100);
+              builder.addData(resultTime, busyness > 100 ? 100 : busyness);
             } else {
               builder.addData(resultTime, 0);
             }

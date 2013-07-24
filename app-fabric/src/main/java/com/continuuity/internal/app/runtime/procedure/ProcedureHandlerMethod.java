@@ -84,11 +84,11 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
   @Override
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
-    context.getSystemMetrics().gauge("requests", 1);
+    context.getSystemMetrics().gauge("query.requests", 1);
     HandlerMethod handlerMethod = handlers.get(request.getMethod());
     if (handlerMethod == null) {
       LOG.error("Unsupport procedure method " + request.getMethod() + " on procedure " + procedure.getClass());
-      context.getSystemMetrics().gauge("failures", 1);
+      context.getSystemMetrics().gauge("query.failures", 1);
       try {
         responder.stream(new ProcedureResponse(ProcedureResponse.Code.NOT_FOUND));
       } catch (IOException e) {
@@ -100,7 +100,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     try {
       handlerMethod.handle(request, responder);
     } catch (Throwable t) {
-      context.getSystemMetrics().gauge("failures", 1);
+      context.getSystemMetrics().gauge("query.failures", 1);
       throw Throwables.propagate(t);
     }
   }

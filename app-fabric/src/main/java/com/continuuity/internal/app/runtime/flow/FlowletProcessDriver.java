@@ -101,7 +101,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       transactionExecutor = MoreExecutors.sameThreadExecutor();
     }
     runnerThread = Thread.currentThread();
-    flowletContext.getSystemMetrics().gauge("instance", 1);
+    flowletContext.getSystemMetrics().gauge("process.instance", 1);
   }
 
   @Override
@@ -193,7 +193,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
           if (processMethod.needsInput()) {
-            flowletContext.getSystemMetrics().gauge("tuples.attempt.read", 1);
+            flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
           }
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
           if (!input.needProcess()) {
@@ -239,8 +239,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     return new Function<ByteBuffer, T>() {
       @Override
       public T apply(ByteBuffer byteBuffer) {
-        flowletContext.getSystemMetrics().gauge("events.ins." + input.getInputContext().getOrigin(), 1);
-        flowletContext.getSystemMetrics().gauge("tuples.read", 1);
+        flowletContext.getSystemMetrics().gauge("process.events.ins." + input.getInputContext().getOrigin(), 1);
+        flowletContext.getSystemMetrics().gauge("process.tuples.read", 1);
         return inputDatumDecoder.apply(byteBuffer);
       }
     };
@@ -268,7 +268,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          flowletContext.getSystemMetrics().gauge("tuples.attempt.read", 1);
+          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
 
           try {
             // Call the process method and commit the transaction
@@ -314,7 +314,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getSystemMetrics().gauge("events.processed", 1);
+          flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.info("Exception on onSuccess call: " + flowletContext, t);
@@ -331,7 +331,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         LOG.info("Process failure. " + reason.getMessage() + ", input: " + input, reason.getCause().getCause());
         FailurePolicy failurePolicy;
         try {
-          flowletContext.getSystemMetrics().gauge("errors", 1);
+          flowletContext.getSystemMetrics().gauge("process.errors", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {
           LOG.error("Exception on onFailure call: " + flowletContext, t);
@@ -355,7 +355,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getSystemMetrics().gauge("events.processed", 1);
+            flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
             inputAcknowledger.ack();
           } catch (OperationException e) {
             LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);
