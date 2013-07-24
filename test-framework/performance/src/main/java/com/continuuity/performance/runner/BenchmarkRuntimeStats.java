@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -34,8 +33,8 @@ public final class BenchmarkRuntimeStats {
 
   private static final Logger LOG = LoggerFactory.getLogger(BenchmarkRuntimeStats.class);
 
-  private static final String FLOWLET_EVENTS = "/process/events/{appId}/flows/{flowId}/{flowletId}?aggregate=true";
-  private static final String FLOWLET_INPUTS = "/process/events/{appId}/flows/{flowId}/{flowletId}/ins?aggregate=true";
+  private static final String FLOWLET_EVENTS = "/process/events/{appId}/flows/{flowId}/{flowletId}";
+  private static final String FLOWLET_INPUTS = "/process/events/{appId}/flows/{flowId}/{flowletId}/ins";
 
   private static final MetricsClient metricsClient = getMetricsClient();
 
@@ -45,13 +44,13 @@ public final class BenchmarkRuntimeStats {
   private static final int REQUEST_TIMEOUT = 1000;
 
   // Read runtime metric counters for a given flowlet.
-  public static BenchmarkRuntimeMetrics getFlowletMetrics(final String applicationId,
-                                                          final String flowId, final String flowletId) {
-    final Metric aggregatedFlowletInputs = new Metric(FLOWLET_INPUTS,
+  public static BenchmarkRuntimeMetrics getFlowletMetrics(final String applicationId, final String flowId,
+                                                          final String flowletId) {
+    final Metric aggregatedFlowletInputs = new Metric(FLOWLET_INPUTS, Metric.Type.AGGREGATE,
                                                       ImmutableMap.of(Metric.Parameter.APPLICATION_ID, applicationId,
                                                       Metric.Parameter.FLOW_ID, flowId,
                                                       Metric.Parameter.FLOWLET_ID, flowletId));
-    final Metric aggregatedFlowletEvents = new Metric(FLOWLET_EVENTS,
+    final Metric aggregatedFlowletEvents = new Metric(FLOWLET_EVENTS, Metric.Type.AGGREGATE,
                                                       ImmutableMap.of(Metric.Parameter.APPLICATION_ID, applicationId,
                                                       Metric.Parameter.FLOW_ID, flowId,
                                                       Metric.Parameter.FLOWLET_ID, flowletId));
@@ -105,45 +104,36 @@ public final class BenchmarkRuntimeStats {
 
       @Override
       public String toString() {
-        return String.format("%s; input=%d, processed=%d, exception=%d", flowletId, getInput(), getProcessed());
+        return String.format("%s; input=%d, processed=%d", flowletId, getInput(), getProcessed());
       }
     };
   }
 
   /**
    * Waits until metrics counter has reached the given count number.
-   * @param counterPath Full path of counter
+   * @param metric Metric object
    * @param count Count to wait for
    * @param timeout Maximum time to wait for
    * @param timeoutUnit {@link TimeUnit} for the timeout time.
    * @throws TimeoutException if the timeout time passed and still not seeing that many count.
    */
   @SuppressWarnings(value = "unused")
-  public static void waitForCounter(String counterPath, long count, long timeout, TimeUnit timeoutUnit)
+  public static void waitForCounter(Metric metric, long count, long timeout, TimeUnit timeoutUnit)
     throws TimeoutException, InterruptedException {
 
-    Counter c = getCounter(counterPath);
+    Counter c = getCounter(metric);
     if (c == null) {
-      throw new RuntimeException("No counter with path " + counterPath + " found.");
+      throw new RuntimeException("No counter with path '" + metric.getPath() + "' found.");
     }
     long value = c.getValue();
     while (timeout > 0 && (value < count)) {
       timeoutUnit.sleep(1);
-      value = getCounter(counterPath).getValue();
+      value = getCounter(metric).getValue();
       timeout--;
     }
     if (timeout == 0 && (value < count)) {
       throw new TimeoutException("Time limit reached.");
     }
-  }
-
-  /**
-   * Gets metrics counter object for a given counter path.
-   * @param counterPath Full path of counter
-   * @return Counter
-   */
-  public static Counter getCounter(String counterPath) {
-    return metricsClient.getCounter(counterPath);
   }
 
   /**
@@ -153,18 +143,6 @@ public final class BenchmarkRuntimeStats {
    */
   public static Counter getCounter(Metric metric) {
     return metricsClient.getCounter(metric);
-  }
-
-  /**
-   * Gets metrics counter object for a given counter pattern and parameters.
-   * @param pattern Counter pattern
-   * @param type Metrics type {@link Metric.Type}
-   * @param params Counter parameters
-   * @return Counter
-   */
-  @SuppressWarnings(value = "unused")
-  public static Counter getCounter(String pattern, Metric.Type type, String[] params) {
-    return metricsClient.getCounter(pattern, type, params);
   }
 
   // Gets new metrics client for retrieving metrics from metrics system.
@@ -201,62 +179,26 @@ public final class BenchmarkRuntimeStats {
 
     private static final Gson GSON = new Gson();
 
-    private final String hostname;
-    private final int port;
     private final String url;
 
     private MetricsClient(String hostname, int port) {
-      this.hostname = hostname;
-      this.port = port;
       this.url = String.format("http://%s:%d/metrics", hostname, port);
     }
 
     private Counter getCounter(Metric metric) {
       if (metric.getType() == Metric.Type.AGGREGATE) {
-        String json = "[ \"" + metric.getPath() + "\" ]";
-        String response = sendJSonPostRequest(url, json, null);
-        List<MetricsResponse> responseData = GSON.fromJson(response,
-                                                           new TypeToken<Collection<MetricsResponse>>(){}.getType());
-        if (responseData == null || responseData.size() == 0) {
-          throw new RuntimeException(String.format("No metric received from metrics system for request %s",
-                                                   metric.getPath()));
-        }
-        if (responseData.size() > 1) {
-          throw new RuntimeException(String.format("More than one metric received from metrics system for request %s",
-                                                   metric.getPath()));
-        }
-        return new Counter(responseData.get(0).getPath(), responseData.get(0).getResult().getData());
-      } else {
+        return getCounter(metric.getPath());
+       } else {
         throw new RuntimeException(String.format("Metrics request type %s is not supported.", metric.getType()));
-      }
-    }
-
-    private Counter getCounter(String pattern, Metric.Type type, String[] params) {
-      if (type == Metric.Type.AGGREGATE) {
-        String json = "[ \"" + String.format(pattern, (Object[]) params) + "\" ]";
-        String response = sendJSonPostRequest(url, json, null);
-        List<MetricsResponse> responseData = GSON.fromJson(response,
-                                                           new TypeToken<Collection<MetricsResponse>>(){}.getType());
-        if (responseData == null || responseData.size() == 0) {
-          throw new RuntimeException(String.format("No metric received from metrics system for request %s",
-                                                   String.format(pattern, (Object[]) params)));
-        }
-        if (responseData.size() > 1) {
-          throw new RuntimeException(String.format("More than one metric received from metrics system for request %s",
-                                                   String.format(pattern, (Object[]) params)));
-        }
-        return new Counter(responseData.get(0).getPath(), responseData.get(0).getResult().getData());
-      } else {
-        throw new RuntimeException(String.format("Metrics request type %s is not supported.", type.name()));
       }
     }
 
     private Counter getCounter(String counterPath) {
       String json = "[ \"" + counterPath + "\" ]";
       LOG.info(" JSON:" + json);
-      String response = sendJSonPostRequest(String.format("http://%s:%d/metrics", hostname, port), json, null);
+      String response = sendJSonPostRequest(url, json, null);
       List<MetricsResponse> responseData = GSON.fromJson(response,
-                                                         new TypeToken<Collection<MetricsResponse>>(){}.getType());
+                                                         new TypeToken<List<MetricsResponse>>(){}.getType());
 
       if (responseData == null || responseData.size() == 0) {
         throw new RuntimeException(String.format("No metric received from metrics system for request %s", counterPath));
@@ -313,7 +255,7 @@ public final class BenchmarkRuntimeStats {
       Response response = future.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
       String body =  response.getResponseBody();
       if (response.getStatusCode() != 200) {
-        throw new RuntimeException(body);
+        throw new RuntimeException("Status code " + response.getStatusCode() + ":" + body);
       }
       return body;
     } catch (IOException e) {
