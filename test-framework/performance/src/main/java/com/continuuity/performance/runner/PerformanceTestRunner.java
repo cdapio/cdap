@@ -10,7 +10,6 @@ import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.guice.LocationRuntimeModule;
-import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.store.StoreFactory;
@@ -29,7 +28,6 @@ import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.performance.application.BenchmarkManagerFactory;
 import com.continuuity.performance.application.BenchmarkStreamWriterFactory;
 import com.continuuity.performance.application.DefaultBenchmarkManager;
@@ -319,16 +317,12 @@ public final class PerformanceTestRunner {
     Module dataFabricModule;
     Module discoveryServiceModule;
     Module locationModule;
-    Module programRunnerModule;
-    Module metricsClientModule;
 
     try {
       if (config.get("perf.reactor.mode") != null
         && config.get("perf.reactor.mode").equals("distributed")) {
         dataFabricModule = new DataFabricModules().getDistributedModules();
         locationModule = new LocationRuntimeModule().getDistributedModules();
-        programRunnerModule = new ProgramRunnerRuntimeModule().getDistributedModules();
-        metricsClientModule = new MetricsClientRuntimeModule().getInMemoryModules();
         zkClientService =
           ZKClientServices.delegate(
             ZKClients.reWatchOnExpire(
@@ -340,8 +334,6 @@ public final class PerformanceTestRunner {
       } else {
         dataFabricModule = new DataFabricModules().getSingleNodeModules();
         locationModule = new LocationRuntimeModule().getInMemoryModules();
-        programRunnerModule = new ProgramRunnerRuntimeModule().getInMemoryModules();
-        metricsClientModule = new MetricsClientRuntimeModule().getInMemoryModules();
         discoveryServiceModule = new AbstractModule() {
           @Override
           protected void configure() {
@@ -379,8 +371,8 @@ public final class PerformanceTestRunner {
                         new ConfigModule(config),
                         new IOModule(),
                         locationModule,
-                        programRunnerModule,
-                        metricsClientModule,
+//                        programRunnerModule,
+//                        metricsClientModule,
                         new AbstractModule() {
                           @Override
                           protected void configure() {
