@@ -1,19 +1,23 @@
 package com.continuuity.metrics2.frontend;
 
-import akka.dispatch.Await;
-import akka.util.Duration;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.metrics.*;
 import com.continuuity.common.metrics.MetricRequest;
+import com.continuuity.common.metrics.MetricResponse;
 import com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor;
 import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
 import com.continuuity.metrics2.temporaldb.DataPoint;
-import com.continuuity.metrics2.thrift.*;
+import com.continuuity.metrics2.thrift.Counter;
+import com.continuuity.metrics2.thrift.CounterRequest;
+import com.continuuity.metrics2.thrift.FlowArgument;
+import com.continuuity.metrics2.thrift.MetricTimeseriesLevel;
+import com.continuuity.metrics2.thrift.MetricsFrontendService;
+import com.continuuity.metrics2.thrift.MetricsServiceException;
+import com.continuuity.metrics2.thrift.Points;
+import com.continuuity.metrics2.thrift.TimeseriesRequest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -182,50 +186,6 @@ public class MetricsFrontendServiceImplTest {
   @Test(expected = MetricsServiceException.class)
   public void testBadRequestArguments() throws Exception {
     getCounters(new FlowArgument(), null);
-  }
-
-  /**
-   * Tests writing and reading a metric.
-   */
-  @Test(timeout = 2000)
-  public void testAddingSingleMetricAndReadingItBack() throws Exception {
-    Assert.assertTrue(
-      addMetric("accountId.applicationId.flowId.runId.flowletId.1.processed",
-                10) == MetricResponse.Status.SUCCESS);
-    List<Counter> counters = getCounters(
-      new FlowArgument("accountId", "applicationId", "flowId"),
-      null
-    );
-    Assert.assertNotNull(counters);
-    Assert.assertThat(counters.size(), CoreMatchers.is(1));
-    Assert.assertTrue(counters.get(0).getValue() == 10.0f);
-  }
-
-  /**
-   * Tests writing and reading a metric at runid level.
-   */
-  @Test
-  public void testAddingSingleMetricAndReadingItBackAtRunIdLevel()
-    throws Exception {
-    Assert.assertTrue(
-    addMetric("accountId1.applicationId.flowId.runId.flowletId.1.processed",
-      11) == MetricResponse.Status.SUCCESS
-    );
-    FlowArgument argument =
-      new FlowArgument("accountId1", "applicationId", "flowId");
-
-    // Should find counters.
-    argument.setRunId("runId");
-    List<Counter> counters = getCounters(argument, null);
-    Assert.assertNotNull(counters);
-    Assert.assertThat(counters.size(), CoreMatchers.is(1));
-    Assert.assertTrue(counters.get(0).getValue() == 11.0f);
-
-    // We should not find any runid related counters.
-    argument.setRunId("rund2");
-    counters = getCounters(argument, null);
-    Assert.assertNotNull(counters);
-    Assert.assertThat(counters.size(), CoreMatchers.is(0));
   }
 
   @Test
@@ -445,67 +405,6 @@ public class MetricsFrontendServiceImplTest {
     Assert.assertTrue(dataPointsRunIdLevel.getPoints()
                         .get("acks").size() >= 1);
     Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
-  }
-
-
-  @Test(timeout = 2000)
-  public void testAddingMultipleFlowletsForSingleMetric() throws Exception {
-    addMetric("demo.myapp.myflow.myfun.source.1.processed", 10);
-    addMetric("demo.myapp.myflow.myfun.compute.1.processed", 11);
-    addMetric("demo.myapp.myflow.myfun.sink.1.processed", 12);
-    List<Counter> counters = getCounters(new FlowArgument("demo", "myapp",
-                                                          "myflow"), null);
-    Assert.assertNotNull(counters);
-    Assert.assertThat(counters.size(), CoreMatchers.is(3));
-  }
-
-
-  @Test(timeout = 2000)
-  public void testMultipleFlowletsAndMultipleInstancePerFlowlet() throws
-    Exception {
-    // Three sources
-    addMetric("demo.myapp.myflow.myfun.source.1.processed", 10);
-    addMetric("demo.myapp.myflow.myfun.source.2.processed", 10);
-    addMetric("demo.myapp.myflow.myfun.source.3.processed", 10);
-
-    // Four computes
-    addMetric("demo.myapp.myflow.myfun.compute.1.processed", 11);
-    addMetric("demo.myapp.myflow.myfun.compute.2.processed", 11);
-    addMetric("demo.myapp.myflow.myfun.compute.3.processed", 11);
-    addMetric("demo.myapp.myflow.myfun.compute.4.processed", 11);
-
-    // Three sinks
-    addMetric("demo.myapp.myflow.myfun.sink.1.processed", 12);
-    addMetric("demo.myapp.myflow.myfun.sink.2.processed", 12);
-    addMetric("demo.myapp.myflow.myfun.sink.3.processed", 12);
-
-    // Expectation is that all instance counts are aggregated into
-    // the flowlet.
-    List<Counter> counters = getCounters(new FlowArgument("demo", "myapp", "myflow"), null);
-    Assert.assertNotNull(counters);
-    Assert.assertThat(counters.size(), CoreMatchers.is(3));
-  }
-
-  @Test
-  public void testBusynessMetric() throws Exception {
-    //acc0.app1.flow1.runid1.fl1.1.tuples.read.count
-    List<String> metrics = Lists.newArrayList();
-    metrics.add("busyness");
-    Points points = getTimeseries(new FlowArgument("acc0", "app1", "flow1"),
-                           metrics, MetricTimeseriesLevel.FLOW_LEVEL, timestamp,
-                           timestamp + counter);
-    Assert.assertNotNull(points);
-    Assert.assertTrue(points.getPoints().get("busyness").size() >= 1);
-  }
-
-  @Test
-  public void testResetMetrics() throws Exception {
-    testMultipleFlowletsAndMultipleInstancePerFlowlet();
-    client.reset("demo");
-    List<Counter> counters
-      = getCounters(new FlowArgument("demo", "myapp", "myflow"), null);
-    Assert.assertNotNull(counters);
-    Assert.assertThat(counters.size(), CoreMatchers.is(0));
   }
 
   /**
