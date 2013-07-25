@@ -181,6 +181,14 @@ public final class TimeSeriesTable {
   }
 
   /**
+   * Delete all entries.
+   * @throws OperationException if there is an error in deleting table.
+   */
+  public void deleteAll() throws OperationException {
+    timeSeriesTable.clear();
+  }
+
+  /**
    * Deletes all row keys that has timestamp before the given time.
    * @param beforeTime All data before this timestamp will be removed (exclusive).
    */
