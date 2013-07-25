@@ -24,7 +24,7 @@ final class MetricsRequestParser {
   private static final String END_TIME = "end";
 
   // Events path parse is slightly different. If there is no "ins" or "outs", it's default to "processed".
-  private static final String EVENTS = "events";
+  private static final String EVENTS = "process.events";
   private static final String PROCESSED = "processed";
 
   private enum ContextType {
@@ -87,7 +87,7 @@ final class MetricsRequestParser {
     ContextType contextType = ContextType.valueOf(pathParts.next().toUpperCase());
 
     // 2. Metric group (prefix)
-    String metricName = pathParts.next();
+    String metricName = contextType.name().toLowerCase() + "." + pathParts.next();
 
     MetricsRequestBuilder builder = new MetricsRequestBuilder(requestURI);
     builder.setMetricPrefix(metricName);

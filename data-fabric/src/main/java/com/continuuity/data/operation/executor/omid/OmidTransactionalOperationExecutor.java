@@ -340,8 +340,8 @@ public class OmidTransactionalOperationExecutor
 
   private void streamMetric(byte[] streamName, int dataSize, int numEntries) {
     String metricName = getStreamMetricName(streamName);
-    streamMetrics.gauge("events", 1, metricName);
-    streamMetrics.gauge("bytes", streamSizeEstimate(streamName, dataSize, numEntries), metricName);
+    streamMetrics.gauge("collect.events", 1, metricName);
+    streamMetrics.gauge("collect.bytes", streamSizeEstimate(streamName, dataSize, numEntries), metricName);
   }
 
   // By using this we reduce amount of strings to concat for super-freq operations, which (shown in tests) reduces
@@ -374,7 +374,7 @@ public class OmidTransactionalOperationExecutor
     // note: we intentionally do not provide table name for some system operations (like talking to MDS) so that
     //       we can skip writing metrics here. Yes, this looks like a hack. Should be fixed with new metrics system.
     if (dataSetName != null) {
-      dataSetMetrics.gauge("reads", 1, dataSetName);
+      dataSetMetrics.gauge("store.reads", 1, dataSetName);
     }
   }
 
@@ -382,8 +382,8 @@ public class OmidTransactionalOperationExecutor
     // note: we intentionally do not provide table name for some system operations (like talking to MDS) so that
     //       we can skip writing metrics here. Yes, this looks like a hack. Should be fixed with new metrics system.
     if (dataSetName != null) {
-      dataSetMetrics.gauge("writes", 1, dataSetName);
-      dataSetMetrics.gauge("bytes", dataSize, dataSetName);
+      dataSetMetrics.gauge("store.writes", 1, dataSetName);
+      dataSetMetrics.gauge("store.bytes", dataSize, dataSetName);
     }
   }
   

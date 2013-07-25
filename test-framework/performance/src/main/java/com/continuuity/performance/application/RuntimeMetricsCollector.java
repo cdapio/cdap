@@ -5,16 +5,15 @@
 package com.continuuity.performance.application;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.performance.runner.BenchmarkRuntimeStats;
+import com.continuuity.performance.runner.BenchmarkRuntimeStats.Counter;
+import com.continuuity.performance.runner.Metric;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import org.apache.commons.lang.StringUtils;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -26,21 +25,15 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMetricsCollector.class);
 
   private final int interval;
-  private final List<CounterName> counterNames;
+  private final List<Metric> metrics;
   private final String tags;
   private final LinkedBlockingDeque<String> queue;
 
   private final Stopwatch stopwatch = new Stopwatch();
   private volatile boolean interrupt = false;
 
-  public RuntimeMetricsCollector(LinkedBlockingDeque<String> queue, int interval, List<String> counterNames,
-                                 String tags) {
-    this.counterNames = new ArrayList<CounterName>(counterNames.size());
-    for (String counterName : counterNames) {
-      CounterName cn = new CounterName(counterName);
-      this.counterNames.add(new CounterName(counterName));
-      Log.debug("Added counter {} to list of counters of metrics collector.", cn);
-    }
+  public RuntimeMetricsCollector(LinkedBlockingDeque<String> queue, int interval, List<Metric> metrics, String tags) {
+    this.metrics = metrics;
     this.tags = tags;
     this.queue = queue;
     this.interval = interval;
@@ -73,8 +66,8 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
 
         if (!interrupt) {
           final long unixTime = getCurrentUnixTime();
-          for (CounterName counterName : counterNames) {
-            enqueueMetric(counterName, unixTime);
+          for (Metric metric : metrics) {
+            enqueueMetric(metric, unixTime);
           }
         }
       } // each interval
@@ -91,41 +84,34 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
     interrupt = true;
   }
 
-  public void enqueueMetric(String counterName) {
-    enqueueMetric(new CounterName(counterName), getCurrentUnixTime());
+  public void enqueueMetric(Metric metric) {
+    enqueueMetric(metric, getCurrentUnixTime());
   }
 
-  public void enqueueMetric(String counterName, double value) {
-    enqueueMetric(counterName, getCurrentUnixTime(),  value);
+  public void enqueueMetric(Metric metric, double value) {
+    enqueueMetric(metric, getCurrentUnixTime(),  value);
   }
 
-  public void enqueueMetric(String counterName, long unixTime, double value) {
-    enqueueMetricCommand(new CounterName(counterName).getName(), unixTime, value, tags);
+  public void enqueueMetric(Metric metric, long unixTime, double value) {
+    enqueueMetricCommand(metric.getPath(), unixTime, value, tags);
   }
 
-  public void  enqueueMetric(CounterName counterName, long unixTime) {
-    final Counter counter;
-    if (counterName.getLevel() == CounterLevel.Account) {
-      counter = BenchmarkRuntimeStats.getCounter(counterName.getName());
-    } else {
-      counter = BenchmarkRuntimeStats.getCounter(counterName.getApplicationId(),
-                                                 counterName.getFlowId(), counterName.getFlowletId(),
-                                                 counterName.getName());
-    }
+  public void enqueueMetric(Metric metric, long unixTime) {
+    final Counter counter = BenchmarkRuntimeStats.getCounter(metric);
     if (counter != null) {
       StringBuilder metricTags = new StringBuilder(tags);
-      if (StringUtils.isNotEmpty(counterName.getApplicationId())) {
-        metricTags.append("application=" + counterName.getApplicationId());
+      if (StringUtils.isNotEmpty(metric.getParameter(Metric.Parameter.APPLICATION_ID))) {
+        metricTags.append("application=" + metric.getParameter(Metric.Parameter.APPLICATION_ID));
         metricTags.append(" ");
       }
-      if (StringUtils.isNotEmpty(counterName.getFlowId())) {
-        metricTags.append("flow=" + counterName.getFlowId());
+      if (StringUtils.isNotEmpty(metric.getParameter(Metric.Parameter.FLOW_ID))) {
+        metricTags.append("flow=" + metric.getParameter(Metric.Parameter.FLOW_ID));
         metricTags.append(" ");
       }
-      if (StringUtils.isNotEmpty(counterName.getFlowletId())) {
-        metricTags.append("flowlet=" + counterName.getFlowletId());
+      if (StringUtils.isNotEmpty(metric.getParameter(Metric.Parameter.FLOWLET_ID))) {
+        metricTags.append("flowlet=" + metric.getParameter(Metric.Parameter.FLOWLET_ID));
       }
-      enqueueMetricCommand(counterName.getName(), unixTime, counter.getValue(), metricTags.toString().trim());
+      enqueueMetricCommand(metric.getPath(), unixTime, counter.getValue(), metricTags.toString().trim());
     }
   }
 
@@ -141,98 +127,5 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
 
   private static String getMetricCommand(String metricName, long unixTime, double value, String tags) {
     return "put" + " " + metricName + " " + unixTime + " " + value + " " + tags;
-  }
-
-  /**
-   * Class for account or flowlet level counter names.
-   */
-  final class CounterName {
-    private CounterLevel level;
-    private String accountId;
-    private String applicationId;
-    private String flowId;
-    private String flowletId;
-    private String name;
-
-    CounterName(String accountId, String applicationId, String flowId, String flowletId, String name) {
-      this.accountId = accountId;
-      this.applicationId = applicationId;
-      this.flowId = flowId;
-      this.flowletId = flowletId;
-      this.name = name;
-    }
-
-    CounterName(String name) {
-      String[] parts = name.split(":");
-      switch (parts.length) {
-        case 1:
-          this.level = CounterLevel.Account;
-          this.name = name;
-          break;
-        case 2:
-          this.level = CounterLevel.Flowlet;
-          this.flowletId = parts[0];
-          this.name = parts[1];
-          break;
-        case 5:
-          this.level = CounterLevel.Flowlet;
-          this.accountId = parts[0];
-          this.applicationId = parts[1];
-          this.flowId = parts[2];
-          this.flowletId = parts[3];
-          this.name = parts[4];
-          break;
-      }
-    }
-
-    CounterLevel getLevel() {
-      return level;
-    }
-
-    String getAccountId() {
-      return accountId;
-    }
-
-    String getApplicationId() {
-      return applicationId;
-    }
-
-    String getFlowId() {
-      return flowId;
-    }
-
-    String getFlowletId() {
-      return flowletId;
-    }
-
-    String getName() {
-      switch (level) {
-        case Account:
-          return name;
-        case Flowlet:
-          return name;
-      }
-      return name;
-    }
-  }
-
-  /**
-   * Enum for level of counter.
-   */
-  enum CounterLevel {
-    Account(1, "Account"),
-    Flowlet(2, "Flowlet");
-
-    private final int id;
-    private final String name;
-
-    private CounterLevel(int id, String name) {
-      this.id = id;
-      this.name = name;
-    }
-
-    public String getName() {
-      return name;
-    }
   }
 }
