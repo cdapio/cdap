@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.queue;
 
 import com.continuuity.app.program.Program;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.google.common.base.Supplier;

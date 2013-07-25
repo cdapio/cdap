@@ -53,7 +53,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.asyncMode = asyncMode;
 
     this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
-    this.queueProducer = new QueueProducer(getQueueProducerName());
+    this.queueProducer = new QueueProducer(getMetricContext());
 
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
     this.systemMetricsCollector = getMetricsCollector(MetricsScope.REACTOR,
@@ -135,17 +135,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     return   0xffffffffL & gid;
   }
 
-  public String getQueueProducerName() {
-    return String.format("%s.%s.%s.%s.%s.%d",
-                         getAccountId(),
-                         getApplicationId(),
-                         getFlowId(),
-                         getRunId(),
-                         getFlowletId(),
-                         getInstanceId());
-  }
-
-  private String getMetricContext() {
+  public String getMetricContext() {
     return String.format("%s.f.%s.%s.%d",
                          getApplicationId(),
                          getFlowId(),
