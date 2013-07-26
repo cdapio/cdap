@@ -62,6 +62,9 @@ import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -76,9 +79,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -136,6 +139,7 @@ public class OmidTransactionalOperationExecutor
   private final int minTableWriteOpsToBatch;
 
   // Metrics collectors
+  private MetricsCollectionService metricsCollectionService;
   private MetricsCollector streamMetrics;
   private MetricsCollector dataSetMetrics;
 
@@ -157,8 +161,9 @@ public class OmidTransactionalOperationExecutor
   // Optional injection of MetricsCollectionService
   @Inject(optional = true)
   void setMetricsCollectionService(MetricsCollectionService metricsCollectionService) {
-    this.streamMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, "-.stream", "0");
-    this.dataSetMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, "-.dataset", "0");
+    this.metricsCollectionService = metricsCollectionService;
+    this.streamMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, STREAM_CONTEXT, "0");
+    this.dataSetMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, DATASET_CONTEXT, "0");
   }
 
   private MetricsCollector createNoopMetricsCollector() {
@@ -176,6 +181,8 @@ public class OmidTransactionalOperationExecutor
   private CMetrics cmetric = new CMetrics(MetricType.System);
 
   private static final String METRIC_PREFIX = "omid-opex-";
+  private static final String STREAM_CONTEXT = "-.stream";
+  private static final String DATASET_CONTEXT = "-.dataset";
 
   public static final String NUMOPS_METRIC_SUFFIX = "-numops";
   public static final String REQ_TYPE_GET_SPLITS_NUM_OPS = METRIC_PREFIX + "GetSplits" + NUMOPS_METRIC_SUFFIX;
@@ -235,6 +242,10 @@ public class OmidTransactionalOperationExecutor
     METRIC_PREFIX + "QueueDropInflight" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_SCAN_LATENCY = METRIC_PREFIX + "Scan" + LATENCY_METRIC_SUFFIX;
 
+  // Expiration seconds of cache queue metrics entries after it's been accessed.
+  // It's to avoid keeping unused MetricsCollector for queues that are not active.
+  private static final long QUEUE_METRICS_EXPIRES_SECONDS = 60;
+
   private void incMetric(String metric) {
     cmetric.meter(metric, 1);
   }
@@ -256,19 +267,23 @@ public class OmidTransactionalOperationExecutor
   }
 
   /* -------------------  (interstitial) queue metrics ---------------- */
-  private ConcurrentMap<String, CMetrics> queueMetrics =
-      new ConcurrentHashMap<String, CMetrics>();
+  private final LoadingCache<String, MetricsCollector> queueMetrics =
+    CacheBuilder.newBuilder()
+                .expireAfterAccess(QUEUE_METRICS_EXPIRES_SECONDS, TimeUnit.SECONDS)
+                .build(new CacheLoader<String, MetricsCollector>() {
+      @Override
+      public MetricsCollector load(String group) throws Exception {
+        Log.trace("Created new MetricsCollector for group '{}'.", group);
+        if (metricsCollectionService != null) {
+          return metricsCollectionService.getCollector(MetricsScope.REACTOR, group, "0");
+        } else {
+          return createNoopMetricsCollector();
+        }
+      }
+    });
 
-  private CMetrics getQueueMetric(String group) {
-    CMetrics metric = queueMetrics.get(group);
-    if (metric == null) {
-      queueMetrics.putIfAbsent(group,
-          new CMetrics(MetricType.FlowSystem, group));
-      metric = queueMetrics.get(group);
-      Log.trace("Created new CMetrics for group '" + group + "'.");
-      // System.err.println("Created new CMetrics for group '" + group + "'.");
-    }
-    return metric;
+  private MetricsCollector getQueueMetric(String group) {
+    return queueMetrics.getUnchecked(group);
   }
 
   private ConcurrentMap<byte[], ImmutablePair<String, String>>
@@ -278,29 +293,31 @@ public class OmidTransactionalOperationExecutor
   private ImmutablePair<String, String> getQueueMetricNames(byte[] queue) {
     ImmutablePair<String, String> names = queueMetricNames.get(queue);
     if (names == null) {
-      String name = new String(queue).replace(":", "");
+      String name = Bytes.toString(queue);
       queueMetricNames.putIfAbsent(queue, new ImmutablePair<String, String>
           ("q.enqueue." + name, "q.ack." + name));
       names = queueMetricNames.get(queue);
-      Log.trace("using metric name '" + names.getFirst() + "' and '"
-          + names.getSecond() + "' for queue '" + new String(queue) + "'");
-      //System.err.println("using metric name '" + names.getFirst() + "' and '"
-      //    + names.getSecond() + "' for queue '" + new String(queue) + "'");
+      Log.trace("using metric name '{}' and '{}' for queue '{}'",
+                names.getFirst(), names.getSecond(), new String(queue));
     }
     return names;
   }
 
-  private void enqueueMetric(byte[] queue, QueueProducer producer) {
+  private void enqueueMetric(byte[] queue, QueueProducer producer, int numEntries) {
+    String metricName = getQueueMetricNames(queue).getFirst();
     if (producer != null && producer.getProducerName() != null) {
-      String metricName = getQueueMetricNames(queue).getFirst();
-      getQueueMetric(producer.getProducerName()).meter(metricName, 1);
+      getQueueMetric(producer.getProducerName()).gauge(metricName, numEntries);
+    } else {
+      // Assume it is stream if prodcuer is null. This is a bit hacky, but this is temporary as opex and metrics
+      // would works differently when rewrite of data-fabric is done.
+      getQueueMetric(STREAM_CONTEXT).gauge(metricName, numEntries);
     }
   }
 
-  private void ackMetric(byte[] queue, QueueConsumer consumer) {
+  private void ackMetric(byte[] queue, QueueConsumer consumer, int numEntries) {
     if (consumer != null && consumer.getGroupName() != null) {
       String metricName = getQueueMetricNames(queue).getSecond();
-      getQueueMetric(consumer.getGroupName()).meter(metricName, 1);
+      getQueueMetric(consumer.getGroupName()).gauge(metricName, numEntries);
     }
   }
 
@@ -956,14 +973,14 @@ public class OmidTransactionalOperationExecutor
       if (undo instanceof QueueUndo.QueueUnenqueue) {
         QueueUndo.QueueUnenqueue unenqueue = (QueueUndo.QueueUnenqueue) undo;
         QueueProducer producer = unenqueue.producer;
-        enqueueMetric(unenqueue.queueName, producer);
+        enqueueMetric(unenqueue.queueName, producer, unenqueue.numEntries());
         if (isStream(unenqueue.queueName)) {
           streamMetric(unenqueue.queueName, unenqueue.sumOfSizes, unenqueue.numEntries());
         }
       } else if (undo instanceof QueueUndo.QueueUnack) {
         QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack) undo;
         QueueConsumer consumer = unack.consumer;
-        ackMetric(unack.queueName, consumer);
+        ackMetric(unack.queueName, consumer, unack.numEntries());
       }
     }
     // done
