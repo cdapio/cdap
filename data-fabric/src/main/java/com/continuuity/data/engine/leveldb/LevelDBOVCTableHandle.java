@@ -39,10 +39,17 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+  protected synchronized OrderedVersionedColumnarTable createNewTable(byte[] tableName)
       throws OperationException {
     LevelDBOVCTable table =
         new LevelDBOVCTable(basePath, Bytes.toString(tableName), blockSize, cacheSize);
+
+    // Always try to open table first, as it's possible that when two threads calling this method at the same time,
+    // the one get executed first (this method is synchronized) will initialized the table, leaving the
+    // latter one get an exception if it calls initializeTable directly.
+    if (table.openTable()) {
+      return table;
+    }
     table.initializeTable();
     return table;
   }
