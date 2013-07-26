@@ -110,7 +110,7 @@ public class TimeSeriesTableTest {
   }
 
   @Test
-  public void testDeleteAll() throws OperationException {
+  public void testClear() throws OperationException {
     TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testDeleteAll", 1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -126,7 +126,7 @@ public class TimeSeriesTableTest {
 
     }
 
-    timeSeriesTable.deleteAll();
+    timeSeriesTable.clear();
 
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("_.")
       .setMetric("input")

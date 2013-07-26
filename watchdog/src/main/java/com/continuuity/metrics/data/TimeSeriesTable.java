@@ -180,13 +180,6 @@ public final class TimeSeriesTable {
     timeSeriesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
   }
 
-  /**
-   * Delete all entries.
-   * @throws OperationException if there is an error in deleting table.
-   */
-  public void deleteAll() throws OperationException {
-    timeSeriesTable.clear();
-  }
 
   /**
    * Deletes all row keys that has timestamp before the given time.
