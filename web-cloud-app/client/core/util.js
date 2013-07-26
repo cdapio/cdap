@@ -158,7 +158,6 @@ define([], function () {
 				}
 
 			}
-
 			if (queries.length) {
 				http.post('metrics', queries, function (response) {
 
@@ -168,15 +167,13 @@ define([], function () {
 
 						var i, k, data, path, label;
 						for (i = 0; i < result.length; i ++) {
-
 							path = result[i].path.split('?')[0];
 							label = map[path].get('aggregates')[path];
-							map[path].setMetric(label, result[i].result.data);
-
+							if (label) {
+								map[path].setMetric(label, result[i].result.data);
+							}
 						}
-
 					}
-
 				});
 			}
 
@@ -262,6 +259,68 @@ define([], function () {
 
 							}
 
+						}
+					}
+
+				});
+			}
+
+		},
+
+		updateRates: function (models, http) {
+
+			var j, k, metrics, count, map = {};
+			var queries = [];
+
+			var max = 1, start;
+			var now = new Date().getTime();
+			var count = 5;
+
+			start = now - ((count + 2) * 1000);
+			start = Math.floor(start / 1000);
+
+			for (j = 0; j < models.length; j ++) {
+
+				metrics = Em.keys(models[j].get('rates') || {});
+
+				for (var k = 0; k < metrics.length; k ++) {
+
+					map[metrics[k]] = models[j];
+					queries.push(metrics[k] + '?start=' + start + '&count=' + count);
+
+				}
+
+			}
+
+			if (queries.length) {
+
+				http.post('metrics', queries, function (response) {
+
+					if (response.result) {
+
+						var result = response.result;
+
+						var i, k, data, path, label;
+						for (i = 0; i < result.length; i ++) {
+
+							path = result[i].path.split('?')[0];
+
+							if (result[i].error) {
+								console.error('Rates', result[i].error);
+							} else {
+								data = result[i].result.data, k = data.length;
+
+								// Averages over the values returned (count)
+
+								var total = 0;
+								while(k --) {
+									total += data[k].value;
+								}
+								label = map[path].get('rates')[path];
+								if (label) {
+									map[path].setMetric(label, total / data.length);
+								}
+							}
 						}
 					}
 
