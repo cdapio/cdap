@@ -62,6 +62,7 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
     try {
       LOG.debug("Request to delete metrics all");
       metricsTableCache.getUnchecked(1).deleteAll();
+      aggregatesTable.clear();
       responder.sendString(HttpResponseStatus.OK, "OK");
     } catch (OperationException e) {
       LOG.debug("Caught exception while deleting metrics {}", e.getMessage(), e);
