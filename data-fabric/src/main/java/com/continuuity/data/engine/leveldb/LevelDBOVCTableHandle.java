@@ -55,12 +55,6 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
 
   @Override
   protected OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
-    // Do the same action as openTable, which gets the table through the LoadingCache.
-    return openTable(tableName);
-  }
-
-  @Override
-  protected OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
     try {
       return tableCache.get(Bytes.toString(tableName));
     } catch (ExecutionException e) {
@@ -70,6 +64,11 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
       }
       throw new OperationException(StatusCode.INTERNAL_ERROR, cause.getMessage(), cause);
     }
+  }
+
+  @Override
+  protected OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
+    return tableCache.getIfPresent(Bytes.toString(tableName));
   }
 
   /**
