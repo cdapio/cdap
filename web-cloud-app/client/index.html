@@ -21,15 +21,7 @@
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
-  <script type="text/javascript">
-    requirejs.config({
-      "paths": {
-        "d3": "/core/lib/d3.v3",
-        "nvd3": "/core/lib/nvd3/js/nv.d3.min",
-        "spectrum": "/third_party/spectrum/spectrum"
-      }
-    });
-  </script>
+  <script src="http://code.highcharts.com/highcharts.js"></script>
 
   <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/third_party/spectrum/spectrum.css">
@@ -732,10 +724,6 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="AnalyzeEmbeddable">
-    <div id="metrics-explorer-widget"></div>
-  </script>
-
   <script type="text/x-handlebars" data-template-name="ColorPicker">
     <input type="text" class="color-picker" {{action setMetricRequestColor controller.metricsRequest.color}} {{ bindAttr value="controller.metricsRequest.color"}} />
   </script>
@@ -752,15 +740,13 @@
           <div class="analyze-selected">
             <ul>
 
-            {{#each metric in series}}
-
+            {{#each metric in selected}}
               <li class="analyze-selected-metric">
                 <div class="analyze-selected-metric-remove" {{action removeFromChart metric}}>&times;</div>
                 <div class="analyze-selected-metric-color" style="background: {{unbound metric.color}}"></div>
                 <div class="analyze-selected-metric-element">{{metric.element}}</div>
                 <div class="analyze-selected-metric-name">{{metric.metric}}</div>
               </li>
-
             {{/each}}
 
               <li class="analyze-selected-metric-add" {{action showConfigure}}>
@@ -775,21 +761,27 @@
               <div class="dropdown analyze-color-select">
                 <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown"><div class="analyze-color-selected" style="background-color:{{unbound configuring.color}}"></div></button>
                 <ul class="dropdown-menu">
-                  <li>Blue</li>
+                  {{#each color in colorOptions}}
+                  <li><a {{action selectColor color}}>{{color.name}}</a></li>
+                  {{/each}}
                 </ul>
+              </div>
+
+              <div>
+                {{view C.Embed.TextField id="elementSelector" data-provide="typeahead"}}
               </div>
 
               <div class="dropdown analyze-dropdown">
                 <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown">{{configuring.element.name}} <b class="caret"></b></button>
                 <ul class="dropdown-menu">
                   {{#each model in elementsList}}
-                    <li {{action selectElement model}}><a>{{model.name}}</a></li>
+                    <li {{action selectElement model}}><a>{{model.type}} / {{model.name}}</a></li>
                   {{/each}}
                 </ul>
               </div>
 
               <div class="dropdown">
-                <button {{bindAttr disabled="configuring.noElement"}} href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown">{{configuring.metric.name}} <b class="caret"></b></button>
+                <button {{bindAttr disabled="configuring.noSelection"}} href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown">{{configuring.metric.name}} <b class="caret"></b></button>
                 <ul class="dropdown-menu">
                   {{#each metric in metricsList}}
                     <li {{action selectMetricName metric}}><a>{{metric.name}}</a></li>
@@ -799,7 +791,7 @@
 
               <button class="analyze-gray-btn" {{action hideConfigure}}>Cancel</button>
 
-              <button {{bindAttr disabled="configuring.noElement"}} class="analyze-blue-btn" {{action addToChart}}>Add</button>
+              <button {{bindAttr disabled="configuring.noSelection"}} class="analyze-blue-btn" {{action addToChart}}>Add</button>
 
             </div>
 

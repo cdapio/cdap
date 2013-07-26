@@ -84,15 +84,6 @@ define([], function () {
 			return;
 
 		}.observes('model.__loadingData'),
-		__titles: {
-			'processed.count': 'Processing Rate',
-			'tuples.read.count': 'Read Rate',
-			'emitted.count': 'Tuples Emitted',
-			'dataops.count': 'Data Operations',
-			'busyness': 'Busyness',
-			'flowlet.failure.count': 'Failures Rate',
-			'storage.trend': 'Storage'
-		},
 		__getTitle: function () {
 
 			if (this.get('title')) {
@@ -103,7 +94,7 @@ define([], function () {
 			var metrics = this.get('metrics');
 			var i = metrics.length;
 			while (i--) {
-				title.push(this.__titles[metrics[i]] || metrics[i]);
+				title.push(metrics[i]);
 				if (i > 0) {
 					title.push(' vs. ');
 				}

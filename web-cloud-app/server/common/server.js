@@ -294,11 +294,38 @@ WebAppServer.prototype.bindRoutes = function(io) {
     'datasets': 'ByDataset'
   };
 
+  var availableMetrics = {
+    'App': [
+      { name: 'Events Collected', path: '/collect/events/apps/{id}' },
+      { name: 'Busyness', path: '/process/busyness/{id}' },
+      { name: 'Bytes Stored', path: '/store/bytes/apps/{id}' },
+      { name: 'Queries Served', path: '/query/requests/{id}' }
+    ],
+    'Stream': [
+      { name: 'Events Collected', path: '/collect/events/streams/{id}' },
+      { name: 'Bytes Collected', path: '/collect/bytes/streams/{id}' },
+      { name: 'Reads', path: '/collect/reads/streams/{id}' }
+    ],
+    'Flow': [
+      { name: 'Busyness', path: '/process/busyness/{parent}/flows/{id}' },
+      { name: 'Events Processed', path: '/process/events/{parent}/flows/{id}' }
+    ]
+
+  };
+
+  this.app.get('/rest/metrics/:type', function (req, res) {
+
+    var type = req.params.type;
+    res.send(availableMetrics[type]);
+
+  });
+
   /*
    * REST handler
    */
   this.app.get('/rest/*', function (req, res) {
 
+    var accountID = 'developer';
     var path = req.url.slice(6).split('/');
     var hierarchy = {};
 
@@ -342,11 +369,42 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
     }
 
-    var accountID = 'developer';
+
+    if (methods[0] === 'all') {
+
+      var count = 0, all = [];
+      for (var name in pluralREST) {
+        methods.push(pluralREST[name]);
+
+        count++;
+        self.Api.metadata(accountID, pluralREST[name], [], function (error, response) {
+
+          var i = response.length, type = this.type;
+
+          // Determine the type of an element.
+          if (type !== 'mapreduce') {
+            type = type.slice(0, type.length - 1);
+          } else {
+            type = 'batch';
+          }
+          type = type.charAt(0).toUpperCase() + type.slice(1);
+
+          while (i--) {
+            response[i].type = type;
+          }
+
+          all = all.concat(response);
+          if (!--count) {
+            res.send(all);
+          }
+        }.bind({type: name}));
+      }
+
+    } else {
 
     if (method === 'getQuery' || method === 'getMapreduce') {
       params[1].application = ids[0];
-    }
+    } else {
 
     if (method === 'getFlow') {
 
@@ -381,13 +439,12 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
       });
 
-    }
-
+    }}}
 
   });
 
   this.app.get('/logs/:method/:appId/:entityId/:entityType', function (req, res) {
-    
+
     if (!req.params.method || !req.params.appId || !req.params.entityId || !req.params.entityType) {
       res.send('incorrect request');
     }
@@ -400,7 +457,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
     var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize, filter];
 
     self.logger.trace('Logs ' + method + ' ' + req.url);
-    
+
     self.Api.monitor(accountID, method, params, function (error, result) {
       if (error) {
         self.logger.error(error);

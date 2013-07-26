@@ -72,8 +72,8 @@ define([], function () {
 
 			$.getJSON(path, callback).fail(function (req) {
 
-				var error = JSON.parse(req.responseText);
-				if (error.fatal) {
+				var error = JSON.parse(req.responseText || "null");
+				if (error && error.fatal) {
 
 					$('#warning').html('<div>' + error.fatal + '</div>').show();
 

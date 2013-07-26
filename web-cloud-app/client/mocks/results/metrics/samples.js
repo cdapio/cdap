@@ -51,13 +51,15 @@ define([], function() {
         "id": "CountAndFilterWords",
         "name": "CountAndFilterWords",
         "description": "Example word filter and count application",
-        "exists": true
+        "exists": true,
+        "type": "App"
       },
       {
         "id": "WordCount",
         "name": "WordCount",
         "description": "Example Word Count Application",
-        "exists": true
+        "exists": true,
+        "type": "App"
       }
     ],
     "streamsSample": [

@@ -5,12 +5,12 @@
     out: './build/developer/client/main.js',
     name: 'main',
     paths: {
-    	"core": "../core/",
-		"lib": "../core/lib",
-		"models": "../core/models",
-        "embeddables": "../core/embeddables",
-		"controllers": "../core/controllers",
-		"partials": "../core/partials"
+    	"core": "./core/",
+		"lib": "./core/lib",
+		"models": "./core/models",
+        "embeddables": "./core/embeddables",
+		"controllers": "./core/controllers",
+		"partials": "./core/partials"
 	},
     wrap: {
         start: "var copyright = 'Copyright (c) 2013 Continuuity, Inc. Minified using RequireJS. https://github.com/jrburke/requirejs';",

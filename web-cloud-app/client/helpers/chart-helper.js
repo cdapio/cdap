@@ -3,43 +3,10 @@
  * helpers for manipulating metric data.
  */
 
-define(['d3'], function () {
+define([], function () {
 
   // Set up chart helper namespace.
   var chartHelper = {};
-
-  /**
-   * Forms a underscore separated url based on a word for clean urls.
-   * ex: "Twitter Scanner" --> twitter_scanner
-   * @param {string} word to modify.
-   * @return {string} modified word.
-   */
-  chartHelper.urlRestify = function(word) {
-    return word.split(' ').map(function(segment) {
-      return segment.toLowerCase();
-    }).join('_');
-  };
-
-  /**
-   * Reforms word from an underscore separated token.
-   * twitter_scanner --> Twitter Scanner.
-   * @param {string} term to reform.
-   * @return {string} reformed term.
-   */
-  chartHelper.reformTerm = function(term) {
-    return term.split('_').map(function(segment) {
-      return segment.capitalize();
-    }).join(' ');
-  },
-
-  /**
-   * Creates an app name.
-   * @param {string} app application id eg: twitter scanner.
-   * @param {string} name type of metric eg: events in, tuples processed.
-   */
-  chartHelper.getAppName = function(app, name) {
-    return app + '_' + name;
-  }
 
   /**
    * Constructor for metrics explorer chart. Renders D3 chart.
@@ -47,7 +14,7 @@ define(['d3'], function () {
    * @param {Array} metrics list of metrics to render.
    * @param {string} divId id of div to insert chart into.
    */
-  chartHelper.Chart = function(data, metrics, divId, width) {
+  chartHelper.ChartHelper = function(data, metrics, divId, width) {
 
     this.metrics = metrics;
 
@@ -57,8 +24,6 @@ define(['d3'], function () {
     var margin = {top: 20, right: 10, bottom: 30, left: 10},
     width = width - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
-
-    var parseDate = d3.time.format("%Y%m%d").parse;
 
     var x = d3.time
               .scale()
@@ -174,7 +139,7 @@ define(['d3'], function () {
         .attr("class", "line")
         .attr("d", function(d) { return line(d.values); })
         .style("stroke", function(d) {
-          return self.getColorForMetric(d.name) || color(d.name);
+          return 'green'; //self.getColorForMetric(d.name) || color(d.name);
         })
         .style("stroke-width", '3');
 
@@ -222,7 +187,7 @@ define(['d3'], function () {
    * @param {string} name app metric token eg: twitter_scanner_events_in.
    * @return {string|null} color if color exists or null.
    */
-  chartHelper.Chart.prototype.getColorForMetric = function(name) {
+  chartHelper.ChartHelper.prototype.getColorForMetric = function(name) {
 
     for (metric in this.metrics) {
       if (this.metrics.hasOwnProperty(metric)) {

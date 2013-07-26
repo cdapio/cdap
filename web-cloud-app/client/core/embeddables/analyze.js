@@ -5,57 +5,138 @@
 
 define(['../../helpers/chart-helper'], function (chartHelper) {
 
+    var seriesOptions = {
+      marker: {
+        enabled: false,
+        states: {
+          hover: {
+            enabled: false
+          }
+        }
+      }
+    };
+
     var Embeddable = Em.View.extend({
-      templateName: 'AnalyzeEmbeddable',
 
-      didInsertElement: function() {
+      elementId: 'metrics-explorer-widget',
 
-        this.renderChart();
+      build: function () {
 
-        this.set('overlays', Em.A([
-          $("#analyze-add-metric-widget")
-        ]));
-        this.set('addMetricButton', $('#analyze-add-metric-button'));
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+
+        var chart;
+        chart = $(this.get('element')).highcharts({
+            chart: {
+                type: 'spline',
+                animation: Highcharts.svg
+            },
+            title: {
+                text: null
+            },
+            xAxis: {
+                type: 'datetime',
+                tickPixelInterval: 100
+            },
+            yAxis: {
+                title: {
+                    text: null
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#DDDDDD'
+                }]
+            },
+            tooltip: {
+              formatter: function() {
+                return 'Path / <b>'+ this.series.name +'</b><br/>Time / '+
+                Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) +'<br/>Value /'+
+                Highcharts.numberFormat(this.y, 2);
+              }
+            },
+            legend: { enabled: false },
+            exporting: { enabled: false },
+            series: []
+        }).highcharts();
+
+        this.set('chart', chart);
+
       },
 
-      /**
-       * Renders all charts.
-       * This observes on controller.data, and changes everytime there is a change in the data.
-       */
-      renderChart: function() {
+      update: function () {
 
-        $("#metrics-explorer-widget").empty();
+        function diff (current, more) {
 
-        var data = this.get('controller.data');
-        var series = this.get('controller.series.content');
+          if (!current.length) {
+            return more;
+          }
 
-        var width = $(this.get('element')).width();
+          var x = current[current.length - 1].x, index = 0;
+          var i = more.length;
+          while (i--) {
+            if (more[i].x <= x) {
+              index = i;
+              break;
+            }
+          }
+          return more.slice(index + 1);
 
-        new chartHelper.Chart(data, series, 'metrics-explorer-widget', width);
+        }
 
-      }.observes('controller.data'),
+        var current = this.get('chart.series');
+        var more = this.get('controller.series');
 
-      /**
-       * Closes open overlays.
-       */
-      closeOverlays: function() {
-        this.get('overlays').hide();
-      },
+        var i = more.length, j, k, found;
+        while (i--) {
 
-      /**
-       *  Opens/closes add metric dialog.
-       */
-      toggleDialog: function() {
-        $("#analyze-add-metric-widget").toggle(this.get('controller.isAddMetricVisible'));
-      }.observes('controller.isAddMetricVisible')
+          j = current.length, found = false;
+          while (j--) {
+            if (current[j].name === more[i].name) {
+              var data = diff(current[j].data, more[i].data);
+              for (k = 0; k <= data.length - 1; k++) {
+                current[j].addPoint([data[k].x, data[k].y], false, true);
+              }
+              found = true;
+            }
+          }
+          if (!found) {
+            $.extend(more[i], seriesOptions);
+            this.get('chart').addSeries(more[i]);
+          }
+
+        }
+
+        i = current.length;
+        while (i--) {
+
+          j = more.length, found = false;
+          while (j--) {
+            if (current[i].name === more[j].name) {
+              found = true;
+            }
+          }
+          if (!found) {
+            current[i].remove();
+          }
+        }
+
+        this.get('chart').redraw();
+
+      }.observes('controller.series'),
+
+      didInsertElement: function () {
+        this.build();
+      }
 
     });
 
     Embeddable.reopenClass({
-
       type: 'Analyze',
       kind: 'Embeddable'
-
     });
 
     return Embeddable;

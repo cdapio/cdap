@@ -25,7 +25,7 @@ define(['spectrum'], function (spectrum) {
             self.set('controller.metricsRequest.color', color.toHexString());
           }
         });
-      },
+      }
 
     });
 
