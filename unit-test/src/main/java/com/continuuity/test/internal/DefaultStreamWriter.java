@@ -2,7 +2,7 @@ package com.continuuity.test.internal;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;

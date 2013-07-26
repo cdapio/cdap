@@ -7,7 +7,7 @@ import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
@@ -144,7 +144,7 @@ public class FlowTest {
                                                   app.getAppSpecLoc().getSpecification().getName());
 
     QueueProducer queueProducer = new QueueProducer("Testing");
-    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT, "text");
+    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "text");
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 10; i++) {
       String msg = "Testing message " + i;
@@ -251,7 +251,7 @@ public class FlowTest {
                                                   app.getAppSpecLoc().getSpecification().getName());
 
     QueueProducer queueProducer = new QueueProducer("Testing");
-    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT, "text");
+    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "text");
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 1; i++) {
       String msg = "Testing message " + i;
