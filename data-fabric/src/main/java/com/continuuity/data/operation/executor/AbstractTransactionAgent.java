@@ -161,7 +161,7 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
     OperationException error = null;
     for (TransactionAware txAware : this.txAware) {
       try {
-        aborted = txAware.abortTx() && aborted;
+        aborted = txAware.rollbackTx() && aborted;
       } catch (Exception e) {
         LOG.error("failed to abort transaction " + currentTx.getWritePointer(), e);
         // NOTE: we keep rolling back here even though we know that abort is already failed. The more is rolled back

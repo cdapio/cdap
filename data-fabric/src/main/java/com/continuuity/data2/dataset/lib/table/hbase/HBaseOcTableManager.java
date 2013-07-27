@@ -37,6 +37,7 @@ public class HBaseOcTableManager implements DataSetManager {
     HTableDescriptor tableDescriptor = new HTableDescriptor(name);
     HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
     // todo: make stuff configurable
+    // todo: using snappy compression for some reason breaks mini-hbase cluster (i.e. unit-test doesn't work)
 //    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
     columnDescriptor.setMaxVersions(100);
     columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW);

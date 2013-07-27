@@ -17,7 +17,7 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
     if (changeIds.size() == 0) {
-      return false;
+      return true;
     }
 
     return InMemoryOracle.canCommit(tx, changeIds);

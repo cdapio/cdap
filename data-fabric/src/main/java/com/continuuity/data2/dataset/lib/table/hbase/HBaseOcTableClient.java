@@ -22,6 +22,8 @@ import java.util.NavigableMap;
 // todo: extract separate "no delete inside tx" table?
 public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   private static final byte[] DATA_COLFAM = HBaseOcTableManager.DATA_COLUMN_FAMILY;
+  // 4Mb
+  private static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
   private final HTable hTable;
 
@@ -30,7 +32,11 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   public HBaseOcTableClient(String name, Configuration hConf)
     throws IOException {
     super(name);
-    this.hTable = new HTable(hConf, name);
+    HTable hTable = new HTable(hConf, name);
+    // todo: make configurable
+    hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
+    hTable.setAutoFlush(false);
+    this.hTable = hTable;
   }
 
   @Override
@@ -52,10 +58,11 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
         } else {
           put.add(DATA_COLFAM, column.getKey(), column.getValue());
         }
-
       }
+      puts.add(put);
     }
     hTable.put(puts);
+    hTable.flushCommits();
   }
 
   @Override
@@ -86,11 +93,14 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   @Override
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
     // todo
+    // todo: don't forget use batching and not use block cache
     return null;
   }
 
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, byte[][] columns) throws IOException {
     Get get = new Get(row);
+    // todo: uncomment when doing caching fetching data in-memory
+    // get.setCacheBlocks(false);
     get.addFamily(DATA_COLFAM);
     if (columns != null) {
       for (byte[] column : columns) {
@@ -111,7 +121,11 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     // if exclusion list is empty, do simple "read last" value call todo: explain
     if (tx.getExcludedList().length == 0) {
       get.setMaxVersions(1);
-      NavigableMap<byte[], byte[]> rowMap = hTable.get(get).getFamilyMap(DATA_COLFAM);
+      Result result = hTable.get(get);
+      if (result.isEmpty()) {
+        return EMPTY_ROW_MAP;
+      }
+      NavigableMap<byte[], byte[]> rowMap = result.getFamilyMap(DATA_COLFAM);
       return unwrapDeletes(rowMap);
     }
 

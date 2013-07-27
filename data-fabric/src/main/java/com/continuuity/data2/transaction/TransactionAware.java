@@ -19,7 +19,7 @@ public interface TransactionAware {
 
   // undo changes made by tx
   // NOTE: borted tx will only be removed from the excluded list when all datasets reported successful rollback
-  boolean abortTx() throws Exception;
+  boolean rollbackTx() throws Exception;
 
   // todo: add flush?
   // todo: add onCommitted() - so that e.g. hbase table can do *actual* deletes at this point

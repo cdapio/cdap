@@ -59,6 +59,9 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferringOcTa
   }
 
   protected static NavigableMap<byte[], byte[]> unwrapDeletes(NavigableMap<byte[], byte[]> rowMap) {
+    if (rowMap == null || rowMap.isEmpty()) {
+      return EMPTY_ROW_MAP;
+    }
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], byte[]> keyVal : rowMap.entrySet()) {
       byte[] val = unwrapDeleteIfNeeded(keyVal.getValue());

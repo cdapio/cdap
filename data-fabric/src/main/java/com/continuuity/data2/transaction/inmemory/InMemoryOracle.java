@@ -20,18 +20,32 @@ import java.util.concurrent.atomic.AtomicInteger;
 // todo: synchronize all
 // todo: optimize heavily
 public class InMemoryOracle {
-  private static List<Long> excludedList = Lists.newArrayList();
+  private static List<Long> excludedList;
 
   // todo: clean it up
   // todo: use moving array instead
   // tx id (write pointer) -> changes made by this tx
-  private static Map<Long, Set<byte[]>> committedChangeSets = Maps.newHashMap();
+  private static Map<Long, Set<byte[]>> committedChangeSets;
   // not committed yet
-  private static Map<Long, Set<byte[]>> committingChangeSets = Maps.newHashMap();
+  private static Map<Long, Set<byte[]>> committingChangeSets;
 
-  private static long readPointer = 0;
+  private static long readPointer;
 
-  private static long nextWritePointer = 1;
+  private static long nextWritePointer;
+
+  // todo: do not use static fields, use proper singleton or smth else
+  static {
+    reset();
+  }
+
+  // public for unit-tests
+  public static synchronized void reset() {
+    excludedList = Lists.newArrayList();
+    committedChangeSets = Maps.newHashMap();
+    committingChangeSets = Maps.newHashMap();
+    readPointer = 0;
+    nextWritePointer = 1;
+  }
 
   public static synchronized Transaction start() {
     Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray(excludedList));
@@ -69,7 +83,6 @@ public class InMemoryOracle {
     makeVisible(tx);
     return true;
   }
-
 
   private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
     if (changeIds.size() == 0) {

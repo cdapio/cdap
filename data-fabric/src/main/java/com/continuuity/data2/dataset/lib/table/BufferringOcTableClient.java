@@ -95,7 +95,7 @@ public abstract class BufferringOcTableClient implements OrderedColumnarTable, D
   }
 
   @Override
-  public boolean abortTx() throws Exception {
+  public boolean rollbackTx() throws Exception {
     buff.clear();
     return true;
   }
