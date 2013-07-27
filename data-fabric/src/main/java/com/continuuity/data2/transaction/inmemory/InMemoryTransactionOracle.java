@@ -12,14 +12,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
  */
 // todo: synchronize all
 // todo: optimize heavily
-public class InMemoryOracle {
+public class InMemoryTransactionOracle {
   private static List<Long> excludedList;
 
   // todo: clean it up
@@ -69,8 +68,16 @@ public class InMemoryOracle {
 
   public static synchronized boolean commit(Transaction tx) {
     // todo: these should be atomic
+    // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot be attempted to
+    //       commit twice
     Set<byte[]> changeSet = committingChangeSets.remove(tx.getWritePointer());
+
     if (changeSet != null) {
+      // double-checking if there are conflicts: someone may have committed since canCommit check
+      if (hasConflicts(tx, changeSet)) {
+        return false;
+      }
+
       committedChangeSets.put(tx.getWritePointer(), changeSet);
     }
     makeVisible(tx);
@@ -91,19 +98,11 @@ public class InMemoryOracle {
 
     // Go thru all tx committed after given tx was started and check if any of them has change
     // conflicting with the given
+    return hasConflicts(tx, changeIds, committedChangeSets);
 
-    // going thru all committed tx changesets
-    if (hasConflicts(tx, changeIds, committedChangeSets)) {
-      return true;
-    }
-    // also going thru all committing changesets.
-    // TODO: a bit dangerous: we need to timeout these and do not allow user proceed with them after expire (in-mem impl
-    //       of table can have races in case of system errors, but we could be ok with that)
-    if (hasConflicts(tx, changeIds, committingChangeSets)) {
-      return true;
-    }
-
-    return false;
+    // NOTE: we could try to optimize for some use-cases and also check those being committed for conflicts to
+    //       avoid later the cost of rollback. This is very complex, but the cost of rollback is so high that we
+    //       can go a bit crazy optimizing stuff around it...
   }
 
   private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds, Map<Long, Set<byte[]>> changeSets) {

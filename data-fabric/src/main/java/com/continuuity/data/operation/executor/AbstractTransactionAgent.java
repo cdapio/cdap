@@ -153,7 +153,10 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
       throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx");
     }
 
-    txSystemClient.commit(currentTx);
+    if (!txSystemClient.commit(currentTx)) {
+      // the app-fabric runtime will call abort() after that, so no need to do extra steps here
+      throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx");
+    }
   }
 
   private void abortTxAwareDataSets() throws OperationException {

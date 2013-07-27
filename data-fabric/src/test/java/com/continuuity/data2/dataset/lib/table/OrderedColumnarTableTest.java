@@ -6,7 +6,7 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.InMemoryOracle;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionOracle;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Preconditions;
 import org.junit.After;
@@ -41,7 +41,7 @@ public abstract class OrderedColumnarTableTest {
   @Before
   public void before() {
     // todo: avoid this hack
-    InMemoryOracle.reset();
+    InMemoryTransactionOracle.reset();
     txClient = new InMemoryTxSystemClient();
   }
 
@@ -90,10 +90,10 @@ public abstract class OrderedColumnarTableTest {
       verify($(), myTable3.get(R1, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
       ((TransactionAware) myTable3).commitTx();
-      txClient.commit(tx3);
+      Assert.assertTrue(txClient.commit(tx3));
 
       // * second, make tx visible
-      txClient.commit(tx1);
+      Assert.assertTrue(txClient.commit(tx1));
       // start tx4 and verify that changes of tx1 are now visible
       // NOTE: table instance can be re-used in series of transactions
       Transaction tx4 = txClient.start();
@@ -108,7 +108,7 @@ public abstract class OrderedColumnarTableTest {
       // committing tx4
       Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) myTable3).getTxChanges()));
       ((TransactionAware) myTable3).commitTx();
-      txClient.commit(tx4);
+      Assert.assertTrue(txClient.commit(tx4));
 
       // do change in tx2 that is conflicting with tx1
       myTable2.put(R1, $(C1), $(V2));
@@ -130,7 +130,7 @@ public abstract class OrderedColumnarTableTest {
       verify($(), myTable3.get(R2, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
       ((TransactionAware) myTable3).commitTx();
-      txClient.commit(tx5);
+      Assert.assertTrue(txClient.commit(tx5));
 
     } finally {
       manager.drop("myTable");
@@ -149,7 +149,7 @@ public abstract class OrderedColumnarTableTest {
       myTable1.put(R1, $(C1, C2), $(V1, V2));
       Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
       ((TransactionAware) myTable1).commitTx();
-      txClient.commit(tx1);
+      Assert.assertTrue(txClient.commit(tx1));
 
       // Now, we will test delete ops
       // start new tx2
@@ -179,7 +179,7 @@ public abstract class OrderedColumnarTableTest {
       verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
       ((TransactionAware) myTable1).commitTx();
-      txClient.commit(tx3);
+      Assert.assertTrue(txClient.commit(tx3));
 
       // starting tx4 before committing tx2 so that we can check conflicts are detected wrt deletes
       Transaction tx4 = txClient.start();
@@ -197,10 +197,10 @@ public abstract class OrderedColumnarTableTest {
       verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
       ((TransactionAware) myTable1).commitTx();
-      txClient.commit(tx6);
+      Assert.assertTrue(txClient.commit(tx6));
 
       // make tx2 visible
-      txClient.commit(tx2);
+      Assert.assertTrue(txClient.commit(tx2));
 
       // start tx7 and verify that changes of tx2 are now visible
       Transaction tx7 = txClient.start();
@@ -209,7 +209,7 @@ public abstract class OrderedColumnarTableTest {
       verify($(C1, V3), myTable1.get(R1, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
       ((TransactionAware) myTable1).commitTx();
-      txClient.commit(tx7);
+      Assert.assertTrue(txClient.commit(tx7));
 
       // but not visible to tx4 that we started earlier than tx2 became visible
       // NOTE: table instance can be re-used between tx
@@ -265,7 +265,7 @@ public abstract class OrderedColumnarTableTest {
       // committing tx1
       Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table1).getTxChanges()));
       ((TransactionAware) table1).commitTx();
-      txClient.commit(tx1);
+      Assert.assertTrue(txClient.commit(tx1));
 
       // no conflict should be when committing tx2
       Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2).getTxChanges()));

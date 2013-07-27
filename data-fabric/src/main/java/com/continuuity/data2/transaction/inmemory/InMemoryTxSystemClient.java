@@ -11,7 +11,7 @@ import java.util.Collection;
 public class InMemoryTxSystemClient implements TransactionSystemClient {
   @Override
   public Transaction start() {
-    return InMemoryOracle.start();
+    return InMemoryTransactionOracle.start();
   }
 
   @Override
@@ -20,16 +20,16 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
       return true;
     }
 
-    return InMemoryOracle.canCommit(tx, changeIds);
+    return InMemoryTransactionOracle.canCommit(tx, changeIds);
   }
 
   @Override
   public boolean commit(Transaction tx) {
-    return InMemoryOracle.commit(tx);
+    return InMemoryTransactionOracle.commit(tx);
   }
 
   @Override
   public boolean abort(Transaction tx) {
-    return InMemoryOracle.abort(tx);
+    return InMemoryTransactionOracle.abort(tx);
   }
 }
