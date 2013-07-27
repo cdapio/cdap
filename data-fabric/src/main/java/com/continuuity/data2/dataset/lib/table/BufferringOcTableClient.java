@@ -17,6 +17,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -84,7 +85,12 @@ public abstract class BufferringOcTableClient implements OrderedColumnarTable, D
   @Override
   public Collection<byte[]> getTxChanges() {
     // we resolve conflicts on row level of individual table
-    return buff.keySet();
+    List<byte[]> changes = new ArrayList<byte[]>(buff.size());
+    for (byte[] changedRow : buff.keySet()) {
+      // todo: cache table name in bytes
+      changes.add(Bytes.add(Bytes.toBytes(getName()), changedRow));
+    }
+    return changes;
   }
 
   @Override

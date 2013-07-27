@@ -149,6 +149,55 @@ public abstract class OrderedColumnarTableTest {
     }
   }
 
+  @Test
+  public void testMultiTableTx() throws Exception {
+    DataSetManager manager = getTableManager();
+    manager.create("table1");
+    manager.create("table2");
+    try {
+      // test no conflict if changing different tables
+
+      Transaction tx1 = txClient.start();
+      OrderedColumnarTable table1 = getTable("table1");
+      ((TransactionAware) table1).startTx(tx1);
+      // write r1->c1,v1 but not commit
+      table1.put(R1, $(C1), $(V1));
+
+      // start new tx
+      Transaction tx2 = txClient.start();
+      OrderedColumnarTable table2 = getTable("table2");
+      ((TransactionAware) table2).startTx(tx2);
+
+      // change in tx2 same data but in different table
+      table2.put(R1, $(C1), $(V2));
+
+      // start new tx
+      Transaction tx3 = txClient.start();
+      OrderedColumnarTable table1_2 = getTable("table1");
+      ((TransactionAware) table1_2).startTx(tx3);
+
+      // change in tx3 same data in same table as tx1
+      table1_2.put(R1, $(C1), $(V2));
+
+      // committing tx1
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table1).getTxChanges()));
+      ((TransactionAware) table1).commitTx();
+      txClient.commit(tx1);
+
+      // no conflict should be when committing tx2
+      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2).getTxChanges()));
+
+      // but conflict should be when committing tx3
+      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) table1_2).getTxChanges()));
+
+    } finally {
+      // NOTE: we are doing our best to cleanup junk between tests to isolate errors, but we are not going to be
+      //       crazy about it
+      manager.drop("table1");
+      manager.drop("table2");
+    }
+  }
+
   // todo: verify changing different cols of one row causes conflict
   // todo: check race: table committed, but txClient doesn't know yet (visibility, conflict detection)
   // todo: test overwrite + delete, that delete doesn't cause getting from persisted again
