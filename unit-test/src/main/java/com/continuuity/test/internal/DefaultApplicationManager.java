@@ -2,6 +2,7 @@ package com.continuuity.test.internal;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.services.AppFabricService;
@@ -13,11 +14,14 @@ import com.continuuity.app.services.FlowStatus;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.MapReduceManager;
@@ -56,9 +60,13 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
 
+  private final TransactionAgent agent;
+
   @Inject
   public DefaultApplicationManager(OperationExecutor opex,
                                    LocationFactory locationFactory,
+                                   DataSetAccessor dataSetAccessor,
+                                   TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
                                    ProcedureClientFactory procedureClientFactory,
                                    @Assisted AuthToken token,
@@ -75,9 +83,8 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.procedureClientFactory = procedureClientFactory;
 
     OperationContext ctx = new OperationContext(accountId, applicationId);
-    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, ctx);
+    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, ctx);
     TransactionProxy proxy = new TransactionProxy();
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, ctx));
 
     try {
       // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
@@ -88,6 +95,11 @@ public class DefaultApplicationManager implements ApplicationManager {
       throw Throwables.propagate(e);
     }
     this.dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
+
+    agent = new SynchronousTransactionAgent(opex, ctx,
+                                            dataSetInstantiator.getTxAwareDataSets(),
+                                            txSystemClient);
+    proxy.setTransactionAgent(agent);
   }
 
   @Override
@@ -239,7 +251,14 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public <T extends DataSet> T getDataSet(String dataSetName) {
-    return dataSetInstantiator.getDataSet(dataSetName);
+    T dataSet = dataSetInstantiator.getDataSet(dataSetName);
+    // now we have to start tx of TxDs2 on agent. This will go way once agent is removed
+    try {
+      agent.start();
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
+    return dataSet;
   }
 
   @Override

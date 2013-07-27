@@ -1,6 +1,8 @@
 package com.continuuity.gateway;
 
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.weave.filesystem.LocationFactory;
 
 /**
@@ -35,4 +37,14 @@ public interface DataAccessor {
    * @return the location factory to use
    */
   public LocationFactory getLocationFactory();
+
+  // below methods are to support early integration with TxDs2
+
+  DataSetAccessor getDataSetAccessor();
+
+  void setDataSetAccessor(DataSetAccessor dataSetAccessor);
+
+  TransactionSystemClient getTxSystemClient();
+
+  void setTxSystemClient(TransactionSystemClient txSystemClient);
 }

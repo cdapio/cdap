@@ -12,7 +12,10 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +36,11 @@ public class SynchronousTransactionAgent extends AbstractTransactionAgent {
    * @param opex the actual operation executor
    * @param context the operation context for all operations
    */
-  public SynchronousTransactionAgent(OperationExecutor opex, OperationContext context) {
-    super(opex, context);
+  public SynchronousTransactionAgent(OperationExecutor opex,
+                                     OperationContext context,
+                                     Collection<TransactionAware> txAware,
+                                     TransactionSystemClient txSystemClient) {
+    super(opex, context, txAware, txSystemClient);
   }
 
   @Override

@@ -29,7 +29,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class TestFrameworkTest extends AppFabricTestBase {
 
-  @Test
+  @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
     try {
@@ -62,11 +62,12 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      clearAppFabric();
+      // TODO: ENG-3151
+//      clearAppFabric();
     }
   }
 
-  @Test
+  @Test(timeout = 240000)
   public void testApp() throws InterruptedException, IOException, TimeoutException, OperationException {
     ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
 
@@ -101,6 +102,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
       // Verify by looking into dataset
       MyKeyValueTable mydataset = applicationManager.getDataSet("mydataset");
+
       Assert.assertEquals(100L, Longs.fromByteArray(mydataset.read("title:title".getBytes(Charsets.UTF_8))));
 
       // check the metrics
@@ -118,7 +120,8 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      clearAppFabric();
+      // TODO: ENG-3151
+//      clearAppFabric();
     }
   }
 
@@ -144,7 +147,8 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      clearAppFabric();
+      // TODO: ENG-3151
+//      clearAppFabric();
     }
   }
 }

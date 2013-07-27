@@ -3,8 +3,11 @@ package com.continuuity.data.operation.executor;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.collect.Lists;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -26,8 +29,10 @@ public class BatchTransactionAgentWithSyncReads extends SynchronousTransactionAg
    * @param opex the actual operation executor
    * @param context the operation context for all operations
    */
-  public BatchTransactionAgentWithSyncReads(OperationExecutor opex, OperationContext context) {
-    super(opex, context);
+  public BatchTransactionAgentWithSyncReads(OperationExecutor opex, OperationContext context,
+                                            Collection<TransactionAware> txAware,
+                                            TransactionSystemClient txSystemClient) {
+    super(opex, context, txAware, txSystemClient);
   }
 
   @Override

@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class OpenCloseDataSetTest {
 
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testDataSetsAreClosed() throws Exception {
     TrackingTable.resetTracker();
 

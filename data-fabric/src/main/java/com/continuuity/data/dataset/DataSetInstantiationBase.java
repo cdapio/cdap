@@ -8,12 +8,16 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.dataset.lib.table.RuntimeTable;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +38,8 @@ public class DataSetInstantiationBase {
   // the known data set specifications
   private Map<String, DataSetSpecification> datasets =
     new HashMap<String, DataSetSpecification>();
+
+  private Collection<TransactionAware> txAwareDataSets = Lists.newArrayList();
 
   public DataSetInstantiationBase() {
     this.classLoader = null;
@@ -146,6 +152,11 @@ public class DataSetInstantiationBase {
     return this.convert(ds, className);
   }
 
+  // NOTE: this is needed for now to minimize destrucion of early integration of txds2
+  public Collection<TransactionAware> getTxAwareDataSets() {
+    return txAwareDataSets;
+  }
+
   /**
    * Helper method to cast the created data set object to its correct class.
    * This method is to isolate the unchecked cast (it has to be unchecked
@@ -193,15 +204,18 @@ public class DataSetInstantiationBase {
     // for base data set types, directly inject the df fields
     if (obj instanceof Table) {
       // this sets the delegate table of the Table to a new ReadWriteTable
-      RuntimeTable runtimeTable = this.isReadOnly()
-        ? ReadOnlyTable.setReadOnlyTable((Table) obj, fabric, metricName, proxy)
-        : ReadWriteTable.setReadWriteTable((Table) obj, fabric, metricName, proxy);
+      RuntimeTable runtimeTable = RuntimeTable.setRuntimeTable((Table) obj, fabric, metricName);
       // also ensure that the table exists in the data fabric
       try {
         runtimeTable.open();
       } catch (OperationException e) {
         throw new DataSetInstantiationException(
           "Failed to open table '" + runtimeTable.getName() + "'.", e);
+      }
+
+      TransactionAware txAware = runtimeTable.getTxAware();
+      if (txAware != null) {
+        txAwareDataSets.add(txAware);
       }
       return;
     }

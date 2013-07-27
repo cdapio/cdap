@@ -1033,7 +1033,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.info("All data for account '" + account + "' deleted.");
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
-      throw new AppFabricServiceException("Fail to rest account " + throwable.getMessage());
+      throw new AppFabricServiceException("Fail to reset account " + throwable.getMessage());
     }
   }
 

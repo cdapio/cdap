@@ -66,7 +66,9 @@ public class DatasetRestAccessor
   @Override
   public void setMetadataService(MetadataService service) {
     super.setMetadataService(service);
-    this.instantiator = new DataSetInstantiatorFromMetaData(getExecutor(), getLocationFactory(), service);
+    this.instantiator = new DataSetInstantiatorFromMetaData(getExecutor(), getLocationFactory(),
+                                                            getDataSetAccessor(), getTxSystemClient(),
+                                                            service);
   }
 
 

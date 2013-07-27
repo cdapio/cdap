@@ -5,6 +5,8 @@ package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.LevelDBDataSetAccessor;
 import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
@@ -15,8 +17,9 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.inject.AbstractModule;
-import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
@@ -84,7 +87,11 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
     bind(OperationExecutor.class).
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-    
+
+    // Bind TxDs2 stuff
+    bind(DataSetAccessor.class).to(LevelDBDataSetAccessor.class).in(Singleton.class);
+    bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
+
     // Bind named fields
     
     bind(String.class)

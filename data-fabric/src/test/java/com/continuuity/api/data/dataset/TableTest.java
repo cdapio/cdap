@@ -14,6 +14,7 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
@@ -137,7 +138,7 @@ public class TableTest extends DataSetTestBase {
   public void testSyncWriteReadSwapDelete() throws OperationException {
 
     // this test runs all operations synchronously
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
 
     OperationResult<Map<byte[], byte[]>> result;
 
@@ -207,7 +208,7 @@ public class TableTest extends DataSetTestBase {
   public void testIncrement() throws OperationException {
 
     // this test runs all operations synchronously
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
 
     OperationResult<Map<byte[], byte[]>> result;
 
@@ -238,90 +239,13 @@ public class TableTest extends DataSetTestBase {
   }
 
   @Test
-  public void testASyncWriteReadSwapDelete() throws OperationException {
-
-    OperationResult<Map<byte[], byte[]>> result;
-
-    // defers all writes to the transaction commit
-    newTransaction(Mode.Batch);
-
-    // write three columns of one row
-    table.write(new Write(key3, col123, val123));
-    // increment another column of another row
-    table.write(new Increment(key4, col1, 1L));
-    // verify not there
-    result = table.read(new Read(key3, null, null));
-    verifyNull(result, col123);
-    result = table.read(new Read(key4, null, null));
-    verifyNull(result, col1);
-
-    // commit xaction
-    commitTransaction();
-
-    // verify all are there with sync reads
-    result = table.read(new Read(key3, null, null));
-    verifyColumns(result, col123, val123);
-    result = table.read(new Read(key4, null, null));
-    verifyColumn(result, col1, 1L);
-
-    // start a new transaction
-    newTransaction(Mode.Batch);
-    // increment same column again
-    table.write(new Increment(key4, col1, 1L));
-    // delete one column
-    table.write(new Delete(key3, col3));
-    // swap one of the other columns
-    table.write(new Swap(key3, col1, val1, val2));
-    // verify not executed yet
-    result = table.read(new Read(key3, null, null));
-    verifyColumns(result, col123, val123);
-    result = table.read(new Read(key4, null, null));
-    verifyColumn(result, col1, 1L);
-
-    // commit xaction
-    commitTransaction();
-
-    // verify all are there with sync reads
-    result = table.read(new Read(key3, null, null));
-    verifyColumns(result, col12, val22);
-    result = table.read(new Read(key4, null, null));
-    verifyColumn(result, col1, 2L);
-
-    // start a new transaction
-    newTransaction(Mode.Batch);
-    // increment same column again
-    table.write(new Increment(key4, col1, 1L));
-    // delete another column
-    table.write(new Delete(key3, col2));
-    // swap the remaining column with wrong value
-    table.write(new Swap(key3, col1, val1, val2));
-    // verify not executed yet
-    result = table.read(new Read(key3, null, null));
-    verifyColumns(result, col12, val22);
-    result = table.read(new Read(key4, null, null));
-    verifyColumn(result, col1, 2L);
-    // commit xaction, should fail
-    try {
-      commitTransaction();
-      Assert.fail("transaction should have failed due to swap");
-    } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
-    }
-    // verify none was executed
-    result = table.read(new Read(key3, null, null));
-    verifyColumns(result, col12, val22);
-    result = table.read(new Read(key4, null, null));
-    verifyColumn(result, col1, 2L);
-  }
-
-  @Test
   public void testWriteReadSwapDelete() throws OperationException {
 
     Table table = instantiator.getDataSet("t3");
     OperationResult<Map<byte[], byte[]>> result;
 
     // defer writes until commit or a read is performed
-    newTransaction(Mode.Smart);
+    TransactionAgent txAgent = newTransaction();
 
     // write three columns of one row
     table.write(new Write(key3, col123, val123));
@@ -334,18 +258,18 @@ public class TableTest extends DataSetTestBase {
     verifyColumn(result, col1, 1L);
 
     // commit xaction
-    commitTransaction();
+    commitTransaction(txAgent);
 
     // verify all are there with sync reads
-    newTransaction(Mode.Sync);
+    txAgent = newTransaction();
     result = table.read(new Read(key3, null, null));
     verifyColumns(result, col123, val123);
     result = table.read(new Read(key4, null, null));
     verifyColumn(result, col1, 1L);
-    commitTransaction();
+    commitTransaction(txAgent);
 
     // start a new transaction
-    newTransaction(Mode.Smart);
+    txAgent = newTransaction();
     // increment same column again
     table.write(new Increment(key4, col1, 1L));
     // delete one column
@@ -359,18 +283,18 @@ public class TableTest extends DataSetTestBase {
     verifyColumn(result, col1, 2L);
 
     // commit xaction
-    commitTransaction();
+    commitTransaction(txAgent);
 
     // verify all are there with sync reads
-    newTransaction(Mode.Sync);
+    txAgent = newTransaction();
     result = table.read(new Read(key3, null, null));
     verifyColumns(result, col12, val22);
     result = table.read(new Read(key4, null, null));
     verifyColumn(result, col1, 2L);
-    commitTransaction();
+    commitTransaction(txAgent);
 
     // start a new transaction
-    newTransaction(Mode.Smart);
+    txAgent = newTransaction();
     // increment same column again
     table.write(new Increment(key4, col1, 1L));
     // delete another column
@@ -381,17 +305,17 @@ public class TableTest extends DataSetTestBase {
     result = table.read(new Read(key4, null, null));
     verifyColumn(result, col1, 3L);
 
-    // swap the remaining column with wrong value
-    table.write(new Swap(key3, col1, val1, val2));
-    // attempt to read the resulting value
     try {
-      table.read(new Read(key3, null, null));
+      // swap the remaining column with wrong value
+      table.write(new Swap(key3, col1, val1, val2));
       Assert.fail("transaction should have failed due to swap");
     } catch (OperationException e) {
       Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
     }
+
     // verify none was committed with sync reads
-    newTransaction(Mode.Sync);
+    table = instantiator.getDataSet("t3");
+    txAgent = newTransaction();
     result = table.read(new Read(key3, null, null));
     verifyColumns(result, col12, val22);
     result = table.read(new Read(key4, null, null));
@@ -406,7 +330,7 @@ public class TableTest extends DataSetTestBase {
     OperationResult<Map<byte[], byte[]>> result;
 
     // initialize the table with sync operations
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
 
     // write a value to table1 and verify it
     table1.write(new Write(key1, col1, val1));
@@ -421,36 +345,25 @@ public class TableTest extends DataSetTestBase {
     result = table2.read(new Read(key3, col3));
     verifyColumn(result, col3, val3);
 
+    commitTransaction(txAgent);
+
     // start a new transaction
-    newTransaction(Mode.Batch);
+    table1 = instantiator.getDataSet("t1");
+    table2 = instantiator.getDataSet("t2");
+    txAgent = newTransaction();
     // add a write for table 1 to the transaction
     table1.write(new Write(key1, col1, val2));
-    // verify that the write is not effective yet
-    result = table1.read(new Read(key1, col1));
-    verifyColumn(result, col1, val1);
     // add an increment for the same column in table 2
     table2.write(new Increment(key2, col2, 3L));
-    // verify that the increment is not effective yet
-    result = table2.read(new Read(key2, col2));
-    verifyColumn(result, col2, 5L);
     // submit a delete for table 2
     table2.write(new Delete(key3, col3));
-    // verify that the delete is not effective yet
-    result = table2.read(new Read(key3, col3));
-    verifyColumn(result, col3, val3);
     // add a swap for a third table that should fail
-    table.write(new Swap(Bytes.toBytes("non-exist"), col1, val1, val1));
-
-    // attempt to commit the transaction, should fail
-    try {
-      commitTransaction();
-      Assert.fail("swap should have failed");
-    } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
-    }
+    attemptSwap(table, new Swap(Bytes.toBytes("non-exist"), col1, val1, val1));
 
     // verify old value are still there, synchronously
-    newTransaction(Mode.Sync);
+    table1 = instantiator.getDataSet("t1");
+    table2 = instantiator.getDataSet("t2");
+    txAgent = newTransaction();
 
     result = table1.read(new Read(key1, col1));
     verifyColumn(result, col1, val1);
@@ -488,7 +401,7 @@ public class TableTest extends DataSetTestBase {
   public void testColumnRange() throws OperationException {
     Table table = instantiator.getDataSet("t4");
     // start a transaction
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
 
     // write a row with 10 columns
     byte[][] allColumns = makeColumns(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -522,7 +435,7 @@ public class TableTest extends DataSetTestBase {
     Table t = instantiator.getDataSet("tBatch");
 
     // start a transaction
-    newTransaction(Mode.Smart);
+    TransactionAgent txAgent = newTransaction();
     // write 1000 random values to the table and remember them in a set
     SortedSet<Long> keysWritten = Sets.newTreeSet();
     Random rand = new Random(451);
@@ -533,10 +446,10 @@ public class TableTest extends DataSetTestBase {
       keysWritten.add(keyLong);
     }
     // commit transaction
-    commitTransaction();
+    commitTransaction(txAgent);
 
     // start a sync transaction
-    newTransaction(Mode.Sync);
+    txAgent = newTransaction();
     // get the splits for the table
     List<Split> splits = t.getSplits();
     // read each split and verify the keys
@@ -544,7 +457,7 @@ public class TableTest extends DataSetTestBase {
     verifySplits(t, splits, keysToVerify);
 
     // start a sync transaction
-    newTransaction(Mode.Sync);
+    txAgent = newTransaction();
     // get specific number of splits for a subrange
     keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
     splits = t.getSplits(5, Bytes.toBytes(0x10000000L), Bytes.toBytes(0x40000000L));
