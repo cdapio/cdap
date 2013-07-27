@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset.lib.table;
+package com.continuuity.data2;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -17,6 +17,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Objects;
 
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * todo: fix docs
  * Base class for runtime implementations of Table.
  */
 public class RuntimeTable extends Table {
@@ -233,7 +233,7 @@ public class RuntimeTable extends Table {
   public static class TableSplit extends Split {
     private final byte[] start, stop;
 
-    TableSplit(byte[] start, byte[] stop) {
+    public TableSplit(byte[] start, byte[] stop) {
       this.start = start;
       this.stop = stop;
     }

@@ -18,7 +18,6 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferringOcTa
     super(name);
   }
 
-  // todo: move to "shared" place: also used by inmemory table
   protected static NavigableMap<byte[], byte[]> getLatestNotExcluded(
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap,
     long[] excluded) {
@@ -51,15 +50,15 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferringOcTa
     return result;
   }
 
-  protected byte[] wrapDeleteIfNeeded(byte[] value) {
+  protected static byte[] wrapDeleteIfNeeded(byte[] value) {
     return value == null ? DELETE_MARKER : value;
   }
 
-  protected byte[] unwrapDeleteIfNeeded(byte[] value) {
+  protected static byte[] unwrapDeleteIfNeeded(byte[] value) {
     return Arrays.equals(DELETE_MARKER, value) ? null : value;
   }
 
-  protected NavigableMap<byte[], byte[]> unwrapDeletes(NavigableMap<byte[], byte[]> rowMap) {
+  protected static NavigableMap<byte[], byte[]> unwrapDeletes(NavigableMap<byte[], byte[]> rowMap) {
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], byte[]> keyVal : rowMap.entrySet()) {
       byte[] val = unwrapDeleteIfNeeded(keyVal.getValue());

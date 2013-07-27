@@ -106,7 +106,6 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     }
 
     // todo: actually we want to read up to write pointer... when we start flushing periodically
-    // todo: overall, what is the point in having both read and write pointer then??
     get.setTimeRange(0L, tx.getReadPointer());
 
     // if exclusion list is empty, do simple "read last" value call todo: explain
@@ -120,15 +119,15 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 //         on the other hand, looks like the above suggestion WILL NOT WORK
     get.setMaxVersions(tx.getExcludedList().length + 1);
 
-    // todo: optimize for empty excluded list
-
-
     // todo: push filtering logic to server
     // todo: cache fetched from server locally
 
+    Result result = hTable.get(get);
+    if (result.isEmpty()) {
+      return EMPTY_ROW_MAP;
+    }
 
-    Result rawRowMap = hTable.get(get);
-    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(rawRowMap.getMap().get(DATA_COLFAM),
+    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(DATA_COLFAM),
                                                                tx.getExcludedList());
     return unwrapDeletes(rowMap);
   }

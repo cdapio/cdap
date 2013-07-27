@@ -8,7 +8,7 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data2.dataset.lib.table.RuntimeTable;
+import com.continuuity.data2.RuntimeTable;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;

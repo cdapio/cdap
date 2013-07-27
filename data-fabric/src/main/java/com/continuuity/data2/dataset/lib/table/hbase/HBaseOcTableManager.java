@@ -37,7 +37,7 @@ public class HBaseOcTableManager implements DataSetManager {
     HTableDescriptor tableDescriptor = new HTableDescriptor(name);
     HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
     // todo: make stuff configurable
-    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
+//    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
     columnDescriptor.setMaxVersions(100);
     columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW);
     tableDescriptor.addFamily(columnDescriptor);

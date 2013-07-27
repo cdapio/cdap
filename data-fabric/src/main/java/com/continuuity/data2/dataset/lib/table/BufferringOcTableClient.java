@@ -7,6 +7,7 @@ import com.continuuity.api.data.batch.Split;
 import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.RuntimeTable;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
