@@ -7,13 +7,13 @@ import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
 import com.continuuity.test.internal.DefaultId;
@@ -22,8 +22,6 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.weave.discovery.Discoverable;
-import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -37,9 +35,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
@@ -50,7 +45,7 @@ public class ReactorTestBase {
   private static AppFabricService.Iface appFabricServer;
   private static LocationFactory locationFactory;
   private static Injector injector;
-  private static DiscoveryService discoveryService;
+  private static MetricsQueryService metricsQueryService;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -110,7 +105,7 @@ public class ReactorTestBase {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
-                                    new MetricsClientRuntimeModule().getInMemoryModules(),
+                                    new MetricsClientRuntimeModule().getNoopModules(),
                                     new MetricsQueryRuntimeModule().getInMemoryModules(),
 
                                     new AbstractModule() {
@@ -130,23 +125,8 @@ public class ReactorTestBase {
                                     );
     appFabricServer = injector.getInstance(AppFabricService.Iface.class);
     locationFactory = injector.getInstance(LocationFactory.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
-    //Register metrics service
-    discoveryService.register(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.SERVICE_METRICS;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        try {
-          return new InetSocketAddress(InetAddress.getLocalHost(), 0);
-        } catch (UnknownHostException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    metricsQueryService.start();
   }
 
   @AfterClass
