@@ -29,6 +29,9 @@ public abstract class OrderedColumnarTableTest {
 
   private static final byte[] V1 = Bytes.toBytes("v1");
   private static final byte[] V2 = Bytes.toBytes("v2");
+  private static final byte[] V3 = Bytes.toBytes("v3");
+  private static final byte[] V4 = Bytes.toBytes("v4");
+  private static final byte[] V5 = Bytes.toBytes("v5");
 
   private TransactionSystemClient txClient;
 
@@ -48,22 +51,7 @@ public abstract class OrderedColumnarTableTest {
   }
 
   @Test
-  public void testPutGetNoTx() throws Exception {
-    DataSetManager manager = getTableManager();
-    manager.create("myTable");
-    try {
-      OrderedColumnarTable myTable = getTable("myTable");
-      myTable.put(R1, $(C1), $(V1));
-
-      verify($(C1, V1), myTable.get(R1, $(C1, C2)));
-
-    } finally {
-      manager.drop("myTable");
-    }
-  }
-
-  @Test
-  public void testPutGetTxBasics() throws Exception {
+  public void testBasicGetPutWithTx() throws Exception {
     DataSetManager manager = getTableManager();
     manager.create("myTable");
     try {
@@ -90,7 +78,7 @@ public abstract class OrderedColumnarTableTest {
       // verify tx1 cannot see changes of tx2
       verify($(), myTable1.get(R2, $(C1, C2)));
 
-      // committing tx1 in stages to check there's no races
+      // committing tx1 in stages to check races are handled well
       // * first, flush operations of table
       Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
       ((TransactionAware) myTable1).commitTx();
@@ -150,6 +138,101 @@ public abstract class OrderedColumnarTableTest {
   }
 
   @Test
+  public void testBasicDeleteWithTx() throws Exception {
+    DataSetManager manager = getTableManager();
+    manager.create("myTable");
+    try {
+      // write r1->c1,v1 and commit
+      Transaction tx1 = txClient.start();
+      OrderedColumnarTable myTable1 = getTable("myTable");
+      ((TransactionAware) myTable1).startTx(tx1);
+      myTable1.put(R1, $(C1, C2), $(V1, V2));
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      ((TransactionAware) myTable1).commitTx();
+      txClient.commit(tx1);
+
+      // Now, we will test delete ops
+      // start new tx2
+      Transaction tx2 = txClient.start();
+      OrderedColumnarTable myTable2 = getTable("myTable");
+      ((TransactionAware) myTable2).startTx(tx2);
+
+      // verify tx2 sees changes of tx1
+      verify($(C1, V1, C2, V2), myTable2.get(R1, $(C1, C2)));
+      // delete c1
+      myTable2.delete(R1, $(C1));
+      // verify can see deletes in own changes before commit
+      verify($(C2, V2), myTable2.get(R1, $(C1, C2)));
+      // overwrite c2 and write new value to c1
+      myTable2.put(R1, $(C1, C2), $(V3, V4));
+      // verify can see changes in own changes before commit
+      verify($(C1, V3, C2, V4), myTable2.get(R1, $(C1, C2)));
+      // delete c2
+      myTable2.delete(R1, $(C2));
+      // verify that delete is there (i.e. not reverted to whatever persisted)
+      verify($(C1, V3), myTable2.get(R1, $(C1, C2)));
+
+      // start tx3 and verify that changes of tx2 are not visible yet
+      Transaction tx3 = txClient.start();
+      // NOTE: table instance can be re-used between tx
+      ((TransactionAware) myTable1).startTx(tx3);
+      verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
+      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
+      ((TransactionAware) myTable1).commitTx();
+      txClient.commit(tx3);
+
+      // starting tx4 before committing tx2 so that we can check conflicts are detected wrt deletes
+      Transaction tx4 = txClient.start();
+      // starting tx5 before committing tx2 so that we can check conflicts are detected wrt deletes
+      Transaction tx5 = txClient.start();
+
+      // commit tx2 in stages to see how races are handled wrt delete ops
+      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      ((TransactionAware) myTable2).commitTx();
+
+      // start tx6 and verify that changes of tx2 are not visible yet (even though they are flushed)
+      Transaction tx6 = txClient.start();
+      // NOTE: table instance can be re-used between tx
+      ((TransactionAware) myTable1).startTx(tx6);
+      verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
+      Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
+      ((TransactionAware) myTable1).commitTx();
+      txClient.commit(tx6);
+
+      // make tx2 visible
+      txClient.commit(tx2);
+
+      // start tx7 and verify that changes of tx2 are now visible
+      Transaction tx7 = txClient.start();
+      // NOTE: table instance can be re-used between tx
+      ((TransactionAware) myTable1).startTx(tx7);
+      verify($(C1, V3), myTable1.get(R1, $(C1, C2)));
+      Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
+      ((TransactionAware) myTable1).commitTx();
+      txClient.commit(tx7);
+
+      // but not visible to tx4 that we started earlier than tx2 became visible
+      // NOTE: table instance can be re-used between tx
+      ((TransactionAware) myTable1).startTx(tx4);
+      verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
+
+      // writing to deleted column, to check conflicts are detected (delete-write conflict)
+      myTable1.put(R1, $(C2), $(V5));
+      Assert.assertFalse(txClient.canCommit(tx4, ((TransactionAware) myTable1).getTxChanges()));
+
+      // deleting changed column, to check conflicts are detected (write-delete conflict)
+      // NOTE: table instance can be re-used between tx
+      ((TransactionAware) myTable1).startTx(tx5);
+      verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
+      myTable1.delete(R1, $(C1));
+      Assert.assertFalse(txClient.canCommit(tx5, ((TransactionAware) myTable1).getTxChanges()));
+
+    } finally {
+      manager.drop("myTable");
+    }
+  }
+
+  @Test
   public void testMultiTableTx() throws Exception {
     DataSetManager manager = getTableManager();
     manager.create("table1");
@@ -201,9 +284,6 @@ public abstract class OrderedColumnarTableTest {
   // todo: verify changing different cols of one row causes conflict
   // todo: check race: table committed, but txClient doesn't know yet (visibility, conflict detection)
   // todo: test overwrite + delete, that delete doesn't cause getting from persisted again
-  // todo: test if commit fail, no rollback - changes not visible
-  // todo: test if commit fail, + rollback + abort - changes not visible
-  // todo: test that table_name is in tx_id ;)
 
   private void verify(byte[][] expected, OperationResult<Map<byte[], byte[]>> actual) {
     Preconditions.checkArgument(expected.length % 2 == 0, "expected [key,val] pairs in first param");

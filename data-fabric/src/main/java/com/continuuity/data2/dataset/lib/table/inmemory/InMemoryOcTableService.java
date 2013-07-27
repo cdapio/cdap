@@ -2,7 +2,11 @@ package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
+import com.google.common.primitives.Longs;
 
+import javax.annotation.Nullable;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentNavigableMap;
@@ -109,11 +113,25 @@ public class InMemoryOcTableService {
     for (Map.Entry<byte[], NavigableMap<Long, byte[]>> column : rowMap.entrySet()) {
       NavigableMap<Long, byte[]> visbleValues = column.getValue().headMap(version, true);
       if (visbleValues.size() > 0) {
-        NavigableMap<Long, byte[]> colMap = Maps.newTreeMap(visbleValues);
+        NavigableMap<Long, byte[]> colMap = createVersionedValuesMap(visbleValues);
         result.put(column.getKey(), colMap);
       }
     }
     return result;
   }
 
+  private static NavigableMap<Long, byte[]> createVersionedValuesMap(NavigableMap<Long, byte[]> copy) {
+    NavigableMap<Long, byte[]> map = Maps.newTreeMap(VERSIONED_VALUE_MAP_COMPARATOR);
+    map.putAll(copy);
+    return map;
+  }
+
+  // This is descending Longs comparator
+  private static final Comparator<Long> VERSIONED_VALUE_MAP_COMPARATOR = new Ordering<Long>() {
+    @Override
+    public int compare(@Nullable Long left, @Nullable Long right) {
+      // NOTE: versions never null
+      return Longs.compare(right, left);
+    }
+  };
 }

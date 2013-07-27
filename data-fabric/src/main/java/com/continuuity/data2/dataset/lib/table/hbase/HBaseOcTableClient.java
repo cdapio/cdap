@@ -116,7 +116,8 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     }
 
     // todo: actually we want to read up to write pointer... when we start flushing periodically
-    get.setTimeRange(0L, tx.getReadPointer());
+    // NOTE: +1 here because we want read up to readpointer inclusive, but timerange's end is exclusive
+    get.setTimeRange(0L, tx.getReadPointer() + 1);
 
     // if exclusion list is empty, do simple "read last" value call todo: explain
     if (tx.getExcludedList().length == 0) {

@@ -23,11 +23,13 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferringOcTa
     long[] excluded) {
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<Long, byte[]>> column : rowMap.entrySet()) {
-      // NOTE: versions map already sorted. todo: not cool to rely on external implementation specifics
+      // NOTE: versions map already sorted, first comes latest version
+      // todo: not cool to rely on external implementation specifics
       for (Map.Entry<Long, byte[]> versionAndValue : column.getValue().entrySet()) {
         // NOTE: we know that excluded versions are ordered
         if (Arrays.binarySearch(excluded, versionAndValue.getKey()) < 0) {
           result.put(column.getKey(), versionAndValue.getValue());
+          break;
         }
       }
     }
