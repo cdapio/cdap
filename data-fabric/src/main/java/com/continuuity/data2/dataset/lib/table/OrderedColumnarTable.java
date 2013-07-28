@@ -1,16 +1,28 @@
 package com.continuuity.data2.dataset.lib.table;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
+import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * todo: docs
  */
 public interface OrderedColumnarTable {
+  // empty result constant
+  static final OperationResult<Map<byte[], byte[]>> EMPTY_RESULT =
+    new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
+
+  // empty immutable row's column->value map constant
+  static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
+    Maps.unmodifiableNavigableMap(Maps.<byte[], byte[], byte[]>newTreeMap(Bytes.BYTES_COMPARATOR));
+
   /**
    * Reads the latest versions of the specified columns in the specified row.
    * @return map of columns to values, never null

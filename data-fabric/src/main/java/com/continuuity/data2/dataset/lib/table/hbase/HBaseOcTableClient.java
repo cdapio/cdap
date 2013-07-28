@@ -69,11 +69,6 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row) throws Exception {
-    return getInternal(row, null);
-  }
-
-  @Override
   protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
     NavigableMap<byte[], byte[]> result = getInternal(row, new byte[][]{column});
     return result.get(column);

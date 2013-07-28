@@ -10,7 +10,7 @@ import java.util.NavigableMap;
 /**
  *
  */
-public abstract class BackedByVersionedStoreOcTableClient extends BufferringOcTableClient {
+public abstract class BackedByVersionedStoreOcTableClient extends BufferingOcTableClient {
   protected static final byte[] DELETE_MARKER = new byte[0];
 
   public BackedByVersionedStoreOcTableClient(String name) {

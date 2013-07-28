@@ -34,11 +34,6 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row) throws IOException {
-    return getInternal(row, null);
-  }
-
-  @Override
   protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
     NavigableMap<byte[], byte[]> internal = getInternal(row, new byte[][]{column});
     return internal.get(column);
