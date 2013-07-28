@@ -241,6 +241,7 @@ public abstract class OrderedColumnarTableTest {
 
   @Test
   public void testBasicScanWithTx() throws Exception {
+    // todo: make work with tx well (merge with buffer, conflicts) and add tests for that
     DataSetManager manager = getTableManager();
     manager.create("myTable");
     try {
@@ -308,6 +309,79 @@ public abstract class OrderedColumnarTableTest {
                 $(C3, V3),
                 $(C4, V4)),
              myTable1.scan(R2, R5));
+
+      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+      Assert.assertTrue(txClient.commit(tx3));
+
+    } finally {
+      manager.drop("myTable");
+    }
+  }
+
+  @Test
+  public void testBasicColumnRangeWithTx() throws Exception {
+    // todo: test more tx logic (or add to get/put unit-test)
+    DataSetManager manager = getTableManager();
+    manager.create("myTable");
+    try {
+      // write test data and commit
+      Transaction tx1 = txClient.start();
+      OrderedColumnarTable myTable1 = getTable("myTable");
+      ((TransactionAware) myTable1).startTx(tx1);
+      myTable1.put(R1, $(C1, C2, C3, C4, C5), $(V1, V2, V3, V4, V5));
+      myTable1.put(R2, $(C1), $(V2));
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+      Assert.assertTrue(txClient.commit(tx1));
+
+      // Now, we will test column range get
+      Transaction tx2 = txClient.start();
+      OrderedColumnarTable myTable2 = getTable("myTable");
+      ((TransactionAware) myTable2).startTx(tx2);
+
+      // bounded range
+      verify($(C2, V2, C3, V3, C4, V4),
+             myTable2.get(R1, C2, C5, Integer.MAX_VALUE));
+      // open start range
+      verify($(C1, V1, C2, V2, C3, V3),
+             myTable2.get(R1, null, C4, Integer.MAX_VALUE));
+      // open end range
+      verify($(C3, V3, C4, V4, C5, V5),
+             myTable2.get(R1, C3, null, Integer.MAX_VALUE));
+      // open ends range
+      verify($(C1, V1, C2, V2, C3, V3, C4, V4, C5, V5),
+             myTable2.get(R1, null, null, Integer.MAX_VALUE));
+
+      // same with limit
+      // bounded range with limit
+      verify($(C2, V2),
+             myTable2.get(R1, C2, C5, 1));
+      // open start range with limit
+      verify($(C1, V1, C2, V2),
+             myTable2.get(R1, null, C4, 2));
+      // open end range with limit
+      verify($(C3, V3, C4, V4),
+             myTable2.get(R1, C3, null, 2));
+      // open ends range with limit
+      verify($(C1, V1, C2, V2, C3, V3, C4, V4),
+             myTable2.get(R1, null, null, 4));
+
+      // adding/changing/removing some columns
+      myTable2.put(R1, $(C1, C2, C3), $(V4, V3, V2));
+      myTable2.delete(R1, $(C4));
+
+      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable2).commitTx());
+      Assert.assertTrue(txClient.commit(tx2));
+
+      // Checking that changes are reflected in new scans in new tx
+      Transaction tx3 = txClient.start();
+      // NOTE: table can be re-used betweet tx
+      ((TransactionAware) myTable1).startTx(tx3);
+
+      verify($(C2, V3, C3, V2),
+             myTable1.get(R1, C2, C5, Integer.MAX_VALUE));
 
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());

@@ -120,7 +120,8 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
 
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<Long, byte[]>> column : rowMap.entrySet()) {
-      result.put(column.getKey(), column.getValue().lastEntry().getValue());
+      // latest go first
+      result.put(column.getKey(), column.getValue().firstEntry().getValue());
     }
     return result;
   }
