@@ -1,22 +1,14 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
-import com.sun.tools.javac.resources.version;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  *
@@ -70,13 +62,15 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   @Override
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
+    // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
       InMemoryOcTableService.getRowRange(getName(), startRow, stopRow, tx.getReadPointer());
 
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange =
       getLatestNotExcludedRows(rowRange, tx.getExcludedList());
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
-    return new MemoryScanner(visibleRowRange.entrySet().iterator());
+    return new InMemoryScanner(rows.entrySet().iterator());
   }
 
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, byte[][] columns) throws IOException {
@@ -129,63 +123,5 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
       result.put(column.getKey(), column.getValue().lastEntry().getValue());
     }
     return result;
-  }
-
-
-  /**
-   * An in-memory implememtation of a scanner.
-   */
-  public class MemoryScanner implements Scanner {
-
-    private final Iterator<Map.Entry<byte[], NavigableMap<byte[], byte[]>>> rows;
-
-    private final Set<byte[]> columnSet;
-
-    public MemoryScanner(Iterator<Map.Entry<byte[], NavigableMap<byte[], byte[]>>> rows) {
-      this(rows, null);
-    }
-
-    public MemoryScanner(Iterator<Map.Entry<byte[], NavigableMap<byte[], byte[]>>> rows,
-                         byte[][] columns) {
-      this.rows = rows;
-      this.columnSet = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
-      if (columns != null) {
-        Collections.addAll(this.columnSet, columns);
-      }
-    }
-
-    @Override
-    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
-      Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-      Map.Entry<byte[], NavigableMap<byte[], byte[]>> rowEntry = null;
-      boolean gotNext = false;
-
-      while (!gotNext){
-        if (!this.rows.hasNext()){
-          break;
-        }
-        rowEntry = this.rows.next();
-        //Try to read all columns for this row
-        for (Map.Entry<byte[], byte[]> colEntry : rowEntry.getValue().entrySet()) {
-          if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey())) {
-            continue;
-          }
-          columns.put(colEntry.getKey(), colEntry.getValue());
-        }
-        if (columns.size() > 0) {
-          //there is at least one valid col for row. Exit the loop. If not try next row
-          gotNext =  true;
-        }
-      }
-      if (columns.size() > 0) {
-        return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowEntry.getKey(), columns);
-      } else {
-        return null;
-      }
-    }
-
-    @Override
-    public void close() { /* no op */ }
-
   }
 }

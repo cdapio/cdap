@@ -9,6 +9,8 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.NavigableMap;
  */
 // todo: do periodic flush when certain threshold is reached
 // todo: extract separate "no delete inside tx" table?
+// todo: consider writing & reading using HTable to do in multi-threaded way
 public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   private static final byte[] DATA_COLFAM = HBaseOcTableManager.DATA_COLUMN_FAMILY;
   // 4Mb
@@ -91,10 +94,27 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
-    // todo
-    // todo: don't forget use batching and not use block cache
-    return null;
+  protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
+    Scan scan = new Scan();
+    scan.addFamily(DATA_COLFAM);
+    // todo: should be configurable
+    // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
+    scan.setCacheBlocks(false);
+    scan.setCaching(1000);
+
+    if (startRow != null) {
+      scan.setStartRow(startRow);
+    }
+    if (stopRow != null) {
+      scan.setStopRow(stopRow);
+    }
+
+    scan.setTimeRange(0, getMaxStamp(tx));
+    // todo: optimise for no excluded list separately
+    scan.setMaxVersions(tx.getExcludedList().length + 1);
+
+    ResultScanner resultScanner = hTable.getScanner(scan);
+    return new HBaseScanner(resultScanner, tx.getExcludedList());
   }
 
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, byte[][] columns) throws IOException {
@@ -116,8 +136,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     }
 
     // todo: actually we want to read up to write pointer... when we start flushing periodically
-    // NOTE: +1 here because we want read up to readpointer inclusive, but timerange's end is exclusive
-    get.setTimeRange(0L, tx.getReadPointer() + 1);
+    get.setTimeRange(0L, getMaxStamp(tx));
 
     // if exclusion list is empty, do simple "read last" value call todo: explain
     if (tx.getExcludedList().length == 0) {
@@ -138,12 +157,20 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     // todo: cache fetched from server locally
 
     Result result = hTable.get(get);
+    return getRowMap(result, tx.getExcludedList());
+  }
+
+  static NavigableMap<byte[], byte[]> getRowMap(Result result, long[] excludedVersions) {
     if (result.isEmpty()) {
       return EMPTY_ROW_MAP;
     }
 
-    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(DATA_COLFAM),
-                                                               tx.getExcludedList());
+    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(DATA_COLFAM), excludedVersions);
     return unwrapDeletes(rowMap);
+  }
+
+  private static long getMaxStamp(Transaction tx) {
+    // NOTE: +1 here because we want read up to readpointer inclusive, but timerange's end is exclusive
+    return tx.getReadPointer() + 1;
   }
 }

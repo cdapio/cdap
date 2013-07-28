@@ -2,6 +2,8 @@ package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -14,7 +16,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.String;
 import java.util.Map;
 
 /**
@@ -23,9 +24,15 @@ import java.util.Map;
 public abstract class OrderedColumnarTableTest {
   private static final byte[] R1 = Bytes.toBytes("r1");
   private static final byte[] R2 = Bytes.toBytes("r2");
+  private static final byte[] R3 = Bytes.toBytes("r3");
+  private static final byte[] R4 = Bytes.toBytes("r4");
+  private static final byte[] R5 = Bytes.toBytes("r5");
 
   private static final byte[] C1 = Bytes.toBytes("c1");
   private static final byte[] C2 = Bytes.toBytes("c2");
+  private static final byte[] C3 = Bytes.toBytes("c3");
+  private static final byte[] C4 = Bytes.toBytes("c4");
+  private static final byte[] C5 = Bytes.toBytes("c5");
 
   private static final byte[] V1 = Bytes.toBytes("v1");
   private static final byte[] V2 = Bytes.toBytes("v2");
@@ -81,7 +88,7 @@ public abstract class OrderedColumnarTableTest {
       // committing tx1 in stages to check races are handled well
       // * first, flush operations of table
       Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
-      ((TransactionAware) myTable1).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
 
       // start tx3 and verify that changes of tx1 are not visible yet (even though they are flushed)
       Transaction tx3 = txClient.start();
@@ -89,7 +96,7 @@ public abstract class OrderedColumnarTableTest {
       ((TransactionAware) myTable3).startTx(tx3);
       verify($(), myTable3.get(R1, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
-      ((TransactionAware) myTable3).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       Assert.assertTrue(txClient.commit(tx3));
 
       // * second, make tx visible
@@ -107,7 +114,7 @@ public abstract class OrderedColumnarTableTest {
 
       // committing tx4
       Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) myTable3).getTxChanges()));
-      ((TransactionAware) myTable3).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       Assert.assertTrue(txClient.commit(tx4));
 
       // do change in tx2 that is conflicting with tx1
@@ -129,7 +136,7 @@ public abstract class OrderedColumnarTableTest {
       verify($(C1, V1), myTable3.get(R1, $(C1, C2)));
       verify($(), myTable3.get(R2, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
-      ((TransactionAware) myTable3).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       Assert.assertTrue(txClient.commit(tx5));
 
     } finally {
@@ -148,7 +155,7 @@ public abstract class OrderedColumnarTableTest {
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, $(C1, C2), $(V1, V2));
       Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
-      ((TransactionAware) myTable1).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
       Assert.assertTrue(txClient.commit(tx1));
 
       // Now, we will test delete ops
@@ -178,7 +185,7 @@ public abstract class OrderedColumnarTableTest {
       ((TransactionAware) myTable1).startTx(tx3);
       verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
-      ((TransactionAware) myTable1).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
       Assert.assertTrue(txClient.commit(tx3));
 
       // starting tx4 before committing tx2 so that we can check conflicts are detected wrt deletes
@@ -188,7 +195,7 @@ public abstract class OrderedColumnarTableTest {
 
       // commit tx2 in stages to see how races are handled wrt delete ops
       Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
-      ((TransactionAware) myTable2).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable2).commitTx());
 
       // start tx6 and verify that changes of tx2 are not visible yet (even though they are flushed)
       Transaction tx6 = txClient.start();
@@ -196,7 +203,7 @@ public abstract class OrderedColumnarTableTest {
       ((TransactionAware) myTable1).startTx(tx6);
       verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
-      ((TransactionAware) myTable1).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
       Assert.assertTrue(txClient.commit(tx6));
 
       // make tx2 visible
@@ -208,7 +215,7 @@ public abstract class OrderedColumnarTableTest {
       ((TransactionAware) myTable1).startTx(tx7);
       verify($(C1, V3), myTable1.get(R1, $(C1, C2)));
       Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
-      ((TransactionAware) myTable1).commitTx();
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
       Assert.assertTrue(txClient.commit(tx7));
 
       // but not visible to tx4 that we started earlier than tx2 became visible
@@ -226,6 +233,85 @@ public abstract class OrderedColumnarTableTest {
       verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
       myTable1.delete(R1, $(C1));
       Assert.assertFalse(txClient.canCommit(tx5, ((TransactionAware) myTable1).getTxChanges()));
+
+    } finally {
+      manager.drop("myTable");
+    }
+  }
+
+  @Test
+  public void testBasicScanWithTx() throws Exception {
+    DataSetManager manager = getTableManager();
+    manager.create("myTable");
+    try {
+      // write r1...r5 and commit
+      Transaction tx1 = txClient.start();
+      OrderedColumnarTable myTable1 = getTable("myTable");
+      ((TransactionAware) myTable1).startTx(tx1);
+      myTable1.put(R1, $(C1), $(V1));
+      myTable1.put(R2, $(C2), $(V2));
+      myTable1.put(R3, $(C3, C4), $(V3, V4));
+      myTable1.put(R4, $(C4), $(V4));
+      myTable1.put(R5, $(C5), $(V5));
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+      Assert.assertTrue(txClient.commit(tx1));
+
+      // Now, we will test scans
+      // currently not testing races/conflicts/etc as this logic is not there for scans yet; so using one same tx
+      Transaction tx2 = txClient.start();
+      OrderedColumnarTable myTable2 = getTable("myTable");
+      ((TransactionAware) myTable2).startTx(tx2);
+
+      // bounded scan
+      verify($(R2, R3, R4),
+             $$($(C2, V2),
+                $(C3, V3, C4, V4),
+                $(C4, V4)),
+             myTable2.scan(R2, R5));
+      // open start scan
+      verify($(R1, R2, R3),
+             $$($(C1, V1),
+                $(C2, V2),
+                $(C3, V3, C4, V4)),
+             myTable2.scan(null, R4));
+      // open end scan
+      verify($(R3, R4, R5),
+             $$($(C3, V3, C4, V4),
+                $(C4, V4),
+                $(C5, V5)),
+             myTable2.scan(R3, null));
+      // open ends scan
+      verify($(R1, R2, R3, R4, R5),
+             $$($(C1, V1),
+                $(C2, V2),
+                $(C3, V3, C4, V4),
+                $(C4, V4),
+                $(C5, V5)),
+             myTable2.scan(null, null));
+
+      // adding/changing/removing some columns
+      myTable2.put(R2, $(C1, C2, C3), $(V4, V3, V2));
+      myTable2.delete(R3, $(C4));
+
+      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable2).commitTx());
+      Assert.assertTrue(txClient.commit(tx2));
+
+      // Checking that changes are reflected in new scans in new tx
+      Transaction tx3 = txClient.start();
+      // NOTE: table can be re-used betweet tx
+      ((TransactionAware) myTable1).startTx(tx3);
+
+      verify($(R2, R3, R4),
+             $$($(C1, V4, C2, V3, C3, V2),
+                $(C3, V3),
+                $(C4, V4)),
+             myTable1.scan(R2, R5));
+
+      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+      Assert.assertTrue(txClient.commit(tx3));
 
     } finally {
       manager.drop("myTable");
@@ -264,7 +350,7 @@ public abstract class OrderedColumnarTableTest {
 
       // committing tx1
       Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table1).getTxChanges()));
-      ((TransactionAware) table1).commitTx();
+      Assert.assertTrue(((TransactionAware) table1).commitTx());
       Assert.assertTrue(txClient.commit(tx1));
 
       // no conflict should be when committing tx2
@@ -291,15 +377,34 @@ public abstract class OrderedColumnarTableTest {
       Assert.assertTrue(actual.isEmpty());
       return;
     }
-    Assert.assertEquals(expected.length / 2, actual.getValue().size());
+    verify(expected, actual.getValue());
+  }
+
+  private void verify(byte[][] expected, Map<byte[], byte[]> rowMap) {
+    Assert.assertEquals(expected.length / 2, rowMap.size());
     for (int i = 0; i < expected.length; i += 2) {
       byte[] key = expected[i];
       byte[] val = expected[i + 1];
-      Assert.assertArrayEquals(val, actual.getValue().get(key));
+      Assert.assertArrayEquals(val, rowMap.get(key));
     }
   }
 
+  private void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
+    for (int i = 0; i < expectedRows.length; i++) {
+      ImmutablePair<byte[],Map<byte[],byte[]>> next = scan.next();
+      Assert.assertArrayEquals(expectedRows[i], next.getFirst());
+      verify(expectedRowMaps[i], next.getSecond());
+    }
+
+    // nothing is left in scan
+    Assert.assertNull(scan.next());
+  }
+
   private static byte[][] $(byte[]... elems) {
+    return elems;
+  }
+
+  private static byte[][][] $$(byte[][]... elems) {
     return elems;
   }
 }

@@ -70,7 +70,8 @@ public abstract class BufferringOcTableClient implements OrderedColumnarTable, D
     throws Exception;
 
 
-  protected abstract  Scanner scanPersisted(byte[] startRow, byte[] stopRow);
+  // todo: merge with buffer?
+  protected abstract  Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception;
 
   @Override
   public void close() {
@@ -334,7 +335,7 @@ public abstract class BufferringOcTableClient implements OrderedColumnarTable, D
   }
 
   @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow) {
+  public Scanner scan(byte[] startRow, byte[] stopRow) throws Exception {
     // todo: merge with in-memory buffer
     return scanPersisted(startRow, stopRow);
   }
