@@ -2,7 +2,6 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
@@ -203,14 +202,14 @@ public class DataSetInstantiationBase {
     throws DataSetInstantiationException {
     // for base data set types, directly inject the df fields
     if (obj instanceof Table) {
-      // this sets the delegate table of the Table to a new ReadWriteTable
-      RuntimeTable runtimeTable = RuntimeTable.setRuntimeTable((Table) obj, fabric, metricName);
-      // also ensure that the table exists in the data fabric
+      // this sets the delegate table of the Table
+      Table table = (Table) obj;
+      RuntimeTable runtimeTable;
       try {
-        runtimeTable.open();
-      } catch (OperationException e) {
+        runtimeTable = RuntimeTable.setRuntimeTable(table, fabric, metricName);
+      } catch (Exception e) {
         throw new DataSetInstantiationException(
-          "Failed to open table '" + runtimeTable.getName() + "'.", e);
+          "Failed to open table '" + table.getName() + "'.", e);
       }
 
       TransactionAware txAware = runtimeTable.getTxAware();

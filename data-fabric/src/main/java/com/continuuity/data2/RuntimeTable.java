@@ -41,11 +41,20 @@ public class RuntimeTable extends Table {
    * @return the new ReadWriteTable
    */
   public static RuntimeTable setRuntimeTable(Table table, DataFabric fabric,
-                                                 String metricName) {
+                                                 String metricName) throws Exception {
+
+    DataSetManager dataSetManager = fabric.getDataSetManager(OrderedColumnarTable.class);
+
+    // We want to ensure table is there before creating table client
+    // todo: races? add createIfNotExists() or simply open()?
+    // todo: better exception handling?
+    if (!dataSetManager.exists(table.getName())) {
+      dataSetManager.create(table.getName());
+    }
 
     RuntimeTable runtimeTable = new RuntimeTable(table.getName(),
                                                  fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class),
-                                                 fabric.getDataSetManager(OrderedColumnarTable.class));
+                                                 dataSetManager);
     runtimeTable.setMetricName(metricName);
     table.setDelegate(runtimeTable);
     return runtimeTable;
