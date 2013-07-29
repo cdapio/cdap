@@ -581,7 +581,7 @@
     <property>
         <name>kafka.seed.brokers</name>
         <value>localhost:9092</value>
-        <description>Comma separated list of Kafka brokers (comma separated)</description>
+        <description>List of Kafka brokers (comma separated)</description>
     </property>
 
     <property>
