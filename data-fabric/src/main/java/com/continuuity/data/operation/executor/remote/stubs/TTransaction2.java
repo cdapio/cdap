@@ -32,7 +32,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
 
   private static final org.apache.thrift.protocol.TField WRITE_POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("writePointer", org.apache.thrift.protocol.TType.I64, (short)1);
   private static final org.apache.thrift.protocol.TField READ_POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("readPointer", org.apache.thrift.protocol.TType.I64, (short)2);
-  private static final org.apache.thrift.protocol.TField EXCLUDES_FIELD_DESC = new org.apache.thrift.protocol.TField("excludes", org.apache.thrift.protocol.TType.SET, (short)3);
+  private static final org.apache.thrift.protocol.TField EXCLUDES_FIELD_DESC = new org.apache.thrift.protocol.TField("excludes", org.apache.thrift.protocol.TType.LIST, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -42,7 +42,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
 
   public long writePointer; // required
   public long readPointer; // required
-  public Set<Long> excludes; // required
+  public List<Long> excludes; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -120,7 +120,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     tmpMap.put(_Fields.READ_POINTER, new org.apache.thrift.meta_data.FieldMetaData("readPointer", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.EXCLUDES, new org.apache.thrift.meta_data.FieldMetaData("excludes", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.SetMetaData(org.apache.thrift.protocol.TType.SET, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TTransaction2.class, metaDataMap);
@@ -132,7 +132,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
   public TTransaction2(
     long writePointer,
     long readPointer,
-    Set<Long> excludes)
+    List<Long> excludes)
   {
     this();
     this.writePointer = writePointer;
@@ -151,7 +151,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     this.writePointer = other.writePointer;
     this.readPointer = other.readPointer;
     if (other.isSetExcludes()) {
-      Set<Long> __this__excludes = new HashSet<Long>();
+      List<Long> __this__excludes = new ArrayList<Long>();
       for (Long other_element : other.excludes) {
         __this__excludes.add(other_element);
       }
@@ -228,16 +228,16 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
 
   public void addToExcludes(long elem) {
     if (this.excludes == null) {
-      this.excludes = new HashSet<Long>();
+      this.excludes = new ArrayList<Long>();
     }
     this.excludes.add(elem);
   }
 
-  public Set<Long> getExcludes() {
+  public List<Long> getExcludes() {
     return this.excludes;
   }
 
-  public TTransaction2 setExcludes(Set<Long> excludes) {
+  public TTransaction2 setExcludes(List<Long> excludes) {
     this.excludes = excludes;
     return this;
   }
@@ -279,7 +279,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       if (value == null) {
         unsetExcludes();
       } else {
-        setExcludes((Set<Long>)value);
+        setExcludes((List<Long>)value);
       }
       break;
 
@@ -500,17 +500,17 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
             }
             break;
           case 3: // EXCLUDES
-            if (schemeField.type == org.apache.thrift.protocol.TType.SET) {
+            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TSet _set132 = iprot.readSetBegin();
-                struct.excludes = new HashSet<Long>(2*_set132.size);
-                for (int _i133 = 0; _i133 < _set132.size; ++_i133)
+                org.apache.thrift.protocol.TList _list132 = iprot.readListBegin();
+                struct.excludes = new ArrayList<Long>(_list132.size);
+                for (int _i133 = 0; _i133 < _list132.size; ++_i133)
                 {
                   long _elem134; // required
                   _elem134 = iprot.readI64();
                   struct.excludes.add(_elem134);
                 }
-                iprot.readSetEnd();
+                iprot.readListEnd();
               }
               struct.setExcludesIsSet(true);
             } else { 
@@ -541,12 +541,12 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       if (struct.excludes != null) {
         oprot.writeFieldBegin(EXCLUDES_FIELD_DESC);
         {
-          oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, struct.excludes.size()));
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.excludes.size()));
           for (long _iter135 : struct.excludes)
           {
             oprot.writeI64(_iter135);
           }
-          oprot.writeSetEnd();
+          oprot.writeListEnd();
         }
         oprot.writeFieldEnd();
       }
@@ -609,9 +609,9 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TSet _set137 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-          struct.excludes = new HashSet<Long>(2*_set137.size);
-          for (int _i138 = 0; _i138 < _set137.size; ++_i138)
+          org.apache.thrift.protocol.TList _list137 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+          struct.excludes = new ArrayList<Long>(_list137.size);
+          for (int _i138 = 0; _i138 < _list137.size; ++_i138)
           {
             long _elem139; // required
             _elem139 = iprot.readI64();

@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  *
@@ -49,6 +50,7 @@ public class InMemoryTransactionOracle {
   public static synchronized Transaction start() {
     Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray(excludedList));
     excludedList.add(nextWritePointer);
+    // it is important to keep it sorted, as client logic may depend on that
     Collections.sort(excludedList);
     nextWritePointer++;
     return tx;
