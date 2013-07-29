@@ -1326,7 +1326,7 @@ public class ConverterUtils {
   // temporary TxDs2 stuff
 
   TTransaction2 wrap(com.continuuity.data2.transaction.Transaction tx) {
-    Set<Long> excludes = Sets.newHashSet();
+    List<Long> excludes = Lists.newArrayList();
     for (long excluded : tx.getExcludedList()) {
       excludes.add(excluded);
     }
