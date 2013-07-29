@@ -15,8 +15,12 @@ import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueueReader;
 import com.continuuity.internal.app.runtime.AbstractListener;
@@ -288,6 +292,12 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         // Bind remote operation executor
         bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
         bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);
+
+        // Bind TxDs2 stuff
+        bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
+        bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
+        bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(cConf);
+        bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hConf);
 
         bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
           @Override
