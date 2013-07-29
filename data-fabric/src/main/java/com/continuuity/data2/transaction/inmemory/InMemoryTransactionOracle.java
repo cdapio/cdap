@@ -2,20 +2,16 @@ package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.Transaction;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongLists;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  *
@@ -23,11 +19,13 @@ import java.util.TreeSet;
 // todo: synchronize all
 // todo: optimize heavily
 public class InMemoryTransactionOracle {
-  private static LongList excludedList;
-//  private static List<Long> excludedList;
+
+  private static final int MIN_EXCLUDE_LIST_SIZE = 1000;
+
+  private static LongArrayList excludedList;
 
   // todo: clean it up
-  // todo: use moving array instead
+  // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
   // tx id (write pointer) -> changes made by this tx
   private static Map<Long, Set<byte[]>> committedChangeSets;
   // not committed yet
@@ -44,7 +42,6 @@ public class InMemoryTransactionOracle {
 
   // public for unit-tests
   public static synchronized void reset() {
-//    excludedList = Lists.newArrayList();
     excludedList = new LongArrayList();
     committedChangeSets = Maps.newHashMap();
     committingChangeSets = Maps.newHashMap();
@@ -56,6 +53,8 @@ public class InMemoryTransactionOracle {
     Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray(excludedList));
     excludedList.add(nextWritePointer);
     // it is important to keep it sorted, as client logic may depend on that
+    // Using Collections.sort is somewhat inefficient as it convert the elements into Object[] and put it back.
+    // todo: optimize the data structure.
     Collections.sort(excludedList);
     nextWritePointer++;
     return tx;
@@ -146,7 +145,10 @@ public class InMemoryTransactionOracle {
   }
 
   private static void makeVisible(Transaction tx) {
-    excludedList.remove(new Long(tx.getWritePointer()));
+    excludedList.remove(tx.getWritePointer());
+    // trim is needed as remove of LongArrayList would not shrink the backing array.
+    // trim will do nothing if the size of excludedList is smaller than the MIN_EXCLUDE_LIST_SIZE.
+    excludedList.trim(MIN_EXCLUDE_LIST_SIZE);
 
     // moving read pointer
     moveReadPointerIfNeeded(tx.getWritePointer());
@@ -162,11 +164,5 @@ public class InMemoryTransactionOracle {
     // todo: optimize (cache, etc. etc.)
     long[] result = new long[excludedList.size()];
     return excludedList.toArray(result);
-//    for (int i = 0; i < result.length; i++) {
-//      result[i] = excludedList.get(i);
-//    }
-//
-//    return result;
   }
-
 }
