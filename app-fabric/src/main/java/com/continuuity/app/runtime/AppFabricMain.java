@@ -12,8 +12,12 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.common.Services;
@@ -72,6 +76,9 @@ public final class AppFabricMain extends DaemonMain {
           bind(CConfiguration.class)
             .annotatedWith(Names.named("RemoteOperationExecutorConfig"))
             .to(CConfiguration.class);
+          // Bind remote TxDs2
+          bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
+          bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
         }
       }
     );
