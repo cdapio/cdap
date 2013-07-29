@@ -48,6 +48,7 @@ import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
 import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
+import com.google.common.collect.Sets;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -56,8 +57,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
@@ -924,4 +927,42 @@ public class OperationExecutorClient extends ConverterUtils {
   public String getName() {
     return "remote-client";
   }
+
+  public com.continuuity.data2.transaction.Transaction start() throws OperationException, TException {
+    try {
+      return unwrap(client.startTx());
+    } catch (TOperationException te) {
+      throw unwrap(te);
+    }
+  }
+
+  public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
+    throws OperationException, TException{
+    try {
+      Set<ByteBuffer> changes = Sets.newHashSet();
+      for (byte[] change : changeIds) {
+        changes.add(ByteBuffer.wrap(change));
+      }
+      return client.canCommitTx(wrap(tx), changes);
+    } catch (TOperationException te) {
+      throw unwrap(te);
+    }
+  }
+
+  public boolean commit(com.continuuity.data2.transaction.Transaction tx) throws OperationException, TException {
+    try {
+      return client.commitTx(wrap(tx));
+    } catch (TOperationException te) {
+      throw unwrap(te);
+    }
+  }
+
+  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException, TException {
+    try {
+      return client.abortTx(wrap(tx));
+    } catch (TOperationException te) {
+      throw unwrap(te);
+    }
+  }
+
 }

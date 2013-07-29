@@ -40,6 +40,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
+import com.continuuity.data.operation.executor.remote.stubs.TTransaction2;
 import com.continuuity.data.operation.executor.remote.stubs.TTruncateTable;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
@@ -50,6 +51,7 @@ import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
 import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
+import com.google.common.collect.Sets;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
@@ -865,4 +868,45 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
     }
   }
 
+  // Temporary TxDs2 stuff
+
+  @Override
+  public TTransaction2 startTx() throws TOperationException, TException {
+    try {
+      return wrap(this.opex.start());
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public boolean canCommitTx(TTransaction2 tx, Set<ByteBuffer> changes) throws TOperationException, TException {
+    Set<byte[]> changeIds = Sets.newHashSet();
+    for (ByteBuffer bb : changes) {
+      changeIds.add(bb.array());
+    }
+    try {
+      return this.opex.canCommit(unwrap(tx), changeIds);
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public boolean commitTx(TTransaction2 tx) throws TOperationException, TException {
+    try {
+      return this.opex.commit(unwrap(tx));
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public boolean abortTx(TTransaction2 tx) throws TOperationException, TException {
+    try {
+      return this.opex.abort(unwrap(tx));
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
 }

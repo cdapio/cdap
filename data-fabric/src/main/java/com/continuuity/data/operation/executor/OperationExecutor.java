@@ -18,6 +18,7 @@ import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.table.Scanner;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -371,4 +372,14 @@ public interface OperationExecutor
    */
   public Scanner scan(OperationContext context, @Nullable Transaction transaction, Scan scan)
     throws OperationException;
+
+  // temporary TxDs2 stuff
+  public com.continuuity.data2.transaction.Transaction start() throws OperationException;
+
+  public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
+    throws OperationException;
+
+  public boolean commit(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
+
+  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
 }

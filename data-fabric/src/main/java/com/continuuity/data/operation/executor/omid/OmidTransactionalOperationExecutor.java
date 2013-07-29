@@ -60,6 +60,7 @@ import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionOracle;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
@@ -73,6 +74,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -1385,6 +1387,27 @@ public class OmidTransactionalOperationExecutor
     end(REQ_TYPE_SCAN_LATENCY, begin);
     dataSetMetric_read(scan.getMetricName());
     return scanner;
+  }
+
+  @Override
+  public com.continuuity.data2.transaction.Transaction start() throws OperationException {
+    return InMemoryTransactionOracle.start();
+  }
+
+  @Override
+  public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
+    throws OperationException {
+    return InMemoryTransactionOracle.canCommit(tx, changeIds);
+  }
+
+  @Override
+  public boolean commit(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    return InMemoryTransactionOracle.commit(tx);
+  }
+
+  @Override
+  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    return InMemoryTransactionOracle.abort(tx);
   }
 
   Transaction startTransaction(boolean trackChanges) {
