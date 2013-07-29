@@ -652,7 +652,7 @@ public abstract class OrderedColumnarTableTest {
 
   private void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
     for (int i = 0; i < expectedRows.length; i++) {
-      ImmutablePair<byte[],Map<byte[],byte[]>> next = scan.next();
+      ImmutablePair<byte[], Map<byte[], byte[]>> next = scan.next();
       Assert.assertArrayEquals(expectedRows[i], next.getFirst());
       verify(expectedRowMaps[i], next.getSecond());
     }
