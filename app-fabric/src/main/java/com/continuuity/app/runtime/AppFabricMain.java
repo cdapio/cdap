@@ -27,6 +27,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.util.concurrent.TimeUnit;
 
@@ -58,7 +59,7 @@ public final class AppFabricMain extends DaemonMain {
       );
 
     injector = Guice.createInjector(
-      new ConfigModule(),
+      new ConfigModule(HBaseConfiguration.create()),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
