@@ -4,6 +4,7 @@
 
 package com.continuuity.app.queue;
 
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.internal.io.Schema;
 
 /**

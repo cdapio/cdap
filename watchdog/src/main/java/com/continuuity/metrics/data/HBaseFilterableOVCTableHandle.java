@@ -26,10 +26,12 @@ import java.io.IOException;
 public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle implements TimeToLiveOVCTableHandle {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseFilterableOVCTableHandle.class);
+  private final String hbaseVersion;
 
   @Inject
   public HBaseFilterableOVCTableHandle(CConfiguration conf, Configuration hConf) throws IOException {
     super(conf, hConf);
+    hbaseVersion = admin.getClusterStatus().getHBaseVersion();
   }
 
   @Override
@@ -39,11 +41,13 @@ public class HBaseFilterableOVCTableHandle extends HBaseOVCTableHandle implement
 
   @Override
   protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
-    return new HBaseFilterableOVCTable(conf, hConf, tableName, FAMILY, new HBaseIOExceptionHandler(), -1);
+    return new HBaseFilterableOVCTable(conf, hConf, tableName, FAMILY,
+                                       new HBaseIOExceptionHandler(), -1, hbaseVersion);
   }
 
   protected HBaseOVCTable createOVCTable(byte[] tableName, int ttl) throws OperationException {
-    return new HBaseFilterableOVCTable(conf, hConf, tableName, FAMILY, new HBaseIOExceptionHandler(), ttl);
+    return new HBaseFilterableOVCTable(conf, hConf, tableName, FAMILY,
+                                       new HBaseIOExceptionHandler(), ttl, hbaseVersion);
   }
 
   @Override

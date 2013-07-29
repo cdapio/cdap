@@ -367,18 +367,18 @@
       <div id="informer"></div>
       <div class="panel">
         <div id="flowviz-container">
-          <!--
+
           <div class="btn-group" style="float: left;">
             <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:14px;float: right;">
               {{flowletLabelName}} <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
-              <li><a {{action "setFlowletLabel" "arrival.count"}}>Enqueue Rate</a></li>
-              <li><a {{action "setFlowletLabel" "queue.depth"}}>Queue Size</a></li>
-              <li><a {{action "setFlowletLabel" "processed.count"}}>Total Processed</a></li>
+              <li><a {{action "setFlowletLabel" "rate"}}>Flowlet Rate</a></li>
+              <li><a {{action "setFlowletLabel" "pending"}}>Flowlet Pending</a></li>
+              <li><a {{action "setFlowletLabel" "aggregate"}}>Flowlet Processed</a></li>
             </ul>
           </div>
-          -->
+
           {{view C.Embed.Visualizer viewName="visualizer"}}
         </div>
       </div>

@@ -19,6 +19,8 @@ import com.google.common.collect.TreeBasedTable;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -42,6 +44,8 @@ import java.util.Map;
  * </p>
  */
 public final class TimeSeriesTable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TimeSeriesTable.class);
 
   private static final int MAX_ROLL_TIME = 0xfffe;
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
@@ -139,7 +143,7 @@ public final class TimeSeriesTable {
       columns = new byte[endCol - startCol + 1][];
 
       for (int i = 0; i < columns.length; i++) {
-        columns[i] = Bytes.toBytes(startCol + i);
+        columns[i] = Bytes.toBytes((short) (startCol + i));
       }
     }
 
@@ -149,7 +153,7 @@ public final class TimeSeriesTable {
                                  query.getMetricPrefix(), query.getTagPrefix(), endTimeBase + 1, 0xff);
 
     Scanner scanner;
-    if (isFilterable) {
+    if (isFilterable && ((FilterableOVCTable) timeSeriesTable).isFilterSupported(FuzzyRowFilter.class)) {
       scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
                                                         MemoryReadPointer.DIRTY_READ,
                                                         getFilter(query, startTimeBase, endTimeBase));
@@ -157,6 +161,14 @@ public final class TimeSeriesTable {
       scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ);
     }
     return new MetricsScanner(query, scanner, entityCodec, resolution);
+  }
+
+  private String toHex(byte[] bytes) {
+    StringBuilder builder = new StringBuilder();
+    for (byte b : bytes) {
+      builder.append(String.format("%02x", b)).append(" ");
+    }
+    return builder.toString();
   }
 
   /**
@@ -167,6 +179,7 @@ public final class TimeSeriesTable {
   public void delete(String contextPrefix) throws OperationException {
     timeSeriesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
   }
+
 
   /**
    * Deletes all row keys that has timestamp before the given time.

@@ -2,7 +2,7 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -76,7 +76,7 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
   public void submit(TransactionAgent agent) throws OperationException {
     List<DataObject<T>> outputs = Lists.newArrayListWithExpectedSize(dataQueue.size());
     dataQueue.drainTo(outputs);
-    flowletContext.getSystemMetrics().gauge("events.outs." + queueName.getSimpleName(), outputs.size());
+    flowletContext.getSystemMetrics().gauge("process.events.outs." + queueName.getSimpleName(), outputs.size());
 
     if (outputs.isEmpty()) {
       // Nothing to submit
