@@ -200,19 +200,28 @@ configurations{
   packages
 }
 
-if(project.name == 'distributions') {
+if (project.name == 'distributions') {
   artifacts {
     packages file: file("$buildDir/linux-package/continuuity_${getPomVersion()}_all.deb"), name: "continuuity"
     packages file: file("$buildDir/linux-package/continuuity-${getPomVersion()}-1.noarch.rpm"), name: "continuuity"
   }
 } else {
-  artifacts {
-    packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
-    packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
-    packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.name}"
+  // Temporary fix to ensure that data fabric packages are generated as continnuity-app-fabric
+  if (project.name == 'data-fabric-runtime') {
+    artifacts {
+      packages file: file("$buildDir/linux-package/continuuity-${project.ext.componentName}_${getPomVersion()}_all.deb"), name: "continuuity-${project.ext.componentName}"
+      packages file: file("$buildDir/linux-package/continuuity-${project.ext.componentName}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.ext.componentName}"
+      packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.ext.componentName}"
+    }
+  } else {
+    artifacts {
+      packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
+      packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
+      packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.name}"
+
+    }
   }
 }
-
 
 uploadPackages {
   repositories {
