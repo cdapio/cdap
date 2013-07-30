@@ -21,10 +21,11 @@
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
-  <script src="http://code.highcharts.com/highcharts.js"></script>
+  <script src="/core/lib/highcharts.js"></script>
+  <script src="/third_party/select2/select2.min.js"></script>
 
   <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="/third_party/spectrum/spectrum.css">
+  <link rel="stylesheet" href="/third_party/select2/select2.css">
   <link rel="stylesheet" href="/assets/css/main.css">
 
 </head>
@@ -730,7 +731,6 @@
 
   <script type="text/x-handlebars" data-template-name="Analyze">
     <div id="title">
-      {{view C.Embed.TimeSelector}}
       <h1>Analyze<span>Metrics</span></h1>
     </div>
     <div id="panels">
@@ -744,13 +744,13 @@
               <li class="analyze-selected-metric">
                 <div class="analyze-selected-metric-remove" {{action removeFromChart metric}}>&times;</div>
                 <div class="analyze-selected-metric-color" style="background: {{unbound metric.color}}"></div>
-                <div class="analyze-selected-metric-element">{{metric.element}}</div>
+                <div class="analyze-selected-metric-element"><a href="{{unbound metric.href}}">{{metric.element}}</a></div>
                 <div class="analyze-selected-metric-name">{{metric.metric}}</div>
               </li>
             {{/each}}
 
               <li class="analyze-selected-metric-add" {{action showConfigure}}>
-                <div class="analyze-selected-metric-color"></div>
+                <div class="analyze-selected-metric-color">+</div>
                 <div class="analyze-selected-metric-element">Add</div>
               </li>
 
@@ -758,39 +758,19 @@
 
             <div id="analyze-configurator">
 
+              <input type="hidden" id="elementSelector" />
+
               <div class="dropdown analyze-color-select">
-                <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown"><div class="analyze-color-selected" style="background-color:{{unbound configuring.color}}"></div></button>
+                <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown"><div class="analyze-color-selected" {{bindAttr style=configuring.colorStyle}}></div></button>
                 <ul class="dropdown-menu">
-                  {{#each color in colorOptions}}
-                  <li><a {{action selectColor color}}>{{color.name}}</a></li>
+                  {{#each color in colors}}
+                  <li><button class="btn" {{action selectColor color}}><div style="background-color:{{unbound color}}"></div></button></li>
                   {{/each}}
                 </ul>
               </div>
 
-              <div>
-                {{view C.Embed.TextField id="elementSelector" data-provide="typeahead"}}
-              </div>
-
-              <div class="dropdown analyze-dropdown">
-                <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown">{{configuring.element.name}} <b class="caret"></b></button>
-                <ul class="dropdown-menu">
-                  {{#each model in elementsList}}
-                    <li {{action selectElement model}}><a>{{model.type}} / {{model.name}}</a></li>
-                  {{/each}}
-                </ul>
-              </div>
-
-              <div class="dropdown">
-                <button {{bindAttr disabled="configuring.noSelection"}} href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown">{{configuring.metric.name}} <b class="caret"></b></button>
-                <ul class="dropdown-menu">
-                  {{#each metric in metricsList}}
-                    <li {{action selectMetricName metric}}><a>{{metric.name}}</a></li>
-                  {{/each}}
-                </ul>
-              </div>
-
+              <input type="hidden" id="metricSelector" disabled="disabled" />
               <button class="analyze-gray-btn" {{action hideConfigure}}>Cancel</button>
-
               <button {{bindAttr disabled="configuring.noSelection"}} class="analyze-blue-btn" {{action addToChart}}>Add</button>
 
             </div>

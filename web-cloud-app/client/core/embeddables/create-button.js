@@ -11,7 +11,7 @@ define([], function () {
 		entityType: 'Application',
 		click: function () {
 
-			var view = C.Embed.Create.create({
+			var view = this.createChildView(C.Embed.Create, {
 				entityType: this.get('entityType')
 			});
 			view.append();

@@ -53,9 +53,9 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
             },
             tooltip: {
               formatter: function() {
-                return 'Path / <b>'+ this.series.name +'</b><br/>Time / '+
-                Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) +'<br/>Value /'+
-                Highcharts.numberFormat(this.y, 2);
+                return '<b>'+ this.series.name +'</b>: <b>' +
+                Highcharts.numberFormat(this.y, 2) + '</b><br/>'+
+                Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x);
               }
             },
             legend: { enabled: false },
@@ -96,7 +96,9 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
           j = current.length, found = false;
           while (j--) {
             if (current[j].name === more[i].name) {
+
               var data = diff(current[j].data, more[i].data);
+
               for (k = 0; k <= data.length - 1; k++) {
                 current[j].addPoint([data[k].x, data[k].y], false, true);
               }

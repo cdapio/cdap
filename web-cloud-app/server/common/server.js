@@ -304,11 +304,25 @@ WebAppServer.prototype.bindRoutes = function(io) {
     'Stream': [
       { name: 'Events Collected', path: '/collect/events/streams/{id}' },
       { name: 'Bytes Collected', path: '/collect/bytes/streams/{id}' },
-      { name: 'Reads', path: '/collect/reads/streams/{id}' }
+      { name: 'Reads per Second', path: '/collect/reads/streams/{id}' }
     ],
     'Flow': [
       { name: 'Busyness', path: '/process/busyness/{parent}/flows/{id}' },
-      { name: 'Events Processed', path: '/process/events/{parent}/flows/{id}' }
+      { name: 'Events Processed', path: '/process/events/{parent}/flows/{id}' },
+      { name: 'Bytes Processed', path: '/process/bytes/{parent}/flows/{id}' },
+      { name: 'Errors per Second', path: '/process/errors/{parent}/flows/{id}' }
+    ],
+    'Batch': [
+      { name: 'Completion', path: '/process/completion/{parent}/mapreduce/{id}' },
+      { name: 'Entries Processed', path: '/process/entries/{parent}/mapreduce/{id}' }
+    ],
+    'Dataset': [
+      { name: 'Bytes per Second', path: '/store/bytes/datasets/{id}' },
+      { name: 'Reads per Second', path: '/store/reads/datasets/{id}' }
+    ],
+    'Procedure': [
+      { name: 'Requests per Second', path: '/query/requests/{parent}/procedures/{id}' },
+      { name: 'Failures per Second', path: '/query/failures/{parent}/procedures/{id}' }
     ]
 
   };
@@ -369,7 +383,6 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
     }
 
-
     if (methods[0] === 'all') {
 
       var count = 0, all = [];
@@ -401,6 +414,8 @@ WebAppServer.prototype.bindRoutes = function(io) {
       }
 
     } else {
+
+          self.logger.warn(method);
 
     if (method === 'getQuery' || method === 'getMapreduce') {
       params[1].application = ids[0];
