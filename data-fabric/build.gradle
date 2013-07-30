@@ -14,6 +14,7 @@ dependencies {
     apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
 
     compile libraries.slf4j_api
+    compile libraries.fastutil
     compile libraries.logback_core
     compile libraries.logback_classic
     compile libraries.google_guice
@@ -67,6 +68,7 @@ test {
 checkstyleMain {
     source = sourceSets.main.allJava.matching {
         exclude '**/stubs/**/*'
+        exclude '**/thrift/**'
     }
 }
 

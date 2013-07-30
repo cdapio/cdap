@@ -19,6 +19,9 @@ public class Constants {
   public static final String
       SERVICE_APPFABRIC_SERVER = "app-fabric-service";
 
+  public static final String
+      SERVICE_TRANSACTION_SERVER = "tx-service";
+
   // Used by the new metrics system. Will deprecate the old one.
   public static final String SERVICE_METRICS = "metricsservice";
 

@@ -3,7 +3,9 @@
  */
 package com.continuuity.common.utils;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
 
 /**
@@ -27,6 +29,23 @@ public final class Networks {
       }
     } catch (UnknownHostException e) {
       return onErrorAddress;
+    }
+  }
+
+  /**
+   * Find a random free port in localhost for binding.
+   * @return A port number or -1 for failure.
+   */
+  public static int getRandomPort() {
+    try {
+      ServerSocket socket = new ServerSocket(0);
+      try {
+        return socket.getLocalPort();
+      } finally {
+        socket.close();
+      }
+    } catch (IOException e) {
+      return -1;
     }
   }
 
