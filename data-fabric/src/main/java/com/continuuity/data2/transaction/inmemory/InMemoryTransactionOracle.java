@@ -5,6 +5,9 @@ import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongLists;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,7 +22,8 @@ import java.util.Set;
 // todo: synchronize all
 // todo: optimize heavily
 public class InMemoryTransactionOracle {
-  private static List<Long> excludedList;
+  private static LongList excludedList;
+//  private static List<Long> excludedList;
 
   // todo: clean it up
   // todo: use moving array instead
@@ -39,7 +43,8 @@ public class InMemoryTransactionOracle {
 
   // public for unit-tests
   public static synchronized void reset() {
-    excludedList = Lists.newArrayList();
+//    excludedList = Lists.newArrayList();
+    excludedList = new LongArrayList();
     committedChangeSets = Maps.newHashMap();
     committingChangeSets = Maps.newHashMap();
     readPointer = 0;
@@ -151,14 +156,15 @@ public class InMemoryTransactionOracle {
     }
   }
 
-  private static long[] getExcludedListAsArray(List<Long> excludedList) {
+  private static long[] getExcludedListAsArray(LongList excludedList) {
     // todo: optimize (cache, etc. etc.)
     long[] result = new long[excludedList.size()];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = excludedList.get(i);
-    }
-
-    return result;
+    return excludedList.toArray(result);
+//    for (int i = 0; i < result.length; i++) {
+//      result[i] = excludedList.get(i);
+//    }
+//
+//    return result;
   }
 
 }
