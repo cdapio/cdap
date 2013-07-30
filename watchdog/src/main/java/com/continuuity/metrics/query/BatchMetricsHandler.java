@@ -227,7 +227,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     }
 
     long len = enqueue - ack;
-    return new AggregateResponse(len >= 0? len : 0);
+    return new AggregateResponse(len >= 0 ? len : 0);
   }
 
   private Iterator<TimeValue> queryTimeSeries(MetricsScanQuery scanQuery) {
@@ -241,7 +241,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Decodes the batch request
+   * Decodes the batch request.
    *
    * @return a List of String containing all requests from the batch.
    */
