@@ -4,8 +4,8 @@
 
 package com.continuuity.logging.save;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -16,6 +16,7 @@ import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
@@ -59,6 +60,7 @@ public final class LogSaver extends AbstractIdleService {
   private final LoggingEventSerializer serializer;
   private final Path logBaseDir;
 
+  private final CConfiguration cConfig;
   private final Configuration hConfig;
   private final OperationExecutor opex;
   private final OperationContext operationContext;
@@ -104,6 +106,7 @@ public final class LogSaver extends AbstractIdleService {
     LOG.info(String.format("Kafka partition is %d", partition));
     this.serializer = new LoggingEventSerializer();
 
+    this.cConfig = cConfig;
     this.hConfig = hConfig;
     this.opex = opex;
     this.operationContext = new OperationContext(account);
@@ -148,7 +151,7 @@ public final class LogSaver extends AbstractIdleService {
 
     scheduledFutures =
       listeningScheduledExecutorService.scheduleAtFixedRate(
-        new LogCleanup(getFileSystem(hConfig), fileMetaDataManager, logBaseDir, retentionDurationMs),
+        new LogCleanup(getFileSystem(cConfig, hConfig), fileMetaDataManager, logBaseDir, retentionDurationMs),
         10, 24 * 60, TimeUnit.MINUTES);
   }
 
@@ -259,8 +262,8 @@ public final class LogSaver extends AbstractIdleService {
   private final class LogWriter implements Runnable {
     private final FileSystem fileSystem;
 
-    private LogWriter(Configuration hConfig) throws IOException {
-      this.fileSystem = getFileSystem(hConfig);
+    private LogWriter(Configuration hConfig) throws Exception {
+      this.fileSystem = getFileSystem(cConfig, hConfig);
     }
 
     @Override
@@ -338,13 +341,23 @@ public final class LogSaver extends AbstractIdleService {
     }
   }
 
-  private static FileSystem getFileSystem(Configuration hConfig) throws IOException {
-    FileSystem fileSystem = FileSystem.get(hConfig);
+  private static FileSystem getFileSystem(CConfiguration cConfig, Configuration hConfig) throws Exception {
+    String hdfsUser = cConfig.get(Constants.CFG_HDFS_USER);
+    FileSystem fileSystem;
+    if (hdfsUser == null) {
+      LOG.info("Create FileSystem with no user.");
+      fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConfig), hConfig);
+    } else {
+      LOG.info("Create FileSystem with user {}", hdfsUser);
+      fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConfig), hConfig, hdfsUser);
+    }
+
     // local file system's hflush() does not work. Using the raw local file system fixes it.
     // https://issues.apache.org/jira/browse/HADOOP-7844
     if (fileSystem instanceof LocalFileSystem) {
       fileSystem = ((LocalFileSystem) fileSystem).getRawFileSystem();
     }
+
     return fileSystem;
   }
 }
