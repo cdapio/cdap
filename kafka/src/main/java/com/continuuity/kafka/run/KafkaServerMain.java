@@ -10,6 +10,7 @@ import com.continuuity.weave.zookeeper.ZKOperations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.net.InetAddresses;
+import com.google.common.util.concurrent.Service;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
@@ -29,9 +30,6 @@ public class KafkaServerMain extends DaemonMain {
   private Properties kafkaProperties;
   private EmbeddedKafkaServer kafkaServer;
 
-  private String zkConnectStr;
-  private String zkNamespace;
-
   public static void main(String [] args) throws Exception {
     new KafkaServerMain().doMain(args);
   }
@@ -42,8 +40,8 @@ public class KafkaServerMain extends DaemonMain {
     LOG.info(String.format("Initializing server with broker id %d", brokerId));
 
     CConfiguration cConf = CConfiguration.create();
-    zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
-    zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    String zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    String zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
     int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);
     String hostname = cConf.get(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG);
@@ -99,7 +97,11 @@ public class KafkaServerMain extends DaemonMain {
     LOG.info("Starting embedded kafka server...");
 
     kafkaServer = new EmbeddedKafkaServer(KafkaServerMain.class.getClassLoader(), kafkaProperties);
-    kafkaServer.startAndWait();
+    Service.State state = kafkaServer.startAndWait();
+
+    if (state != Service.State.RUNNING) {
+      throw new  IllegalStateException("Kafka server has not started... terminating.");
+    }
 
     LOG.info("Embedded kafka server started successfully.");
   }
@@ -107,7 +109,7 @@ public class KafkaServerMain extends DaemonMain {
   @Override
   public void stop() {
     LOG.info("Stopping embedded kafka server...");
-    if (kafkaServer != null) {
+    if (kafkaServer != null && kafkaServer.isRunning()) {
       kafkaServer.stopAndWait();
     }
   }
