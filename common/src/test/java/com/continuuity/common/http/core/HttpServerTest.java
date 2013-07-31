@@ -57,7 +57,7 @@ public class HttpServerTest {
     service.startAndWait();
     Service.State state = service.state();
     assertEquals(Service.State.RUNNING, state);
-    port = service.getServicePort();
+    port = service.getBindAddress().getPort();
   }
 
   @AfterClass

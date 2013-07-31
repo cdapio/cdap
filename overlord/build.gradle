@@ -11,6 +11,7 @@ dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
     clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
     clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
@@ -23,7 +24,10 @@ dependencies {
 
 
     // External dependencies.
-    compile libraries.akka_actor
+    compile (libraries.akka_actor) {
+        exclude group: 'org.scala-lang'
+    }
+    compile group: 'org.scala-lang', name: 'scala-library', version: '2.8.0'
     compile libraries.google_guava
     compile libraries.google_guice
     compile libraries.google_guava

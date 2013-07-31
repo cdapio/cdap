@@ -1,6 +1,12 @@
 if(! has('epoch')) {
  ext.epoch =  (int)System.currentTimeMillis()/1000
 }
+// componentName is the name used in packaging and directory layout. defaults to project name
+// any project that needs to change it must set this property *before* applying this plugin
+// since it is used during configuration phase
+if(! has('componentName')) {
+ project.ext.componentName = project.name
+}
 
 /**
  * Prepackager stages the project files into a directory that is then 
@@ -10,7 +16,8 @@ if(! has('epoch')) {
  */
 task ('prepackager', dependsOn : ['build']) {
   def stageDir = file("$buildDir/stage-packaging")
-  def installDir = file("$stageDir/opt/continuuity/$project.name")
+  def componentName = project.ext.componentName
+  def installDir = file("$stageDir/opt/continuuity/$componentName")
 
   doLast {
     copy {
@@ -46,7 +53,8 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 task ('debianPrepackager', dependsOn: ['prepackager']) {
   def stageDir = file("$buildDir/stage-packaging")
-  def installDir = file("$stageDir/opt/continuuity/$project.name")
+  def componentName = project.ext.componentName
+  def installDir = file("$stageDir/opt/continuuity/$componentName")
 
   doLast {
     File confDir = file("$projectDir/conf")
@@ -54,13 +62,13 @@ task ('debianPrepackager', dependsOn: ['prepackager']) {
     envfiles.collect { relativePath(it) }.each {
       if(it =~ /conf\/(.*)-env.sh/) {
         service = it.substring(it.indexOf("conf/") + 5, it.indexOf("-env.sh"))
-        println "creating service script from template for $project.name : $service"
+        println "creating service script from template for $componentName : $service"
         copy {
           from "$rootProject.projectDir/distributions/src/debian/init.d"
           into "${stageDir}/etc/init.d"
           include "continuuity-service"
           rename 'continuuity-service', "continuuity-$service"
-          filter(ReplaceTokens, tokens: [packagename: project.name, servicename: service])
+          filter(ReplaceTokens, tokens: [packagename: componentName, servicename: service])
         }
       }
     }
@@ -69,7 +77,8 @@ task ('debianPrepackager', dependsOn: ['prepackager']) {
 
 task ('rpmPrepackager', dependsOn: ['prepackager']) {
   def stageDir = file("$buildDir/stage-packaging")
-  def installDir = file("$stageDir/opt/continuuity/$project.name")
+  def componentName = project.ext.componentName
+  def installDir = file("$stageDir/opt/continuuity/$componentName")
 
   doLast {
     File confDir = file("$projectDir/conf")
@@ -77,13 +86,13 @@ task ('rpmPrepackager', dependsOn: ['prepackager']) {
     envfiles.collect { relativePath(it) }.each {
       if(it =~ /conf\/(.*)-env.sh/) {
         service = it.substring(it.indexOf("conf/") + 5, it.indexOf("-env.sh"))
-        println "creating service script from template for $project.name : $service"
+        println "creating service script from template for $componentName : $service"
         copy {
           from "$rootProject.projectDir/distributions/src/rpm/init.d"
           into "${stageDir}/etc/rc.d/init.d"
           include "continuuity-service"
           rename 'continuuity-service', "continuuity-$service"
-          filter(ReplaceTokens, tokens: [packagename: project.name, servicename: service])
+          filter(ReplaceTokens, tokens: [packagename: componentName, servicename: service])
         }
       }
     }
@@ -122,12 +131,12 @@ packaging {
                    'continuuity'
                  ]
   extraOptions = [
-                   '--name': "continuuity-$project.name",
+                   '--name': "continuuity-$componentName",
                    '--vendor': 'Continuuity Inc.',
                    '--maintainer': 'support@continuuity.com',
                    '--license': 'Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.',
                    '--description': 'Component of Continuuity Enterprise Reactor',
-                   '--directories': "/opt/continuuity/$project.name",
+                   '--directories': "/opt/continuuity/$componentName",
                    '--category': 'misc',
                    '--url': 'http://www.continuuity.com/products',
                    '--architecture': 'all',
@@ -135,7 +144,7 @@ packaging {
                    '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
                    '--before-remove': "$rootProject.projectDir/distributions/src/debian/scripts/prerm",
                    '--after-remove': "$rootProject.projectDir/distributions/src/debian/scripts/postrm",
-                   '--template-value': "project=$project.name"
+                   '--template-value': "project=$componentName"
   ]
 }
 
@@ -171,12 +180,12 @@ rpm.doFirst {
  */
 task tgz(type: Tar, dependsOn : ['prepackager']) {
   compression = Compression.GZIP
-  baseName = "continuuity-$baseName"
+  baseName = "continuuity-$componentName"
   version = getPomVersion()
   include 'opt/continuuity/**'
   includeEmptyDirs false
   from "$project.buildDir/stage-packaging"
-  eachFile { it.setPath(it.getPath().replaceFirst("^opt/continuuity/$project.name/", "continuuity-$project.name-$version/")) }
+  eachFile { it.setPath(it.getPath().replaceFirst("^opt/continuuity/$componentName/", "continuuity-$componentName-$version/")) }
 }
 
 
@@ -191,19 +200,28 @@ configurations{
   packages
 }
 
-if(project.name == 'distributions') {
+if (project.name == 'distributions') {
   artifacts {
     packages file: file("$buildDir/linux-package/continuuity_${getPomVersion()}_all.deb"), name: "continuuity"
     packages file: file("$buildDir/linux-package/continuuity-${getPomVersion()}-1.noarch.rpm"), name: "continuuity"
   }
 } else {
-  artifacts {
-    packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
-    packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
-    packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.name}"
+  // Temporary fix to ensure that data fabric packages are generated as continnuity-app-fabric
+  if (project.name == 'data-fabric-runtime') {
+    artifacts {
+      packages file: file("$buildDir/linux-package/continuuity-${project.ext.componentName}_${getPomVersion()}_all.deb"), name: "continuuity-${project.ext.componentName}"
+      packages file: file("$buildDir/linux-package/continuuity-${project.ext.componentName}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.ext.componentName}"
+      packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.ext.componentName}"
+    }
+  } else {
+    artifacts {
+      packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
+      packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
+      packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.name}"
+
+    }
   }
 }
-
 
 uploadPackages {
   repositories {

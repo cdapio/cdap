@@ -556,4 +556,101 @@
         <description>Sets the environment the appfabric is in.</description>
     </property>
 
+    <!-- New Metrics system settings -->
+    <property>
+        <name>metrics.query.server.address</name>
+        <value>localhost</value>
+        <description>Host address where the metrics query server is started.</description>
+    </property>
+
+    <property>
+        <name>metrics.query.server.port</name>
+        <value>45005</value>
+        <description>Port for metrics query server to listen on.</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.retention.resolution.1.seconds</name>
+        <value>7200</value>
+        <description>Retention hours for the resolution 1 sec table.</description>
+    </property>
+
+    <!--
+        Logging Configuration
+    -->
+    <property>
+        <name>kafka.seed.brokers</name>
+        <value>localhost:9092</value>
+        <description>List of Kafka brokers (comma separated)</description>
+    </property>
+
+    <property>
+        <name>log.publish.num.partitions</name>
+        <value>1</value>
+        <description>Number of Kafka partitions to publish the logs to</description>
+    </property>
+
+    <property>
+        <name>log.run.account</name>
+        <value>continuuity</value>
+        <description>Account to run the logging service</description>
+    </property>
+
+    <property>
+        <name>log.base.dir</name>
+        <value>/tmp/logs/avro</value>
+        <description>Base log directory</description>
+    </property>
+
+    <property>
+        <name>log.retention.duration.days</name>
+        <value>7</value>
+        <description>Log file retention duration in days</description>
+    </property>
+
+    <property>
+        <name>log.file.rotation.interval.mins</name>
+        <value>1440</value>
+        <description>Log file rotation interval (for single node only)</description>
+    </property>
+
+    <!--
+        Kafka Configuration
+    -->
+    <property>
+        <name>kafka.bind.hostname</name>
+        <value>0.0.0.0</value>
+        <description>Kafka server hostname to bind to</description>
+    </property>
+
+    <property>
+        <name>kafka.port</name>
+        <value>9092</value>
+        <description>Kafka server port</description>
+    </property>
+
+    <property>
+        <name>kafka.num.partitions</name>
+        <value>1</value>
+        <description>Default number of partitions for a topic</description>
+    </property>
+
+    <property>
+        <name>kafka.log.dir</name>
+        <value>/tmp/kafka-logs</value>
+        <description>Directory to store Kafka logs</description>
+    </property>
+
+    <property>
+        <name>kafka.zookeeper.namespace</name>
+        <value>continuuity_kafka</value>
+        <description>ZK namespace for Kafka</description>
+    </property>
+
+    <property>
+        <name>kafka.default.replication.factor</name>
+        <value>1</value>
+        <description>Kafka replication factor</description>
+    </property>
+
 </configuration>

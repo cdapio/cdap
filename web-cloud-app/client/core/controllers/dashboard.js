@@ -4,23 +4,21 @@
 
 define([], function () {
 
+	var DASH_CHART_COUNT = 60;
+
 	var Controller = Em.Controller.extend({
 
 		elements: Em.Object.create(),
 		counts: Em.Object.create(),
 		__remaining: -1,
 
+		aggregates: Em.Object.create(),
+		timeseries: Em.Object.create(),
+		value: Em.Object.create(),
+
 		load: function () {
 
-			/*
-			 * This is decremented to know when loading is complete.
-			 * There are 6 things to load. See __loaded below.
-			 */
-			this.__remaining = 4;
-
 			this.set('elements.App', Em.ArrayProxy.create({content: []}));
-			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
-			this.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
 
 			this.set('model', Em.Object.create({
 				addMetricName: function (metric) {
@@ -66,49 +64,17 @@ define([], function () {
 				self.get('elements.App').pushObjects(objects);
 				self.get('counts').set('App', objects.length);
 
-				self.__loaded();
+				/*
+				 * Give the chart Embeddables 100ms to configure
+				 * themselves before updating.
+				 */
+				setTimeout(function () {
+					self.updateStats();
+				}, C.EMBEDDABLE_DELAY);
 
-			});
-
-			/*
-			 * Load all Streams to calculate counts and storage
-			 */
-			this.HTTP.get('rest', 'streams', function (objects) {
-
-				self.get('elements.Stream').pushObjects(objects);
-				self.get('counts').set('Stream', objects.length);
-				self.__loaded();
-
-			});
-
-			/*
-			 * Load all Flows to calculate counts
-			 */
-			this.HTTP.get('rest', 'flows', function (objects) {
-
-				self.get('counts').set('Flow', objects.length);
-				self.__loaded();
-
-			});
-
-			/*
-			 * Load all Datasets to calculate counts and storage
-			 */
-			this.HTTP.get('rest', 'datasets', function (objects) {
-
-				self.get('elements.Dataset').pushObjects(objects);
-				self.get('counts').set('Dataset', objects.length);
-				self.__loaded();
-
-			});
-
-			/*
-			 * Load all Procedures to calculate counts
-			 */
-			this.HTTP.get('rest', 'procedures', function (objects) {
-
-				self.get('counts').set('Procedure', objects.length);
-				self.__loaded();
+				self.interval = setInterval(function () {
+					self.updateStats();
+				}, C.POLLING_INTERVAL);
 
 			});
 
@@ -129,167 +95,74 @@ define([], function () {
 
 		},
 
-		__loaded: function () {
-
-			if (!(--this.__remaining)) {
-
-				var self = this;
-				/*
-				 * Give the chart Embeddables 100ms to configure
-				 * themselves before updating.
-				 */
-				setTimeout(function () {
-					self.updateStats();
-				}, C.EMBEDDABLE_DELAY);
-
-				this.interval = setInterval(function () {
-					self.updateStats();
-				}, C.POLLING_INTERVAL);
-
-				/*
-				 * Count hack to add Batch to Flows (Process)
-				 *
-
-				var batchCount = this.get('counts').get('Batch');
-				var flowCount = this.get('counts').get('Flow');
-
-				this.get('counts').set('Flow', batchCount + flowCount);
-				*/
-
-			}
-
-		},
-
 		unload: function () {
 
 			clearInterval(this.interval);
 			this.set('elements', Em.Object.create());
 			this.set('counts', Em.Object.create());
 
+			this.set('aggregates', Em.Object.create());
+			this.set('timeseries', Em.Object.create());
+
 		},
 
 		updateStats: function () {
 
-			var self = this;
-
-			var streams = this.get('elements.Stream').content;
-			var datasets = this.get('elements.Dataset').content;
-
-			var accountId = C.Env.user.id;
-			var metrics = [];
-			var start = C.__timeRange * -1;
-
-			/*
-			 * Add Stream URIs to calculate storage usage by Streams
-			 */
-			for (var i = 0; i < streams.length; i ++) {
-				metrics.push('stream.storage.stream//' + accountId + '/' + streams[i].id + '.count');
+			if (C.currentPath !== 'index') {
+				return;
 			}
 
-			/*
-			 * Add Dataset URIs to calculate storage usage by Datasets
-			 */
-			for (var i = 0; i < datasets.length; i ++) {
-				metrics.push('dataset.storage.' + datasets[i].id + '.count');
+			var models = this.get('elements.App').get('content');
+
+			var now = new Date().getTime();
+
+			// Add a two second buffer to make sure we have a full response.
+			var start = now - ((C.__timeRange + 2) * 1000);
+			start = Math.floor(start / 1000);
+
+			// Scans models for timeseries metrics and updates them.
+			C.Util.updateTimeSeries(models, this.HTTP);
+
+			// Scans models for aggregate metrics and udpates them.
+			C.Util.updateAggregates(models, this.HTTP);
+
+			// Hax. Count is timerange because server treats end = start + count (no downsample yet)
+			var queries = [
+				'/collect/events?count=' + C.__timeRange + '&start=' + start,
+				'/process/busyness?count=' + C.__timeRange + '&start=' + start,
+				'/store/bytes?count=' + C.__timeRange + '&start=' + start,
+				'/query/requests?count=' + C.__timeRange + '&start=' + start
+			], self = this;
+
+			function lastValue(arr) {
+				return arr[arr.length - 1].value;
 			}
 
-			if (metrics.length) {
+			this.HTTP.post('metrics', queries, function (response) {
 
-				/*
-				 * Get total disk usage and push to storage trend timeseries
-				 * Someday we will have an API to give us a real timeseries
-				 */
-				C.get('monitor', {
-					method: 'getCounters',
-					params: ['-', '-', null, metrics]
-				}, function (error, response) {
+				if (response.result) {
 
-					if (!response.params) {
-						return;
-					}
+					var result = response.result;
 
-					var values = response.params;
-					var currentValue = 0;
-					for (var i = 0; i < values.length; i ++) {
-						currentValue += values[i].value;
-					}
+					self.set('timeseries.collect', result[0].result.data);
+					self.set('timeseries.process', result[1].result.data);
+					self.set('timeseries.store', result[2].result.data);
+					self.set('timeseries.query', result[3].result.data);
 
-					var series = self.get('model').get('metricData').get('storagetrend');
+					self.set('value.collect', lastValue(result[0].result.data));
+					self.set('value.query', lastValue(result[3].result.data));
 
-					// If first value, initialize timeseries with current total as straight line
-					if (series === undefined) {
-						var length = Math.abs(start) - 21;
-						series = [];
-						while (length--) {
-							series[length] = currentValue;
-						}
-					}
+					self.set('value.process', lastValue(result[1].result.data));
 
-					series.shift();
-					series.push(currentValue);
-					self.get('model').get('metricData').set('storagetrend', series.concat([]));
-
-				});
-
-			} else {
-
-				/*
-				 * No storage Elements, create a flat timeseries as default
-				 */
-				var length = Math.abs(start);
-				var series = [];
-				while (length--) {
-					series[length] = 0;
-				}
-
-				self.get('model').get('metricData').set('storagetrend', series.concat([]));
-
-			}
-
-			/*
-			 * Update processed.count for entire Reactor
-			 */
-			C.get('monitor', {
-				method: 'getTimeSeries',
-				params: [null, null, ['processed.count'], (C.__timeRange * -1), null, 'ACCOUNT_LEVEL']
-			}, function (error, response) {
-
-				if (!response.params) {
-					return;
-				}
-
-				var data, points = response.params.points;
-
-				for (var metric in points) {
-					data = points[metric];
-
-					var k = data.length;
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-					metric = metric.replace(/\./g, '');
-					self.get('model').get('metricData').set(metric, data);
+					var store = C.Util.bytes(lastValue(result[2].result.data));
+					self.set('value.store', {
+						label: store[0],
+						unit: store[1]
+					});
 
 				}
-
 
 			});
-
-			/*
-			 * Update metrics for all Apps
-			 */
-			if (this.get('elements.App')) {
-
-				var content = this.get('elements.App').get('content');
-
-				for (var i = 0; i < content.length; i ++) {
-					if (typeof content[i].getUpdateRequest === 'function') {
-						C.get.apply(C, content[i].getUpdateRequest(this.HTTP));
-					}
-				}
-
-			}
 
 		}
 

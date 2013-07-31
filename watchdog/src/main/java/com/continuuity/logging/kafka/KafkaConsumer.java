@@ -12,6 +12,7 @@ import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
 import kafka.common.ErrorMapping;
+import kafka.common.OffsetOutOfRangeException;
 import kafka.common.TopicAndPartition;
 import kafka.javaapi.FetchResponse;
 import kafka.javaapi.OffsetRequest;
@@ -31,11 +32,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static com.continuuity.common.logging.LoggingConfiguration.KafkaHost;
+import static com.continuuity.logging.LoggingConfiguration.KafkaHost;
 import static kafka.api.OffsetRequest.CurrentVersion;
 
 /**
- * Kafka consumer that listens on a topic/partition and retrieves messages.
+ * Kafka consumer that listens on a topic/partition and retrieves messages. This class is thread-safe.
  */
 public final class KafkaConsumer implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaConsumer.class);
@@ -50,7 +51,8 @@ public final class KafkaConsumer implements Closeable {
   private final int fetchTimeoutMs;
   private final String clientName;
 
-  private SimpleConsumer consumer;
+  // Simple consumer is thread safe
+  private volatile SimpleConsumer consumer;
 
   /**
    * Represents the Kafka offsets that can be fetched by KafkaConsumer. Only earliest and latest offset are supported.
@@ -88,12 +90,11 @@ public final class KafkaConsumer implements Closeable {
   /**
    * Fetches Kafka messages from an offset.
    * @param offset message offset to start.
-   * @param sizeBytes max bytes to fetch from Kafka in this call.
    * @param callback callback to handle the messages fetched.
    * @return number of messages fetched.
    */
-  public int fetchMessages(long offset, int sizeBytes, Callback callback) {
-    ByteBufferMessageSet messageSet = fetchMessageSet(offset, sizeBytes);
+  public int fetchMessages(long offset, Callback callback) throws OffsetOutOfRangeException {
+    ByteBufferMessageSet messageSet = fetchMessageSet(offset);
     int msgCount = 0;
     for (MessageAndOffset msg : messageSet) {
       ++msgCount;
@@ -146,7 +147,7 @@ public final class KafkaConsumer implements Closeable {
     closeConsumer();
   }
 
-  private ByteBufferMessageSet fetchMessageSet(long fetchOffset, int sizeBytes) {
+  private ByteBufferMessageSet fetchMessageSet(long fetchOffset) throws OffsetOutOfRangeException {
     Preconditions.checkArgument(fetchOffset >= 0, String.format("Illegal fetch offset %d", fetchOffset));
 
     short errorCode = 0;
@@ -157,7 +158,7 @@ public final class KafkaConsumer implements Closeable {
 
       FetchRequest req = new FetchRequestBuilder()
         .clientId(clientName)
-        .addFetch(topic, partition, fetchOffset, sizeBytes)
+        .addFetch(topic, partition, fetchOffset, BUFFER_SIZE_BYTES)
         .maxWait(fetchTimeoutMs)
         .build();
       FetchResponse fetchResponse = consumer.fetch(req);
@@ -168,7 +169,7 @@ public final class KafkaConsumer implements Closeable {
           String.format("Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
                         consumer.host(), consumer.port(), topic, partition, errorCode));
         if (errorCode == ErrorMapping.OffsetOutOfRangeCode())  {
-          throw new RuntimeException(
+          throw new OffsetOutOfRangeException(
             String.format("Requested offset %d is out of range for topic %s partition %d",
                           fetchOffset, topic, partition));
         }

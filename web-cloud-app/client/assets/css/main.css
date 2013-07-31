@@ -63,6 +63,26 @@ body {
 	text-rendering: optimizeLegibility;
 }
 
+progress {
+	width: 100%;
+	border: 2px solid #eea44c;
+	background-color: #fff;
+	height: 16px;
+	border-radius: 0;
+}
+
+progress::-webkit-progress-bar {
+	background-color: #fff;
+}
+
+progress::-webkit-progress-value {
+	background: #eea44c;
+}
+
+progress::-moz-progress-bar {
+	background-color: #eea44c;
+}
+
 .gf3-font {
 	font-family: "HelveticaNeueW01-57Cn";
 	color: #555;
@@ -231,7 +251,6 @@ a, a:visited {
 
 #content {
 	min-width: 1056px;
-	max-width: 1456px;
 	margin-left: 224px;
 	background-color: #eff0f0;
 	position: relative;
@@ -442,27 +461,41 @@ h1 span {
 	width: 25%;
 	float: left;
 }
+.quarter path.sparkline-area {
+	fill: #f4f5f5;
+}
 .quarter .panel {
 	margin: 0px 10px 10px 0px;
-	padding: 20px;
+	padding: 16px;
+	min-height: 214px;
 }
 .quarter-title {
 	text-align: center;
 	font-size: 25px;
 	font-family: "HelveticaNeueW01-Thin";
 	padding: 10px 0px 10px;
+	color: #505050;
 }
 .quarter-value {
 	text-align: center;
 	font-size: 20px;
+	min-height: 42px;
 	font-family: "HelveticaNeueW01-Thin";
 	padding: 0px 0px 20px;
+	color: #505050;
 }
 .quarter-value strong {
 	font-family: "HelveticaNeueW01-75Bold";
 }
-.quarter-chart {
+.dash-chart {
 	height: 100px;
+	overflow: hidden;
+	border: 1px solid #eff0f0;
+	background-color: #fdfdfd;
+}
+.dash-chart rect {
+	fill: #40AFD0;
+	stroke: white;
 }
 
 #info {
@@ -517,7 +550,7 @@ h1 span {
 }
 .sparkline-box-container {
 	background-image: url(../img/sparkline-bg.png);
-	height: 69px;
+	height: 70px;
 	margin-right: 81px;
 	/*
 	border-right: 1px solid #fff;
@@ -607,8 +640,6 @@ path.sparkline-data {
 }
 path.sparkline-area {
 	fill: #e4e4e4;
-	stroke: #e4e4e4;
-	stroke-width: 2px;
 }
 .blue path.sparkline-data {
 	stroke: #40AFD0;
@@ -1071,7 +1102,7 @@ a strong {
 }
 #action-buttons .btn-drain {
 	background-image: url(../img/flow-controls.png);
-	background-position: 0px 24px;
+	background-position: 0px 48px;
 	display: block;
 	width: 24px;
 	height: 24px;
@@ -1223,7 +1254,7 @@ a strong {
 #flowviz {
 	margin: 0 auto;
 	position: relative;
-	padding: 24px 0px 48px;
+	padding: 36px 0px;
 	clear: left;
 }
 .flowviz-fade {
@@ -1863,30 +1894,51 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .batch-icon {
 	width: 120px;
 	height: 120px;
-	display: inline-table;
-	margin: 30px;
-	float: left;
 }
 
 #batchviz {
-	width: 800px;
 	margin: 0px auto;
-	margin-top: 40px;
+	padding: 32px 0px;
+	width: 500px;
 }
 
+#batchviz-container {
+	margin-bottom: 12px;
+	overflow: auto;
+	overflow-y: hidden;
+	padding: 16px 0px 16px 16px;
+	text-align: center;
+}
+
+.batch-item {
+	max-width: 200px;
+	float: left;
+	margin: 30px;
+	margin-left: 60px;
+	margin-right: 60px;
+}
+
+.batch-item progress {
+	margin-top: 10px;
+}
+.batch-item .sparkline-box-title {
+	color: #555;
+}
 .batch-start {
 	background: url('../img/batchstart.png') no-repeat center;
 	background-size: 100%;
 }
 
 .batch-map {
-	background: url('../img/batchmap.png') no-repeat center;
+	border: 4px solid #70CDEB;
+	background-color: #40AECF;
 	background-size: 100%;
 	color: #fff;
 }
 
 .batch-reduce {
-	background: url('../img/batchreduce.png') no-repeat center;
+	border: 4px solid #70CDEB;
+	background-color: #FFF;
 	background-size: 100%;
 	color: #40AECF;
 }
@@ -1939,21 +1991,25 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .batch-start>.info-window {
 	text-align: left;
 	margin-left: 25px;
-	margin-top: 30px;
+	margin-top: 12px;
 }
 
 .batch-map>.info-window {
-	margin-top: 30px;
+	margin-top: 12px;
 }
 
 .batch-reduce>.info-window {
-	margin-top: 30px;
+	margin-top: 12px;
 	color: #40AECF;
 }
 
 .batch-end>.info-window {
-	margin-top: 30px;
+	margin-top: 12px;
 	color: #40AECF;
+}
+
+.info-window .label {
+	margin-bottom: 8px;
 }
 
 .emphasized-letters {

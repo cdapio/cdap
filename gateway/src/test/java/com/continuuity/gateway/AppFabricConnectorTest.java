@@ -95,6 +95,25 @@ public class AppFabricConnectorTest {
     HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
+// TODO(ENG-3120, ENG-3119): The test doesn't pass since we need to inject metrics discovery client.
+//  @Test
+//  public void testDelete() throws Exception {
+//    String deployStatusUrl = baseURL + "/status";
+//    Assert.assertEquals(200, deploy("WordCount.jar"));
+//
+//    Map<String, String> headers = Maps.newHashMap();
+//    headers.put(CONTINUUITY_API_KEY, "api-key-example");
+//    headers.put("Content-Type", "application/json");
+//
+//    HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
+//    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+//
+//    String deleteUrl = baseURL + "/WordCountApp";
+//    int responseCode = TestUtil.sendDeleteRequest(deleteUrl);
+//    Assert.assertEquals(200, responseCode);
+//
+//  }
+
 
   @Test
   public void testDeployStatus() throws Exception {

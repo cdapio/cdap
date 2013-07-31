@@ -27,7 +27,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator.Node;
@@ -37,6 +37,7 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
@@ -99,18 +100,21 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DatumWriterFactory datumWriterFactory;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
+  private final MetricsCollectionService metricsCollectionService;
 
   private volatile List<QueueConsumerSupplier> queueConsumerSuppliers;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
                               DataFabricFacadeFactory txAgentSupplierFactory,
-                              QueueReaderFactory queueReaderFactory) {
+                              QueueReaderFactory queueReaderFactory,
+                              MetricsCollectionService metricsCollectionService) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
-    queueConsumerSuppliers = ImmutableList.of();
+    this.queueConsumerSuppliers = ImmutableList.of();
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Inject(optional = true)
@@ -166,7 +170,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
                                                options.getUserArguments(),
                                                flowletDef.getFlowletSpec(),
-                                               flowletClass.isAnnotationPresent(Async.class));
+                                               flowletClass.isAnnotationPresent(Async.class),
+                                               metricsCollectionService);
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
@@ -360,7 +365,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
           Schema schema = schemaGenerator.generate(dataType.getType());
 
           ProcessMethod processMethod = processMethodFactory.create(method);
-          result.add(processSpecFactory.create(inputNames, schema, dataType, processMethod, queueInfo));
+          ProcessSpecification processSpec = processSpecFactory.create(inputNames, schema, dataType,
+                                                                       processMethod, queueInfo);
+          if (processSpec != null) {
+            result.add(processSpec);
+          }
         } catch (UnsupportedTypeException e) {
           throw Throwables.propagate(e);
         }
@@ -464,7 +473,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 dataFabricFacade.createQueueConsumerFactory(
                   flowletContext.getInstanceId(),
                   flowletContext.getGroupId(),
-                  flowletContext.getMetricName(),
+                  flowletContext.getMetricContext(),
                   queueName, queueInfo,
                   !flowletContext.isAsyncMode()
                 ),
@@ -475,6 +484,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
           }
         }
 
+        // If inputs is needed but there is no available input queue, return null
+        if (!inputNames.isEmpty() && queueReaders.isEmpty()) {
+          return null;
+        }
         return new ProcessSpecification<T>(new RoundRobinQueueReader(queueReaders),
                                         createInputDatumDecoder(dataType, schema, schemaCache),
                                         method);
@@ -575,6 +588,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface ProcessSpecificationFactory {
+    /**
+     * Returns a {@link ProcessSpecification} for invoking the given process method. {@code null} is returned if
+     * no input is available for the given method.
+     */
     <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType, ProcessMethod method,
                                 QueueInfo queueInfo) throws OperationException;
   }

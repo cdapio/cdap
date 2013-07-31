@@ -42,14 +42,15 @@ public class TestLevelDBTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
+    updateCConfiguration(conf);
     return new TTQueueOnVCTable(
-        handle.getTable(Bytes.toBytes("TestMemoryTTQueueTable" + rand)),
+        handle.getTable(Bytes.toBytes("TestLevelDBTTQueueTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
         TestTTQueue.oracle, conf);
   }
 
   @Override
   protected int getNumIterations() {
-    return 100;
+    return 1002;
   }
 }

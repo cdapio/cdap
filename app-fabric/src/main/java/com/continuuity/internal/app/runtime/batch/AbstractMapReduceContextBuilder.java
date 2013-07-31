@@ -20,6 +20,7 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Throwables;
@@ -65,9 +66,10 @@ public abstract class AbstractMapReduceContextBuilder {
     Injector injector = createInjector();
 
     // Initializing Program
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
     try {
-      program = loadProgram(programLocation, injector.getInstance(LocationFactory.class));
+      program = loadProgram(programLocation, locationFactory);
     } catch (IOException e) {
       LOG.error("Could not init Program based on location: " + programLocation);
       throw Throwables.propagate(e);
@@ -87,7 +89,7 @@ public abstract class AbstractMapReduceContextBuilder {
       throw Throwables.propagate(e);
     }
     transactionProxy.setTransactionAgent(txAgent);
-    DataFabric dataFabric = new DataFabricImpl(opex, opexContext);
+    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, opexContext);
     DataSetInstantiator dataSetContext =
       new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
     dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
@@ -116,6 +118,10 @@ public abstract class AbstractMapReduceContextBuilder {
     if (injector.getBindings().containsKey(Key.get(LogWriter.class))) {
       CAppender.logWriter = injector.getInstance(LogWriter.class);
     }
+
+    // Initialize log appender
+    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
 
     return context;
   }

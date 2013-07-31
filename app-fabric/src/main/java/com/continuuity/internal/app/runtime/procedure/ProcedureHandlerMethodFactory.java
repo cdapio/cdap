@@ -2,9 +2,7 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
-import com.continuuity.weave.api.RunId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -32,32 +30,28 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   private final ReferenceQueue<HandlerMethod> refQueue;
 
   private final Program program;
-  private final RunId runId;
-  private final int instanceId;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
-  private final ProgramOptions options;
+  private final BasicProcedureContextFactory contextFactory;
 
   private Thread runThread;
 
-  ProcedureHandlerMethodFactory(Program program, RunId runId, int instanceId,
-                                ProgramOptions options, DataFabricFacadeFactory txAgentSupplierFactory) {
+  ProcedureHandlerMethodFactory(Program program, DataFabricFacadeFactory txAgentSupplierFactory,
+                                BasicProcedureContextFactory contextFactory) {
 
     Map<WeakReference<HandlerMethod>, ProcedureEntry> map = Maps.newIdentityHashMap();
     procedures = Collections.synchronizedMap(map);
     refQueue = new ReferenceQueue<HandlerMethod>();
 
     this.program = program;
-    this.runId = runId;
-    this.instanceId = instanceId;
-    this.options = options;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.contextFactory = contextFactory;
   }
 
   @Override
   public HandlerMethod create() {
     try {
-      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, runId, instanceId, options,
-                                                                        txAgentSupplierFactory);
+      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program,
+                                                                        txAgentSupplierFactory, contextFactory);
       handlerMethod.init();
 
       procedures.put(new WeakReference<HandlerMethod>(handlerMethod, refQueue), new ProcedureEntry(handlerMethod));

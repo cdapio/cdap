@@ -11,8 +11,9 @@ versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
 versions.minaVersion = '2.0.4'
 versions.leveldbVersion = '1.5'
-versions.weaveVersion = '1.0.0-rc2'
+versions.weaveVersion = '1.0.0-rc3'
 versions.zookeeperVersion = '3.4.5'
+versions.hbaseVersion = '0.94.6.1.continuuity'
 
 //--------------------------------------------------------------------------
 // Define all the global dependencies here. 
@@ -84,6 +85,9 @@ libraries.hadoop_minicluster = "org.apache.hadoop:hadoop-minicluster:$versions.h
 libraries.hadoop_auth = "org.apache.hadoop:hadoop-auth:$versions.hadoopVersion"
 libraries.hadoop_yarn = "org.apache.hadoop:hadoop-yarn:$versions.hadoopVersion"
 
+// HBase
+libraries.hbase = "org.apache.hbase:hbase:$versions.hbaseVersion"
+libraries.hbase_test = "org.apache.hbase:hbase:$versions.hbaseVersion:tests"
 
 // Jetty
 libraries.jetty = "org.mortbay.jetty:jetty:6.1.22"

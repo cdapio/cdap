@@ -5,16 +5,11 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
-import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.io.InstantiatorFactory;
-import com.continuuity.weave.api.RunId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -42,17 +37,12 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final Map<String, HandlerMethod> handlers;
   private final BasicProcedureContext context;
 
-  ProcedureHandlerMethod(Program program, RunId runId, int instanceId, ProgramOptions options,
-                         DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
+  ProcedureHandlerMethod(Program program, DataFabricFacadeFactory txAgentSupplierFactory,
+                         BasicProcedureContextFactory contextFactory) throws ClassNotFoundException {
 
     DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
-    DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
-    ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
-    context = new BasicProcedureContext(program, runId, instanceId,
-                                        DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
-                                        options.getUserArguments(),
-                                        procedureSpec);
+    context = contextFactory.create(txAgentSupplier);
 
     try {
       TypeToken<? extends Procedure> procedureType
@@ -94,10 +84,11 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
   @Override
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
+    context.getSystemMetrics().gauge("query.requests", 1);
     HandlerMethod handlerMethod = handlers.get(request.getMethod());
     if (handlerMethod == null) {
       LOG.error("Unsupport procedure method " + request.getMethod() + " on procedure " + procedure.getClass());
-      context.getSystemMetrics().counter("query.failed", 1);
+      context.getSystemMetrics().gauge("query.failures", 1);
       try {
         responder.stream(new ProcedureResponse(ProcedureResponse.Code.NOT_FOUND));
       } catch (IOException e) {
@@ -108,9 +99,8 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
     try {
       handlerMethod.handle(request, responder);
-      context.getSystemMetrics().counter("query.success", 1);
     } catch (Throwable t) {
-      context.getSystemMetrics().counter("query.failed", 1);
+      context.getSystemMetrics().gauge("query.failures", 1);
       throw Throwables.propagate(t);
     }
   }

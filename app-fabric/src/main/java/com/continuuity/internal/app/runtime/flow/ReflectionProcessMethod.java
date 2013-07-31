@@ -152,7 +152,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
                                  new SimpleInputAcknowledger(txAgentSupplier, input));
             } finally {
               // we want to emit metrics after every retry after finish() so that deferred operations are also logged
-              flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
+              flowletContext.getSystemMetrics().gauge("store.ops", txAgent.getSucceededCount());
             }
           }
         });
@@ -174,7 +174,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
           public void run() {
             try {
               // emitting metrics before abort is fine: we don't perform any operataions during abort();
-              flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
+              flowletContext.getSystemMetrics().gauge("store.ops", txAgent.getSucceededCount());
               txAgent.abort();
             } catch (Throwable t) {
               LOGGER.error("OperationException when aborting transaction.", t);

@@ -11,6 +11,9 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
 import com.continuuity.test.internal.DefaultId;
@@ -42,6 +45,7 @@ public class ReactorTestBase {
   private static AppFabricService.Iface appFabricServer;
   private static LocationFactory locationFactory;
   private static Injector injector;
+  private static MetricsQueryService metricsQueryService;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -101,6 +105,9 @@ public class ReactorTestBase {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
+                                    new MetricsClientRuntimeModule().getNoopModules(),
+                                    new MetricsQueryRuntimeModule().getInMemoryModules(),
+
                                     new AbstractModule() {
                                       @Override
                                       protected void configure() {
@@ -114,9 +121,12 @@ public class ReactorTestBase {
                                                   .implement(ProcedureClient.class, DefaultProcedureClient.class)
                                                   .build(ProcedureClientFactory.class));
                                       }
-                                    });
+                                    }
+                                    );
     appFabricServer = injector.getInstance(AppFabricService.Iface.class);
     locationFactory = injector.getInstance(LocationFactory.class);
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    metricsQueryService.start();
   }
 
   @AfterClass

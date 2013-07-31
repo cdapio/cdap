@@ -19,6 +19,9 @@ public class Constants {
   public static final String
       SERVICE_APPFABRIC_SERVER = "app-fabric-service";
 
+  // Used by the new metrics system. Will deprecate the old one.
+  public static final String SERVICE_METRICS = "metricsservice";
+
   /**
    * Common across components.
    */
@@ -36,6 +39,8 @@ public class Constants {
   @Deprecated
   public static final String CFG_COMMAND_PORT_ENABLED =
     "command.port.enabled";
+
+  public static final String CFG_HDFS_USER = "hdfs.user";
 
   /**
    * Default constants for common.

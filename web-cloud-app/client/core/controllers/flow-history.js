@@ -35,13 +35,15 @@ define([], function () {
 			this.HTTP.rpc('runnable', 'getFlowHistory', [model.app, model.name],
 					function (response) {
 
-					var history = response.params;
+						if (response.result) {
+							var history = response.result;
 
-					for (var i = 0; i < history.length; i ++) {
+							for (var i = 0; i < history.length; i ++) {
 
-						self.runs.pushObject(C.Run.create(history[i]));
+								self.runs.pushObject(C.Run.create(history[i]));
 
-					}
+							}
+						}
 
 			});
 

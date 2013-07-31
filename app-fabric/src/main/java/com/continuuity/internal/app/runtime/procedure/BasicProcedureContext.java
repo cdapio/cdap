@@ -2,16 +2,17 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.app.logging.ProcedureLoggingContext;
 import com.continuuity.app.metrics.ProcedureMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricType;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.logging.context.ProcedureLoggingContext;
 import com.continuuity.weave.api.RunId;
 import com.google.common.collect.ImmutableMap;
 
@@ -29,20 +30,20 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   private final ProcedureSpecification procedureSpec;
   private final ProcedureMetrics procedureMetrics;
   private final ProcedureLoggingContext procedureLoggingContext;
-  private final CMetrics systemMetrics;
+  private final MetricsCollector systemMetrics;
   private final Arguments runtimeArguments;
 
   BasicProcedureContext(Program program, RunId runId, int instanceId, Map<String, DataSet> datasets,
-                        Arguments runtimeArguments, ProcedureSpecification procedureSpec) {
+                        Arguments runtimeArguments, ProcedureSpecification procedureSpec,
+                        MetricsCollectionService collectionService) {
     super(program, runId, datasets);
     this.procedureId = program.getProgramName();
     this.instanceId = instanceId;
     this.procedureSpec = procedureSpec;
-    this.procedureMetrics = new ProcedureMetrics(getAccountId(), getApplicationId(),
-                                                 getProcedureId(), getRunId().toString(), getInstanceId());
+    this.procedureMetrics = new ProcedureMetrics(collectionService, getApplicationId(), getProcedureId());
     this.runtimeArguments = runtimeArguments;
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
-    this.systemMetrics = new CMetrics(MetricType.ProcedureSystem, getMetricName());
+    this.systemMetrics = getMetricsCollector(MetricsScope.REACTOR, collectionService, getMetricsContext());
   }
 
   @Override
@@ -60,7 +61,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     return procedureMetrics;
   }
 
-  public CMetrics getSystemMetrics() {
+  public MetricsCollector getSystemMetrics() {
     return systemMetrics;
   }
 
@@ -76,13 +77,8 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     return procedureLoggingContext;
   }
 
-  private String getMetricName() {
-    return String.format("%s.%s.%s.%s.foo.%d",
-                         getAccountId(),
-                         getApplicationId(),
-                         getProcedureId(),
-                         getRunId(),
-                         getInstanceId());
+  private String getMetricsContext() {
+    return String.format("%s.p.%s.%d", getApplicationId(), getProcedureId(), getInstanceId());
   }
 
   /**

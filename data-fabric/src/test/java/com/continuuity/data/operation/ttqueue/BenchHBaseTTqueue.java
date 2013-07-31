@@ -16,16 +16,14 @@ import org.junit.BeforeClass;
  */
 public class BenchHBaseTTqueue extends BenchTTQueue {
 
-  private static Injector injector;
-
-  private static OVCTableHandle handle;
+  protected static Injector injector;
+  protected static OVCTableHandle handle;
 
   @BeforeClass
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      injector = Guice.createInjector(
-          new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
       handle = injector.getInstance(OVCTableHandle.class);
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -45,12 +43,12 @@ public class BenchHBaseTTqueue extends BenchTTQueue {
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(BenchTTQueue.RANDOM.nextInt());
     return new TTQueueOnVCTable(
-        handle.getTable(Bytes.toBytes("BenchTable" + rand)),
-        Bytes.toBytes("BQN" + rand),
-        TestTTQueue.oracle, conf);
+      handle.getTable(Bytes.toBytes("BenchTable" + rand)),
+      Bytes.toBytes("BQN" + rand),
+      TestTTQueue.oracle, conf);
   }
 
-  // Configuration for hypersql bench
+  // Configuration for hbase bench
   private static final BenchConfig config = new BenchConfig();
   static {
     config.numJustEnqueues = 100;

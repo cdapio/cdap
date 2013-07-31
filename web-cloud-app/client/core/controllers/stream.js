@@ -5,7 +5,8 @@
 define([], function () {
 
 	var Controller = Em.Controller.extend({
-		typesBinding: 'model.types',
+
+		elements: Em.Object.create(),
 
 		load: function (id) {
 
@@ -23,19 +24,31 @@ define([], function () {
 				self.updateStats();
 			}, C.EMBEDDABLE_DELAY);
 
+			this.HTTP.rest('streams', this.get('model').id, 'flows', function (models, error) {
+
+				var i = models.length;
+				while (i--) {
+					models[i] = C.Flow.create(models[i]);
+				}
+				self.set('elements.Flow', Em.ArrayProxy.create({content: models}));
+
+			});
+
 		},
 
 		updateStats: function () {
-			var self = this;
 
-			// Update timeseries data for current flow.
-			C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
+			var models = [this.get('model')].concat(this.get('elements.Flow.content'));
+
+      C.Util.updateTimeSeries(models, this.HTTP);
+      C.Util.updateAggregates(models, this.HTTP);
 
 		},
 
 		unload: function () {
 
 			clearInterval(this.interval);
+			this.set('elements', Em.Object.create());
 
 		},
 

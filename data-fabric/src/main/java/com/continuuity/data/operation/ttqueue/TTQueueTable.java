@@ -146,10 +146,4 @@ public interface TTQueueTable {
    * Clears this queue table, completely wiping all queues.
    */
   public void clear() throws OperationException;
-
-  // Old debugging methods
-
-  public String getGroupInfo(byte[] queueName, int groupId) throws OperationException;
-
-  public String getEntryInfo(byte[] queueName, long entryId) throws OperationException;
 }

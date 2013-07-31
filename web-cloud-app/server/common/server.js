@@ -7,7 +7,7 @@
 
 var express = require('express'),
   io = require('socket.io'),
-  Int64 = require('node-int64').Int64,
+  Int64 = require('node-int64'),
   fs = require('fs'),
   log4js = require('log4js'),
   http = require('http'),
@@ -261,8 +261,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
     return false;
   }
 
-
-var singularREST = {
+  var singularREST = {
     'apps': 'getApplication',
     'streams': 'getStream',
     'flows': 'getFlow',
@@ -289,10 +288,15 @@ var singularREST = {
     'procedures': 'Query'
   };
 
+  var selectiveREST = {
+    'apps': 'ByApplication',
+    'streams': 'ByStream',
+    'datasets': 'ByDataset'
+  };
+
   /*
    * REST handler
    */
-
   this.app.get('/rest/*', function (req, res) {
 
     var path = req.url.slice(6).split('/');
@@ -315,13 +319,14 @@ var singularREST = {
 
     var method = null, params = [];
 
-    if (methods[0] === 'apps' && methods[1]) {
+    if ((methods[0] === 'apps' || methods[0] === 'streams' ||
+      methods[0] === 'datasets') && methods[1]) {
 
       if (ids[1]) {
         method = singularREST[methods[1]];
         params = [typesREST[methods[1]], { id: ids[1] }];
       } else {
-        method = pluralREST[methods[1]] + 'ByApplication';
+        method = pluralREST[methods[1]] + selectiveREST[methods[0]];
         params = [ids[0]];
       }
 
@@ -351,7 +356,9 @@ var singularREST = {
           if (error) {
             self.logger.error(error);
             res.status(500);
-            res.send(error);
+            res.send({
+              error: error
+            });
           } else {
             res.send(response);
           }
@@ -365,7 +372,9 @@ var singularREST = {
           if (error) {
             self.logger.error(error);
             res.status(500);
-            res.send(error);
+            res.send({
+              error: error
+            });
           } else {
             res.send(response);
           }
@@ -377,15 +386,55 @@ var singularREST = {
 
   });
 
+  this.app.get('/logs/:method/:appId/:entityId/:entityType', function (req, res) {
+    
+    if (!req.params.method || !req.params.appId || !req.params.entityId || !req.params.entityType) {
+      res.send('incorrect request');
+    }
+
+    var offSet = req.query.fromOffset;
+    var maxSize = req.query.maxSize;
+    var filter = req.query.filter;
+    var method = req.params.method;
+    var accountID = 'developer';
+    var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize, filter];
+
+    self.logger.trace('Logs ' + method + ' ' + req.url);
+    
+    self.Api.monitor(accountID, method, params, function (error, result) {
+      if (error) {
+        self.logger.error(error);
+      }
+      result.map(function (item) {
+        item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset));
+        return item;
+      });
+
+      res.send({result: result, error: error});
+    });
+
+  });
+
   /*
    * RPC Handler
    */
   this.app.post('/rpc/:type/:method', function (req, res) {
 
-    var type = req.params.type;
-    var method = req.params.method;
-    var params = JSON.parse(req.body.params);
-    var accountID = 'developer';
+    try {
+
+      var type = req.params.type;
+      var method = req.params.method;
+      var params = req.body
+      var accountID = 'developer';
+
+    } catch (e) {
+
+      self.logger.error(e, req.body);
+      res.send({ result: null, error: 'Malformed request' });
+
+      return;
+
+    }
 
     self.logger.trace('RPC ' + type + ':' + method, params);
 
@@ -393,25 +442,28 @@ var singularREST = {
 
       case 'runnable':
         self.Api.manager(accountID, method, params, function (error, result) {
-
           if (error) {
             self.logger.error(error);
           }
-
           res.send({ result: result, error: error });
-
         });
         break;
 
       case 'fabric':
         self.Api.far(accountID, method, params, function (error, result) {
-
           if (error) {
             self.logger.error(error);
           }
-
           res.send({ result: result, error: error });
+        });
+        break;
 
+      case 'gateway':
+        self.Api.gateway(accountID, method, params, function (error, result) {
+          if (error) {
+            self.logger.error(error);
+          }
+          res.send({ result: result, error: error });
         });
     }
 
@@ -422,10 +474,56 @@ var singularREST = {
    */
   this.app.post('/metrics', function (req, res) {
 
-    var params = req.body.params;
+    var pathList = req.body;
     var accountID = 'developer';
 
-    self.logger.trace('Metrics ', params);
+    self.logger.trace('Metrics ', pathList);
+
+    var content = JSON.stringify(pathList);
+
+    var options = {
+      host: self.config['metrics.service.host'],
+      port: self.config['metrics.service.port'],
+      path: '/metrics',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': content.length
+      }
+    };
+
+    var request = http.request(options, function(response) {
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
+      });
+
+      response.on('end', function () {
+
+        try {
+          data = JSON.parse(data);
+          res.send({ result: data, error: null });
+        } catch (e) {
+          self.logger.error('Parsing Error', data);
+          res.send({ result: null, error: 'Parsing Error' });
+        }
+
+      });
+    });
+
+    request.on('error', function(e) {
+
+      res.send({
+        result: null,
+        error: {
+          fatal: 'MetricsService: ' + e.code
+        }
+      });
+
+    });
+
+    request.write(content);
+    request.end();
 
   });
 
@@ -448,10 +546,6 @@ var singularREST = {
       path: '/version',
       port: '80'
     };
-
-    res.set({
-      'Content-Type': 'application-json'
-    });
 
     var request = http.request(options, function(response) {
       var data = '';

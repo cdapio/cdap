@@ -33,7 +33,10 @@ define([], function () {
 
 		updateStats: function () {
 
-			C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
+			this.get('model').updateState(this.HTTP);
+
+			C.Util.updateTimeSeries([this.get('model')], this.HTTP);
+			C.Util.updateAggregates([this.get('model')], this.HTTP);
 
 		},
 		/**
@@ -131,7 +134,7 @@ define([], function () {
 			}
 		},
 
-		"delete": function () {
+		'delete': function () {
 
 			if (this.get('model').get('currentState') !== 'STOPPED' &&
 				this.get('model').get('currentState') !== 'DEPLOYED') {

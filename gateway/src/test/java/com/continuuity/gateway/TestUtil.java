@@ -3,8 +3,7 @@ package com.continuuity.gateway;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.Id;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -296,7 +295,7 @@ public class TestUtil {
                                    String collectorName,
                                    int eventsExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = QueueName.fromStream(new Id.Account(DEFAULT_ACCOUNT_ID), destination)
+    byte[] queueURI = QueueName.fromStream(DEFAULT_ACCOUNT_ID, destination)
                                .toString().getBytes();
     // one deserializer to reuse
     StreamEventCodec deserializer = new StreamEventCodec();

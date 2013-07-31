@@ -10,10 +10,12 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
+import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -61,6 +63,13 @@ public class Gateway implements Server {
   private OperationExecutor executor;
 
   /**
+   * This is the location factory that all accessors will use for the data fabric.
+   * Gateway can not function without a valid location factory.
+   */
+  @Inject
+  private LocationFactory locationFactory;
+
+  /**
    * This is the executor that all accessors will use for the data fabric.
    * Gateway can not function without a valid operation executor.
    */
@@ -77,6 +86,9 @@ public class Gateway implements Server {
 
   @Inject
   private DiscoveryServiceClient discoveryServiceClient;
+
+  @Inject
+  private LogReader logReader;
 
   private GatewayMetrics gatewayMetrics = new GatewayMetrics();
 
@@ -201,6 +213,10 @@ public class Gateway implements Server {
       }
       if (connector instanceof DataAccessor) {
         ((DataAccessor) connector).setExecutor(this.executor);
+        ((DataAccessor) connector).setLocationFactory(this.locationFactory);
+      }
+      if (connector instanceof LogReaderAware) {
+        ((LogReaderAware) connector).setLogReader(logReader);
       }
       // all connectors get the meta data service
       connector.setMetadataService(this.mds);

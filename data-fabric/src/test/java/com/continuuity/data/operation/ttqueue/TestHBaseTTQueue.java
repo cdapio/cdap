@@ -11,32 +11,29 @@ import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 
 import java.util.Random;
 
 import static org.junit.Assert.assertTrue;
 
 /**
- *
+ * test the queues with HBase.
  */
-// Ignoring all TestHBaseTTQueue tests for now. New queue algorithm has replaced this class. This class will be
-// removed later.
-@Ignore
-public class TestHBaseTTQueue extends TestTTQueue {
+public class TestHBaseTTQueue extends TestHBaseAbstractTTQueue {
 
-  private static Injector injector;
+  protected static Injector injector;
+  protected static OVCTableHandle handle;
 
-  private static OVCTableHandle handle;
+  @Override
+  public void testInjection() {
+    assertTrue(handle instanceof HBaseOVCTableHandle);
+  }
 
   @BeforeClass
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-      injector = Guice.createInjector(
-          new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
       handle = injector.getInstance(OVCTableHandle.class);
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -57,25 +54,16 @@ public class TestHBaseTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
+    updateCConfiguration(conf);
+
     return new TTQueueOnVCTable(
-        handle.getTable(Bytes.toBytes("TestMemoryTTQueueTable" + rand)),
-        Bytes.toBytes("TestTTQueueName" + rand),
-        TestTTQueue.oracle, conf);
+      handle.getTable(Bytes.toBytes("TTQueueOnVCTable" + rand)),
+      Bytes.toBytes("TestTTQueueName" + rand),
+      TestTTQueue.oracle, conf);
   }
 
   @Override
   protected int getNumIterations() {
     return 100;
-  }
-
-  @Override
-  public void testInjection() {
-    assertTrue(handle instanceof HBaseOVCTableHandle);
-  }
-
-  // This test fails when native queues are disabled. Since this implementation will no longer be used it is being
-  // disabled.
-  @Override @Ignore
-  public void testEvictOnAck_ThreeGroups() throws Exception {
   }
 }
