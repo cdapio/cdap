@@ -1051,7 +1051,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Discoverable discoverable = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS).iterator().next();
 
     for (Application application : applications){
-      String url = String.format("http://%s:%d/metrics/%s",
+      String url = String.format("http://%s:%d/metrics/app/%s",
                                  discoverable.getSocketAddress().getHostName(),
                                  discoverable.getSocketAddress().getPort(),
                                  application.getId());
@@ -1062,12 +1062,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
       client.delete();
     }
+
+    String url = String.format("http://%s:%d/metrics",
+                               discoverable.getSocketAddress().getHostName(),
+                               discoverable.getSocketAddress().getPort());
+
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+      .build();
+    client.delete();
   }
 
 
   private void deleteMetrics(String account, String application) throws IOException {
     Discoverable discoverable = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS).iterator().next();
-    String url = String.format("http://%s:%d/metrics/%s",
+    String url = String.format("http://%s:%d/metrics/app/%s",
                                     discoverable.getSocketAddress().getHostName(),
                                     discoverable.getSocketAddress().getPort(),
                                     application);

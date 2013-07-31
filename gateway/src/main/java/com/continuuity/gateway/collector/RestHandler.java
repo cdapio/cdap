@@ -5,8 +5,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.Id;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
@@ -313,7 +312,7 @@ public class RestHandler extends NettyRestHandler {
 
         case INFO: {
 
-          String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
+          String queueURI = QueueName.fromStream(accountId, destination)
             .toString();
           GetQueueInfo getInfo = new GetQueueInfo(queueURI.getBytes());
           OperationResult<QueueInfo> info = null;
@@ -372,7 +371,7 @@ public class RestHandler extends NettyRestHandler {
         // 2. dequeue an event with GET stream?q=dequeue with the consumerId as
         //    an HTTP header
         case NEWID: {
-          String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
+          String queueURI = QueueName.fromStream(accountId, destination)
             .toString();
           GetGroupID op =
             new GetGroupID(queueURI.getBytes());
@@ -427,7 +426,7 @@ public class RestHandler extends NettyRestHandler {
             return;
           }
           // valid consumer id, dequeue and return it
-          String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
+          String queueURI = QueueName.fromStream(accountId, destination)
             .toString();
           // 0th instance of group 'id' of size 1
           // NOTE: the queue is configured during getGroupId call, if any changes are made to the queue config

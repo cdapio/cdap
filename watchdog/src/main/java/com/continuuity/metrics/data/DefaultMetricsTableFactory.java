@@ -12,6 +12,9 @@ import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsAnnotation;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,24 +29,26 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
   private final CConfiguration cConf;
   private final OVCTableHandle tableHandle;
-  private final MetricsEntityCodec entityCodec;
+  // Stores the MetricsEntityCodec per namespace
+  private final LoadingCache<String, MetricsEntityCodec> entityCodecs;
 
   @Inject
-  public DefaultMetricsTableFactory(CConfiguration cConf, @MetricsAnnotation OVCTableHandle tableHandle) {
-    try {
-      this.cConf = cConf;
-      this.tableHandle = tableHandle;
-      EntityTable entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes(
-                                                  cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                                            MetricsConstants.DEFAULT_ENTITY_TABLE_NAME))));
+  public DefaultMetricsTableFactory(final CConfiguration cConf, @MetricsAnnotation final OVCTableHandle tableHandle) {
+    this.cConf = cConf;
+    this.tableHandle = tableHandle;
+    this.entityCodecs = CacheBuilder.newBuilder().build(new CacheLoader<String, MetricsEntityCodec>() {
+      @Override
+      public MetricsEntityCodec load(String namespace) throws Exception {
+        String tableName = namespace + "." + cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                                       MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+        EntityTable entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes(tableName)));
 
-      this.entityCodec = new MetricsEntityCodec(entityTable,
-                                                MetricsConstants.DEFAULT_CONTEXT_DEPTH,
-                                                MetricsConstants.DEFAULT_METRIC_DEPTH,
-                                                MetricsConstants.DEFAULT_TAG_DEPTH);
-    } catch (OperationException e) {
-      throw Throwables.propagate(e);
-    }
+        return new MetricsEntityCodec(entityTable,
+                                      MetricsConstants.DEFAULT_CONTEXT_DEPTH,
+                                      MetricsConstants.DEFAULT_METRIC_DEPTH,
+                                      MetricsConstants.DEFAULT_TAG_DEPTH);
+      }
+    });
   }
 
   @Override
@@ -63,7 +68,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
       }
 
       LOG.info("TimeSeriesTable created: {}", tableName);
-      return new TimeSeriesTable(table, entityCodec, resolution, getRollTime(resolution));
+      return new TimeSeriesTable(table, entityCodecs.getUnchecked(namespace), resolution, getRollTime(resolution));
     } catch (OperationException e) {
       LOG.error("Exception in creating TimeSeriesTable.", e);
       throw Throwables.propagate(e);
@@ -78,7 +83,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
 
       LOG.info("AggregatesTable created: {}", tableName);
-      return new AggregatesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodec);
+      return new AggregatesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodecs.getUnchecked(namespace));
     } catch (OperationException e) {
       LOG.error("Exception in creating AggregatesTable.", e);
       throw Throwables.propagate(e);

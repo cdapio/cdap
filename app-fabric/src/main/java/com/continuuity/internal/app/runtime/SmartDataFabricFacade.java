@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.app.program.Program;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetContext;

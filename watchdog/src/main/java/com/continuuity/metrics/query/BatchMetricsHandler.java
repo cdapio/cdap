@@ -3,10 +3,11 @@
  */
 package com.continuuity.metrics.query;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.queue.QueueName;
+import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsScanQuery;
@@ -18,6 +19,7 @@ import com.continuuity.metrics.data.TimeValue;
 import com.continuuity.metrics.data.TimeValueAggregator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -27,6 +29,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -41,16 +44,15 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Class for handling batch requests for metrics data of the {@link MetricsScope#REACTOR} scope.
@@ -112,39 +114,9 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
       if (metricsRequest.getType() == MetricsRequest.Type.TIME_SERIES) {
         TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(metricsRequest.getStartTime(),
                                                                         metricsRequest.getEndTime());
-        // Busyness is a special case that computes from multiple timeseries.
+        // Special metrics handle that requires computation from multiple time series.
         if ("process.busyness".equals(metricsRequest.getMetricPrefix())) {
-          MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
-            .setContext(metricsRequest.getContextPrefix())
-            .setMetric("process.tuples.read")
-            .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
-
-          PeekingIterator<TimeValue> tuplesReadItor = Iterators.peekingIterator(queryTimeSeries(scanQuery));
-
-          scanQuery = new MetricsScanQueryBuilder()
-            .setContext(metricsRequest.getContextPrefix())
-            .setMetric("process.events.processed")
-            .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
-
-          PeekingIterator<TimeValue> eventsProcessedItor = Iterators.peekingIterator(queryTimeSeries(scanQuery));
-
-          for (int i = 0; i < metricsRequest.getCount(); i++) {
-            long resultTime = metricsRequest.getStartTime() + i;
-            int tupleRead = 0;
-            int eventProcessed = 0;
-            if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTime() == resultTime) {
-              tupleRead = tuplesReadItor.next().getValue();
-            }
-            if (eventsProcessedItor.hasNext() && eventsProcessedItor.peek().getTime() == resultTime) {
-              eventProcessed = eventsProcessedItor.next().getValue();
-            }
-            if (eventProcessed != 0) {
-              int busyness = (int) ((float) tupleRead / eventProcessed * 100);
-              builder.addData(resultTime, busyness > 100 ? 100 : busyness);
-            } else {
-              builder.addData(resultTime, 0);
-            }
-          }
+          computeProcessBusyness(metricsRequest, builder);
         } else {
           MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
             .setContext(metricsRequest.getContextPrefix())
@@ -167,7 +139,12 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
         resultObj = builder.build();
 
       } else if (metricsRequest.getType() == MetricsRequest.Type.AGGREGATE) {
-        resultObj = getAggregates(metricsRequest);
+        // Special metrics handle that requires computation from multiple aggregates results.
+        if ("process.events.pending".equals(metricsRequest.getMetricPrefix())) {
+          resultObj = computeQueueLength(metricsRequest);
+        } else {
+          resultObj = getAggregates(metricsRequest);
+        }
       }
 
       JsonObject json = new JsonObject();
@@ -181,6 +158,77 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, output);
   }
 
+  private void computeProcessBusyness(MetricsRequest metricsRequest, TimeSeriesResponse.Builder builder) {
+    MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
+      .setContext(metricsRequest.getContextPrefix())
+      .setMetric("process.tuples.read")
+      .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
+
+    PeekingIterator<TimeValue> tuplesReadItor = Iterators.peekingIterator(queryTimeSeries(scanQuery));
+
+    scanQuery = new MetricsScanQueryBuilder()
+      .setContext(metricsRequest.getContextPrefix())
+      .setMetric("process.events.processed")
+      .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
+
+    PeekingIterator<TimeValue> eventsProcessedItor = Iterators.peekingIterator(queryTimeSeries(scanQuery));
+
+    for (int i = 0; i < metricsRequest.getCount(); i++) {
+      long resultTime = metricsRequest.getStartTime() + i;
+      int tupleRead = 0;
+      int eventProcessed = 0;
+      if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTime() == resultTime) {
+        tupleRead = tuplesReadItor.next().getValue();
+      }
+      if (eventsProcessedItor.hasNext() && eventsProcessedItor.peek().getTime() == resultTime) {
+        eventProcessed = eventsProcessedItor.next().getValue();
+      }
+      if (eventProcessed != 0) {
+        int busyness = (int) ((float) tupleRead / eventProcessed * 100);
+        builder.addData(resultTime, busyness > 100 ? 100 : busyness);
+      } else {
+        builder.addData(resultTime, 0);
+      }
+    }
+  }
+
+  private Object computeQueueLength(MetricsRequest metricsRequest) {
+    // First scan the ack to get an aggregate and also names of queues.
+    AggregatesScanner scanner = aggregatesTable.scan(metricsRequest.getContextPrefix(),
+                                                     "q.ack",
+                                                     metricsRequest.getRunId(),
+                                                     metricsRequest.getTagPrefix());
+    long ack = 0;
+    Set<QueueName> queueNames = Sets.newHashSet();
+    while (scanner.hasNext()) {
+      AggregatesScanResult scanResult = scanner.next();
+      ack += scanResult.getValue();
+      queueNames.add(QueueName.from(URI.create(scanResult.getMetric().substring("q.ack.".length()))));
+    }
+
+    // For each queue, get the enqueue aggregate
+    long enqueue = 0;
+    for (QueueName queueName : queueNames) {
+      if (queueName.isStream()) {
+        // It's a stream, use stream context
+        enqueue += sumAll(aggregatesTable.scan("-.stream", "q.enqueue." + queueName.toString()));
+      } else {
+        // Construct query context from the queue name and the request context
+        // This is hacky. Need a refactor of how metrics, queue and opex interact
+        String contextPrefix = metricsRequest.getContextPrefix();
+        String appId = contextPrefix.substring(0, contextPrefix.indexOf('.'));
+        String flowId = queueName.toURI().getHost();
+        String flowletId = Splitter.on('/').omitEmptyStrings().split(queueName.toURI().getPath()).iterator().next();
+        // The paths would be /flowId/flowletId/queueSimpleName
+        enqueue += sumAll(aggregatesTable.scan(String.format("%s.f.%s.%s", appId, flowId, flowletId),
+                                               "q.enqueue." + queueName.toString()));
+      }
+    }
+
+    long len = enqueue - ack;
+    return new AggregateResponse(len >= 0 ? len : 0);
+  }
+
   private Iterator<TimeValue> queryTimeSeries(MetricsScanQuery scanQuery) {
     List<Iterable<TimeValue>> timeValues = Lists.newArrayList();
     MetricsScanner scanner = metricsTableCache.getUnchecked(1).scan(scanQuery);
@@ -191,24 +239,8 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     return new TimeValueAggregator(timeValues).iterator();
   }
 
-
-  @Path("{app-id}")
-  @DELETE
-  public void deleteAppMetrics(HttpRequest request, HttpResponder responder,
-                               @PathParam("app-id") String appId) throws IOException{
-    try {
-      LOG.debug("Request to delete metrics for application {}", appId);
-      metricsTableCache.getUnchecked(1).delete(appId);
-      aggregatesTable.delete(appId);
-      responder.sendString(HttpResponseStatus.OK, "OK");
-    } catch (OperationException e) {
-      LOG.debug("Caught exception while deleting metrics {}", e.getMessage(), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting application");
-    }
-  }
-
   /**
-   * Decodes the batch request
+   * Decodes the batch request.
    *
    * @return a List of String containing all requests from the batch.
    */
@@ -226,10 +258,14 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   private AggregateResponse getAggregates(MetricsRequest request) {
     AggregatesScanner scanner = aggregatesTable.scan(request.getContextPrefix(), request.getMetricPrefix(),
                                                      request.getRunId(), request.getTagPrefix());
+    return new AggregateResponse(sumAll(scanner));
+  }
+
+  private long sumAll(AggregatesScanner scanner) {
     long value = 0;
     while (scanner.hasNext()) {
       value += scanner.next().getValue();
     }
-    return new AggregateResponse(value);
+    return value;
   }
 }

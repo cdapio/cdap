@@ -63,6 +63,42 @@ public class AggregatesTableTest {
   }
 
   @Test
+  public void testDeleteAggregates() throws OperationException {
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("aggDelete");
+
+    for (int i = 1; i <= 10; i++) {
+      MetricsRecord metric = new MetricsRecord("simple." + i, "runId", "metric",
+                                               ImmutableList.<TagMetric>of(), 0L, i);
+      aggregatesTable.update(ImmutableList.of(metric));
+    }
+
+    // Insert again, so it'll get aggregated.
+    for (int i = 1; i <= 10; i++) {
+      MetricsRecord metric = new MetricsRecord("simple." + i, "runId", "metric",
+                                               ImmutableList.<TagMetric>of(), 0L, i);
+      aggregatesTable.update(ImmutableList.of(metric));
+    }
+
+    aggregatesTable.clear();
+
+    // Scan
+    AggregatesScanner scanner = aggregatesTable.scan("simple", "metric");
+    try {
+      long value = 0;
+      while (scanner.hasNext()) {
+        value += scanner.next().getValue();
+      }
+
+      Assert.assertEquals(0, value);
+      Assert.assertEquals(0, scanner.getRowScanned());
+
+    } finally {
+      scanner.close();
+    }
+  }
+
+
+  @Test
   public void testRowFilter() throws OperationException {
     AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
 

@@ -19,6 +19,7 @@ define([], function () {
 
 			this.set('timeseries', Em.Object.create());
 			this.set('aggregates', Em.Object.create());
+			this.set('rates', Em.Object.create());
 
 			this.set('id', this.get('name'));
 
@@ -50,6 +51,14 @@ define([], function () {
 
 			this.set(label + 'Label', value[0]);
 			this.set(label + 'Units', value[1]);
+
+		},
+
+		clearMetrics: function () {
+
+			this.set('timeseries', Em.Object.create());
+			this.set('aggregates', Em.Object.create());
+			this.set('rates', Em.Object.create());
 
 		},
 
