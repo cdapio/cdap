@@ -10,7 +10,6 @@ import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
-import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -59,8 +58,8 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
   private static final int FETCH_SIZE = 1024 * 1024;        // Use a default fetch size.
   private static final int SO_TIMEOUT = 10 * 1000;          // 10 seconds.
   private static final long CONSUMER_EXPIRE_MINUTES = 1L;   // close consumer if not used for 1 minute.
-  private static final int MAX_FAILURE_RETRY = 5;           // Maximum number of retries if there is error.
-  private static final long FAILURE_RETRY_INTERVAL = 100L;  // Sleep for 100 ms before retry again.
+  private static final int MAX_FAILURE_RETRY = 5;          // Maximum number of retries if there is error.
+  private static final long FAILURE_RETRY_INTERVAL = 1000L; // Sleep for 1 second before retry again.
   private static final long CONSUMER_FAILER_RETRY_INTERVAL = 5000L; // Sleep for 5 seconds if failure in consumer.
   private static final long EMPTY_FETCH_WAIT = 500L;        // Sleep for 500 ms if no message is fetched.
 
@@ -87,12 +86,14 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
    * called by KafkaClientService who own this consumer.
    */
   void stop() {
+    LOG.info("Stopping Kafka consumer");
     List<Cancellable> cancels = Lists.newLinkedList();
     consumerCancels.drainTo(cancels);
     for (Cancellable cancel : cancels) {
       cancel.cancel();
     }
     consumers.invalidateAll();
+    LOG.info("Kafka Consumer stopped");
   }
 
   /**
@@ -123,15 +124,6 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
   }
 
   /**
-   * Picks any available broker.
-   */
-  private BrokerInfo pickBroker() {
-    Iterator<BrokerInfo> itor = brokerService.getBrokers().iterator();
-    Preconditions.checkState(itor.hasNext(), "No broker available.");
-    return itor.next();
-  }
-
-  /**
    * Retrieves the last offset before the given timestamp for a given topic partition.
    *
    * @throws IllegalStateException if number of failure is greater than {@link #MAX_FAILURE_RETRY}.
@@ -146,7 +138,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
    * @return the last offset that is earlier than the given timestamp.
    */
   private long getLastOffset(TopicPartition topicPart, long timestamp, int trial) {
-    BrokerInfo brokerInfo = pickBroker();
+    BrokerInfo brokerInfo = brokerService.getLeader(topicPart.getTopic(), topicPart.getPartition());
     SimpleConsumer consumer = brokerInfo == null ? null : consumers.getUnchecked(brokerInfo);
 
     // If no broker, treat it as failure attempt.
@@ -156,7 +148,8 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
         Uninterruptibles.sleepUninterruptibly(FAILURE_RETRY_INTERVAL, TimeUnit.MILLISECONDS);
         return getLastOffset(topicPart, timestamp, trial + 1);
       }
-      throw new IllegalStateException("Failed to talk to any broker.");
+      LOG.warn("Failed to talk to any broker. Default offset to 0 for {}", topicPart);
+      return 0L;
     }
 
     // Fire offset request
@@ -178,15 +171,14 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
 
       consumers.refresh(brokerInfo);
       if (trial <= MAX_FAILURE_RETRY) {
-        LOG.info("Failed to fetch offset for {} with timestamp {}. Error: {}", topicPart, timestamp, errorCode);
+        LOG.info("Failed to fetch offset for {} with timestamp {}. Broker: {}, Error: {}",
+                 topicPart, timestamp, brokerInfo, errorCode);
         Uninterruptibles.sleepUninterruptibly(FAILURE_RETRY_INTERVAL, TimeUnit.MILLISECONDS);
         return getLastOffset(topicPart, timestamp, trial + 1);
       }
-
-      String errorMsg = String.format("Failed to fetch offset for %s with timestamp %d. Error: %d",
-                                      topicPart, timestamp, errorCode);
-      LOG.error(errorMsg);
-      throw new IllegalStateException(errorMsg);
+      LOG.warn("Failed to fetch offset for {} with timestamp {}. Error: {}. Default offset to 0.",
+               topicPart, timestamp, errorCode);
+      return 0L;
     }
 
     LOG.debug("Offset {} fetched for {} with timestamp {} with {} attempts.",
