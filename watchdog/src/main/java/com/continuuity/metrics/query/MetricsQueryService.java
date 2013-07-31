@@ -31,7 +31,6 @@ public final class MetricsQueryService extends AbstractIdleService {
   private static final int DEFAULT_THREAD_POOL_SIZE = 30;
   private static final int DEFAULT_KEEP_ALIVE_SECONDS = 30;
 
-  private final InetAddress hostname;
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
 
@@ -42,20 +41,24 @@ public final class MetricsQueryService extends AbstractIdleService {
                              @Named(MetricsConstants.ConfigKeys.SERVER_ADDRESS) InetAddress hostname,
                              DiscoveryService discoveryService,
                              Set<HttpHandler> handlers) {
-    this.httpService = new NettyHttpService(cConf.getInt(MetricsConstants.ConfigKeys.SERVER_PORT, 0),
-                                            cConf.getInt(MetricsConstants.ConfigKeys.THREAD_POOL_SIZE,
-                                                         DEFAULT_THREAD_POOL_SIZE),
-                                            cConf.getInt(MetricsConstants.ConfigKeys.KEEP_ALIVE_SECONDS,
-                                                         DEFAULT_KEEP_ALIVE_SECONDS),
-                                            handlers);
-    this.hostname = hostname;
+    this.httpService = NettyHttpService.builder()
+                                       .setHost(hostname.getCanonicalHostName())
+                                       .setPort(cConf.getInt(MetricsConstants.ConfigKeys.SERVER_PORT, 0))
+                                       .setThreadPoolSize(
+                                         cConf.getInt(MetricsConstants.ConfigKeys.THREAD_POOL_SIZE,
+                                                      DEFAULT_THREAD_POOL_SIZE))
+                                       .setThreadKeepAliveSeconds(
+                                         cConf.getInt(MetricsConstants.ConfigKeys.KEEP_ALIVE_SECONDS,
+                                                      DEFAULT_KEEP_ALIVE_SECONDS))
+                                       .addHttpHandlers(handlers)
+                                       .build();
     this.discoveryService = discoveryService;
   }
 
   @Override
   protected void startUp() throws Exception {
     httpService.startAndWait();
-    final InetSocketAddress address = new InetSocketAddress(hostname, httpService.getServicePort());
+    final InetSocketAddress address = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
