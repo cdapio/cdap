@@ -48,9 +48,9 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
   }
 
   @Override
-  public void finished(boolean error, Throwable cause) {
+  public void finished() {
     try {
-      delegate.finished(error, cause);
+      delegate.finished();
     } finally {
       // Save the offset
       persist();

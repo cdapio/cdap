@@ -21,12 +21,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.Uninterruptibles;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
 import kafka.common.ErrorMapping;
-import kafka.common.OffsetOutOfRangeException;
 import kafka.common.TopicAndPartition;
 import kafka.javaapi.FetchResponse;
 import kafka.javaapi.OffsetRequest;
@@ -56,11 +54,10 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
 
   private static final Logger LOG = LoggerFactory.getLogger(SimpleKafkaConsumer.class);
   private static final int FETCH_SIZE = 1024 * 1024;        // Use a default fetch size.
-  private static final int SO_TIMEOUT = 10 * 1000;          // 10 seconds.
+  private static final int SO_TIMEOUT = 5 * 1000;           // 5 seconds.
+  private static final int MAX_WAIT = 1000;                 // 1 second.
   private static final long CONSUMER_EXPIRE_MINUTES = 1L;   // close consumer if not used for 1 minute.
-  private static final int MAX_FAILURE_RETRY = 5;          // Maximum number of retries if there is error.
-  private static final long FAILURE_RETRY_INTERVAL = 1000L; // Sleep for 1 second before retry again.
-  private static final long CONSUMER_FAILER_RETRY_INTERVAL = 5000L; // Sleep for 5 seconds if failure in consumer.
+  private static final long CONSUMER_FAILURE_RETRY_INTERVAL = 2000L; // Sleep for 2 seconds if failure in consumer.
   private static final long EMPTY_FETCH_WAIT = 500L;        // Sleep for 500 ms if no message is fetched.
 
   private final BrokerService brokerService;
@@ -126,28 +123,14 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
   /**
    * Retrieves the last offset before the given timestamp for a given topic partition.
    *
-   * @throws IllegalStateException if number of failure is greater than {@link #MAX_FAILURE_RETRY}.
+   * @return The last offset before the given timestamp or {@code 0} if failed to do so.
    */
-  private long getLastOffset(TopicPartition topicPartition, long timestamp) {
-    return getLastOffset(topicPartition, timestamp, 1);
-  }
-
-  /**
-   * Retrieves the last offset before the given timestamp for a given topic partition with a given trial count.
-   *
-   * @return the last offset that is earlier than the given timestamp.
-   */
-  private long getLastOffset(TopicPartition topicPart, long timestamp, int trial) {
+  private long getLastOffset(TopicPartition topicPart, long timestamp) {
     BrokerInfo brokerInfo = brokerService.getLeader(topicPart.getTopic(), topicPart.getPartition());
     SimpleConsumer consumer = brokerInfo == null ? null : consumers.getUnchecked(brokerInfo);
 
     // If no broker, treat it as failure attempt.
     if (consumer == null) {
-      if (trial <= MAX_FAILURE_RETRY) {
-        LOG.info("No broker. Retry in {} ms.", FAILURE_RETRY_INTERVAL);
-        Uninterruptibles.sleepUninterruptibly(FAILURE_RETRY_INTERVAL, TimeUnit.MILLISECONDS);
-        return getLastOffset(topicPart, timestamp, trial + 1);
-      }
       LOG.warn("Failed to talk to any broker. Default offset to 0 for {}", topicPart);
       return 0L;
     }
@@ -164,26 +147,17 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
     long[] offsets = response.hasError() ? null : response.offsets(topicPart.getTopic(), topicPart.getPartition());
     if (offsets == null || offsets.length <= 0) {
       short errorCode = response.errorCode(topicPart.getTopic(), topicPart.getPartition());
-      if (errorCode == ErrorMapping.UnknownTopicOrPartitionCode()) {
-        // If the topic partition doesn't exists, use offset 0.
-        return 0L;
-      }
 
-      consumers.refresh(brokerInfo);
-      if (trial <= MAX_FAILURE_RETRY) {
-        LOG.info("Failed to fetch offset for {} with timestamp {}. Broker: {}, Error: {}",
-                 topicPart, timestamp, brokerInfo, errorCode);
-        Uninterruptibles.sleepUninterruptibly(FAILURE_RETRY_INTERVAL, TimeUnit.MILLISECONDS);
-        return getLastOffset(topicPart, timestamp, trial + 1);
+      // If the topic partition doesn't exists, use offset 0 without logging error.
+      if (errorCode != ErrorMapping.UnknownTopicOrPartitionCode()) {
+        consumers.refresh(brokerInfo);
+        LOG.warn("Failed to fetch offset for {} with timestamp {}. Error: {}. Default offset to 0.",
+                 topicPart, timestamp, errorCode);
       }
-      LOG.warn("Failed to fetch offset for {} with timestamp {}. Error: {}. Default offset to 0.",
-               topicPart, timestamp, errorCode);
       return 0L;
     }
 
-    LOG.debug("Offset {} fetched for {} with timestamp {} with {} attempts.",
-              offsets[0], topicPart, timestamp, trial);
-
+    LOG.debug("Offset {} fetched for {} with timestamp {}.", offsets[0], topicPart, timestamp);
     return offsets[0];
   }
 
@@ -210,14 +184,14 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
     @Override
     public Preparer addFromBeginning(String topic, int partition) {
       TopicPartition topicPartition = new TopicPartition(topic, partition);
-      requests.put(topicPartition, getLastOffset(topicPartition, kafka.api.OffsetRequest.EarliestTime()));
+      requests.put(topicPartition, kafka.api.OffsetRequest.EarliestTime());
       return this;
     }
 
     @Override
     public Preparer addLatest(String topic, int partition) {
       TopicPartition topicPartition = new TopicPartition(topic, partition);
-      requests.put(topicPartition, getLastOffset(topicPartition, kafka.api.OffsetRequest.LatestTime()));
+      requests.put(topicPartition, kafka.api.OffsetRequest.LatestTime());
       return this;
     }
 
@@ -296,7 +270,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
         }
 
         @Override
-        public void finished(final boolean error, final Throwable cause) {
+        public void finished() {
           // Make sure finished only get called once.
           if (!stopped.compareAndSet(false, true)) {
             return;
@@ -305,7 +279,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
             @Override
             public void run() {
               // When finished is called, also cancel the consumption from all poller thread.
-              callback.finished(error, cause);
+              callback.finished();
               cancellable.cancel();
             }
           }));
@@ -339,12 +313,12 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
       final AtomicLong offset = new AtomicLong(startOffset);
 
       Map.Entry<BrokerInfo, SimpleConsumer> consumerEntry = null;
-      Throwable errorCause = null;
 
       while (running) {
         if (consumerEntry == null && (consumerEntry = getConsumerEntry()) == null) {
+          LOG.warn("No leader for topic partition {}.", topicPart);
           try {
-            TimeUnit.MICROSECONDS.sleep(CONSUMER_FAILER_RETRY_INTERVAL);
+            TimeUnit.MILLISECONDS.sleep(CONSUMER_FAILURE_RETRY_INTERVAL);
           } catch (InterruptedException e) {
             // OK to ignore this, as interrupt would be caused by thread termination.
             LOG.debug("Consumer sleep interrupted.", e);
@@ -352,38 +326,50 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
           continue;
         }
 
+        // If offset < 0, meaning it's special offset value that needs to fetch either the earliest or latest offset
+        // from kafak server.
+        long off = offset.get();
+        if (off < 0) {
+          offset.set(getLastOffset(topicPart, off));
+        }
+
         SimpleConsumer consumer = consumerEntry.getValue();
 
         // Fire a fetch message request
-        FetchResponse response = fetchMessages(consumer, offset.get());
+        try {
+          FetchResponse response = fetchMessages(consumer, offset.get());
 
-        // Failure response, set consumer entry to null and let next round of loop to handle it.
-        if (response.hasError()) {
-          short errorCode = response.errorCode(topicPart.getTopic(), topicPart.getPartition());
-          LOG.info("Failed to fetch message on {}. Error: {}", topicPart, errorCode);
-          // If it is out of range error, throw an stop the callback with an exception.
-          if (errorCode == ErrorMapping.OffsetOutOfRangeCode()) {
-            errorCause = new OffsetOutOfRangeException("Offset out of range: " + offset.get());
-            break;
+          // Failure response, set consumer entry to null and let next round of loop to handle it.
+          if (response.hasError()) {
+            short errorCode = response.errorCode(topicPart.getTopic(), topicPart.getPartition());
+            LOG.info("Failed to fetch message on {}. Error: {}", topicPart, errorCode);
+            // If it is out of range error, reset to earliest offset
+            if (errorCode == ErrorMapping.OffsetOutOfRangeCode()) {
+              offset.set(kafka.api.OffsetRequest.EarliestTime());
+            }
+
+            consumers.refresh(consumerEntry.getKey());
+            consumerEntry = null;
+            continue;
           }
 
+          ByteBufferMessageSet messages = response.messageSet(topicPart.getTopic(), topicPart.getPartition());
+          if (sleepIfEmpty(messages)) {
+            continue;
+          }
+
+          // Call the callback
+          invokeCallback(messages, offset);
+        } catch (Throwable t) {
+          LOG.info("Exception when fetching message on {}.", topicPart, t);
           consumers.refresh(consumerEntry.getKey());
           consumerEntry = null;
-          continue;
         }
-
-        ByteBufferMessageSet messages = response.messageSet(topicPart.getTopic(), topicPart.getPartition());
-        if (sleepIfEmpty(messages)) {
-          continue;
-        }
-
-        // Call the callback
-        invokeCallback(messages, offset);
       }
 
       // When the thread is done, call the callback finished method.
       try {
-        callback.finished(running, errorCause);
+        callback.finished();
       } catch (Throwable t) {
         LOG.error("Exception thrown from MessageCallback.finished({})", running, t);
       }
@@ -410,7 +396,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
       FetchRequest request = new FetchRequestBuilder()
         .clientId(consumer.clientId())
         .addFetch(topicPart.getTopic(), topicPart.getPartition(), offset, FETCH_SIZE)
-        .maxWait(1000)
+        .maxWait(MAX_WAIT)
         .build();
       return consumer.fetch(request);
     }
