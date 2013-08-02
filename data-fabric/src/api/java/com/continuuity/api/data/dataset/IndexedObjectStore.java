@@ -33,14 +33,14 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   // 1. MultiObjectStore
   //    (primaryKey to Object)
   // 2. Index table
-  //    (indexValues to keyMapping)
-  //    (prefixedPrimaryKey to indexValues)
+  //    (secondaryKeys to primaryKey mapping)
+  //    (prefixedPrimaryKey to secondaryKeys)
   private Table index;
   private String indexName;
 
   private static final byte[] EMPTY_VALUE = new byte[0];
   //KEY_PREFIX is used to prefix primary key when it stores PrimaryKey -> Categories mapping.
-  private static final byte[] KEY_PREFIX = Bytes.toBytes("_keyToIndexValues");
+  private static final byte[] KEY_PREFIX = Bytes.toBytes("_keyToSecondaryKey");
 
   /**
    * Construct IndexObjectStore with name and type.
@@ -75,16 +75,18 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   }
 
   /**
-   * Read all the objects from objectStore via index. Returns all the objects that match the indexValue.
+   * Read all the objects from objectStore via index. Returns all the objects that match the secondaryKey.
    * Returns an empty list if no value is found. Never returns null.
-   * @param indexValue value for the lookup.
-   * @return List of Objects matching the indexValue.
+   * @param secondaryKey for the lookup.
+   * @return List of Objects matching the secondaryKey.
    * @throws OperationException in case of error.
    */
-  public List<T> readAllByIndex(byte[] indexValue) throws OperationException {
+  public List<T> readAllByIndex(byte[] secondaryKey) throws OperationException {
     ImmutableList.Builder resultList = new ImmutableList.Builder();
-    //Lookup the index and get all the keys in primary
-    Read idxRead = new Read(indexValue, null, null);
+    //Lookup the secondaryKey and get all the keys in primary
+    //Each row with secondaryKey as rowKey contains column named as the primary key
+    // of every object that can be looked up using the secondaryKey
+    Read idxRead = new Read(secondaryKey, null, null);
     OperationResult<Map<byte[], byte[]>> result = this.index.read(idxRead);
 
     // if the index has no match, return nothing
@@ -97,73 +99,73 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
     return resultList.build();
   }
 
-  private List<byte[]> indexValuesToDelete(Set<byte[]> existingIndexValues, Set<byte[]> newIndexValues) {
-    List<byte[]> indexValuesToDelete = Lists.newArrayList();
-    if (existingIndexValues.size() > 0) {
-      for (byte[] indexValue : existingIndexValues) {
-        // If it is not in newIndexValues then it needs to be deleted.
-        if (!newIndexValues.contains(indexValue)) {
-          indexValuesToDelete.add(indexValue);
+  private List<byte[]> secondaryKeysToDelete(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
+    List<byte[]> secondaryKeysToDelete = Lists.newArrayList();
+    if (existingSecondaryKeys.size() > 0) {
+      for (byte[] secondaryKey : existingSecondaryKeys) {
+        // If it is not in newSecondaryKeys then it needs to be deleted.
+        if (!newSecondaryKeys.contains(secondaryKey)) {
+          secondaryKeysToDelete.add(secondaryKey);
         }
       }
     }
-    return indexValuesToDelete;
+    return secondaryKeysToDelete;
   }
 
-  private List<byte[]> indexValuesToAdd(Set<byte[]> existingIndexValues, Set<byte[]> newIndexValues) {
-    List<byte[]> indexValuesToAdd = Lists.newArrayList();
-    if (existingIndexValues.size() > 0) {
-      for (byte[] indexValue : newIndexValues) {
-        // If it is not in existingIndexValues then it needs to be added
+  private List<byte[]> secondaryKeysToAdd(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
+    List<byte[]> secondaryKeysToAdd = Lists.newArrayList();
+    if (existingSecondaryKeys.size() > 0) {
+      for (byte[] secondaryKey : newSecondaryKeys) {
+        // If it is not in existingSecondaryKeys then it needs to be added
         // else it exists already.
-        if (!existingIndexValues.contains(indexValue)) {
-          indexValuesToAdd.add(indexValue);
+        if (!existingSecondaryKeys.contains(secondaryKey)) {
+          secondaryKeysToAdd.add(secondaryKey);
         }
       }
     } else {
       //all the newValues should be added
-      indexValuesToAdd.addAll(newIndexValues);
+      secondaryKeysToAdd.addAll(newSecondaryKeys);
     }
 
-    return indexValuesToAdd;
+    return secondaryKeysToAdd;
   }
 
   /**
-   * Write to the data set, deletes older indexValues corresponding the key and updates the indexTable with the
-   * indexValues that is passed.
+   * Write to the data set, deletes existing secondaryKey corresponding the key and updates the indexTable with the
+   * secondaryKey that is passed.
    * @param key key for storing the object.
    * @param object object to be stored.
-   * @param indexValues indices that can be used to lookup the object.
+   * @param secondaryKeys indices that can be used to lookup the object.
    * @throws OperationException incase of errors.
    */
-  public void write(byte[] key, T object, byte[][] indexValues) throws OperationException {
+  public void write(byte[] key, T object, byte[][] secondaryKeys) throws OperationException {
 
     writeToObjectStore(key, object);
 
-    //Update the indexValues
+    //Update the secondaryKeys
     OperationResult<Map<byte[], byte[]>> result = index.read(new Read(getPrefixedPrimaryKey(key)));
-    Set<byte[]> existingIndexValues = Sets.newTreeSet(new Bytes.ByteArrayComparator());
+    Set<byte[]> existingSecondaryKeys = Sets.newTreeSet(new Bytes.ByteArrayComparator());
 
     if (!result.isEmpty()){
-      existingIndexValues = result.getValue().keySet();
+      existingSecondaryKeys = result.getValue().keySet();
     }
 
-    Set<byte[]> newIndexValues = new TreeSet<byte[]>(new Bytes.ByteArrayComparator());
-    newIndexValues.addAll(Arrays.asList(indexValues));
+    Set<byte[]> newSecondaryKeys = new TreeSet<byte[]>(new Bytes.ByteArrayComparator());
+    newSecondaryKeys.addAll(Arrays.asList(secondaryKeys));
 
-    List<byte[]> indexValuesDeleted = indexValuesToDelete(existingIndexValues, newIndexValues);
-    deleteIndexValues(key, indexValuesDeleted.toArray(new byte[indexValuesDeleted.size()][]));
+    List<byte[]> secondaryKeysDeleted = secondaryKeysToDelete(existingSecondaryKeys, newSecondaryKeys);
+    deleteSecondaryKeys(key, secondaryKeysDeleted.toArray(new byte[secondaryKeysDeleted.size()][]));
 
-    List<byte[]> indexValuesAdded =  indexValuesToAdd(existingIndexValues, newIndexValues);
+    List<byte[]> secondaryKeysAdded =  secondaryKeysToAdd(existingSecondaryKeys, newSecondaryKeys);
+
+    //for each key store the secondaryKey. This will be used while deleting old index values.
     index.write(new Write(getPrefixedPrimaryKey(key),
-                          indexValuesAdded.toArray(new byte[indexValuesAdded.size()][]),
-                          new byte[indexValuesAdded.size()][0]));
+                          secondaryKeysAdded.toArray(new byte[secondaryKeysAdded.size()][]),
+                          new byte[secondaryKeysAdded.size()][0]));
 
-    for (byte[] indexValue : indexValues) {
+    for (byte[] secondaryKey : secondaryKeysAdded) {
       //update the index.
-      index.write(new Write(indexValue, key, EMPTY_VALUE));
-      //for each key store the indexValue of the key. This will be used while deleting old index values.
-      index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EMPTY_VALUE));
+      index.write(new Write(secondaryKey, key, EMPTY_VALUE));
     }
   }
 
@@ -173,20 +175,20 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
 
   @Override
   public void write(byte[] key, T object) throws OperationException {
-    OperationResult<Map<byte[], byte[]>> existingIndexValues = index.read(new Read(getPrefixedPrimaryKey(key)));
-    if (!existingIndexValues.isEmpty() && existingIndexValues.getValue().size() > 0){
-      Set<byte[]> columnsToDelete = existingIndexValues.getValue().keySet();
-      deleteIndexValues(key, columnsToDelete.toArray(new byte[columnsToDelete.size()][]));
+    OperationResult<Map<byte[], byte[]>> existingSecondaryKeys = index.read(new Read(getPrefixedPrimaryKey(key)));
+    if (!existingSecondaryKeys.isEmpty() && existingSecondaryKeys.getValue().size() > 0){
+      Set<byte[]> columnsToDelete = existingSecondaryKeys.getValue().keySet();
+      deleteSecondaryKeys(key, columnsToDelete.toArray(new byte[columnsToDelete.size()][]));
     }
     writeToObjectStore(key, object);
   }
 
 
-  private void deleteIndexValues(byte[] key, byte[][] columns) throws OperationException{
-    //Delete the key to indexValue mapping
+  private void deleteSecondaryKeys(byte[] key, byte[][] columns) throws OperationException{
+    //Delete the key to secondaryKey mapping
     index.write(new Delete(getPrefixedPrimaryKey(key), columns));
 
-    // delete indexValue to key mapping
+    // delete secondaryKey to key mapping
     for (byte[] col : columns){
       index.write(new Delete(col, key));
     }
@@ -200,22 +202,22 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * Delete an index that is no longer needed. After deleting the index the lookup using the index value will no
    * longer return the object.
    * @param key key for the object.
-   * @param indexValue index to be pruned.
+   * @param secondaryKey index to be pruned.
    * @throws OperationException incase of errors.
    */
-  public void pruneIndex(byte[] key, byte[] indexValue) throws OperationException {
-    this.index.write(new Delete(indexValue, key));
-    this.index.write(new Delete(getPrefixedPrimaryKey(key), indexValue));
+  public void pruneIndex(byte[] key, byte[] secondaryKey) throws OperationException {
+    this.index.write(new Delete(secondaryKey, key));
+    this.index.write(new Delete(getPrefixedPrimaryKey(key), secondaryKey));
   }
 
   /**
-   * Update index value for an existing key. This will not delete the old indexValues.
+   * Update index value for an existing key. This will not delete the older secondaryKeys.
    * @param key key for the object.
-   * @param indexValue index to be pruned.
+   * @param secondaryKey index to be pruned.
    * @throws OperationException incase of errors.
    */
-  public void updateIndex(byte[] key, byte[] indexValue) throws OperationException {
-    this.index.write(new Write(indexValue, key, EMPTY_VALUE));
-    this.index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EMPTY_VALUE));
+  public void updateIndex(byte[] key, byte[] secondaryKey) throws OperationException {
+    this.index.write(new Write(secondaryKey, key, EMPTY_VALUE));
+    this.index.write(new Write(getPrefixedPrimaryKey(key), secondaryKey, EMPTY_VALUE));
   }
 }
