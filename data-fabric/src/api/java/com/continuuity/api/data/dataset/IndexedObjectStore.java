@@ -10,11 +10,15 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * This dataset extends ObjectStore to support access to objects via indices. Look by the index will return
@@ -26,15 +30,15 @@ import java.util.Map;
 public class IndexedObjectStore<T> extends ObjectStore<T> {
 
   //IndexedObjectStore stores the following mappings
-  // 1. ObjectStore
+  // 1. MultiObjectStore
   //    (primaryKey to Object)
   // 2. Index table
-  //    (indexValue to primaryKey)
-  //    (prefixedPrimaryKey to indexValue)
+  //    (indexValues to keyMapping)
+  //    (prefixedPrimaryKey to indexValues)
   private Table index;
   private String indexName;
 
-  private static final byte[] EXISTS = { 'x' };
+  private static final byte[] EMPTY_VALUE = new byte[0];
   //KEY_PREFIX is used to prefix primary key when it stores PrimaryKey -> Categories mapping.
   private static final byte[] KEY_PREFIX = Bytes.toBytes("_keyToIndexValues");
 
@@ -62,7 +66,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
 
   private void init(String name) {
     this.indexName = "i_" + name;
- }
+  }
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(super.configure()).
@@ -86,14 +90,42 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
     // if the index has no match, return nothing
     if (!result.isEmpty()) {
       for (byte[] column : result.getValue().keySet()) {
-        if (Arrays.equals(EXISTS, result.getValue().get(column))) {
-          // construct a new read with this column as the row key
-          T obj = read(column);
-          resultList.add(obj);
-        }
+        T obj = read(column);
+        resultList.add(obj);
       }
     }
     return resultList.build();
+  }
+
+  private List<byte[]> indexValuesToDelete(Set<byte[]> existingIndexValues, Set<byte[]> newIndexValues) {
+    List<byte[]> indexValuesToDelete = Lists.newArrayList();
+    if (existingIndexValues.size() > 0) {
+      for (byte[] indexValue : existingIndexValues) {
+        // If it is not in newIndexValues then it needs to be deleted.
+        if (!newIndexValues.contains(indexValue)) {
+          indexValuesToDelete.add(indexValue);
+        }
+      }
+    }
+    return indexValuesToDelete;
+  }
+
+  private List<byte[]> indexValuesToAdd(Set<byte[]> existingIndexValues, Set<byte[]> newIndexValues) {
+    List<byte[]> indexValuesToAdd = Lists.newArrayList();
+    if (existingIndexValues.size() > 0) {
+      for (byte[] indexValue : newIndexValues) {
+        // If it is not in existingIndexValues then it needs to be added
+        // else it exists already.
+        if (!existingIndexValues.contains(indexValue)) {
+          indexValuesToAdd.add(indexValue);
+        }
+      }
+    } else {
+      //all the newValues should be added
+      indexValuesToAdd.addAll(newIndexValues);
+    }
+
+    return indexValuesToAdd;
   }
 
   /**
@@ -105,14 +137,34 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * @throws OperationException incase of errors.
    */
   public void write(byte[] key, T object, byte[][] indexValues) throws OperationException {
-    deleteIndexValues(key);
+
+    writeToObjectStore(key, object);
+
+    //Update the indexValues
+    OperationResult<Map<byte[], byte[]>> result = index.read(new Read(getPrefixedPrimaryKey(key)));
+    Set<byte[]> existingIndexValues = Sets.newTreeSet(new Bytes.ByteArrayComparator());
+
+    if (!result.isEmpty()){
+      existingIndexValues = result.getValue().keySet();
+    }
+
+    Set<byte[]> newIndexValues = new TreeSet<byte[]>(new Bytes.ByteArrayComparator());
+    newIndexValues.addAll(Arrays.asList(indexValues));
+
+    List<byte[]> indexValuesDeleted = indexValuesToDelete(existingIndexValues, newIndexValues);
+    deleteIndexValues(key, indexValuesDeleted.toArray(new byte[indexValuesDeleted.size()][]));
+
+    List<byte[]> indexValuesAdded =  indexValuesToAdd(existingIndexValues, newIndexValues);
+    index.write(new Write(getPrefixedPrimaryKey(key),
+                          indexValuesAdded.toArray(new byte[indexValuesAdded.size()][]),
+                          new byte[indexValuesAdded.size()][0]));
+
     for (byte[] indexValue : indexValues) {
       //update the index.
-      index.write(new Write(indexValue, key, EXISTS));
+      index.write(new Write(indexValue, key, EMPTY_VALUE));
       //for each key store the indexValue of the key. This will be used while deleting old index values.
-      index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EXISTS));
+      index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EMPTY_VALUE));
     }
-    writeToObjectStore(key, object);
   }
 
   private void writeToObjectStore(byte[] key, T object) throws OperationException {
@@ -121,19 +173,22 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
 
   @Override
   public void write(byte[] key, T object) throws OperationException {
-    deleteIndexValues(key);
+    OperationResult<Map<byte[], byte[]>> existingIndexValues = index.read(new Read(getPrefixedPrimaryKey(key)));
+    if (!existingIndexValues.isEmpty() && existingIndexValues.getValue().size() > 0){
+      Set<byte[]> columnsToDelete = existingIndexValues.getValue().keySet();
+      deleteIndexValues(key, columnsToDelete.toArray(new byte[columnsToDelete.size()][]));
+    }
     writeToObjectStore(key, object);
   }
 
-  private void deleteIndexValues(byte[] key) throws OperationException{
-    OperationResult<Map<byte[], byte[]>> existingIndexValues = index.read(new Read(getPrefixedPrimaryKey(key)));
-    if (!existingIndexValues.isEmpty()){
-      for (Map.Entry<byte[], byte[]> entry : existingIndexValues.getValue().entrySet()){
-        //delete the category to key mapping.
-        index.write(new Delete(entry.getKey(), key));
-        //delete the key to category mapping.
-        index.write(new Delete(getPrefixedPrimaryKey(key), entry.getKey()));
-      }
+
+  private void deleteIndexValues(byte[] key, byte[][] columns) throws OperationException{
+    //Delete the key to indexValue mapping
+    index.write(new Delete(getPrefixedPrimaryKey(key), columns));
+
+    // delete indexValue to key mapping
+    for (byte[] col : columns){
+      index.write(new Delete(col, key));
     }
   }
 
@@ -160,7 +215,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * @throws OperationException incase of errors.
    */
   public void updateIndex(byte[] key, byte[] indexValue) throws OperationException {
-    this.index.write(new Write(indexValue, key, EXISTS));
-    this.index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EXISTS));
+    this.index.write(new Write(indexValue, key, EMPTY_VALUE));
+    this.index.write(new Write(getPrefixedPrimaryKey(key), indexValue, EMPTY_VALUE));
   }
 }
