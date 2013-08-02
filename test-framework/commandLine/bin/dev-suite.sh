@@ -11,16 +11,27 @@ jars[6]="SimpleWriteAndRead/SimpleWriteAndRead.jar"
 jars[7]="WordCount/WordCount.jar"
 jars[8]="Purchase/PurchaseApp.jar"
 
-#apps, flows
-apps[0]="CountAndFilterWords" flows[0]="CountAndFilterWords"
-apps[1]="CountCounts"         flows[1]="CountCounts"
-apps[2]="CountOddAndEven"     flows[2]="CountOddAndEven"
-apps[3]="CountRandom"         flows[3]="CountRandom"
-apps[4]="CountTokens"         flows[4]="CountTokens"
-apps[5]="HelloWorld"          flows[5]="whoFlow"
-apps[6]="SimpleWriteAndRead"  flows[6]="SimpleWriteAndRead"
-apps[7]="WordCount"           flows[7]="WordCounter"
-apps[8]="PurchaseHistory"     flows[8]="PurchaseFlow"
+#apps
+apps[0]="CountAndFilterWords"
+apps[1]="CountCounts"
+apps[2]="CountOddAndEven"
+apps[3]="CountRandom"
+apps[4]="CountTokens"
+apps[5]="HelloWorld"
+apps[6]="SimpleWriteAndRead"
+apps[7]="WordCount"
+apps[8]="PurchaseHistory"
+
+#flows
+flows[0]="CountAndFilterWords"
+flows[1]="CountCounts"
+flows[2]="CountOddAndEven"
+flows[3]="CountRandom"
+flows[4]="CountTokens"
+flows[5]="whoFlow"
+flows[6]="SimpleWriteAndRead"
+flows[7]="WordCounter"
+flows[8]="PurchaseFlow"
 
 #compile all apps
 compile() {
@@ -57,7 +68,7 @@ start() {
 status() {
   for i in `seq $NUM_APPS`;
   do
-    $1/bin/reactor-client status --application ${apps[i]} --flow ${flow[i]}
+    $1/bin/reactor-client status --application ${apps[i]} --flow ${flows[i]}
   done
 }
 
@@ -75,8 +86,6 @@ stream() {
     exit 1
   fi
 
-  echo "Stress testing rest api. Number of iterations" ${2}
-
   for i in `seq $2`;
   do
     msg=`date`;
@@ -89,6 +98,22 @@ stream() {
   done
 
   echo 'Completed.'
+}
+
+multiClientStream() {
+  if [ "$#" -ne 3 ] ; then
+    echo "Usage: $0 multiClientStream [hostname] [#iterations] [#clients]" >&2
+    exit 1
+  fi
+
+  set -m # Enable Job Control
+
+  for i in `seq $3`; do # start  jobs in parallel
+    ./dev-suite.sh stream $1 $2 &
+  done
+
+  # Wait for all parallel jobs to finish
+  while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
 }
 
 proc() {
@@ -152,12 +177,13 @@ case "$1" in
   promote)
     $1 $APP_HOME $3 $4
   ;;
-  progressBar)
-    $1
+  multiClientStream)
+    $1 $2 $3 $4
   ;;
 
+
   *)
-    echo "Usage: $0 {compile|deploy|start|status|start_mr|stream|proc|promote}"
+    echo "Usage: $0 {compile|deploy|start|status|start_mr|stream|multiClientStream|proc|promote}"
     exit 1
   ;;
 esac
