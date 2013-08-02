@@ -19,7 +19,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,7 +29,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ObjectStoreTest extends DataSetTestBase {
 
   private static final byte[] a = { 'a' };
-  private static final byte[] DEFAULT_OBJECT_STORE_COLUMN = { 'c' };
 
   @BeforeClass
   public static void configure() throws Exception {
@@ -41,13 +39,8 @@ public class ObjectStoreTest extends DataSetTestBase {
     DataSet innerStore = new ObjectStore<CustomWithInner.Inner<Integer>>(
       "inners", new TypeToken<CustomWithInner.Inner<Integer>>(){}.getType());
     DataSet batchStore = new ObjectStore<String>("batch", String.class);
-    DataSet batchTestsMultiCol = new ObjectStore<String>("batchTestsMultiCol", String.class);
-
     DataSet intStore = new IntegerStore("ints");
-    DataSet multiStringStore = new ObjectStore<String>("multiString", String.class);
-
-    setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore,
-                                         batchStore, intStore, multiStringStore, batchTestsMultiCol));
+    setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore, batchStore, intStore));
     // this test runs all operations synchronously
     newTransaction(Mode.Sync);
   }
@@ -68,28 +61,6 @@ public class ObjectStoreTest extends DataSetTestBase {
     pairStore.write(a, pair);
     ImmutablePair<Integer, String> result = pairStore.read(a);
     Assert.assertEquals(pair, result);
-  }
-
-  @Test
-  public void testMultiValueStore() throws OperationException {
-    ObjectStore<String> multiStringStore = instantiator.getDataSet("multiString");
-    String string1 = "String1";
-    String string2 = "String2";
-    String string3 = "String3";
-    String string4 = "String4";
-
-    byte[] col1 = {'z'};
-    byte[] col2 = {'y'};
-    byte[] col3 = {'x'};
-    byte[] col4 = {'w'};
-
-    multiStringStore.write(a, col1, string1);
-    multiStringStore.write(a, col2, string2);
-    multiStringStore.write(a, col3, string3);
-    multiStringStore.write(a, col4, string4);
-
-    List<String> result = multiStringStore.readAll(a);
-    Assert.assertEquals(4, result.size());
   }
 
   @Test
@@ -220,14 +191,12 @@ public class ObjectStoreTest extends DataSetTestBase {
     throws OperationException, InterruptedException {
     // read each split and verify the keys, remove all read keys from the set
     for (Split split : splits) {
-      SplitReader<byte[], Map<byte[], String>> reader = t.createSplitReader(split);
+      SplitReader<byte[], String> reader = t.createSplitReader(split);
       reader.initialize(split);
       while (reader.nextKeyValue()) {
         byte[] key = reader.getCurrentKey();
-        Map<byte[], String> values = reader.getCurrentValue();
-        Assert.assertEquals(1, values.size());
-        String value = values.get(DEFAULT_OBJECT_STORE_COLUMN);
-//        // verify each row has the column written
+        String value = reader.getCurrentValue();
+        // verify each row has the two columns written
         Assert.assertEquals(Long.toString(Bytes.toLong(key)), value);
         Assert.assertTrue(keysToVerify.remove(Bytes.toLong(key)));
       }
@@ -238,61 +207,6 @@ public class ObjectStoreTest extends DataSetTestBase {
     }
     Assert.assertTrue(keysToVerify.isEmpty());
   }
-
-
-  @Test
-  public void testBatchReadMultipleColumns() throws OperationException, InterruptedException {
-    ObjectStore<String> t = instantiator.getDataSet("batchTestsMultiCol");
-    byte [] col1 = Bytes.toBytes("c1");
-    byte [] col2 = Bytes.toBytes("c2");
-
-    // start a transaction
-    newTransaction(DataSetTestBase.Mode.Smart);
-    // write 1000 random values to the table and remember them in a set
-    SortedSet<Integer> keysWritten = Sets.newTreeSet();
-    Random rand = new Random(451);
-    for (int i = 0; i < 1000; i++) {
-      int keyInt = rand.nextInt();
-      byte[] key = Bytes.toBytes(keyInt);
-      //write two columns
-      t.write(key, col1, Long.toString(keyInt));
-      t.write(key, col2, Long.toString(keyInt * 2));
-
-      keysWritten.add(keyInt);
-    }
-    // commit transaction
-    commitTransaction();
-
-    // commit transaction
-    commitTransaction();
-
-    // start a sync transaction
-    newTransaction(DataSetTestBase.Mode.Sync);
-    // get the splits for the table
-    List<Split> splits = t.getSplits();
-    // read each split and verify the keys
-    SortedSet<Integer> keysToVerify = Sets.newTreeSet(keysWritten);
-
-    for (Split split : splits) {
-      SplitReader<byte[], Map<byte[], String>> reader = t.createSplitReader(split);
-      reader.initialize(split);
-      while (reader.nextKeyValue()) {
-        byte[] key = reader.getCurrentKey();
-        Map<byte[], String> values = reader.getCurrentValue();
-        Assert.assertEquals(2, values.size());
-        String value1 = values.get(col1);
-        String value2 = values.get(col2);
-
-        // verify each row has the two columns written
-        Assert.assertEquals(Integer.toString(Bytes.toInt(key)), value1);
-        Assert.assertEquals(Integer.toString(Bytes.toInt(key) * 2), value2);
-        Assert.assertTrue(keysToVerify.remove(Bytes.toInt(key)));
-      }
-    }
-
-  }
-
-
 
   @Test
   public void testSubclass() throws OperationException {
