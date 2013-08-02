@@ -1,20 +1,15 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import javax.annotation.Nullable;
@@ -22,7 +17,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This is the implementation of object store that is injected as the delegate at runtime. It has actual
@@ -77,73 +71,19 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
   }
 
   @Override
-  public void write(byte[] key, byte[] col, T object) throws OperationException {
-    // write to key value table
-    Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-    values.put(col, encode(object));
-    writeRawColumns(key, values);
-  }
-
-  @Override
-  public void write(byte[] key, Map<byte[], T> columnValues) throws OperationException {
-    // write to key value table
-    Map<byte[], byte[]> rawColumnValues = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-    for (Map.Entry<byte[], T> entry : columnValues.entrySet()) {
-      rawColumnValues.put(entry.getKey(), encode(entry.getValue()));
-    }
-    writeRawColumns(key, rawColumnValues);
-  }
-
-  @Override
   public T read(byte[] key) throws OperationException {
     byte[] bytes = readRaw(key);
     return decode(bytes);
   }
 
-  @Override
-  public List<T> readAll(byte[] key) throws OperationException {
-    ImmutableList.Builder<T> result = new ImmutableList.Builder<T>();
-    Map<byte[], byte[]> entries = readRawAll(key);
-    if (entries != null) {
-      for (Map.Entry<byte[], byte[]> entry : entries.entrySet()){
-        result.add(decode(entry.getValue()));
-      }
-    }
-    return result.build();
-  }
-
   private void writeRaw(byte[] key, byte[] value) throws OperationException {
-    // write to table with default Column
-    Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-    values.put(DEFAULT_COLUMN, value);
-    writeRawColumns(key, values);
-  }
-
-  private void writeRawColumns(byte[] key, Map<byte[], byte[]> columnValues) throws OperationException {
-    // write to table with  column values
-    this.table.write(key, columnValues);
+    // write to key value table
+    this.kvTable.write(key, value);
   }
 
   private byte[] readRaw(byte[] key) throws OperationException {
-    // read from the underlying table
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(key, DEFAULT_COLUMN));
-    if (result.isEmpty()) {
-      return null;
-    } else {
-      return result.getValue().get(DEFAULT_COLUMN);
-    }
-  }
-
-  private Map<byte[], byte[]> readRawAll(byte[] key) throws OperationException {
-    // read from the underlying table
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(key));
-    if (result.isEmpty()) {
-      return null;
-    } else {
-      return result.getValue();
-    }
+    // read from the key/value table
+    return this.kvTable.read(key);
   }
 
   private byte[] encode(T object) throws OperationException {
@@ -183,29 +123,29 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
    * @return list of {@link Split}
    */
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
-    return this.table.getSplits(numSplits, start, stop);
+    return this.kvTable.getSplits(numSplits, start, stop);
   }
 
   @Override
   public List<Split> getSplits() throws OperationException {
-    return this.table.getSplits();
+    return this.kvTable.getSplits();
   }
 
   @Override
-  public SplitReader<byte[], Map<byte[], T>> createSplitReader(Split split) {
+  public SplitReader<byte[], T> createSplitReader(Split split) {
     return new ObjectScanner(split);
   }
 
   /**
-   * The split reader for objects is reading a table split using the underlying Table's split reader.
+   * The split reader for objects is reading a table split using the underlying KeyValuyeTable's split reader.
    */
-  public class ObjectScanner extends SplitReader<byte[], Map<byte[], T>> {
+  public class ObjectScanner extends SplitReader<byte[], T> {
 
     // the underlying KeyValueTable's split reader
-    private SplitReader<byte[], Map<byte[], byte[]>> reader;
+    private SplitReader<byte[], byte[]> reader;
 
     public ObjectScanner(Split split) {
-      this.reader = table.createSplitReader(split);
+      this.reader = kvTable.createSplitReader(split);
     }
 
     @Override
@@ -224,13 +164,9 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     }
 
     @Override
-    public Map<byte[], T> getCurrentValue() throws InterruptedException, OperationException {
+    public T getCurrentValue() throws InterruptedException, OperationException {
       // get the current value as a byte array and decode it into an object of type T
-      Map<byte[], T> columnValues = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-      for (Map.Entry<byte[], byte[]> entry : this.reader.getCurrentValue().entrySet()){
-        columnValues.put(entry.getKey(), decode(entry.getValue()));
-      }
-      return columnValues;
+      return decode(this.reader.getCurrentValue());
     }
 
     @Override
