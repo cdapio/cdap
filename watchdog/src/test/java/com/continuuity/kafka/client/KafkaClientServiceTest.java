@@ -67,10 +67,8 @@ public class KafkaClientServiceTest {
           }
 
           @Override
-          public void finished(boolean error, Throwable cause) {
-            if (!error) {
-              finishLatch.countDown();
-            }
+          public void finished() {
+            finishLatch.countDown();
           }
         });
 
