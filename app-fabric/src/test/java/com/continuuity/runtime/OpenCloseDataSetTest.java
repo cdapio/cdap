@@ -5,7 +5,7 @@ import com.continuuity.TrackingTable;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.data.operation.OperationContext;
@@ -66,7 +66,7 @@ public class OpenCloseDataSetTest {
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
     QueueProducer queueProducer = new QueueProducer("Testing");
-    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT, "xx");
+    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "xx");
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 4; i++) {
       String msg = "x" + i;

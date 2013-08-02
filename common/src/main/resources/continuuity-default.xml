@@ -649,7 +649,7 @@
 
     <property>
         <name>kafka.default.replication.factor</name>
-        <value>2</value>
+        <value>1</value>
         <description>Kafka replication factor</description>
     </property>
 

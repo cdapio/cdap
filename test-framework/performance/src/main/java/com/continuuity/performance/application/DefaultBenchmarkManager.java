@@ -6,10 +6,10 @@ package com.continuuity.performance.application;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -63,7 +63,7 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
 
   @Override
   public StreamWriter getStreamWriter(String streamName) {
-    QueueName queueName = QueueName.fromStream(idAccount, streamName);
+    QueueName queueName = QueueName.fromStream(idAccount.getId(), streamName);
     StreamWriter streamWriter = benchmarkStreamWriterFactory.create(CConfiguration.create(), queueName);
     streamWriters.add((MultiThreadedStreamWriter) streamWriter);
     return streamWriter;

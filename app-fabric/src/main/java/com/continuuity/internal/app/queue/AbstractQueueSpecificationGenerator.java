@@ -7,7 +7,7 @@ package com.continuuity.internal.app.queue;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.Id;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.common.utils.ImmutablePair;
@@ -60,7 +60,7 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
       }
 
       if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        builder.add(createSpec(QueueName.fromStream(account, outputName),
+        builder.add(createSpec(QueueName.fromStream(account.getId(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
         builder.add(createSpec(QueueName.fromFlowlet(flow, connection.getSourceName(), outputName),

@@ -4,8 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.Id;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.ClearFabric;
@@ -547,7 +546,7 @@ public class RestAccessorTest {
 
   void verifyEvent(String stream, int n) throws Exception {
 
-    String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
+    String streamUri = QueueName.fromStream(TestUtil.DEFAULT_ACCOUNT_ID, stream)
                                 .toString();
     GetGroupID op = new GetGroupID(streamUri.getBytes());
     long id = this.executor.execute(CONTEXT, op);
@@ -631,7 +630,7 @@ public class RestAccessorTest {
   }
 
   void verifyStreamGone(String stream) throws Exception {
-    String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
+    String streamUri = QueueName.fromStream(TestUtil.DEFAULT_ACCOUNT_ID, stream)
       .toString();
     verifyQueueGone(streamUri);
   }

@@ -21,10 +21,11 @@ define([], function () {
 				flowlets[i].app = model.get('app');
 
 				objects.push(C.Flowlet.create(flowlets[i]));
-				objects[i].trackMetric('/process/events/{app}/flows/{flow}/{id}', 'aggregates', 'events');
 
 			}
 			this.set('elements.Flowlet', Em.ArrayProxy.create({content: objects}));
+
+			this.setFlowletLabel('aggregate');
 
 			var streams = model.flowStreams;
 			objects = [];
@@ -91,6 +92,8 @@ define([], function () {
 				this.get('elements.Stream.content'));
 
 			C.Util.updateAggregates(models, this.HTTP);
+
+			C.Util.updateRates(models, this.HTTP);
 
 		},
 
@@ -196,18 +199,35 @@ define([], function () {
 
 		setFlowletLabel: function (label) {
 
-			this.set('__currentFlowletLabel', label);
+			var paths = {
+				'rate': '/process/events/{app}/flows/{flow}/{id}/ins',
+				'pending': '/process/events/{app}/flows/{flow}/{id}/pending',
+				'aggregate': '/process/events/{app}/flows/{flow}/{id}'
+			};
+			var kinds = {
+				'rate': 'rates',
+				'pending': 'aggregates',
+				'aggregate': 'aggregates'
+			};
 
-			this.__resetFlowletLabels();
+			var flowlets = this.get('elements.Flowlet.content');
+			var streams = this.get('elements.Stream.content');
+
+			var i = flowlets.length;
+			while (i--) {
+				flowlets[i].clearMetrics();
+				flowlets[i].trackMetric(paths[label], kinds[label], 'events');
+			}
+
+			this.set('__currentFlowletLabel', label);
 
 		},
 		flowletLabelName: function () {
 
 			return {
-				'arrival.count': 'Enqueue Rate',
-				'queue.depth': 'Queue Size',
-				'queue.maxdepth': 'Max Queue Depth',
-				'processed.count': 'Total Processed'
+				'rate': 'Flowlet Rate',
+				'pending': 'Flowlet Pending',
+				'aggregate': 'Flowlet Processed'
 			}[this.__currentFlowletLabel];
 
 		}.property('__currentFlowletLabel')

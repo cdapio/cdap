@@ -3,8 +3,7 @@ package com.continuuity.test.internal;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.app.Id;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.EntityType;
@@ -245,7 +244,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public StreamWriter getStreamWriter(String streamName) {
-    QueueName queueName = QueueName.fromStream(Id.Account.from(accountId), streamName);
+    QueueName queueName = QueueName.fromStream(accountId, streamName);
     return streamWriterFactory.create(queueName, accountId, applicationId);
   }
 
