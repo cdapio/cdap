@@ -2,8 +2,8 @@ package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.Transaction;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 
@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  *
@@ -21,6 +20,7 @@ import java.util.TreeSet;
 // todo: optimize heavily
 public class InMemoryTransactionOracle {
 
+  // Minimum size of the excludedList for compaction. This is to avoid compacting on every commit.
   private static final int MIN_EXCLUDE_LIST_SIZE = 1000;
 
   private static LongArrayList excludedList;
@@ -66,8 +66,8 @@ public class InMemoryTransactionOracle {
       return false;
     }
 
-    Set<byte[]> set = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-    set.addAll(changeIds);
+    // The change set will never get modified. Using a immutable has smaller footprint and could perform better.
+    Set<byte[]> set = ImmutableSortedSet.copyOf(Bytes.BYTES_COMPARATOR, changeIds);
     committingChangeSets.put(tx.getWritePointer(), set);
 
     return true;
@@ -99,7 +99,7 @@ public class InMemoryTransactionOracle {
   }
 
   private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
-    if (changeIds.size() == 0) {
+    if (changeIds.isEmpty()) {
       return false;
     }
 
