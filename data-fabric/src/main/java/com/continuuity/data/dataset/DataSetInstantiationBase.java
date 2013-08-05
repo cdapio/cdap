@@ -214,9 +214,8 @@ public class DataSetInstantiationBase {
       // but do not return yet, continue to inject data fabric into the runtime
     }
 
-    // for object stores (and subclasses), we set the delegate to a RuntimeObjectStore. But RuntimeObjectStore
-    // is a subclass of ObjectStore itself, and there is no point in setting its delegate (it would actually
-    // lead to infinite recursion!).
+    // for multi object stores (and subclasses), we set the delegate to a MultiObjectStore if
+    // it is not RuntimeMultiObjectStore.
     if (obj instanceof MultiObjectStore<?> && !(obj instanceof RuntimeMultiObjectStore)) {
       RuntimeMultiObjectStore.setImplementation((MultiObjectStore<?>) obj, this.classLoader);
       // but do not return yet, continue to inject data fabric into the runtime
