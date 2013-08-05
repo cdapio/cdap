@@ -29,9 +29,11 @@ import java.io.OutputStreamWriter;
  */
 public class HttpResponder {
   private final Channel channel;
+  private final boolean keepalive;
 
-  public HttpResponder(Channel channel) {
+  public HttpResponder(Channel channel, boolean keepalive) {
     this.channel = channel;
+    this.keepalive = keepalive;
   }
 
   /**
@@ -52,11 +54,14 @@ public class HttpResponder {
       response.setContent(channelBuffer);
       response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
       response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, channelBuffer.readableBytes());
+      if (keepalive) {
+        response.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+      }
 
-      ChannelFuture result = channel.write(response);
-      result.await();
-    } catch (InterruptedException e) {
-      throw Throwables.propagate(e);
+      ChannelFuture future = channel.write(response);
+      if (!keepalive) {
+        future.addListener(ChannelFutureListener.CLOSE);
+      }
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -71,18 +76,20 @@ public class HttpResponder {
     try {
       HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
 
-      ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
-      OutputStreamWriter writer = new OutputStreamWriter (new ChannelBufferOutputStream(channelBuffer));
-      writer.write(data);
-      writer.close();
+      ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(data));
       response.setContent(channelBuffer);
-      response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+      response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8");
       response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, channelBuffer.readableBytes());
+      if (keepalive) {
+        response.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+      }
 
-      channel.write(response).addListener(ChannelFutureListener.CLOSE);
-      //TODO: Fix connection keep-alive case
+      ChannelFuture future = channel.write(response);
+      if (!keepalive) {
+        future.addListener(ChannelFutureListener.CLOSE);
+      }
 
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
@@ -99,10 +106,16 @@ public class HttpResponder {
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
 
     ChannelBuffer errorContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage));
-    response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain");
-    response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, errorContent.readableBytes());
     response.setContent(errorContent);
+    response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8");
+    response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, errorContent.readableBytes());
+    if (keepalive) {
+      response.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+    }
 
-    channel.write(response).addListener(ChannelFutureListener.CLOSE);
+    ChannelFuture future = channel.write(response);
+    if (!keepalive) {
+      future.addListener(ChannelFutureListener.CLOSE);
+    }
   }
 }

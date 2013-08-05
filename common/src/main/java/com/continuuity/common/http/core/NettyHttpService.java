@@ -23,6 +23,7 @@ import org.jboss.netty.handler.codec.http.HttpContentCompressor;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.execution.ExecutionHandler;
+import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +31,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -58,6 +57,7 @@ public final class NettyHttpService extends AbstractIdleService {
   private final ChannelGroup channelGroup;
 
   private static final int CLOSE_CHANNEL_TIMEOUT = 5;
+  private static final int BOSS_THREAD_POOL_SIZE = 2;
   private static final int WORKER_THREAD_POOL_SIZE = 10;
 
   private HttpResourceHandler resourceHandler;
@@ -102,10 +102,9 @@ public final class NettyHttpService extends AbstractIdleService {
     };
 
     //Create ExecutionHandler
-    return new ExecutionHandler(new ThreadPoolExecutor(0, threadPoolSize, threadKeepAliveSecs, TimeUnit.SECONDS,
-                                                       new SynchronousQueue<Runnable>(),
-                                                       threadFactory,
-                                                       new ThreadPoolExecutor.AbortPolicy()));
+    return new ExecutionHandler(
+      new OrderedMemoryAwareThreadPoolExecutor(threadPoolSize, 0, 0, threadKeepAliveSecs, TimeUnit.SECONDS,
+                                               threadFactory));
   }
 
   /**
@@ -124,10 +123,11 @@ public final class NettyHttpService extends AbstractIdleService {
 
     final ExecutionHandler executionHandler = createExecutionHandler(threadPoolSize, threadKeepAliveSecs);
 
-    Executor bossExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-                                                                .setDaemon(true)
-                                                                .setNameFormat("boss-thread")
-                                                                .build());
+    Executor bossExecutor = Executors.newFixedThreadPool(BOSS_THREAD_POOL_SIZE,
+                                                         new ThreadFactoryBuilder()
+                                                           .setDaemon(true)
+                                                           .setNameFormat("boss-thread")
+                                                           .build());
 
     Executor workerExecutor = Executors.newFixedThreadPool(WORKER_THREAD_POOL_SIZE, new ThreadFactoryBuilder()
                                                                                         .setDaemon(true)
@@ -135,7 +135,9 @@ public final class NettyHttpService extends AbstractIdleService {
                                                                                         .build());
 
     //Server bootstrap with default worker threads (2 * number of cores)
-    bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
+    bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, BOSS_THREAD_POOL_SIZE,
+                                                                      workerExecutor, WORKER_THREAD_POOL_SIZE));
+    bootstrap.setOption("backlog", 40000);
 
     resourceHandler = new HttpResourceHandler(httpHandlers);
     resourceHandler.init(handlerContext);
