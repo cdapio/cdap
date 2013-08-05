@@ -60,6 +60,8 @@ public final class NettyHttpService extends AbstractIdleService {
   private static final int BOSS_THREAD_POOL_SIZE = 2;
   private static final int WORKER_THREAD_POOL_SIZE = 10;
 
+  private static final int CONNECTION_BACKLOG = 40000;
+
   private HttpResourceHandler resourceHandler;
 
 
@@ -137,7 +139,7 @@ public final class NettyHttpService extends AbstractIdleService {
     //Server bootstrap with default worker threads (2 * number of cores)
     bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, BOSS_THREAD_POOL_SIZE,
                                                                       workerExecutor, WORKER_THREAD_POOL_SIZE));
-    bootstrap.setOption("backlog", 40000);
+    bootstrap.setOption("backlog", CONNECTION_BACKLOG);
 
     resourceHandler = new HttpResourceHandler(httpHandlers);
     resourceHandler.init(handlerContext);
