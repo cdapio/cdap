@@ -754,7 +754,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public void deploy(AuthToken token, final ResourceIdentifier resource) throws AppFabricServiceException {
-    LOG.warn("Finishing deploy of application " + resource.toString());
+    LOG.debug("Finishing deploy of application " + resource.toString());
     if (!sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("No information about archive being uploaded is available.");
     }
@@ -777,8 +777,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         @Override
         public void onFailure(Throwable t) {
           LOG.warn(StackTraceUtil.toStringStackTrace(t));
-
-          LOG.warn(t.getCause().toString());
 
           DeployStatus status = DeployStatus.FAILED;
           Throwable cause = t.getCause();
