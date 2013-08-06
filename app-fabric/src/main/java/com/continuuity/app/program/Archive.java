@@ -5,8 +5,8 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
-import com.continuuity.app.UserErrors;
-import com.continuuity.app.UserMessages;
+import com.continuuity.internal.UserErrors;
+import com.continuuity.internal.UserMessages;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
 import com.continuuity.weave.filesystem.Location;

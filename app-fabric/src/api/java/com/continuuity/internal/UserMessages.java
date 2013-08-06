@@ -1,4 +1,4 @@
-package com.continuuity.app;
+package com.continuuity.internal;
 
 import java.util.ResourceBundle;
 
