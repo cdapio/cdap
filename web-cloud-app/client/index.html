@@ -213,8 +213,7 @@
           </ul>
         </div>
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Arrivals" metrics="/collect/events/streams/{id}"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Read Rate (All)" metrics="/collect/reads/streams/{id}"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Events In" metrics="/collect/events/streams/{id}"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
