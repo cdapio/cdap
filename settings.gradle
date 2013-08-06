@@ -7,4 +7,6 @@ include 'kafka'
 project(':singlenode').buildFileName = 'package.gradle'
 
 // Test framework
-include 'test-framework', 'test-framework:performance', 'test-framework:commandLine'
+include 'test-framework'
+include 'test-framework:commandLine'
+include 'test-framework:performance'

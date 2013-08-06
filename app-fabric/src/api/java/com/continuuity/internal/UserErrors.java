@@ -1,4 +1,4 @@
-package com.continuuity.app;
+package com.continuuity.internal;
 
 public final class UserErrors {
 
