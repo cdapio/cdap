@@ -15,6 +15,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.app.UserErrors;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -259,7 +260,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       FlowIdentifier id = descriptor.getIdentifier();
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
-      Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage("already-running"));
+      Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage(UserErrors.ALREADY_RUNNING));
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
 
       Program program;
@@ -349,7 +350,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     throws AppFabricServiceException, TException {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage("runtime-info-not-found"),
+      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
               identifier.getApplicationId(), identifier.getFlowId());
       ProgramController controller = runtimeInfo.getController();
       RunId runId = controller.getRunId();
@@ -379,7 +380,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // can at least set instances count for this session
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage("runtime-info-not-found"),
+      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
               identifier.getApplicationId(), identifier.getFlowId());
       store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                                 identifier.getFlowId()), flowletId, instances);
@@ -437,7 +438,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         runtimeInfos = runtimeService.list(Type.MAPREDUCE).values();
         break;
     }
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage("runtime-info-not-found"),
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
             identifier.getAccountId(), identifier.getFlowId());
 
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
@@ -627,7 +628,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       try {
         log = store.getRunHistory(programId);
       } catch (OperationException e) {
-        throw  new AppFabricServiceException(String.format(UserMessages.getMessage("program-not-found"), id.toString(),
+        throw  new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id.toString(),
                 e.getMessage()));
       }
       List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
@@ -785,10 +786,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           Throwable cause = t.getCause();
 
           if (cause instanceof ClassNotFoundException) {
-            status.setMessage(String.format(UserMessages.getMessage("class-not-found"), t.getMessage()));
+            status.setMessage(String.format(UserMessages.getMessage(UserErrors.CLASS_NOT_FOUND), t.getMessage()));
 
           } else if (cause instanceof IllegalArgumentException) {
-            status.setMessage(String.format(UserMessages.getMessage("specification-error"), t.getMessage()));
+            status.setMessage(String.format(UserMessages.getMessage(UserErrors.SPECIFICATION_ERROR), t.getMessage()));
           } else {
             status.setMessage(t.getMessage());
           }
@@ -1055,7 +1056,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.info("All data for account '" + account + "' deleted.");
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
-      throw new AppFabricServiceException(String.format(UserMessages.getMessage("reset-fail"), throwable.getMessage()));
+      throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), throwable.getMessage()));
     }
   }
 

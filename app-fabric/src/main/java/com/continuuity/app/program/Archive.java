@@ -5,6 +5,7 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
+import com.continuuity.app.UserErrors;
 import com.continuuity.app.UserMessages;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
@@ -34,10 +35,10 @@ public final class Archive {
     this.id = id;
 
     Manifest manifest = jarResources.getManifest();
-    check(manifest != null, UserMessages.getMessage("bad-jar-manifest"));
+    check(manifest != null, UserMessages.getMessage(UserErrors.BAD_JAR_MANIFEST));
 
     mainClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
-    check(mainClassName != null, UserMessages.getMessage("bad-jar-attribute"), ManifestFields.MAIN_CLASS);
+    check(mainClassName != null, UserMessages.getMessage(UserErrors.BAD_JAR_ATTRIBUTE), ManifestFields.MAIN_CLASS);
   }
 
   public Class<?> getMainClass() throws ClassNotFoundException {

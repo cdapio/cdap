@@ -6,6 +6,7 @@ package com.continuuity.api.flow;
 
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.flowlet.Flowlet;
+import com.continuuity.app.UserErrors;
 import com.continuuity.app.UserMessages;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.google.common.base.Preconditions;
@@ -91,7 +92,7 @@ public interface FlowSpecification {
        * @return An instance of {@link DescriptionSetter}
        */
       public DescriptionSetter setName(String name) {
-        Preconditions.checkArgument(name != null, UserMessages.getMessage("flow-spec-name"));
+        Preconditions.checkArgument(name != null, UserMessages.getMessage(UserErrors.FLOW_SPEC_NAME));
 
         Builder.this.name = name;
         return new DescriptionSetter();
@@ -109,7 +110,7 @@ public interface FlowSpecification {
        * @return A instance of {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
-        Preconditions.checkArgument(description != null, UserMessages.getMessage("flow-spec-desc"));
+        Preconditions.checkArgument(description != null, UserMessages.getMessage(UserErrors.FLOW_SPEC_DESC));
         Builder.this.description = description;
         return new AfterDescription();
       }
@@ -195,16 +196,16 @@ public interface FlowSpecification {
       @Override
       public MoreFlowlet add(String name, Flowlet flowlet, int instances) {
 
-        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage("invalid-flowlet-null"));
+        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
 
         FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
         String flowletName = flowletDef.getFlowletSpec().getName();
 
-        Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage("invalid-instances"),
+        Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
           flowletName, instances));
 
         Preconditions.checkArgument(!flowlets.containsKey(flowletName),
-                UserMessages.getMessage("invalid-flowlet-exists"), flowletName);
+                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
 
         flowlets.put(flowletName, flowletDef);
 
@@ -295,19 +296,20 @@ public interface FlowSpecification {
 
       @Override
       public ConnectTo from(Flowlet flowlet) {
-        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage("invalid-flowlet-null"));
+        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
         return from(flowlet.configure().getName());
       }
 
       @Override
       public ConnectTo from(Stream stream) {
-        Preconditions.checkArgument(stream != null, UserMessages.getMessage("invalid-stream-null"));
+        Preconditions.checkArgument(stream != null, UserMessages.getMessage(UserErrors.INVALID_STREAM_NULL));
         return fromStream(stream.configure().getName());
       }
 
       @Override
       public ConnectTo from(String flowlet) {
-        Preconditions.checkArgument(flowlets.containsKey(flowlet), UserMessages.getMessage("invalid-flowlet-name"), flowlet);
+        Preconditions.checkArgument(flowlets.containsKey(flowlet),
+                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
         fromFlowlet = flowlets.get(flowlet);
         fromStream = null;
         return this;
@@ -315,7 +317,7 @@ public interface FlowSpecification {
 
       @Override
       public ConnectTo fromStream(String stream) {
-        Preconditions.checkArgument(stream != null, UserMessages.getMessage("invalid-stream-name"), stream);
+        Preconditions.checkArgument(stream != null, UserMessages.getMessage(UserErrors.INVALID_STREAM_NAME), stream);
         fromFlowlet = null;
         fromStream = stream;
         return this;
@@ -323,15 +325,15 @@ public interface FlowSpecification {
 
       @Override
       public MoreConnect to(Flowlet flowlet) {
-        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage("invalid-flowlet-null"));
+        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
         return to(flowlet.configure().getName());
       }
 
       @Override
       public MoreConnect to(String flowlet) {
-        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage("invalid-flowlet-null"));
+        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
         Preconditions.checkArgument(flowlets.containsKey(flowlet),
-                UserMessages.getMessage("invalid-flowlet-name"), flowlet);
+                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
 
         FlowletConnection.Type sourceType;
         String sourceName;

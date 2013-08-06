@@ -1,6 +1,5 @@
 package com.continuuity.app;
 
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 public final class UserMessages {
@@ -12,13 +11,7 @@ public final class UserMessages {
     try {
       return ResourceBundle.getBundle(BUNDLE_NAME).getString(key);
 
-    } catch (NullPointerException e) {
-      return "Unknown Error. Please check the Reactor log.";
-
-    } catch (MissingResourceException e) {
-      return "Unknown Error. Please check the Reactor log.";
-
-    } catch (ClassCastException e) {
+    } catch (Exception e) {
       return "Unknown Error. Please check the Reactor log.";
     }
 
