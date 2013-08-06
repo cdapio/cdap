@@ -349,7 +349,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     throws AppFabricServiceException, TException {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, "Unable to find runtime info for %s", identifier);
+      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage("runtime-info-not-found"),
+              identifier.getApplicationId(), identifier.getFlowId());
       ProgramController controller = runtimeInfo.getController();
       RunId runId = controller.getRunId();
       controller.stop().get();
@@ -378,7 +379,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // can at least set instances count for this session
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, "Unable to find runtime info for %s", identifier);
+      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage("runtime-info-not-found"),
+              identifier.getApplicationId(), identifier.getFlowId());
       store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                                 identifier.getFlowId()), flowletId, instances);
       runtimeInfo.getController().command("instances", ImmutableMap.of(flowletId, (int) instances)).get();
@@ -435,7 +437,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         runtimeInfos = runtimeService.list(Type.MAPREDUCE).values();
         break;
     }
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage("runtime-info-not-found"));
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage("runtime-info-not-found"),
+            identifier.getAccountId(), identifier.getFlowId());
 
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),
@@ -1039,7 +1042,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         public boolean apply(Id.Program programId) {
           return programId.getAccountId().equals(accountId.getId());
         }
-      }, Type.values()), "There are program still running under account " + accountId.getId());
+      }, Type.values()), "There are programs still running on the Reactor. Please stop them first.");
 
       deleteMetrics(account);
       // delete all meta data
@@ -1052,7 +1055,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.info("All data for account '" + account + "' deleted.");
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
-      throw new AppFabricServiceException("Fail to rest account " + throwable.getMessage());
+      throw new AppFabricServiceException(String.format(UserMessages.getMessage("reset-fail"), throwable.getMessage()));
     }
   }
 
