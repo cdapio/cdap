@@ -41,6 +41,7 @@ import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.app.services.RunIdentifier;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
+import com.continuuity.app.UserMessages;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.StackTraceUtil;
@@ -229,7 +230,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         return Type.MAPREDUCE;
     }
     // Never hit
-    throw new IllegalArgumentException("Type not support: " + identifier.getType());
+    throw new IllegalArgumentException("Type not supported: " + identifier.getType());
   }
 
   private EntityType typeToEntityType(Type type) {
@@ -242,7 +243,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         return EntityType.MAPREDUCE;
     }
     // Never hit
-    throw new IllegalArgumentException("Type not suppport: " + type);
+    throw new IllegalArgumentException("Type not suppported: " + type);
   }
 
   /**
@@ -258,7 +259,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       FlowIdentifier id = descriptor.getIdentifier();
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
-      Preconditions.checkArgument(existingRuntimeInfo == null, "Flow is already running");
+      Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage("already-running"));
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
 
       Program program;
@@ -417,7 +418,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
-      throw new AppFabricServiceException("Exception when getting all run histories: " + throwable.getMessage());
+      throw new AppFabricServiceException("Exception while retrieving the run history. " + throwable.getMessage());
     }
   }
 
@@ -434,7 +435,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         runtimeInfos = runtimeService.list(Type.MAPREDUCE).values();
         break;
     }
-    Preconditions.checkNotNull(runtimeInfos, "Cannot find any runtime info.");
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage("runtime-info-not-found"));
 
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),
@@ -623,8 +624,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       try {
         log = store.getRunHistory(programId);
       } catch (OperationException e) {
-        throw  new AppFabricServiceException("Unable to retrieve application for " +
-                                             id.toString() + e.getMessage());
+        throw  new AppFabricServiceException(String.format(UserMessages.getMessage("program-not-found"), id.toString(),
+                e.getMessage()));
       }
       List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
       for (RunRecord runRecord : log) {
@@ -741,7 +742,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
       sessions.remove(resource.getAccountId());
-      throw new AppFabricServiceException("Failed to write archive chunk");
+      throw new AppFabricServiceException("Failed to write archive chunk.");
     }
   }
 
@@ -753,7 +754,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public void deploy(AuthToken token, final ResourceIdentifier resource) throws AppFabricServiceException {
-    LOG.debug("Finishing deploy of application " + resource.toString());
+    LOG.warn("Finishing deploy of application " + resource.toString());
     if (!sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("No information about archive being uploaded is available.");
     }
@@ -776,16 +777,36 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         @Override
         public void onFailure(Throwable t) {
           LOG.warn(StackTraceUtil.toStringStackTrace(t));
-          save(sessionInfo.setStatus(DeployStatus.FAILED));
+
+          LOG.warn(t.getCause().toString());
+
+          DeployStatus status = DeployStatus.FAILED;
+          Throwable cause = t.getCause();
+
+          if (cause instanceof ClassNotFoundException) {
+            status.setMessage(String.format(UserMessages.getMessage("class-not-found"), t.getMessage()));
+
+          } else if (cause instanceof IllegalArgumentException) {
+            status.setMessage(String.format(UserMessages.getMessage("specification-error"), t.getMessage()));
+          } else {
+            status.setMessage(t.getMessage());
+          }
+
+          save(sessionInfo.setStatus(status));
           sessions.remove(resource.getAccountId());
         }
       });
 
     } catch (Throwable e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      save(sessionInfo.setStatus(DeployStatus.FAILED));
+
+      DeployStatus status = DeployStatus.FAILED;
+      status.setMessage(e.getMessage());
+      save(sessionInfo.setStatus(status));
+
       sessions.remove(resource.getAccountId());
       throw new AppFabricServiceException(e.getMessage());
+
     }
   }
 
