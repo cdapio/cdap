@@ -91,8 +91,8 @@ public interface FlowSpecification {
        * @return An instance of {@link DescriptionSetter}
        */
       public DescriptionSetter setName(String name) {
-        Preconditions.checkArgument(name != null,
-          "Your FlowSpecification is missing a \"name\" value.");
+        Preconditions.checkArgument(name != null, UserMessages.getMessage("flow-spec-name"));
+
         Builder.this.name = name;
         return new DescriptionSetter();
       }
@@ -109,8 +109,7 @@ public interface FlowSpecification {
        * @return A instance of {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
-        Preconditions.checkArgument(description != null,
-          "Your FlowSpecification is missing a \"description\" value.");
+        Preconditions.checkArgument(description != null, UserMessages.getMessage("flow-spec-desc"));
         Builder.this.description = description;
         return new AfterDescription();
       }

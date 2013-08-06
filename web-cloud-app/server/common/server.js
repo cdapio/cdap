@@ -503,7 +503,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
         try {
           data = JSON.parse(data);
-          res.send({ results: data, error: null });
+          res.send({ result: data, error: null });
         } catch (e) {
           self.logger.error('Parsing Error', data);
           res.send({ result: null, error: 'Parsing Error' });
