@@ -9,7 +9,7 @@ public final class UserMessages {
   public static String getMessage (String key) {
 
     try {
-      return ResourceBundle.getBundle(BUNDLE_NAME).getString(key);
+      return getBundle().getString(key);
 
     } catch (Exception e) {
       return "Unknown Error. Please check the Reactor log.";
