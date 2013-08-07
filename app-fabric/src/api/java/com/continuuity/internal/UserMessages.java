@@ -2,6 +2,9 @@ package com.continuuity.internal;
 
 import java.util.ResourceBundle;
 
+/**
+ * Class for App-Fabric User Messages.
+ */
 public final class UserMessages {
 
   private static final String BUNDLE_NAME = "UserMessages";

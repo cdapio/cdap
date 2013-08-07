@@ -1,5 +1,8 @@
 package com.continuuity.internal;
 
+/**
+ * Class for App-Fabric User Errors.
+ */
 public final class UserErrors {
 
   public static final String CLASS_NOT_FOUND = "class-not-found";
