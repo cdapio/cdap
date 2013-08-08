@@ -683,7 +683,9 @@ fs.readFile(configPath, function (error, result) {
 					break;
 
 				case 'gateway':
-					Api.gateway(accountID, method, params, function (error, result) {
+
+					// NOTE: Gateway authenticates with the API key, not the AccountID.
+					Api.gateway(req.session.api_key, method, params, function (error, result) {
 						if (error) {
 							logger.error(error);
 						}
