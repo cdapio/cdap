@@ -45,22 +45,20 @@ public final class NettyHttpService extends AbstractIdleService {
   private static final int MAX_INPUT_SIZE = 128 * 1024;
 
   private ServerBootstrap bootstrap;
-  private Channel channel;
   private int port;
 
   private int servicePort;
-  private final int threadPoolSize;
-  private final long threadKeepAliveSecs;
+  private int bossThreadPoolSize;
+  private int workerThreadPoolSize;
+  private int connectionBacklog;
+  private final int execThreadPoolSize;
+  private final long execThreadKeepAliveSecs;
 
   private final Set<HttpHandler> httpHandlers;
   private final HandlerContext handlerContext;
   private final ChannelGroup channelGroup;
 
   private static final int CLOSE_CHANNEL_TIMEOUT = 5;
-  private static final int BOSS_THREAD_POOL_SIZE = 2;
-  private static final int WORKER_THREAD_POOL_SIZE = 10;
-
-  private static final int CONNECTION_BACKLOG = 40000;
 
   private HttpResourceHandler resourceHandler;
 
@@ -69,14 +67,22 @@ public final class NettyHttpService extends AbstractIdleService {
    * Initialize NettyHttpService.
    *
    * @param port port to run the service on.
-   * @param threadPoolSize Size of the thread pool for the executor.
-   * @param threadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
+   * @param bossThreadPoolSize Size of the boss thread pool.
+   * @param workerThreadPoolSize Size of the worker thread pool.
+   * @param connectionBacklog Max concurrent connections that can be queued.
+   * @param execThreadPoolSize Size of the thread pool for the executor.
+   * @param execThreadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
    * @param httpHandlers HttpHandlers to handle the calls.
    */
-  public NettyHttpService(int port, int threadPoolSize, long threadKeepAliveSecs, Iterable<HttpHandler> httpHandlers){
+  public NettyHttpService(int port, int bossThreadPoolSize, int workerThreadPoolSize, int connectionBacklog,
+                          int execThreadPoolSize, long execThreadKeepAliveSecs,
+                          Iterable<HttpHandler> httpHandlers){
     this.port = port;
-    this.threadPoolSize = threadPoolSize;
-    this.threadKeepAliveSecs = threadKeepAliveSecs;
+    this.bossThreadPoolSize = bossThreadPoolSize;
+    this.workerThreadPoolSize = workerThreadPoolSize;
+    this.connectionBacklog = connectionBacklog;
+    this.execThreadPoolSize = execThreadPoolSize;
+    this.execThreadKeepAliveSecs = execThreadKeepAliveSecs;
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
     this.handlerContext = new DummyHandlerContext();
     this.channelGroup = new DefaultChannelGroup();
@@ -125,21 +131,21 @@ public final class NettyHttpService extends AbstractIdleService {
 
     final ExecutionHandler executionHandler = createExecutionHandler(threadPoolSize, threadKeepAliveSecs);
 
-    Executor bossExecutor = Executors.newFixedThreadPool(BOSS_THREAD_POOL_SIZE,
+    Executor bossExecutor = Executors.newFixedThreadPool(bossThreadPoolSize,
                                                          new ThreadFactoryBuilder()
                                                            .setDaemon(true)
                                                            .setNameFormat("boss-thread")
                                                            .build());
 
-    Executor workerExecutor = Executors.newFixedThreadPool(WORKER_THREAD_POOL_SIZE, new ThreadFactoryBuilder()
+    Executor workerExecutor = Executors.newFixedThreadPool(workerThreadPoolSize, new ThreadFactoryBuilder()
                                                                                         .setDaemon(true)
                                                                                         .setNameFormat("worker-thread")
                                                                                         .build());
 
     //Server bootstrap with default worker threads (2 * number of cores)
-    bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, BOSS_THREAD_POOL_SIZE,
-                                                                      workerExecutor, WORKER_THREAD_POOL_SIZE));
-    bootstrap.setOption("backlog", CONNECTION_BACKLOG);
+    bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, bossThreadPoolSize,
+                                                                      workerExecutor, workerThreadPoolSize));
+    bootstrap.setOption("backlog", connectionBacklog);
 
     resourceHandler = new HttpResourceHandler(httpHandlers);
     resourceHandler.init(handlerContext);
@@ -179,9 +185,9 @@ public final class NettyHttpService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting service on port {}", port);
-    bootStrap(threadPoolSize, threadKeepAliveSecs, httpHandlers);
+    bootStrap(execThreadPoolSize, execThreadKeepAliveSecs, httpHandlers);
     InetSocketAddress address = new InetSocketAddress(port);
-    channel = bootstrap.bind(address);
+    Channel channel = bootstrap.bind(address);
     channelGroup.add(channel);
     servicePort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
 
@@ -212,20 +218,29 @@ public final class NettyHttpService extends AbstractIdleService {
    */
   public static class Builder {
 
-    private static final int DEFAULT_THREAD_POOL_SIZE = 60;
-    private static final long DEFAULT_THREAD_KEEP_ALIVE_TIME_SECS = 60L;
+    private static final int DEFAULT_BOSS_THREAD_POOL_SIZE = 1;
+    private static final int DEFAULT_WORKER_THREAD_POOL_SIZE = 10;
+    private static final int DEFAULT_CONNECTION_BACKLOG = 1000;
+    private static final int DEFAULT_EXEC_HANDLER_THREAD_POOL_SIZE = 60;
+    private static final long DEFAULT_EXEC_HANDLER_THREAD_KEEP_ALIVE_TIME_SECS = 60L;
 
     //Private constructor to prevent instantiating Builder instance directly.
     private Builder(){
-      threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
-      threadKeepAliveSecs = DEFAULT_THREAD_KEEP_ALIVE_TIME_SECS;
+      bossThreadPoolSize = DEFAULT_BOSS_THREAD_POOL_SIZE;
+      workerThreadPoolSize = DEFAULT_WORKER_THREAD_POOL_SIZE;
+      connectionBacklog = DEFAULT_CONNECTION_BACKLOG;
+      execThreadPoolSize = DEFAULT_EXEC_HANDLER_THREAD_POOL_SIZE;
+      execThreadKeepAliveSecs = DEFAULT_EXEC_HANDLER_THREAD_KEEP_ALIVE_TIME_SECS;
       port = 0;
     }
 
     private Iterable<HttpHandler> handlers;
-    private int threadPoolSize;
+    private int bossThreadPoolSize;
+    private int workerThreadPoolSize;
+    private int connectionBacklog;
+    private int execThreadPoolSize;
     private int port;
-    private long threadKeepAliveSecs;
+    private long execThreadKeepAliveSecs;
 
     /**
      * Add HttpHandlers that service the request.
@@ -237,13 +252,25 @@ public final class NettyHttpService extends AbstractIdleService {
       return this;
     }
 
-    public Builder setThreadPoolSize(int threadPoolSize){
-      this.threadPoolSize = threadPoolSize;
+    public void setBossThreadPoolSize(int bossThreadPoolSize) {
+      this.bossThreadPoolSize = bossThreadPoolSize;
+    }
+
+    public void setWorkerThreadPoolSize(int workerThreadPoolSize) {
+      this.workerThreadPoolSize = workerThreadPoolSize;
+    }
+
+    public void setConnectionBacklog(int connectionBacklog) {
+      this.connectionBacklog = connectionBacklog;
+    }
+
+    public Builder setExecThreadPoolSize(int execThreadPoolSize){
+      this.execThreadPoolSize = execThreadPoolSize;
       return this;
     }
 
-    public Builder setThreadKeepAliveSeconds(long threadKeepAliveSecs){
-      this.threadKeepAliveSecs = threadKeepAliveSecs;
+    public Builder setExecThreadKeepAliveSeconds(long threadKeepAliveSecs){
+      this.execThreadKeepAliveSecs = threadKeepAliveSecs;
       return this;
     }
 
@@ -259,7 +286,8 @@ public final class NettyHttpService extends AbstractIdleService {
     }
 
     public NettyHttpService build(){
-      return new NettyHttpService(port, threadPoolSize, threadKeepAliveSecs, handlers);
+      return new NettyHttpService(port, bossThreadPoolSize, workerThreadPoolSize, connectionBacklog,
+                                  execThreadPoolSize, execThreadKeepAliveSecs, handlers);
     }
 
   }

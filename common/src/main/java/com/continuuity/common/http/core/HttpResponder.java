@@ -41,27 +41,15 @@ public class HttpResponder {
    * @param status Status of the response.
    * @param object Object that will be serialized into Json and sent back as content.
    */
-  public synchronized void sendJson(HttpResponseStatus status, Object object){
+  public void sendJson(HttpResponseStatus status, Object object){
     try {
-      HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
-
       ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
       JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(channelBuffer),
                                                                     Charsets.UTF_8));
       new Gson().toJson(object, object.getClass(), jsonWriter);
       jsonWriter.close();
 
-      response.setContent(channelBuffer);
-      response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
-      response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, channelBuffer.readableBytes());
-      if (keepalive) {
-        response.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-      }
-
-      ChannelFuture future = channel.write(response);
-      if (!keepalive) {
-        future.addListener(ChannelFutureListener.CLOSE);
-      }
+      sendContent(status, channelBuffer, "application/json");
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -74,21 +62,8 @@ public class HttpResponder {
    */
   public synchronized void sendString(HttpResponseStatus status, String data){
     try {
-      HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
-
       ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(data));
-      response.setContent(channelBuffer);
-      response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8");
-      response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, channelBuffer.readableBytes());
-      if (keepalive) {
-        response.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-      }
-
-      ChannelFuture future = channel.write(response);
-      if (!keepalive) {
-        future.addListener(ChannelFutureListener.CLOSE);
-      }
-
+      sendContent(status, channelBuffer, "text/plain; charset=utf-8");
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -103,12 +78,15 @@ public class HttpResponder {
   public synchronized void sendError(HttpResponseStatus status, String errorMessage){
     Preconditions.checkArgument(!status.equals(HttpResponseStatus.OK), "Response status cannot be OK for errors");
 
-    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
-
     ChannelBuffer errorContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage));
-    response.setContent(errorContent);
-    response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8");
-    response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, errorContent.readableBytes());
+    sendContent(status, errorContent, "text/plain; charset=utf-8");
+  }
+
+  private synchronized void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType){
+    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
+    response.setContent(content);
+    response.setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
+    response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
     if (keepalive) {
       response.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
     }
