@@ -65,6 +65,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
   private final SortedMap<byte[], Entry> entryCache;
   private final SortedMap<byte[], Entry> consumingEntries;
   private final Function<byte[], byte[]> rowKeyToChangeTx;
+  private final byte[] stateColumnName;
   private Transaction transaction;
   private byte[] startRow;
 
@@ -75,6 +76,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.startRow = queueName.toBytes();
+    this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX, Bytes.toBytes(consumerConfig.getGroupId()));
 
     byte[] tableName = hTable.getTableName();
     final byte[] changeTxPrefix = ByteBuffer.allocate(tableName.length + 1)
@@ -99,22 +101,24 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
   public DequeueResult dequeue(int maxBatchSize) throws IOException {
     Preconditions.checkArgument(maxBatchSize > 0, "Batch size must be > 0.");
 
+//    System.out.println("Dequeue");
+
     List<Entry> dequeueEntries = Lists.newLinkedList();
     while (dequeueEntries.size() < maxBatchSize && getEntries(dequeueEntries, maxBatchSize)) {
       Iterator<Entry> iterator = dequeueEntries.iterator();
       while (iterator.hasNext()) {
         Entry entry = iterator.next();
-        // For FIFO, need to try claiming the entry.
-        if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO) {
+        // For FIFO, need to try claiming the entry if group size > 1
+        if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
           // If the state is already in CLAIMED state, no need to claim it again
           // It happens for rollbacked entries or restart from failure
           // The pickup logic in populateCache and shouldInclude() make sure that's the case
           if (entry.getState() == null) {
             Put put = new Put(entry.getRowKey());
             byte[] stateValue = encodeStateColumn(ConsumerEntryState.CLAIMED);
-            put.add(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.STATE_COLUMN, stateValue);
+            put.add(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, stateValue);
             boolean claimed = hTable.checkAndPut(entry.getRowKey(), HBaseQueueConstants.COLUMN_FAMILY,
-                                                 HBaseQueueConstants.STATE_COLUMN, entry.getState(), put);
+                                                 stateColumnName, entry.getState(), put);
             // If not able to claim it, remove it, and move to next one.
             if (!claimed) {
               iterator.remove();
@@ -124,9 +128,12 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
           }
         }
 
+//        System.out.println("Take entry: " + Bytes.toInt(entry.getData()));
         consumingEntries.put(entry.getRowKey(), entry);
       }
     }
+
+//    System.out.println("End dequeue");
 
     // If nothing get dequeued, return the empty result.
     if (dequeueEntries.isEmpty()) {
@@ -158,7 +165,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     List<Put> puts = Lists.newArrayListWithCapacity(consumingEntries.size());
     for (byte[] rowKey : consumingEntries.keySet()) {
       Put put = new Put(rowKey);
-      put.add(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.STATE_COLUMN, stateContent);
+      put.add(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, stateContent);
       puts.add(put);
     }
 
@@ -180,17 +187,17 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     List<Row> ops = Lists.newArrayListWithCapacity(consumingEntries.size());
 
     // If it is FIFO, restore to the CLAIMED state. This instance will retry it on the next dequeue.
-    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO) {
+    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
       byte[] stateContent = encodeStateColumn(ConsumerEntryState.CLAIMED);
       for (byte[] rowKey : consumingEntries.keySet()) {
         Put put = new Put(rowKey);
-        put.add(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.STATE_COLUMN, stateContent);
+        put.add(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, stateContent);
         ops.add(put);
       }
     } else {
       for (byte[] rowKey : consumingEntries.keySet()) {
         Delete delete = new Delete(rowKey);
-        delete.deleteColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.STATE_COLUMN);
+        delete.deleteColumn(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName);
         ops.add(delete);
       }
     }
@@ -240,7 +247,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     scan.setStopRow(getStopRow());
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.DATA_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.META_COLUMN);
-    scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.STATE_COLUMN);
+    scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName);
     scan.setMaxVersions();
 
     long readPointer = transaction.getReadPointer();
@@ -263,11 +270,6 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
           continue;
         }
 
-        // If nothing in the excluded list, no new entries will be enqueue before current row.
-        if (excludedList.length == 0) {
-          startRow = rowKey;
-        }
-
         // Row key is queue_name + writePointer + counter
         long writePointer = Bytes.toLong(rowKey, queueName.toBytes().length, Longs.BYTES);
 
@@ -285,7 +287,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
         KeyValue metaColumn = result.getColumnLatest(HBaseQueueConstants.COLUMN_FAMILY,
                                                      HBaseQueueConstants.META_COLUMN);
         KeyValue stateColumn = result.getColumnLatest(HBaseQueueConstants.COLUMN_FAMILY,
-                                                      HBaseQueueConstants.STATE_COLUMN);
+                                                      stateColumnName);
 
         int counter = Bytes.toInt(rowKey, rowKey.length - 4, Ints.BYTES);
         if (!shouldInclude(writePointer, counter, metaColumn, stateColumn)) {
@@ -296,7 +298,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
                                          result.getValue(HBaseQueueConstants.COLUMN_FAMILY,
                                                          HBaseQueueConstants.DATA_COLUMN),
                                          result.getValue(HBaseQueueConstants.COLUMN_FAMILY,
-                                                         HBaseQueueConstants.STATE_COLUMN)));
+                                                         stateColumnName)));
       }
     }
     scanner.close();
