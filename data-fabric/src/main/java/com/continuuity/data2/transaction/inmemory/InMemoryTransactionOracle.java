@@ -5,7 +5,6 @@ import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -146,11 +145,13 @@ public class InMemoryTransactionOracle {
   }
 
   private static void makeVisible(Transaction tx) {
-    excludedList.remove(tx.getWritePointer());
-    // trim is needed as remove of LongArrayList would not shrink the backing array.
-    // trim will do nothing if the size of excludedList is smaller than the MIN_EXCLUDE_LIST_SIZE.
-    excludedList.trim(MIN_EXCLUDE_LIST_SIZE);
-
+    int idx = Arrays.binarySearch(excludedList.elements(), 0, excludedList.size(), tx.getWritePointer());
+    if (idx >= 0) {
+      excludedList.removeLong(idx);
+      // trim is needed as remove of LongArrayList would not shrink the backing array.
+      // trim will do nothing if the size of excludedList is smaller than the MIN_EXCLUDE_LIST_SIZE.
+      excludedList.trim(MIN_EXCLUDE_LIST_SIZE);
+    }
     // moving read pointer
     moveReadPointerIfNeeded(tx.getWritePointer());
   }
@@ -161,9 +162,9 @@ public class InMemoryTransactionOracle {
     }
   }
 
-  private static long[] getExcludedListAsArray(LongList excludedList) {
+  private static long[] getExcludedListAsArray(LongArrayList excludedList) {
     // todo: optimize (cache, etc. etc.)
-    long[] result = new long[excludedList.size()];
-    return excludedList.toArray(result);
+    long[] elements = excludedList.elements();
+    return Arrays.copyOf(elements, excludedList.size());
   }
 }

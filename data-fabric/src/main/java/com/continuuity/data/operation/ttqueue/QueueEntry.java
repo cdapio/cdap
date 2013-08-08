@@ -45,9 +45,6 @@ public class QueueEntry {
   }
 
   public Integer getHashKey(String key) {
-    if (hashKeys == null) {
-      return null;
-    }
     return this.hashKeys.get(key);
   }
 
@@ -88,11 +85,15 @@ public class QueueEntry {
   }
 
   public static Map<String, Integer> deserializeHashKeys(byte[] bytes) throws IOException {
-    if (bytes == null || (bytes.length == 1 && bytes[0] == 0)) {
+    return deserializeHashKeys(bytes, 0, bytes.length);
+  }
+
+  public static Map<String, Integer> deserializeHashKeys(byte[] bytes, int off, int len) throws IOException {
+    if (bytes == null || (len == 1 && bytes[off] == 0)) {
       // No hash keys.
       return ImmutableMap.of();
     }
-    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+    ByteArrayInputStream bis = new ByteArrayInputStream(bytes, off, len);
     BinaryDecoder decoder = new BinaryDecoder(bis);
     int size = decoder.readInt();
     Map<String, Integer> hashKeys = Maps.newHashMapWithExpectedSize(size);

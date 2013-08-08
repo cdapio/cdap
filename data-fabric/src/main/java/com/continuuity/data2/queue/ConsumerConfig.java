@@ -1,0 +1,48 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+package com.continuuity.data2.queue;
+
+import com.google.common.base.Preconditions;
+
+/**
+ *
+ */
+public final class ConsumerConfig {
+
+  private final long groupId;
+  private final int instanceId;
+  private final int groupSize;
+  private final DequeueStrategy dequeueStrategy;
+  private final String hashKey;
+
+  public ConsumerConfig(long groupId, int instanceId, int groupSize, DequeueStrategy dequeueStrategy, String hashKey) {
+    Preconditions.checkArgument(instanceId >= 0, "Instance ID must be >= 0.");
+    Preconditions.checkArgument(instanceId < groupSize, "Instance ID must be < groupSize");
+    this.groupId = groupId;
+    this.instanceId = instanceId;
+    this.groupSize = groupSize;
+    this.dequeueStrategy = dequeueStrategy;
+    this.hashKey = dequeueStrategy == DequeueStrategy.HASH ? hashKey : null;
+  }
+
+  public long getGroupId() {
+    return groupId;
+  }
+
+  public int getInstanceId() {
+    return instanceId;
+  }
+
+  public int getGroupSize() {
+    return groupSize;
+  }
+
+  public DequeueStrategy getDequeueStrategy() {
+    return dequeueStrategy;
+  }
+
+  public String getHashKey() {
+    return hashKey;
+  }
+}
