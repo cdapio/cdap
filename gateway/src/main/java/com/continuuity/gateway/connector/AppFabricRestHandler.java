@@ -118,7 +118,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
   private static final Map<String, ImmutablePair<List<HttpMethod>, Pattern>> ALLOWED_PATHS =
       new  ImmutableMap.Builder<String, ImmutablePair<List<HttpMethod>, Pattern>>().
                 put(DEPLOY_PATH,
-                    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST),
+                    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST, HttpMethod.PUT),
                                                                  Pattern.compile(DEPLOY_PATH))).
                 put(DEPLOY_STATUS_PATH,
                     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
