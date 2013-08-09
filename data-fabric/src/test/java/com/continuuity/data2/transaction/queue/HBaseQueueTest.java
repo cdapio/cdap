@@ -169,7 +169,7 @@ public class HBaseQueueTest extends HBaseTestBase {
     // Try to dequeue
     final int expectedSum = (count / 2 * (count - 1));
     final AtomicInteger valueSum = new AtomicInteger();
-    final int consumerSize = 5;
+    final int consumerSize = 3;
     final CyclicBarrier startBarrier = new CyclicBarrier(consumerSize + 1);
     final CountDownLatch completeLatch = new CountDownLatch(consumerSize);
     ExecutorService executor = Executors.newFixedThreadPool(consumerSize);
@@ -203,9 +203,10 @@ public class HBaseQueueTest extends HBaseTestBase {
                   continue;
                 }
 
-                byte[] data = result.getData().iterator().next();
-                valueSum.addAndGet(Bytes.toInt(data));
-                dequeueCount++;
+                for (byte[] data : result.getData()) {
+                  valueSum.addAndGet(Bytes.toInt(data));
+                  dequeueCount++;
+                }
               } catch (Exception e) {
                 opex.abort(transaction);
                 throw Throwables.propagate(e);
@@ -224,7 +225,7 @@ public class HBaseQueueTest extends HBaseTestBase {
     }
 
     startBarrier.await();
-    Assert.assertTrue(completeLatch.await(40, TimeUnit.SECONDS));
+    Assert.assertTrue(completeLatch.await(120, TimeUnit.SECONDS));
     TimeUnit.SECONDS.sleep(2);
 
     Assert.assertEquals(expectedSum, valueSum.get());
