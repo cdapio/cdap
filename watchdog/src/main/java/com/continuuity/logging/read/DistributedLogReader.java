@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -107,9 +106,9 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public Future<?> getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
-    return executor.submit(
+    executor.submit(
       new Runnable() {
         @Override
         public void run() {
@@ -145,9 +144,9 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public Future<?> getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
-    return executor.submit(
+    executor.submit(
       new Runnable() {
         @Override
         public void run() {
@@ -184,9 +183,9 @@ public final class DistributedLogReader implements LogReader {
 
 
   @Override
-  public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
+  public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
                           final Filter filter, final Callback callback) {
-    return executor.submit(
+    executor.submit(
       new Runnable() {
         @Override
         public void run() {

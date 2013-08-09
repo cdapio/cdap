@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -82,13 +81,13 @@ public class SingleNodeLogReader implements LogReader {
   }
 
   @Override
-  public Future<?> getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
     if (fromOffset < 0) {
-      return getLogPrev(loggingContext, -1, maxEvents, filter, callback);
+      getLogPrev(loggingContext, -1, maxEvents, filter, callback);
     }
 
-    return executor.submit(
+    executor.submit(
       new Runnable() {
         @Override
         public void run() {
@@ -130,9 +129,9 @@ public class SingleNodeLogReader implements LogReader {
   }
 
   @Override
-  public Future<?> getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
-    return executor.submit(new Runnable() {
+    executor.submit(new Runnable() {
       @Override
       public void run() {
         Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
@@ -173,9 +172,9 @@ public class SingleNodeLogReader implements LogReader {
   }
 
   @Override
-  public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
+  public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
                           final Filter filter, final Callback callback) {
-    return executor.submit(
+    executor.submit(
       new Runnable() {
         @Override
         public void run() {

@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -191,7 +192,8 @@ public class MetricsFrontendServiceImpl
     LogCallback logCallback = new LogCallback(maxEvents, logPattern);
     try {
       Filter filter = FilterParser.parse(filterStr);
-      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback).get();
+      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
+      logCallback.await();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -207,7 +209,8 @@ public class MetricsFrontendServiceImpl
     LogCallback logCallback = new LogCallback(maxEvents, logPattern);
     try {
       Filter filter = FilterParser.parse(filterStr);
-      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback).get();
+      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
+      logCallback.await();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -220,6 +223,8 @@ public class MetricsFrontendServiceImpl
   private static class LogCallback implements Callback {
     private final List<TLogResult> logResults;
     private final PatternLayout patternLayout;
+
+    private final CountDownLatch doneLatch = new CountDownLatch(1);
 
     private LogCallback(int maxEvents, String logPattern) {
       logResults = Lists.newArrayListWithExpectedSize(maxEvents);
@@ -246,6 +251,11 @@ public class MetricsFrontendServiceImpl
     @Override
     public void close() {
       patternLayout.stop();
+      doneLatch.countDown();
+    }
+
+    public void await() throws InterruptedException {
+      doneLatch.await();
     }
 
     public List<TLogResult> getLogResults() {
