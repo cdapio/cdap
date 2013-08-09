@@ -82,7 +82,7 @@ public class HttpResponder {
     sendContent(status, errorContent, "text/plain; charset=utf-8");
   }
 
-  private synchronized void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType){
+  private void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType){
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
     response.setContent(content);
     response.setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
