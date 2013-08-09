@@ -29,6 +29,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Scan;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -44,6 +46,8 @@ import java.util.SortedMap;
  *
  */
 final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueConsumer.class);
 
   // TODO: Make these configurable.
   private static final int MAX_CACHE_ROWS = 100;
@@ -247,8 +251,8 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 
     long readPointer = transaction.getReadPointer();
     long[] excludedList = transaction.getExcludedList();
+    List<Delete> cleanupRows = Lists.newArrayList();
 
-    // TODO: Scan with startRow by looking HBaseConsumerState
     ResultScanner scanner = hTable.getScanner(scan);
     // Try fill up the cache with at most MAX_CACHE_ROWS
     while (entryCache.size() < MAX_CACHE_ROWS) {
@@ -284,7 +288,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
                                                       stateColumnName);
 
         int counter = Bytes.toInt(rowKey, rowKey.length - 4, Ints.BYTES);
-        if (!shouldInclude(writePointer, counter, metaColumn, stateColumn)) {
+        if (!shouldInclude(rowKey, writePointer, counter, metaColumn, stateColumn, cleanupRows)) {
           continue;
         }
 
@@ -296,6 +300,16 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       }
     }
     scanner.close();
+
+    if (!cleanupRows.isEmpty()) {
+      // Pick one to issue delete. Doesn't matter if multiple consumers tries to delete overlapping rows.
+      int hashCode = Arrays.hashCode(cleanupRows.get(0).getRow());
+      if (hashCode % consumerConfig.getGroupSize() == consumerConfig.getInstanceId()) {
+        LOG.trace("Queue eviction on {}, with {} deletes.", queueName, cleanupRows.size());
+        hTable.delete(cleanupRows);
+        // No flushing here, just let claim/commit/rollback flush it.
+      }
+    }
   }
 
   private byte[] encodeStateColumn(ConsumerEntryState state) {
@@ -320,8 +334,9 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       stateColumn.getBuffer()[stateColumn.getValueOffset() + Longs.BYTES + Ints.BYTES]);
   }
 
-  private boolean shouldInclude(long writePointer, int counter,
-                                KeyValue metaColumn, KeyValue stateColumn) throws IOException {
+  private boolean shouldInclude(byte[] rowKey, long writePointer, int counter,
+                                KeyValue metaColumn, KeyValue stateColumn,
+                                List<Delete> cleanupRows) throws IOException {
     if (stateColumn != null) {
       // If the state is written by the current transaction, ignore it, as it's processing
       long stateWritePointer = getStateWritePointer(stateColumn);
@@ -331,9 +346,12 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 
       // If the state was updated by a different consumer instance that is still active, ignore this entry.
       // The assumption is, the corresponding instance is either processing (claimed)
-      // or going to process it (due to rollback/restart)
+      // or going to process it (due to rollback/restart).
+      // This only applies to FIFO, as for hash and rr, repartition needs to happen if group size change.
       int stateInstanceId = getStateInstanceId(stateColumn);
-      if (stateInstanceId < consumerConfig.getGroupSize() && stateInstanceId != consumerConfig.getInstanceId()) {
+      if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO
+          && stateInstanceId < consumerConfig.getGroupSize()
+          && stateInstanceId != consumerConfig.getInstanceId()) {
         return false;
       }
 
@@ -342,6 +360,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       if (state == ConsumerEntryState.PROCESSED
           && stateWritePointer <= transaction.getReadPointer()
           && Arrays.binarySearch(transaction.getExcludedList(), stateWritePointer) < 0) {
+        cleanupRows.add(new Delete(rowKey));
         return false;
       }
     }

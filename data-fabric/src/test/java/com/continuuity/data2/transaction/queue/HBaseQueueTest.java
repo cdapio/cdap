@@ -25,21 +25,9 @@ import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.Ints;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -73,71 +61,12 @@ public class HBaseQueueTest extends HBaseTestBase {
   private static OperationExecutor opex;
 
   @Test
-  public void testFilter() throws IOException {
-    byte[] columnFamily = "c".getBytes(Charsets.UTF_8);
-    byte[] column = columnFamily;
-    HBaseUtils.createTableIfNotExists(getHBaseAdmin(), "testFilter", columnFamily, 1000);
-    HTable hTable = new HTable(getConfiguration(), "testFilter");
-
-    // Insert 10 rows
-    for (int i = 0; i < 10; i++) {
-      byte[] value = new byte[Ints.BYTES * 2 + 1];
-      Bytes.putInt(value, 0, i);
-      Bytes.putInt(value, Ints.BYTES, i % 2);
-
-      if (i % 2 == 0) {
-        value[value.length - 1] = ConsumerEntryState.CLAIMED.getState();
-      } else {
-        value[value.length - 1] = ConsumerEntryState.PROCESSED.getState();
-      }
-
-      Put put = new Put(Bytes.toBytes(i));
-      put.add(columnFamily, "d".getBytes(Charsets.UTF_8), Bytes.toBytes(i));
-      put.add(columnFamily, column, value);
-      hTable.put(put);
-    }
-    // Insert 10 rows without state
-    for (int i = 10; i < 20; i++) {
-      Put put = new Put(Bytes.toBytes(i));
-      put.add(columnFamily, "d".getBytes(Charsets.UTF_8), Bytes.toBytes(i));
-      hTable.put(put);
-    }
-
-    // Scan
-    Scan scan = new Scan();
-    scan.addFamily(columnFamily);
-
-    // Filter for (writePointer < readPointer)
-    int readPointer = 6;
-    Filter commitFilter = new SingleColumnValueFilter(columnFamily, column,
-                                                      CompareFilter.CompareOp.GREATER,
-                                                      new BinaryPrefixComparator(Bytes.toBytes(readPointer)));
-
-    // Filters for excluded list
-    FilterList excludedFilter = new FilterList(FilterList.Operator.MUST_PASS_ONE);
-    for (int excluded : new int[]{ 1, 4 }) {
-      excludedFilter.addFilter(new SingleColumnValueFilter(columnFamily, column,
-                                                           CompareFilter.CompareOp.EQUAL,
-                                                           new BinaryPrefixComparator(Bytes.toBytes(excluded))));
-    }
-
-    scan.setFilter(new FilterList(FilterList.Operator.MUST_PASS_ONE,
-                                  ImmutableList.of(commitFilter, excludedFilter)));
-
-    ResultScanner scanner = hTable.getScanner(scan);
-    Result result;
-    while ((result = scanner.next()) != null) {
-      System.out.println(Bytes.toInt(result.getRow()));
-    }
-  }
-
-  @Test
   public void testSingleFifo() throws Exception {
     // Create the queue table
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
     final HBaseQueueClient queueClient = new HBaseQueueClient(HBaseTestBase.getHBaseAdmin(), "queueTest", queueName);
 
-    final int count = 5000;
+    final int count = 30000;
     LOG.info("Start enqueue {} entries.", count);
 
     Stopwatch stopwatch = new Stopwatch();
