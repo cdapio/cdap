@@ -103,9 +103,9 @@ WebAppServer.prototype.configureExpress = function() {
 
   // Workaround to make static files work on cloud.
   if (fs.existsSync(this.dirPath + '/../client/')) {
-    this.app.use(express.static(this.dirPath + '/../client/'));
+    this.app.use(express['static'](this.dirPath + '/../client/'));
   } else {
-    this.app.use(express.static(this.dirPath + '/../../client/'));
+    this.app.use(express['static'](this.dirPath + '/../../client/'));
   }
 };
 
@@ -406,7 +406,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
         self.logger.error(error);
       } else {
         result.map(function (item) {
-          item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset));
+          item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset), 10);
           return item;
         });
       }
@@ -421,12 +421,14 @@ WebAppServer.prototype.bindRoutes = function(io) {
    */
   this.app.post('/rpc/:type/:method', function (req, res) {
 
+    var type, method, params, accountID;
+
     try {
 
-      var type = req.params.type;
-      var method = req.params.method;
-      var params = req.body
-      var accountID = 'developer';
+      type = req.params.type;
+      method = req.params.method;
+      params = req.body;
+      accountID = 'developer';
 
     } catch (e) {
 
