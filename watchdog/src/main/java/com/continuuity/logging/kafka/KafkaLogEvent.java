@@ -11,7 +11,7 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Represents a log event fetched from Kafka.
  */
-public final class KafkaLogEvent {
+public final class KafkaLogEvent implements Comparable<KafkaLogEvent> {
   private final GenericRecord  genericRecord;
   private final ILoggingEvent logEvent;
   private final LoggingContext loggingContext;
@@ -39,5 +39,12 @@ public final class KafkaLogEvent {
 
   public LoggingContext getLoggingContext() {
     return loggingContext;
+  }
+
+  @Override
+  public int compareTo(KafkaLogEvent event) {
+    return logEvent.getTimeStamp() > event.getLogEvent().getTimeStamp() ? 1 :
+      logEvent.getTimeStamp() < event.getLogEvent().getTimeStamp() ? -1 : 0;
+
   }
 }

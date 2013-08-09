@@ -93,6 +93,7 @@ public final class AvroFileWriter implements Closeable {
     AvroFile avroFile = getAvroFile(loggingContext, timestamp);
     for (KafkaLogEvent event : events) {
       avroFile.append(event);
+      avroFile.flush();
     }
 
     checkPoint(false);
@@ -171,7 +172,7 @@ public final class AvroFileWriter implements Closeable {
     Set<String> files = Sets.newHashSetWithExpectedSize(fileMap.size());
     for (Iterator<Map.Entry<String, AvroFile>> it = fileMap.entrySet().iterator(); it.hasNext();) {
       AvroFile avroFile = it.next().getValue();
-      avroFile.flush();
+      avroFile.sync();
 
       files.add(avroFile.getPath().toUri().toString());
       if (avroFile.getMaxOffsetSeen() > checkpointOffset) {
@@ -246,6 +247,11 @@ public final class AvroFileWriter implements Closeable {
     public void flush() throws IOException {
       dataFileWriter.flush();
       outputStream.hflush();
+    }
+
+    public void sync() throws IOException {
+      dataFileWriter.flush();
+      outputStream.hsync();
     }
 
     @Override

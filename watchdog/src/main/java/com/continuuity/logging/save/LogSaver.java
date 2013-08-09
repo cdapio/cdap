@@ -4,6 +4,7 @@
 
 package com.continuuity.logging.save;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.LoggingContext;
@@ -16,7 +17,6 @@ import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -73,7 +74,7 @@ public final class LogSaver extends AbstractIdleService {
   private final int syncIntervalBytes;
   private final long checkpointIntervalMs = 60 * 1000;
   private final long inactiveIntervalMs = 10 * 60 * 1000;
-  private final long eventProcessingDelayMs = 5 * 1000;
+  private final long eventProcessingDelayMs = 7 * 1000;
   private final long retentionDurationMs;
   private final long maxLogFileSizeBytes;
 
@@ -307,7 +308,9 @@ public final class LogSaver extends AbstractIdleService {
                                      messages, topic, partition));
             }
             for (Iterator<List<KafkaLogEvent>> it = writeLists.iterator(); it.hasNext(); ) {
-              avroFileWriter.append(it.next());
+              List<KafkaLogEvent> events = it.next();
+              Collections.sort(events);
+              avroFileWriter.append(events);
               // Remove successfully written message
               it.remove();
             }
