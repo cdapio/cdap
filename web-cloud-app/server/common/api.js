@@ -135,14 +135,14 @@ logger.setLevel(LOG_LEVEL);
 			switch (method) {
 				case 'start':
 					identifier = new appfabricservice_types.FlowDescriptor({
-						identifier: new appfabricservice_types.FlowIdentifier({
+						"identifier": new appfabricservice_types.FlowIdentifier({
 							applicationId: params[1],
 							flowId: params[2],
 							version: parseInt(params[3], 10),
 							accountId: params[0],
 							type: appfabricservice_types.EntityType[params[4] || 'FLOW']
 						}),
-						"arguments": []
+						"arguments": params[5] || []
 					});
 					Manager.start(auth_token, identifier, done);
 				break;
@@ -221,6 +221,17 @@ logger.setLevel(LOG_LEVEL);
 					Monitor.getLog.apply(Monitor, params.concat(done));
 
 				break;
+
+				case 'getLogPrev':
+
+					params.unshift(accountID);
+					Monitor.getLogPrev.apply(Monitor, params.concat(done));
+					break;
+
+				case 'getLogNext':
+					params.unshift(accountID);
+					Monitor.getLogNext.apply(Monitor, params.concat(done));
+					break;
 
 				case 'getCounters':
 					flow = new metricsservice_types.FlowArgument({
@@ -311,7 +322,7 @@ logger.setLevel(LOG_LEVEL);
 
 					identifier = new appfabricservice_types.FlowIdentifier({
 						applicationId: params[0],
-						flowId: '',
+						flowId: 'NONE',
 						version: -1,
 						accountId: accountID
 					});
@@ -356,7 +367,7 @@ logger.setLevel(LOG_LEVEL);
 
 		var post_data = params.payload || "";
 
-		var post_options = post_options = {
+		var post_options = {
 			host: this.config['gateway.hostname'],
 			port: this.config['gateway.port'],
 			method: 'POST',
@@ -370,14 +381,14 @@ logger.setLevel(LOG_LEVEL);
 			case 'inject':
 
 				// Adding 1000 to be picked up by nginx.
-				post_options.port = parseInt(this.config['stream.rest.port']) + (secure ? 1000 : 0);
+				post_options.port = parseInt(this.config['stream.rest.port'], 10) + (secure ? 1000 : 0);
 				post_options.path = '/stream/' + params.stream;
 
 			break;
 			case 'query':
 
 				// Adding 1000 to be picked up by nginx.
-				post_options.port = parseInt(this.config['procedure.rest.port']) + (secure ? 1000 : 0);
+				post_options.port = parseInt(this.config['procedure.rest.port'], 10) + (secure ? 1000 : 0);
 				post_options.path = '/procedure/' + params.app + '/' +
 					params.service + '/' + params.method;
 
@@ -421,6 +432,7 @@ logger.setLevel(LOG_LEVEL);
 
 		});
 
+
 		request.on('error', function (e) {
 
 			done({
@@ -430,7 +442,7 @@ logger.setLevel(LOG_LEVEL);
 
 		});
 
-		request.write(post_data)
+		request.write(post_data);
 		request.end();
 
 	};
@@ -453,6 +465,8 @@ logger.setLevel(LOG_LEVEL);
 			res.write('');
 			res.end();
 
+			logger.trace('Upload received.', file + '(' + data.length + ')');
+
 			var conn = thrift.createConnection(
 				self.config['resource.manager.server.address'],
 				self.config['resource.manager.server.port'], {
@@ -460,7 +474,7 @@ logger.setLevel(LOG_LEVEL);
 				protocol: tprotocol.TBinaryProtocol
 			});
 			conn.on('error', function (error) {
-			logger.warn('Could not connect to AppFabricService (Upload).');
+				logger.error('Could not connect to AppFabricService (Upload).', error);
 				socket.emit('upload', {'status': 'failed', 'step': 4, 'message': 'Could not connect to AppFabricService'});
 			});
 
@@ -479,6 +493,8 @@ logger.setLevel(LOG_LEVEL);
 						socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
 
 					} else {
+
+						logger.trace('Upload to AppFabric initialized.');
 
 						socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
 
@@ -501,6 +517,8 @@ logger.setLevel(LOG_LEVEL);
 												logger.warn('FARManager verify', error);
 												socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
 											} else {
+
+												logger.trace('Upload status changed', result);
 
 												if (current_status !== result.overall) {
 													socket.emit('upload', {'status': 'verifying', 'step': result.overall, 'message': result.message, 'flows': result.verification});

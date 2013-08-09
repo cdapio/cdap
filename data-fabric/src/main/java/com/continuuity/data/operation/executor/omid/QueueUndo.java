@@ -37,6 +37,10 @@ public abstract class QueueUndo implements Undo {
     return this.entryPointers;
   }
 
+  public int numEntries() {
+    return this.entryPointers.length;
+  }
+
   protected QueueUndo(final byte[] queueName, final QueueEntryPointer [] entryPointers) {
     this.queueName = queueName;
     this.entryPointers = entryPointers;
@@ -76,10 +80,6 @@ public abstract class QueueUndo implements Undo {
         size += entry.getData().length;
       }
       this.sumOfSizes = size;
-    }
-
-    public int numEntries() {
-      return this.entryPointers.length;
     }
 
     @Override

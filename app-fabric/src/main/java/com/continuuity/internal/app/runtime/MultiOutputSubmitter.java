@@ -7,8 +7,8 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 /**
- * A {@link com.continuuity.internal.app.runtime.OutputSubmitter} that would delegate the {@link #submit(TransactionAgent)}
- * call to all the {@link com.continuuity.internal.app.runtime.OutputSubmitter} that it contains one by one.
+ * A {@link OutputSubmitter} that would delegate the {@link #submit(TransactionAgent)}
+ * call to all the {@link OutputSubmitter} that it contains one by one.
  */
 public final class MultiOutputSubmitter implements OutputSubmitter {
 

@@ -1,24 +1,19 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
+/**
+ * Defines common methods for Simple OVC table handle.
+ */
 public abstract class SimpleOVCTableHandle extends AbstractOVCTableHandle {
 
   protected final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable>
       openTables =
-        new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
+        new ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable>(
             Bytes.BYTES_COMPARATOR);
-
-  /**
-   * This is the timestamp generator that we will use
-   */
-  @Inject
-  protected TransactionOracle oracle;
 
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName)
@@ -26,7 +21,9 @@ public abstract class SimpleOVCTableHandle extends AbstractOVCTableHandle {
     OrderedVersionedColumnarTable table = this.openTables.get(tableName);
 
     // we currently have an open table for this name
-    if (table != null) return table;
+    if (table != null) {
+      return table;
+    }
 
     // the table is not open, but it may exist in the data fabric
     table = openTable(tableName);

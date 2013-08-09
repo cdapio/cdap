@@ -3,7 +3,7 @@ package com.continuuity.data.operation;
 import com.google.common.base.Preconditions;
 
 /**
- * An operations to spit a table into ranges of row keys
+ * An operations to spit a table into ranges of row keys.
  */
 public class GetSplits extends ReadOperation {
 
@@ -20,7 +20,7 @@ public class GetSplits extends ReadOperation {
   private final int numSplits;
 
   /**
-   * Get splits for all columns of the entire table
+   * Get splits for all columns of the entire table.
    */
   public GetSplits(String table) {
     this(table, -1);

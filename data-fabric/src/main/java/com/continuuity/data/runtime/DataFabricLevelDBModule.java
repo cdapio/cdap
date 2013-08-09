@@ -16,6 +16,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.AbstractModule;
+import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
@@ -32,8 +33,8 @@ public class DataFabricLevelDBModule extends AbstractModule {
   private final CConfiguration conf;
 
   public static boolean isOsLevelDBCompatible() {
-    String OS = System.getProperty("os.name").toLowerCase();
-    return OS.contains("mac") || OS.contains("nix") || OS.contains("nux") || OS.contains("aix");
+    String os = System.getProperty("os.name").toLowerCase();
+    return os.contains("mac") || os.contains("nix") || os.contains("nux") || os.contains("aix");
   }
 
   public DataFabricLevelDBModule(CConfiguration configuration) {
@@ -53,7 +54,8 @@ public class DataFabricLevelDBModule extends AbstractModule {
     this.basePath = path;
     this.blockSize = configuration.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE,
                                           Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-    this.cacheSize = configuration.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
+    this.cacheSize = configuration.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE,
+                                           Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     this.conf = configuration;
   }
 

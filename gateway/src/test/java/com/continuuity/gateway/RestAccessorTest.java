@@ -4,8 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.Id;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.ClearFabric;
@@ -44,32 +43,34 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Tests Rest Accessor.
+ */
 public class RestAccessorTest {
 
-  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
+  static final OperationContext CONTEXT = TestUtil.DEFAULT_CONTEXT;
 
   /**
-   * this is the executor for all access to the data fabric
+   * this is the executor for all access to the data fabric.
    */
   private OperationExecutor executor;
 
   /**
-   * the rest accessor we will use in the tests
+   * the rest accessor we will use in the tests.
    */
   private DataRestAccessor accessor;
 
   /**
-   * the rest collector we will use in the clear test
+   * the rest collector we will use in the clear test.
    */
   private RestCollector collector;
 
   /**
-   * Set up in-memory data fabric
+   * Set up in-memory data fabric.
    */
   @Before
   public void setup() throws OperationException {
@@ -78,12 +79,12 @@ public class RestAccessorTest {
     Injector injector = Guice.createInjector(
       new DataFabricModules().getInMemoryModules());
     this.executor = injector.getInstance(OperationExecutor.class);
-    this.executor.execute(TestUtil.context, new ClearFabric(ClearFabric.ToClear.ALL));
+    this.executor.execute(TestUtil.CONTEXT, new ClearFabric(ClearFabric.ToClear.ALL));
 
   } // end of setupGateway
 
   /**
-   * Create a new rest accessor with a given name and parameters
+   * Create a new rest accessor with a given name and parameters.
    *
    * @param name   The name for the accessor
    * @param prefix The path prefix for the URI
@@ -115,7 +116,7 @@ public class RestAccessorTest {
     return "http://localhost:" + port + prefix + middle;
   }
 
-  // we will need this to test the clear API
+  // we will need this to test the clear API.
   String setupCollector(String name, String prefix, String middle)
       throws Exception {
     // bring up a new collector
@@ -158,7 +159,7 @@ public class RestAccessorTest {
 
   /**
    * Starts up a REST accessor, then tests retrieval of several combinations
-   * of keys and values
+   * of keys and values.
    * <ul>
    * <li>of ASCII letters only</li>
    * <li>of special characters</li>
@@ -186,7 +187,7 @@ public class RestAccessorTest {
 
   /**
    * Starts up a REST accessor, then tests storing of several combinations
-   * of keys and values
+   * of keys and values.
    * <ul>
    * <li>of ASCII letters only</li>
    * <li>of special characters</li>
@@ -213,7 +214,7 @@ public class RestAccessorTest {
   }
 
   /**
-   * Verifies that a PUT to an existing key updates the value
+   * Verifies that a PUT to an existing key updates the value.
    */
   @Test
   public void testRepeatedPut() throws Exception {
@@ -323,7 +324,7 @@ public class RestAccessorTest {
 
   /**
    * This tests that the accessor returns the correct HTTP codes for
-   * invalid requests
+   * invalid requests.
    *
    * @throws Exception if anything goes wrong
    */
@@ -430,7 +431,7 @@ public class RestAccessorTest {
   }
 
   /**
-   * This tests that the accessor can be stopped and restarted
+   * This tests that the accessor can be stopped and restarted.
    */
   @Test
   public void testStopRestart() throws Exception {
@@ -545,16 +546,16 @@ public class RestAccessorTest {
 
   void verifyEvent(String stream, int n) throws Exception {
 
-    String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
+    String streamUri = QueueName.fromStream(TestUtil.DEFAULT_ACCOUNT_ID, stream)
                                 .toString();
     GetGroupID op = new GetGroupID(streamUri.getBytes());
-    long id = this.executor.execute(context, op);
+    long id = this.executor.execute(CONTEXT, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    this.executor.execute(context, new QueueConfigure(streamUri.getBytes(), queueConsumer));
+    this.executor.execute(CONTEXT, new QueueConfigure(streamUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
-    DequeueResult result = this.executor.execute(context, dequeue);
+    DequeueResult result = this.executor.execute(CONTEXT, dequeue);
     Assert.assertFalse(result.isEmpty());
     // try to deserialize into an event
     StreamEventCodec deserializer = new StreamEventCodec();
@@ -566,18 +567,18 @@ public class RestAccessorTest {
     // ack the entry so that the next request can see the next entry
     QueueAck ack = new
       QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
-    this.collector.getExecutor().commit(context, ack);
+    this.collector.getExecutor().commit(CONTEXT, ack);
   }
 
   void verifyInteger(String queueUri, int n) throws Exception {
     GetGroupID op = new GetGroupID(queueUri.getBytes());
-    long id = this.executor.execute(context, op);
+    long id = this.executor.execute(CONTEXT, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    executor.execute(context, new QueueConfigure(queueUri.getBytes(), queueConsumer));
+    executor.execute(CONTEXT, new QueueConfigure(queueUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
-    DequeueResult result = this.executor.execute(context, dequeue);
+    DequeueResult result = this.executor.execute(CONTEXT, dequeue);
     Assert.assertFalse(result.isEmpty());
     // try to deserialize into an integer
     int num = Bytes.toInt(result.getEntry().getData());
@@ -585,7 +586,7 @@ public class RestAccessorTest {
     // ack the entry so that the next request can see the next entry
     QueueAck ack = new
       QueueAck(queueUri.getBytes(), result.getEntryPointer(), queueConsumer);
-    this.collector.getExecutor().commit(context, ack);
+    this.collector.getExecutor().commit(CONTEXT, ack);
   }
 
   void sendAndVerify(String baseUrl, String stream, int n) throws Exception {
@@ -601,35 +602,35 @@ public class RestAccessorTest {
   void sendInteger(String queueUri, int n) throws OperationException {
     byte[] bytes = Bytes.toBytes(n);
     QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), new QueueEntry(bytes));
-    this.executor.commit(context, enqueue);
+    this.executor.commit(CONTEXT, enqueue);
   }
 
   void verifyKeyGone(String key) throws Exception {
     Read read = new Read(key.getBytes(), Operation.KV_COL);
-    Assert.assertTrue(this.executor.execute(context, read).isEmpty());
+    Assert.assertTrue(this.executor.execute(CONTEXT, read).isEmpty());
   }
 
   void verifyKeyValue(String key, String value) throws Exception {
     Read read = new Read(key.getBytes(), Operation.KV_COL);
-    OperationResult<Map<byte[],byte[]>> result = this.executor.execute(context, read);
+    OperationResult<Map<byte[], byte[]>> result = this.executor.execute(CONTEXT, read);
     Assert.assertFalse(result.isEmpty());
     Assert.assertArrayEquals(value.getBytes(), result.getValue().get(Operation.KV_COL));
   }
 
   void verifyQueueGone(String queueUri) throws Exception {
     GetGroupID op = new GetGroupID(queueUri.getBytes());
-    long id = this.executor.execute(context, op);
+    long id = this.executor.execute(CONTEXT, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    executor.execute(context, new QueueConfigure(queueUri.getBytes(), queueConsumer));
+    executor.execute(CONTEXT, new QueueConfigure(queueUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
-    DequeueResult result = this.executor.execute(context, dequeue);
+    DequeueResult result = this.executor.execute(CONTEXT, dequeue);
     Assert.assertTrue(result.isEmpty());
   }
 
   void verifyStreamGone(String stream) throws Exception {
-    String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
+    String streamUri = QueueName.fromStream(TestUtil.DEFAULT_ACCOUNT_ID, stream)
       .toString();
     verifyQueueGone(streamUri);
   }

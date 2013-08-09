@@ -14,65 +14,54 @@ define([], function () {
 
 		}.property().cacheable(),
 		init: function() {
+
 			this._super();
 
-			this.set('metricData', Em.Object.create());
-			this.set('metricNames', {});
+			this.set('timeseries', Em.Object.create());
+			this.set('aggregates', Em.Object.create());
+			this.set('rates', Em.Object.create());
 
 			this.set('id', this.get('name'));
 
 		},
-		addMetricName: function (name) {
 
-			this.get('metricNames')[name] = 1;
+		interpolate: function (path) {
 
-		},
-		getUpdateRequest: function (flow) {
-
-			var id = flow.name;
-			var app = flow.app;
-
-			var self = this;
-			var pointCount = 30;
-
-			var metrics = [];
-			for (var name in this.get('metricNames')) {
-				metrics.push(name);
-			}
-
-			var start = C.__timeRange * -1;
-
-			return ['monitor', {
-				method: 'getTimeSeries',
-				params: [app, id, metrics, start, undefined, 'FLOWLET_LEVEL', this.get('id')]
-			}, function (error, response, id) {
-
-				if (!response.params) {
-					return;
-				}
-
-				var data, points = response.params.points,
-					latest = response.params.latest;
-
-				for (var metric in points) {
-					data = points[metric];
-
-					var k = data.length;
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-					metric = metric.replace(/\./g, '');
-
-					self.get('metricData').set(metric, data);
-					self.set('__loadingData', false);
-
-				}
-
-			}];
+			return path.replace(/\{app\}/, this.get('app'))
+				.replace(/\{flow\}/, this.get('flow'))
+				.replace(/\{id\}/, this.get('id'));
 
 		},
-		label: 0,
+
+		trackMetric: function (path, kind, label) {
+
+			this.get(kind).set(path = this.interpolate(path), label || []);
+			return path;
+
+		},
+
+		units: {
+			'events': 'number'
+		},
+
+		setMetric: function (label, value) {
+
+			var unit = this.get('units')[label];
+			value = C.Util[unit](value);
+
+			this.set(label + 'Label', value[0]);
+			this.set(label + 'Units', value[1]);
+
+		},
+
+		clearMetrics: function () {
+
+			this.set('timeseries', Em.Object.create());
+			this.set('aggregates', Em.Object.create());
+			this.set('rates', Em.Object.create());
+
+		},
+
 		plural: function () {
 			return this.instances === 1 ? '' : 's';
 		}.property('instances'),

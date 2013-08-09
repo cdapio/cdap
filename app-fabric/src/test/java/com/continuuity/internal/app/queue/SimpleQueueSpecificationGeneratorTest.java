@@ -9,7 +9,7 @@ import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.app.Id;
-import com.continuuity.test.app.DefaultId;
+import com.continuuity.test.internal.DefaultId;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
@@ -69,10 +69,10 @@ public class SimpleQueueSpecificationGeneratorTest {
 
     // Stream X
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"),
-                                    "stream://"+TEST_ACCOUNT_ID.getId()+"/X"));
+                                    "stream://" + TEST_ACCOUNT_ID.getId() + "/X"));
 
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"),
-                                    "stream://"+TEST_ACCOUNT_ID.getId()+"/Y"));
+                                    "stream://" + TEST_ACCOUNT_ID.getId() + "/Y"));
 
     // Node A
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue://ToyFlow/A/out1"));
@@ -106,7 +106,7 @@ public class SimpleQueueSpecificationGeneratorTest {
 
     Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
                         .iterator().next().getQueueName().toString()
-                        .equals("stream://"+TEST_ACCOUNT_ID.getId()+"/text"));
+                        .equals("stream://" + TEST_ACCOUNT_ID.getId() + "/text"));
     Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
                         .iterator().next().getQueueName().toString()
                         .equals("queue://WordCountFlow/StreamSource/queue"));

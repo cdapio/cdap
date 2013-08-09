@@ -11,6 +11,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class HyperSQLOpexServiceTest extends OperationExecutorServiceTest {
 
   static Injector injector;

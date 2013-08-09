@@ -1,10 +1,10 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.executor.ReadPointer;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -75,4 +75,22 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    */
   public List<KeyRange> getSplits(int numSplits, byte[] start, byte[] stop, byte[][] columns, ReadPointer pointer)
     throws OperationException;
+
+  /**
+   * Delete all rows in a given range completely, and dirtily, that is, bypassing transactions: these rows will
+   * disappear right away, and even current transactions will not be able to read them anymore.
+   * @param startRow the first row to delete
+   * @param stopRow the first row not to delete, or null to delete all rows greater or equal to startRow.
+   * @throws OperationException in case of error
+   */
+  public void deleteRowsDirtily(byte[] startRow, @Nullable byte[] stopRow) throws OperationException;
+
+  /**
+   * Delete all rows with a given prefix completely, and dirtily, that is, bypassing transactions: these rows will
+   * disappear right away, and even current transactions will not be able to read them anymore.
+   * @param prefix the prefix of rows to delete
+   * @throws OperationException in case of error
+   */
+  public void deleteRowsDirtily(byte[] prefix) throws OperationException;
+
 }

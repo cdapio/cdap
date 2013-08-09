@@ -19,6 +19,9 @@ import com.google.common.base.Objects;
  *   TupleInputStreamIdentifier identifier = tupleStreamPair.getSecond();
  *   ...
  * </pre>
+ *
+ * @param <A> type A
+ * @param <B> type B
  */
 public final class ImmutablePair<A, B> {
   private final A first;
@@ -78,9 +81,13 @@ public final class ImmutablePair<A, B> {
    */
   @Override
   public boolean equals(Object o) {
-    if(o == null) return false;
-    if (!(o instanceof ImmutablePair)) return false;
-    ImmutablePair<?,?> other = (ImmutablePair<?,?>) o;
+    if (o == null) {
+      return false;
+    }
+    if (!(o instanceof ImmutablePair)) {
+      return false;
+    }
+    ImmutablePair<?, ?> other = (ImmutablePair<?, ?>) o;
     return Objects.equal(first, other.first) && Objects.equal(second, other.second);
   }
 }

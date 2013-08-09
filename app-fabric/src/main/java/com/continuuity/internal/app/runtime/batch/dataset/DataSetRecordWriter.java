@@ -29,7 +29,7 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   public void write(final KEY key, final VALUE value) throws IOException {
     try {
       batchWritable.write(key, value);
-    } catch(OperationException e) {
+    } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -43,6 +43,8 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
     } catch (OperationException e) {
       LOG.error("Failed to flush operations at the end of reducer of " + mrContext.toString());
       throw Throwables.propagate(e);
+    } finally {
+      mrContext.close();
     }
   }
 }

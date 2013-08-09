@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.hbase.ttqueue.HBQConsumer;
 import com.google.common.base.Objects;
 
 /**
@@ -15,6 +14,9 @@ public class QueueConsumer {
   private final String partitioningKey; // may be null or empty
   private StateType stateType = StateType.UNINITIALIZED;
 
+  /**
+   * Defines queue consumer states.
+   */
   public enum StateType {
     UNINITIALIZED, // Consumer does not have its state, it could be due to consumer's first call or consumer crash
     INITIALIZED,   // Consumer has its state available
@@ -50,7 +52,7 @@ public class QueueConsumer {
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey,
                        QueueConfig config) {
-    if(instanceId >= groupSize) {
+    if (instanceId >= groupSize) {
       throw new IllegalArgumentException(String.format(
         "instanceId should be between 0..groupSize. Given instanceId is %d, groupSize is %d", instanceId, groupSize));
     }
@@ -117,9 +119,5 @@ public class QueueConsumer {
         .add("partitioningKey", this.partitioningKey)
         .add("stateType", this.stateType)
         .toString();
-  }
-
-  public HBQConsumer toHBQ() {
-    return new HBQConsumer(instanceId, groupId, groupSize);
   }
 }

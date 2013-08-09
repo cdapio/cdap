@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Collector for logging system.
+ */
 public class LogCollector {
 
   private static final Logger LOG
@@ -29,14 +32,15 @@ public class LogCollector {
 
   private FileSystem getFileSystem() throws IOException {
     if (fs == null) {
-      synchronized(this) {
+      synchronized (this) {
         if (fs == null) {
           fs = FileSystem.get(hConfig);
           // TODO horrible! what worth is the FileSystem abstraction then?
           // not sure why this is, but the local file system's hflush() does
           // not appear to work. Using the raw local file system fixes it.
-          if (fs instanceof LocalFileSystem)
+          if (fs instanceof LocalFileSystem) {
             fs = ((LocalFileSystem) fs).getRawFileSystem();
+          }
         }
       }
     }

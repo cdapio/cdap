@@ -34,8 +34,9 @@ task jshint << {
     "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
   ]
 
+  print command.join(' ');
 
-/*
+/* Exluding command to fix build. 
   if(executeCommand(command) != 0) {
     throw new GradleScriptException("JSHint reported errors while building command app", null)
   }
@@ -50,11 +51,11 @@ task nodeTests << {
   def command = [
     "$rootProject.projectDir/web-cloud-app/test/node_modules/mocha/bin/mocha"
   ]
-/*
+  /*
   if(executeCommand(command) != 0) {
     throw new GradleScriptException("Error running node tests", null)
   }
-*/
+  */
 }
 
 /**
@@ -162,6 +163,14 @@ task prepackager(dependsOn: 'build', overwrite: true) {
       into "${installDir}/conf"
     }
   }
+}
+
+packaging {
+  extraOptions['--config-files'] = "/opt/continuuity/web-cloud-app/server/continuuity-local.xml"
+}
+
+rpm.doFirst {
+  packaging.extraOptions['--config-files'] = "/opt/continuuity/web-cloud-app/server/continuuity-local.xml"
 }
 
 debianPrepackager.dependsOn prepackager

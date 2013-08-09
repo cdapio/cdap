@@ -6,13 +6,13 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.internal.io.Schema;
 import com.continuuity.app.Id;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.app.SchemaFinder;
+import com.continuuity.internal.io.Schema;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 
@@ -40,7 +40,7 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
     // Iterate through all the outputs and look for an input with compatible schema.
     // If no such input is found, look for one with ANY_INPUT.
     // If there is exact match of schema then we pick that over the compatible one.
-    for(Map.Entry<String, Set<Schema>> entryOutput : outputSchemas.entrySet()) {
+    for (Map.Entry<String, Set<Schema>> entryOutput : outputSchemas.entrySet()) {
       String outputName = entryOutput.getKey();
 
       Set<Schema> nameOutputSchemas = inputSchemas.get(outputName);
@@ -60,7 +60,7 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
       }
 
       if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        builder.add(createSpec(QueueName.fromStream(account, outputName),
+        builder.add(createSpec(QueueName.fromStream(account.getId(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
         builder.add(createSpec(QueueName.fromFlowlet(flow, connection.getSourceName(), outputName),
@@ -104,7 +104,7 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
         if (obj == null || !(obj instanceof QueueSpecification)) {
           return false;
         }
-        QueueSpecification other = (QueueSpecification)obj;
+        QueueSpecification other = (QueueSpecification) obj;
         return Objects.equal(getQueueName(), other.getQueueName())
                 && Objects.equal(getInputSchema(), other.getInputSchema())
                 && Objects.equal(getOutputSchema(), other.getOutputSchema());

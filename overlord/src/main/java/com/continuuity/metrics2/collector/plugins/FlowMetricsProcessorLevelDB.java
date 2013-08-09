@@ -78,7 +78,7 @@ public class FlowMetricsProcessorLevelDB implements MetricsProcessor {
       Constants.DEFAULT_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS
     );
 
-    for(String metric : allowedMetrics) {
+    for (String metric : allowedMetrics) {
       allowedTimeseriesMetrics.put(metric, true);
     }
   }
@@ -104,8 +104,8 @@ public class FlowMetricsProcessorLevelDB implements MetricsProcessor {
     try {
       final FlowMetricElements elements =
         new FlowMetricElements.Builder(request.getMetricName()).create();
-      if(elements != null) {
-        if(updateDataPoint(elements, request)) {
+      if (elements != null) {
+        if (updateDataPoint(elements, request)) {
           response.set(MetricResponse.Status.SUCCESS);
         } else {
           response.set(MetricResponse.Status.FAILED);
@@ -172,10 +172,10 @@ public class FlowMetricsProcessorLevelDB implements MetricsProcessor {
    */
   @Override
   public void close() throws IOException {
-    if(DB != null) {
+    if (DB != null) {
       DB.close();
     }
-    if(es != null) {
+    if (es != null) {
       es.shutdown();
     }
   }

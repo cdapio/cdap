@@ -43,7 +43,7 @@ logger.setLevel(LOG_LEVEL);
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  logger.error('Uncaught Exception', err);
+	logger.error('Uncaught Exception', err);
 });
 
 /**
@@ -416,7 +416,7 @@ fs.readFile(configPath, function (error, result) {
 				});
 
 				/**
-				 * FAR request. Requires an  accountID.
+				 * FAR request. Requires an	accountID.
 				 */
 				socket.on('far', function (request) {
 
@@ -480,6 +480,278 @@ fs.readFile(configPath, function (error, result) {
 			});
 
 		}
+
+		var singularREST = {
+			'apps': 'getApplication',
+			'streams': 'getStream',
+			'flows': 'getFlow',
+			'mapreduce': 'getMapreduce',
+			'datasets': 'getDataset',
+			'procedures': 'getQuery'
+		};
+
+		var pluralREST = {
+			'apps': 'getApplications',
+			'streams': 'getStreams',
+			'flows': 'getFlows',
+			'mapreduce': 'getMapreduces',
+			'datasets': 'getDatasets',
+			'procedures': 'getQueries'
+		};
+
+		var typesREST = {
+			'apps': 'Application',
+			'streams': 'Stream',
+			'flows': 'Flow',
+			'mapreduce': 'Mapreduce',
+			'datasets': 'Dataset',
+			'procedures': 'Query'
+		};
+
+		var selectiveREST = {
+			'apps': 'ByApplication',
+			'streams': 'ByStream',
+			'datasets': 'ByDataset'
+		};
+
+		/*
+		 * REST handler
+		 */
+		app.get('/rest/*', function (req, res) {
+
+			var path = req.url.slice(6).split('/');
+			var hierarchy = {};
+
+			logger.trace('GET ' + req.url);
+
+			if (!path[path.length - 1]) {
+				path = path.slice(0, path.length - 1);
+			}
+
+			var methods = [], ids = [];
+			for (var i = 0; i < path.length; i ++) {
+				if (i % 2) {
+					ids.push(path[i]);
+				} else {
+					methods.push(path[i]);
+				}
+			}
+
+			var method = null, params = [];
+
+			if ((methods[0] === 'apps' || methods[0] === 'streams' ||
+				methods[0] === 'datasets') && methods[1]) {
+
+				if (ids[1]) {
+					method = singularREST[methods[1]];
+					params = [typesREST[methods[1]], { id: ids[1] }];
+				} else {
+					method = pluralREST[methods[1]] + selectiveREST[methods[0]];
+					params = [ids[0]];
+				}
+
+			} else {
+
+				if (ids[0]) {
+					method = singularREST[methods[0]];
+					params = [typesREST[methods[0]], { id: ids[0] } ];
+				} else {
+					method = pluralREST[methods[0]];
+					params = [];
+				}
+
+			}
+
+			var accountID = req.session.account_id;
+
+			if (method === 'getQuery' || method === 'getMapreduce') {
+				params[1].application = ids[0];
+			}
+
+			if (method === 'getFlow') {
+
+				Api.manager(accountID, 'getFlowDefinition', [ids[0], ids[1]],
+					function (error, response) {
+
+						if (error) {
+							logger.error(error);
+							res.status(500);
+							res.send({
+								error: error
+							});
+						} else {
+							res.send(response);
+						}
+
+				});
+
+			} else {
+
+				Api.metadata(accountID, method, params, function (error, response) {
+
+						if (error) {
+							logger.error(error);
+							res.status(500);
+							res.send({
+								error: error
+							});
+						} else {
+							res.send(response);
+						}
+
+				});
+
+			}
+
+
+		});
+
+		app.get('/logs/:method/:appId/:entityId/:entityType', function (req, res) {
+
+			if (!req.params.method || !req.params.appId || !req.params.entityId || !req.params.entityType) {
+				res.send('incorrect request');
+			}
+
+			var offSet = req.query.fromOffset;
+			var maxSize = req.query.maxSize;
+			var filter = req.query.filter;
+			var method = req.params.method;
+			var accountID = req.session.account_id;
+
+			var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize, filter];
+
+			logger.trace('Logs ' + method + ' ' + req.url);
+
+			Api.monitor(accountID, method, params, function (error, result) {
+				if (error) {
+					logger.error(error);
+				} else {
+					result.map(function (item) {
+						item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset), 10);
+						return item;
+					});
+				}
+
+				res.send({result: result, error: error});
+			});
+
+		});
+
+		/*
+		 * RPC Handler
+		 */
+		app.post('/rpc/:type/:method', function (req, res) {
+
+			var type, method, params, accountID;
+
+			try {
+
+				type = req.params.type;
+				method = req.params.method;
+				params = req.body;
+				accountID = req.session.account_id;
+
+			} catch (e) {
+
+				logger.error(e, req.body);
+				res.send({ result: null, error: 'Malformed request' });
+
+				return;
+
+			}
+
+			logger.trace('RPC ' + type + ':' + method, params);
+
+			switch (type) {
+
+				case 'runnable':
+					Api.manager(accountID, method, params, function (error, result) {
+						if (error) {
+							logger.error(error);
+						}
+						res.send({ result: result, error: error });
+					});
+					break;
+
+				case 'fabric':
+					Api.far(accountID, method, params, function (error, result) {
+						if (error) {
+							logger.error(error);
+						}
+						res.send({ result: result, error: error });
+					});
+					break;
+
+				case 'gateway':
+
+					// NOTE: Gateway authenticates with the API key, not the AccountID.
+					Api.gateway(req.session.api_key, method, params, function (error, result) {
+						if (error) {
+							logger.error(error);
+						}
+						res.send({ result: result, error: error });
+					});
+			}
+
+		});
+
+		/*
+		 * Metrics Handler
+		 */
+		app.post('/metrics', function (req, res) {
+
+			var pathList = req.body;
+			var accountID = req.session.account_id;
+
+			logger.trace('Metrics ', pathList);
+
+			var content = JSON.stringify(pathList);
+
+			var options = {
+				host: config['metrics.service.host'],
+				port: config['metrics.service.port'],
+				path: '/metrics',
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Content-Length': content.length
+				}
+			};
+
+			var request = http.request(options, function(response) {
+				var data = '';
+				response.on('data', function (chunk) {
+					data += chunk;
+				});
+
+				response.on('end', function () {
+
+					try {
+						data = JSON.parse(data);
+						res.send({ result: data, error: null });
+					} catch (e) {
+						logger.error('Parsing Error', data);
+						res.send({ result: null, error: 'Parsing Error' });
+					}
+
+				});
+			});
+
+			request.on('error', function(e) {
+
+				res.send({
+					result: null,
+					error: {
+						fatal: 'MetricsService: ' + e.code
+					}
+				});
+
+			});
+
+			request.write(content);
+			request.end();
+
+		});
 
 		/**
 		 * HTTP handlers.

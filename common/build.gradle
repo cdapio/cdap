@@ -50,11 +50,6 @@ dependencies {
     compile libraries.google_guava
     compile libraries.google_gson
     compile libraries.google_guice
-    compile libraries.netflix_curator_framework
-    compile libraries.netflix_curator_client
-    compile libraries.netflix_curator_discovery_client
-    compile libraries.netflix_curator_discovery_server
-    compile libraries.netflix_curator_recipes
     compile (libraries.hadoop_common) {
         exclude group: 'commons-logging'
         exclude group: 'junit'
@@ -79,6 +74,9 @@ dependencies {
     compile libraries.weave_discovery_api
     compile libraries.weave_discovery_core
     compile libraries.weave_zookeeper
+    compile (libraries.commons_beanutils_core) {
+        exclude group: 'commons-logging'
+    }
 
     testCompile libraries.hadoop_minicluster
     testCompile libraries.jersey_server
@@ -88,4 +86,10 @@ dependencies {
 
     // For metrics
     compile "com.yammer.metrics:metrics-core:2.1.5"
+}
+
+checkstyleTest {
+    source = sourceSets.main.allJava.matching {
+        exclude '**/stubs/**/*'
+    }
 }

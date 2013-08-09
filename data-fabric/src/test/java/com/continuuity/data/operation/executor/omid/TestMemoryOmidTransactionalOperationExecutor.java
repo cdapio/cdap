@@ -9,6 +9,9 @@ import com.google.inject.Injector;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class TestMemoryOmidTransactionalOperationExecutor
 extends TestOmidTransactionalOperationExecutor {
 
@@ -16,7 +19,7 @@ extends TestOmidTransactionalOperationExecutor {
       Guice.createInjector(new DataFabricModules().getInMemoryModules());
 
   private static final OmidTransactionalOperationExecutor executor =
-      (OmidTransactionalOperationExecutor)injector.getInstance(
+      (OmidTransactionalOperationExecutor) injector.getInstance(
           OperationExecutor.class);
 
   @Override

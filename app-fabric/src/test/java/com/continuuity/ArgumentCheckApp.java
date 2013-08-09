@@ -80,9 +80,13 @@ public class ArgumentCheckApp implements Application {
 
   private class SimpleConsumerFlowlet extends AbstractFlowlet {
     public void process(String arg) {
-      if(!arg.equals("test")) {
+      if (!arg.equals("test")) {
         throw new IllegalArgumentException("User argument from prev flowlet not passed");
       }
+    }
+
+    public void process(int i) {
+      // A dummy process method that has no matching upstream.
     }
   }
 
@@ -101,7 +105,7 @@ public class ArgumentCheckApp implements Application {
     @Override
     public void initialize(ProcedureContext context) {
       this.context = context;
-      if(! context.getRuntimeArguments().containsKey("arg")) {
+      if (!context.getRuntimeArguments().containsKey("arg")) {
         throw new IllegalArgumentException("User runtime argument fuctionality not working.");
       }
     }

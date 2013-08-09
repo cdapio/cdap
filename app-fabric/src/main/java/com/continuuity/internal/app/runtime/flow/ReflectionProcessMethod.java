@@ -28,7 +28,7 @@ import java.util.Iterator;
 import java.util.concurrent.Executor;
 
 /**
- *
+ * @param <T> Type of input accepted by this process method.
  */
 @NotThreadSafe
 public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
@@ -66,7 +66,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
       TypeToken.of(method.getGenericParameterTypes()[0]).getRawType().equals(Iterator.class);
     this.needContext = method.getGenericParameterTypes().length == 2;
 
-    if(!this.method.isAccessible()) {
+    if (!this.method.isAccessible()) {
       this.method.setAccessible(true);
     }
   }
@@ -98,7 +98,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
         Iterator<ByteBuffer> inputIterator = input.getData();
         Iterator<T> dataIterator = Iterators.transform(inputIterator, inputDatumTransformer);
 
-        if(needsBatch) {
+        if (needsBatch) {
           //noinspection unchecked
           event = (T) dataIterator;
         } else {
@@ -109,7 +109,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
 
       try {
         if (hasParam) {
-          if(needContext) {
+          if (needContext) {
             method.invoke(flowlet, event, inputContext);
           } else {
             method.invoke(flowlet, event);
@@ -118,7 +118,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
           method.invoke(flowlet);
         }
         return getPostProcess(txAgent, input, event, inputContext);
-      } catch(Throwable t) {
+      } catch (Throwable t) {
         return getFailurePostProcess(t, txAgent, input, event, inputContext);
       } finally {
         outputSubmitter.submit(txAgent);
@@ -152,7 +152,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
                                  new SimpleInputAcknowledger(txAgentSupplier, input));
             } finally {
               // we want to emit metrics after every retry after finish() so that deferred operations are also logged
-              flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
+              flowletContext.getSystemMetrics().gauge("store.ops", txAgent.getSucceededCount());
             }
           }
         });
@@ -174,7 +174,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
           public void run() {
             try {
               // emitting metrics before abort is fine: we don't perform any operataions during abort();
-              flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
+              flowletContext.getSystemMetrics().gauge("store.ops", txAgent.getSucceededCount());
               txAgent.abort();
             } catch (Throwable t) {
               LOGGER.error("OperationException when aborting transaction.", t);

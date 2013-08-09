@@ -3,6 +3,7 @@
  */
 package com.continuuity;
 
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
@@ -19,7 +20,12 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.metadata.MetadataServerInterface;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetadataModules;
@@ -57,6 +63,11 @@ public class SingleNodeMain {
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
 
+  private final MetricsCollectionService metricsCollectionService;
+  private final MetricsQueryService metricsQueryService;
+
+  private final LogAppenderInitializer logAppenderInitializer;
+
   private InMemoryZKServer zookeeper;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration) {
@@ -69,6 +80,10 @@ public class SingleNodeMain {
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
+    logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -87,6 +102,8 @@ public class SingleNodeMain {
    * Start the service.
    */
   protected void startUp(String[] args) throws Exception {
+    logAppenderInitializer.initialize();
+
     File zkDir = new File(ZOOKEEPER_DATA_DIR);
     zkDir.mkdir();
     zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
@@ -95,6 +112,9 @@ public class SingleNodeMain {
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionStr());
 
     // Start all the services.
+    metricsCollectionService.startAndWait();
+    metricsQueryService.startAndWait();
+
     overlordCollection.start(args, configuration);
 
     Service.State state = appFabricServer.startAndWait();
@@ -232,8 +252,9 @@ public class SingleNodeMain {
     try {
       main.startUp(args);
     } catch (Exception e) {
-      main.shutDown();
       System.err.println("Failed to start server. " + e.getMessage());
+      LOG.error("Failed to start server", e);
+      main.shutDown();
       System.exit(-2);
     }
   }
@@ -252,7 +273,10 @@ public class SingleNodeMain {
       new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules()
+      new MetadataModules().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
+      new MetricsQueryRuntimeModule().getInMemoryModules(),
+      new LoggingModules().getInMemoryModules()
     );
   }
 
@@ -289,8 +313,12 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-          useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules()
+      useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
+      new MetadataModules().getSingleNodeModules(),
+      new MetricsClientRuntimeModule().getSingleNodeModules(),
+      new MetricsQueryRuntimeModule().getSingleNodeModules(),
+      new MetadataModules().getSingleNodeModules(),
+      new LoggingModules().getSingleNodeModules()
     );
   }
 }

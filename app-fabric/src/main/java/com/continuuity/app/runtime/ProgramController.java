@@ -36,6 +36,12 @@ public interface ProgramController {
    * </p>
    */
   enum State {
+
+    /**
+     * Program is starting
+     */
+    STARTING,
+
     /**
      * Program is alive
      */
@@ -106,6 +112,9 @@ public interface ProgramController {
    */
   ListenableFuture<ProgramController> command(String name, Object value);
 
+  /**
+   * Listener for getting callbacks on state changed on {@link ProgramController}.
+   */
   interface Listener {
     /**
      * Called when the listener is added. This method will triggered once only.

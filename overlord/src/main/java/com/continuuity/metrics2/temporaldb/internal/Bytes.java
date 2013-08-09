@@ -4,11 +4,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 /**
- * Created with IntelliJ IDEA.
- * User: nmotgi
- * Date: 10/7/12
- * Time: 5:45 PM
- * To change this template use File | Settings | File Templates.
+ * Bytes helper functions.
  */
 class Bytes {
 

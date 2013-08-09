@@ -1,0 +1,24 @@
+apply from: "$rootProject.projectDir/gradle/test-framework.gradle"
+
+defaultTasks 'deployDevSuite'
+
+task cleanDevSuite(type: Delete) {
+    logger.println('[INFO]: Deleting previous Reactor...')
+    delete "${buildDir}"
+}
+
+task deployDevSuite(type: Copy) {
+
+    println "[INFO]: Deploying reactor local to ${buildDir}"
+    def zipFile = file("${rootProject.projectDir}/distributions/build/distributions/continuuity-developer-suite-${version}.zip")
+    def outputDir = file("${buildDir}")
+    from zipTree(zipFile)
+    into outputDir
+
+    doLast {
+        logger.println("[INFO]: reactor local deployed at ${buildDir}/continuuity-developer-suite-${version}")
+    }
+
+}
+deployDevSuite.dependsOn('cleanDevSuite')
+deployDevSuite.dependsOn(":distributions:developer_suite_dist")

@@ -12,6 +12,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * Hypersql backed metadata store tests.
+ */
 public abstract class HyperSQLMetaDataStoreTest extends MetaDataStoreTest {
 
   private static Injector injector;

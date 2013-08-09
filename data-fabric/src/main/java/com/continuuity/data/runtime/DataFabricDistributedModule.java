@@ -1,7 +1,6 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.hbase.HBaseNativeOVCTableHandle;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -19,6 +18,9 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Defines guice bindings for distributed modules.
+ */
 public class DataFabricDistributedModule extends AbstractModule {
 
   private static final Logger Log =
@@ -28,13 +30,8 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   private final Configuration hbaseConf;
 
-  public static final String CONF_ENABLE_NATIVE_QUEUES =
-      "fabric.queue.hbase.native";
-  
-  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
-
   /**
-   * Create a module with default configuration for HBase and Continuuity
+   * Create a module with default configuration for HBase and Continuuity.
    */
   public DataFabricDistributedModule() {
     this.conf = loadConfiguration();
@@ -43,7 +40,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   /**
    * Create a module with custom configuration for HBase,
-   * and defaults for Continuuity
+   * and defaults for Continuuity.
    */
   public DataFabricDistributedModule(Configuration conf) {
     this.hbaseConf = new Configuration(conf);
@@ -51,18 +48,8 @@ public class DataFabricDistributedModule extends AbstractModule {
   }
 
   /**
-   * Create a module with separate, custom configurations for HBase
-   * and for Continuuity
-   */
-  public DataFabricDistributedModule(Configuration conf,
-                                     CConfiguration cconf) {
-    this.hbaseConf = new Configuration(conf);
-    this.conf = cconf;
-  }
-
-  /**
    * Create a module with custom configuration, which will
-   * be used both for HBase and for Continuuity
+   * be used both for HBase and for Continuuity.
    */
   public DataFabricDistributedModule(CConfiguration conf) {
     this.hbaseConf = new Configuration();
@@ -85,10 +72,6 @@ public class DataFabricDistributedModule extends AbstractModule {
   public void configure() {
 
     Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
-    // Check if native hbase queue handle should be used
-    if (conf.getBoolean(CONF_ENABLE_NATIVE_QUEUES, CONF_ENABLE_NATIVE_QUEUES_DEFAULT)) {
-      ovcTableHandle = HBaseNativeOVCTableHandle.class;
-    }
     Log.info("Table Handle is " + ovcTableHandle.getName());
 
     // Bind our implementations

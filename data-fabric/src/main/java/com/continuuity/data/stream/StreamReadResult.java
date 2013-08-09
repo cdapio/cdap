@@ -4,7 +4,6 @@ import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueueState;
-import com.continuuity.hbase.ttqueue.HBQDequeueResult;
 
 /**
  * Result from a stream read operation. It is extending from DequeueResult since Streams implementation are performed
@@ -24,12 +23,8 @@ public class StreamReadResult extends DequeueResult {
     super(status, pointer, entry, queueState);
   }
 
-  public StreamReadResult(byte[] queueName, HBQDequeueResult dequeueResult) {
-    super(queueName, dequeueResult);
-  }
-
   public static StreamReadResult fromDequeueResult(DequeueResult result){
-    return new StreamReadResult(result.getStatus(),result.getEntryPointer(),result.getEntry());
+    return new StreamReadResult(result.getStatus(), result.getEntryPointer(), result.getEntry());
   }
 
 }

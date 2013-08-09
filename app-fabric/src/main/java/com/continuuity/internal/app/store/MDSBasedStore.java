@@ -5,7 +5,9 @@
 package com.continuuity.internal.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -59,12 +61,12 @@ public class MDSBasedStore implements Store {
   private static final RunRecordComparator PROGRAM_RUN_RECORD_START_TIME_COMPARATOR =
     new RunRecordComparator();
   /**
-   * We re-use metadataService to store configuration type data
+   * We re-use metadataService to store configuration type data.
    */
   private final MetadataService.Iface metaDataService;
 
   /**
-   * Helper class
+   * Helper class.
    */
   private final MetadataServiceHelper metadataServiceHelper;
 
@@ -73,7 +75,7 @@ public class MDSBasedStore implements Store {
   private final CConfiguration configuration;
 
   /**
-   * We use metaDataStore directly to store user actions history
+   * We use metaDataStore directly to store user actions history.
    */
   private MetaDataStore metaDataStore;
 
@@ -90,7 +92,7 @@ public class MDSBasedStore implements Store {
   }
 
   /**
-   * Loads a given program
+   * Loads a given program.
    *
    * @param id of the program
    * @param type of program
@@ -98,13 +100,14 @@ public class MDSBasedStore implements Store {
    * @throws IOException
    */
   @Override
-  public Program loadProgram(Id.Program id, Type type ) throws IOException {
+  public Program loadProgram(Id.Program id, Type type) throws IOException {
     Location programLocation = getProgramLocation(id, type);
     return new Program(programLocation);
   }
 
   /**
-   * NOTE: fails with RuntimeException if program can't be found
+   * @return The {@link Location} of the given program.
+   * @throws RuntimeException if program can't be found.
    */
   private Location getProgramLocation(Id.Program id, Type type) throws IOException {
     Location allAppsLocation = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR,
@@ -112,12 +115,12 @@ public class MDSBasedStore implements Store {
     Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
     String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
     Location applicationProgramsLocation = accountAppsLocation.append(name);
-    if(! applicationProgramsLocation.exists()) {
+    if (!applicationProgramsLocation.exists()) {
       throw new RuntimeException("Unable to locate the Program,  location doesn't exist: "
                                    + applicationProgramsLocation.toURI().getPath());
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
-    if(! programLocation.exists()) {
+    if (!programLocation.exists()) {
       throw new RuntimeException(String.format("Program %s.%s of type %s does not exists.",
                                                id.getApplication(), id.getId(), type));
     }
@@ -155,7 +158,7 @@ public class MDSBasedStore implements Store {
   }
 
   /**
-   * Logs end of program run
+   * Logs end of program run.
    *
    * @param id      id of program
    * @param pid     run id
@@ -174,7 +177,7 @@ public class MDSBasedStore implements Store {
                                 FieldTypes.ProgramRun.ENTRY_TYPE, pid,
                                 FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1);
       metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE,
-                                pid, FieldTypes.ProgramRun.END_STATE,state, -1);
+                                pid, FieldTypes.ProgramRun.END_STATE, state, -1);
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
@@ -197,9 +200,9 @@ public class MDSBasedStore implements Store {
                                                      id.getApplicationId(),
                                                      FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields);
     List<RunRecord> runHistory = Lists.newArrayList();
-    for(MetaDataEntry entry : entries) {
+    for (MetaDataEntry entry : entries) {
       String endTsStr = entry.getTextField(FieldTypes.ProgramRun.END_TS);
-      if(endTsStr == null) {
+      if (endTsStr == null) {
         // we need to return only those that finished
         continue;
       }
@@ -252,7 +255,7 @@ public class MDSBasedStore implements Store {
   private static final class RunRecordComparator implements Comparator<RunRecord> {
     @Override
     public int compare(final RunRecord left, final RunRecord right) {
-      if(left.getStartTs() > right.getStartTs()) {
+      if (left.getStartTs() > right.getStartTs()) {
         return 1;
       } else {
         return left.getStartTs() < right.getStartTs() ? -1 : 0;
@@ -402,10 +405,56 @@ public class MDSBasedStore implements Store {
     ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
     storeAppSpec(id.getApplication(), newAppSpec);
 
+    // we don't know the type of the program so we'll try to remove any of Flow, Query or Mapreduce
+    StringBuilder errorMessage = new StringBuilder(
+      String.format("Removing program: account: %s, application: %s, program: %s. Trying every type of program... ",
+                    id.getAccountId(), id.getApplicationId(), id.getId()));
+    // Unfortunately with current MDS there's no way to say if we deleted anything. So we'll just rely on "no errors in
+    // all attempts means we deleted smth". And yes, we show only latest error. And yes, we have to try remove
+    // every type.
+    MetadataServiceException error = null;
     try {
       metadataServiceHelper.deleteFlow(id);
+      error = null;
     } catch (MetadataServiceException e) {
-      throw Throwables.propagate(e);
+      error = e;
+      LOG.warn(
+        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as flow ",
+                      id.getAccountId(), id.getApplicationId(), id.getId()),
+        e);
+      errorMessage.append("Could not remove as Flow (").append(e.getMessage()).append(")...");
+    }
+
+    try {
+      metadataServiceHelper.deleteQuery(id);
+      error = null;
+    } catch (MetadataServiceException e) {
+      if (error != null) {
+        error = e;
+      }
+      LOG.warn(
+        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as query ",
+                      id.getAccountId(), id.getApplicationId(), id.getId()),
+        e);
+      errorMessage.append("Could not remove as Query (").append(e.getMessage()).append(")...");
+    }
+
+    try {
+      metadataServiceHelper.deleteMapReduce(id);
+      error = null;
+    } catch (MetadataServiceException e) {
+      if (error != null) {
+        error = e;
+      }
+      LOG.warn(
+        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as mapreduce ",
+                      id.getAccountId(), id.getApplicationId(), id.getId()),
+        e);
+      errorMessage.append("Could not remove as Mapreduce (").append(e.getMessage()).append(")");
+    }
+
+    if (error != null) {
+      throw new OperationException(StatusCode.ENTRY_NOT_FOUND, errorMessage.toString(), error);
     }
   }
 
@@ -457,7 +506,7 @@ public class MDSBasedStore implements Store {
     throws OperationException {
     for (ProcedureSpecification procedure : appSpec.getProcedures().values()) {
       try {
-        metadataServiceHelper.deleteFlow(Id.Program.from(id.getId(), appSpec.getName(), procedure.getName()));
+        metadataServiceHelper.deleteQuery(Id.Program.from(id.getId(), appSpec.getName(), procedure.getName()));
       } catch (MetadataServiceException e) {
         throw Throwables.propagate(e);
       }
@@ -475,11 +524,26 @@ public class MDSBasedStore implements Store {
     }
   }
 
+  private void removeAllMapreducesFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
+    throws OperationException {
+    for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+      try {
+        metadataServiceHelper.deleteMapReduce(Id.Program.from(id.getId(), appSpec.getName(), mrSpec.getName()));
+      } catch (MetadataServiceException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  }
+
   private void removeApplicationFromAppSpec(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
     OperationContext context = new OperationContext(id.getId());
     removeAllFlowsFromMetadataStore(id, appSpec);
+    removeAllMapreducesFromMetadataStore(id, appSpec);
     removeAllProceduresFromMetadataStore(id, appSpec);
     metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
+    // make sure to also delete the "application" entry of MDS (by-passing MDS here). this will go away with MDS
+    metaDataStore.delete(context, id.getId(), null, com.continuuity.metadata.FieldTypes.Application.ID,
+                         appSpec.getName());
   }
 
   private ApplicationSpecification getAppSpecSafely(Id.Program id) throws OperationException {
@@ -537,6 +601,13 @@ public class MDSBasedStore implements Store {
         procedures.remove(id.getId());
         return procedures;
       }
+
+      @Override
+      public Map<String, MapReduceSpecification> getMapReduces() {
+        Map<String, MapReduceSpecification> procedures = Maps.newHashMap(super.getMapReduces());
+        procedures.remove(id.getId());
+        return procedures;
+      }
     };
   }
 
@@ -546,7 +617,7 @@ public class MDSBasedStore implements Store {
     MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
 
-    if(entry == null) {
+    if (entry == null) {
       return null;
     }
 
@@ -560,7 +631,7 @@ public class MDSBasedStore implements Store {
     MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
 
-    if(entry == null) {
+    if (entry == null) {
       return null;
     }
 

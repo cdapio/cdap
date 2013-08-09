@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -15,6 +14,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class  TestHBaseOmidTransactionalOperationExecutor  extends TestOmidTransactionalOperationExecutor {
 
   private static Injector injector;
@@ -24,11 +26,7 @@ public class  TestHBaseOmidTransactionalOperationExecutor  extends TestOmidTrans
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      CConfiguration conf = CConfiguration.create();
-      // make sure we use vanilla hbase
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-      injector = Guice.createInjector(
-        new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
       executor = (OmidTransactionalOperationExecutor) injector.getInstance(
         Key.get(OperationExecutor.class, Names.named("DataFabricOperationExecutor")));
     } catch (Exception e) {

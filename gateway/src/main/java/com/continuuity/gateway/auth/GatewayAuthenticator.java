@@ -15,7 +15,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 public interface GatewayAuthenticator {
 
   // TODO: Pull from Passport once constant is visible
-  public final static String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
+  public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
 
   /**
    * Checks whether authentication is required or not.  If not, then no token

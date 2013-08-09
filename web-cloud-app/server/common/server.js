@@ -7,7 +7,7 @@
 
 var express = require('express'),
   io = require('socket.io'),
-  Int64 = require('node-int64').Int64,
+  Int64 = require('node-int64'),
   fs = require('fs'),
   log4js = require('log4js'),
   http = require('http'),
@@ -103,9 +103,9 @@ WebAppServer.prototype.configureExpress = function() {
 
   // Workaround to make static files work on cloud.
   if (fs.existsSync(this.dirPath + '/../client/')) {
-    this.app.use(express.static(this.dirPath + '/../client/'));
+    this.app.use(express['static'](this.dirPath + '/../client/'));
   } else {
-    this.app.use(express.static(this.dirPath + '/../../client/'));
+    this.app.use(express['static'](this.dirPath + '/../../client/'));
   }
 };
 
@@ -260,6 +260,276 @@ WebAppServer.prototype.bindRoutes = function(io) {
     this.logger.info("Configuration file not set ", this.config);
     return false;
   }
+
+  var singularREST = {
+    'apps': 'getApplication',
+    'streams': 'getStream',
+    'flows': 'getFlow',
+    'mapreduce': 'getMapreduce',
+    'datasets': 'getDataset',
+    'procedures': 'getQuery'
+  };
+
+  var pluralREST = {
+    'apps': 'getApplications',
+    'streams': 'getStreams',
+    'flows': 'getFlows',
+    'mapreduce': 'getMapreduces',
+    'datasets': 'getDatasets',
+    'procedures': 'getQueries'
+  };
+
+  var typesREST = {
+    'apps': 'Application',
+    'streams': 'Stream',
+    'flows': 'Flow',
+    'mapreduce': 'Mapreduce',
+    'datasets': 'Dataset',
+    'procedures': 'Query'
+  };
+
+  var selectiveREST = {
+    'apps': 'ByApplication',
+    'streams': 'ByStream',
+    'datasets': 'ByDataset'
+  };
+
+  /*
+   * REST handler
+   */
+  this.app.get('/rest/*', function (req, res) {
+
+    var path = req.url.slice(6).split('/');
+    var hierarchy = {};
+
+    self.logger.trace('GET ' + req.url);
+
+    if (!path[path.length - 1]) {
+      path = path.slice(0, path.length - 1);
+    }
+
+    var methods = [], ids = [];
+    for (var i = 0; i < path.length; i ++) {
+      if (i % 2) {
+        ids.push(path[i]);
+      } else {
+        methods.push(path[i]);
+      }
+    }
+
+    var method = null, params = [];
+
+    if ((methods[0] === 'apps' || methods[0] === 'streams' ||
+      methods[0] === 'datasets') && methods[1]) {
+
+      if (ids[1]) {
+        method = singularREST[methods[1]];
+        params = [typesREST[methods[1]], { id: ids[1] }];
+      } else {
+        method = pluralREST[methods[1]] + selectiveREST[methods[0]];
+        params = [ids[0]];
+      }
+
+    } else {
+
+      if (ids[0]) {
+        method = singularREST[methods[0]];
+        params = [typesREST[methods[0]], { id: ids[0] } ];
+      } else {
+        method = pluralREST[methods[0]];
+        params = [];
+      }
+
+    }
+
+    var accountID = 'developer';
+
+    if (method === 'getQuery' || method === 'getMapreduce') {
+      params[1].application = ids[0];
+    }
+
+    if (method === 'getFlow') {
+
+      self.Api.manager(accountID, 'getFlowDefinition', [ids[0], ids[1]],
+        function (error, response) {
+
+          if (error) {
+            self.logger.error(error);
+            res.status(500);
+            res.send({
+              error: error
+            });
+          } else {
+            res.send(response);
+          }
+
+      });
+
+    } else {
+
+      self.Api.metadata(accountID, method, params, function (error, response) {
+
+          if (error) {
+            self.logger.error(error);
+            res.status(500);
+            res.send({
+              error: error
+            });
+          } else {
+            res.send(response);
+          }
+
+      });
+
+    }
+
+
+  });
+
+  this.app.get('/logs/:method/:appId/:entityId/:entityType', function (req, res) {
+
+    if (!req.params.method || !req.params.appId || !req.params.entityId || !req.params.entityType) {
+      res.send('incorrect request');
+    }
+
+    var offSet = req.query.fromOffset;
+    var maxSize = req.query.maxSize;
+    var filter = req.query.filter;
+    var method = req.params.method;
+    var accountID = 'developer';
+    var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize, filter];
+
+    self.logger.trace('Logs ' + method + ' ' + req.url);
+
+    self.Api.monitor(accountID, method, params, function (error, result) {
+      if (error) {
+        self.logger.error(error);
+      } else {
+        result.map(function (item) {
+          item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset), 10);
+          return item;
+        });
+      }
+
+      res.send({result: result, error: error});
+    });
+
+  });
+
+  /*
+   * RPC Handler
+   */
+  this.app.post('/rpc/:type/:method', function (req, res) {
+
+    var type, method, params, accountID;
+
+    try {
+
+      type = req.params.type;
+      method = req.params.method;
+      params = req.body;
+      accountID = 'developer';
+
+    } catch (e) {
+
+      self.logger.error(e, req.body);
+      res.send({ result: null, error: 'Malformed request' });
+
+      return;
+
+    }
+
+    self.logger.trace('RPC ' + type + ':' + method, params);
+
+    switch (type) {
+
+      case 'runnable':
+        self.Api.manager(accountID, method, params, function (error, result) {
+          if (error) {
+            self.logger.error(error);
+          }
+          res.send({ result: result, error: error });
+        });
+        break;
+
+      case 'fabric':
+        self.Api.far(accountID, method, params, function (error, result) {
+          if (error) {
+            self.logger.error(error);
+          }
+          res.send({ result: result, error: error });
+        });
+        break;
+
+      case 'gateway':
+        self.Api.gateway(accountID, method, params, function (error, result) {
+          if (error) {
+            self.logger.error(error);
+          }
+          res.send({ result: result, error: error });
+        });
+    }
+
+  });
+
+  /*
+   * Metrics Handler
+   */
+  this.app.post('/metrics', function (req, res) {
+
+    var pathList = req.body;
+    var accountID = 'developer';
+
+    self.logger.trace('Metrics ', pathList);
+
+    var content = JSON.stringify(pathList);
+
+    var options = {
+      host: self.config['metrics.service.host'],
+      port: self.config['metrics.service.port'],
+      path: '/metrics',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': content.length
+      }
+    };
+
+    var request = http.request(options, function(response) {
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
+      });
+
+      response.on('end', function () {
+
+        try {
+          data = JSON.parse(data);
+          res.send({ result: data, error: null });
+        } catch (e) {
+          self.logger.error('Parsing Error', data);
+          res.send({ result: null, error: 'Parsing Error' });
+        }
+
+      });
+    });
+
+    request.on('error', function(e) {
+
+      res.send({
+        result: null,
+        error: {
+          fatal: 'MetricsService: ' + e.code
+        }
+      });
+
+    });
+
+    request.write(content);
+    request.end();
+
+  });
+
   /**
    * Upload an Application archive.
    */
@@ -280,10 +550,6 @@ WebAppServer.prototype.bindRoutes = function(io) {
       port: '80'
     };
 
-    res.set({
-      'Content-Type': 'application-json'
-    });
-
     var request = http.request(options, function(response) {
       var data = '';
       response.on('data', function (chunk) {
@@ -291,14 +557,19 @@ WebAppServer.prototype.bindRoutes = function(io) {
       });
 
       response.on('end', function () {
+
         data = data.replace(/\n/g, '');
-        res.send(JSON.stringify({
+
+        res.send({
           current: self.VERSION,
           newest: data
-        }));
+        });
+
       });
     });
+
     request.end();
+
   });
 
   /**
@@ -424,6 +695,5 @@ WebAppServer.prototype.getLocalHost = function() {
  * Export app.
  */
 module.exports = WebAppServer;
-
 
 

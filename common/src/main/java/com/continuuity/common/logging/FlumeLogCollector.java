@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
+/**
+ * Collector for flume.
+ */
 public class FlumeLogCollector {
 
   private static final Logger LOG = LoggerFactory

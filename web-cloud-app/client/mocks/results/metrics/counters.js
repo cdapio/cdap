@@ -5,78 +5,65 @@
 define([], function () {
 
   var sample = {
+
+    // MapReduce
     '/store/bytes/datasets/dataset1': 37.34,
     '/store/records/datasets/dataset1': 117,
-    '/process/completion/jobs/mappers/job1': 75,
-    '/process/events/jobs/mappers/job1': 100,
-    '/process/bytes/jobs/mappers/job1': 30.00,
-    '/process/completion/jobs/reducers/job1': 0,
-    '/process/events/jobs/reducers/job1': 0,
-    '/process/bytes/jobs/reducers/job1': 0,
-    '/store/bytes/datasets/dataset2': 0,
-    '/store/records/datasets/dataset2': 0
+    '/process/completion/jobs/mappers/batchid1': 75,
+    '/process/events/jobs/mappers/batchid1': 100,
+    '/process/bytes/jobs/mappers/batchid1': 30.00,
+    '/process/completion/jobs/reducers/batchid1': 0,
+    '/process/events/jobs/reducers/batchid1': 0,
+    '/process/bytes/jobs/reducers/batchid1': 0,
+    '/store/bytes/datasets/filterTable': 0,
+    '/store/records/datasets/filterTable': 0,
+
+    // Overview
+
+    '/collect/bytes/streams/wordStream': 10,
+    '/collect/bytes/streams/text': 10,
+    '/collect/events/streams/text': 10,
+    '/collect/events/streams/wordStream': 10,
+
+    // App Storage
+    '/store/bytes/CountAndFilterWords': 40,
+
+    // Flowlets
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/number-filter': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-all': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-number': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-lower': 50,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/lower-filter': 45030304,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/upper-filter': 10,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/source': 24,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/count-upper': 100,
+    '/process/events/CountAndFilterWords/flows/CountAndFilterWords/splitter': 100,
+
+    // Store
+    '/store/bytes/datasets/filterTable': 100000,
+    '/store/bytes/datasets/uniqueCount': 2000,
+    '/store/bytes/datasets/wordAssocs': 2928312,
+    '/store/bytes/datasets/wordCounts': 19232,
+    '/store/bytes/datasets/wordStats': 100000,
+
+    "/process/completion/CountAndFilterWords/mapreduce/batchid1/mappers": 29,
+    "/process/completion/CountAndFilterWords/mapreduce/batchid1/reducers": 30,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/mappers/ins": 3752,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/mappers/outs": 35654,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/reducers/ins": 21,
+    "/process/entries/CountAndFilterWords/mapreduce/batchid1/reducers/outs": 25632
   };
 
   return function (path, query, callback) {
 
-    callback(200, sample[path]);
+    callback(200, {
+        path: path,
+        result: {
+            data: sample[path]
+        },
+        error: null
+    });
 
   };
-
-  /*
-	return {
-		"/counters/flow?a,b,c,d": {
-			"status": 200,
-			"result": {
-				"values": {
-					"a": 1,
-					"b": 1,
-					"c": 1,
-					"d": 1
-				}
-			}
-		},
-		"counterSample": [
-			{
-				"timestamp": 0,
-				"value": 234
-			}
-		],
-		"batchMetrics": {
-      "bytesIn": 37.34,
-      "partitions": 117,
-      "mapperCompletion": 74.3,
-      "mapperRecordsIn": 37.6,
-      "mapperRecordsOut": 846,
-      "reducerCompletion": 0,
-      "reducerRecordsIn": 3.6,
-      "reducerRecordsOut": 846,
-      "bytesOut": 0,
-      "operations": 0
-    },
-    "batchAlerts": [
-      {
-        "type": "critical",
-        "message": "sample message goes here"
-      },
-      {
-        "type": "warning",
-        "message": "sample message goes here"
-      },
-      {
-        "type": "critical",
-        "message": "sample message goes here"
-      },
-      {
-        "type": "debug",
-        "message": "sample message goes here"
-      },
-      {
-        "type": "danger",
-        "message": "sample message goes here"
-      }
-    ]
-	};
-  */
 
 });

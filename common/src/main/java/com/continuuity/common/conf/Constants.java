@@ -19,6 +19,9 @@ public class Constants {
   public static final String
       SERVICE_APPFABRIC_SERVER = "app-fabric-service";
 
+  // Used by the new metrics system. Will deprecate the old one.
+  public static final String SERVICE_METRICS = "metricsservice";
+
   /**
    * Common across components.
    */
@@ -37,8 +40,10 @@ public class Constants {
   public static final String CFG_COMMAND_PORT_ENABLED =
     "command.port.enabled";
 
+  public static final String CFG_HDFS_USER = "hdfs.user";
+
   /**
-   * Default constants for common
+   * Default constants for common.
    */
   public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
 
@@ -53,7 +58,7 @@ public class Constants {
   public static final boolean DEFAULT_COMMAND_PORT_ENABLED = false;
 
   /**
-   * App Fabric Server
+   * App Fabric Server.
    */
   public static final String CFG_APP_FABRIC_SERVER_ADDRESS = "app.server.address";
   public static final String CFG_APP_FABRIC_SERVER_PORT = "app.server.port";
@@ -67,14 +72,14 @@ public class Constants {
   public static final String DEFAULT_APP_FABRIC_SERVER_ADDRESS = "localhost";
 
   /**
-   * Data Fabric
+   * Data Fabric.
    */
   public static enum InMemoryPersistenceType {
     MEMORY,
     LEVELDB,
     HSQLDB
   }
-  /** defines which persistence engine to use when running all in one JVM **/
+  /** defines which persistence engine to use when running all in one JVM. **/
   public static final String CFG_DATA_INMEMORY_PERSISTENCE = "data.local.inmemory.persistence.type";
   public static final String CFG_DATA_LEVELDB_ENABLED = "data.local.leveldb.enabled";
   public static final String CFG_DATA_LEVELDB_DIR = "data.local.leveldb";
@@ -82,31 +87,31 @@ public class Constants {
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.leveldb.cachesize";
   public static final String CFG_DATA_HSQLDB_CACHE_ROWS = "data.local.hsqldb.cache_rows";
   public static final String CFG_DATA_HSQLDB_CACHE_SIZE = "data.local.hsqldb.cache_size";
-  /** Minimum count of table write ops executed by opex to try to apply batching logic to */
+  /** Minimum count of table write ops executed by opex to try to apply batching logic to. */
   public static final String CFG_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE = "data.table.ops.batch.min";
-  /** Max puts to perform in one rpc */
+  /** Max puts to perform in one rpc. */
   public static final String CFG_DATA_HBASE_PUTS_BATCH_MAX_SIZE = "data.dist.hbase.put.batch_size.max";
-  /** Max threads to use to write into single HBase table */
+  /** Max threads to use to write into single HBase table. */
   public static final String CFG_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT =
     "data.dist.hbase.table.write_threads_count.max";
   public static final String CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES =
     "queue.state.proxy.max.cache.size.bytes";
 
   /**
-   * Defaults for Data Fabric
+   * Defaults for Data Fabric.
    */
   public static final String DEFAULT_DATA_INMEMORY_PERSISTENCE = InMemoryPersistenceType.MEMORY.name();
   public static final boolean DEFAULT_DATA_LEVELDB_ENABLED = true;
   public static final String DEFAULT_DATA_LEVELDB_DIR = "data";
   public static final int DEFAULT_DATA_LEVELDB_BLOCKSIZE = 1024;
-  public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024*1024*100;
+  public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024 * 1024 * 100;
   public static final long DEFAULT_DATA_HSQLDB_CACHE_ROWS = 64000;
   public static final long DEFAULT_DATA_HSQLDB_CACHE_SIZE = 64000;
-  /** I.e. by default do NOT attempt to batch table write ops */
+  /** I.e. by default do NOT attempt to batch table write ops. */
   public static final int DEFAULT_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE = Integer.MAX_VALUE;
-  /** I.e. by default do NOT limit puts count per rpc */
+  /** I.e. by default do NOT limit puts count per rpc. */
   public static final int DEFAULT_DATA_HBASE_PUTS_BATCH_MAX_SIZE = Integer.MAX_VALUE;
-  /** Use 10 threads per table by default */
+  /** Use 10 threads per table by default. */
   public static final int DEFAULT_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT = 10;
   public static final long DEAFULT_CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES = 200 * 1024 * 1024;
 
@@ -148,13 +153,13 @@ public class Constants {
   /**
    * Constants used by resource manager.
    */
-  public static final String JAR_EXTENSION=".jar";
+  public static final String JAR_EXTENSION = ".jar";
   public static final String STANDARD_FAR_FLOWS_CONFIG_FILE = "flows.json";
   public static final String MANIFEST_FILE_PATH = "META-INF/MANIFEST.MF";
   public static final int RESOURCE_MANAGER_VERSION_FIND_ATTEMPTS = 10;
 
   /**
-   * Default constants defined for resource manager
+   * Default constants defined for resource manager.
    */
   @Deprecated
   public static final int DEFAULT_RESOURCE_MANAGER_SERVER_PORT = 45000;
@@ -163,13 +168,13 @@ public class Constants {
 
 
   /**
-   * Constants used by Tuple serializer
+   * Constants used by Tuple serializer.
    */
   @Deprecated
   public static final int MAX_SERDE_BUFFER = 16 * 1024 * 1024;
 
   /**
-   * Configuration key names used by flow manager
+   * Configuration key names used by flow manager.
    */
   @Deprecated
   public static final String CFG_FLOW_MANAGER_SERVER_PORT =
@@ -210,7 +215,7 @@ public class Constants {
     DEFAULT_RESOURCE_MANAGER_CLOUD_PORT = DEFAULT_RESOURCE_MANAGER_SERVER_PORT;
 
   /**
-   * Configuration for OpenTSDB
+   * Configuration for OpenTSDB.
    */
   public static final String
     CFG_OPENTSDB_SERVER_ADDRESS = "opentsdb.server.address";
@@ -218,13 +223,13 @@ public class Constants {
     CFG_OPENTSDB_SERVER_PORT = "opentsdb.server.port";
 
   /**
-   * Defaults for OpenTSDB
+   * Defaults for OpenTSDB.
    */
   public static final String DEFAULT_OPENTSDB_SERVER_ADDRESS = "localhost";
   public static final int DEFAULT_OPENTSDB_SERVER_PORT = 4242;
 
   /**
-   * Configuration for Metrics collection server
+   * Configuration for Metrics collection server.
    */
   public static final String
     CFG_METRICS_COLLECTOR_SERVER_ADDRESS
@@ -262,7 +267,7 @@ public class Constants {
       "overlord.metrics.cleanup.period";
 
   /**
-   * Defaults for metrics collection server
+   * Defaults for metrics collection server.
    */
   public static final String
     DEFAULT_METRICS_COLLECTOR_SERVER_ADDRESS = "localhost";
@@ -282,7 +287,7 @@ public class Constants {
   public static final long DEFAULT_METRICS_CLEANUP_PERIOD = 60;
 
   /**
-   * Configuration for Metadata service
+   * Configuration for Metadata service.
    */
   public static final String
     CFG_METADATA_SERVER_ADDRESS = "metadata.server.address";
@@ -292,7 +297,7 @@ public class Constants {
     CFG_METADATA_SERVER_THREADS = "metadata.server.threads";
 
   /**
-   * Defaults for metadata service
+   * Defaults for metadata service.
    */
   public static final String
     DEFAULT_METADATA_SERVER_ADDRESS = "localhost";
@@ -312,7 +317,7 @@ public class Constants {
     CFG_OVERLORD_SERVER_THREADS = "overlord.server.threads";
 
   /**
-   * Defaults for Overlord service
+   * Defaults for Overlord service.
    */
   public static final String
     DEFAULT_OVERLORD_SERVER_ADDRESS = "localhost";
@@ -322,7 +327,7 @@ public class Constants {
     DEFAULT_OVERLORD_SERVER_THREADS = 10;
 
   /**
-   * Config for Log Collection
+   * Config for Log Collection.
    */
   public static final String CFG_LOG_COLLECTION_ROOT =
       "log.collection.root";
@@ -342,12 +347,18 @@ public class Constants {
       "localhost";
 
   /**
-   * Constants related to Passport
+   * Constants related to Passport.
    */
-  public final static String CFG_PASSPORT_SERVER_ADDRESS_KEY = "passport.server.address";
-  public final static String CFG_PASSPORT_SERVER_PORT_KEY = "passport.server.port";
-  public final static String CONTINUUITY_API_KEY_HEADER = "X-Continuuity-ApiKey";
-  public final static String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
-  public final static String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
+  public static final String CFG_PASSPORT_SERVER_ADDRESS_KEY = "passport.server.address";
+  public static final String CFG_PASSPORT_SERVER_PORT_KEY = "passport.server.port";
+  public static final String CONTINUUITY_API_KEY_HEADER = "X-Continuuity-ApiKey";
+  public static final String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
+  public static final String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
 
+
+  /**
+   * Corresponds to account id used when running in local mode.
+   * NOTE: value should be in sync with the one used by UI.
+   */
+  public static final String DEVELOPER_ACCOUNT_ID = "developer";
 }

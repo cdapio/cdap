@@ -2,6 +2,9 @@ package com.continuuity.common.logging;
 
 import java.io.IOException;
 
+/**
+ * Represents classes that can write log.
+ */
 public interface LogWriter {
 
   /**

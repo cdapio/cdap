@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class CMetricsTest {
   private static final Logger LOG = LoggerFactory.getLogger(CMetricsTest.class);
-  private static InMemoryZookeeper zookeeper;
   private static CConfiguration configuration;
   private static MetricsCollectionServerInterface serverInterface;
 
@@ -34,7 +33,7 @@ public class CMetricsTest {
     configuration = CConfiguration.create();
 
     // Start Zookeeper in memory.
-    zookeeper = new InMemoryZookeeper();
+    InMemoryZookeeper zookeeper = new InMemoryZookeeper();
 
     // Set the port the zookeeper was started on.
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
@@ -74,7 +73,7 @@ public class CMetricsTest {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    if(serverInterface != null) {
+    if (serverInterface != null) {
       serverInterface.stop(true);
     }
   }
@@ -89,7 +88,7 @@ public class CMetricsTest {
       = new CMetrics(MetricType.FlowUser,
                      "act.app.flow.run.let.2");
 
-    for(int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; i++) {
       systemMetrics.meter(CMetricsTest.class, "stream.in", 1);
       systemMetrics.meter("stream.out", 1);
       systemMetrics.histogram("window", 1);

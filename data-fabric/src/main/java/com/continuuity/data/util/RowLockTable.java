@@ -1,10 +1,13 @@
 package com.continuuity.data.util;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -28,8 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class RowLockTable {
 
-  private final ConcurrentHashMap<Row, RowLock> locks =
-    new ConcurrentHashMap<Row, RowLock>();
+  private final ConcurrentNavigableMap<Row, RowLock> locks = new ConcurrentSkipListMap<Row, RowLock>();
 
   /**
    * @return the number row locks in the table
@@ -123,6 +125,33 @@ public class RowLockTable {
   }
 
   /**
+   * Delete a (and invalidate) the locks for a single row.
+   * @param row the row to delete
+   */
+  public void removeLock(Row row) {
+    Preconditions.checkNotNull(row, "row cannot be null");
+    RowLock lock = locks.get(row);
+    if (lock != null) {
+      lock.invalidate();
+      locks.remove(row);
+    }
+  }
+
+  /**
+   * Delete a (and invalidate) the locks for a consecutive range of rows.
+   * @param start the first row to delete
+   * @param stop the first row not to delete. If null, delete all rows greater than start.
+   */
+  public void removeRange(Row start, Row stop) {
+    Preconditions.checkNotNull(start, "start row cannot be null");
+    Map<Row, RowLock> submap = stop == null ? locks.tailMap(start) : locks.subMap(start, stop);
+    for (RowLock lock : submap.values()) {
+      lock.invalidate();
+    }
+    submap.clear();
+  }
+
+  /**
    * A lock for a row. The lock must be checked for its validity by who ever receives it back from a lock table.
    */
   public static class RowLock {
@@ -182,7 +211,7 @@ public class RowLockTable {
 
     @Override
     public boolean equals(Object o) {
-      return (o instanceof RowLock) && this.id == ((RowLock)o).id
+      return (o instanceof RowLock) && this.id == ((RowLock) o).id
         && Bytes.equals(this.row.value, ((RowLock) o).row.value);
     }
 

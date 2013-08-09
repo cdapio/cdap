@@ -26,7 +26,7 @@ import java.io.IOException;
  * </code>
  */
 public class InMemoryZookeeper implements Closeable {
-  private final static Logger LOG = LoggerFactory.getLogger(InMemoryZookeeper.class);
+  private static final  Logger LOG = LoggerFactory.getLogger(InMemoryZookeeper.class);
   private final InMemoryZookeeperServer inMemoryZookeeperServer;
   private final InstanceSpecification specification;
 
@@ -77,8 +77,6 @@ public class InMemoryZookeeper implements Closeable {
     this.specification = specification;
     inMemoryZookeeperServer = new InMemoryZookeeperServer(new QuorumConfigBuilder(specification));
     // Disables event logging and connection issues.
-    System.setProperty("curator-log-events", "false");
-    System.setProperty("curator-dont-log-connection-problems", "true");
     LOG.info("Starting InMemoryZookeeper ...");
     inMemoryZookeeperServer.start();
   }

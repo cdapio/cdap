@@ -30,10 +30,10 @@ public class GatewayRestCollectorTest {
 
   // A set of constants we'll use in these tests
   static String name = "collect.rest";
-  static final String prefix = "";
-  static final String path = "/stream/";
-  static final String stream = "pfunk";
-  static final int eventsToSend = 10;
+  static final String PREFIX = "";
+  static final String PATH = "/stream/";
+  static final String STREAM = "pfunk";
+  static final int EVENTS_TO_SEND = 10;
   static int port = 10000;
 
   // This is the Gateway object we'll use for these tests
@@ -71,9 +71,9 @@ public class GatewayRestCollectorTest {
     myConfiguration.setInt(Constants.buildConnectorPropertyName(name,
         Constants.CONFIG_PORT), port);
     myConfiguration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_PREFIX), prefix);
+        Constants.CONFIG_PATH_PREFIX), PREFIX);
     myConfiguration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_MIDDLE), path);
+        Constants.CONFIG_PATH_MIDDLE), PATH);
 
     // Now create our Gateway
     theGateway = new Gateway();
@@ -87,8 +87,8 @@ public class GatewayRestCollectorTest {
 
     // make sure the destination stream is defined in the meta data
     MetadataService mds = new MetadataService(this.executor);
-    Stream stream = new Stream(GatewayRestCollectorTest.stream);
-    stream.setName(GatewayRestCollectorTest.stream);
+    Stream stream = new Stream(GatewayRestCollectorTest.STREAM);
+    stream.setName(GatewayRestCollectorTest.STREAM);
     mds.assertStream(new Account(TestUtil.DEFAULT_ACCOUNT_ID), stream);
 
   } // end of setupGateway
@@ -117,11 +117,11 @@ public class GatewayRestCollectorTest {
     }
 
     // Send some REST events and verify them
-    TestUtil.sendRestEvents(port, prefix, path, stream, eventsToSend);
-    Assert.assertEquals(eventsToSend, consumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
+    TestUtil.sendRestEvents(port, PREFIX, PATH, STREAM, EVENTS_TO_SEND);
+    Assert.assertEquals(EVENTS_TO_SEND, consumer.eventsReceived());
+    Assert.assertEquals(EVENTS_TO_SEND, consumer.eventsSucceeded());
     Assert.assertEquals(0, consumer.eventsFailed());
-    TestUtil.consumeQueueAsEvents(this.executor, stream, name, eventsToSend);
+    TestUtil.consumeQueueAsEvents(this.executor, STREAM, name, EVENTS_TO_SEND);
 
     // Stop the Gateway
     theGateway.stop(false);

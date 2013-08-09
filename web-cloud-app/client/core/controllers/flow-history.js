@@ -32,18 +32,18 @@ define([], function () {
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
 			this.set('elements.Batch', Em.ArrayProxy.create({content: objects}));
 
-			C.get('manager', {
-				method: 'getFlowHistory',
-				params: [model.app, model.name]
-			}, function (error, response) {
+			this.HTTP.rpc('runnable', 'getFlowHistory', [model.app, model.name],
+					function (response) {
 
-				var history = response.params;
+						if (response.result) {
+							var history = response.result;
 
-				for (var i = 0; i < history.length; i ++) {
+							for (var i = 0; i < history.length; i ++) {
 
-					self.runs.pushObject(C.Run.create(history[i]));
+								self.runs.pushObject(C.Run.create(history[i]));
 
-				}
+							}
+						}
 
 			});
 

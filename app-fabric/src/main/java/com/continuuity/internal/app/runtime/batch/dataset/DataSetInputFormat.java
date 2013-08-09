@@ -20,6 +20,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An {@link InputFormat} that reads from dataset.
+ * @param <KEY> Type of key.
+ * @param <VALUE> Type of value.
+ */
 public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
   public static final String INPUT_DATASET_SPEC = "input.dataset.spec";
 
@@ -30,15 +35,18 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
 
   @Override
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
-    MapReduceContextProvider contextProvider = new MapReduceContextProvider(context);
-    List<Split> splits = contextProvider.get().getInputDataSelection();
-
-    List<InputSplit> list = new ArrayList<InputSplit>();
-    for (Split split : splits) {
-      list.add(new DataSetInputSplit(split));
+    BasicMapReduceContext mrContext = new MapReduceContextProvider(context).get();
+    try {
+      List<Split> splits = mrContext.getInputDataSelection();
+      List<InputSplit> list = new ArrayList<InputSplit>();
+      for (Split split : splits) {
+        list.add(new DataSetInputSplit(split));
+      }
+      return list;
+    } finally {
+      // input format does not have a close() method, so we must close the context here to release its resources
+      mrContext.close();
     }
-
-    return list;
   }
 
   @Override
@@ -55,6 +63,7 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     BatchReadable<KEY, VALUE> dataset = (BatchReadable) mrContext.getDataSet(getInputDataSetSpec(conf).getName());
     SplitReader<KEY, VALUE> splitReader = dataset.createSplitReader(inputSplit.getSplit());
 
+    // the record reader now owns the context and will close it
     return new DataSetRecordReader<KEY, VALUE>(splitReader, mrContext);
   }
 

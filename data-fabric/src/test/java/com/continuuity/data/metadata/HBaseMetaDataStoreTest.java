@@ -1,6 +1,5 @@
 package com.continuuity.data.metadata;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -15,6 +14,9 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * HBase meta data store tests.
+ */
 public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
 
   private static Injector injector;
@@ -22,9 +24,7 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
   @BeforeClass
   public static void setupOpex() throws Exception {
     HBaseTestBase.startHBase();
-    CConfiguration conf = CConfiguration.create();
-    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-    DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf);
+    DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
     injector = Guice.createInjector(module);
     opex = injector.getInstance(Key.get(
         OperationExecutor.class, Names.named("DataFabricOperationExecutor")));

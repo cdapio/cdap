@@ -1,20 +1,19 @@
 package com.continuuity.data.engine.leveldb;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.engine.leveldb.KeyValue.Type;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.KeyValue.Type;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBComparator;
 import org.iq80.leveldb.DBException;
@@ -140,15 +139,15 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   // LevelDB specific helpers
 
   private byte[] createStartKey(byte[] row) {
-    return new KeyValue(row, FAMILY, null, HConstants.LATEST_TIMESTAMP, Type.Maximum).getKey();
+    return new KeyValue(row, FAMILY, null, KeyValue.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
   private byte[] createStartKey(byte[] row, byte[] column) {
-    return new KeyValue(row, FAMILY, column, HConstants.LATEST_TIMESTAMP, Type.Maximum).getKey();
+    return new KeyValue(row, FAMILY, column, KeyValue.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
   private byte[] createEndKey(byte[] row) {
-    return new KeyValue(row, null, null, HConstants.LATEST_TIMESTAMP, Type.Minimum).getKey();
+    return new KeyValue(row, null, null, KeyValue.LATEST_TIMESTAMP, Type.Minimum).getKey();
   }
 
   private byte[] createEndKey(byte[] row, byte[] column) {
@@ -186,7 +185,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
         if (!readPointer.isVisible(curVersion)) {
           continue;
         }
-        Type type = Type.codeToType(kv.getType());
+        KeyValue.Type type = Type.codeToType(kv.getType());
 
         if (type == Type.Delete) {
           lastDelete = curVersion;
@@ -464,7 +463,32 @@ public class LevelDBOVCTable extends AbstractOVCTable {
           }
           db.delete(nextKey);
         }
+        // we don't want to keep row locks for rows that are not around any more
+        locks.removeLock(new RowLockTable.Row(row));
       }
+    } catch (DBException dbe) {
+      throw createOperationException(dbe, "delete");
+    }
+  }
+
+  @Override
+  public void deleteRowsDirtily(byte[] startRow, byte[] stopRow) throws OperationException {
+    Preconditions.checkNotNull(startRow, "start row cannot be null");
+    try {
+      byte[] startKey = createStartKey(startRow);
+      // the start key of the stopRow is our upper bound
+      byte[] endKey = stopRow == null ? null : createStartKey(stopRow);
+      DBIterator iterator = db.iterator();
+      iterator.seek(startKey);
+      while (iterator.hasNext()) {
+        byte[] nextKey = iterator.next().getKey();
+        if (endKey != null && KeyValue.KEY_COMPARATOR.compare(nextKey, endKey) >= 0) {
+          break;
+        }
+        db.delete(nextKey);
+      }
+      // don't forget to invalidate and remove the locks for all the rows
+      locks.removeRange(new RowLockTable.Row(startRow), stopRow == null ? null : new RowLockTable.Row(stopRow));
     } catch (DBException dbe) {
       throw createOperationException(dbe, "delete");
     }

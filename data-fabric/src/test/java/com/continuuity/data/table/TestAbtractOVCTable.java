@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Tests static methods in the abstract OVC table
+ * Tests static methods in the abstract OVC table.
  */
 public class TestAbtractOVCTable {
 
@@ -47,6 +47,7 @@ public class TestAbtractOVCTable {
     // all splits should have about the same length - we verify that by looking at only the
     // first byte of each start and stop
     Set<Integer> lengths = new HashSet<Integer>();
+    Assert.assertNotNull(first.getStart());
     int prev = first.getStart()[0] & 0xff;
     for (int i = 1; i < splits.size(); i++) {
       int cur = splits.get(i).getStart()[0] & 0xff;
@@ -65,18 +66,18 @@ public class TestAbtractOVCTable {
 
   @Test
   public void testPrimitiveSplits() {
-    testPrimitiveNoSplits(0, new byte[] { 'a' }, new byte[] { 'a' } );
-    testPrimitiveNoSplits(0, new byte[] { 'c' }, new byte[] { 'b' } );
-    testPrimitiveNoSplits(1, new byte[] { 'a' }, new byte[] { 'a' } );
-    testPrimitiveNoSplits(1000, new byte[] { 'c' }, new byte[] { 'b' } );
+    testPrimitiveNoSplits(0, new byte[] { 'a' }, new byte[] { 'a' });
+    testPrimitiveNoSplits(0, new byte[] { 'c' }, new byte[] { 'b' });
+    testPrimitiveNoSplits(1, new byte[] { 'a' }, new byte[] { 'a' });
+    testPrimitiveNoSplits(1000, new byte[] { 'c' }, new byte[] { 'b' });
     testPrimitiveSplits(0, null, null);
     testPrimitiveSplits(1, null, null);
     testPrimitiveSplits(24, null, null);
-    testPrimitiveSplits(0, null, new byte[] { (byte)0x80 });
-    testPrimitiveSplits(16, null, new byte[] { (byte)0x80 });
-    testPrimitiveSplits(0, new byte[] { (byte)0x80 }, null);
-    testPrimitiveSplits(1, new byte[] { (byte)0x80 }, null);
-    testPrimitiveSplits(5, new byte[] { (byte)0x80 }, null);
+    testPrimitiveSplits(0, null, new byte[] { (byte) 0x80 });
+    testPrimitiveSplits(16, null, new byte[] { (byte) 0x80 });
+    testPrimitiveSplits(0, new byte[] { (byte) 0x80 }, null);
+    testPrimitiveSplits(1, new byte[] { (byte) 0x80 }, null);
+    testPrimitiveSplits(5, new byte[] { (byte) 0x80 }, null);
     testPrimitiveSplits(0, new byte[] { 'A', 'B', 'C' }, new byte[] { 'a', 'b', 'c' });
     testPrimitiveSplits(1, new byte[] { 'A', 'B', 'C' }, new byte[] { 'a', 'b', 'c' });
     testPrimitiveSplits(10, new byte[] { 'A', 'B', 'C' }, new byte[] { 'a', 'b', 'c' });
@@ -84,5 +85,22 @@ public class TestAbtractOVCTable {
     testPrimitiveSplits(1, new byte[] { 'A', 'B', 'C' }, new byte[] { 'B', '1', '2' });
     testPrimitiveSplits(10, new byte[] { 'A', 'B', 'C' }, new byte[] { 'B', '1', '2' });
     testPrimitiveSplits(10, Bytes.toBytes(1L), Bytes.toBytes(2L));
+  }
+
+  @Test
+  public void testKeyAfterPrefix() {
+    final byte oxFF = (byte) 0xFF;
+    final byte[][] tests = {
+      { },                  null,
+      { 0x00 },             { 0x01 },
+      { 0x42, oxFF },       { 0x43 },
+      { 0x42, oxFF, oxFF},  { 0x43 },
+      { 0x42, oxFF, 0x17},  { 0x42, oxFF, 0x18 },
+      { oxFF, oxFF, oxFF},  null
+    };
+    for (int i = 0; i < tests.length / 2; i++) {
+      Assert.assertArrayEquals("Failed for " + i, tests[i * 2 + 1], AbstractOVCTable.keyAfterPrefix(tests[i * 2]));
+
+    }
   }
 }

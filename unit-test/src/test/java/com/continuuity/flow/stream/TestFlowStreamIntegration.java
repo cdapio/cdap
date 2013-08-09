@@ -1,15 +1,18 @@
 package com.continuuity.flow.stream;
 
 import com.continuuity.test.AppFabricTestBase;
-import com.continuuity.test.app.ApplicationManager;
-import com.continuuity.test.app.RuntimeMetrics;
-import com.continuuity.test.app.RuntimeStats;
-import com.continuuity.test.app.StreamWriter;
+import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.RuntimeMetrics;
+import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.StreamWriter;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ *
+ */
 public class TestFlowStreamIntegration extends AppFabricTestBase {
   @Test
   public void testStreamBatch() throws Exception {

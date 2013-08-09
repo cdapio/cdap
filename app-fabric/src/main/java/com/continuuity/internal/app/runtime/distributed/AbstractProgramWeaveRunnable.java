@@ -10,8 +10,11 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.conf.KafkaConstants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
-import com.continuuity.common.metrics.OverlordMetricsReporter;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -22,14 +25,25 @@ import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
+import com.continuuity.internal.kafka.client.ZKKafkaClientService;
+import com.continuuity.kafka.client.KafkaClientService;
+import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.runtime.LoggingModules;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.api.Command;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnable;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
 import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.common.Services;
+import com.continuuity.weave.filesystem.HDFSLocationFactory;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -38,17 +52,21 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +96,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   private ProgramController controller;
   private Configuration hConf;
   private CConfiguration cConf;
+  private ZKClientService zkClientService;
+  private KafkaClientService kafkaClientService;
+  private MetricsCollectionService metricsCollectionService;
 
   protected AbstractProgramWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -116,12 +137,34 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
-      OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, cConf);
+      zkClientService =
+        ZKClientServices.delegate(
+          ZKClients.reWatchOnExpire(
+            ZKClients.retryOnFailure(
+              ZKClientService.Builder.of(cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE))
+                .setSessionTimeout(10000)
+                .build(),
+              RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
+            )
+          )
+        );
+      String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+      kafkaClientService = new ZKKafkaClientService(
+        kafkaZKNamespace == null
+          ? zkClientService
+          : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
+      );
 
-      injector = Guice.createInjector(createModule(context));
+      injector = Guice.createInjector(createModule(context, kafkaClientService));
+
+      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+
+      // Initialize log appender
+      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer.initialize();
+
       try {
-        program = new Program(injector.getInstance(LocationFactory.class)
-                                .create(cmdLine.getOptionValue(RunnableOptions.JAR)));
+        program = injector.getInstance(ProgramFactory.class).create(cmdLine.getOptionValue(RunnableOptions.JAR));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -171,12 +214,16 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       LOG.error("Fail to stop. {}", e, e);
       throw Throwables.propagate(e);
     } finally {
-      OverlordMetricsReporter.disable();
+      LOG.info("Stopping metrics service");
+      Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
     }
   }
 
   @Override
   public void run() {
+    LOG.info("Starting metrics service");
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
+
     LOG.info("Starting runnable: " + name);
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
@@ -214,13 +261,21 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   // TODO(terence) make this works for different mode
-  private Module createModule(final WeaveContext context) {
-    return new AbstractModule() {
+  private Module createModule(final WeaveContext context, final KafkaClientService kafkaClientService) {
+    return Modules.combine(new ConfigModule(cConf, hConf),
+                           new IOModule(),
+                           new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
+                           new LoggingModules().getDistributedModules(),
+                           new AbstractModule() {
       @Override
       protected void configure() {
-        bind(InetAddress.class).annotatedWith(Names.named("config.hostname")).toInstance(context.getHost());
+        bind(InetAddress.class).annotatedWith(Names.named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS))
+                               .toInstance(context.getHost());
 
-        bind(LocationFactory.class).toInstance(new LocalLocationFactory(new File(System.getProperty("user.dir"))));
+        bind(LocationFactory.class).toInstance(new HDFSLocationFactory(hConf));
+
+        // For program loading
+        install(createProgramFactoryModule());
 
         // For binding DataSet transaction stuff
         install(createFactoryModule(DataFabricFacadeFactory.class,
@@ -229,9 +284,6 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
         // For Binding queue stuff
         install(createFactoryModule(QueueReaderFactory.class, QueueReader.class, SingleQueueReader.class));
-
-        // For datum decode.
-        install(new IOModule());
 
         // Bind remote operation executor
         bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
@@ -244,7 +296,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           }
         });
       }
-    };
+    });
   }
 
   private <T> Module createFactoryModule(final Class<?> factoryClass,
@@ -258,6 +310,37 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                   .build(factoryClass));
       }
     };
+  }
+
+  private Module createProgramFactoryModule() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(LocationFactory.class)
+          .annotatedWith(Names.named("program.location.factory"))
+          .toInstance(new LocalLocationFactory(new File(System.getProperty("user.dir"))));
+        bind(ProgramFactory.class).in(Scopes.SINGLETON);
+        expose(ProgramFactory.class);
+      }
+    };
+  }
+
+  /**
+   * A private factory for creating instance of Program.
+   * It's needed so that we can inject different LocationFactory just for loading program.
+   */
+  private static final class ProgramFactory {
+
+    private final LocationFactory locationFactory;
+
+    @Inject
+    ProgramFactory(@Named("program.location.factory") LocationFactory locationFactory) {
+      this.locationFactory = locationFactory;
+    }
+
+    public Program create(String path) throws IOException {
+      return new Program(locationFactory.create(path));
+    }
   }
 }
 

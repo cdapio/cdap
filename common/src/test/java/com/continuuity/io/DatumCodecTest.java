@@ -41,6 +41,9 @@ import java.util.UUID;
  */
 public class DatumCodecTest {
 
+  /**
+   *
+   */
   public static class Value {
     private final int id;
     private final String name;
@@ -52,15 +55,15 @@ public class DatumCodecTest {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
 
       Value value = (Value) o;
-
-      if (id != value.id) return false;
-      if (!name.equals(value.name)) return false;
-
-      return true;
+      return id == value.id && name.equals(value.name);
     }
 
     @Override
@@ -79,6 +82,9 @@ public class DatumCodecTest {
     }
   }
 
+  /**
+   *
+   */
   public static class Record1 {
     private final int i;
     private final Map<Integer, Value> properties;
@@ -97,6 +103,9 @@ public class DatumCodecTest {
     }
   }
 
+  /**
+   *
+   */
   public static class Record2 {
     private final Long i;
     private final Map<String, Value> properties;
@@ -176,6 +185,9 @@ public class DatumCodecTest {
     Assert.assertArrayEquals(new String[]{"1", "2", "3"}, array);
   }
 
+  /**
+   *
+   */
   public static final class Node {
     int d;
     Node next;
@@ -194,6 +206,9 @@ public class DatumCodecTest {
   }
 
 
+  /**
+   *
+   */
   public static final class MoreFields {
 
     static final class Inner {
@@ -221,6 +236,9 @@ public class DatumCodecTest {
     }
   }
 
+  /**
+   *
+   */
   public static final class LessFields {
     static final class Inner {
       String b;
@@ -247,6 +265,9 @@ public class DatumCodecTest {
     Assert.assertEquals(moreFields.inner.b, lessFields.inner.b);
   }
 
+  /**
+   *
+   */
   public static enum TestEnum {
     VALUE1, VALUE2, VALUE3
   }

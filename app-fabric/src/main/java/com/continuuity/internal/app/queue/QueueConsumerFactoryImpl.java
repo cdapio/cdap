@@ -2,7 +2,7 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
@@ -13,7 +13,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
 /**
- *  Creates a QueueConsumer
+ *  Creates a QueueConsumer.
  */
 public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
   private final OperationExecutor opex;
@@ -48,7 +48,7 @@ public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
   public QueueConsumer create(int groupSize) {
     QueueConfig queueConfig;
 
-    if(queueInfo.isBatchMode()) {
+    if (queueInfo.isBatchMode()) {
       queueConfig =
         new QueueConfig(queueInfo.getPartitionerType(), sync, queueInfo.getBatchSize(), queueInfo.isBatchMode());
     } else {

@@ -231,6 +231,12 @@ struct TOpenTable {
   3: optional string metric,
 }
 
+struct TTruncateTable {
+  1: string table,
+  2: i64 id,
+  3: optional string metric,
+}
+
 struct TOptionalBinary {
   1: optional binary value,
   2: optional i32 status,
@@ -300,6 +306,7 @@ service TOperationExecutor {
   TQueueInfo getQueueInfo(1: TOperationContext context, 2: TGetQueueInfo getQueueInfo) throws (1: TOperationException ex),
   void clearFabric(1: TOperationContext context, 2: TClearFabric clearFabric) throws (1: TOperationException ex),
   void openTable(1: TOperationContext context, 2: TOpenTable openTable) throws (1: TOperationException ex),
+  void truncateTable(1: TOperationContext context, 2: TTruncateTable truncateTable) throws (1: TOperationException ex),
   void configureQueue(1: TOperationContext context, 2: TQueueConfigure configure) throws (1: TOperationException ex),
   void configureQueueGroups(1: TOperationContext context, 2: TQueueConfigureGroups configure) throws (1: TOperationException ex),
   void queueDropInflight(1: TOperationContext context, 2: TQueueDropInflight op) throws (1: TOperationException ex),

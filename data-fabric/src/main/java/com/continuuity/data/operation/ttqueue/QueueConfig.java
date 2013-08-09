@@ -1,7 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.hbase.ttqueue.HBQConfig;
 import com.google.common.base.Objects;
 
 /**
@@ -19,7 +18,7 @@ public class QueueConfig {
   private final boolean returnBatch;
 
   /**
-   * A config without batching
+   * A config without batching.
    * @param partitionerType the partitioner to use
    * @param singleEntry if true, repeated dequeue returns the same element until it is ack'ed
    */
@@ -31,7 +30,7 @@ public class QueueConfig {
   }
 
   /**
-   * A config with batch claim but single entry return
+   * A config with batch claim but single entry return.
    * @param partitionerType the partitioner to use
    * @param singleEntry if true, repeated dequeue returns the same element until it is ack'ed
    * @param batchSize dequeue will prefetch this many entries, but return only one at a time
@@ -41,7 +40,7 @@ public class QueueConfig {
   }
 
   /**
-   * A config with batch claim but single entry return
+   * A config with batch claim but single entry return.
    * @param partitionerType the partitioner to use
    * @param singleEntry if true, repeated dequeue returns the same element until it is ack'ed
    * @param batchSize dequeue will (pre)fetch this many entries
@@ -51,7 +50,7 @@ public class QueueConfig {
     this.partitionerType = partitionerType;
     this.singleEntry = singleEntry;
 
-    if(batchSize <= 0) {
+    if (batchSize <= 0) {
       throw new IllegalArgumentException(
         String.format("batchSize has to be greater than zero, given batchSize=%d", batchSize));
     }
@@ -108,10 +107,5 @@ public class QueueConfig {
     result = 31 * result + batchSize;
     result = 31 * result + (returnBatch ? 1 : 0);
     return result;
-  }
-
-  public HBQConfig toHBQ() {
-    // native HBase queues ignore batching
-    return new HBQConfig(partitionerType.toHBQ(), singleEntry);
   }
 }

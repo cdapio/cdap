@@ -2,20 +2,14 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.procedure.Procedure;
-import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
-import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.io.InstantiatorFactory;
-import com.continuuity.weave.api.RunId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -43,33 +37,35 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final Map<String, HandlerMethod> handlers;
   private final BasicProcedureContext context;
 
-  ProcedureHandlerMethod(Program program, RunId runId, int instanceId, ProgramOptions options,
-                         DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
+  ProcedureHandlerMethod(Program program, DataFabricFacadeFactory txAgentSupplierFactory,
+                         BasicProcedureContextFactory contextFactory) throws ClassNotFoundException {
 
     DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
-    DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
-    ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
-    context = new BasicProcedureContext(program, runId, instanceId,
-                                        DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
-                                        options.getUserArguments(),
-                                        procedureSpec);
+    context = contextFactory.create(txAgentSupplier);
 
-    TypeToken<? extends Procedure> procedureType
-      = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
-    procedure = new InstantiatorFactory(false).get(procedureType).create();
-    context.injectFields(procedure);
-    handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
+    try {
+      TypeToken<? extends Procedure> procedureType
+        = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
+      procedure = new InstantiatorFactory(false).get(procedureType).create();
+      context.injectFields(procedure);
+      handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
 
-    // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
-    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+      // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
+      LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+
+    } catch (Throwable t) {
+      // make sure the context releases all resources, datasets, ...
+      context.close();
+      throw Throwables.propagate(t);
+    }
   }
 
   public Procedure getProcedure() {
     return procedure;
   }
 
-  public ProcedureContext getContext() {
+  public BasicProcedureContext getContext() {
     return context;
   }
 
@@ -80,16 +76,19 @@ final class ProcedureHandlerMethod implements HandlerMethod {
       LOG.info("Procedure initialized: " + context);
     } catch (Throwable t) {
       LOG.error("Procedure throws exception during init.", t);
+      // make sure the context releases all resources, datasets, ...
+      context.close();
       throw Throwables.propagate(t);
     }
   }
 
   @Override
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
+    context.getSystemMetrics().gauge("query.requests", 1);
     HandlerMethod handlerMethod = handlers.get(request.getMethod());
     if (handlerMethod == null) {
       LOG.error("Unsupport procedure method " + request.getMethod() + " on procedure " + procedure.getClass());
-      context.getSystemMetrics().counter("query.failed", 1);
+      context.getSystemMetrics().gauge("query.failures", 1);
       try {
         responder.stream(new ProcedureResponse(ProcedureResponse.Code.NOT_FOUND));
       } catch (IOException e) {
@@ -100,9 +99,8 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
     try {
       handlerMethod.handle(request, responder);
-      context.getSystemMetrics().counter("query.success", 1);
     } catch (Throwable t) {
-      context.getSystemMetrics().counter("query.failed", 1);
+      context.getSystemMetrics().gauge("query.failures", 1);
       throw Throwables.propagate(t);
     }
   }

@@ -14,7 +14,9 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
 
-
+/**
+ * Count random app for testing.
+ */
 public class TestCountRandomApp implements Application {
   @Override
   public ApplicationSpecification configure() {
@@ -98,7 +100,7 @@ public class TestCountRandomApp implements Application {
       try {
         Thread.sleep(millis);
         millis += direction;
-        if(millis > 100 || millis < 1) {
+        if (millis > 100 || millis < 1) {
           direction = direction * -1;
         }
       } catch (InterruptedException e) {

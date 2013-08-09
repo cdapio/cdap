@@ -5,95 +5,61 @@
 define([], function () {
 
 	var Model = Em.Object.extend({
+		type: 'Flow',
+		plural: 'Flows',
 
 		href: function () {
 			return '#/flows/' + this.get('id');
 		}.property('id'),
-		metricData: null,
-		metricNames: null,
-		__loadingData: false,
+
 		instances: 0,
-		type: 'Flow',
-		plural: 'Flows',
+		version: -1,
+		currentState: '',
+
 		init: function() {
 			this._super();
 
-			this.set('metricData', Em.Object.create());
-			this.set('metricNames', {});
-
+			this.set('timeseries', Em.Object.create());
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
-			this.set('app', this.get('applicationId') || this.get('application'));
+			this.set('app', this.get('applicationId') || this.get('application') || this.get('meta').app);
 			this.set('id', this.get('app') + ':' +
 				(this.get('flowId') || this.get('id') || this.get('meta').name));
 
 		},
-		addMetricName: function (name) {
 
-			this.get('metricNames')[name] = 1;
+		interpolate: function (path) {
+
+			return path.replace(/\{parent\}/, this.get('app'))
+				.replace(/\{id\}/, this.get('name'));
 
 		},
-		getUpdateRequest: function () {
+
+		trackMetric: function (path, kind, label) {
+
+			this.get(kind).set(path = this.interpolate(path), label || []);
+			return path;
+
+		},
+
+		updateState: function (http) {
 
 			var self = this;
 
 			var app_id = this.get('app'),
-				flow_id = this.get('name'),
-				start = C.__timeRange * -1;
+				flow_id = this.get('name');
 
-			var metrics = [];
-			var metricNames = this.get('metricNames');
-			for (var name in metricNames) {
-				if (metricNames[name] === 1) {
-					metrics.push(name);
-				}
-			}
-			if (!metrics.length) {
-				this.set('__loadingData', false);
-				return;
-			}
+			http.rpc('runnable', 'status', [app_id, flow_id, -1],
+				function (response) {
 
-			C.get('manager', {
-				method: 'status',
-				params: [app_id, flow_id, -1]
-			}, function (error, response) {
-
-				if (response.params) {
-					self.set('currentState', response.params.status);
-				}
+					if (response.result) {
+						self.set('currentState', response.result.status);
+					}
 
 			});
 
-			return ['monitor', {
-				method: 'getTimeSeries',
-				params: [app_id, flow_id, metrics, start, undefined, 'FLOW_LEVEL']
-			}, function (error, response) {
-
-				if (!response.params) {
-					return;
-				}
-
-				var data, points = response.params.points,
-					latest = response.params.latest;
-
-				for (var metric in points) {
-					data = points[metric];
-
-					var k = data.length;
-
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-
-					metric = metric.replace(/\./g, '');
-					self.get('metricData').set(metric, data);
-					self.set('__loadingData', false);
-				}
-
-			}];
-
 		},
+
 		getMeta: function () {
 			var arr = [];
 			for (var m in this.meta) {
@@ -104,6 +70,7 @@ define([], function () {
 			}
 			return arr;
 		}.property('meta'),
+
 		isRunning: function() {
 
 			if (this.currentState !== 'RUNNING') {
@@ -154,6 +121,9 @@ define([], function () {
 
 		}.property('currentState'),
 		defaultAction: function () {
+			if (!this.currentState) {
+				return '...';
+			}
 			return {
 				'deployed': 'Start',
 				'stopped': 'Start',
@@ -178,33 +148,20 @@ define([], function () {
 			var app_id = model_id[0];
 			var flow_id = model_id[1];
 
-			C.get('manager', {
-				method: 'getFlowDefinition',
-				params: [app_id, flow_id]
-			}, function (error, response) {
+			http.rest('apps', app_id, 'flows', flow_id, function (model, error) {
 
-				if (error || !response.params) {
-					promise.reject(error);
-					return;
-				}
+				model.applicationId = app_id;
+				model = C.Flow.create(model);
 
-				response.params.currentState = 'UNKNOWN';
-				response.params.version = -1;
-				response.params.type = 'Flow';
-				response.params.applicationId = app_id;
+				http.rpc('runnable', 'status', [app_id, flow_id, -1],
+					function (response, error) {
 
-				var model = C.Flow.create(response.params);
-
-				C.get('manager', {
-					method: 'status',
-					params: [app_id, flow_id, -1]
-				}, function (error, response) {
-
-					if (response.params) {
-						model.set('currentState', response.params.status);
+					if (response.error) {
+							promise.reject(error);
+					} else {
+							model.set('currentState', response.result.status);
+							promise.resolve(model);
 					}
-
-					promise.resolve(model);
 
 				});
 
@@ -213,6 +170,7 @@ define([], function () {
 			return promise;
 
 		}
+
 	});
 
 	return Model;

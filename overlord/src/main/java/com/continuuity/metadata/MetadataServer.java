@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Metadata server
+ * Metadata server.
  */
 public class MetadataServer extends AbstractRegisteredServer
   implements MetadataServerInterface {
@@ -29,7 +29,7 @@ public class MetadataServer extends AbstractRegisteredServer
   );
 
   /**
-   * Instance of operation executor
+   * Instance of operation executor.
    */
   private final OperationExecutor opex;
 
@@ -71,7 +71,7 @@ public class MetadataServer extends AbstractRegisteredServer
    */
   @Override
   protected void stop() {
-    if(server != null) {
+    if (server != null) {
       server.stop();
     }
     executorService.shutdown();

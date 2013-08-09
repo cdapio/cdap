@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+    Copyright (c) to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+    <!--
+        Performance configurations.
+    -->
+
+    <property>
+        <name>perf.datafabric.mode</name>
+        <value>single</value>
+        <description>Specifies the data fabric mode.</description>
+    </property>
+
+    <property>
+        <name>perf.reporter.enabled</name>
+        <value>true</value>
+        <description>Specifies whether reporting of metrics is enabled or not.</description>
+    </property>
+
+    <property>
+        <name>perf.reporter.class</name>
+        <value>com.continuuity.performance.application.MensaMetricsReporter</value>
+        <description>Specifies a comma-separated list of classes for the REST metrics connector</description>
+    </property>
+
+    <property>
+        <name>perf.report.metrics</name>
+        <value>developer:SimpleApp:SimpleFlow:source:processed.count</value>
+        <description>Specifies a comma-separated list of metrics that need to be added to overlord</description>
+    </property>
+
+    <property>
+        <name>perf.report.interval</name>
+        <value>10</value>
+        <description>Specifies the reporting interval in seconds</description>
+    </property>
+
+    <property>
+        <name>opentsdb.server.address</name>
+        <value>mon101.ops.sl.continuuity.com</value>
+        <description>Specifies metrics server</description>
+    </property>
+
+</configuration>

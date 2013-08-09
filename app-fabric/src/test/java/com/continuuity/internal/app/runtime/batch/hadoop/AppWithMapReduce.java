@@ -32,6 +32,9 @@ public class AppWithMapReduce implements Application {
       .build();
   }
 
+  /**
+   *
+   */
   public static final class ClassicWordCount implements MapReduce {
     @UseDataSet("jobConfig")
     private KeyValueTable table;
@@ -57,6 +60,9 @@ public class AppWithMapReduce implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class AggregateTimeseriesByTag implements MapReduce {
     @UseDataSet("timeSeries")
     private SimpleTimeseriesTable table;

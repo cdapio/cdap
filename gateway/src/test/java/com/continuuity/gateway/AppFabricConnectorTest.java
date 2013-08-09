@@ -30,8 +30,11 @@ import java.io.Reader;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Tests Reactor connector.
+ */
 public class AppFabricConnectorTest {
-  private final static String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
+  private static final String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
 
   private static AppFabricServer server;
   private static Connector restConnector;
@@ -79,13 +82,12 @@ public class AppFabricConnectorTest {
     restConnector.start();
   } // end of setupGateway
 
-
   @Test
-  public void testDeploy() throws Exception {
+  public void testDeployWithHttpPut() throws Exception {
     String deployStatusUrl = baseURL + "/status";
-    Assert.assertEquals(200, deploy("WordCount.jar"));
+    Assert.assertEquals(200, deploy("WordCount.jar", true));
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("Content-Type", "application/json");
 
@@ -94,12 +96,44 @@ public class AppFabricConnectorTest {
   }
 
   @Test
+  public void testDeploy() throws Exception {
+    String deployStatusUrl = baseURL + "/status";
+    Assert.assertEquals(200, deploy("WordCount.jar"));
+
+    Map<String, String> headers = Maps.newHashMap();
+    headers.put(CONTINUUITY_API_KEY, "api-key-example");
+    headers.put("Content-Type", "application/json");
+
+    HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+// TODO(ENG-3120, ENG-3119): The test doesn't pass since we need to inject metrics discovery client.
+//  @Test
+//  public void testDelete() throws Exception {
+//    String deployStatusUrl = baseURL + "/status";
+//    Assert.assertEquals(200, deploy("WordCount.jar"));
+//
+//    Map<String, String> headers = Maps.newHashMap();
+//    headers.put(CONTINUUITY_API_KEY, "api-key-example");
+//    headers.put("Content-Type", "application/json");
+//
+//    HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
+//    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+//
+//    String deleteUrl = baseURL + "/WordCountApp";
+//    int responseCode = TestUtil.sendDeleteRequest(deleteUrl);
+//    Assert.assertEquals(200, responseCode);
+//
+//  }
+
+
+  @Test
   public void testDeployStatus() throws Exception {
     Assert.assertEquals(200, deploy("WordCount.jar"));
 
     String deployStatusUrl = baseURL + "/status";
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("Content-Type", "application/json");
 
@@ -116,7 +150,7 @@ public class AppFabricConnectorTest {
   public void testPing() throws Exception {
     Assert.assertEquals(200, deploy("WordCount.jar"));
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
 
     HttpResponse response = TestUtil.sendGetRequest(pingURL, headers);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -130,7 +164,7 @@ public class AppFabricConnectorTest {
     String queryInstancesUrl = baseURL + "/WordCountApp/flow/WordCountFlow/Tokenizer?op=instances";
     String setInstancesUrl = baseURL + "/WordCountApp/flow/WordCountFlow/Tokenizer?op=instances";
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("Content-Type", "application/json");
 
@@ -157,7 +191,7 @@ public class AppFabricConnectorTest {
     String stopProcedureUrl = baseURL + "/WordCountApp/procedure/WordFrequency?op=stop";
     String statusFlowUrl = baseURL + "/WordCountApp/flow/WordCountFlow?op=status";
 
-    Map<String,String> headers = Maps.newHashMap();
+    Map<String, String> headers = Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("Content-Type", "application/json");
 
@@ -194,11 +228,15 @@ public class AppFabricConnectorTest {
   }
 
   private int deploy(String jarFileName) throws Exception {
+    return deploy(jarFileName, false);
+  }
+
+  private int deploy(String jarFileName, boolean useHttpPut) throws Exception {
     // JAR file is stored in test/resource/WordCount.jar.
     File archive = FileUtils.toFile(getClass().getResource("/" + jarFileName));
 
-    Map<String,String> headers = Maps.newHashMap();
-    headers.put(CONTINUUITY_API_KEY,"api-key-example");
+    Map<String, String> headers = Maps.newHashMap();
+    headers.put(CONTINUUITY_API_KEY, "api-key-example");
     headers.put("X-Archive-Name", jarFileName);
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -207,6 +245,10 @@ public class AppFabricConnectorTest {
     } finally {
       bos.close();
     }
-    return TestUtil.sendPostRequest(baseURL, bos.toByteArray(), headers);
+    if (useHttpPut) {
+      return TestUtil.sendPutRequest(baseURL, bos.toByteArray(), headers);
+    } else {
+      return TestUtil.sendPostRequest(baseURL, bos.toByteArray(), headers);
+    }
   }
 }

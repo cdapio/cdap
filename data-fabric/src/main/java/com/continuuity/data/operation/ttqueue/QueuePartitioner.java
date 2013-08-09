@@ -2,7 +2,6 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-import com.continuuity.hbase.ttqueue.HBQPartitioner.HBQPartitionerType;
 import com.google.common.base.Objects;
 
 import java.io.IOException;
@@ -20,6 +19,9 @@ public interface QueuePartitioner {
    */
   public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash);
 
+  /**
+   * Defines queue partition type.
+   */
   public static enum PartitionerType {
     HASH, FIFO, ROUND_ROBIN;
 
@@ -36,14 +38,6 @@ public interface QueuePartitioner {
         case ROUND_ROBIN: return PARTITIONER_ROUND_ROBIN;
         case FIFO: return PARTITIONER_FIFO;
         default: return PARTITIONER_FIFO;
-      }
-    }
-
-    public HBQPartitionerType toHBQ() {
-      switch (this) {
-        case FIFO: return HBQPartitionerType.RANDOM; // TODO whatever we do with HBQ, rename this too
-        case HASH: return HBQPartitionerType.HASH_ON_VALUE; // TODO: Not 100% the same !!!
-        default: return HBQPartitionerType.RANDOM;
       }
     }
 
@@ -75,6 +69,9 @@ public interface QueuePartitioner {
     }
   }
 
+  /**
+   * Implementation of hash partion for queues.
+   */
   public static class HashPartitioner implements QueuePartitioner {
 
     @Override
@@ -89,6 +86,9 @@ public interface QueuePartitioner {
     }
   }
 
+  /**
+   * Implementation of Fifo partition for queues.
+   */
   public static class FifoPartitioner implements QueuePartitioner {
 
     @Override
@@ -102,6 +102,9 @@ public interface QueuePartitioner {
     }
   }
 
+  /**
+   * Implementation of round robin partition for queues.
+   */
   public static class RoundRobinPartitioner implements QueuePartitioner {
 
     @Override

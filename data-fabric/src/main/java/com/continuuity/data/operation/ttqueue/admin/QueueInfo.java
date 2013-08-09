@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.ttqueue.admin;
 
-import com.continuuity.hbase.ttqueue.HBQQueueMeta;
 import com.google.common.base.Objects;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -27,7 +26,9 @@ public class QueueInfo {
 
   @Override
   public boolean equals(Object other) {
-    if (other == this) return true;
+    if (other == this) {
+      return true;
+    }
     if (other instanceof QueueInfo) {
       return Objects.equal(this.jsonString, ((QueueInfo) other).jsonString);
     }
@@ -37,15 +38,6 @@ public class QueueInfo {
   @Override
   public int hashCode() {
     return jsonString == null ? 0 : jsonString.hashCode();
-  }
-
-  public QueueInfo(HBQQueueMeta meta) {
-    try {
-      this.jsonString = meta.toJSON();
-    } catch (JSONException e) {
-      LOG.warn("Error converting HBQQueueMeta to JSON: " + e.getMessage());
-      this.jsonString = new JSONObject().toString();
-    }
   }
 
   public QueueInfo(QueueMeta meta) {

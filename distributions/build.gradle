@@ -1,6 +1,6 @@
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':unit-test')
-evaluationDependsOn(':performance')
+//evaluationDependsOn(':test-framework:performance')
 evaluationDependsOn(':passport')
 
 apply plugin:'maven'
@@ -162,6 +162,8 @@ task developer_suite_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
     exclude "TwitterScanner/"
     exclude "LishApps/"
     exclude "AggregateMetrics/"
+    exclude "lib/"
+    exclude "build-checkstyle.xml"
   }
 
   //webapp

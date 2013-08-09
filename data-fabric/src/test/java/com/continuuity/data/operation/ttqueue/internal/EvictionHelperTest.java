@@ -16,8 +16,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import static com.continuuity.data.operation.ttqueue.internal.TTQueueNewConstants.INVALID_ENTRY_ID;
+import static com.continuuity.data.operation.ttqueue.internal.TTQueueConstants.INVALID_ENTRY_ID;
 
+/**
+ *
+ */
 public class EvictionHelperTest {
 
   @Test

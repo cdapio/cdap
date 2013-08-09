@@ -24,10 +24,10 @@ public class TestMemoryOracle {
   private static TransactionOracle newOracle() {
     return injector.getInstance(TransactionOracle.class);
   }
-  static final byte[] a = { 'a' };
-  static final byte[] b = { 'b' };
-  static final byte[] c = { 'c' };
-  static final byte[][] columns = { { 'x' } };
+  private static final byte[] a = { 'a' };
+  private static final byte[] b = { 'b' };
+  private static final byte[] c = { 'c' };
+  private static final byte[][] columns = { { 'x' } };
 
   // test that txids are increasing
   // test that new transaction includes itself for read
@@ -99,26 +99,26 @@ public class TestMemoryOracle {
 
     // start four transactions with overlapping writes
     Transaction tx1 = oracle.startTransaction(true);
-    oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
+    oracle.addToTransaction(tx1, Collections.singletonList((Undo) new UndoWrite(table, a, columns)));
 
     Transaction tx2 = oracle.startTransaction(true);
-    oracle.addToTransaction(tx2, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
+    oracle.addToTransaction(tx2, Collections.singletonList((Undo) new UndoWrite(table, a, columns)));
 
     Transaction tx3 = oracle.startTransaction(true);
-    oracle.addToTransaction(tx3, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
+    oracle.addToTransaction(tx3, Collections.singletonList((Undo) new UndoWrite(table, b, columns)));
 
     Transaction tx4 = oracle.startTransaction(true);
-    oracle.addToTransaction(tx4, Collections.singletonList((Undo)new UndoWrite(table, c, columns)));
+    oracle.addToTransaction(tx4, Collections.singletonList((Undo) new UndoWrite(table, c, columns)));
 
     // now each transaction has started and performed one write
     // each one may now perform another wrote or commit right away
 
     // tx2 writes another one and commits -> success
-    oracle.addToTransaction(tx2, Collections.singletonList((Undo)new UndoWrite(table, c, columns)));
+    oracle.addToTransaction(tx2, Collections.singletonList((Undo) new UndoWrite(table, c, columns)));
     Assert.assertTrue(oracle.commitTransaction(tx2).isSuccess());
 
     // now tx1 writes another value and commits -> abort due to conflict on a
-    oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
+    oracle.addToTransaction(tx1, Collections.singletonList((Undo) new UndoWrite(table, b, columns)));
     TransactionResult txres1 = oracle.commitTransaction(tx1);
     Assert.assertFalse(txres1.isSuccess());
     List<Undo> undos1 = txres1.getUndos();
@@ -278,9 +278,9 @@ public class TestMemoryOracle {
     Transaction tx3 = oracle.startTransaction(true);
 
     // all transactions write the same row to different tables, one uses default table
-    oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(t1, a, new byte[][] { b } )));
-    oracle.addToTransaction(tx2, Collections.singletonList((Undo)new UndoWrite(t2, a, new byte[][] { b } )));
-    oracle.addToTransaction(tx3, Collections.singletonList((Undo)new UndoWrite(t3, a, new byte[][] { b } )));
+    oracle.addToTransaction(tx1, Collections.singletonList((Undo) new UndoWrite(t1, a, new byte[][] { b })));
+    oracle.addToTransaction(tx2, Collections.singletonList((Undo) new UndoWrite(t2, a, new byte[][] { b })));
+    oracle.addToTransaction(tx3, Collections.singletonList((Undo) new UndoWrite(t3, a, new byte[][] { b })));
 
     // commit all transactions, none should fail
     Assert.assertTrue(oracle.commitTransaction(tx1).isSuccess());
@@ -320,26 +320,26 @@ public class TestMemoryOracle {
 
     // start four transactions with overlapping writes
     Transaction tx1 = oracle.startTransaction(false);
-    oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
+    oracle.addToTransaction(tx1, Collections.singletonList((Undo) new UndoWrite(table, a, columns)));
 
     Transaction tx2 = oracle.startTransaction(true);
-    oracle.addToTransaction(tx2, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
+    oracle.addToTransaction(tx2, Collections.singletonList((Undo) new UndoWrite(table, a, columns)));
 
     Transaction tx3 = oracle.startTransaction(true);
-    oracle.addToTransaction(tx3, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
+    oracle.addToTransaction(tx3, Collections.singletonList((Undo) new UndoWrite(table, b, columns)));
 
     Transaction tx4 = oracle.startTransaction(false);
-    oracle.addToTransaction(tx4, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
+    oracle.addToTransaction(tx4, Collections.singletonList((Undo) new UndoWrite(table, b, columns)));
 
     // now each transaction has started and performed one write
     // each one may now perform another wrote or commit right away
 
     // tx2 writes another one and commits -> success
-    oracle.addToTransaction(tx2, Collections.singletonList((Undo)new UndoWrite(table, c, columns)));
+    oracle.addToTransaction(tx2, Collections.singletonList((Undo) new UndoWrite(table, c, columns)));
     Assert.assertTrue(oracle.commitTransaction(tx2).isSuccess());
 
     // now NTC tx1 writes another value and commits -> success even though there's a conflict with tx2 (on 'a' row)
-    oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
+    oracle.addToTransaction(tx1, Collections.singletonList((Undo) new UndoWrite(table, b, columns)));
     Assert.assertTrue(oracle.commitTransaction(tx1).isSuccess());
 
     // now tx3 commits. It has a conflict with tx1 (on 'b' row) but will not fail since tx1 is NTC

@@ -26,8 +26,9 @@ import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
-import com.continuuity.test.app.DefaultId;
-import com.continuuity.test.app.TestHelper;
+import com.continuuity.test.internal.DefaultId;
+import com.continuuity.test.internal.TestHelper;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
@@ -42,6 +43,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class MultiConsumerTest {
 
+  /**
+   *
+   */
   public static final class MultiApp implements Application {
 
     @Override
@@ -57,6 +61,9 @@ public class MultiConsumerTest {
     }
   }
 
+  /**
+   *
+   */
   public static final class MultiFlow implements Flow {
 
     @Override
@@ -77,6 +84,9 @@ public class MultiConsumerTest {
     }
   }
 
+  /**
+   *
+   */
   public static final class Generator extends AbstractGeneratorFlowlet {
 
     private OutputEmitter<Integer> output;
@@ -94,8 +104,11 @@ public class MultiConsumerTest {
     }
   }
 
-  private static final byte[] KEY = new byte[] {'k','e','y'};
+  private static final byte[] KEY = new byte[] {'k', 'e', 'y'};
 
+  /**
+   *
+   */
   public static final class Consumer extends AbstractFlowlet {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
@@ -105,6 +118,9 @@ public class MultiConsumerTest {
     }
   }
 
+  /**
+   *
+   */
   public static final class ConsumerStr extends AbstractFlowlet {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
@@ -145,12 +161,14 @@ public class MultiConsumerTest {
     TimeUnit.SECONDS.sleep(4);
 
     OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
+    LocationFactory locationFactory = TestHelper.getInjector().getInstance(LocationFactory.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 
     TransactionProxy proxy = new TransactionProxy();
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, opCtx));
-    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, opCtx), proxy,
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, opCtx),
+                                                                      proxy,
                                                                       getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new MultiApp().configure().getDataSets().values()));
 

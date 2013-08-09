@@ -73,21 +73,22 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
    * @return A {@link Schema} representing the given java {@link Type}.
    * @throws UnsupportedTypeException Indicates schema generation is not support for the given java {@link Type}.
    */
+  @SuppressWarnings("unchecked")
   protected final Schema doGenerate(TypeToken<?> typeToken, Set<String> knownRecords) throws UnsupportedTypeException {
     Type type = typeToken.getType();
     Class<?> rawType = typeToken.getRawType();
 
-    if(SIMPLE_SCHEMAS.containsKey(rawType)) {
+    if (SIMPLE_SCHEMAS.containsKey(rawType)) {
       return SIMPLE_SCHEMAS.get(rawType);
     }
 
     // Enum type, simply use all the enum constants for ENUM schema.
-    if(rawType.isEnum()) {
+    if (rawType.isEnum()) {
       return Schema.enumWith((Class<Enum<?>>) rawType);
     }
 
     // Java array, use ARRAY schema.
-    if(rawType.isArray()) {
+    if (rawType.isArray()) {
       Schema componentSchema = doGenerate(TypeToken.of(rawType.getComponentType()), knownRecords);
       if (rawType.getComponentType().isPrimitive()) {
         return Schema.arrayOf(componentSchema);
@@ -95,7 +96,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
       return Schema.arrayOf(Schema.unionOf(componentSchema, Schema.of(Schema.Type.NULL)));
     }
 
-    if(!( type instanceof Class || type instanceof ParameterizedType )) {
+    if (!(type instanceof Class || type instanceof ParameterizedType)) {
       throw new UnsupportedTypeException(
                                           "Type " + type + " is not supported. " +
                                             "Only Class or ParameterizedType are supported."
@@ -103,21 +104,21 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     }
 
     // Any parameterized Collection class would be represented by ARRAY schema.
-    if(Collection.class.isAssignableFrom(rawType)) {
-      if(!( type instanceof ParameterizedType )) {
+    if (Collection.class.isAssignableFrom(rawType)) {
+      if (!(type instanceof ParameterizedType)) {
         throw new UnsupportedTypeException("Only supports parameterized Collection type.");
       }
-      TypeToken<?> componentType = typeToken.resolveType(( (ParameterizedType) type ).getActualTypeArguments()[0]);
+      TypeToken<?> componentType = typeToken.resolveType(((ParameterizedType) type).getActualTypeArguments()[0]);
       Schema componentSchema = doGenerate(componentType, knownRecords);
       return Schema.arrayOf(Schema.unionOf(componentSchema, Schema.of(Schema.Type.NULL)));
     }
 
     // Java Map, use MAP schema.
-    if(Map.class.isAssignableFrom(rawType)) {
-      if(!( type instanceof ParameterizedType )) {
+    if (Map.class.isAssignableFrom(rawType)) {
+      if (!(type instanceof ParameterizedType)) {
         throw new UnsupportedTypeException("Only supports parameterized Map type.");
       }
-      Type[] typeArgs = ( (ParameterizedType) type ).getActualTypeArguments();
+      Type[] typeArgs = ((ParameterizedType) type).getActualTypeArguments();
       TypeToken<?> keyType = typeToken.resolveType(typeArgs[0]);
       TypeToken<?> valueType = typeToken.resolveType(typeArgs[1]);
 
@@ -128,7 +129,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
 
     // Any Java class, class name as the record name.
     String recordName = typeToken.getRawType().getName();
-    if(knownRecords.contains(recordName)) {
+    if (knownRecords.contains(recordName)) {
       // Record already seen before, simply create a reference RECORD schema by the name.
       return Schema.recordOf(recordName);
     }
@@ -140,11 +141,11 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
   /**
    * Generates a RECORD schema of the given type.
    *
-   * @param typeToken
-   * @param knownRecords
+   * @param typeToken Type of the record.
+   * @param knownRecords Set of record names that schema has already been generated.
    * @return An instance of {@link Schema}
    * @throws UnsupportedTypeException
    */
-  protected abstract Schema generateRecord(TypeToken<?> typeToken, Set<String> knownRecords) throws
-    UnsupportedTypeException;
+  protected abstract Schema generateRecord(TypeToken<?> typeToken,
+                                           Set<String> knownRecords) throws UnsupportedTypeException;
 }

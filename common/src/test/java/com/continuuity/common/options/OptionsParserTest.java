@@ -15,9 +15,9 @@ import java.util.List;
 public class OptionsParserTest {
 
   private static class MyFlags {
-    @Option(usage="a boolean flag") private boolean flagNoValue;
+    @Option(usage = "a boolean flag") private boolean flagNoValue;
     @Option protected boolean flagOneDashBoolean;
-    @Option(name="flagFloat") public float flagNumber;
+    @Option(name = "flagFloat") public float flagNumber;
     @Option public double flagDouble;
     @Option public int flagInt;
     @Option public long flagLong;
@@ -26,8 +26,8 @@ public class OptionsParserTest {
     @Option public String flagDefault = "defaultValue";
 
     // These two parameters may be controlled by explicit flags or by the environment.
-    @Option(name="home", envVar="HOME", hidden=true) public String homeVar = "somedefault";
-    @Option(name="missing", envVar="MISSING_ENV_VAR_XXXXXXX", hidden=true)
+    @Option(name = "home", envVar = "HOME", hidden = true) public String homeVar = "somedefault";
+    @Option(name = "missing", envVar = "MISSING_ENV_VAR_XXXXXXX", hidden = true)
     public String missingEnv = "missing";
 
     private String notAFlag;
@@ -55,7 +55,7 @@ public class OptionsParserTest {
 
   private static class DuplicateFlagDeclaration {
     @Option private int myFlag;
-    @Option(name="myFlag") private String myDuplicateFlag;
+    @Option(name = "myFlag") private String myDuplicateFlag;
   }
 
   private static class HelpOverride {
@@ -108,7 +108,7 @@ public class OptionsParserTest {
       "--notAFlag=foo",
     };
     try {
-      OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0",System.out);
+      OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0", System.out);
       Assert.assertTrue(false);  // Should have thrown an exception.
     } catch (UnrecognizedOptionException e) {
       Assert.assertTrue(e.getMessage().contains("notAFlag"));
@@ -231,17 +231,19 @@ public class OptionsParserTest {
   @Test
   public void testEnvVarFlags() {
     // Ignore this test if windows as this does not work
-    if (OSDetector.isWindows()) return;
+    if (OSDetector.isWindows()) {
+      return;
+    }
     MyFlags myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] { "--flagInt=7" },"OptionsParserTest", "0.1.0", System.out);
+    OptionsParser.init(myFlags, new String[] { "--flagInt=7" }, "OptionsParserTest", "0.1.0", System.out);
     Assert.assertTrue(myFlags.homeVar.startsWith("/")); // should be some path.
 
     myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] { "--home=meep" }, "OptionsParserTest", "0.1.0",System.out);
+    OptionsParser.init(myFlags, new String[] { "--home=meep" }, "OptionsParserTest", "0.1.0", System.out);
     Assert.assertEquals("meep", myFlags.homeVar);
 
     myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] { "--missing=wombat" }, "OptionsParserTest", "0.1.0",System.out);
+    OptionsParser.init(myFlags, new String[] { "--missing=wombat" }, "OptionsParserTest", "0.1.0", System.out);
     Assert.assertEquals("wombat", myFlags.missingEnv);
 
     myFlags = new MyFlags();

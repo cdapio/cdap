@@ -4,7 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
-import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.common.metrics.codec.MetricCodecFactory;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
@@ -41,7 +40,7 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
   private static final int IDLE_THREAD_POOL_SIZE = 10;
 
   /**
-   * Defines queue length
+   * Defines queue length.
    */
   private static final int WORKER_QUEUE_LENGTH = 100000;
 
@@ -66,12 +65,12 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
       @Override
       public void run() {
         try {
-          while(true) {
-            if(finished.await(1, TimeUnit.SECONDS)) {
+          while (true) {
+            if (finished.await(1, TimeUnit.SECONDS)) {
               break;
             }
           }
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException ignored) {}
       }
     });
   }
@@ -83,7 +82,7 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
     // Unbind from the port so that we don't receive any more
     // requests. Assumption is that the <code>AbstractRegisteredServer</code>
     // has already unregistered, so it's safe to unbind the port.
-    if(acceptor != null) {
+    if (acceptor != null) {
       acceptor.unbind();
       // latch down the counter.
       finished.countDown();
@@ -115,15 +114,15 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
     try {
 
       // Verify that an IoHandler has been set.
-      if(handler == null) {
+      if (handler == null) {
         // Create an instance of metrics i/o handler.
         handler =
           new MetricsCollectionServerIoHandler(conf);
       }
 
       // Retrieve the port on which to run the overlord server.
-      int serverPort = conf.getInt( Constants.CFG_METRICS_COLLECTOR_SERVER_PORT,
-                                    Constants.DEFAULT_METRICS_COLLECTOR_SERVER_PORT);
+      int serverPort = conf.getInt(Constants.CFG_METRICS_COLLECTOR_SERVER_PORT,
+                                   Constants.DEFAULT_METRICS_COLLECTOR_SERVER_PORT);
 
       InetAddress serverAddress = getServerInetAddress(
             conf.get(Constants.CFG_METRICS_COLLECTOR_SERVER_ADDRESS,
@@ -150,7 +149,7 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
       // it's NioSocketAcceptor.
       IoServiceMBean acceptorMBean = new IoServiceMBean(acceptor);
 
-      if(mBeanServer != null) {
+      if (mBeanServer != null) {
         // create a JMX ObjectName.  This has to be in a specific format.
         ObjectName acceptorName = new ObjectName(
           acceptor.getClass().getPackage().getName() +
@@ -169,7 +168,7 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
       // case, a ProtocolCodecFilter
       IoFilterMBean protocolFilterMBean = new IoFilterMBean(protocolFilter);
 
-      if(mBeanServer != null) {
+      if (mBeanServer != null) {
         // create a JMX ObjectName.
         ObjectName protocolFilterName = new ObjectName(
           protocolFilter.getClass().getPackage().getName() +
@@ -177,7 +176,7 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
 
         // register the bean on the MBeanServer.  Without this line, no JMX will happen for
         // this filter.
-        mBeanServer.registerMBean( protocolFilterMBean, protocolFilterName );
+        mBeanServer.registerMBean(protocolFilterMBean, protocolFilterName);
       }
 
       // Add an IoFilter - This class is responsible for converting
@@ -195,7 +194,7 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
       filterChainBuilder.addLast("threadPool",
                                  new ExecutorFilter(new ThreadPoolExecutor(
                                    IDLE_THREAD_POOL_SIZE, THREAD_POOL_SIZE,
-                                   5*60, TimeUnit.SECONDS,
+                                   5 * 60, TimeUnit.SECONDS,
                                    new ArrayBlockingQueue<Runnable>(WORKER_QUEUE_LENGTH)
                                  )));
 
@@ -227,10 +226,8 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
       );
 
       // Include the service payload.
-      RegisteredServerInfo registrationInfo =
-        new RegisteredServerInfo(serverAddress.getHostAddress(), serverPort);
 
-      return registrationInfo;
+      return new RegisteredServerInfo(serverAddress.getHostAddress(), serverPort);
     } catch (Exception e) {
       Log.error("Failed configuring metrics collection server : {}",
                 e.getMessage(), e);

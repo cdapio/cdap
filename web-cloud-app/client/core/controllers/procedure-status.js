@@ -33,9 +33,15 @@ define([], function () {
 
 		updateStats: function () {
 
-			C.get.apply(C, this.get('model').getUpdateRequest());
+			this.get('model').updateState(this.HTTP);
+
+			C.Util.updateTimeSeries([this.get('model')], this.HTTP);
+			C.Util.updateAggregates([this.get('model')], this.HTTP);
 
 		},
+		/**
+		 * Lifecycle
+		 */
 
 		start: function (app, id, version, config) {
 
@@ -44,12 +50,14 @@ define([], function () {
 
 			model.set('currentState', 'STARTING');
 
-			C.get('manager', {
-				method: 'start',
-				params: [app, id, -1, 'QUERY', config]
-			}, function (error, response) {
+			this.HTTP.rpc('runnable', 'start', [app, id, version, 'QUERY', config],
+				function (response) {
 
-				model.set('lastStarted', new Date().getTime() / 1000);
+					if (response.error) {
+						C.Modal.show(response.error.name, response.error.message);
+					} else {
+						model.set('lastStarted', new Date().getTime() / 1000);
+					}
 
 			});
 
@@ -61,11 +69,12 @@ define([], function () {
 
 			model.set('currentState', 'STOPPING');
 
-			C.get('manager', {
-				method: 'stop',
-				params: [app, id, -1, 'QUERY']
-			}, function (error, response) {
+			this.HTTP.rpc('runnable', 'stop', [app, id, version, 'QUERY'],
+				function (response) {
 
+					if (response.error) {
+						C.Modal.show(response.error.name, response.error.message);
+					}
 
 			});
 
@@ -125,7 +134,7 @@ define([], function () {
 			}
 		},
 
-		"delete": function () {
+		'delete': function () {
 
 			if (this.get('model').get('currentState') !== 'STOPPED' &&
 				this.get('model').get('currentState') !== 'DEPLOYED') {

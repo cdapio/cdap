@@ -23,7 +23,6 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
@@ -32,6 +31,7 @@ import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -60,12 +60,18 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Map;
 
+/**
+ * Tests Data Rest Accessor
+ */
 public class DatasetRestAccessorTest {
 
   static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
 
   // this is the executor for all access to the data fabric
   private static OperationExecutor executor;
+
+  // this is the location factory for access to the data fabric
+  private static LocationFactory locationFactory;
 
   // a meta data service
   private static MetadataService mds;
@@ -77,17 +83,17 @@ public class DatasetRestAccessorTest {
   private DatasetRestAccessor accessor;
 
   /**
-   * Set up in-memory data fabric
+   * Set up in-memory data fabric.
    */
   @BeforeClass
   public static void setup() {
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+    Injector injector = Guice.createInjector(new GatewayTestModule(new CConfiguration()));
     executor = injector.getInstance(OperationExecutor.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
     mds = new MetadataService(executor);
-    instantiator = new DataSetInstantiatorFromMetaData(executor, mds);
+    instantiator = new DataSetInstantiatorFromMetaData(executor, locationFactory, mds);
 
   } // end of setupGateway
 
@@ -103,7 +109,7 @@ public class DatasetRestAccessorTest {
   }
 
   /**
-   * Create a new rest accessor with a given name and parameters
+   * Create a new rest accessor with a given name and parameters.
    *
    * @param name   The name for the accessor
    * @param prefix The path prefix for the URI
@@ -127,6 +133,7 @@ public class DatasetRestAccessorTest {
         Constants.CONFIG_PATH_MIDDLE), middle);
     restAccessor.configure(configuration);
     restAccessor.setExecutor(executor);
+    restAccessor.setLocationFactory(locationFactory);
     restAccessor.setMetadataService(mds);
     // start the accessor
     restAccessor.start();
@@ -268,7 +275,9 @@ public class DatasetRestAccessorTest {
     HttpResponse response = client.execute(post);
     client.getConnectionManager().shutdown();
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
-    if (expected != HttpStatus.SC_OK) return null;
+    if (expected != HttpStatus.SC_OK) {
+      return null;
+    }
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     // JSon always returns string maps, no matter what the type, must be due to type erasure
     Type valueMapType = new TypeToken<Map<String, String>>(){}.getType();
@@ -291,8 +300,8 @@ public class DatasetRestAccessorTest {
     t.write(new Write(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b }));
 
     // submit increment for row with c1 and c3, should succeed
-    String json = "{\"a\":35,\"c\":11}";
-    Map<String,Long> map = assertIncrement(urlPrefix, 200, "Table/" + t.getName() + "/" + row + "?op=increment", json);
+    String json = "{\"a\":35, \"c\":11}";
+    Map<String, Long> map = assertIncrement(urlPrefix, 200, "Table/" + t.getName() + "/" + row + "?op=increment", json);
     // verify result is the incremented value
     Assert.assertNotNull(map);
     Assert.assertEquals(2L, map.size());
@@ -386,23 +395,60 @@ public class DatasetRestAccessorTest {
     assertCreate(urlPrefix, HttpStatus.SC_BAD_REQUEST, "" + "?op=create"); // empty table name
   }
 
-  final static QueueEntry streamEntry = new QueueEntry("x".getBytes());
+  @Test
+  public void testTruncateTable() throws Exception {
+    String urlPrefix = setupAccessor("data", "", "/data/");
+    String tablePrefix = urlPrefix + "Table/";
+    String table = "tCTbl";
+    assertCreate(tablePrefix, HttpStatus.SC_OK, table);
+    assertWrite(tablePrefix, HttpStatus.SC_OK, table + "/abc", "{ \"c1\":\"v1\"}");
+    // make sure both columns are there
+    assertRead(tablePrefix, 1, 1, table + "/abc");
+
+    String dataSetManagementOpsPrefix = urlPrefix + "DataSet/";
+    assertTruncate(dataSetManagementOpsPrefix, HttpStatus.SC_OK, table);
+
+    // make sure data was removed: 404 on read
+    assertReadFails(tablePrefix, table + "/abc", HttpStatus.SC_NOT_FOUND);
+
+    // but table is there: we can write into it again
+    assertCreate(tablePrefix, HttpStatus.SC_OK, table);
+    assertWrite(tablePrefix, HttpStatus.SC_OK, table + "/abc", "{ \"c3\":\"v3\"}");
+    // make sure both columns are there
+    assertRead(tablePrefix, 3, 3, table + "/abc");
+  }
+
+  void assertTruncate(String prefix, int expected, String table) throws IOException {
+    HttpDelete delete = new HttpDelete(prefix + table + "?op=truncate");
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(delete);
+    client.getConnectionManager().shutdown();
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
+
+  static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
+
   static WriteOperation addToStream(String name) {
-    return new QueueEnqueue(("stream:" + name).getBytes(), streamEntry);
+    return new QueueEnqueue(("stream:" + name).getBytes(), STREAM_ENTRY);
   }
+
   static WriteOperation addToQueue(String name) {
-    return new QueueEnqueue(("queue:" + name).getBytes(), streamEntry);
+    return new QueueEnqueue(("queue:" + name).getBytes(), STREAM_ENTRY);
   }
+
   static void createStream(String name) throws Exception {
     Stream stream = new Stream(name);
     stream.setName(name);
     mds.assertStream(new Account(context.getAccount()), stream);
     executor.commit(context, addToStream(name));
   }
+
   static void createQueue(String name) throws Exception {
     executor.commit(context, addToQueue(name));
   }
+
   static Write addToTable = new Write(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'});
+
   static Table createTable(String name) throws Exception {
     Table table = newTable(name);
     table.write(addToTable);
@@ -418,15 +464,18 @@ public class DatasetRestAccessorTest {
                                             new QueueDequeue(queue.getBytes(), consumer, consumer.getQueueConfig()));
     return !result.isEmpty();
   }
+
   boolean verifyStream(String name) throws Exception {
     Stream stream = mds.getStream(new Account(context.getAccount()), new Stream(name));
     boolean streamExists = stream.isExists();
     boolean dataExists = dequeueOne("stream:" + name);
     return streamExists || dataExists;
   }
+
   boolean verifyQueue(String name) throws Exception {
     return dequeueOne("queue:" + name);
   }
+
   boolean verifyTable(String name) throws OperationException {
     OperationResult<Map<byte[], byte[]>> result;
     try {

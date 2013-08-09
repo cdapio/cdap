@@ -15,7 +15,7 @@ define([], function () {
 			 * This is decremented to know when loading is complete.
 			 * There are 4 things to load. See __loaded below.
 			 */
-			this.__remaining = 4;
+			this.__remaining = 5;
 
 			this.set('elements.Flow', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Batch', Em.ArrayProxy.create({content: []}));
@@ -26,55 +26,79 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
+			model.trackMetric('/store/bytes/apps/{id}', 'aggregates', 'storage');
+
 			/*
 			 * Load Streams
 			 */
-			this.HTTP.getElements('Stream', function (objects) {
+			this.HTTP.get('rest', 'apps', model.id, 'streams', function (objects) {
 
+				var i = objects.length;
+				while (i--) {
+
+					objects[i] = C.Stream.create(objects[i]);
+
+				}
 				self.get('elements.Stream').pushObjects(objects);
 				self.__loaded();
 
-			}, model.id);
+			});
 
 			/*
 			 * Load Flows
 			 */
-			this.HTTP.getElements('Flow', function (objects) {
+			this.HTTP.get('rest', 'apps', model.id, 'flows', function (objects) {
 
+				var i = objects.length;
+				while (i--) {
+					objects[i] = C.Flow.create(objects[i]);
+				}
 				self.get('elements.Flow').pushObjects(objects);
 				self.__loaded();
 
-			}, model.id);
+			});
 
-			/**
-			 * Load Batches
-			 */
-			this.HTTP.getElements('Batch', function (objects) {
+      /*
+       * Load Mapreduces
+       */
+      this.HTTP.get('rest', 'apps', model.id, 'mapreduce', function (objects) {
 
-				self.get('elements.Batch').pushObjects(objects);
-				self.__loaded();
+          var i = objects.length;
+          while (i--) {
+              objects[i] = C.Batch.create(objects[i]);
+          }
+          self.get('elements.Batch').pushObjects(objects);
+          self.__loaded();
 
-			}, model.id);
+      });
 
 			/*
 			 * Load Datasets
 			 */
-			this.HTTP.getElements('Dataset', function (objects) {
+			this.HTTP.get('rest', 'apps', model.id, 'datasets', function (objects) {
 
+				var i = objects.length;
+				while (i--) {
+					objects[i] = C.Dataset.create(objects[i]);
+				}
 				self.get('elements.Dataset').pushObjects(objects);
 				self.__loaded();
 
-			}, model.id);
+			});
 
 			/*
 			 * Load Procedures
 			 */
-			this.HTTP.getElements('Procedure', function (objects) {
+			this.HTTP.get('rest', 'apps', model.id, 'procedures', function (objects) {
 
+				var i = objects.length;
+				while (i--) {
+					objects[i] = C.Procedure.create(objects[i]);
+				}
 				self.get('elements.Procedure').pushObjects(objects);
 				self.__loaded();
 
-			}, model.id);
+			});
 
 		},
 
@@ -108,35 +132,37 @@ define([], function () {
 
 		updateStats: function () {
 
+			if (C.currentPath !== 'App') {
+				return;
+			}
+
 			var self = this, types = ['Flow', 'Batch', 'Stream', 'Procedure', 'Dataset'];
 
 			if (this.get('model')) {
 
-				C.get.apply(C, this.get('model').getUpdateRequest());
+				var i, models = [this.get('model')];
+				for (i = 0; i < types.length; i ++) {
+					models = models.concat(this.get('elements').get(types[i]).get('content'));
+				}
 
-				for (var i = 0; i < types.length; i ++) {
-
-					var content = this.get('elements').get(types[i]).get('content');
-					for (var j = 0; j < content.length; j ++) {
-						if (typeof content[j].getUpdateRequest === 'function') {
-							C.get.apply(C, content[j].getUpdateRequest());
-						}
+				/*
+				 * Hax until we have a pub/sub system for state.
+				 */
+				i = models.length;
+				while (i--) {
+					if (typeof models[i].updateState === 'function') {
+						models[i].updateState(this.HTTP);
 					}
 				}
+				/*
+				 * End hax
+				 */
 
+				// Scans models for timeseries metrics and updates them.
+				C.Util.updateTimeSeries(models, this.HTTP);
 
-				var storage = 0;
-				var streams = this.get('elements.Stream').content;
-				for (var i = 0; i < streams.length; i ++) {
-					storage += streams[i].get('storage');
-				}
-				var datasets = this.get('elements.Dataset').content;
-				for (var i = 0; i < datasets.length; i ++) {
-					storage += datasets[i].get('storage');
-				}
-
-				self.get('model').set('storageLabel', C.Util.bytes(storage)[0]);
-				self.get('model').set('storageUnits', C.Util.bytes(storage)[1]);
+				// Scans models for aggregate metrics and udpates them.
+				C.Util.updateAggregates(models, this.HTTP);
 
 			}
 
@@ -400,6 +426,8 @@ define([], function () {
 
 		"delete": function () {
 
+			var self = this;
+
 			C.Modal.show(
 				"Delete Application",
 				"Are you sure you would like to delete this Application? This action is not reversible.",
@@ -407,24 +435,15 @@ define([], function () {
 
 					var app = this.get('model');
 
-					C.get('metadata', {
-						method: 'deleteApplication',
-						params: ['Application', {
-							id: app.id
-						}]
-					}, function (error, response) {
+					C.get('far', {
+						method: 'remove',
+						params: [app.id]
+					}, function () {
 
-						C.Modal.hide(function () {
-
-							if (error) {
-								C.Modal.show('Error Deleting', error.message);
-							} else {
-								window.history.go(-1);
-							}
-
-						});
+						self.transitionToRoute('index');
 
 					});
+
 				}, this));
 
 		},
@@ -504,18 +523,16 @@ define([], function () {
 
 			destination += '.continuuity.net';
 
-			C.get('far', {
-				method: 'promote',
-				params: [model.id, destination, C.Env.get('credential')]
-			}, function (error, response) {
+			this.HTTP.rpc('fabric', 'promote', [model.id, destination, C.Env.get('credential')],
+				function (response) {
 
-				if (error) {
+				if (response.error) {
 
 					self.set('finished', 'Error');
-					if (error.name) {
-						self.set('finishedMessage', error.name + ': ' + error.message);
+					if (response.error.name) {
+						self.set('finishedMessage', response.error.name + ': ' + response.error.message);
 					} else {
-						self.set('finishedMessage', response.message || JSON.stringify(error));
+						self.set('finishedMessage', response.result.message || JSON.stringify(response.error));
 					}
 
 				} else {

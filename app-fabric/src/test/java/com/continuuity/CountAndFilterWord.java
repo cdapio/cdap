@@ -11,8 +11,8 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.google.common.collect.Maps;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public class CountAndFilterWord implements Application {
   /**
-   * Configures the {@link com.continuuity.api.Application} by returning an {@link com.continuuity.api.ApplicationSpecification}
+   * Configures the {@link Application} by returning an {@link ApplicationSpecification}
    *
    * @return An instance of {@code ApplicationSpecification}.
    */
@@ -32,7 +32,7 @@ public class CountAndFilterWord implements Application {
       .withStreams()
       .add(new Stream("text"))
       .withDataSets()
-      .add(new KeyValueTable(Common.counterTableName))
+      .add(new KeyValueTable(Common.COUNTER_TABLE_NAME))
       .withFlows()
         .add(new CountAndFilterWordFlow())
       .noProcedure()
@@ -63,7 +63,7 @@ public class CountAndFilterWord implements Application {
   }
 
   private static class StreamSource extends AbstractFlowlet {
-    private OutputEmitter<Map<String,String>> output;
+    private OutputEmitter<Map<String, String>> output;
 
     public StreamSource() {
       super("source");
@@ -77,9 +77,9 @@ public class CountAndFilterWord implements Application {
       Map<String, String> headers = event.getHeaders();
       String title = headers.get("title");
       byte[] body = event.getBody().array();
-      String text = body == null ? "" :new String(body);
+      String text = body == null ? "" : new String(body);
 
-      Map<String,String> tuple = new HashMap<String,String>();
+      Map<String, String> tuple = Maps.newHashMap();
       tuple.put("title", title);
       tuple.put("text", text);
 
@@ -91,7 +91,7 @@ public class CountAndFilterWord implements Application {
   }
 
   private static class Tokenizer extends AbstractFlowlet {
-    private OutputEmitter<Map<String,String>> output;
+    private OutputEmitter<Map<String, String>> output;
 
     public Tokenizer() {
       super("split-words");
@@ -104,7 +104,7 @@ public class CountAndFilterWord implements Application {
         System.out.println(this.getClass().getSimpleName() + ": Received tuple " + map);
       }
       for (String field : fields) {
-        tokenize((String)map.get(field), field);
+        tokenize(map.get(field), field);
       }
     }
 
@@ -116,7 +116,7 @@ public class CountAndFilterWord implements Application {
       String[] tokens = str.split(delimiters);
 
       for (String token : tokens) {
-        Map<String,String> tuple = new HashMap<String,String>();
+        Map<String, String> tuple = Maps.newHashMap();
         tuple.put("field", field);
         tuple.put("word", token);
 
@@ -129,7 +129,7 @@ public class CountAndFilterWord implements Application {
   }
 
   private static class UpperCaseFilter extends AbstractFlowlet {
-    private OutputEmitter<Map<String,String>> output;
+    private OutputEmitter<Map<String, String>> output;
 
     public UpperCaseFilter() {
       super("upper-filter");
@@ -148,7 +148,7 @@ public class CountAndFilterWord implements Application {
         return;
       }
 
-      Map<String,String> tupleOut = new HashMap<String,String>();
+      Map<String, String> tupleOut = Maps.newHashMap();
       tupleOut.put("word", word);
 
       if (Common.debug) {
@@ -161,7 +161,7 @@ public class CountAndFilterWord implements Application {
 
   private static class CountByField extends AbstractFlowlet {
 
-    @UseDataSet(Common.counterTableName)
+    @UseDataSet(Common.COUNTER_TABLE_NAME)
     KeyValueTable counters;
 
     public CountByField() {
@@ -174,9 +174,13 @@ public class CountAndFilterWord implements Application {
       }
 
       String token = tupleIn.get("word");
-      if (token == null) return;
+      if (token == null) {
+        return;
+      }
       String field = tupleIn.get("field");
-      if (field != null) token = field + ":" + token;
+      if (field != null) {
+        token = field + ":" + token;
+      }
 
       if (Common.debug) {
         System.out.println(this.getClass().getSimpleName() + ": Incrementing for " + token);
@@ -192,7 +196,6 @@ public class CountAndFilterWord implements Application {
   private static class Common {
     static boolean verbose = false;
     static boolean debug = true;
-    final static String counterTableName = "fieldcount";
+    static final String COUNTER_TABLE_NAME = "fieldcount";
   }
-
 }

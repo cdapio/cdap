@@ -36,7 +36,7 @@ public abstract class AbstractRegisteredServer {
     (AbstractRegisteredServer.class);
 
   /**
-   * Name of the server
+   * Name of the server.
    */
   private String server = "NA";
 
@@ -67,7 +67,7 @@ public abstract class AbstractRegisteredServer {
   private static final long START_WAIT_TIME = 5 * 1000;
 
   /**
-   * Set server name
+   * Set server name.
    *
    * @param server name
    */
@@ -76,7 +76,7 @@ public abstract class AbstractRegisteredServer {
   }
 
   /**
-   * Returns name of the service
+   * Returns name of the service.
    * @return name of the service.
    */
   public String getServerName() {
@@ -106,12 +106,12 @@ public abstract class AbstractRegisteredServer {
    */
   public static void setLoggingLevel(Level level) {
     LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-    for(ch.qos.logback.classic.Logger log : lc.getLoggerList()) {
+    for (ch.qos.logback.classic.Logger log : lc.getLoggerList()) {
       log.setLevel(level);
     }
   }
   /**
-   * Starts the service
+   * Starts the service.
    *
    * @param args arguments for the service
    * @param conf instance of configuration object.
@@ -179,7 +179,7 @@ public abstract class AbstractRegisteredServer {
                          new CommandPortServer.CommandListener() {
         @Override
         public String act() {
-          if(ruok()) {
+          if (ruok()) {
             return "imok";
           }
           return "i am in trouble";
@@ -187,7 +187,7 @@ public abstract class AbstractRegisteredServer {
       });
 
       final RegisteredServerInfo serverArgs = configure(args, conf); // Declaring final to access in inner class
-      if(serverArgs == null) {
+      if (serverArgs == null) {
         throw new ServerException("configuration of service failed.");
       }
 
@@ -218,7 +218,7 @@ public abstract class AbstractRegisteredServer {
       });
 
       serverThread = start();
-      if(serverThread == null) {
+      if (serverThread == null) {
         throw new ServerException("Thread returned from start is null");
       }
 
@@ -229,8 +229,8 @@ public abstract class AbstractRegisteredServer {
       // timeout.
       StopWatch watch = new StopWatch();
       watch.start();
-      while(watch.getTime() < START_WAIT_TIME) {
-        if(ruok()) {
+      while (watch.getTime() < START_WAIT_TIME) {
+        if (ruok()) {
           running = true;
           break;
         }
@@ -240,14 +240,14 @@ public abstract class AbstractRegisteredServer {
           Thread.currentThread().interrupt();
         }
       }
-      if(!running) {
+      if (!running) {
         throw new ServerException("Service not started even after waiting for "
                                     + START_WAIT_TIME + "ms.");
       }
 
       // If command port has been enabled, then we block else we destroy
       // the command port object.
-      if(conf.getBoolean(Constants.CFG_COMMAND_PORT_ENABLED,
+      if (conf.getBoolean(Constants.CFG_COMMAND_PORT_ENABLED,
                          Constants.DEFAULT_COMMAND_PORT_ENABLED)) {
         cmdPortServer.serve();
       } else {
@@ -282,7 +282,7 @@ public abstract class AbstractRegisteredServer {
       discoveryServiceCancellable.cancel();
     }
 
-    if(cmdPortServer != null) {
+    if (cmdPortServer != null) {
       cmdPortServer.stop();
     }
 
@@ -301,7 +301,7 @@ public abstract class AbstractRegisteredServer {
   protected final InetAddress getServerInetAddress(String preferredAddress)
     throws UnknownHostException {
     InetAddress listenAddress = null;
-    if(preferredAddress == null) {
+    if (preferredAddress == null) {
       listenAddress = InetAddress.getLocalHost();
     } else {
       listenAddress = InetAddress.getByName(preferredAddress);
@@ -316,7 +316,7 @@ public abstract class AbstractRegisteredServer {
    */
   public long getMaxReadBuffer(CConfiguration configuration) {
     String maxReadBufferStr = configuration.get(Constants.CFG_MAX_READ_BUFFER);
-    if(maxReadBufferStr == null || maxReadBufferStr.isEmpty()) {
+    if (maxReadBufferStr == null || maxReadBufferStr.isEmpty()) {
       return Constants.DEFAULT_MAX_READ_BUFFER;
     }
     long maxReadBuffer = Integer.valueOf(maxReadBufferStr);
@@ -331,7 +331,7 @@ public abstract class AbstractRegisteredServer {
   protected abstract Thread start();
 
   /**
-   * Should be implemented by the class extending
+   * Should be implemented by the class extending.
    * {@link AbstractRegisteredServer} to stop the service.
    */
   protected abstract void stop();

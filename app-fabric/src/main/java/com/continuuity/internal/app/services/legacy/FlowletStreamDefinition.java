@@ -20,13 +20,13 @@ public interface FlowletStreamDefinition {
    */
   public String getStream();
 
-	/**
-	 * @return whether this connects to a stream of a flowlet
-	 */
-	public boolean isFlowletStream();
+  /**
+   * @return whether this connects to a stream of a flowlet
+   */
+  public boolean isFlowletStream();
 
-	/**
-	 * @return whether this connects to a stream the enclosing flow
-	 */
-	public boolean isFlowStream();
+  /**
+   * @return whether this connects to a stream the enclosing flow
+   */
+  public boolean isFlowStream();
 }

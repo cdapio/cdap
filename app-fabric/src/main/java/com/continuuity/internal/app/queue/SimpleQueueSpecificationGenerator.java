@@ -8,12 +8,12 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -69,7 +69,7 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
     Map<String, FlowletDefinition> flowlets = input.getFlowlets();
 
     // Iterate through connections of a flow.
-    for(FlowletConnection connection : input.getConnections()) {
+    for (FlowletConnection connection : input.getConnections()) {
       final String source = connection.getSourceName();
       final String target = connection.getTargetName();
       final Node sourceNode = new Node(connection.getSourceType(), source);

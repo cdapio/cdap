@@ -50,7 +50,7 @@ define (['core/application'], function (Application) {
 				 */
 				require(mocks, function () {
 
-					mocks = Array.prototype.slice.call(arguments, 0);
+					mocks = [].slice.call(arguments, 0);
 
 					var i = mocks.length, type, resource;
 					while (i--) {
@@ -74,20 +74,6 @@ define (['core/application'], function (Application) {
 								resource.connect();
 							}
 
-						}
-
-						/*
-						 * Temporary for Backwards Compat.
-						 */
-						if (type === 'Socket') {
-							C.Socket = container.lookup('Socket:main');
-							C.get = function () {
-								C.Socket.request.apply(C.Socket, arguments);
-							};
-						}
-
-						if (type === 'HTTP') {
-							C.HTTP = container.lookup('HTTP:main');
 						}
 					}
 				});
@@ -159,6 +145,22 @@ define (['core/application'], function (Application) {
 
 	});
 
+	function modelFinder (params) {
+		for (var key in params) {
+			/*
+			 * Converts e.g. 'app_id' into 'App', 'flow_id' into 'Flow'
+			 */
+			var type = key.charAt(0).toUpperCase() + key.slice(1, key.length - 3);
+			/*
+			 * Finds type and injects HTTP
+			 */
+			if (type in C) {
+				return C[type].find(params[key],
+					this.controllerFor('Application').HTTP);
+			}
+		}
+	}
+
 	/*
 	 * This is a basic route handler that others can extend from to reduce duplication.
 	 */
@@ -179,21 +181,7 @@ define (['core/application'], function (Application) {
 		/*
 		 * Override to load a model based on parameter name and inject HTTP resource.
 		 */
-		model: function (params) {
-			for (var key in params) {
-				/*
-				 * Converts e.g. 'app_id' into 'App', 'flow_id' into 'Flow'
-				 */
-				var type = key.charAt(0).toUpperCase() + key.slice(1, key.length - 3);
-				/*
-				 * Finds type and injects HTTP
-				 */
-				if (type in C) {
-					return C[type].find(params[key],
-						this.controllerFor('Application').HTTP);
-				}
-			}
-		}
+		model: modelFinder
 
 	});
 
@@ -210,6 +198,13 @@ define (['core/application'], function (Application) {
 		AppRoute: basicRouter.extend(),
 
 		StreamRoute: basicRouter.extend(),
+
+		/*
+		 * Ensures that the HTTP injection is handled properly (see basicRouter)
+		 */
+		FlowRoute: Ember.Route.extend({
+			model: modelFinder
+		}),
 
 		FlowStatusRoute: basicRouter.extend({
 			model: function () {
@@ -255,6 +250,13 @@ define (['core/application'], function (Application) {
 			}
 		}),
 
+		/*
+		 * Ensures that the model is handled properly (see basicRouter)
+		 */
+		BatchRoute: Ember.Route.extend({
+			model: modelFinder
+		}),
+
 		BatchStatusRoute: basicRouter.extend({
 			model: function() {
 				return this.modelFor('Batch');
@@ -277,6 +279,13 @@ define (['core/application'], function (Application) {
 		}),
 
 		DatasetRoute: basicRouter.extend(),
+
+		/*
+		 * Ensures that the HTTP injection is handled properly (see basicRouter)
+		 */
+		ProcedureRoute: Ember.Route.extend({
+			model: modelFinder
+		}),
 
 		ProcedureStatusRoute: basicRouter.extend({
 			model: function () {

@@ -43,12 +43,12 @@ public class FlowMetricsProcessorTest {
     MetricsProcessor processor
       = new FlowMetricsProcessor(configuration);
 
-    long timestamp = System.currentTimeMillis()/1000;
-    for(int i = 1; i <= 10; ++i) {
+    long timestamp = System.currentTimeMillis() / 1000;
+    for (int i = 1; i <= 10; ++i) {
       MetricRequest request = new MetricRequest.Builder(true)
         .setRequestType("put")
         .setMetricName("accountId.applicationId.flowId.runId.flowletId.1.processed")
-        .setTimestamp(timestamp+i) // move the time to avoid sleeping for test.
+        .setTimestamp(timestamp + i) // move the time to avoid sleeping for test.
         .setValue(i)
         .setMetricType("FlowSystem")
         .create();
@@ -66,11 +66,11 @@ public class FlowMetricsProcessorTest {
     try {
        stmt = connection.createStatement();
        assertNotNull(stmt);
-       if(stmt.execute(readSQL)) {
+       if (stmt.execute(readSQL)) {
          ResultSet rs = stmt.getResultSet();
          assertNotNull(rs);
          // We expect only one row here.
-         while(rs.next()) {
+         while (rs.next()) {
            assertTrue(10.0 == rs.getFloat("value"));
            assertThat(rs.getInt("instance_id"), is(1));
            assertThat(rs.getString("account_id"), equalTo("accountId"));
@@ -80,7 +80,7 @@ public class FlowMetricsProcessorTest {
          }
        }
     } finally {
-      if(stmt != null) {
+      if (stmt != null) {
         stmt.close();
       }
     }

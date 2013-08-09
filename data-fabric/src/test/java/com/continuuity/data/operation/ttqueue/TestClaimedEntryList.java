@@ -14,19 +14,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+/**
+ *
+ */
 public class TestClaimedEntryList {
 
   @Test
   public void testClaimedEntry() {
     ClaimedEntryRange claimedEntryRange = ClaimedEntryRange.INVALID;
-    for(int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
       assertFalse(claimedEntryRange.isValid());
       claimedEntryRange.move(1);
     }
     assertFalse(claimedEntryRange.isValid());
 
     claimedEntryRange = new ClaimedEntryRange(0, 5);
-    for(int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) {
       assertTrue(claimedEntryRange.isValid());
       claimedEntryRange.move(claimedEntryRange.getBegin() + 1);
     }
@@ -40,14 +43,14 @@ public class TestClaimedEntryList {
     }
 
     try {
-      new ClaimedEntryRange(TTQueueNewOnVCTable.INVALID_ENTRY_ID, 2);
+      new ClaimedEntryRange(TTQueueOnVCTable.INVALID_ENTRY_ID, 2);
       fail("Should throw exception");
     } catch (IllegalArgumentException e) {
       // Expected
     }
 
     try {
-      new ClaimedEntryRange(3, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+      new ClaimedEntryRange(3, TTQueueOnVCTable.INVALID_ENTRY_ID);
       fail("Should throw exception");
     } catch (IllegalArgumentException e) {
       // Expected
@@ -57,7 +60,7 @@ public class TestClaimedEntryList {
   @Test
   public void testClaimedEntryListMove() {
     ClaimedEntryList claimedEntryList = new ClaimedEntryList();
-    for(int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
       assertFalse(claimedEntryList.getClaimedEntry().isValid());
       claimedEntryList.moveForwardTo(1);
     }
@@ -73,10 +76,10 @@ public class TestClaimedEntryList {
     verifyClaimedEntryListIncrementMove(claimedEntryList, 11, 20);
     assertFalse(claimedEntryList.getClaimedEntry().isValid());
 
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(TTQueueOnVCTable.INVALID_ENTRY_ID, TTQueueOnVCTable.INVALID_ENTRY_ID);
     claimedEntryList.add(6, 6);
     claimedEntryList.add(8, 30);
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(TTQueueOnVCTable.INVALID_ENTRY_ID, TTQueueOnVCTable.INVALID_ENTRY_ID);
     claimedEntryList.add(3, 4);
     claimedEntryList.add(1, 2);
     verifyClaimedEntryListIncrementMove(claimedEntryList, 1, 2);
@@ -140,7 +143,8 @@ public class TestClaimedEntryList {
     assertEquals(begin, claimedEntryList.getClaimedEntry().getBegin());
     assertEquals(end, claimedEntryList.getClaimedEntry().getEnd());
 
-    for(long i = begin; i <= end; ++i, claimedEntryList.moveForwardTo(claimedEntryList.getClaimedEntry().getBegin() + 1)) {
+    for (long i = begin; i <= end; ++i,
+                                  claimedEntryList.moveForwardTo(claimedEntryList.getClaimedEntry().getBegin() + 1)) {
       assertTrue(claimedEntryList.getClaimedEntry().isValid());
       assertEquals(i, claimedEntryList.getClaimedEntry().getBegin());
       assertEquals(end, claimedEntryList.getClaimedEntry().getEnd());
@@ -155,10 +159,10 @@ public class TestClaimedEntryList {
     claimedEntryList.add(5, 5);
     verifyClaimedEntryListEncode(claimedEntryList);
 
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(TTQueueOnVCTable.INVALID_ENTRY_ID, TTQueueOnVCTable.INVALID_ENTRY_ID);
     claimedEntryList.add(6, 6);
     claimedEntryList.add(15, 30);
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(TTQueueOnVCTable.INVALID_ENTRY_ID, TTQueueOnVCTable.INVALID_ENTRY_ID);
     claimedEntryList.add(7, 10);
     claimedEntryList.add(1, 4);
     verifyClaimedEntryListEncode(claimedEntryList);

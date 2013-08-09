@@ -12,11 +12,7 @@ import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -52,22 +48,27 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     // Lookup all live applications and look for the one that matches runId
-    Optional<WeaveRunner.LiveInfo> result = Iterables.tryFind(weaveRunner.lookupLive(),
-                                                              new Predicate<WeaveRunner.LiveInfo>() {
-      @Override
-      public boolean apply(WeaveRunner.LiveInfo input) {
-        return Iterables.indexOf(input.getRunIds(), Predicates.equalTo(runId)) != -1;
+    String appName = null;
+    WeaveController controller = null;
+    for (WeaveRunner.LiveInfo liveInfo : weaveRunner.lookupLive()) {
+      for (WeaveController c : liveInfo.getControllers()) {
+        if (c.getRunId().equals(runId)) {
+          appName = liveInfo.getApplicationName();
+          controller = c;
+          break;
+        }
       }
-    });
+      if (controller != null) {
+        break;
+      }
+    }
 
-    if (!result.isPresent()) {
+    if (controller == null) {
       LOG.info("No running instance found for RunId {}", runId);
       // TODO (ENG-2623): How about mapreduce job?
       return null;
     }
 
-    WeaveRunner.LiveInfo liveInfo = result.get();
-    String appName = liveInfo.getApplicationName();
     Matcher matcher = APP_NAME_PATTERN.matcher(appName);
     if (!matcher.matches()) {
       LOG.warn("Unrecognized application name pattern {}", appName);
@@ -81,12 +82,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
     Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
 
-    WeaveController weaveController = weaveRunner.lookup(appName, runId);
-    if (weaveController == null) {
-      LOG.info("No running instance found for RunId {}", runId);
-      return null;
-    }
-    runtimeInfo = createRuntimeInfo(type, programId, weaveController);
+    runtimeInfo = createRuntimeInfo(type, programId, controller);
     updateRuntimeInfo(type, runId, runtimeInfo);
     return runtimeInfo;
   }
@@ -108,17 +104,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         continue;
       }
 
-      for (RunId runId : liveInfo.getRunIds()) {
+      for (WeaveController controller : liveInfo.getControllers()) {
+        RunId runId = controller.getRunId();
         if (result.containsKey(runId)) {
           continue;
         }
         Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
-        WeaveController weaveController = weaveRunner.lookup(appName, runId);
-        if (weaveController != null) {
-          RuntimeInfo runtimeInfo = createRuntimeInfo(type, programId, weaveController);
-          result.put(runId, runtimeInfo);
-          updateRuntimeInfo(type, runId, runtimeInfo);
-        }
+        RuntimeInfo runtimeInfo = createRuntimeInfo(type, programId, controller);
+        result.put(runId, runtimeInfo);
+        updateRuntimeInfo(type, runId, runtimeInfo);
       }
     }
     return ImmutableMap.copyOf(result);
@@ -137,6 +131,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         break;
       case PROCEDURE:
         programController = new ProcedureWeaveProgramController(programId, controller);
+        break;
+      case MAPREDUCE:
+        programController = new MapReduceWeaveProgramController(programId, controller);
         break;
     }
     return programController == null ? null : programController.startListen();

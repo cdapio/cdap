@@ -10,6 +10,8 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.batch.AbstractMapReduce;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
@@ -49,7 +51,7 @@ public class WordCountApp implements Application {
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}
+   * {@link com.continuuity.api.ApplicationSpecification}.
    *
    * @return An instance of {@code ApplicationSpecification}.
    */
@@ -61,9 +63,14 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency()).noBatch().build();
+      .withProcedures().add(new WordFrequency())
+      .withBatch().add(new VoidMapReduceJob())
+      .build();
   }
 
+  /**
+   *
+   */
   public static final class MyRecord {
 
     private final String title;
@@ -89,6 +96,22 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   * Map reduce job to test MDS.
+   */
+  public static class VoidMapReduceJob extends AbstractMapReduce {
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("VoidMapReduceJob")
+        .setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS")
+        .build();
+    }
+  }
+
+  /**
+   *
+   */
   public static class WordCountFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -105,6 +128,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class StreamSucker extends AbstractFlowlet {
     private OutputEmitter<MyRecord> output;
     private Metrics metrics;
@@ -124,6 +150,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class Tokenizer extends AbstractFlowlet {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
@@ -145,6 +174,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
 //  @Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
@@ -179,6 +211,9 @@ public class WordCountApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
     private KeyValueTable counters;

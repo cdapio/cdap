@@ -11,7 +11,7 @@ public abstract class ApplicationLoggingContext extends AccountLoggingContext {
   public static final String TAG_APPLICATION_ID = ".applicationId";
 
   /**
-   * Constructs ApplicationLoggingContext
+   * Constructs ApplicationLoggingContext.
    * @param accountId account id
    * @param applicationId application id
    */

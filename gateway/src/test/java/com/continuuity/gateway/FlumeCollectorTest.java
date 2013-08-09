@@ -9,6 +9,9 @@ import org.apache.flume.event.SimpleEvent;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Tests the flume collector.
+ */
 public class FlumeCollectorTest {
 
   static FlumeCollector newCollector(String name) {
@@ -19,7 +22,7 @@ public class FlumeCollectorTest {
   }
 
   /**
-   * verify that collector picks up the port from config
+   * verify that collector picks up the port from config.
    */
   @Test
   public void testConfiguration() throws Exception {
@@ -40,7 +43,7 @@ public class FlumeCollectorTest {
   }
 
   /**
-   * verify that collector does not bind to port until start()
+   * verify that collector does not bind to port until start().
    */
   @Test
   public void testStartStop() throws Exception {
@@ -78,7 +81,7 @@ public class FlumeCollectorTest {
   }
 
   /**
-   * verify that flume events get transformed and annotated correctly
+   * verify that flume events get transformed and annotated correctly.
    */
   @Test
   public void testTransformEvent() throws Exception {

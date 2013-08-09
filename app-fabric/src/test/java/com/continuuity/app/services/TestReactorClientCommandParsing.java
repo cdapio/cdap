@@ -5,6 +5,7 @@ import com.continuuity.common.utils.UsageException;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -22,10 +23,10 @@ public class TestReactorClientCommandParsing {
     assertTrue("deploy".equals(client.getCommand()));
   }
 
-  @Test(expected = UsageException.class)
   public void testUnknownCommands() throws ParseException {
     ReactorClient client = new ReactorClient();
-    client.parseArguments(new String[]{"Foobaz", "-jar", "jar"}, CConfiguration.create());
+    String command = client.parseArguments(new String[]{"Foobaz", "-jar", "jar"}, CConfiguration.create());
+    assertEquals("help", command);
   }
 
   @Test(expected = UsageException.class)
@@ -35,9 +36,16 @@ public class TestReactorClientCommandParsing {
   }
 
   @Test(expected = UsageException.class)
+  public void testValidInvalidDeleteArgs() throws ParseException {
+    ReactorClient client = new ReactorClient();
+    client.parseArguments(new String[]{"delete"}, CConfiguration.create());
+  }
+
   public void testValidInvalidStartArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
-    client.parseArguments(new String[]{"SomeRandomCommand", "--application", "args"}, CConfiguration.create());
+    String command = client.parseArguments(new String[]{"SomeRandomCommand", "--application", "args"},
+                                           CConfiguration.create());
+    assertEquals("help", command);
   }
 
   @Test(expected = UsageException.class)
@@ -64,6 +72,9 @@ public class TestReactorClientCommandParsing {
   public void testValidArguments() throws ParseException {
     ReactorClient client = new ReactorClient();
     assertTrue("help".equals(client.parseArguments(new String[]{"help"}, CConfiguration.create())));
+
+    assertTrue("delete".equals(client.parseArguments(new String[]{"delete", "--application", "appId"},
+                                                     CConfiguration.create())));
 
     assertTrue("deploy".equals(client.parseArguments(new String[]{"deploy", "--archive", "jar"},
                                                      CConfiguration.create())));

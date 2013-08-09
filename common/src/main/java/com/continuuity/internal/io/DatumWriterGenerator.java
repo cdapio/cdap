@@ -221,7 +221,8 @@ final class DatumWriterGenerator {
       // Generate the synthetic method for the bridging
       Method method = getMethod(void.class, "encode", Object.class, Encoder.class);
       GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC,
-                                                 method, null, new Type[] {Type.getType(IOException.class)}, classWriter);
+                                                 method, null, new Type[] {Type.getType(IOException.class)},
+                                                 classWriter);
 
       mg.loadThis();
       mg.loadArg(0);

@@ -4,29 +4,32 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.operation.ttqueue.TTQueueTableNewOnVCTable;
+import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
+/**
+ * Provides common implementations for some OVC TableHandle methods.
+ */
 public abstract class AbstractOVCTableHandle implements OVCTableHandle {
 
   protected final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
-      new ConcurrentSkipListMap<byte[],TTQueueTable>(
+      new ConcurrentSkipListMap<byte[], TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
 
   protected final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
-    new ConcurrentSkipListMap<byte[],TTQueueTable>(Bytes.BYTES_COMPARATOR);
+    new ConcurrentSkipListMap<byte[], TTQueueTable>(Bytes.BYTES_COMPARATOR);
 
   /**
-   * This is the timestamp generator that we will use
+   * This is the timestamp generator that we will use.
    */
   @Inject
   protected TransactionOracle oracle;
 
   /**
-   * A configuration object. Not currently used (for real)
+   * A configuration object. Not currently used (for real).
    */
   private CConfiguration conf = new CConfiguration();
 
@@ -40,11 +43,13 @@ public abstract class AbstractOVCTableHandle implements OVCTableHandle {
   public TTQueueTable getQueueTable(byte[] queueTableName)
       throws OperationException {
     TTQueueTable queueTable = this.queueTables.get(queueTableName);
-    if (queueTable != null) return queueTable;
+    if (queueTable != null) {
+      return queueTable;
+    }
     OrderedVersionedColumnarTable table = getTable(queueOVCTable);
 
     // queueTable = new TTQueueTableOnVCTable(table, oracle, conf);
-    queueTable = new TTQueueTableNewOnVCTable(table, oracle, conf);
+    queueTable = new TTQueueTableOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
@@ -54,11 +59,13 @@ public abstract class AbstractOVCTableHandle implements OVCTableHandle {
   public TTQueueTable getStreamTable(byte[] streamTableName)
     throws OperationException {
     TTQueueTable streamTable = this.streamTables.get(streamTableName);
-    if (streamTable != null) return streamTable;
+    if (streamTable != null) {
+      return streamTable;
+    }
     OrderedVersionedColumnarTable table = getTable(streamOVCTable);
 
     // streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
-    streamTable = new TTQueueTableNewOnVCTable(table, oracle, conf);
+    streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
         streamTableName, streamTable);
     return existing != null ? existing : streamTable;

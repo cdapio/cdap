@@ -30,7 +30,9 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
   @Override
   public boolean authenticateRequest(HttpRequest request) {
     String apiKey = request.getHeader(CONTINUUITY_API_KEY);
-    if (apiKey == null) return false;
+    if (apiKey == null) {
+      return false;
+    }
     return authenticate(apiKey);
   }
 

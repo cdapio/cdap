@@ -1,7 +1,6 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.hbase.HBaseOVCTable;
 import com.continuuity.data.hbase.HBaseTestBase;
@@ -23,6 +22,10 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+
+/**
+ *
+ */
 public class  TestHBaseOVCTable extends TestOVCTable {
 
   private static final Logger Log = LoggerFactory.getLogger(TestHBaseOVCTable.class);
@@ -32,9 +35,7 @@ public class  TestHBaseOVCTable extends TestOVCTable {
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf));
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -67,24 +68,27 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     int ncols = 100;
     assertTrue(ncols % 2 == 0); // needs to be even in this test
     byte [][] columns = new byte[ncols][];
-    for (int i=0;i<ncols;i++) {
+    for (int i = 0; i < ncols; i++) {
       columns[i] = Bytes.toBytes(new Long(i));
     }
     byte [][] values = new byte[ncols][];
-    for (int i=0;i<ncols;i++) values[i] = Bytes.toBytes(Math.abs(r.nextLong()));
+    for (int i = 0; i < ncols; i++) {
+      values[i] = Bytes.toBytes(Math.abs(RANDOM.nextLong()));
+    }
 
     // insert a version of every column, two at a time
     long version = 10L;
-    for (int i=0;i<ncols;i+=2) {
-      this.table.put(row, new byte [][] {columns[i], columns[i+1]}, version, new byte [][] {values[i], values[i+1]});
+    for (int i = 0; i < ncols; i += 2) {
+      this.table.put(row, new byte [][] {columns[i], columns[i + 1]},
+                     version, new byte [][] {values[i], values[i + 1]});
     }
 
     // read them all back at once using all the various read apis
 
     // get(row)
-    Map<byte[],byte[]> colMap = this.table.get(row, RP_MAX).getValue();
+    Map<byte[], byte[]> colMap = this.table.get(row, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    int idx=0;
+    int idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -92,14 +96,14 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     }
 
     // get(row,col)
-    for(int i=0;i<ncols;i++) {
+    for (int i = 0; i < ncols; i++) {
       byte [] value = this.table.get(row, columns[i], RP_MAX).getValue();
       assertTrue(Bytes.equals(value, values[i]));
     }
 
     // getWV(row,col)
-    for(int i=0;i<ncols;i++) {
-      ImmutablePair<byte[],Long> valueAndVersion = this.table.getWithVersion(row, columns[i], RP_MAX).getValue();
+    for (int i = 0; i < ncols; i++) {
+      ImmutablePair<byte[], Long> valueAndVersion = this.table.getWithVersion(row, columns[i], RP_MAX).getValue();
       assertTrue(Bytes.equals(valueAndVersion.getFirst(), values[i]));
       assertEquals(new Long(version), valueAndVersion.getSecond());
     }
@@ -109,7 +113,7 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     // get(row,start=null,stop=null,unlimited)
     colMap = this.table.get(row, null, null, -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    idx=0;
+    idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -117,10 +121,10 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     }
 
     // get(row,start=0,stop=ncols+1, limit)
-    colMap = this.table.get(row, Bytes.toBytes((long)0),
-                            Bytes.toBytes((long)ncols+1), -1, RP_MAX).getValue();
+    colMap = this.table.get(row, Bytes.toBytes((long) 0),
+                            Bytes.toBytes((long) ncols + 1), -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    idx=0;
+    idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -130,7 +134,7 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     // get(row,cols[ncols])
     colMap = this.table.get(row, columns, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
-    idx=0;
+    idx = 0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
@@ -141,7 +145,7 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     byte [][] subCols = Arrays.copyOfRange(columns, 1, ncols - 1);
     colMap = this.table.get(row, subCols, RP_MAX).getValue();
     assertEquals(ncols - 2, colMap.size());
-    idx=1;
+    idx = 1;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));

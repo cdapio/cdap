@@ -3,7 +3,6 @@ package com.continuuity.internal.app.verification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.internal.io.Schema;
 import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
@@ -12,6 +11,7 @@ import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.error.Err;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.continuuity.internal.io.Schema;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -50,18 +50,18 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
     String flowName = input.getName();
 
     // Checks if Flow name is an ID
-    if(!isId(flowName)) {
-      return VerifyResult.FAILURE(Err.NOT_AN_ID, "Flow");
+    if (!isId(flowName)) {
+      return VerifyResult.failure(Err.NOT_AN_ID, "Flow");
     }
 
     // Check if there are no flowlets.
-    if(input.getFlowlets().size() == 0) {
-      return VerifyResult.FAILURE(Err.Flow.ATLEAST_ONE_FLOWLET, flowName);
+    if (input.getFlowlets().size() == 0) {
+      return VerifyResult.failure(Err.Flow.ATLEAST_ONE_FLOWLET, flowName);
     }
 
     // Check if there no connections.
-    if(input.getConnections().size() == 0) {
-      return VerifyResult.FAILURE(Err.Flow.ATLEAST_ONE_CONNECTION, flowName);
+    if (input.getConnections().size() == 0) {
+      return VerifyResult.failure(Err.Flow.ATLEAST_ONE_CONNECTION, flowName);
     }
 
     // We go through each Flowlet and verify the flowlets.
@@ -74,29 +74,29 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
       }
     }
 
-    for(Map.Entry<String, FlowletDefinition> entry : input.getFlowlets().entrySet()) {
+    for (Map.Entry<String, FlowletDefinition> entry : input.getFlowlets().entrySet()) {
       FlowletDefinition defn = entry.getValue();
       String flowletName = defn.getFlowletSpec().getName();
 
       // Check if the Flowlet Name is an ID.
-      if(!isId(defn.getFlowletSpec().getName())) {
-        return VerifyResult.FAILURE(Err.NOT_AN_ID, flowName + ":" + flowletName);
+      if (!isId(defn.getFlowletSpec().getName())) {
+        return VerifyResult.failure(Err.NOT_AN_ID, flowName + ":" + flowletName);
       }
 
       // We check if all the dataset names used are ids
-      for(String dataSet : defn.getDatasets()) {
-        if(!isId(dataSet)) {
-          return VerifyResult.FAILURE(Err.NOT_AN_ID, flowName + ":" + flowletName + ":" + dataSet);
+      for (String dataSet : defn.getDatasets()) {
+        if (!isId(dataSet)) {
+          return VerifyResult.failure(Err.NOT_AN_ID, flowName + ":" + flowletName + ":" + dataSet);
         }
       }
 
       // Check if the flowlet has output, it must be appear as source flowlet in at least one connection
       if (entry.getValue().getOutputs().size() > 0 && !sourceFlowletNames.contains(flowletName)) {
-        return VerifyResult.FAILURE(Err.Flow.OUTPUT_NOT_CONNECTED, flowletName);
+        return VerifyResult.failure(Err.Flow.OUTPUT_NOT_CONNECTED, flowletName);
       }
     }
 
-    // FIXME: We should unify the logic here and the queue spec generation, as they are doing the same thing.
+    // NOTE: We should unify the logic here and the queue spec generation, as they are doing the same thing.
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecTable
             = new SimpleQueueSpecificationGenerator(Id.Account.from("dummy")).create(input);
 
@@ -105,7 +105,7 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
       QueueSpecificationGenerator.Node node = new QueueSpecificationGenerator.Node(connection.getSourceType(),
                                                                                    connection.getSourceName());
       if (!queueSpecTable.contains(node, connection.getTargetName())) {
-        return VerifyResult.FAILURE(Err.Flow.NO_INPUT_FOR_OUTPUT,
+        return VerifyResult.failure(Err.Flow.NO_INPUT_FOR_OUTPUT,
                                     connection.getTargetName(), connection.getSourceType(), connection.getSourceName());
       }
     }
@@ -127,12 +127,12 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
       }
 
       if (!outputs.isEmpty()) {
-        return VerifyResult.FAILURE(Err.Flow.MORE_OUTPUT_NOT_ALLOWED,
+        return VerifyResult.failure(Err.Flow.MORE_OUTPUT_NOT_ALLOWED,
                                     node.getType(), node.getName(), outputs);
       }
     }
 
-    return VerifyResult.SUCCESS();
+    return VerifyResult.success();
   }
 
   private <K, V> Multimap<K, V> toMultimap(Map<K, ? extends Collection<V>> map) {

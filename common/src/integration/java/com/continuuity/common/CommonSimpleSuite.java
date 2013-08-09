@@ -4,6 +4,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 
+/**
+ * Test suite for common.
+ */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({OtherTest.class })
 public class CommonSimpleSuite {

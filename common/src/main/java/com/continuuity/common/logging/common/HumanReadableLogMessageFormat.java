@@ -6,6 +6,9 @@ package com.continuuity.common.logging.common;
 
 import com.continuuity.common.logging.LoggingContext;
 
+/**
+ * A message format that is human readable.
+ */
 public class HumanReadableLogMessageFormat implements LogMessageFormat {
   /**
    * End of line, for our own internal presentation.
@@ -36,7 +39,7 @@ public class HumanReadableLogMessageFormat implements LogMessageFormat {
 
     sb.append(message);
 
-    if(traceLines != null) {
+    if (traceLines != null) {
       for (String traceLine : traceLines) {
         sb.append(TRACE_LINE_PREFIX).append(traceLine).append(EOL);
       }

@@ -68,7 +68,7 @@ public interface MapReduceSpecification {
   String getInputDataSet();
 
   /**
-   * Builder for building {@link MapReduceSpecification}
+   * Builder for building {@link MapReduceSpecification}.
    */
   static final class Builder {
     private String name;
@@ -79,7 +79,7 @@ public interface MapReduceSpecification {
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
 
     /**
-     * Starts defining {@link MapReduceSpecification}
+     * Starts defining {@link MapReduceSpecification}.
      * @return an instance of {@link NameSetter}
      */
     public static NameSetter with() {
@@ -92,7 +92,7 @@ public interface MapReduceSpecification {
     public final class NameSetter {
 
       /**
-       * Sets the name of the {@link MapReduce}
+       * Sets the name of the {@link MapReduce}.
        * @param name of the mapreduce job.
        * @return instance of this {@link Builder}
        */
@@ -110,7 +110,7 @@ public interface MapReduceSpecification {
     public final class DescriptionSetter {
 
       /**
-       * Sets the description for this {@link MapReduce}
+       * Sets the description for this {@link MapReduce}.
        * @param description of the {@link MapReduce}
        * @return An instance of {@link AfterDescription}
        */

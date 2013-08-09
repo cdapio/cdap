@@ -1,6 +1,7 @@
 package com.continuuity.api.data;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 
 import java.util.TreeMap;
 
@@ -67,6 +68,14 @@ public final class DataSetSpecification {
    */
   public DataSetSpecification getSpecificationFor(String dsName) {
     return dataSetSpecs.get(dsName);
+  }
+
+  /**
+   * Get specifications for all directly embedded data sets.
+   * @return the iterable of specifications
+   */
+  public Iterable<DataSetSpecification> getSpecifications() {
+    return ImmutableList.copyOf(dataSetSpecs.values());
   }
 
 

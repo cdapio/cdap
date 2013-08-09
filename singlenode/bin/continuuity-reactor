@@ -14,7 +14,7 @@ else
 fi
 
 # Add default JVM options here. You can also use JAVA_OPTS and CONTINUUITY_REACTOR_OPTS to pass JVM options to this script.
-CONTINUUITY_REACTOR_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc="
+CONTINUUITY_REACTOR_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 APP_NAME="continuuity-reactor"
 APP_BASE_NAME=`basename "$0"`

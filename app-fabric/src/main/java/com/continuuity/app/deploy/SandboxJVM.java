@@ -7,12 +7,12 @@ package com.continuuity.app.deploy;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.program.Program;
-import com.continuuity.weave.filesystem.HDFSLocationFactory;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
+import com.continuuity.weave.filesystem.HDFSLocationFactory;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import org.apache.commons.cli.CommandLine;
@@ -20,8 +20,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,19 +66,19 @@ public class SandboxJVM {
     // Check all the options of command line
     try {
       CommandLine line = parser.parse(options, args);
-      if(!line.hasOption("jar")) {
+      if (!line.hasOption("jar")) {
         LOG.error("Application JAR not specified.");
         return -1;
       }
-      if(!line.hasOption("output")) {
+      if (!line.hasOption("output")) {
         LOG.error("Output file not specified.");
         return -1;
       }
-      if(!line.hasOption("id")) {
+      if (!line.hasOption("id")) {
         LOG.error("Account id not specified.");
         return -1;
       }
-      if(!line.hasOption("locfactory")) {
+      if (!line.hasOption("locfactory")) {
         LOG.error("Location factory not specified.");
         return -1;
       }
@@ -87,7 +87,7 @@ public class SandboxJVM {
       outputFile = new File(line.getOptionValue("output"));
       id = line.getOptionValue("id");
       locationFactory = line.getOptionValue("locfactory");
-    } catch(org.apache.commons.cli.ParseException e) {
+    } catch (ParseException e) {
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp("SandboxJVM", options);
       return -1;
@@ -97,9 +97,9 @@ public class SandboxJVM {
 
     Object mainClass;
     try {
-      if("LOCAL".equals(locationFactory)) {
+      if ("LOCAL".equals(locationFactory)) {
         lf = new LocalLocationFactory();
-      } else if("DISTRIBUTED".equals(locationFactory)) {
+      } else if ("DISTRIBUTED".equals(locationFactory)) {
         lf = new HDFSLocationFactory(new Configuration());
       } else {
         LOG.error("Unknown location factory specified");
@@ -108,7 +108,7 @@ public class SandboxJVM {
 
       Program archive = new Program(lf.create(jarFilename));
       mainClass = archive.getMainClass().newInstance();
-    } catch(Exception e) {
+    } catch (Exception e) {
       LOG.error(e.getMessage());
       return -1;
     }
@@ -136,7 +136,7 @@ public class SandboxJVM {
       } finally {
         writer.close();
       }
-    } catch(IOException e) {
+    } catch (IOException e) {
       LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
       return -1;
     }

@@ -38,9 +38,8 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   protected static final byte [] FAMILY = Bytes.toBytes("f");
 
   @Inject
-  public HBaseOVCTableHandle(
-      @Named("HBaseOVCTableHandleCConfig")CConfiguration conf,
-      @Named("HBaseOVCTableHandleHConfig")Configuration hConf)
+  public HBaseOVCTableHandle(@Named("HBaseOVCTableHandleCConfig") CConfiguration conf,
+                             @Named("HBaseOVCTableHandleHConfig") Configuration hConf)
           throws IOException {
     this.conf = conf;
     this.hConf = hConf;

@@ -11,11 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
- * Created with IntelliJ IDEA.
- * User: nmotgi
- * Date: 10/7/12
- * Time: 5:45 PM
- * To change this template use File | Settings | File Templates.
+ * Class for managing unique id
  */
 class UniqueId {
   private static final Logger Log = LoggerFactory.getLogger(UniqueId.class);
@@ -34,7 +30,7 @@ class UniqueId {
   }
 
   public synchronized int getOrCreateId(String name) throws Exception {
-    if(name == null || name.isEmpty()) {
+    if (name == null || name.isEmpty()) {
       throw new Exception("Metric name is empty or null.");
     }
     Integer cached = cache.get(name);
