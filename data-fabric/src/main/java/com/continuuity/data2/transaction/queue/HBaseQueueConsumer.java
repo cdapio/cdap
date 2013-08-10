@@ -71,7 +71,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
   private final SortedMap<byte[], Entry> consumingEntries;
   private final Function<byte[], byte[]> rowKeyToChangeTx;
   private final byte[] stateColumnName;
-  private final byte[] startRow;
+  private byte[] startRow;
   private Transaction transaction;
 
   HBaseQueueConsumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName) {
@@ -251,7 +251,6 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 
     long readPointer = transaction.getReadPointer();
     long[] excludedList = transaction.getExcludedList();
-    List<Delete> cleanupRows = Lists.newArrayList();
 
     ResultScanner scanner = hTable.getScanner(scan);
     // Try fill up the cache with at most MAX_CACHE_ROWS
@@ -288,7 +287,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
                                                       stateColumnName);
 
         int counter = Bytes.toInt(rowKey, rowKey.length - 4, Ints.BYTES);
-        if (!shouldInclude(rowKey, writePointer, counter, metaColumn, stateColumn, cleanupRows)) {
+        if (!shouldInclude(rowKey, writePointer, counter, metaColumn, stateColumn)) {
           continue;
         }
 
@@ -300,16 +299,6 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       }
     }
     scanner.close();
-
-    if (!cleanupRows.isEmpty()) {
-      // Pick one to issue delete. Doesn't matter if multiple consumers tries to delete overlapping rows.
-      int hashCode = Arrays.hashCode(cleanupRows.get(0).getRow());
-      if (hashCode % consumerConfig.getGroupSize() == consumerConfig.getInstanceId()) {
-        LOG.trace("Queue eviction on {}, with {} deletes.", queueName, cleanupRows.size());
-        hTable.delete(cleanupRows);
-        // No flushing here, just let claim/commit/rollback flush it.
-      }
-    }
   }
 
   private byte[] encodeStateColumn(ConsumerEntryState state) {
@@ -334,9 +323,8 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       stateColumn.getBuffer()[stateColumn.getValueOffset() + Longs.BYTES + Ints.BYTES]);
   }
 
-  private boolean shouldInclude(byte[] rowKey, long writePointer, int counter,
-                                KeyValue metaColumn, KeyValue stateColumn,
-                                List<Delete> cleanupRows) throws IOException {
+  private boolean shouldInclude(byte[] rowKey, long enqueueWritePointer, int counter,
+                                KeyValue metaColumn, KeyValue stateColumn) throws IOException {
     if (stateColumn != null) {
       // If the state is written by the current transaction, ignore it, as it's processing
       long stateWritePointer = getStateWritePointer(stateColumn);
@@ -356,11 +344,16 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       }
 
       // If state is PROCESSED and committed, ignore it
+      long[] excludedList = transaction.getExcludedList();
       ConsumerEntryState state = getState(stateColumn);
       if (state == ConsumerEntryState.PROCESSED
           && stateWritePointer <= transaction.getReadPointer()
-          && Arrays.binarySearch(transaction.getExcludedList(), stateWritePointer) < 0) {
-        cleanupRows.add(new Delete(rowKey));
+          && Arrays.binarySearch(excludedList, stateWritePointer) < 0) {
+
+        // If the PROCESSED entry write pointer is smaller than smallest in excluded list, then it must be processed.
+        if (excludedList.length == 0 || excludedList[0] > enqueueWritePointer) {
+          startRow = rowKey;
+        }
         return false;
       }
     }
@@ -371,7 +364,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
         // to CLAIMED
         return true;
       case ROUND_ROBIN: {
-        int hashValue = Objects.hashCode(writePointer, counter);
+        int hashValue = Objects.hashCode(enqueueWritePointer, counter);
         return consumerConfig.getInstanceId() == (hashValue % consumerConfig.getGroupSize());
       }
       case HASH: {
