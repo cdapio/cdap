@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 
 /**
@@ -86,7 +87,7 @@ public final class FileMetaDataManager {
   }
 
   /**
-   * Deletes meta data until a given time.
+   * Deletes meta data until a given time, while keeping the latest meta data even if less than tillTime.
    * @param tillTime time till the meta data will be deleted.
    * @param callback callback called before deleting a meta data column.
    * @return total number of columns deleted.
@@ -102,11 +103,12 @@ public final class FileMetaDataManager {
     ImmutablePair<byte[], Map<byte[], byte[]>> row;
     while ((row = scanner.next()) != null) {
       byte [] rowKey = row.getFirst();
+      byte [] maxCol = getMax(row.getSecond().keySet());
 
       for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
         byte [] colName = entry.getKey();
-        // Delete if colName is less than tillTime
-        if (Bytes.compareTo(colName, tillTimeBytes) < 1) {
+        // Delete if colName is less than tillTime, but don't delete the last one
+        if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
           callback.handle(new Path(URI.create(Bytes.toString(entry.getValue()))));
           deleteExecutor.delete(new Delete(rowKey, colName));
         }
@@ -118,6 +120,16 @@ public final class FileMetaDataManager {
     scanner.close();
 
     return deleteExecutor.getTotalDeletes();
+  }
+
+  private byte [] getMax(Set<byte []> elements) {
+    byte [] max = Bytes.EMPTY_BYTE_ARRAY;
+    for (byte [] elem : elements) {
+      if (Bytes.compareTo(max, elem) < 0) {
+        max = elem;
+      }
+    }
+    return max;
   }
 
   /**
