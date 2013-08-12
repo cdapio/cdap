@@ -15,7 +15,7 @@ import java.util.concurrent.CountDownLatch;
  * Zookeeper client tool that deletes Reactor related z-nodes from Zookeeper.
  */
 public final class ZookeeperTool {
-  private static final int SESSION_TIMEOUT = 5000;
+  private static final int SESSION_TIMEOUT = 30000; // 30 seconds
   private static final String[] REACTOR_NODES = {"/continuuity_kafka", "/discoverable", "/LogSaverWeaveApplication"};
 
   private String zkHost;
@@ -37,6 +37,16 @@ public final class ZookeeperTool {
     });
     signal.await();
     return zk;
+  }
+
+  /**
+   * Prints the usage information.
+   */
+  private void usage() {
+    System.out.println("Usage:");
+    System.out.println("  zk-tool --dropReactorNodes --noPrompt --zkHost <host> [ --zkPort <port> ]");
+    System.out.println("  zk-tool --listNodes --noPrompt --zkHost <host> [ --zkPort <port> ]");
+    System.out.println("  zk-tool --help");
   }
 
   private boolean parseArgs(String[] args) {
@@ -71,6 +81,7 @@ public final class ZookeeperTool {
       || prompt
       || command == null || command.isEmpty()
       || zkHost == null) {
+      usage();
       return false;
     }
     return true;

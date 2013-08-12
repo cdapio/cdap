@@ -20,6 +20,16 @@ public final class HBaseTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTool.class);
 
+  /**
+   * Prints the usage information.
+   */
+  private void usage() {
+    System.out.println("Usage:");
+    System.out.println("  hbase-tool --dropAllTables --noPrompt --zkHost <host> [ --zkPort <port> ]");
+    System.out.println("  hbase-tool --listNodes --noPrompt --zkHost <host> [ --zkPort <port> ]");
+    System.out.println("  hbase-tool --help");
+  }
+
   private boolean parseArgs(String[] args) {
     hbConfig = HBaseConfiguration.create();
     boolean help = false;
@@ -38,7 +48,7 @@ public final class HBaseTool {
         if (i + 1 < args.length) {
           String key = args[i].substring(2);
           String value = args[ ++i ];
-          if ("zkQuorum".equals(key)) {
+          if ("zkHost".equals(key)) {
             hbConfig.set("hbase.zookeeper.quorum", value);
           } else if ("zkPort".equals(key)) {
             hbConfig.set("hbase.zookeeper.property.clientPort", value);
@@ -52,6 +62,7 @@ public final class HBaseTool {
       || command == null || command.isEmpty()
       || hbConfig.get("hbase.zookeeper.quorum") == null
       || hbConfig.get("hbase.zookeeper.property.clientPort") == null) {
+      usage();
       return false;
     }
     return true;
