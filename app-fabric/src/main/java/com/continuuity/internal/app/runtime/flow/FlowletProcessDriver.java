@@ -46,14 +46,18 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   // Minimum back-off time in nanoseconds, 1ms.
   private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1);
 
-  // Maximum back-off time in nanoseconds when increasing exponentially, 2s.
-  private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);
+  // Maximum back-off time in nanoseconds when increasing exponentially, 100ms.
+  private static final long BACKOFF_MAX = TimeUnit.MILLISECONDS.toNanos(100);
 
-  // Start time for switching from constant to exponentially increasing back-off time, 1s.
-  private static final long BACKOFF_EXP_START = TimeUnit.SECONDS.toNanos(1);
+  // Start time for switching from constant to exponentially increasing back-off time, 20ms.
+  private static final long BACKOFF_EXP_START = TimeUnit.MILLISECONDS.toNanos(20);
+
+  // Incrementing back-off time by this until reaching exponential increase range.
+  private static final long BACKOFF_CONSTANT_INCREMENT = TimeUnit.MILLISECONDS.toNanos(1);
 
   // Doubling back-off time during exponential increase, up to maximum back-off time.
   private static final int BACKOFF_EXP = 2;
+
   private static final int PROCESS_MAX_RETRY = 10;
 
   private final Flowlet flowlet;
@@ -145,7 +149,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   }
 
   /**
-   * Resume the running of flowlet
+   * Resume the running of flowlet.
    */
   public void resume() {
     CountDownLatch latch = suspension.getAndSet(null);
@@ -394,7 +398,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     private final ProcessSpecification<T> processSpec;
     private final ProcessSpecification<T> retrySpec;
     private long nextDeque;
-    private long continousBackOff = 0;
     private long currentBackOff = BACKOFF_MIN;
 
     private static <T> ProcessEntry<T> create(ProcessSpecification<T> processSpec) {
@@ -435,14 +438,14 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
     public void resetBackOff() {
       nextDeque = 0;
-      continousBackOff = 0;
       currentBackOff = BACKOFF_MIN;
     }
 
     public void backOff() {
       nextDeque = System.nanoTime() + currentBackOff;
-      continousBackOff += currentBackOff;
-      if (continousBackOff >= BACKOFF_EXP_START) {
+      if (currentBackOff < BACKOFF_EXP_START) {
+        currentBackOff += BACKOFF_CONSTANT_INCREMENT;
+      } else {
         currentBackOff = Math.min(currentBackOff * BACKOFF_EXP, BACKOFF_MAX);
       }
     }
