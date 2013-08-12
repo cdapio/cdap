@@ -5,11 +5,13 @@
 package com.continuuity.performance.application;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.performance.runner.Metric;
 import com.continuuity.performance.util.MensaMetricsDispatcher;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,16 +50,24 @@ public final class MensaMetricsReporter  {
       tags = tags.trim();
     }
     dispatchQueue = new LinkedBlockingDeque<String>(50000);
-    collector = new RuntimeMetricsCollector(dispatchQueue, interval, metricNames, tags);
+    collector = new RuntimeMetricsCollector(dispatchQueue, interval, getMetricsInstances(metricNames), tags);
     dispatcher = new MensaMetricsDispatcher(tsdbHostName, tsdbPort, dispatchQueue);
     init();
+  }
+
+  private static List<Metric> getMetricsInstances(List<String> metricPaths) {
+    List metricInstances = new ArrayList(metricPaths.size());
+    for (String metricPath : metricPaths) {
+      metricInstances.add(new Metric(metricPath));
+    }
+    return metricInstances;
   }
 
   public MensaMetricsReporter(String tsdbHostName, int tsdbPort, List<String> metricNames, String tags, int interval) {
     this.tsdbHostName = tsdbHostName;
     this.tsdbPort = tsdbPort;
     dispatchQueue = new LinkedBlockingDeque<String>(50000);
-    collector = new RuntimeMetricsCollector(dispatchQueue, interval, metricNames, tags);
+    collector = new RuntimeMetricsCollector(dispatchQueue, interval, getMetricsInstances(metricNames), tags);
     dispatcher = new MensaMetricsDispatcher(tsdbHostName, tsdbPort, dispatchQueue);
     init();
   }
@@ -70,11 +80,11 @@ public final class MensaMetricsReporter  {
   }
 
   public void reportNow(String metricName, double value) {
-    collector.enqueueMetric(metricName, value);
+    collector.enqueueMetric(new Metric(metricName), value);
   }
 
   public void reportNow(String metricName) {
-    collector.enqueueMetric(metricName);
+    collector.enqueueMetric(new Metric(metricName));
   }
 
   public final void shutdown() {

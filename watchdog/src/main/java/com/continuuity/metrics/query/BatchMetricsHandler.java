@@ -114,7 +114,6 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
       if (metricsRequest.getType() == MetricsRequest.Type.TIME_SERIES) {
         TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(metricsRequest.getStartTime(),
                                                                         metricsRequest.getEndTime());
-
         // Special metrics handle that requires computation from multiple time series.
         if ("process.busyness".equals(metricsRequest.getMetricPrefix())) {
           computeProcessBusyness(metricsRequest, builder);

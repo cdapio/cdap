@@ -10,4 +10,3 @@ project(':singlenode').buildFileName = 'package.gradle'
 //include 'test-framework'
 //include 'test-framework:commandLine'
 //include 'test-framework:performance'
-

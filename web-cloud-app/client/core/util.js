@@ -187,7 +187,8 @@ define([], function () {
 			var max = 60, start;
 			var now = new Date().getTime();
 
-			start = now - (C.__timeRange * 1000);
+			// Add a two second buffer to make sure we have a full response.
+			start = now - ((C.__timeRange + 2) * 1000);
 			start = Math.floor(start / 1000);
 
 			for (j = 0; j < models.length; j ++) {

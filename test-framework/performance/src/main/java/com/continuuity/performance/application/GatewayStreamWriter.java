@@ -5,9 +5,9 @@
 package com.continuuity.performance.application;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.passport.PassportConstants;
