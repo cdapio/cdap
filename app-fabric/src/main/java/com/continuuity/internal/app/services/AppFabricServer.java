@@ -85,11 +85,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     server = new TThreadedSelectorServer(options);
   }
 
-  @Override
-  protected void shutDown() throws Exception {
-    executor.shutdownNow();
-  }
-
   /**
    * Runs the AppFabricServer.
    * <p>
@@ -105,6 +100,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    * Invoked during shutdown of the thread.
    */
   protected void triggerShutdown() {
+    executor.shutdownNow();
     server.stop();
   }
 }
