@@ -36,6 +36,6 @@ public abstract class AbstractListener implements ProgramController.Listener {
   }
 
   @Override
-  public void error() {
+  public void error(Throwable cause) {
   }
 }

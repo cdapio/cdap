@@ -202,7 +202,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     }
     if ("instances".equals(command.getCommand())) {
       int instances = Integer.parseInt(command.getOptions().get("count"));
-      controller.command("instances", instances);
+      controller.command("instances", instances).get();
       return;
     }
     LOG.warn("Ignore unsupported command: " + command);
@@ -238,12 +238,13 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       }
 
       @Override
-      public void error() {
+      public void error(Throwable cause) {
+        LOG.error("Program runner error out.", cause);
         state.set(ProgramController.State.ERROR);
       }
     }, MoreExecutors.sameThreadExecutor());
 
-    LOG.info("Program runner terminated. State: ", Futures.getUnchecked(state));
+    LOG.info("Program runner terminated. State: {}", Futures.getUnchecked(state));
   }
 
   private CommandLine parseArgs(String[] args) {

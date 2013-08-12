@@ -134,6 +134,6 @@ public interface ProgramController {
 
     void stopped();
 
-    void error();
+    void error(Throwable cause);
   }
 }
