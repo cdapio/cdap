@@ -2,6 +2,9 @@ package com.continuuity.internal;
 
 import java.util.ResourceBundle;
 
+/**
+ * Helper class for getting error messages.
+ */
 public final class UserMessages {
 
   private static final String BUNDLE_NAME = "UserMessages";

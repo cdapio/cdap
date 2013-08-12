@@ -1,5 +1,8 @@
 package com.continuuity.internal;
 
+/**
+ * Collections of user errors key.
+ */
 public final class UserErrors {
 
   public static final String CLASS_NOT_FOUND = "class-not-found";

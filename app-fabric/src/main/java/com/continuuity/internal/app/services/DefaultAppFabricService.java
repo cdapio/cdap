@@ -15,7 +15,6 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.internal.UserErrors;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -42,13 +41,14 @@ import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.app.services.RunIdentifier;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.internal.UserMessages;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.internal.UserErrors;
+import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -628,8 +628,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       try {
         log = store.getRunHistory(programId);
       } catch (OperationException e) {
-        throw  new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id.toString(),
-                e.getMessage()));
+        throw new AppFabricServiceException(
+          String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id.toString(), e.getMessage()));
       }
       List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
       for (RunRecord runRecord : log) {
@@ -1056,7 +1056,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.info("All data for account '" + account + "' deleted.");
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
-      throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), throwable.getMessage()));
+      throw new AppFabricServiceException(
+        String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), throwable.getMessage()));
     }
   }
 
