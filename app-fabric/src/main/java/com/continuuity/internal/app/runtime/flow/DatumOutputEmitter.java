@@ -2,7 +2,7 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;

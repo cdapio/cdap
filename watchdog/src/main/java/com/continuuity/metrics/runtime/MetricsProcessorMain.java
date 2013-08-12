@@ -19,6 +19,7 @@ import com.continuuity.metrics.process.MessageCallbackFactory;
 import com.continuuity.metrics.process.MetricsMessageCallbackFactory;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClient;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
@@ -31,6 +32,8 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +41,8 @@ import java.util.concurrent.TimeUnit;
  * Main class for starting a metrics processor in distributed mode.
  */
 public final class MetricsProcessorMain extends DaemonMain {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorMain.class);
 
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
@@ -65,11 +70,13 @@ public final class MetricsProcessorMain extends DaemonMain {
 
     // For talking to kafka
     String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    kafkaClientService = new ZKKafkaClientService(
-      kafkaZKNamespace == null
-        ? zkClientService
-        : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
-    );
+    ZKClient kafkaZKClient = (kafkaZKNamespace == null)
+                                  ? zkClientService
+                                  : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace);
+
+    kafkaClientService = new ZKKafkaClientService(kafkaZKClient);
+
+    LOG.info("Kafka ZK: {}", kafkaZKClient.getConnectString());
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                              new IOModule(),

@@ -5,6 +5,8 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
+import com.continuuity.internal.UserErrors;
+import com.continuuity.internal.UserMessages;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
 import com.continuuity.weave.filesystem.Location;
@@ -13,7 +15,7 @@ import java.io.IOException;
 import java.util.jar.Manifest;
 
 /**
- * Represents the archive that is uploaded by the user using the dpeloyment
+ * Represents the archive that is uploaded by the user using the deployment
  * service.
  */
 public final class Archive {
@@ -33,9 +35,10 @@ public final class Archive {
     this.id = id;
 
     Manifest manifest = jarResources.getManifest();
+    check(manifest != null, UserMessages.getMessage(UserErrors.BAD_JAR_MANIFEST));
 
     mainClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
-    check(mainClassName != null, "Fail to get %s attribute in jar.", ManifestFields.MAIN_CLASS);
+    check(mainClassName != null, UserMessages.getMessage(UserErrors.BAD_JAR_ATTRIBUTE), ManifestFields.MAIN_CLASS);
   }
 
   public Class<?> getMainClass() throws ClassNotFoundException {

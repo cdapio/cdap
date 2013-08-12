@@ -1,6 +1,6 @@
 package com.continuuity.test.internal;
 
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.test.StreamWriter;
 import com.google.inject.assistedinject.Assisted;
 

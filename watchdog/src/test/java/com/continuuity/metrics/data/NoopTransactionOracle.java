@@ -12,7 +12,7 @@ import java.util.List;
 /**
 *
 */
-final class NoopTransactionOracle implements TransactionOracle {
+public final class NoopTransactionOracle implements TransactionOracle {
 
   @Override
   public Transaction startTransaction(boolean trackChanges) {

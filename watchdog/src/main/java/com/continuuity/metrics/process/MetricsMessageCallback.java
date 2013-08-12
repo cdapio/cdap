@@ -81,12 +81,8 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   }
 
   @Override
-  public void finished(boolean error, Throwable cause) {
+  public void finished() {
     // Just log
-    if (error) {
-      LOG.warn("Metrics MessageCallback completed with error.", cause);
-    } else {
-      LOG.info("Metrics MessageCallback completed.");
-    }
+    LOG.info("Metrics MessageCallback completed.");
   }
 }

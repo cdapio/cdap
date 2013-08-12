@@ -47,9 +47,8 @@ public final class NettyHttpService extends AbstractIdleService {
 
   private ServerBootstrap bootstrap;
   private Channel channel;
-  private int port;
+  private InetSocketAddress bindAddress;
 
-  private int servicePort;
   private final int threadPoolSize;
   private final long threadKeepAliveSecs;
 
@@ -66,13 +65,14 @@ public final class NettyHttpService extends AbstractIdleService {
   /**
    * Initialize NettyHttpService.
    *
-   * @param port port to run the service on.
+   * @param bindAddress Address for the service to bind to.
    * @param threadPoolSize Size of the thread pool for the executor.
    * @param threadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
    * @param httpHandlers HttpHandlers to handle the calls.
    */
-  public NettyHttpService(int port, int threadPoolSize, long threadKeepAliveSecs, Iterable<HttpHandler> httpHandlers){
-    this.port = port;
+  private NettyHttpService(InetSocketAddress bindAddress, int threadPoolSize,
+                           long threadKeepAliveSecs, Iterable<HttpHandler> httpHandlers){
+    this.bindAddress = bindAddress;
     this.threadPoolSize = threadPoolSize;
     this.threadKeepAliveSecs = threadKeepAliveSecs;
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
@@ -174,25 +174,24 @@ public final class NettyHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting service on port {}", port);
+    LOG.info("Starting service on address {}", bindAddress);
     bootStrap(threadPoolSize, threadKeepAliveSecs, httpHandlers);
-    InetSocketAddress address = new InetSocketAddress(port);
-    channel = bootstrap.bind(address);
+    channel = bootstrap.bind(bindAddress);
     channelGroup.add(channel);
-    servicePort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
+    bindAddress = ((InetSocketAddress) channel.getLocalAddress());
 
   }
 
   /**
    * @return port where the service is running.
    */
-  public int getServicePort() {
-    return servicePort;
+  public InetSocketAddress getBindAddress() {
+    return bindAddress;
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping service on port {}", port);
+    LOG.info("Stopping service on address {}", bindAddress);
     try {
       if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT, TimeUnit.SECONDS)) {
         LOG.warn("Timeout when closing all channels.");
@@ -212,7 +211,7 @@ public final class NettyHttpService extends AbstractIdleService {
     private static final long DEFAULT_THREAD_KEEP_ALIVE_TIME_SECS = 60L;
 
     //Private constructor to prevent instantiating Builder instance directly.
-    private Builder(){
+    private Builder() {
       threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
       threadKeepAliveSecs = DEFAULT_THREAD_KEEP_ALIVE_TIME_SECS;
       port = 0;
@@ -220,6 +219,7 @@ public final class NettyHttpService extends AbstractIdleService {
 
     private Iterable<HttpHandler> handlers;
     private int threadPoolSize;
+    private String host;
     private int port;
     private long threadKeepAliveSecs;
 
@@ -228,17 +228,17 @@ public final class NettyHttpService extends AbstractIdleService {
      * @param handlers Iterable of HttpHandlers.
      * @return instance of {@code Builder}.
      */
-    public Builder addHttpHandlers(Iterable<HttpHandler> handlers){
+    public Builder addHttpHandlers(Iterable<HttpHandler> handlers) {
       this.handlers = handlers;
       return this;
     }
 
-    public Builder setThreadPoolSize(int threadPoolSize){
+    public Builder setThreadPoolSize(int threadPoolSize) {
       this.threadPoolSize = threadPoolSize;
       return this;
     }
 
-    public Builder setThreadKeepAliveSeconds(long threadKeepAliveSecs){
+    public Builder setThreadKeepAliveSeconds(long threadKeepAliveSecs) {
       this.threadKeepAliveSecs = threadKeepAliveSecs;
       return this;
     }
@@ -249,14 +249,25 @@ public final class NettyHttpService extends AbstractIdleService {
      * @param port port on which the service should listen to.
      * @return instance of {@code Builder}.
      */
-    public Builder setPort(int port){
+    public Builder setPort(int port) {
       this.port = port;
       return this;
     }
 
-    public NettyHttpService build(){
-      return new NettyHttpService(port, threadPoolSize, threadKeepAliveSecs, handlers);
+    public Builder setHost(String host) {
+      this.host = host;
+      return this;
     }
 
+    public NettyHttpService build() {
+      InetSocketAddress bindAddress;
+      if (host == null) {
+        bindAddress = new InetSocketAddress("localhost", port);
+      } else {
+        bindAddress = new InetSocketAddress(host, port);
+      }
+
+      return new NettyHttpService(bindAddress, threadPoolSize, threadKeepAliveSecs, handlers);
+    }
   }
 }
