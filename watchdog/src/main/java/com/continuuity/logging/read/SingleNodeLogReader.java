@@ -85,6 +85,7 @@ public class SingleNodeLogReader implements LogReader {
                               final Filter filter, final Callback callback) {
     if (fromOffset < 0) {
       getLogPrev(loggingContext, -1, maxEvents, filter, callback);
+      return;
     }
 
     executor.submit(

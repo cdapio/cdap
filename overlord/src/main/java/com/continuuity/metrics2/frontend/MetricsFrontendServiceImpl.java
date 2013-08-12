@@ -193,7 +193,6 @@ public class MetricsFrontendServiceImpl
     try {
       Filter filter = FilterParser.parse(filterStr);
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
-      logCallback.await();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -210,7 +209,6 @@ public class MetricsFrontendServiceImpl
     try {
       Filter filter = FilterParser.parse(filterStr);
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
-      logCallback.await();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -254,11 +252,12 @@ public class MetricsFrontendServiceImpl
       doneLatch.countDown();
     }
 
-    public void await() throws InterruptedException {
-      doneLatch.await();
-    }
-
     public List<TLogResult> getLogResults() {
+      try {
+        doneLatch.await();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
       return Collections.unmodifiableList(logResults);
     }
   }
