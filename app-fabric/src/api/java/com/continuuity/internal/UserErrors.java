@@ -18,7 +18,7 @@
 package com.continuuity.internal;
 
 /**
- * User errors definitions.
+ * Collections of user errors key. 
  */
 public final class UserErrors {
 
