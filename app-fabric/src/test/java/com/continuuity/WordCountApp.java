@@ -28,7 +28,6 @@ import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
-import com.continuuity.api.procedure.ProcedureResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
@@ -223,7 +222,7 @@ public class WordCountApp implements Application {
       String word = request.getArgument("word");
       Map<String, Long> result = ImmutableMap.of(word,
         Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
-      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
+      responder.sendJson(result);
     }
   }
 }

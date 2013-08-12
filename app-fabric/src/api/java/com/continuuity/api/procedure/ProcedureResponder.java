@@ -34,6 +34,23 @@ public interface ProcedureResponder {
   void sendJson(ProcedureResponse response, Object object) throws IOException;
 
   /**
+   * Sends a response with the given response code and a json body.
+   *
+   * @param code The response code to be returned.
+   * @param object An object to be serialized into json and sent as response body.
+   * @throws IOException When there is issue sending the response to the callee.
+   */
+  void sendJson(ProcedureResponse.Code code, Object object) throws IOException;
+
+  /**
+   * Sends a success response ({@link ProcedureResponse.Code#SUCCESS}) with a json body.
+   *
+   * @param object An object to be serialized into json and sent as response body.
+   * @throws IOException When there is issue sending the response to the callee.
+   */
+  void sendJson(Object object) throws IOException;
+
+  /**
    * Sends an error response to client with the given error message.
    *
    * @param errorCode The error code
