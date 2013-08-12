@@ -86,15 +86,11 @@ public final class HBaseTool {
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     HBaseTool hbt = new HBaseTool();
     boolean ok = hbt.parseArgs(args);
     if (ok) {
-      try {
-        hbt.execute();
-      } catch (IOException e) {
-        ok = false;
-      }
+      hbt.execute();
     }
     if (!ok) {
       System.exit(1);

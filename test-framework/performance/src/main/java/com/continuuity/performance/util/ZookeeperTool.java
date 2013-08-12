@@ -115,15 +115,11 @@ public final class ZookeeperTool {
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws InterruptedException, IOException, KeeperException {
     ZookeeperTool zkt = new ZookeeperTool();
     boolean ok = zkt.parseArgs(args);
     if (ok) {
-      try {
-        zkt.execute();
-      } catch (Exception e) {
-        ok = false;
-      }
+      zkt.execute();
     }
     if (!ok) {
       System.exit(1);
