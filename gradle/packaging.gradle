@@ -211,13 +211,11 @@ uploadPackages {
       repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
         authentication(userName: nexusUsername, password: nexusPassword)
         pom.groupId = 'com.continuuity.distributions.release'
-        //pom.version = getPomVersion()
         pom.version = rootProject.version
       }
       snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
         authentication(userName: nexusUsername, password: nexusPassword)
         pom.groupId = 'com.continuuity.distributions.snapshots'
-        //pom.version = getPomVersion()
         pom.version = rootProject.version
       }
 
