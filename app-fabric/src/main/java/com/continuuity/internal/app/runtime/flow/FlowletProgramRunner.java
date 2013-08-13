@@ -24,11 +24,10 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator.Node;
@@ -38,6 +37,7 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
@@ -473,7 +473,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 dataFabricFacade.createQueueConsumerFactory(
                   flowletContext.getInstanceId(),
                   flowletContext.getGroupId(),
-                  flowletContext.getQueueProducerName(),
+                  flowletContext.getMetricContext(),
                   queueName, queueInfo,
                   !flowletContext.isAsyncMode()
                 ),

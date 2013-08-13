@@ -8,12 +8,12 @@ package com.continuuity.app.services;
  * Defines the status of a resource.
  */
 public enum DeployStatus {
-  NOT_FOUND(0, "Archive not found"),
-  REGISTERED(1, "Archive has been registered"),
-  UPLOADING(2, "Archive is being uploaded"),
-  VERIFYING(3, "Archive is being verified"),
-  FAILED(4, "Failed in verification & registration of Archive"),
-  DEPLOYED(5, "Upload & verification were completed successfully. Archive is now deployed."),
+  NOT_FOUND(0, "The archive was not found."),
+  REGISTERED(1, "The archive has been registered."),
+  UPLOADING(2, "The archive is being uploaded."),
+  VERIFYING(3, "The archive is being verified."),
+  FAILED(4, "There was a problem verifying the archive or its contents."),
+  DEPLOYED(5, "Upload and verification completed successfully. Archive has been deployed."),
   UNDEPLOYED(6, "Archive has been un-deployed");
 
   private String message;
@@ -30,5 +30,9 @@ public enum DeployStatus {
 
   public String getMessage() {
     return message;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
   }
 }

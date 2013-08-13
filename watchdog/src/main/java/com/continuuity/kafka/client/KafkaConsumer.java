@@ -27,12 +27,8 @@ public interface KafkaConsumer {
     /**
      * Invoked when message consumption is stopped. When this method is invoked,
      * no more {@link #onReceived(java.util.Iterator)} will get triggered.
-     *
-     * @param error Error flag will be {@code true} to reflect stop consumption due to error, or {@code false} if
-     *              stopped normally.
-     * @param cause If error is {@code true}, this carries the cause, otherwise it is {@code null}.
      */
-    void finished(boolean error, Throwable cause);
+    void finished();
   }
 
   /**

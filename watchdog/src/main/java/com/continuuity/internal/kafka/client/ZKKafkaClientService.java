@@ -11,9 +11,9 @@ import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.AbstractIdleService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -28,8 +28,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * A KafkaClientService that uses ZooKeeper for broker discovery.
  */
-public class ZKKafkaClientService extends AbstractService implements KafkaClientService, Runnable {
+public class ZKKafkaClientService extends AbstractIdleService implements KafkaClientService, Runnable {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ZKKafkaClientService.class);
   private static final long PUBLISHER_CLEANUP_SECONDS = 1;
 
   private final BrokerService brokerService;
@@ -69,46 +70,6 @@ public class ZKKafkaClientService extends AbstractService implements KafkaClient
   }
 
   @Override
-  protected void doStart() {
-    scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("kafka-client-cleanup"));
-    scheduler.scheduleAtFixedRate(this, PUBLISHER_CLEANUP_SECONDS, PUBLISHER_CLEANUP_SECONDS, TimeUnit.SECONDS);
-
-    // Start broker service to get auto-updated brokers information.
-    Futures.addCallback(brokerService.start(), new FutureCallback<State>() {
-      @Override
-      public void onSuccess(State result) {
-        notifyStarted();
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        notifyFailed(t);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-  }
-
-  @Override
-  protected void doStop() {
-    scheduler.shutdownNow();
-    for (Cancellable cancellable : publishers.values()) {
-      cancellable.cancel();
-    }
-    consumer.stop();
-
-    Futures.addCallback(brokerService.stop(), new FutureCallback<State>() {
-      @Override
-      public void onSuccess(State result) {
-        notifyStopped();
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        notifyFailed(t);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-  }
-
-  @Override
   public void run() {
     // For calling publisher.producer.close() on garbage collected
     Reference<? extends KafkaPublisher> ref = referenceQueue.poll();
@@ -116,5 +77,27 @@ public class ZKKafkaClientService extends AbstractService implements KafkaClient
       publishers.remove(ref).cancel();
       ref = referenceQueue.poll();
     }
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("kafka-client-cleanup"));
+    scheduler.scheduleAtFixedRate(this, PUBLISHER_CLEANUP_SECONDS, PUBLISHER_CLEANUP_SECONDS, TimeUnit.SECONDS);
+
+    // Start broker service to get auto-updated brokers information.
+    brokerService.startAndWait();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.info("Stopping KafkaClientService");
+    scheduler.shutdownNow();
+    for (Cancellable cancellable : publishers.values()) {
+      cancellable.cancel();
+    }
+    consumer.stop();
+
+    brokerService.stopAndWait();
+    LOG.info("KafkaClientService stopped");
   }
 }

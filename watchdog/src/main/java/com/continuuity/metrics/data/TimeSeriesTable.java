@@ -180,6 +180,7 @@ public final class TimeSeriesTable {
     timeSeriesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
   }
 
+
   /**
    * Deletes all row keys that has timestamp before the given time.
    * @param beforeTime All data before this timestamp will be removed (exclusive).

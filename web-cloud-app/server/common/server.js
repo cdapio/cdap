@@ -103,9 +103,9 @@ WebAppServer.prototype.configureExpress = function() {
 
   // Workaround to make static files work on cloud.
   if (fs.existsSync(this.dirPath + '/../client/')) {
-    this.app.use(express.static(this.dirPath + '/../client/'));
+    this.app.use(express['static'](this.dirPath + '/../client/'));
   } else {
-    this.app.use(express.static(this.dirPath + '/../../client/'));
+    this.app.use(express['static'](this.dirPath + '/../../client/'));
   }
 };
 
@@ -387,7 +387,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
   });
 
   this.app.get('/logs/:method/:appId/:entityId/:entityType', function (req, res) {
-    
+
     if (!req.params.method || !req.params.appId || !req.params.entityId || !req.params.entityType) {
       res.send('incorrect request');
     }
@@ -400,15 +400,16 @@ WebAppServer.prototype.bindRoutes = function(io) {
     var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize, filter];
 
     self.logger.trace('Logs ' + method + ' ' + req.url);
-    
+
     self.Api.monitor(accountID, method, params, function (error, result) {
       if (error) {
         self.logger.error(error);
+      } else {
+        result.map(function (item) {
+          item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset), 10);
+          return item;
+        });
       }
-      result.map(function (item) {
-        item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset));
-        return item;
-      });
 
       res.send({result: result, error: error});
     });
@@ -420,12 +421,14 @@ WebAppServer.prototype.bindRoutes = function(io) {
    */
   this.app.post('/rpc/:type/:method', function (req, res) {
 
+    var type, method, params, accountID;
+
     try {
 
-      var type = req.params.type;
-      var method = req.params.method;
-      var params = req.body
-      var accountID = 'developer';
+      type = req.params.type;
+      method = req.params.method;
+      params = req.body;
+      accountID = 'developer';
 
     } catch (e) {
 

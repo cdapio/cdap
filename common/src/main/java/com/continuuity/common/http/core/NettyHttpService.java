@@ -45,14 +45,12 @@ public final class NettyHttpService extends AbstractIdleService {
   private static final int MAX_INPUT_SIZE = 128 * 1024;
 
   private ServerBootstrap bootstrap;
-  private int port;
-
-  private int servicePort;
   private int bossThreadPoolSize;
   private int workerThreadPoolSize;
   private int connectionBacklog;
   private final int execThreadPoolSize;
   private final long execThreadKeepAliveSecs;
+  private InetSocketAddress bindAddress;
 
   private final Set<HttpHandler> httpHandlers;
   private final HandlerContext handlerContext;
@@ -66,7 +64,7 @@ public final class NettyHttpService extends AbstractIdleService {
   /**
    * Initialize NettyHttpService.
    *
-   * @param port port to run the service on.
+   * @param bindAddress Address for the service to bind to.
    * @param bossThreadPoolSize Size of the boss thread pool.
    * @param workerThreadPoolSize Size of the worker thread pool.
    * @param connectionBacklog Max concurrent connections that can be queued.
@@ -74,10 +72,11 @@ public final class NettyHttpService extends AbstractIdleService {
    * @param execThreadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
    * @param httpHandlers HttpHandlers to handle the calls.
    */
-  public NettyHttpService(int port, int bossThreadPoolSize, int workerThreadPoolSize, int connectionBacklog,
+  public NettyHttpService(InetSocketAddress bindAddress, int bossThreadPoolSize, int workerThreadPoolSize,
+                          int connectionBacklog,
                           int execThreadPoolSize, long execThreadKeepAliveSecs,
                           Iterable<HttpHandler> httpHandlers){
-    this.port = port;
+    this.bindAddress = bindAddress;
     this.bossThreadPoolSize = bossThreadPoolSize;
     this.workerThreadPoolSize = workerThreadPoolSize;
     this.connectionBacklog = connectionBacklog;
@@ -184,25 +183,24 @@ public final class NettyHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting service on port {}", port);
+    LOG.info("Starting service on address {}", bindAddress);
     bootStrap(execThreadPoolSize, execThreadKeepAliveSecs, httpHandlers);
-    InetSocketAddress address = new InetSocketAddress(port);
-    Channel channel = bootstrap.bind(address);
+    Channel channel = bootstrap.bind(bindAddress);
     channelGroup.add(channel);
-    servicePort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
+    bindAddress = ((InetSocketAddress) channel.getLocalAddress());
 
   }
 
   /**
    * @return port where the service is running.
    */
-  public int getServicePort() {
-    return servicePort;
+  public InetSocketAddress getBindAddress() {
+    return bindAddress;
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping service on port {}", port);
+    LOG.info("Stopping service on address {}", bindAddress);
     try {
       if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT, TimeUnit.SECONDS)) {
         LOG.warn("Timeout when closing all channels.");
@@ -239,6 +237,7 @@ public final class NettyHttpService extends AbstractIdleService {
     private int workerThreadPoolSize;
     private int connectionBacklog;
     private int execThreadPoolSize;
+    private String host;
     private int port;
     private long execThreadKeepAliveSecs;
 
@@ -247,21 +246,24 @@ public final class NettyHttpService extends AbstractIdleService {
      * @param handlers Iterable of HttpHandlers.
      * @return instance of {@code Builder}.
      */
-    public Builder addHttpHandlers(Iterable<HttpHandler> handlers){
+    public Builder addHttpHandlers(Iterable<HttpHandler> handlers) {
       this.handlers = handlers;
       return this;
     }
 
-    public void setBossThreadPoolSize(int bossThreadPoolSize) {
+    public Builder setBossThreadPoolSize(int bossThreadPoolSize) {
       this.bossThreadPoolSize = bossThreadPoolSize;
+      return this;
     }
 
-    public void setWorkerThreadPoolSize(int workerThreadPoolSize) {
+    public Builder setWorkerThreadPoolSize(int workerThreadPoolSize) {
       this.workerThreadPoolSize = workerThreadPoolSize;
+      return this;
     }
 
-    public void setConnectionBacklog(int connectionBacklog) {
+    public Builder setConnectionBacklog(int connectionBacklog) {
       this.connectionBacklog = connectionBacklog;
+      return this;
     }
 
     public Builder setExecThreadPoolSize(int execThreadPoolSize){
@@ -280,15 +282,26 @@ public final class NettyHttpService extends AbstractIdleService {
      * @param port port on which the service should listen to.
      * @return instance of {@code Builder}.
      */
-    public Builder setPort(int port){
+    public Builder setPort(int port) {
       this.port = port;
       return this;
     }
 
-    public NettyHttpService build(){
-      return new NettyHttpService(port, bossThreadPoolSize, workerThreadPoolSize, connectionBacklog,
-                                  execThreadPoolSize, execThreadKeepAliveSecs, handlers);
+    public Builder setHost(String host) {
+      this.host = host;
+      return this;
     }
 
+    public NettyHttpService build() {
+      InetSocketAddress bindAddress;
+      if (host == null) {
+        bindAddress = new InetSocketAddress("localhost", port);
+      } else {
+        bindAddress = new InetSocketAddress(host, port);
+      }
+
+      return new NettyHttpService(bindAddress, bossThreadPoolSize, workerThreadPoolSize, connectionBacklog,
+                                  execThreadPoolSize, execThreadKeepAliveSecs, handlers);
+    }
   }
 }

@@ -106,10 +106,8 @@ public class KafkaMetricsCollectionServiceTest {
       }
 
       @Override
-      public void finished(boolean error, Throwable cause) {
-        if (!error) {
-          semaphore.release();
-        }
+      public void finished() {
+        semaphore.release();
         LOG.info("Finished");
       }
     });

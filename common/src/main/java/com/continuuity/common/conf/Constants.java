@@ -40,6 +40,8 @@ public class Constants {
   public static final String CFG_COMMAND_PORT_ENABLED =
     "command.port.enabled";
 
+  public static final String CFG_HDFS_USER = "hdfs.user";
+
   /**
    * Default constants for common.
    */

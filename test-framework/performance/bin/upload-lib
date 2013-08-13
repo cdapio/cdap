@@ -1,0 +1,112 @@
+#
+# Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+#
+
+#!/bin/sh
+
+REACTOR_COMPONENTS='app-fabric data-fabric data-fabric-runtime gateway overlord watchdog'
+COMMON='common'
+
+if [[ $# -eq 0 ]];
+then
+     echo "ERROR: Please execute script with list of hosts (separated by space character)."
+     echo "Usage: upload-lib <host> [ <host> ... ]  "
+     exit 1
+fi
+
+for host in $*
+do
+  if ! eval "ping -c 1 $host >/dev/null 2>/dev/null"
+  then
+    echo "ERROR: Host $host is not responding."
+    echo "Usage: upload-lib <host> [ <host> ... ]  "
+    exit 1
+  fi
+done
+
+REMOTE_CONTINUUITY_ROOT="/opt/continuuity"
+TARFILENAME="continuuity_jars.tgz"
+
+LOCALDIRS=${COMMON}'/build/libs '
+JARPATTERNS=${COMMON}'-?.?.?*.jar '
+REMOTEDIRS=''
+
+for REACTOR_COMPONENT in $REACTOR_COMPONENTS ;
+do
+  LOCALDIRS+=${REACTOR_COMPONENT}'/build/libs '
+  JARPATTERNS+=${REACTOR_COMPONENT}'-?.?.?*.jar '
+  REMOTEDIRS+=${REMOTE_CONTINUUITY_ROOT}/${REACTOR_COMPONENT}'/lib '
+done
+
+for LOCALDIR in $LOCALDIRS ;
+do
+  if [[ ! -d $LOCALDIR ]]; then
+    echo "ERROR: Local build directory $LOCALDIR is missing. Please change the current directory to the"
+    echo "       root directory of the Reactor source tree (i.e. /Users/mario/git/reactor) and verify that"
+    echo "       you have a full local Reactor build (i.e. by running gradlew build)"
+    exit 1
+  fi
+done
+
+echo ""
+echo "Creating local tar file /tmp/$TARFILENAME with all jars from local build:"
+tar czvf /tmp/$TARFILENAME $LOCALDIRS
+
+for HOST in $*
+do
+  echo ""
+  echo "Current node is $HOST"
+
+  echo ""
+  echo "Copying local file /tmp/$TARFILENAME to remote directory ${HOST}:/tmp"
+  scp /tmp/$TARFILENAME ${HOST}:/tmp >/dev/null
+
+  for REMOTEDIR in $REMOTEDIRS
+  do
+    echo ""
+    echo "Current remote directory is $REMOTEDIR"
+    if [ "$REMOTEDIR" = "" ]; then
+      echo "ERROR: Tried to use illegal remote directory." 1>&2
+      exit 1
+    fi
+
+    echo ""
+    echo "Deleting existing versions of libraries in remote directory $REMOTEDIR"
+    ssh $HOST sudo -u continuuity "sh -c \"if [ -d $REMOTEDIR ] ; then cd $REMOTEDIR ; rm $JARPATTERNS ; fi\" "
+    echo ""
+    echo "Copying new versions of libraries from remote tar file /tmp/$TARFILENAME to remote directory $REMOTEDIR"
+    ssh $HOST sudo -u continuuity "sh -c \"if [ -d $REMOTEDIR ] ; then cd $REMOTEDIR ; tar xzvf /tmp/$TARFILENAME \
+                                           --strip-components 3 -C $REMOTEDIR ; fi \" "
+    echo ""
+    echo "Deleting existing versions of libraries in remote directory $REMOTEDIR"
+    ssh $HOST sudo -u continuuity "sh -c \"if [ -d $REMOTEDIR ] ; then cd $REMOTEDIR ; rm $JARPATTERNS ; fi\" "
+  done
+  echo ""
+  echo "Deleting remote tar file /tmp/$TARFILENAME"
+  ssh $HOST "sh -c \"if [ -f /tmp/$TARFILENAME ] ; then rm /tmp/$TARFILENAME ; fi\" "
+done
+
+echo ""
+echo "Deleting local tar file /tmp/$TARFILENAME"
+rm /tmp/$TARFILENAME
+
+echo ''
+echo '*****************************************************************************************************************'
+echo '*                                                                                                               *'
+echo '*      Please consider the following steps                                                                      *'
+echo '*                                                                                                               *'
+echo '*       1) stop all Reactor components on all nodes, i.e. by running the following command on each node         *'
+echo '*              for i in /etc/init.d/continuuity-* ; do sudo -u continuuity $i stop; done                        *'
+echo '*                                                                                                               *'
+echo '*       2) delete all HBase tables (only if required), i.e. by running in /opt/continuuity/performance/bin      *'
+echo '*              ./hbase-tool --noPrompt --dropAllTables --zkHost <zkHost>                                        *'
+echo '*                                                                                                               *'
+echo '*       3) start all Reactor components on all nodes, i.e. by running on each node                              *'
+echo '*              for i in /etc/init.d/continuuity-* ; do sudo -u continuuity $i start; done                       *'
+echo '*                                                                                                               *'
+echo '*      Btw, you can install the latest Reactor (snapshot) build on each node by running                         *'
+echo '*                                                                                                               *'
+echo '*  for pkg in `dpkg-query -W -f='${Package} ' 'continuuity*'` ; do sudo apt-get install --reinstall $pkg; done  *'
+echo '*                                                                                                               *'
+echo '*****************************************************************************************************************'
+echo ''
