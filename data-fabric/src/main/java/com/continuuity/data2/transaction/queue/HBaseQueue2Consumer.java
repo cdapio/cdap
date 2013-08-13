@@ -250,6 +250,8 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.DATA_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.META_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName);
+
+    // TODO: Need more test before enabling it.
 //    scan.setFilter(createFilter());
 
     long readPointer = transaction.getReadPointer();
