@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  *
@@ -89,7 +90,9 @@ public class InMemoryTransactionOracle {
       if (committedChangeSets.containsKey(nextWritePointer)) {
         committedChangeSets.get(nextWritePointer).addAll(changeSet);
       } else {
-        committedChangeSets.put(nextWritePointer, Sets.newHashSet(changeSet));
+        TreeSet<byte[]> committedChangeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+        committedChangeSet.addAll(changeSet);
+        committedChangeSets.put(nextWritePointer, committedChangeSet);
       }
     }
     makeVisible(tx);
@@ -129,7 +132,7 @@ public class InMemoryTransactionOracle {
     for (Map.Entry<Long, Set<byte[]>> changeSet : committedChangeSets.entrySet()) {
       // If commit time is greater than tx read-pointer,
       // basically not visible but committed means "tx committed after given tx was started"
-      if (changeSet.getKey() > tx.getReadPointer()) {
+      if (changeSet.getKey() > tx.getWritePointer()) {
         if (containsAny(changeSet.getValue(), changeIds)) {
           return true;
         }
