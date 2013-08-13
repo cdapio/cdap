@@ -33,7 +33,7 @@ public class LogFileWriter implements Closeable {
 
   private FSDataOutputStream outputStream;
   private DataFileWriter<GenericRecord> dataFileWriter;
-  private long currentTimeInterval = -1;
+  private long currentFileTs = -1;
 
   private static final String FILE_SUFFIX = "avro";
 
@@ -70,11 +70,11 @@ public class LogFileWriter implements Closeable {
     }
   }
 
-  private void rotate(long ts) throws IOException {
-    if ((currentTimeInterval != ts && ts % fileRotateIntervalMs == 0) || dataFileWriter == null) {
+  void rotate(long ts) throws IOException {
+    if ((currentFileTs != ts && ts - currentFileTs > fileRotateIntervalMs) || dataFileWriter == null) {
       close();
       create(ts);
-      currentTimeInterval = ts;
+      currentFileTs = ts;
 
       cleanUp();
     }
@@ -93,7 +93,10 @@ public class LogFileWriter implements Closeable {
     RemoteIterator<LocatedFileStatus> filesIt = fileSystem.listFiles(logBaseDir, false);
     while (filesIt.hasNext()) {
       LocatedFileStatus status = filesIt.next();
-      if (status.getModificationTime() < retentionTs && status.getPath().getName().endsWith(FILE_SUFFIX)) {
+      String fileName = status.getPath().getName();
+      String currentFilePrefix = String.valueOf(currentFileTs);
+      if (status.getModificationTime() < retentionTs && fileName.endsWith(FILE_SUFFIX)
+        && !fileName.startsWith(currentFilePrefix)) {
         fileSystem.delete(status.getPath(), false);
       }
     }

@@ -47,10 +47,10 @@ public class FileLogAppender extends LogAppender {
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
     this.logBaseDir = new Path(baseDir);
 
-    long rotationMins = cConfig.getLong(LoggingConfiguration.LOG_FILE_ROTATION_INTERVAL_MINS,
+    float rotationMins = cConfig.getFloat(LoggingConfiguration.LOG_FILE_ROTATION_INTERVAL_MINS,
                                       TimeUnit.MINUTES.convert(1, TimeUnit.DAYS));
     Preconditions.checkArgument(rotationMins > 0, "Log file rotation interval is invalid: %s", rotationMins);
-    this.logFileRotationIntervalMs = TimeUnit.MILLISECONDS.convert(rotationMins, TimeUnit.MINUTES);
+    this.logFileRotationIntervalMs = (long) (rotationMins * 60 * 1000);
 
     this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 5 * 1024 * 1024);
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
@@ -117,5 +117,9 @@ public class FileLogAppender extends LogAppender {
   public void stop() {
     super.stop();
     close();
+  }
+
+  LogFileWriter getLogFileWriter() {
+    return logFileWriter;
   }
 }
