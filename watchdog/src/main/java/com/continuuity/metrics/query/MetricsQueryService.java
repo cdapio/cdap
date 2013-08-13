@@ -44,10 +44,10 @@ public final class MetricsQueryService extends AbstractIdleService {
     this.httpService = NettyHttpService.builder()
                                        .setHost(hostname.getCanonicalHostName())
                                        .setPort(cConf.getInt(MetricsConstants.ConfigKeys.SERVER_PORT, 0))
-                                       .setThreadPoolSize(
+                                       .setExecThreadPoolSize(
                                          cConf.getInt(MetricsConstants.ConfigKeys.THREAD_POOL_SIZE,
                                                       DEFAULT_THREAD_POOL_SIZE))
-                                       .setThreadKeepAliveSeconds(
+                                       .setExecThreadKeepAliveSeconds(
                                          cConf.getInt(MetricsConstants.ConfigKeys.KEEP_ALIVE_SECONDS,
                                                       DEFAULT_KEEP_ALIVE_SECONDS))
                                        .addHttpHandlers(handlers)
