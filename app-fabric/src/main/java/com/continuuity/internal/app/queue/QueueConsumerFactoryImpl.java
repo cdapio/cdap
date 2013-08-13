@@ -78,8 +78,9 @@ public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
   public Queue2Consumer createConsumer(int groupSize) {
     DequeueStrategy strategy = DequeueStrategy.valueOf(queueInfo.getPartitionerType().name());
     try {
-      return queueClientFactory.createConsumer(
-        new ConsumerConfig(groupId, instanceId, groupSize, strategy, queueInfo.getPartitionKey()));
+      return queueClientFactory.createConsumer(queueName,
+                                               new ConsumerConfig(groupId, instanceId, groupSize,
+                                                                  strategy, queueInfo.getPartitionKey()));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
