@@ -3,9 +3,10 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.data.dataset.DataSetTestBase;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,7 +32,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   public void testLookupByIndex() throws Exception{
 
     indexedFeed = instantiator.getDataSet("index");
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
 
     List<String> categories1 = ImmutableList.of("racing", "tech");
     List<String> categories2 = ImmutableList.of("electronics", "tech");
@@ -44,6 +45,8 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
 
     indexedFeed.write(key1, feed1, getCategories(categories1));
     indexedFeed.write(key2, feed2, getCategories(categories2));
+
+    commitTransaction(txAgent);
 
     List<Feed> feedResult1 = indexedFeed.readAllByIndex(Bytes.toBytes("racing"));
     Assert.assertEquals(1, feedResult1.size());
@@ -59,7 +62,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   public void testIndexRewrites() throws Exception {
 
     indexedFeed = instantiator.getDataSet("index");
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
 
     List<String> categories1 = ImmutableList.of("big data", "startup");
     List<String> categories2 = ImmutableList.of("hadoop");
@@ -74,6 +77,8 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
 
     // re-write with new index values
     indexedFeed.write(key1, feed1, getCategories(categories2));
+
+    commitTransaction(txAgent);
 
     //Should not return based on old index values
     feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("big data"));
@@ -93,13 +98,15 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   public void testIndexPruning() throws Exception{
 
     indexedFeed = instantiator.getDataSet("index");
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
 
     List<String> categories = ImmutableList.of("running", "marathon", "drinking");
     Feed feed =  new Feed("rocknroll", "http://rock'n'roll.com", categories);
 
     byte[] key = Bytes.toBytes(feed.getId());
     indexedFeed.write(key, feed, getCategories(categories));
+
+    commitTransaction(txAgent);
 
     List<Feed> feeds = indexedFeed.readAllByIndex(Bytes.toBytes("drinking"));
     Assert.assertEquals(1, feeds.size());
@@ -113,7 +120,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   @Test
   public void testIndexUpdates() throws Exception {
     indexedFeed = instantiator.getDataSet("index");
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
 
     List<String> categories1 = ImmutableList.of("big data");
 
@@ -126,6 +133,8 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     Assert.assertEquals(1, feedResult.size());
 
     indexedFeed.updateIndex(key1, Bytes.toBytes("startup"));
+
+    commitTransaction(txAgent);
 
     feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("startup"));
     Assert.assertEquals(1, feedResult.size());

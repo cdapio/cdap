@@ -6,21 +6,15 @@ package com.continuuity.data2.transaction.queue;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
-import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.QueueClient;
-import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -29,14 +23,9 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * A {@link TransactionAware} implementation of {@link QueueClient} using HBase as the backing store.
+ *
  */
-public final class HBaseQueueClient implements QueueClient, TransactionAware {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueClient.class);
-
-  // 4M write buffer for HTable
-  private static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
+public final class HBaseQueue2Producer implements Queue2Producer, TransactionAware {
 
   private final Queue<QueueEntry> queue;
   private final QueueName queueName;
@@ -45,23 +34,10 @@ public final class HBaseQueueClient implements QueueClient, TransactionAware {
   private Transaction transaction;
 
 
-  public HBaseQueueClient(Configuration hConf, String tableName, QueueName queueName) throws IOException {
-    this(new HBaseAdmin(hConf), tableName, queueName);
-  }
-
-
-  public HBaseQueueClient(HBaseAdmin admin, String tableName, QueueName queueName) throws IOException {
+  public HBaseQueue2Producer(HTable hTable, QueueName queueName) {
     this.queue = new ConcurrentLinkedQueue<QueueEntry>();
     this.queueName = queueName;
     this.rollbackKeys = Lists.newArrayList();
-
-    HBaseUtils.createTableIfNotExists(admin, tableName,
-                                      HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.MAX_CREATE_TABLE_WAIT);
-
-    HTable hTable = new HTable(admin.getConfiguration(), tableName);
-    // TODO: make configurable
-    hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlush(false);
     this.hTable = hTable;
   }
 
@@ -82,15 +58,6 @@ public final class HBaseQueueClient implements QueueClient, TransactionAware {
     } else {
       persist(entries);
     }
-  }
-
-  @Override
-  public QueueConsumer createConsumer(ConsumerConfig consumerConfig) throws IOException {
-    HTable consumerTable = new HTable(hTable.getConfiguration(), hTable.getTableName());
-    consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-    consumerTable.setAutoFlush(false);
-
-    return new HBaseQueueConsumer(consumerConfig, consumerTable, queueName);
   }
 
   @Override
@@ -130,7 +97,7 @@ public final class HBaseQueueClient implements QueueClient, TransactionAware {
    * Persist queue entries into HBase.
    */
   private void persist(Iterable<QueueEntry> entries) throws IOException {
-    // TODO: What key should it be if transaction is null.
+    // TODO: What key should it be if transaction is null?
     long writePointer = transaction.getWritePointer();
     byte[] rowKeyPrefix = Bytes.add(queueName.toBytes(), Bytes.toBytes(writePointer));
     int count = 0;

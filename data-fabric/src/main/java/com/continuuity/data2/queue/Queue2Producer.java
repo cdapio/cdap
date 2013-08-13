@@ -8,13 +8,11 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import java.io.IOException;
 
 /**
- *
+ * TODO: This class should be renamed as QueueProducer when the old queue is gone.
  */
-public interface QueueClient {
+public interface Queue2Producer {
 
   void enqueue(QueueEntry entry) throws IOException;
 
   void enqueue(Iterable<QueueEntry> entries) throws IOException;
-
-  QueueConsumer createConsumer(ConsumerConfig consumerConfig) throws IOException;
 }

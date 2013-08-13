@@ -9,13 +9,14 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -29,8 +30,12 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Scan;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
+import org.apache.hadoop.hbase.filter.BitComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,9 +50,7 @@ import java.util.SortedMap;
 /**
  *
  */
-final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueConsumer.class);
+final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
 
   // TODO: Make these configurable.
   private static final int MAX_CACHE_ROWS = 100;
@@ -74,7 +77,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
   private byte[] startRow;
   private Transaction transaction;
 
-  HBaseQueueConsumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName) {
+  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName) {
     this.consumerConfig = consumerConfig;
     this.hTable = hTable;
     this.queueName = queueName;
@@ -149,7 +152,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    return ImmutableList.copyOf(Iterators.transform(consumingEntries.keySet().iterator(), rowKeyToChangeTx));
+    return ImmutableSet.copyOf(Iterators.transform(consumingEntries.keySet().iterator(), rowKeyToChangeTx));
   }
 
   @Override
@@ -247,7 +250,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.DATA_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.META_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName);
-    scan.setMaxVersions();
+//    scan.setFilter(createFilter());
 
     long readPointer = transaction.getReadPointer();
     long[] excludedList = transaction.getExcludedList();
@@ -287,7 +290,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
                                                       stateColumnName);
 
         int counter = Bytes.toInt(rowKey, rowKey.length - 4, Ints.BYTES);
-        if (!shouldInclude(rowKey, writePointer, counter, metaColumn, stateColumn)) {
+        if (!shouldInclude(writePointer, counter, metaColumn, stateColumn)) {
           continue;
         }
 
@@ -299,6 +302,19 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       }
     }
     scanner.close();
+  }
+
+  private Filter createFilter() {
+    byte[] processedMask = new byte[Ints.BYTES * 2 + 1];
+    processedMask[processedMask.length - 1] = ConsumerEntryState.PROCESSED.getState();
+    Filter stateFilter = new SingleColumnValueFilter(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName,
+                                                     CompareFilter.CompareOp.NOT_EQUAL,
+                                                     new BitComparator(processedMask, BitComparator.BitwiseOp.AND));
+
+    return new FilterList(FilterList.Operator.MUST_PASS_ONE, stateFilter, new SingleColumnValueFilter(
+      HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, CompareFilter.CompareOp.GREATER,
+      new BinaryPrefixComparator(Bytes.toBytes(transaction.getReadPointer()))
+    ));
   }
 
   private byte[] encodeStateColumn(ConsumerEntryState state) {
@@ -323,7 +339,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       stateColumn.getBuffer()[stateColumn.getValueOffset() + Longs.BYTES + Ints.BYTES]);
   }
 
-  private boolean shouldInclude(byte[] rowKey, long enqueueWritePointer, int counter,
+  private boolean shouldInclude(long enqueueWritePointer, int counter,
                                 KeyValue metaColumn, KeyValue stateColumn) throws IOException {
     if (stateColumn != null) {
       // If the state is written by the current transaction, ignore it, as it's processing
@@ -352,7 +368,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 
         // If the PROCESSED entry write pointer is smaller than smallest in excluded list, then it must be processed.
         if (excludedList.length == 0 || excludedList[0] > enqueueWritePointer) {
-          startRow = rowKey;
+          startRow = getNextRow(enqueueWritePointer, counter);
         }
         return false;
       }
@@ -389,6 +405,10 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
    */
   private byte[] getStopRow() {
     return Bytes.add(queueName.toBytes(), Bytes.toBytes(transaction.getReadPointer() + 1L));
+  }
+
+  private byte[] getNextRow(long writePointer, int count) {
+    return Bytes.add(queueName.toBytes(), Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
   }
 
   private static final class Entry {

@@ -8,9 +8,13 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data2.queue.ConsumerConfig;
+import com.continuuity.data2.queue.DequeueStrategy;
+import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.google.common.base.Throwables;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
+
+import java.io.IOException;
 
 /**
  *  Creates a QueueConsumer.
@@ -23,12 +27,12 @@ public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
   private final String groupName;
   private final QueueName queueName;
   private final QueueInfo queueInfo;
+  private final QueueClientFactory queueClientFactory;
   private final boolean sync;
 
-  @Inject
-  public QueueConsumerFactoryImpl(OperationExecutor opex, @Assisted Program program, @Assisted int instanceId,
-                                  @Assisted long groupId, @Assisted String groupName, @Assisted QueueName queueName,
-                                  @Assisted QueueInfo queueInfo, @Assisted boolean singleEntry) {
+  public QueueConsumerFactoryImpl(OperationExecutor opex, Program program, int instanceId,
+                                  long groupId, String groupName, QueueName queueName,
+                                  QueueInfo queueInfo, boolean singleEntry, QueueClientFactory queueClientFactory) {
     this.opex = opex;
     this.operationCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
     this.instanceId = instanceId;
@@ -37,6 +41,7 @@ public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
     this.queueName = queueName;
     this.queueInfo = queueInfo;
     this.sync = singleEntry;
+    this.queueClientFactory = queueClientFactory;
   }
 
   /**
@@ -67,5 +72,16 @@ public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
     }
 
     return queueConsumer;
+  }
+
+  @Override
+  public Queue2Consumer createConsumer(int groupSize) {
+    DequeueStrategy strategy = DequeueStrategy.valueOf(queueInfo.getPartitionerType().name());
+    try {
+      return queueClientFactory.createConsumer(
+        new ConsumerConfig(groupId, instanceId, groupSize, strategy, queueInfo.getPartitionKey()));
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

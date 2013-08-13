@@ -2,6 +2,7 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data2.queue.Queue2Consumer;
 
 /**
  *  A factory interface to create QueueConsumer
@@ -14,6 +15,13 @@ public interface QueueConsumerFactory {
    * @return Created QueueConsumer
    */
   QueueConsumer create(int groupSize);
+
+  /**
+   * Creates a {@link Queue2Consumer} for the new queue system.
+   * @param groupSize Size of the group of which the created consumer will be in.
+   * @return A new instance of {@link Queue2Consumer}.
+   */
+  Queue2Consumer createConsumer(int groupSize);
 
   /**
    * Represents partitioning information of a Flowlet's process method
