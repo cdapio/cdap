@@ -31,7 +31,9 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -50,6 +52,7 @@ public final class NettyHttpService extends AbstractIdleService {
   private int connectionBacklog;
   private final int execThreadPoolSize;
   private final long execThreadKeepAliveSecs;
+  private final RejectedExecutionHandler rejectedExecutionHandler;
   private InetSocketAddress bindAddress;
 
   private final Set<HttpHandler> httpHandlers;
@@ -70,11 +73,13 @@ public final class NettyHttpService extends AbstractIdleService {
    * @param connectionBacklog Max concurrent connections that can be queued.
    * @param execThreadPoolSize Size of the thread pool for the executor.
    * @param execThreadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
+   * @param rejectedExecutionHandler rejection policy for executor.
    * @param httpHandlers HttpHandlers to handle the calls.
    */
   public NettyHttpService(InetSocketAddress bindAddress, int bossThreadPoolSize, int workerThreadPoolSize,
                           int connectionBacklog,
                           int execThreadPoolSize, long execThreadKeepAliveSecs,
+                          RejectedExecutionHandler rejectedExecutionHandler,
                           Iterable<HttpHandler> httpHandlers){
     this.bindAddress = bindAddress;
     this.bossThreadPoolSize = bossThreadPoolSize;
@@ -82,6 +87,7 @@ public final class NettyHttpService extends AbstractIdleService {
     this.connectionBacklog = connectionBacklog;
     this.execThreadPoolSize = execThreadPoolSize;
     this.execThreadKeepAliveSecs = execThreadKeepAliveSecs;
+    this.rejectedExecutionHandler = rejectedExecutionHandler;
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
     this.handlerContext = new DummyHandlerContext();
     this.channelGroup = new DefaultChannelGroup();
@@ -109,9 +115,11 @@ public final class NettyHttpService extends AbstractIdleService {
     };
 
     //Create ExecutionHandler
-    return new ExecutionHandler(
+    ThreadPoolExecutor threadPoolExecutor =
       new OrderedMemoryAwareThreadPoolExecutor(threadPoolSize, 0, 0, threadKeepAliveSecs, TimeUnit.SECONDS,
-                                               threadFactory));
+                                               threadFactory);
+    threadPoolExecutor.setRejectedExecutionHandler(rejectedExecutionHandler);
+    return new ExecutionHandler(threadPoolExecutor);
   }
 
   /**
@@ -221,6 +229,8 @@ public final class NettyHttpService extends AbstractIdleService {
     private static final int DEFAULT_CONNECTION_BACKLOG = 1000;
     private static final int DEFAULT_EXEC_HANDLER_THREAD_POOL_SIZE = 60;
     private static final long DEFAULT_EXEC_HANDLER_THREAD_KEEP_ALIVE_TIME_SECS = 60L;
+    private static final RejectedExecutionHandler DEFAULT_REJECTED_EXECUTION_HANDLER =
+      new ThreadPoolExecutor.CallerRunsPolicy();
 
     //Private constructor to prevent instantiating Builder instance directly.
     private Builder(){
@@ -229,6 +239,7 @@ public final class NettyHttpService extends AbstractIdleService {
       connectionBacklog = DEFAULT_CONNECTION_BACKLOG;
       execThreadPoolSize = DEFAULT_EXEC_HANDLER_THREAD_POOL_SIZE;
       execThreadKeepAliveSecs = DEFAULT_EXEC_HANDLER_THREAD_KEEP_ALIVE_TIME_SECS;
+      rejectedExecutionHandler = DEFAULT_REJECTED_EXECUTION_HANDLER;
       port = 0;
     }
 
@@ -240,6 +251,7 @@ public final class NettyHttpService extends AbstractIdleService {
     private String host;
     private int port;
     private long execThreadKeepAliveSecs;
+    private RejectedExecutionHandler rejectedExecutionHandler;
 
     /**
      * Add HttpHandlers that service the request.
@@ -276,6 +288,11 @@ public final class NettyHttpService extends AbstractIdleService {
       return this;
     }
 
+    public Builder setRejectedExecutionHandler(RejectedExecutionHandler rejectedExecutionHandler) {
+      this.rejectedExecutionHandler = rejectedExecutionHandler;
+      return this;
+    }
+
     /**
      * Set the port on which the service should listen to.
      * By default the service will run on a random port.
@@ -301,7 +318,7 @@ public final class NettyHttpService extends AbstractIdleService {
       }
 
       return new NettyHttpService(bindAddress, bossThreadPoolSize, workerThreadPoolSize, connectionBacklog,
-                                  execThreadPoolSize, execThreadKeepAliveSecs, handlers);
+                                  execThreadPoolSize, execThreadKeepAliveSecs, rejectedExecutionHandler, handlers);
     }
   }
 }
