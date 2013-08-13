@@ -6,9 +6,10 @@ package com.continuuity.data2.queue;
 import java.io.IOException;
 
 /**
- *
+ * TODO: This class should be renamed to QueueConsumer when the old queue is gone. It is named this
+ * way to avoid name conflicts and make it easier for auto-complete.
  */
-public interface QueueConsumer {
+public interface Queue2Consumer {
 
   /**
    * Dequeue an entry from the queue.

@@ -9,13 +9,14 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -29,6 +30,12 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
+import org.apache.hadoop.hbase.filter.BitComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -37,12 +44,13 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 
 /**
  *
  */
-final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
+final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
 
   // TODO: Make these configurable.
   private static final int MAX_CACHE_ROWS = 100;
@@ -66,10 +74,10 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
   private final SortedMap<byte[], Entry> consumingEntries;
   private final Function<byte[], byte[]> rowKeyToChangeTx;
   private final byte[] stateColumnName;
-  private Transaction transaction;
   private byte[] startRow;
+  private Transaction transaction;
 
-  HBaseQueueConsumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName) {
+  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName) {
     this.consumerConfig = consumerConfig;
     this.hTable = hTable;
     this.queueName = queueName;
@@ -101,20 +109,20 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
   public DequeueResult dequeue(int maxBatchSize) throws IOException {
     Preconditions.checkArgument(maxBatchSize > 0, "Batch size must be > 0.");
 
-//    System.out.println("Dequeue");
+    while (consumingEntries.size() < maxBatchSize && getEntries(consumingEntries, maxBatchSize)) {
 
-    List<Entry> dequeueEntries = Lists.newLinkedList();
-    // ANDREAS: this while loop should stop once getEntries/populateCache reaches the end of the queue. Currently, it
-    // will retry as long as it gets at least one entry in every round, even if that is an entry that must be ignored
-    // because it cannot be claimed.
-    // ANDREAS: It could be a problem that we always read to the end of the queue. This way one flowlet instance may
-    // always all entries, while others are idle.
-    while (dequeueEntries.size() < maxBatchSize && getEntries(dequeueEntries, maxBatchSize)) {
-      Iterator<Entry> iterator = dequeueEntries.iterator();
-      while (iterator.hasNext()) {
-        Entry entry = iterator.next();
-        // For FIFO, need to try claiming the entry if group size > 1
-        if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
+      // ANDREAS: this while loop should stop once getEntries/populateCache reaches the end of the queue. Currently, it
+      // will retry as long as it gets at least one entry in every round, even if that is an entry that must be ignored
+      // because it cannot be claimed.
+      // ANDREAS: It could be a problem that we always read to the end of the queue. This way one flowlet instance may
+      // always all entries, while others are idle.
+
+      // For FIFO, need to try claiming the entry if group size > 1
+      if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
+        Iterator<Map.Entry<byte[], Entry>> iterator = consumingEntries.entrySet().iterator();
+        while (iterator.hasNext()) {
+          Entry entry = iterator.next().getValue();
+
           // If the state is already in CLAIMED state, no need to claim it again
           // It happens for rollbacked entries or restart from failure
           // The pickup logic in populateCache and shouldInclude() make sure that's the case
@@ -125,29 +133,23 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
             byte[] stateValue = encodeStateColumn(ConsumerEntryState.CLAIMED);
             put.add(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, stateValue);
             boolean claimed = hTable.checkAndPut(entry.getRowKey(), HBaseQueueConstants.COLUMN_FAMILY,
-                                                 stateColumnName, entry.getState(), put);
+                                                 stateColumnName, null, put);
             // If not able to claim it, remove it, and move to next one.
             if (!claimed) {
               iterator.remove();
               continue;
             }
-            entry = new Entry(entry.getRowKey(), entry.getData(), stateValue);
           }
         }
-
-//        System.out.println("Take entry: " + Bytes.toInt(entry.getData()));
-        consumingEntries.put(entry.getRowKey(), entry);
       }
     }
 
-//    System.out.println("End dequeue");
-
     // If nothing get dequeued, return the empty result.
-    if (dequeueEntries.isEmpty()) {
+    if (consumingEntries.isEmpty()) {
       return EMPTY_RESULT;
     }
 
-    return new DequeueResultImpl(dequeueEntries);
+    return new DequeueResultImpl(consumingEntries.values());
   }
 
   @Override
@@ -161,7 +163,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     // ANDREAS: can there ever be a conflict on dequeue? since we claim the entries using checkAndPut, I feel that
     // all rows modified are exclusively modified by this consumer. But there may be other consumer groups that
     // update the entry state for the same entry, and that would cause a conflict. We don't want these conflicts.
-    return ImmutableList.copyOf(Iterators.transform(consumingEntries.keySet().iterator(), rowKeyToChangeTx));
+    return ImmutableSet.copyOf(Iterators.transform(consumingEntries.keySet().iterator(), rowKeyToChangeTx));
   }
 
   @Override
@@ -225,34 +227,35 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
    * @return The entries instance.
    * @throws IOException
    */
-  private boolean getEntries(List<Entry> entries, int maxBatchSize) throws IOException {
+  private boolean getEntries(SortedMap<byte[], Entry> entries, int maxBatchSize) throws IOException {
     boolean hasEntry = fetchFromCache(entries, maxBatchSize);
 
     // If not enough entries from the cache, try to get more.
     // ANDREAS: I think this is wrong. If the batch=10, and the cache has 5 entries, but populateCache cannot
     // fetch more entries, then we have 5 and should return true. But this code will return false.
     if (entries.size() < maxBatchSize) {
-      populateRowCache();
-      hasEntry = fetchFromCache(entries, maxBatchSize);
+      populateRowCache(entries.keySet());
+      hasEntry = fetchFromCache(entries, maxBatchSize) || hasEntry;
     }
 
     return hasEntry;
   }
 
-  private boolean fetchFromCache(List<Entry> entries, int maxBatchSize) {
+  private boolean fetchFromCache(SortedMap<byte[], Entry> entries, int maxBatchSize) {
     if (entryCache.isEmpty()) {
       return false;
     }
 
     Iterator<Map.Entry<byte[], Entry>> iterator = entryCache.entrySet().iterator();
     while (entries.size() < maxBatchSize && iterator.hasNext()) {
-      entries.add(iterator.next().getValue());
+      Map.Entry<byte[], Entry> entry = iterator.next();
+      entries.put(entry.getKey(), entry.getValue());
       iterator.remove();
     }
     return true;
   }
 
-  private void populateRowCache() throws IOException {
+  private void populateRowCache(Set<byte[]> excludeRows) throws IOException {
     // Scan the table for queue entries.
     Scan scan = new Scan();
     scan.setCaching(MAX_CACHE_ROWS);
@@ -263,12 +266,13 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.DATA_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.META_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName);
-    scan.setMaxVersions();
+
+    // TODO: Need more test before enabling it.
+//    scan.setFilter(createFilter());
 
     long readPointer = transaction.getReadPointer();
     long[] excludedList = transaction.getExcludedList();
 
-    // TODO: Scan with startRow by looking HBaseConsumerState
     ResultScanner scanner = hTable.getScanner(scan);
     // Try fill up the cache with at most MAX_CACHE_ROWS
     while (entryCache.size() < MAX_CACHE_ROWS) {
@@ -280,8 +284,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       for (Result result : results) {
         byte[] rowKey = result.getRow();
 
-        // In the cache already, skip
-        if (entryCache.containsKey(rowKey) || consumingEntries.containsKey(rowKey)) {
+        if (excludeRows.contains(rowKey)) {
           continue;
         }
 
@@ -322,6 +325,19 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     scanner.close();
   }
 
+  private Filter createFilter() {
+    byte[] processedMask = new byte[Ints.BYTES * 2 + 1];
+    processedMask[processedMask.length - 1] = ConsumerEntryState.PROCESSED.getState();
+    Filter stateFilter = new SingleColumnValueFilter(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName,
+                                                     CompareFilter.CompareOp.NOT_EQUAL,
+                                                     new BitComparator(processedMask, BitComparator.BitwiseOp.AND));
+
+    return new FilterList(FilterList.Operator.MUST_PASS_ONE, stateFilter, new SingleColumnValueFilter(
+      HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, CompareFilter.CompareOp.GREATER,
+      new BinaryPrefixComparator(Bytes.toBytes(transaction.getReadPointer()))
+    ));
+  }
+
   private byte[] encodeStateColumn(ConsumerEntryState state) {
     // State column content is encoded as (writePointer) + (instanceId) + (state)
     byte[] stateContent = new byte[Longs.BYTES + Ints.BYTES + 1];
@@ -344,7 +360,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
       stateColumn.getBuffer()[stateColumn.getValueOffset() + Longs.BYTES + Ints.BYTES]);
   }
 
-  private boolean shouldInclude(long writePointer, int counter,
+  private boolean shouldInclude(long enqueueWritePointer, int counter,
                                 KeyValue metaColumn, KeyValue stateColumn) throws IOException {
     if (stateColumn != null) {
       // If the state is written by the current transaction, ignore it, as it's processing
@@ -355,17 +371,26 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 
       // If the state was updated by a different consumer instance that is still active, ignore this entry.
       // The assumption is, the corresponding instance is either processing (claimed)
-      // or going to process it (due to rollback/restart)
+      // or going to process it (due to rollback/restart).
+      // This only applies to FIFO, as for hash and rr, repartition needs to happen if group size change.
       int stateInstanceId = getStateInstanceId(stateColumn);
-      if (stateInstanceId < consumerConfig.getGroupSize() && stateInstanceId != consumerConfig.getInstanceId()) {
+      if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO
+          && stateInstanceId < consumerConfig.getGroupSize()
+          && stateInstanceId != consumerConfig.getInstanceId()) {
         return false;
       }
 
       // If state is PROCESSED and committed, ignore it
+      long[] excludedList = transaction.getExcludedList();
       ConsumerEntryState state = getState(stateColumn);
       if (state == ConsumerEntryState.PROCESSED
           && stateWritePointer <= transaction.getReadPointer()
-          && Arrays.binarySearch(transaction.getExcludedList(), stateWritePointer) < 0) {
+          && Arrays.binarySearch(excludedList, stateWritePointer) < 0) {
+
+        // If the PROCESSED entry write pointer is smaller than smallest in excluded list, then it must be processed.
+        if (excludedList.length == 0 || excludedList[0] > enqueueWritePointer) {
+          startRow = getNextRow(enqueueWritePointer, counter);
+        }
         return false;
       }
     }
@@ -376,7 +401,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
         // to CLAIMED
         return true;
       case ROUND_ROBIN: {
-        int hashValue = Objects.hashCode(writePointer, counter);
+        int hashValue = Objects.hashCode(enqueueWritePointer, counter);
         return consumerConfig.getInstanceId() == (hashValue % consumerConfig.getGroupSize());
       }
       case HASH: {
@@ -397,10 +422,14 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
   }
 
   /**
-   * Given a key prefix, return the smallest key that is greater than all keys starting with that prefix.
+   * Gets the stop row for scan. Stop row is queueName + (readPointer + 1).
    */
   private byte[] getStopRow() {
     return Bytes.add(queueName.toBytes(), Bytes.toBytes(transaction.getReadPointer() + 1L));
+  }
+
+  private byte[] getNextRow(long writePointer, int count) {
+    return Bytes.add(queueName.toBytes(), Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
   }
 
   private static final class Entry {

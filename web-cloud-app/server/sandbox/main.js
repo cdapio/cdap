@@ -562,7 +562,7 @@ fs.readFile(configPath, function (error, result) {
 
 			}
 
-			var accountID = 'developer';
+			var accountID = req.session.account_id;
 
 			if (method === 'getQuery' || method === 'getMapreduce') {
 				params[1].application = ids[0];
@@ -606,6 +606,37 @@ fs.readFile(configPath, function (error, result) {
 
 		});
 
+		app.get('/logs/:method/:appId/:entityId/:entityType', function (req, res) {
+
+			if (!req.params.method || !req.params.appId || !req.params.entityId || !req.params.entityType) {
+				res.send('incorrect request');
+			}
+
+			var offSet = req.query.fromOffset;
+			var maxSize = req.query.maxSize;
+			var filter = req.query.filter;
+			var method = req.params.method;
+			var accountID = req.session.account_id;
+
+			var params = [req.params.appId, req.params.entityId, +req.params.entityType, +offSet, +maxSize, filter];
+
+			logger.trace('Logs ' + method + ' ' + req.url);
+
+			Api.monitor(accountID, method, params, function (error, result) {
+				if (error) {
+					logger.error(error);
+				} else {
+					result.map(function (item) {
+						item.offset = parseInt(new Int64(new Buffer(item.offset.buffer), item.offset.offset), 10);
+						return item;
+					});
+				}
+
+				res.send({result: result, error: error});
+			});
+
+		});
+
 		/*
 		 * RPC Handler
 		 */
@@ -618,7 +649,7 @@ fs.readFile(configPath, function (error, result) {
 				type = req.params.type;
 				method = req.params.method;
 				params = req.body;
-				accountID = 'developer';
+				accountID = req.session.account_id;
 
 			} catch (e) {
 
@@ -652,7 +683,9 @@ fs.readFile(configPath, function (error, result) {
 					break;
 
 				case 'gateway':
-					Api.gateway(accountID, method, params, function (error, result) {
+
+					// NOTE: Gateway authenticates with the API key, not the AccountID.
+					Api.gateway(req.session.api_key, method, params, function (error, result) {
 						if (error) {
 							logger.error(error);
 						}
@@ -668,7 +701,7 @@ fs.readFile(configPath, function (error, result) {
 		app.post('/metrics', function (req, res) {
 
 			var pathList = req.body;
-			var accountID = 'developer';
+			var accountID = req.session.account_id;
 
 			logger.trace('Metrics ', pathList);
 
@@ -693,10 +726,12 @@ fs.readFile(configPath, function (error, result) {
 
 				response.on('end', function () {
 
-					if (data) {
-						res.send({ result: JSON.parse(data), error: null });
-					} else {
-						res.send({ result: null, error: 'No Data' });
+					try {
+						data = JSON.parse(data);
+						res.send({ result: data, error: null });
+					} catch (e) {
+						logger.error('Parsing Error', data);
+						res.send({ result: null, error: 'Parsing Error' });
 					}
 
 				});
@@ -704,9 +739,12 @@ fs.readFile(configPath, function (error, result) {
 
 			request.on('error', function(e) {
 
-				res.send({ result: null, error: {
-					fatal: 'MetricsService: ' + e.code
-				} });
+				res.send({
+					result: null,
+					error: {
+						fatal: 'MetricsService: ' + e.code
+					}
+				});
 
 			});
 

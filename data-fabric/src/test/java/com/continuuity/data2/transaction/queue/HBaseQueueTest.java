@@ -18,14 +18,15 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Ints;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -36,9 +37,11 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
+import org.apache.hadoop.hbase.filter.BitComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -50,12 +53,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
@@ -73,71 +77,14 @@ public class HBaseQueueTest extends HBaseTestBase {
   private static OperationExecutor opex;
 
   @Test
-  public void testFilter() throws IOException {
-    byte[] columnFamily = "c".getBytes(Charsets.UTF_8);
-    byte[] column = columnFamily;
-    HBaseUtils.createTableIfNotExists(getHBaseAdmin(), "testFilter", columnFamily, 1000);
-    HTable hTable = new HTable(getConfiguration(), "testFilter");
-
-    // Insert 10 rows
-    for (int i = 0; i < 10; i++) {
-      byte[] value = new byte[Ints.BYTES * 2 + 1];
-      Bytes.putInt(value, 0, i);
-      Bytes.putInt(value, Ints.BYTES, i % 2);
-
-      if (i % 2 == 0) {
-        value[value.length - 1] = ConsumerEntryState.CLAIMED.getState();
-      } else {
-        value[value.length - 1] = ConsumerEntryState.PROCESSED.getState();
-      }
-
-      Put put = new Put(Bytes.toBytes(i));
-      put.add(columnFamily, "d".getBytes(Charsets.UTF_8), Bytes.toBytes(i));
-      put.add(columnFamily, column, value);
-      hTable.put(put);
-    }
-    // Insert 10 rows without state
-    for (int i = 10; i < 20; i++) {
-      Put put = new Put(Bytes.toBytes(i));
-      put.add(columnFamily, "d".getBytes(Charsets.UTF_8), Bytes.toBytes(i));
-      hTable.put(put);
-    }
-
-    // Scan
-    Scan scan = new Scan();
-    scan.addFamily(columnFamily);
-
-    // Filter for (writePointer < readPointer)
-    int readPointer = 6;
-    Filter commitFilter = new SingleColumnValueFilter(columnFamily, column,
-                                                      CompareFilter.CompareOp.GREATER,
-                                                      new BinaryPrefixComparator(Bytes.toBytes(readPointer)));
-
-    // Filters for excluded list
-    FilterList excludedFilter = new FilterList(FilterList.Operator.MUST_PASS_ONE);
-    for (int excluded : new int[]{ 1, 4 }) {
-      excludedFilter.addFilter(new SingleColumnValueFilter(columnFamily, column,
-                                                           CompareFilter.CompareOp.EQUAL,
-                                                           new BinaryPrefixComparator(Bytes.toBytes(excluded))));
-    }
-
-    scan.setFilter(new FilterList(FilterList.Operator.MUST_PASS_ONE,
-                                  ImmutableList.of(commitFilter, excludedFilter)));
-
-    ResultScanner scanner = hTable.getScanner(scan);
-    Result result;
-    while ((result = scanner.next()) != null) {
-      System.out.println(Bytes.toInt(result.getRow()));
-    }
-  }
-
-  @Test
   public void testSingleFifo() throws Exception {
     // Create the queue table
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
-    final HBaseQueueClient queueClient = new HBaseQueueClient(HBaseTestBase.getHBaseAdmin(), "queueTest", queueName);
+    final QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
+    final String tableName = "queueTestFifo";
+    Queue2Producer producer = createProducer(tableName, queueName);
+    TransactionAware txAware = (TransactionAware) producer;
 
-    final int count = 5000;
+    final int count = 30000;
     LOG.info("Start enqueue {} entries.", count);
 
     Stopwatch stopwatch = new Stopwatch();
@@ -148,12 +95,12 @@ public class HBaseQueueTest extends HBaseTestBase {
 
       try {
         byte[] queueData = Bytes.toBytes(i);
-        queueClient.startTx(transaction);
-        queueClient.enqueue(new QueueEntry(queueData));
+        txAware.startTx(transaction);
+        producer.enqueue(new QueueEntry(queueData));
 
-        if (opex.canCommit(transaction, queueClient.getTxChanges()) && queueClient.commitTx()) {
+        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
           if (!opex.commit(transaction)) {
-            queueClient.rollbackTx();
+            txAware.rollbackTx();
           }
         }
       } catch (Exception e) {
@@ -167,8 +114,8 @@ public class HBaseQueueTest extends HBaseTestBase {
     LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
 
     // Try to dequeue
-    final int expectedSum = (count / 2 * (count - 1));
-    final AtomicInteger valueSum = new AtomicInteger();
+    final long expectedSum = ((long) count / 2 * ((long) count - 1));
+    final AtomicLong valueSum = new AtomicLong();
     final int consumerSize = 5;
     final CyclicBarrier startBarrier = new CyclicBarrier(consumerSize + 1);
     final CountDownLatch completeLatch = new CountDownLatch(consumerSize);
@@ -180,8 +127,9 @@ public class HBaseQueueTest extends HBaseTestBase {
         public void run() {
           try {
             startBarrier.await();
-            QueueConsumer consumer = queueClient.createConsumer(
-              new ConsumerConfig(0, instanceId, consumerSize, DequeueStrategy.FIFO, null));
+            Queue2Consumer consumer = createConsumer(tableName, queueName,
+                                                     new ConsumerConfig(0, instanceId, consumerSize,
+                                                                        DequeueStrategy.FIFO, null));
             TransactionAware txAware = (TransactionAware)consumer;
 
             Stopwatch stopwatch = new Stopwatch();
@@ -194,7 +142,7 @@ public class HBaseQueueTest extends HBaseTestBase {
 
               try {
                 DequeueResult result = consumer.dequeue();
-                if (opex.canCommit(transaction, queueClient.getTxChanges()) && txAware.commitTx()) {
+                if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
                   if (!opex.commit(transaction)) {
                     txAware.rollbackTx();
                   }
@@ -203,9 +151,10 @@ public class HBaseQueueTest extends HBaseTestBase {
                   continue;
                 }
 
-                byte[] data = result.getData().iterator().next();
-                valueSum.addAndGet(Bytes.toInt(data));
-                dequeueCount++;
+                for (byte[] data : result.getData()) {
+                  valueSum.addAndGet(Bytes.toInt(data));
+                  dequeueCount++;
+                }
               } catch (Exception e) {
                 opex.abort(transaction);
                 throw Throwables.propagate(e);
@@ -224,7 +173,7 @@ public class HBaseQueueTest extends HBaseTestBase {
     }
 
     startBarrier.await();
-    Assert.assertTrue(completeLatch.await(40, TimeUnit.SECONDS));
+    Assert.assertTrue(completeLatch.await(120, TimeUnit.SECONDS));
     TimeUnit.SECONDS.sleep(2);
 
     Assert.assertEquals(expectedSum, valueSum.get());
@@ -233,11 +182,13 @@ public class HBaseQueueTest extends HBaseTestBase {
 
   @Test
   public void testSingleHash() throws Exception {
-    // Create the queue table
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
-    HBaseQueueClient queueClient = new HBaseQueueClient(HBaseTestBase.getHBaseAdmin(), "queueTest", queueName);
 
-    int count = 5000;
+    final String tableName = "queueHashTest";
+    Queue2Producer producer = createProducer(tableName, queueName);
+    TransactionAware txAware = (TransactionAware) producer;
+
+    int count = 30000;
     LOG.info("Start enqueue {} entries.", count);
 
     Stopwatch stopwatch = new Stopwatch();
@@ -247,13 +198,13 @@ public class HBaseQueueTest extends HBaseTestBase {
       Transaction transaction = opex.start();
 
       try {
-        byte[] queueData = ("queue data " + i).getBytes(Charsets.UTF_8);
-        queueClient.startTx(transaction);
-        queueClient.enqueue(new QueueEntry(queueData));
+        byte[] queueData = Bytes.toBytes(i);
+        txAware.startTx(transaction);
+        producer.enqueue(new QueueEntry(queueData));
 
-        if (opex.canCommit(transaction, queueClient.getTxChanges()) && queueClient.commitTx()) {
+        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
           if (!opex.commit(transaction)) {
-            queueClient.rollbackTx();
+            txAware.rollbackTx();
           }
         }
       } catch (Exception e) {
@@ -267,24 +218,29 @@ public class HBaseQueueTest extends HBaseTestBase {
     LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
 
     // Try to dequeue
-    QueueConsumer consumer = queueClient.createConsumer(new ConsumerConfig(0, 0, 1, DequeueStrategy.HASH, "key"));
-    TransactionAware txAware = (TransactionAware)consumer;
+    Queue2Consumer consumer = createConsumer(tableName, queueName,
+                                             new ConsumerConfig(0, 0, 1, DequeueStrategy.HASH, "key"));
+    txAware = (TransactionAware)consumer;
 
     stopwatch = new Stopwatch();
     stopwatch.start();
 
+    long sum = 0L;
+    final long expectedSum = ((long) count / 2 * ((long) count - 1));
     for (int i = 0; i < count; i++) {
       Transaction transaction = opex.start();
       txAware.startTx(transaction);
 
       try {
         DequeueResult result = consumer.dequeue();
-        if (opex.canCommit(transaction, queueClient.getTxChanges()) && txAware.commitTx()) {
+        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
           if (!opex.commit(transaction)) {
             txAware.rollbackTx();
           }
         }
-        Assert.assertEquals(("queue data " + i), new String(result.getData().iterator().next(), Charsets.UTF_8));
+        for (byte[] data : result.getData()) {
+          sum += Bytes.toInt(data);
+        }
       } catch (Exception e) {
         opex.abort(transaction);
         throw Throwables.propagate(e);
@@ -294,15 +250,19 @@ public class HBaseQueueTest extends HBaseTestBase {
     elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
     LOG.info("Dequeue {} entries in {} ms", count, elapsed);
     LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
+
+    Assert.assertEquals(expectedSum, sum);
   }
 
   @Test
   public void testBatchHash() throws OperationException, IOException {
-    // Create the queue table
-    HBaseQueueClient queueClient = new HBaseQueueClient(HBaseTestBase.getHBaseAdmin(), "queueTest",
-                                                        QueueName.fromFlowlet("flow", "flowlet", "out"));
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
 
-    int count = 5000;
+    final String tableName = "queueBatchHashTest";
+    Queue2Producer producer = createProducer(tableName, queueName);
+    TransactionAware txAware = (TransactionAware) producer;
+
+    int count = 30000;
     int batchSize = 5;
     byte[] queueData = "queue data".getBytes(Charsets.UTF_8);
     LOG.info("Start enqueue {} entries with batch size {}.", count, batchSize);
@@ -314,15 +274,15 @@ public class HBaseQueueTest extends HBaseTestBase {
       Transaction transaction = opex.start();
 
       try {
-        queueClient.startTx(transaction);
+        txAware.startTx(transaction);
 
         for (int j = 0; j < batchSize; j++) {
-          queueClient.enqueue(new QueueEntry(queueData));
+          producer.enqueue(new QueueEntry(queueData));
         }
 
-        if (opex.canCommit(transaction, queueClient.getTxChanges()) && queueClient.commitTx()) {
+        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
           if (!opex.commit(transaction)) {
-            queueClient.rollbackTx();
+            txAware.rollbackTx();
           }
         }
       } catch (Exception e) {
@@ -337,8 +297,9 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     // Try to dequeue
     batchSize = 50;
-    QueueConsumer consumer = queueClient.createConsumer(new ConsumerConfig(0, 0, 1, DequeueStrategy.HASH, "key"));
-    TransactionAware txAware = (TransactionAware)consumer;
+    Queue2Consumer consumer = createConsumer(tableName, queueName,
+                                             new ConsumerConfig(0, 0, 1, DequeueStrategy.HASH, "key"));
+    txAware = (TransactionAware)consumer;
 
     stopwatch = new Stopwatch();
     stopwatch.start();
@@ -349,7 +310,7 @@ public class HBaseQueueTest extends HBaseTestBase {
 
       try {
         DequeueResult result = consumer.dequeue(batchSize);
-        if (opex.canCommit(transaction, queueClient.getTxChanges()) && txAware.commitTx()) {
+        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
           if (!opex.commit(transaction)) {
             txAware.rollbackTx();
           }
@@ -412,5 +373,14 @@ public class HBaseQueueTest extends HBaseTestBase {
     opexService.stop(true);
     HBaseTestBase.stopHBase();
     zkServer.stopAndWait();
+  }
+
+  private static Queue2Producer createProducer(String tableName, QueueName queueName) throws IOException {
+    return new HBaseQueueClientFactory(getHBaseAdmin(), tableName).createProducer(queueName);
+  }
+
+  private static Queue2Consumer createConsumer(String tableName, QueueName queueName,
+                                               ConsumerConfig config) throws IOException {
+    return new HBaseQueueClientFactory(getHBaseAdmin(), tableName).createConsumer(queueName, config);
   }
 }

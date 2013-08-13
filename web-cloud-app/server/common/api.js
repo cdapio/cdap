@@ -367,7 +367,7 @@ logger.setLevel(LOG_LEVEL);
 
 		var post_data = params.payload || "";
 
-		var post_options = post_options = {
+		var post_options = {
 			host: this.config['gateway.hostname'],
 			port: this.config['gateway.port'],
 			method: 'POST',
@@ -381,14 +381,14 @@ logger.setLevel(LOG_LEVEL);
 			case 'inject':
 
 				// Adding 1000 to be picked up by nginx.
-				post_options.port = parseInt(this.config['stream.rest.port']) + (secure ? 1000 : 0);
+				post_options.port = parseInt(this.config['stream.rest.port'], 10) + (secure ? 1000 : 0);
 				post_options.path = '/stream/' + params.stream;
 
 			break;
 			case 'query':
 
 				// Adding 1000 to be picked up by nginx.
-				post_options.port = parseInt(this.config['procedure.rest.port']) + (secure ? 1000 : 0);
+				post_options.port = parseInt(this.config['procedure.rest.port'], 10) + (secure ? 1000 : 0);
 				post_options.path = '/procedure/' + params.app + '/' +
 					params.service + '/' + params.method;
 
@@ -442,7 +442,7 @@ logger.setLevel(LOG_LEVEL);
 
 		});
 
-		request.write(post_data)
+		request.write(post_data);
 		request.end();
 
 	};
@@ -464,6 +464,8 @@ logger.setLevel(LOG_LEVEL);
 
 			res.write('');
 			res.end();
+
+			logger.trace('Upload received.', file + '(' + data.length + ')');
 
 			var conn = thrift.createConnection(
 				self.config['resource.manager.server.address'],
@@ -492,6 +494,8 @@ logger.setLevel(LOG_LEVEL);
 
 					} else {
 
+						logger.trace('Upload to AppFabric initialized.');
+
 						socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
 
 						var send_deploy = function () {
@@ -513,6 +517,8 @@ logger.setLevel(LOG_LEVEL);
 												logger.warn('FARManager verify', error);
 												socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
 											} else {
+
+												logger.trace('Upload status changed', result);
 
 												if (current_status !== result.overall) {
 													socket.emit('upload', {'status': 'verifying', 'step': result.overall, 'message': result.message, 'flows': result.verification});

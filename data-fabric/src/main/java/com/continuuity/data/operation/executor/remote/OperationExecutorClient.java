@@ -48,6 +48,9 @@ import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
 import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -56,6 +59,7 @@ import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
@@ -74,6 +78,12 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 public class OperationExecutorClient extends ConverterUtils {
 
   private static final Logger Log = LoggerFactory.getLogger(OperationExecutorClient.class);
+  private static final Function<byte[], ByteBuffer> BYTES_WRAPPER = new Function<byte[], ByteBuffer>() {
+    @Override
+    public ByteBuffer apply(byte[] input) {
+      return ByteBuffer.wrap(input);
+    }
+  };
 
   /**
    * The thrift transport layer. We need this when we close the connection.
@@ -939,11 +949,7 @@ public class OperationExecutorClient extends ConverterUtils {
   public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
     throws OperationException, TException{
     try {
-      Set<ByteBuffer> changes = Sets.newHashSet();
-      for (byte[] change : changeIds) {
-        changes.add(ByteBuffer.wrap(change));
-      }
-      return client.canCommitTx(wrap(tx), changes);
+      return client.canCommitTx(wrap(tx), ImmutableSet.copyOf(Iterables.transform(changeIds, BYTES_WRAPPER)));
     } catch (TOperationException te) {
       throw unwrap(te);
     }

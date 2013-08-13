@@ -4,13 +4,16 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  *
@@ -24,10 +27,9 @@ public class InMemoryTransactionOracle {
 
   private static LongArrayList excludedList;
 
-  // todo: clean it up
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
-  // tx id (write pointer) -> changes made by this tx
-  private static Map<Long, Set<byte[]>> committedChangeSets;
+  // commit time nextWritePointer -> changes made by this tx
+  private static NavigableMap<Long, Set<byte[]>> committedChangeSets;
   // not committed yet
   private static Map<Long, Set<byte[]>> committingChangeSets;
 
@@ -43,7 +45,7 @@ public class InMemoryTransactionOracle {
   // public for unit-tests
   public static synchronized void reset() {
     excludedList = new LongArrayList();
-    committedChangeSets = Maps.newHashMap();
+    committedChangeSets = Maps.newTreeMap();
     committingChangeSets = Maps.newHashMap();
     readPointer = 0;
     nextWritePointer = 1;
@@ -84,9 +86,20 @@ public class InMemoryTransactionOracle {
         return false;
       }
 
-      committedChangeSets.put(tx.getWritePointer(), changeSet);
+      // Record the committed change set with the nextWritePointer as the commit time.
+      if (committedChangeSets.containsKey(nextWritePointer)) {
+        committedChangeSets.get(nextWritePointer).addAll(changeSet);
+      } else {
+        TreeSet<byte[]> committedChangeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+        committedChangeSet.addAll(changeSet);
+        committedChangeSets.put(nextWritePointer, committedChangeSet);
+      }
     }
     makeVisible(tx);
+
+    // Cleanup commitedChangeSets.
+    // All committed change sets that are smaller than the earliest started transaction could be removed.
+    committedChangeSets.headMap(excludedList.isEmpty() ? Long.MAX_VALUE : excludedList.get(0)).clear();
     return true;
   }
 
@@ -97,24 +110,29 @@ public class InMemoryTransactionOracle {
     return true;
   }
 
+//  private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
+//    if (changeIds.isEmpty()) {
+//      return false;
+//    }
+//
+//    // Go thru all tx committed after given tx was started and check if any of them has change
+//    // conflicting with the given
+//    return hasConflicts(tx, changeIds);
+//
+//    // NOTE: we could try to optimize for some use-cases and also check those being committed for conflicts to
+//    //       avoid later the cost of rollback. This is very complex, but the cost of rollback is so high that we
+//    //       can go a bit crazy optimizing stuff around it...
+//  }
+
   private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
     if (changeIds.isEmpty()) {
       return false;
     }
 
-    // Go thru all tx committed after given tx was started and check if any of them has change
-    // conflicting with the given
-    return hasConflicts(tx, changeIds, committedChangeSets);
-
-    // NOTE: we could try to optimize for some use-cases and also check those being committed for conflicts to
-    //       avoid later the cost of rollback. This is very complex, but the cost of rollback is so high that we
-    //       can go a bit crazy optimizing stuff around it...
-  }
-
-  private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds, Map<Long, Set<byte[]>> changeSets) {
-    for (Map.Entry<Long, Set<byte[]>> changeSet : changeSets.entrySet()) {
+    for (Map.Entry<Long, Set<byte[]>> changeSet : committedChangeSets.entrySet()) {
+      // If commit time is greater than tx read-pointer,
       // basically not visible but committed means "tx committed after given tx was started"
-      if (!visible(tx, changeSet.getKey())) {
+      if (changeSet.getKey() > tx.getWritePointer()) {
         if (containsAny(changeSet.getValue(), changeIds)) {
           return true;
         }

@@ -12,6 +12,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
@@ -33,17 +34,19 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   private final Program program;
   private final TransactionProxy transactionProxy;
   private final DataSetInstantiator dataSetContext;
+  private final QueueClientFactory queueClientFactory;
 
   private final TransactionSystemClient txSystemClient;
 
   @Inject
   public SmartDataFabricFacade(OperationExecutor opex, LocationFactory locationFactory,
                                TransactionSystemClient txSystemClient, DataSetAccessor dataSetAccessor,
-                               @Assisted Program program) {
+                               QueueClientFactory queueClientFactory, @Assisted Program program) {
     this.opex = opex;
     this.program = program;
     this.transactionProxy = new TransactionProxy();
     this.txSystemClient = txSystemClient;
+    this.queueClientFactory = queueClientFactory;
     this.dataSetContext = createDataSetContext(program, opex, locationFactory, dataSetAccessor, transactionProxy);
   }
 
@@ -71,7 +74,7 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
                                                          QueueName queueName, QueueInfo queueInfo,
                                                          boolean singleEntry) {
     return new QueueConsumerFactoryImpl(opex, program, instanceId, groupId, groupName, queueName, queueInfo,
-                                        singleEntry);
+                                        singleEntry, queueClientFactory);
   }
 
   private DataSetInstantiator createDataSetContext(Program program,

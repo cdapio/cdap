@@ -172,7 +172,7 @@ public abstract class AbstractProgramController implements ProgramController {
     if (future != null) {
       future.setException(t);
     }
-    caller.error();
+    caller.error(t);
   }
 
   /**
@@ -271,9 +271,9 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void error() {
+    public void error(Throwable cause) {
       for (ListenerCaller caller : listeners.keySet()) {
-        caller.error();
+        caller.error(cause);
       }
     }
   }
@@ -386,12 +386,12 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void error() {
+    public void error(final Throwable cause) {
       executor.execute(new Runnable() {
         @Override
         public void run() {
           try {
-            listener.error();
+            listener.error(cause);
           } catch (Throwable t) {
             LOG.info(t.getMessage(), t);
           }
