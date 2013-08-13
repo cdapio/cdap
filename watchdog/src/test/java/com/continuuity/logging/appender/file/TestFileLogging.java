@@ -9,7 +9,6 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.filter.Filter;
-import com.continuuity.logging.publish.TestKafkaLogging;
 import com.continuuity.logging.read.Callback;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.SingleNodeLogReader;
@@ -51,7 +50,7 @@ public class TestFileLogging {
     FileLogAppender appender = new FileLogAppender(cConf, new Configuration());
     new LogAppenderInitializer(appender).initialize();
 
-    Logger logger = LoggerFactory.getLogger(TestKafkaLogging.class);
+    Logger logger = LoggerFactory.getLogger(TestFileLogging.class);
     for (int i = 0; i < 20; ++i) {
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
