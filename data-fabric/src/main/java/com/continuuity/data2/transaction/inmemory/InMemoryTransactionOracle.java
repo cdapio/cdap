@@ -4,6 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 import java.util.Arrays;
@@ -84,7 +85,12 @@ public class InMemoryTransactionOracle {
         return false;
       }
 
-      committedChangeSets.put(nextWritePointer, changeSet);
+      // Record the committed change set with the nextWritePointer as the commit time.
+      if (committedChangeSets.containsKey(nextWritePointer)) {
+        committedChangeSets.get(nextWritePointer).addAll(changeSet);
+      } else {
+        committedChangeSets.put(nextWritePointer, Sets.newHashSet(changeSet));
+      }
     }
     makeVisible(tx);
 
