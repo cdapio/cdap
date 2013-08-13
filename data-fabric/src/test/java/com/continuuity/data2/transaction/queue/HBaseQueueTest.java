@@ -116,7 +116,7 @@ public class HBaseQueueTest extends HBaseTestBase {
     // Try to dequeue
     final long expectedSum = ((long) count / 2 * ((long) count - 1));
     final AtomicLong valueSum = new AtomicLong();
-    final int consumerSize = 1;
+    final int consumerSize = 5;
     final CyclicBarrier startBarrier = new CyclicBarrier(consumerSize + 1);
     final CountDownLatch completeLatch = new CountDownLatch(consumerSize);
     ExecutorService executor = Executors.newFixedThreadPool(consumerSize);
