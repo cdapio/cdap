@@ -43,9 +43,21 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProcessDriver.class);
   private static final int TX_EXECUTOR_POOL_SIZE = 4;
 
-  private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1); // 1ms
-  private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
+  // Minimum back-off time in nanoseconds, 1ms.
+  private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1);
+
+  // Maximum back-off time in nanoseconds when increasing exponentially, 100ms.
+  private static final long BACKOFF_MAX = TimeUnit.MILLISECONDS.toNanos(100);
+
+  // Start time for switching from constant to exponentially increasing back-off time, 20ms.
+  private static final long BACKOFF_EXP_START = TimeUnit.MILLISECONDS.toNanos(20);
+
+  // Incrementing back-off time by this until reaching exponential increase range.
+  private static final long BACKOFF_CONSTANT_INCREMENT = TimeUnit.MILLISECONDS.toNanos(1);
+
+  // Doubling back-off time during exponential increase, up to maximum back-off time.
   private static final int BACKOFF_EXP = 2;
+
   private static final int PROCESS_MAX_RETRY = 10;
 
   private final Flowlet flowlet;
@@ -137,7 +149,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   }
 
   /**
-   * Resume the running of flowlet
+   * Resume the running of flowlet.
    */
   public void resume() {
     CountDownLatch latch = suspension.getAndSet(null);
@@ -148,6 +160,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   protected void run() {
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
@@ -191,7 +204,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           if (!entry.shouldProcess()) {
             continue;
           }
+
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
+
           if (processMethod.needsInput()) {
             flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
           }
@@ -201,7 +216,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             continue;
           }
 
-          entry.nextDeque = 0;
+          // Resetting back-off time to minimum back-off time, since an entry to process was de-queued and most likely
+          // more entries will follow.
+          entry.resetBackOff();
+
           if (!entry.isRetry()) {
             // Only increment the inflight count for non-retry entries.
             // The inflight count would get decrement when the transaction committed successfully or input get ignored.
@@ -228,6 +246,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
         }
       }
+
     }
     waitForInflight(processQueue);
 
@@ -250,6 +269,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
    * Wait for all inflight processes in the queue.
    * @param processQueue list of inflight processes
    */
+  @SuppressWarnings("unchecked")
   private void waitForInflight(PriorityBlockingQueue<ProcessEntry<?>> processQueue) {
     List<ProcessEntry> processList = Lists.newArrayListWithCapacity(processQueue.size());
     boolean hasRetry;
@@ -416,9 +436,18 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       return nextDeque > o.nextDeque ? 1 : -1;
     }
 
+    public void resetBackOff() {
+      nextDeque = 0;
+      currentBackOff = BACKOFF_MIN;
+    }
+
     public void backOff() {
       nextDeque = System.nanoTime() + currentBackOff;
-      currentBackOff = Math.min(currentBackOff * BACKOFF_EXP, BACKOFF_MAX);
+      if (currentBackOff < BACKOFF_EXP_START) {
+        currentBackOff += BACKOFF_CONSTANT_INCREMENT;
+      } else {
+        currentBackOff = Math.min(currentBackOff * BACKOFF_EXP, BACKOFF_MAX);
+      }
     }
 
     public ProcessSpecification<T> getProcessSpec() {
