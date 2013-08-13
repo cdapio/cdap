@@ -275,9 +275,6 @@ public class MultiObjectStoreTest extends DataSetTestBase {
     // commit transaction
     commitTransaction(txAgent);
 
-    // commit transaction
-    commitTransaction(txAgent);
-
     // start a sync transaction
     txAgent = newTransaction();
     // get the splits for the table

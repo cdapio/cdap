@@ -46,8 +46,6 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     indexedFeed.write(key1, feed1, getCategories(categories1));
     indexedFeed.write(key2, feed2, getCategories(categories2));
 
-    commitTransaction(txAgent);
-
     List<Feed> feedResult1 = indexedFeed.readAllByIndex(Bytes.toBytes("racing"));
     Assert.assertEquals(1, feedResult1.size());
 
@@ -56,6 +54,8 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
 
     List<Feed> feedResult3 = indexedFeed.readAllByIndex(Bytes.toBytes("tech"));
     Assert.assertEquals(2, feedResult3.size());
+
+    commitTransaction(txAgent);
   }
 
   @Test
@@ -78,8 +78,6 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     // re-write with new index values
     indexedFeed.write(key1, feed1, getCategories(categories2));
 
-    commitTransaction(txAgent);
-
     //Should not return based on old index values
     feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("big data"));
     Assert.assertEquals(0, feedResult.size());
@@ -92,6 +90,8 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     indexedFeed.write(key1, feed1);
     feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("hadoop"));
     Assert.assertEquals(0, feedResult.size());
+
+    commitTransaction(txAgent);
   }
 
   @Test
@@ -106,8 +106,6 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     byte[] key = Bytes.toBytes(feed.getId());
     indexedFeed.write(key, feed, getCategories(categories));
 
-    commitTransaction(txAgent);
-
     List<Feed> feeds = indexedFeed.readAllByIndex(Bytes.toBytes("drinking"));
     Assert.assertEquals(1, feeds.size());
 
@@ -115,6 +113,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     feeds = indexedFeed.readAllByIndex(Bytes.toBytes("drinking"));
     Assert.assertEquals(0, feeds.size());
 
+    commitTransaction(txAgent);
   }
 
   @Test
@@ -134,10 +133,10 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
 
     indexedFeed.updateIndex(key1, Bytes.toBytes("startup"));
 
-    commitTransaction(txAgent);
-
     feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("startup"));
     Assert.assertEquals(1, feedResult.size());
+
+    commitTransaction(txAgent);
   }
 
 
