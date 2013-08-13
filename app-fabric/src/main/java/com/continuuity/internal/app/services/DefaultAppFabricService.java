@@ -628,8 +628,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       try {
         log = store.getRunHistory(programId);
       } catch (OperationException e) {
-        throw  new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
-                                                           id.toString(), e.getMessage()));
+        throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
+                                                          id.toString(), e.getMessage()));
       }
       List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
       for (RunRecord runRecord : log) {
