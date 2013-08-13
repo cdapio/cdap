@@ -15,6 +15,7 @@ import java.io.IOException;
  *
  */
 public class HBaseOcTableManager implements DataSetManager {
+  // ANDREAS: Didn't we use 'c' before? Changing it would make this incompatible...
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   private final HBaseAdmin admin;

@@ -104,6 +104,11 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 //    System.out.println("Dequeue");
 
     List<Entry> dequeueEntries = Lists.newLinkedList();
+    // ANDREAS: this while loop should stop once getEntries/populateCache reaches the end of the queue. Currently, it
+    // will retry as long as it gets at least one entry in every round, even if that is an entry that must be ignored
+    // because it cannot be claimed.
+    // ANDREAS: It could be a problem that we always read to the end of the queue. This way one flowlet instance may
+    // always all entries, while others are idle.
     while (dequeueEntries.size() < maxBatchSize && getEntries(dequeueEntries, maxBatchSize)) {
       Iterator<Entry> iterator = dequeueEntries.iterator();
       while (iterator.hasNext()) {
@@ -113,6 +118,8 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
           // If the state is already in CLAIMED state, no need to claim it again
           // It happens for rollbacked entries or restart from failure
           // The pickup logic in populateCache and shouldInclude() make sure that's the case
+          // ANDREAS: but how do we know that it was claimed by THIS consumer. If there are multiple consumers,
+          // then they all will pick it up, right?
           if (entry.getState() == null) {
             Put put = new Put(entry.getRowKey());
             byte[] stateValue = encodeStateColumn(ConsumerEntryState.CLAIMED);
@@ -151,6 +158,9 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 
   @Override
   public Collection<byte[]> getTxChanges() {
+    // ANDREAS: can there ever be a conflict on dequeue? since we claim the entries using checkAndPut, I feel that
+    // all rows modified are exclusively modified by this consumer. But there may be other consumer groups that
+    // update the entry state for the same entry, and that would cause a conflict. We don't want these conflicts.
     return ImmutableList.copyOf(Iterators.transform(consumingEntries.keySet().iterator(), rowKeyToChangeTx));
   }
 
@@ -187,6 +197,7 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     List<Row> ops = Lists.newArrayListWithCapacity(consumingEntries.size());
 
     // If it is FIFO, restore to the CLAIMED state. This instance will retry it on the next dequeue.
+    // ANDREAS: this is only needed if commitTx() was called to ack the entries.
     if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
       byte[] stateContent = encodeStateColumn(ConsumerEntryState.CLAIMED);
       for (byte[] rowKey : consumingEntries.keySet()) {
@@ -218,6 +229,8 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     boolean hasEntry = fetchFromCache(entries, maxBatchSize);
 
     // If not enough entries from the cache, try to get more.
+    // ANDREAS: I think this is wrong. If the batch=10, and the cache has 5 entries, but populateCache cannot
+    // fetch more entries, then we have 5 and should return true. But this code will return false.
     if (entries.size() < maxBatchSize) {
       populateRowCache();
       hasEntry = fetchFromCache(entries, maxBatchSize);
@@ -244,6 +257,8 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
     Scan scan = new Scan();
     scan.setCaching(MAX_CACHE_ROWS);
     scan.setStartRow(startRow);
+    // ANDREAS it seems that startRow never gets updated. That means we will always rescan entries that we have
+    // already read and decided to ignore.
     scan.setStopRow(getStopRow());
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.DATA_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.META_COLUMN);
@@ -275,6 +290,9 @@ final class HBaseQueueConsumer implements QueueConsumer, TransactionAware {
 
         // If writes later than the reader pointer, abort the loop, as entries that comes later are all uncommitted.
         if (writePointer > readPointer) {
+          // ANDREAS: since we limit the scan to end at getStopRow(), I don't think this can ever happen? Also,
+          // it would not be visible under the read pointer... but why do we not limit the scan's versions to the
+          // read pointer?
           break;
         }
 

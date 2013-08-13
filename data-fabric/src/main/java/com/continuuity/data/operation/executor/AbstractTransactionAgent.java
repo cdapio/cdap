@@ -153,6 +153,10 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
       throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx");
     }
 
+    // ANDREAS: isn't there a race condition here? canCommit() returns true, then we commit all datasets,
+    // then we attempt to commit() which detects a conflict. Now the dataset changes will not be rolled back.
+    // chances for this are high: until we call canCommit(), all changes happen in memory and are fast. The
+    // committing/flushing of all datasets is the slow part... so conflicts most likely happen now.
     if (!txSystemClient.commit(currentTx)) {
       // the app-fabric runtime will call abort() after that, so no need to do extra steps here
       throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx");

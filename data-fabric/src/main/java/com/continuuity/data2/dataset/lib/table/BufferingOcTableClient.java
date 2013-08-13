@@ -171,6 +171,8 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
 
   @Override
   public boolean rollbackTx() throws Exception {
+    // ANDREAS: so we never undo any writes. we just add txid to the excludes? That means we accumulate a lot of
+    // invalid transactions, hence exclude lists become really large.
     buff.clear();
     return true;
   }
@@ -187,6 +189,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], byte[]> buffCols = buff.get(row);
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
+    // ANDREAS: can this ever happen?
     if (rowDeleted) {
       return EMPTY_RESULT;
     }
@@ -224,6 +227,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     if (colVals == null) {
       colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
       buff.put(row, colVals);
+      // ANDREAS: is this thread-safe?
     }
     for (int i = 0; i < columns.length; i++) {
       colVals.put(columns[i], values[i]);
@@ -233,6 +237,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   @Override
   public void delete(byte[] row, byte[][] columns) throws Exception {
     // same as writing null for every column
+    // ANDREAS: shouldn't this be DELETE_MARKER?
     put(row, columns, new byte[columns.length][]);
   }
 
