@@ -74,3 +74,10 @@ sourceSets {
 javadoc {
     classpath += sourceSets.api.output
 }
+
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+}

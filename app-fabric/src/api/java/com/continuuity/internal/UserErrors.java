@@ -17,7 +17,6 @@
 
 package com.continuuity.internal;
 
-
 /**
  * User errors definitions.
  */
