@@ -1,6 +1,5 @@
-package com.continuuity.app.queue;
+package com.continuuity.common.queue;
 
-import com.continuuity.app.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -52,12 +51,12 @@ public final class QueueName {
   /**
    * Generates an QueueName for the stream.
    *
-   * @param account The stream belongs to
+   * @param accountId The stream belongs to
    * @param stream  connected to flow
    * @return An {@link QueueName} with schema as stream
    */
-  public static QueueName fromStream(Id.Account account, String stream) {
-    URI uri = URI.create(Joiner.on("/").join("stream:", "", account.getId(), stream));
+  public static QueueName fromStream(String accountId, String stream) {
+    URI uri = URI.create(Joiner.on("/").join("stream:", "", accountId, stream));
     return new QueueName(uri);
   }
 
@@ -72,6 +71,10 @@ public final class QueueName {
     this.simpleName = new File(uri.getPath()).getName();
   }
 
+  public boolean isStream() {
+    return "stream".equals(uri.getScheme());
+  }
+
   /**
    * @return Simple name which is the last part of queue URI path and endpoint.
    */
@@ -84,6 +87,13 @@ public final class QueueName {
    */
   public byte[] toBytes() {
     return toString().getBytes(Charsets.US_ASCII);
+  }
+
+  /**
+   * @return A {@link URI} representation of the queue name.
+   */
+  public URI toURI() {
+    return uri;
   }
 
   /**

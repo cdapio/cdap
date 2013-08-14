@@ -4,11 +4,11 @@
 package com.continuuity.metrics.guice;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.query.BatchMetricsHandler;
+import com.continuuity.metrics.query.DeleteMetricsHandler;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
@@ -30,6 +30,7 @@ public abstract class AbstractMetricsQueryModule extends PrivateModule {
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
     handlerBinder.addBinding().to(BatchMetricsHandler.class).in(Scopes.SINGLETON);
+    handlerBinder.addBinding().to(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
 
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);

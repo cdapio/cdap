@@ -110,6 +110,51 @@ public class TimeSeriesTableTest {
   }
 
   @Test
+  public void testClear() throws OperationException {
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testDeleteAll", 1);
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // Insert metrics for app id1 flow.
+    for (int i = 0; i < 5; i++) {
+      String context = "app.developer.flow.flowlet" + i;
+      String metric = "input." + i;
+      String specialContext = "_.";
+      // Insert 500 metrics for each flowlet with the same time series.
+      insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
+      insertMetrics(timeSeriesTable, specialContext, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
+
+    }
+
+    timeSeriesTable.clear();
+
+    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("_.")
+      .setMetric("input")
+      .build(time, time + 1000);
+
+    //Scan and verify 0 results for app id1
+    MetricsScanner scanner = timeSeriesTable.scan(query);
+    Assert.assertEquals(0, scanner.getRowScanned());
+
+    while (scanner.hasNext()){
+      MetricsScanResult result = scanner.next();
+      Assert.assertTrue(false);
+    }
+
+    query = new MetricsScanQueryBuilder().setContext("app.developer.flow")
+      .setMetric("input")
+      .build(time, time + 1000);
+
+    scanner = timeSeriesTable.scan(query);
+    Assert.assertEquals(0, scanner.getRowScanned());
+
+    while (scanner.hasNext()){
+      MetricsScanResult result = scanner.next();
+      Assert.assertTrue(false);
+    }
+  }
+
+  @Test
   public void testDelete() throws OperationException {
 
     TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testDelete", 1);

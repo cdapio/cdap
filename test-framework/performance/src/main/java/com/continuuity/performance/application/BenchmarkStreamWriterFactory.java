@@ -4,8 +4,8 @@
 
 package com.continuuity.performance.application;
 
-import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.internal.StreamWriterFactory;
 

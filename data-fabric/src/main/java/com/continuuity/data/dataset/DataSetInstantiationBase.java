@@ -4,6 +4,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.FileDataSet;
+import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
@@ -210,6 +211,13 @@ public class DataSetInstantiationBase {
     // lead to infinite recursion!).
     if (obj instanceof ObjectStore<?> && !(obj instanceof RuntimeObjectStore)) {
       RuntimeObjectStore.setImplementation((ObjectStore<?>) obj, this.classLoader);
+      // but do not return yet, continue to inject data fabric into the runtime
+    }
+
+    // for multi object stores (and subclasses), we set the delegate to a MultiObjectStore if
+    // it is not RuntimeMultiObjectStore.
+    if (obj instanceof MultiObjectStore<?> && !(obj instanceof RuntimeMultiObjectStore)) {
+      RuntimeMultiObjectStore.setImplementation((MultiObjectStore<?>) obj, this.classLoader);
       // but do not return yet, continue to inject data fabric into the runtime
     }
 

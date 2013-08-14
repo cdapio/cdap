@@ -218,8 +218,7 @@
           </ul>
         </div>
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Arrivals" metrics="/collect/events/streams/{id}"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Read Rate (All)" metrics="/collect/reads/streams/{id}"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Events In" metrics="/collect/events/streams/{id}"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
@@ -372,18 +371,18 @@
       <div id="informer"></div>
       <div class="panel">
         <div id="flowviz-container">
-          <!--
+
           <div class="btn-group" style="float: left;">
             <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:14px;float: right;">
               {{flowletLabelName}} <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
-              <li><a {{action "setFlowletLabel" "arrival.count"}}>Enqueue Rate</a></li>
-              <li><a {{action "setFlowletLabel" "queue.depth"}}>Queue Size</a></li>
-              <li><a {{action "setFlowletLabel" "processed.count"}}>Total Processed</a></li>
+              <li><a {{action "setFlowletLabel" "rate"}}>Flowlet Rate</a></li>
+              <li><a {{action "setFlowletLabel" "pending"}}>Flowlet Pending</a></li>
+              <li><a {{action "setFlowletLabel" "aggregate"}}>Flowlet Processed</a></li>
             </ul>
           </div>
-          -->
+
           {{view C.Embed.Visualizer viewName="visualizer"}}
         </div>
       </div>
