@@ -85,10 +85,13 @@ public final class AvroFileWriter implements Closeable {
    */
   public void append(List<KafkaLogEvent> events) throws IOException, OperationException {
     if (events.isEmpty()) {
+      LOG.debug("Empty append list.");
       return;
     }
 
     LoggingContext loggingContext = events.get(0).getLoggingContext();
+    LOG.debug("Appending {} messages for logging context {}", events.size(), loggingContext.getLogPathFragment());
+
     long timestamp = events.get(0).getLogEvent().getTimeStamp();
     AvroFile avroFile = getAvroFile(loggingContext, timestamp);
     for (KafkaLogEvent event : events) {

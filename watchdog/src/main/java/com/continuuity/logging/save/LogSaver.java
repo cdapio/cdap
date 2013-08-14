@@ -74,7 +74,8 @@ public final class LogSaver extends AbstractIdleService {
   private final int syncIntervalBytes;
   private final long checkpointIntervalMs = 60 * 1000;
   private final long inactiveIntervalMs = 10 * 60 * 1000;
-  private final long eventProcessingDelayMs = 7 * 1000;
+  private final long eventBucketIntervalMs = 4 * 1000;
+  private final long eventProcessingDelayMs = 8 * 1000;
   private final long retentionDurationMs;
   private final long maxLogFileSizeBytes;
 
@@ -245,7 +246,7 @@ public final class LogSaver extends AbstractIdleService {
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
 
         synchronized (messageTable) {
-          long key = event.getTimeStamp() / eventProcessingDelayMs;
+          long key = event.getTimeStamp() / eventBucketIntervalMs;
           List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
           if (msgList == null) {
             msgList = Lists.newArrayList();
@@ -279,13 +280,14 @@ public final class LogSaver extends AbstractIdleService {
                                                          maxLogFileSizeBytes, syncIntervalBytes,
                                                          checkpointIntervalMs, inactiveIntervalMs);
       List<List<KafkaLogEvent>> writeLists = Lists.newArrayList();
+      int messages = 0;
       try {
         while (isRunning()) {
-          int messages = 0;
           try {
             // Read new messages only if previous write was successful.
             if (writeLists.isEmpty()) {
-              long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventProcessingDelayMs;
+              messages = 0;
+              long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventBucketIntervalMs;
               synchronized (messageTable) {
                 for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
                      it.hasNext(); ) {
