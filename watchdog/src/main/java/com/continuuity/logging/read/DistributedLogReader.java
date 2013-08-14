@@ -193,16 +193,18 @@ public final class DistributedLogReader implements LogReader {
 
           try {
             SortedMap<Long, Path> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
+            long prevInterval = -1;
             Path prevFile = null;
             List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
             for (Map.Entry<Long, Path> entry : sortedFiles.entrySet()) {
-              if (entry.getKey() >= fromTimeMs && entry.getKey() < toTimeMs && prevFile != null) {
+              if (entry.getKey() >= fromTimeMs && prevInterval != -1 && prevInterval < toTimeMs) {
                 files.add(prevFile);
               }
+              prevInterval = entry.getKey();
               prevFile = entry.getValue();
             }
 
-            if (prevFile != null) {
+            if (prevInterval != -1 && prevInterval < toTimeMs) {
               files.add(prevFile);
             }
 
