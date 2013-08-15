@@ -63,9 +63,9 @@ public final class LogSaverMain extends DaemonMain {
 
     // If LogSaver is already running, return handle to that instance
     Iterable<WeaveController> weaveControllers = weaveRunnerService.lookup(LogSaverWeaveApplication.getName());
+    Iterator<WeaveController> iterator = weaveControllers.iterator();
 
-    if (weaveControllers.iterator().hasNext()) {
-      Iterator<WeaveController> iterator = weaveControllers.iterator();
+    if (iterator.hasNext()) {
       LOG.info("{} application is already running", LogSaverWeaveApplication.getName());
       weaveController = iterator.next();
 

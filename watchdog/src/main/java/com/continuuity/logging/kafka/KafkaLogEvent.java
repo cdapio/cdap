@@ -6,6 +6,7 @@ package com.continuuity.logging.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
+import com.google.common.primitives.Longs;
 import org.apache.avro.generic.GenericRecord;
 
 /**
@@ -43,8 +44,6 @@ public final class KafkaLogEvent implements Comparable<KafkaLogEvent> {
 
   @Override
   public int compareTo(KafkaLogEvent event) {
-    return logEvent.getTimeStamp() > event.getLogEvent().getTimeStamp() ? 1 :
-      logEvent.getTimeStamp() < event.getLogEvent().getTimeStamp() ? -1 : 0;
-
+    return Longs.compare(logEvent.getTimeStamp(), event.getLogEvent().getTimeStamp());
   }
 }

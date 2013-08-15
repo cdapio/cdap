@@ -18,9 +18,10 @@ import com.continuuity.logging.kafka.Callback;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -41,7 +42,6 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -191,26 +191,16 @@ public final class LogSaver extends AbstractIdleService {
     listeningScheduledExecutorService.shutdownNow();
   }
 
-  private void waitForRun() {
-    while (state() == State.STARTING) {
-      try {
-        TimeUnit.MILLISECONDS.sleep(200);
-      } catch (InterruptedException e) {
-        LOG.warn("Caught exception while waiting for service to start", e);
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
   private final class LogCollector implements Runnable, Callback {
     long lastOffset;
 
     @Override
     public void run() {
-      waitForRun();
-
       KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaSaveFetchTimeoutMs);
       try {
+        // Wait for service to start
+        start().get();
+
         CheckpointInfo checkpointInfo = checkpointManager.getCheckpoint();
         lastOffset = checkpointInfo == null ? -1 : checkpointInfo.getOffset();
         LOG.info(String.format("Starting LogCollector for topic %s, partition %d, offset %d.",
@@ -224,7 +214,7 @@ public final class LogSaver extends AbstractIdleService {
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
             } else {
               LOG.debug(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
-                                     msgCount, topic, partition, lastOffset));
+                                      msgCount, topic, partition, lastOffset));
             }
           } catch (OffsetOutOfRangeException e) {
 
@@ -293,8 +283,6 @@ public final class LogSaver extends AbstractIdleService {
 
     @Override
     public void run() {
-      waitForRun();
-
       LOG.info(String.format("Starting LogWriter for topic %s, partition %d.", topic, partition));
 
       AvroFileWriter avroFileWriter = new AvroFileWriter(checkpointManager, fileMetaDataManager,
@@ -302,9 +290,12 @@ public final class LogSaver extends AbstractIdleService {
                                                          serializer.getAvroSchema(),
                                                          maxLogFileSizeBytes, syncIntervalBytes,
                                                          checkpointIntervalMs, inactiveIntervalMs);
-      Map<String, List<KafkaLogEvent>> writeListMap = Maps.newHashMap();
+      ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
       int messages = 0;
       try {
+        // Wait for service to start
+        start().get();
+
         while (isRunning()) {
           try {
             // Read new messages only if previous write was successful.
@@ -319,12 +310,8 @@ public final class LogSaver extends AbstractIdleService {
                   if (cell.getRowKey() >= processKey) {
                     continue;
                   }
-                  List<KafkaLogEvent> list = writeListMap.get(cell.getColumnKey());
-                  if (list == null) {
-                    writeListMap.put(cell.getColumnKey(), cell.getValue());
-                  } else {
-                    list.addAll(cell.getValue());
-                  }
+
+                  writeListMap.putAll(cell.getColumnKey(), cell.getValue());
                   it.remove();
                   messages += cell.getValue().size();
                 }
@@ -335,13 +322,14 @@ public final class LogSaver extends AbstractIdleService {
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
             } else {
               LOG.debug(String.format("Got %d log messages to save for topic %s, partition %s",
-                                     messages, topic, partition));
+                                      messages, topic, partition));
             }
-            for (Iterator<Map.Entry<String, List<KafkaLogEvent>>> it = writeListMap.entrySet().iterator();
-                 it.hasNext(); ) {
-              Map.Entry<String, List<KafkaLogEvent>> entry = it.next();
-              Collections.sort(entry.getValue());
-              avroFileWriter.append(entry.getValue());
+
+            for (Iterator<String> it = writeListMap.keySet().iterator(); it.hasNext(); ) {
+              String key = it.next();
+              List<KafkaLogEvent> list = writeListMap.get(key);
+              Collections.sort(list);
+              avroFileWriter.append(list);
               // Remove successfully written message
               it.remove();
             }
@@ -360,6 +348,12 @@ public final class LogSaver extends AbstractIdleService {
         }
 
         LOG.info(String.format("Stopping LogWriter for topic %s, partition %d.", topic, partition));
+      } catch (InterruptedException e) {
+        LOG.error(String.format("Caught InterruptedException for topic %s, partition %d",
+                                topic, partition), e);
+        Thread.currentThread().interrupt();
+      } catch (Throwable t) {
+        LOG.error("Caught unexpected exception. Terminating...", t);
       } finally {
         try {
           try {

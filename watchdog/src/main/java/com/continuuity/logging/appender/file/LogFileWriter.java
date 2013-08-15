@@ -70,6 +70,11 @@ public class LogFileWriter implements Closeable {
     }
   }
 
+  /**
+   * Rotates the current log file file when current log file is open for more than fileRotateIntervalMs.
+   * @param ts Timestamp to use for creating the new log file.
+   * @throws IOException
+   */
   void rotate(long ts) throws IOException {
     if ((currentFileTs != ts && ts - currentFileTs > fileRotateIntervalMs) || dataFileWriter == null) {
       close();

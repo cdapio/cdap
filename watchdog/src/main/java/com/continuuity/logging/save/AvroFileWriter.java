@@ -98,8 +98,8 @@ public final class AvroFileWriter implements Closeable {
 
     for (KafkaLogEvent event : events) {
       avroFile.append(event);
-      avroFile.flush();
     }
+    avroFile.flush();
 
     checkPoint(false);
   }
@@ -191,7 +191,7 @@ public final class AvroFileWriter implements Closeable {
     }
 
     if (checkpointOffset != -1) {
-      LOG.info(String.format("Saving checkpoint offset %d with files %d", checkpointOffset, files.size()));
+      LOG.debug(String.format("Saving checkpoint offset %d with files %d", checkpointOffset, files.size()));
       checkpointManager.saveCheckpoint(new CheckpointInfo(checkpointOffset, files));
     }
     lastCheckpointTime = currentTs;
