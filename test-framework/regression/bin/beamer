@@ -121,9 +121,9 @@ function install() {
   scp $tar $cuser@$host:/tmp
   installer=/tmp/beamer.deployer.$epoch.sh
   scp -q $bin/beamer-project-deployer $cuser@$host:$installer
-  ssh -l $cuser $host sudo chmod +x $installer
-  ssh -l $cuser $host sudo $installer $component $tar_remote_path $branch
-  ssh -l $cuser $host sudo rm -f $installer $tar_remote_path
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo chmod +x $installer
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo $installer $component $tar_remote_path $branch
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f $installer $tar_remote_path
 }
 
 function list() {
@@ -132,8 +132,8 @@ function list() {
   local component=$1; shift
   echo "Listing component $component on cluster $cluster"
 
-  pkg=`ssh -l $cuser $host sudo readlink /opt/continuuity/$component/lib | awk -F"/" ' { print $4 } '`
-  for file in `ssh -l $cuser $host sudo ls -1 /var/beamer | grep $component | grep -v lock`
+  pkg=`ssh -oStrictHostKeyChecking=no -l $cuser $host sudo readlink /opt/continuuity/$component/lib | awk -F"/" ' { print $4 } '`
+  for file in `ssh -oStrictHostKeyChecking=no -l $cuser $host sudo ls -1 /var/beamer | grep $component | grep -v lock`
   do
     if [[ "x${pkg}" == "x$file" ]]; then
       echo "$file (*)"
@@ -152,16 +152,16 @@ function activate() {
   echo "Activating package $package on cluster $cluster"
   installer=/tmp/beamer.deployer.$epoch.sh
   scp -q $bin/beamer-project-deployer $cuser@$host:$installer
-  ssh -l $cuser $host sudo chmod +x $installer
-  ssh -l $cuser $host sudo $installer $component /tmp/$package
-  ssh -l $cuser $host sudo rm -f $installer
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo chmod +x $installer
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo $installer $component /tmp/$package
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f $installer
 }
 
 function lock() {
   local cluster=$1; shift
   local host=$1; shift
   local component=$1; shift
-  ssh -l $cuser $host sudo touch /var/beamer/$component.lock
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo touch /var/beamer/$component.lock
   echo "Component $component has been locked on cluster $cluster"
 }
 
@@ -169,19 +169,19 @@ function unlock() {
   local cluster=$1; shift
   local host=$1; shift
   local component=$1; shift
-  ssh -l $cuser $host sudo rm -f /var/beamer/$component.lock
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f /var/beamer/$component.lock
   echo "Component $component has been unlocked on cluster $cluster"
 }
 
 function pre_service_op() {
   local host=$1; shift
   scp -q $bin/beamer-service $cuser@$host:/tmp/beamer-service-$epoch.sh
-  ssh -l $cuser $host chmod +x /tmp/beamer-service-$epoch.sh
+  ssh -oStrictHostKeyChecking=no -l $cuser $host chmod +x /tmp/beamer-service-$epoch.sh
 }
 
 function post_service_op() {
   local host=$1; shift
-  ssh -l $cuser $host rm -f /tmp/beamer-service-$epoch.sh
+  ssh -oStrictHostKeyChecking=no -l $cuser $host rm -f /tmp/beamer-service-$epoch.sh
 }
 
 function service() {
@@ -190,7 +190,7 @@ function service() {
   local host=$1; shift
   local component=$1; shift
   pre_service_op $host
-  ssh -l $cuser $host sudo /tmp/beamer-service-$epoch.sh $command $component
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo /tmp/beamer-service-$epoch.sh $command $component
   post_service_op $host
 }
 
@@ -204,13 +204,18 @@ function map() {
 function show_installed() {
   local cluster=$1; shift
   echo "Installed continuuity components on cluster $cluster"
+  if [[ ! -f $conf/cluster/$cluster.host.conf ]]; then
+   echo "Invalid cluster $cluster"
+   return   
+  fi
+
   v=0
   for host in `cat $conf/cluster/$cluster.host.conf`
   do
-    for component in `ssh -l $cuser $host ls -1 /opt/continuuity 2>/dev/null`
+    for component in `ssh -oStrictHostKeyChecking=no -l $cuser $host ls -1 /opt/continuuity 2>/dev/null`
     do
       v=1
-      printf "%20s %30s" $host $component 
+      printf "%-30s %20s\n" $component $host
     done
   done
   if [[ "x${v}" == "x0" ]]; then
