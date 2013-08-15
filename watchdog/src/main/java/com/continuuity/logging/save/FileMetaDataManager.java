@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.List;
@@ -32,6 +34,8 @@ import java.util.SortedMap;
  * Handles reading/writing of file metadata.
  */
 public final class FileMetaDataManager {
+  private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataManager.class);
+
   private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte [] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
 
@@ -53,6 +57,9 @@ public final class FileMetaDataManager {
    * @throws OperationException
    */
   public void writeMetaData(LoggingContext loggingContext, long startTimeMs, Path path) throws OperationException {
+    LOG.debug("Writing meta data for logging context {} as startTimeMs {} and path {}",
+              loggingContext.getLogPartition(), startTimeMs, path);
+
     Write writeOp = new Write(table,
                               Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition())),
                               Bytes.toBytes(startTimeMs),

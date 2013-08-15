@@ -94,13 +94,14 @@ public final class AvroFileWriter implements Closeable {
 
     long timestamp = events.get(0).getLogEvent().getTimeStamp();
     AvroFile avroFile = getAvroFile(loggingContext, timestamp);
+    rotateFile(avroFile, loggingContext, timestamp);
+
     for (KafkaLogEvent event : events) {
       avroFile.append(event);
       avroFile.flush();
     }
 
     checkPoint(false);
-    rotateFile(avroFile, loggingContext, timestamp);
   }
 
   @Override
@@ -128,7 +129,6 @@ public final class AvroFileWriter implements Closeable {
     AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment());
     if (avroFile == null) {
       avroFile = createAvroFile(loggingContext, timestamp);
-      fileMap.put(loggingContext.getLogPathFragment(), avroFile);
     }
     return avroFile;
   }
@@ -145,6 +145,7 @@ public final class AvroFileWriter implements Closeable {
       avroFile.close();
       throw e;
     }
+    fileMap.put(loggingContext.getLogPathFragment(), avroFile);
     fileMetaDataManager.writeMetaData(loggingContext, timestamp, path);
     return avroFile;
   }
@@ -158,9 +159,9 @@ public final class AvroFileWriter implements Closeable {
     OperationException {
     if (avroFile.getPos() > maxFileSize) {
       LOG.info(String.format("Rotating file %s", avroFile.getPath()));
+      checkPoint(true);
       avroFile.close();
       createAvroFile(loggingContext, timestamp);
-      checkPoint(true);
     }
   }
 
@@ -205,6 +206,7 @@ public final class AvroFileWriter implements Closeable {
     private DataFileWriter<GenericRecord> dataFileWriter;
     private long maxOffsetSeen = -1;
     private long lastModifiedTs;
+    private boolean isOpen = false;
 
     public AvroFile(Path path) {
       this.path = path;
@@ -221,6 +223,7 @@ public final class AvroFileWriter implements Closeable {
       this.dataFileWriter.create(schema, this.outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
       this.lastModifiedTs = System.currentTimeMillis();
+      this.isOpen = true;
     }
 
     public Path getPath() {
@@ -259,6 +262,10 @@ public final class AvroFileWriter implements Closeable {
 
     @Override
     public void close() throws IOException {
+      if (!isOpen) {
+        return;
+      }
+
       try {
         if (dataFileWriter != null) {
           dataFileWriter.close();
@@ -268,6 +275,8 @@ public final class AvroFileWriter implements Closeable {
           outputStream.close();
         }
       }
+
+      isOpen = false;
     }
   }
 }

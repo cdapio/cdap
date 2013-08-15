@@ -20,6 +20,7 @@ import com.continuuity.logging.kafka.KafkaLogEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -40,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -72,10 +74,10 @@ public final class LogSaver extends AbstractIdleService {
   private final long kafkaEmptySleepMs = 2000;
   private final int kafkaSaveFetchTimeoutMs = 1000;
   private final int syncIntervalBytes;
-  private final long checkpointIntervalMs = 60 * 1000;
-  private final long inactiveIntervalMs = 10 * 60 * 1000;
-  private final long eventBucketIntervalMs = 4 * 1000;
-  private final long eventProcessingDelayMs = 8 * 1000;
+  private final long checkpointIntervalMs;
+  private final long inactiveIntervalMs;
+  private final long eventBucketIntervalMs;
+  private final long eventProcessingDelayMs;
   private final long retentionDurationMs;
   private final long maxLogFileSizeBytes;
 
@@ -121,7 +123,8 @@ public final class LogSaver extends AbstractIdleService {
     this.logBaseDir = new Path(baseDir);
     LOG.info(String.format("Log base dir is %s", logBaseDir));
 
-    long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, -1);
+    long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
+                                                 LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
     this.retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
@@ -133,6 +136,26 @@ public final class LogSaver extends AbstractIdleService {
     this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 5 * 1024 * 1024);
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
                                 "Log file sync interval is invalid: %s", this.syncIntervalBytes);
+
+    this.checkpointIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
+                                                LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
+    Preconditions.checkArgument(this.checkpointIntervalMs > 0,
+                                "Checkpoint interval is invalid: %s", this.checkpointIntervalMs);
+
+    this.inactiveIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
+                                              LoggingConfiguration.DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS);
+    Preconditions.checkArgument(this.inactiveIntervalMs > 0,
+                                "Inactive interval is invalid: %s", this.inactiveIntervalMs);
+
+    this.eventBucketIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS,
+                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS);
+    Preconditions.checkArgument(this.eventBucketIntervalMs > 0,
+                                "Event bucket interval is invalid: %s", this.eventBucketIntervalMs);
+
+    this.eventProcessingDelayMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS,
+                                                  LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_PROCESSING_DELAY_MS);
+    Preconditions.checkArgument(this.eventProcessingDelayMs > 0,
+                                "Event processing delay interval is invalid: %s", this.eventProcessingDelayMs);
   }
 
   @Override
@@ -200,7 +223,7 @@ public final class LogSaver extends AbstractIdleService {
               LOG.debug("Got 0 messages from Kafka, sleeping...");
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
             } else {
-              LOG.info(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
+              LOG.debug(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
                                      msgCount, topic, partition, lastOffset));
             }
           } catch (OffsetOutOfRangeException e) {
@@ -256,7 +279,7 @@ public final class LogSaver extends AbstractIdleService {
         }
         lastOffset = offset;
       } catch (Exception e) {
-        LOG.debug(String.format("Exception while processing message with offset %d. Skipping it.", offset));
+        LOG.warn(String.format("Exception while processing message with offset %d. Skipping it.", offset));
       }
     }
   }
@@ -279,13 +302,13 @@ public final class LogSaver extends AbstractIdleService {
                                                          serializer.getAvroSchema(),
                                                          maxLogFileSizeBytes, syncIntervalBytes,
                                                          checkpointIntervalMs, inactiveIntervalMs);
-      List<List<KafkaLogEvent>> writeLists = Lists.newArrayList();
+      Map<String, List<KafkaLogEvent>> writeListMap = Maps.newHashMap();
       int messages = 0;
       try {
         while (isRunning()) {
           try {
             // Read new messages only if previous write was successful.
-            if (writeLists.isEmpty()) {
+            if (writeListMap.isEmpty()) {
               messages = 0;
               long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventBucketIntervalMs;
               synchronized (messageTable) {
@@ -296,23 +319,29 @@ public final class LogSaver extends AbstractIdleService {
                   if (cell.getRowKey() >= processKey) {
                     continue;
                   }
-                  writeLists.add(cell.getValue());
+                  List<KafkaLogEvent> list = writeListMap.get(cell.getColumnKey());
+                  if (list == null) {
+                    writeListMap.put(cell.getColumnKey(), cell.getValue());
+                  } else {
+                    list.addAll(cell.getValue());
+                  }
                   it.remove();
                   messages += cell.getValue().size();
                 }
               }
             }
-            if (writeLists.isEmpty()) {
+            if (writeListMap.isEmpty()) {
               LOG.debug("Got 0 messages to save, sleeping...");
               TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
             } else {
-              LOG.info(String.format("Got %d log messages to save for topic %s, partition %s",
+              LOG.debug(String.format("Got %d log messages to save for topic %s, partition %s",
                                      messages, topic, partition));
             }
-            for (Iterator<List<KafkaLogEvent>> it = writeLists.iterator(); it.hasNext(); ) {
-              List<KafkaLogEvent> events = it.next();
-              Collections.sort(events);
-              avroFileWriter.append(events);
+            for (Iterator<Map.Entry<String, List<KafkaLogEvent>>> it = writeListMap.entrySet().iterator();
+                 it.hasNext(); ) {
+              Map.Entry<String, List<KafkaLogEvent>> entry = it.next();
+              Collections.sort(entry.getValue());
+              avroFileWriter.append(entry.getValue());
               // Remove successfully written message
               it.remove();
             }
