@@ -23,7 +23,7 @@ fi
 cp -f $TGZ_FILE $CINST_BASE/${TGZ_NAME}/ >/dev/null 2>/dev/null
 
 pushd $CINST_BASE/$TGZ_NAME >/dev/null
-tar -xvf $TGZ_NAME >/dev/null
+tar -mxvf $TGZ_NAME >/dev/null
 echo "$BRANCH" > branch >/dev/null
 popd >/dev/null
 
