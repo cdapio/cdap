@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 
 /**
@@ -110,7 +109,7 @@ public final class FileMetaDataManager {
     ImmutablePair<byte[], Map<byte[], byte[]>> row;
     while ((row = scanner.next()) != null) {
       byte [] rowKey = row.getFirst();
-      byte [] maxCol = getMax(row.getSecond().keySet());
+      byte [] maxCol = getMaxKey(row.getSecond());
 
       for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
         byte [] colName = entry.getKey();
@@ -129,9 +128,13 @@ public final class FileMetaDataManager {
     return deleteExecutor.getTotalDeletes();
   }
 
-  private byte [] getMax(Set<byte []> elements) {
+  private byte [] getMaxKey(Map<byte[], byte[]> map) {
+    if (map instanceof SortedMap) {
+      return ((SortedMap<byte [], byte []>) map).lastKey();
+    }
+
     byte [] max = Bytes.EMPTY_BYTE_ARRAY;
-    for (byte [] elem : elements) {
+    for (byte [] elem : map.keySet()) {
       if (Bytes.compareTo(max, elem) < 0) {
         max = elem;
       }
