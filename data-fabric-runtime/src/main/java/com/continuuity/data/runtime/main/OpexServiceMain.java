@@ -101,9 +101,6 @@ public class OpexServiceMain {
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
 
-      // enable metrics collection
-      OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, configuration);
-
       Copyright.print(System.out);
       System.out.println("Starting Operation Executor Service...");
       // start it. start is blocking, hence main won't terminate
