@@ -14,6 +14,7 @@ import java.io.File;
  * WeaveApplication wrapper to run LogSaver.
  */
 public class LogSaverWeaveApplication implements WeaveApplication {
+  private static final String NAME = "LogSaverWeaveApplication";
   private final int partitions;
   private final int memoryMb;
   private final File hConfig;
@@ -26,10 +27,14 @@ public class LogSaverWeaveApplication implements WeaveApplication {
     this.cConfig = cConfig;
   }
 
+  public static String getName() {
+    return NAME;
+  }
+
   @Override
   public WeaveSpecification configure() {
     WeaveSpecification.Builder.MoreRunnable moreRunnable = WeaveSpecification.Builder.with()
-      .setName("LogSaverWeaveApplication")
+      .setName(NAME)
       .withRunnable();
 
     ResourceSpecification spec = ResourceSpecification.Builder

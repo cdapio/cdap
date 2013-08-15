@@ -37,10 +37,10 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Reads log events in single node setup.
@@ -82,13 +82,14 @@ public class SingleNodeLogReader implements LogReader {
   }
 
   @Override
-  public Future<?> getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
     if (fromOffset < 0) {
-      return getLogPrev(loggingContext, -1, maxEvents, filter, callback);
+      getLogPrev(loggingContext, -1, maxEvents, filter, callback);
+      return;
     }
 
-    return executor.submit(
+    executor.submit(
       new Runnable() {
         @Override
         public void run() {
@@ -115,11 +116,12 @@ public class SingleNodeLogReader implements LogReader {
           }
 
           callback.init();
-          final List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
           AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
+          CountingCallback countingCallback = new CountingCallback(callback);
           for (Path file : tailFiles) {
-            logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - loggingEvents.size(), callback);
-            if (loggingEvents.size() >= maxEvents) {
+            logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - countingCallback.getCount(),
+                              countingCallback);
+            if (countingCallback.getCount() >= maxEvents) {
               break;
             }
           }
@@ -129,10 +131,40 @@ public class SingleNodeLogReader implements LogReader {
     );
   }
 
+  /**
+   * Counts the number of times handle is called.
+   */
+  private static class CountingCallback implements Callback {
+    private final Callback callback;
+    private final AtomicInteger count = new AtomicInteger(0);
+
+    private CountingCallback(Callback callback) {
+      this.callback = callback;
+    }
+
+    @Override
+    public void init() {
+    }
+
+    @Override
+    public void handle(LogEvent event) {
+      count.incrementAndGet();
+      callback.handle(event);
+    }
+
+    public int getCount() {
+      return count.get();
+    }
+
+    @Override
+    public void close() {
+    }
+  }
+
   @Override
-  public Future<?> getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
-    return executor.submit(new Runnable() {
+    executor.submit(new Runnable() {
       @Override
       public void run() {
         Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
@@ -141,8 +173,7 @@ public class SingleNodeLogReader implements LogReader {
           return;
         }
 
-        long fromTimeMs = fromOffset >= 0 ? fromOffset - 1 :
-          sortedFiles.get(sortedFiles.firstKey()).getModificationTime();
+        long fromTimeMs = fromOffset >= 0 ? fromOffset - 1 : System.currentTimeMillis();
 
         List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
         for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
@@ -173,9 +204,9 @@ public class SingleNodeLogReader implements LogReader {
   }
 
   @Override
-  public Future<?> getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
+  public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
                           final Filter filter, final Callback callback) {
-    return executor.submit(
+    executor.submit(
       new Runnable() {
         @Override
         public void run() {
@@ -189,14 +220,14 @@ public class SingleNodeLogReader implements LogReader {
           Path prevPath = null;
           List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
           for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-            if (entry.getKey() >= fromTimeMs && entry.getKey() < toTimeMs && prevPath != null) {
+            if (entry.getKey() >= fromTimeMs && prevInterval != -1 && prevInterval < toTimeMs) {
               files.add(prevPath);
             }
             prevInterval = entry.getKey();
             prevPath = entry.getValue().getPath();
           }
 
-          if (prevInterval != -1) {
+          if (prevInterval != -1 && prevInterval < toTimeMs) {
             files.add(prevPath);
           }
 
