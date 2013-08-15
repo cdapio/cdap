@@ -12,14 +12,12 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.internal.app.queue.QueueConsumerFactory;
-import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
-import com.continuuity.internal.app.queue.QueueConsumerFactoryImpl;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -28,7 +26,6 @@ import com.google.inject.assistedinject.Assisted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
 
 /**
@@ -37,8 +34,6 @@ import java.io.IOException;
  * Also the newly created {@link TransactionAgent} would be set into the given {@link TransactionProxy} instance.
  */
 public final class SmartDataFabricFacade implements DataFabricFacade {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SmartDataFabricFacade.class);
 
   private final OperationExecutor opex;
   private final Program program;
@@ -80,56 +75,29 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public QueueConsumerFactory createQueueConsumerFactory(int instanceId, long groupId, String groupName,
-                                                         QueueName queueName, QueueInfo queueInfo,
-                                                         boolean singleEntry) {
+  public Queue2Producer createProducer(QueueName queueName) throws IOException {
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    if (producer instanceof TransactionAware) {
+      dataSetContext.addTransactionAware((TransactionAware) producer);
+    }
+    return producer;
+  }
 
-    final QueueConsumerFactory factory = new QueueConsumerFactoryImpl(opex, program, instanceId, groupId,
-                                                                      groupName, queueName, queueInfo,
-                                                                      singleEntry, queueClientFactory);
-    // TODO: This is a hacky way to inject queue consumer into transaction aware set.
-    return new QueueConsumerFactory() {
-      private volatile Queue2Consumer consumer;
-
-      @Override
-      public QueueConsumer create(int groupSize) {
-        return factory.create(groupSize);
-      }
-
-      @Override
-      public Queue2Consumer createConsumer(int groupSize) {
-        // Cleanup old consumer
-        Queue2Consumer oldConsumer = consumer;
-        if (oldConsumer != null) {
-          if (oldConsumer instanceof TransactionAware) {
-            dataSetContext.removeTransactionAware((TransactionAware) oldConsumer);
-          }
-          if (oldConsumer instanceof Closeable) {
-            try {
-              ((Closeable) oldConsumer).close();
-            } catch (IOException e) {
-              LOG.warn("Exception when closing queue consumer: {}", e.getMessage(), e);
-            }
-          }
-        }
-
-        // Create new consumer
-        Queue2Consumer newConsumer = factory.createConsumer(groupSize);
-        if (newConsumer instanceof TransactionAware) {
-          dataSetContext.addTransactionAware((TransactionAware) newConsumer);
-        }
-        consumer = newConsumer;
-
-        return newConsumer;
-      }
-    };
+  @Override
+  public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig) throws IOException {
+    Queue2Consumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig);
+    if (consumer instanceof TransactionAware) {
+      dataSetContext.addTransactionAware((TransactionAware) consumer);
+      // TODO: Need to deal with removing from the transaction aware list when no longer used.
+    }
+    return consumer;
   }
 
   private DataSetInstantiator createDataSetContext(Program program,
-                                              OperationExecutor opex,
-                                              LocationFactory locationFactory,
-                                              DataSetAccessor dataSetAccessor,
-                                              TransactionProxy proxy) {
+                                                   OperationExecutor opex,
+                                                   LocationFactory locationFactory,
+                                                   DataSetAccessor dataSetAccessor,
+                                                   TransactionProxy proxy) {
     try {
       OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
       DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, ctx);

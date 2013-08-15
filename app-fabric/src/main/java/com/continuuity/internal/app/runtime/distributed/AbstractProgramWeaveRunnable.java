@@ -21,10 +21,8 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
-import com.continuuity.internal.app.annotations.TxDs2;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
-import com.continuuity.internal.app.queue.SingleQueueReader;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
@@ -322,8 +320,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
   private Module createQueueFactoryModule() {
     return new FactoryModuleBuilder()
-      .implement(QueueReader.class, SingleQueueReader.class)
-      .implement(QueueReader.class, TxDs2.class, SingleQueue2Reader.class)
+      .implement(QueueReader.class, SingleQueue2Reader.class)
       .build(QueueReaderFactory.class);
   }
 

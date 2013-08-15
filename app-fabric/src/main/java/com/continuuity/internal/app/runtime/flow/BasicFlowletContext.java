@@ -18,7 +18,6 @@ import com.continuuity.weave.api.RunId;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -86,12 +85,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
    */
   @Override
   public Map<String, String> getRuntimeArguments() {
-    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    Iterator<Map.Entry<String, String>> it = runtimeArguments.iterator();
-    while (it.hasNext()) {
-      arguments.put(it.next());
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (Map.Entry<String, String> entry : runtimeArguments) {
+      builder.put(entry);
     }
-    return arguments.build();
+    return builder.build();
   }
 
   public MetricsCollector getSystemMetrics() {
