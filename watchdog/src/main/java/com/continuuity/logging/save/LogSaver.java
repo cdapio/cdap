@@ -312,8 +312,8 @@ public final class LogSaver extends AbstractIdleService {
                   }
 
                   writeListMap.putAll(cell.getColumnKey(), cell.getValue());
-                  it.remove();
                   messages += cell.getValue().size();
+                  it.remove();
                 }
               }
             }
