@@ -10,17 +10,18 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data2.RuntimeTable;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
@@ -39,7 +40,7 @@ public class DataSetInstantiationBase {
   private Map<String, DataSetSpecification> datasets =
     new HashMap<String, DataSetSpecification>();
 
-  private Collection<TransactionAware> txAwareDataSets = Lists.newArrayList();
+  private Set<TransactionAware> txAwareDataSets = Sets.newIdentityHashSet();
 
   public DataSetInstantiationBase() {
     this.classLoader = null;
@@ -152,9 +153,21 @@ public class DataSetInstantiationBase {
     return this.convert(ds, className);
   }
 
-  // NOTE: this is needed for now to minimize destrucion of early integration of txds2
-  public Collection<TransactionAware> getTxAwareDataSets() {
-    return txAwareDataSets;
+
+  /**
+   * Returns an immutable life Iterable of {@link TransactionAware} objects.
+   */
+  // NOTE: this is needed for now to minimize destruction of early integration of txds2
+  public Iterable<TransactionAware> getTransactionAware() {
+    return Iterables.unmodifiableIterable(txAwareDataSets);
+  }
+
+  public void addTransactionAware(TransactionAware transactionAware) {
+    txAwareDataSets.add(transactionAware);
+  }
+
+  public void removeTransactionAware(TransactionAware transactionAware) {
+    txAwareDataSets.remove(transactionAware);
   }
 
   /**

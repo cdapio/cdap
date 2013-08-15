@@ -10,7 +10,6 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,7 +31,7 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
 
   // NOTE: the tx2 logic is put in TransactionAgent to  minimize destrucion of early integration of txds2.
   //       TransactionAgent will go away as soon as we complete transition
-  private final Collection<TransactionAware> txAware;
+  private final Iterable<TransactionAware> txAware;
   private final TransactionSystemClient txSystemClient;
 
   // TransactionAgent can be associated only with one transaction at a time.
@@ -44,7 +43,7 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
    * @param context the operation context for all operations
    */
   public AbstractTransactionAgent(OperationExecutor opex, OperationContext context,
-                                  Collection<TransactionAware> txAware, TransactionSystemClient txSystemClient) {
+                                  Iterable<TransactionAware> txAware, TransactionSystemClient txSystemClient) {
     this.opex = opex;
     this.context = context;
     this.txAware = txAware;

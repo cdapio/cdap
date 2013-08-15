@@ -8,6 +8,10 @@ package com.continuuity.data2.transaction.queue;
  */
 public final class HBaseQueueConstants {
 
+  public static final class ConfigKeys {
+    public static final String QUEUE_TABLE_NAME = "data.queue.table.name";
+  }
+
   public static final byte[] COLUMN_FAMILY = new byte[] {'q'};
   public static final byte[] DATA_COLUMN = new byte[] {'d'};
   public static final byte[] META_COLUMN = new byte[] {'m'};

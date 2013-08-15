@@ -27,7 +27,6 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator.Node;
@@ -38,10 +37,12 @@ import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -528,21 +529,26 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private static final class QueueConsumerSupplier implements Supplier<QueueConsumer> {
     private final QueueConsumerFactory queueConsumerFactory;
     private volatile QueueConsumer consumer;
+    private volatile Queue2Consumer queueConsumer;
 
-    public QueueConsumerSupplier(QueueConsumerFactory queueConsumerFactory, int groupSize) {
+    QueueConsumerSupplier(QueueConsumerFactory queueConsumerFactory, int groupSize) {
       this.queueConsumerFactory = queueConsumerFactory;
       this.consumer = queueConsumerFactory.create(groupSize);
+      this.queueConsumer = queueConsumerFactory.createConsumer(groupSize);
     }
 
     public void updateInstanceCount(int groupSize) {
       consumer = queueConsumerFactory.create(groupSize);
+      queueConsumer = queueConsumerFactory.createConsumer(groupSize);
     }
 
-    @Override
     public QueueConsumer get() {
       return consumer;
     }
 
+    public Queue2Consumer getConsumer() {
+      return queueConsumer;
+    }
   }
 
   private int getNumGroups(Iterable<QueueSpecification> queueSpecs, QueueName queueName) {

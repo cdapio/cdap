@@ -16,6 +16,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  *
  */
-public final class HBaseQueue2Producer implements Queue2Producer, TransactionAware {
+public final class HBaseQueue2Producer implements Queue2Producer, TransactionAware, Closeable {
 
   private final Queue<QueueEntry> queue;
   private final QueueName queueName;
@@ -91,6 +92,11 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
     hTable.flushCommits();
 
     return true;
+  }
+
+  @Override
+  public void close() throws IOException {
+    hTable.close();
   }
 
   /**

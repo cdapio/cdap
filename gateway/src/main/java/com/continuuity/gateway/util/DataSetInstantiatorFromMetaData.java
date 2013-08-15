@@ -101,7 +101,7 @@ public final class DataSetInstantiatorFromMetaData {
     TransactionProxy proxy = new TransactionProxy();
     // set the transaction agent to synchronous
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, context,
-                                                              instantiator.getTxAwareDataSets(),
+                                                              instantiator.getTransactionAware(),
                                                               txSystemClient));
     // this just gets passed through to the data set instantiator
     return this.instantiator.getDataSet(name,

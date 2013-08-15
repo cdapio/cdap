@@ -103,7 +103,7 @@ public class DataSetTestBase {
    */
   public static TransactionAgent newTransaction() throws OperationException {
     SmartTransactionAgent agent = new SmartTransactionAgent(opex, OperationUtil.DEFAULT,
-                                      instantiator.getTxAwareDataSets(), txSystemClient);
+                                      instantiator.getTransactionAware(), txSystemClient);
     agent.start();
     return agent;
   }

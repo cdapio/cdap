@@ -3,6 +3,7 @@
  */
 package com.continuuity.data2.queue;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 /**
@@ -44,5 +45,16 @@ public final class ConsumerConfig {
 
   public String getHashKey() {
     return hashKey;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("groupId", groupId)
+      .add("groupSize", groupSize)
+      .add("instanceId", instanceId)
+      .add("strategy", dequeueStrategy)
+      .add("hashKey", hashKey)
+      .toString();
   }
 }

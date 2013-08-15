@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,13 +88,13 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
    * @param context the operation context for all operations
    */
   public SmartTransactionAgent(OperationExecutor opex, OperationContext context,
-                               Collection<TransactionAware> txAware, TransactionSystemClient txSystemClient) {
+                               Iterable<TransactionAware> txAware, TransactionSystemClient txSystemClient) {
     this(opex, context, txAware, txSystemClient, null);
   }
 
   /**
    * Same as {@link #SmartTransactionAgent(OperationExecutor, com.continuuity.data.operation.OperationContext,
-   * java.util.Collection, com.continuuity.data2.transaction.TransactionSystemClient)} but
+   * java.lang.Iterable, com.continuuity.data2.transaction.TransactionSystemClient)} but
    * takes transaction to operate with.
    * @param opex the actual operation executor
    * @param context the operation context for all operations
@@ -103,7 +102,7 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
    */
   public SmartTransactionAgent(OperationExecutor opex,
                                OperationContext context,
-                               Collection<TransactionAware> txAware,
+                               Iterable<TransactionAware> txAware,
                                TransactionSystemClient txSystemClient,
                                Transaction tx) {
     super(opex, context, txAware, txSystemClient);

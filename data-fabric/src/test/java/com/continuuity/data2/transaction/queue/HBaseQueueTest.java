@@ -4,7 +4,6 @@
 package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
@@ -20,29 +19,17 @@ import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
-import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.primitives.Ints;
+import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
-import org.apache.hadoop.hbase.filter.BitComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.RowFilter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -52,8 +39,8 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Set;
+import java.io.Closeable;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -75,260 +62,40 @@ public class HBaseQueueTest extends HBaseTestBase {
   private static InMemoryZKServer zkServer;
   private static OperationExecutorService opexService;
   private static OperationExecutor opex;
+  private static QueueClientFactory queueClientFactory;
 
+  // Simple enqueue and dequeue with one consumer, no batch
   @Test
   public void testSingleFifo() throws Exception {
-    // Create the queue table
-    final QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
-    final String tableName = "queueTestFifo";
-    Queue2Producer producer = createProducer(tableName, queueName);
-    TransactionAware txAware = (TransactionAware) producer;
-
-    final int count = 30000;
-    LOG.info("Start enqueue {} entries.", count);
-
-    Stopwatch stopwatch = new Stopwatch();
-    stopwatch.start();
-
-    for (int i = 0; i < count; i++) {
-      Transaction transaction = opex.start();
-
-      try {
-        byte[] queueData = Bytes.toBytes(i);
-        txAware.startTx(transaction);
-        producer.enqueue(new QueueEntry(queueData));
-
-        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
-          if (!opex.commit(transaction)) {
-            txAware.rollbackTx();
-          }
-        }
-      } catch (Exception e) {
-        opex.abort(transaction);
-        throw Throwables.propagate(e);
-      }
-    }
-
-    long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
-    LOG.info("Enqueue {} entries in {} ms", count, elapsed);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
-
-    // Try to dequeue
-    final long expectedSum = ((long) count / 2 * ((long) count - 1));
-    final AtomicLong valueSum = new AtomicLong();
-    final int consumerSize = 5;
-    final CyclicBarrier startBarrier = new CyclicBarrier(consumerSize + 1);
-    final CountDownLatch completeLatch = new CountDownLatch(consumerSize);
-    ExecutorService executor = Executors.newFixedThreadPool(consumerSize);
-    for (int i = 0; i < consumerSize; i++) {
-      final int instanceId = i;
-      executor.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            startBarrier.await();
-            Queue2Consumer consumer = createConsumer(tableName, queueName,
-                                                     new ConsumerConfig(0, instanceId, consumerSize,
-                                                                        DequeueStrategy.FIFO, null));
-            TransactionAware txAware = (TransactionAware)consumer;
-
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.start();
-
-            int dequeueCount = 0;
-            while (valueSum.get() != expectedSum) {
-              Transaction transaction = opex.start();
-              txAware.startTx(transaction);
-
-              try {
-                DequeueResult result = consumer.dequeue();
-                if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
-                  if (!opex.commit(transaction)) {
-                    txAware.rollbackTx();
-                  }
-                }
-                if (result.isEmpty()) {
-                  continue;
-                }
-
-                for (byte[] data : result.getData()) {
-                  valueSum.addAndGet(Bytes.toInt(data));
-                  dequeueCount++;
-                }
-              } catch (Exception e) {
-                opex.abort(transaction);
-                throw Throwables.propagate(e);
-              }
-            }
-
-            long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
-            LOG.info("Dequeue {} entries in {} ms", dequeueCount, elapsed);
-            LOG.info("Average {} entries per seconds", (double)dequeueCount * 1000 / elapsed);
-            completeLatch.countDown();
-          } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-          }
-        }
-      });
-    }
-
-    startBarrier.await();
-    Assert.assertTrue(completeLatch.await(120, TimeUnit.SECONDS));
-    TimeUnit.SECONDS.sleep(2);
-
-    Assert.assertEquals(expectedSum, valueSum.get());
-    executor.shutdownNow();
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlefifo");
+    enqueueDequeue(queueName, 30000, 30000, 1, 1, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
   }
 
+  // Simple enqueue and dequeue with three consumers, no batch
+  @Test
+  public void testMultiFifo() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multififo");
+    enqueueDequeue(queueName, 30000, 30000, 1, 3, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
+  }
+
+  // Simple enqueue and dequeue with one consumer, no batch
   @Test
   public void testSingleHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
-
-    final String tableName = "queueHashTest";
-    Queue2Producer producer = createProducer(tableName, queueName);
-    TransactionAware txAware = (TransactionAware) producer;
-
-    int count = 30000;
-    LOG.info("Start enqueue {} entries.", count);
-
-    Stopwatch stopwatch = new Stopwatch();
-    stopwatch.start();
-
-    for (int i = 0; i < count; i++) {
-      Transaction transaction = opex.start();
-
-      try {
-        byte[] queueData = Bytes.toBytes(i);
-        txAware.startTx(transaction);
-        producer.enqueue(new QueueEntry(queueData));
-
-        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
-          if (!opex.commit(transaction)) {
-            txAware.rollbackTx();
-          }
-        }
-      } catch (Exception e) {
-        opex.abort(transaction);
-        throw Throwables.propagate(e);
-      }
-    }
-
-    long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
-    LOG.info("Enqueue {} entries in {} ms", count, elapsed);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
-
-    // Try to dequeue
-    Queue2Consumer consumer = createConsumer(tableName, queueName,
-                                             new ConsumerConfig(0, 0, 1, DequeueStrategy.HASH, "key"));
-    txAware = (TransactionAware)consumer;
-
-    stopwatch = new Stopwatch();
-    stopwatch.start();
-
-    long sum = 0L;
-    final long expectedSum = ((long) count / 2 * ((long) count - 1));
-    for (int i = 0; i < count; i++) {
-      Transaction transaction = opex.start();
-      txAware.startTx(transaction);
-
-      try {
-        DequeueResult result = consumer.dequeue();
-        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
-          if (!opex.commit(transaction)) {
-            txAware.rollbackTx();
-          }
-        }
-        for (byte[] data : result.getData()) {
-          sum += Bytes.toInt(data);
-        }
-      } catch (Exception e) {
-        opex.abort(transaction);
-        throw Throwables.propagate(e);
-      }
-    }
-
-    elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
-    LOG.info("Dequeue {} entries in {} ms", count, elapsed);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
-
-    Assert.assertEquals(expectedSum, sum);
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlehash");
+    enqueueDequeue(queueName, 60000, 30000, 1, 1, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
   }
 
   @Test
-  public void testBatchHash() throws OperationException, IOException {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
+  public void testMultiHash() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multihash");
+    enqueueDequeue(queueName, 60000, 30000, 1, 3, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
+  }
 
-    final String tableName = "queueBatchHashTest";
-    Queue2Producer producer = createProducer(tableName, queueName);
-    TransactionAware txAware = (TransactionAware) producer;
-
-    int count = 30000;
-    int batchSize = 5;
-    byte[] queueData = "queue data".getBytes(Charsets.UTF_8);
-    LOG.info("Start enqueue {} entries with batch size {}.", count, batchSize);
-
-    Stopwatch stopwatch = new Stopwatch();
-    stopwatch.start();
-
-    for (int i = 0; i < count / batchSize; i++) {
-      Transaction transaction = opex.start();
-
-      try {
-        txAware.startTx(transaction);
-
-        for (int j = 0; j < batchSize; j++) {
-          producer.enqueue(new QueueEntry(queueData));
-        }
-
-        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
-          if (!opex.commit(transaction)) {
-            txAware.rollbackTx();
-          }
-        }
-      } catch (Exception e) {
-        opex.abort(transaction);
-        throw Throwables.propagate(e);
-      }
-    }
-
-    long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
-    LOG.info("Enqueue {} entries of batch size {} in {} ms", count, batchSize, elapsed);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
-
-    // Try to dequeue
-    batchSize = 50;
-    Queue2Consumer consumer = createConsumer(tableName, queueName,
-                                             new ConsumerConfig(0, 0, 1, DequeueStrategy.HASH, "key"));
-    txAware = (TransactionAware)consumer;
-
-    stopwatch = new Stopwatch();
-    stopwatch.start();
-
-    for (int i = 0; i < count / batchSize; i++) {
-      Transaction transaction = opex.start();
-      txAware.startTx(transaction);
-
-      try {
-        DequeueResult result = consumer.dequeue(batchSize);
-        if (opex.canCommit(transaction, txAware.getTxChanges()) && txAware.commitTx()) {
-          if (!opex.commit(transaction)) {
-            txAware.rollbackTx();
-          }
-        }
-        int j = 0;
-        for (byte[] data : result.getData()) {
-          Assert.assertEquals("queue data", new String(data, Charsets.UTF_8));
-          j++;
-        }
-      } catch (Exception e) {
-        opex.abort(transaction);
-        throw Throwables.propagate(e);
-      }
-    }
-
-    elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
-    LOG.info("Dequeue {} entries in {} ms of batch size {}", count, elapsed, batchSize);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
+  // Batch enqueue and batch dequeue with one consumer.
+  @Test
+  public void testBatchHash() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "batchhash");
+    enqueueDequeue(queueName, 60000, 30000, 10, 1, DequeueStrategy.HASH, 50, 120, TimeUnit.SECONDS);
   }
 
   @BeforeClass
@@ -366,6 +133,7 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     // Get the remote opex
     opex = injector.getInstance(OperationExecutor.class);
+    queueClientFactory = injector.getInstance(QueueClientFactory.class);
   }
 
   @AfterClass
@@ -375,12 +143,154 @@ public class HBaseQueueTest extends HBaseTestBase {
     zkServer.stopAndWait();
   }
 
-  private static Queue2Producer createProducer(String tableName, QueueName queueName) throws IOException {
-    return new HBaseQueueClientFactory(getHBaseAdmin(), tableName).createProducer(queueName);
+  private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
+                              int concurrentCount, int enqueueBatchSize,
+                              final int consumerSize, final DequeueStrategy dequeueStrategy,
+                              final int dequeueBatchSize,
+                              long timeout, TimeUnit timeoutUnit) throws Exception {
+
+    Preconditions.checkArgument(preEnqueueCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
+    Preconditions.checkArgument(concurrentCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
+
+    createEnqueueRunnable(queueName, preEnqueueCount, enqueueBatchSize, null).run();
+
+    final CyclicBarrier startBarrier = new CyclicBarrier(consumerSize + 2);
+    ExecutorService executor = Executors.newFixedThreadPool(consumerSize + 1);
+
+    // Enqueue thread
+    executor.submit(createEnqueueRunnable(queueName, concurrentCount, enqueueBatchSize, startBarrier));
+
+    // Dequeue
+    final long expectedSum = ((long) preEnqueueCount / 2 * ((long) preEnqueueCount - 1)) +
+                             ((long) concurrentCount / 2 * ((long) concurrentCount - 1));
+    final AtomicLong valueSum = new AtomicLong();
+    final CountDownLatch completeLatch = new CountDownLatch(consumerSize);
+
+    for (int i = 0; i < consumerSize; i++) {
+      final int instanceId = i;
+      executor.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            startBarrier.await();
+            LOG.info("Consumer {} starts consuming {}", instanceId, queueName.getSimpleName());
+            Queue2Consumer consumer = queueClientFactory.createConsumer(queueName,
+                                                                        new ConsumerConfig(0, instanceId,
+                                                                                           consumerSize,
+                                                                                           dequeueStrategy, "key"));
+            try {
+              TransactionAware txAware = (TransactionAware) consumer;
+
+              Stopwatch stopwatch = new Stopwatch();
+              stopwatch.start();
+
+              int dequeueCount = 0;
+              while (valueSum.get() != expectedSum) {
+                Transaction transaction = opex.start();
+                txAware.startTx(transaction);
+
+                try {
+                  DequeueResult result = consumer.dequeue(dequeueBatchSize);
+
+                  Preconditions.checkState(opex.canCommit(transaction, txAware.getTxChanges()),
+                                           "Conflicts in pre commit check.");
+                  Preconditions.checkState(txAware.commitTx(), "Fails to commit.");
+                  Preconditions.checkState(opex.commit(transaction), "Fails to commit transaction.");
+
+                  if (result.isEmpty()) {
+                    continue;
+                  }
+
+                  for (byte[] data : result.getData()) {
+                    valueSum.addAndGet(Bytes.toInt(data));
+                    dequeueCount++;
+                  }
+                } catch (Exception e) {
+                  opex.abort(transaction);
+                  throw Throwables.propagate(e);
+                }
+              }
+
+              long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
+              LOG.info("Dequeue {} entries in {} ms for {}", dequeueCount, elapsed, queueName.getSimpleName());
+              LOG.info("Dequeue avg {} entries per seconds for {}",
+                       (double)dequeueCount * 1000 / elapsed, queueName.getSimpleName());
+              completeLatch.countDown();
+            } finally {
+              if (consumer instanceof Closeable) {
+                ((Closeable) consumer).close();
+              }
+            }
+          } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+          }
+        }
+      });
+    }
+
+    startBarrier.await();
+    Assert.assertTrue(completeLatch.await(timeout, timeoutUnit));
+    TimeUnit.SECONDS.sleep(2);
+
+    Assert.assertEquals(expectedSum, valueSum.get());
+    executor.shutdownNow();
   }
 
-  private static Queue2Consumer createConsumer(String tableName, QueueName queueName,
-                                               ConsumerConfig config) throws IOException {
-    return new HBaseQueueClientFactory(getHBaseAdmin(), tableName).createConsumer(queueName, config);
+  private Runnable createEnqueueRunnable(final QueueName queueName, final int count,
+                                         final int batchSize, final CyclicBarrier barrier) {
+    return new Runnable() {
+
+      @Override
+      public void run() {
+        try {
+          if (barrier != null) {
+            barrier.await();
+          }
+          Queue2Producer producer = queueClientFactory.createProducer(queueName);
+          try {
+            TransactionAware txAware = (TransactionAware) producer;
+
+            LOG.info("Start enqueue {} entries.", count);
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.start();
+
+            // Pre-Enqueue
+            int batches = count / batchSize;
+            List<QueueEntry> queueEntries = Lists.newArrayListWithCapacity(batchSize);
+            for (int i = 0; i < batches; i++) {
+              Transaction transaction = opex.start();
+              txAware.startTx(transaction);
+
+              queueEntries.clear();
+              for (int j = 0; j < batchSize; j++) {
+                int val = i * batchSize + j;
+                byte[] queueData = Bytes.toBytes(val);
+                queueEntries.add(new QueueEntry("key", val, queueData));
+              }
+
+              producer.enqueue(queueEntries);
+
+              Preconditions.checkState(opex.canCommit(transaction, txAware.getTxChanges()),
+                                       "Conflicts in pre commit check.");
+              Preconditions.checkState(txAware.commitTx(), "Fails to commit.");
+              Preconditions.checkState(opex.commit(transaction), "Fails to commit transaction.");
+            }
+
+            long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
+            LOG.info("Enqueue {} entries in {} ms for {}", count, elapsed, queueName.getSimpleName());
+            LOG.info("Enqueue avg {} entries per seconds for {}",
+                     (double)count * 1000 / elapsed, queueName.getSimpleName());
+            stopwatch.stop();
+          } finally {
+            if (producer instanceof Closeable) {
+              ((Closeable) producer).close();
+            }
+          }
+        } catch (Exception e) {
+          LOG.error(e.getMessage(), e);
+        }
+      }
+    };
   }
 }
