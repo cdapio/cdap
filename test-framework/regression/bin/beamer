@@ -1,0 +1,292 @@
+#
+# Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+#
+
+#!/usr/bin/env bash
+
+version="0.0.1"
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+conf="$bin/../conf"
+build_home="$bin/../../.."
+script=`basename $0`
+command=$1;
+user=$USER
+version=`cat $build_home/version.txt`
+epoch=`date +%s`
+cuser=${CINST_USER:-$USER}
+branch=`git branch | grep '*' | awk ' { print $2 } '`
+
+function build() {
+  local component=$1; shift
+  local release=$1; shift
+  local tests=$1; shift
+
+  echo "Locally building component $component, version $version, branch $branch"
+  pushd $build_home/$component >/dev/null
+  rm -fr $build_home/$component/build 2>/dev/null >/dev/null
+
+  tag="snapshot"
+  xcmd=" "
+  if [[ "x${release}" == "x1" ]]; then
+    tag="release"
+    xcmd="$xcmd -PfinalRelease=true"
+  fi
+ 
+  if [[ "x${tests}" == "x1" ]]; then
+    xcmd="$xcmd -x test"
+  fi
+
+  $build_home/gradlew :${component}:rpmPrepackager -x test >/dev/null 2>/dev/null
+  if [[ $? -ne 0 ]]; then
+    echo "Build for component ${component} failed"
+  fi
+
+  package="continuuity-${component}-${user}-${version}-${tag}.${epoch}.tgz"
+  echo "Packaging component : $component, Package : $package"
+  popd >/dev/null
+  pushd $build_home/$component/build/stage-packaging >/dev/null
+  tar cvzf $build_home/$component/build/$package * >/dev/null 2>/dev/null
+  if [[ $? -eq 0 ]]; then
+    echo $build_home/$component/build/$package > $build_home/$component/build/receipt
+  else
+    echo "Component $component packaging failed" >/dev/null
+    popd >/dev/null
+    exit -1
+  fi
+  popd >/dev/null
+}
+
+function hostname() {
+  component=$1; shift
+  cluster=$1; shift
+  l=`grep $component $conf/cluster/$cluster.conf 2>/dev/null`
+  host=`echo $l | awk ' { print $2 }'`
+  echo $host
+}
+
+function usage() {
+  echo ""
+  echo "Developer Beamer v$version"
+  echo ""
+  echo "$script <section> <command> <component> -c <cluster> [ -p <package>] [-r] [-t]"
+  echo ""
+  echo "Section"
+  echo "  software     All software related operations"
+  echo "  cluster      All cluster related operations"
+  echo "  config       All config operations"
+  echo ""
+  echo "Commands for section software"
+  echo "  install      Install a components on the cluster from local build"
+  echo "  list         List all the snapshot builds available on the cluster (*) indicates currently active"
+  echo "  lock         Lock the component on the cluster."
+  echo "  unlock       Unlock the component on the cluster"
+  echo "  activate     Activate a older version of snapshot on the cluster"
+  echo "  start        Start of all the services in a component"
+  echo "  stop         Stop of all the services in a component"
+  echo "  restart      Restart of all the services in a component"
+  echo "  status       Status of all the services in a component"
+  echo ""
+  echo "Options"
+  echo "  -c Specifies the cluster on which the command would operate on"
+  echo "  -p Specifies the package"
+  echo "  -r Specifies to use a release version (no SNAPSHOT)"
+  echo "  -t Specifies to run tests for the component locally before uploading"
+  echo ""
+  echo "Commands for section config"
+  echo "  show-map      Shows cluster component host mapping"
+  echo ""
+}
+
+function install() {
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  local release=$1; shift
+  local tests=$1; shift
+
+  echo "Installing component $component on cluster $cluster"
+  if [[ -f $build_home/$component/build/receipt ]]; then
+    t=`cat $build_home/$component/build/receipt`
+    tar=`basename $t`
+    read -p "Previous build exists ($tar). Want to push that build (y/n) : " option
+    option=${option:-n}
+    if [[ "x${option}" == "xn" ]]; then
+      build $component $release $tests
+    fi
+  else
+    build $component $release $tests
+  fi
+
+  tar=`cat $build_home/$component/build/receipt`
+  tar_name=`basename $tar`
+  tar_remote_path=/tmp/$tar_name
+  scp $tar $cuser@$host:/tmp
+  installer=/tmp/beamer.deployer.$epoch.sh
+  scp -q $bin/beamer-project-deployer $cuser@$host:$installer
+  ssh -l $cuser $host sudo chmod +x $installer
+  ssh -l $cuser $host sudo $installer $component $tar_remote_path $branch
+  ssh -l $cuser $host sudo rm -f $installer $tar_remote_path
+}
+
+function list() {
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  echo "Listing component $component on cluster $cluster"
+
+  pkg=`ssh -l $cuser $host sudo readlink /opt/continuuity/$component/lib | awk -F"/" ' { print $4 } '`
+  for file in `ssh -l $cuser $host sudo ls -1 /var/beamer | grep $component | grep -v lock`
+  do
+    if [[ "x${pkg}" == "x$file" ]]; then
+      echo "$file (*)"
+    else
+      echo "$file"
+    fi
+  done
+}
+
+function activate() {
+  local cluster=$1; shift;
+  local host=$1; shift
+  local component=$1; shift
+  local package=$1; shift
+
+  echo "Activating package $package on cluster $cluster"
+  installer=/tmp/beamer.deployer.$epoch.sh
+  scp -q $bin/beamer-project-deployer $cuser@$host:$installer
+  ssh -l $cuser $host sudo chmod +x $installer
+  ssh -l $cuser $host sudo $installer $component /tmp/$package
+  ssh -l $cuser $host sudo rm -f $installer
+}
+
+function lock() {
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  ssh -l $cuser $host sudo touch /var/beamer/$component.lock
+  echo "Component $component has been locked on cluster $cluster"
+}
+
+function unlock() {
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  ssh -l $cuser $host sudo rm -f /var/beamer/$component.lock
+  echo "Component $component has been unlocked on cluster $cluster"
+}
+
+function pre_service_op() {
+  local host=$1; shift
+  scp -q $bin/beamer-service $cuser@$host:/tmp/beamer-service-$epoch.sh
+  ssh -l $cuser $host chmod +x /tmp/beamer-service-$epoch.sh
+}
+
+function post_service_op() {
+  local host=$1; shift
+  ssh -l $cuser $host rm -f /tmp/beamer-service-$epoch.sh
+}
+
+function service() {
+  local command=$1; shift
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  pre_service_op $host
+  ssh -l $cuser $host sudo /tmp/beamer-service-$epoch.sh $command $component
+  post_service_op $host
+}
+
+function map() {
+  local cluster=$1; shift
+  echo "Mapping for cluster $cluster"
+  echo ""
+  cat $conf/cluster/$cluster.conf
+}
+
+section=$1; shift
+
+if [[ "x${section}" == "software" ]]; then
+  cmd=$1; shift
+  component=$1; shift
+
+  if [[ "x${cmd}" == "x" ]]; then
+    usage 
+    exit -1
+  fi
+
+  if [[ "x${component}" == "x" ]]; then
+    usage
+    exit -1
+  fi
+
+  cluster=
+  package=
+  release=0
+  tests=0
+  while [ $# -gt 0 ]
+  do
+     case "$1" in 
+       -c) shift; cluster=$1; shift;;
+       -p) shift; package=$1; shift;;
+       -r) shift; release=1;;
+       -t) shift; tests=1;;
+       *)  usage; exit 1
+     esac  
+  done
+
+  if [[ "x${cluster}" == "x" ]]; then
+    echo "Cluster not specified. Please use -c option"
+    usage
+    exit -1
+  fi
+
+  host=$(hostname $component $cluster)
+
+  if [[ "x${host}" == "x" ]]; then
+    echo "Component has not host assigned in the cluster $cluster"
+    usage
+    exit -1
+  fi
+
+  case "$cmd" in 
+    install) install $cluster $host $component $release $test;;
+    list) list $cluster $host $component;;
+    activate) activate $cluster $host $component $package;;
+    lock) lock $cluster $host $component;;
+    unlock) unlock $cluster $host $component;;
+    start) service start $cluster $host $component;;
+    stop)  service stop $cluster $host $component;;
+    restart) service restart $cluster $host $component;;
+    status) service status $cluster $host $component;;
+    *) usage; exit 1
+  esac
+  exit 0
+fi
+
+if [[ "x${section}" == "xcluster" ]]; then
+  cmd=$1; shift
+
+  cluster=
+  while [ $# -gt 0 ]
+  do
+     case "$1" in
+       -c) shift; cluster=$1; shift;;
+       *)  usage; exit 1
+     esac
+  done
+
+  if [[ "x${cluster}" == "x" ]]; then
+    echo "Cluster not specified. Please use -c option"
+    usage
+    exit -1
+  fi
+
+  case "$cmd" in
+    show-map) map $cluster;;
+  esac
+  exit 0
+fi
+
+usage
+exit 1
