@@ -41,7 +41,7 @@ function build() {
 
   echo "Locally building component $component, version $version, branch $branch, $info"
 
-  $build_home/gradlew :${component}:rpmPrepackager $xcmd >/dev/null 2>/dev/null
+  $build_home/gradlew :${component}:rpmPrepackager $xcmd
   if [[ $? -ne 0 ]]; then
     echo "Build for component ${component} failed"
     exit 0
@@ -210,6 +210,16 @@ function map() {
   cat $conf/cluster/$cluster.conf
 }
 
+function project_map() {
+  local component=$1; shift
+  mapped_component=`grep $component $conf/project.map 2>/dev/null`
+  if [[ "x${mapped_component}" == "x" ]]; then
+    echo $component
+    return
+  fi
+  echo $mapped_component | awk ' { print $2 } '
+}
+
 function show_installed() {
   local cluster=$1; shift
   echo "Installed continuuity components on cluster $cluster"
@@ -236,7 +246,6 @@ section=$1; shift
 
 if [[ "x${section}" == "xsoftware" ]]; then
   cmd=$1; shift
-  component=$1; shift
 
   if [[ "x${cmd}" == "x" ]]; then
     echo "Command not specified"
@@ -244,11 +253,14 @@ if [[ "x${section}" == "xsoftware" ]]; then
     exit -1
   fi
 
-  if [[ "x${component}" == "x" ]] || [[ ! -d $build_home/$component ]]; then
+  xcomponent=$1; shift
+  if [[ "x${xcomponent}" == "x" ]] || [[ ! -d $build_home/$xcomponent ]]; then
     echo "Component is missing or doesn't exist"
     usage
     exit -1
   fi
+
+  component=$(project_map $xcomponent)
 
   cluster=
   package=
@@ -271,7 +283,7 @@ if [[ "x${section}" == "xsoftware" ]]; then
     exit -1
   fi
 
-  host=$(hostname $component $cluster)
+  host=$(hostname $xcomponent $cluster)
 
   if [[ "x${host}" == "x" ]]; then
     echo "Component has not host assigned in the cluster $cluster"
