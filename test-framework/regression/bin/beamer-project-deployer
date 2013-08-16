@@ -5,6 +5,7 @@ TGZ_FILE=$1;shift
 BRANCH=$1; shift
 TGZ_NAME=`basename $TGZ_FILE`
 CINST_BASE=/var/beamer
+epoch=`date +%s`
 
 if [[ $UID -ne 0 ]]; then
   echo "Please run this script as root"
@@ -13,6 +14,7 @@ fi
 
 if [[ ! -d $CINST_BASE/$TGZ_NAME ]]; then
   mkdir -p $CINST_BASE/$TGZ_NAME >/dev/null 2>/dev/null
+  mkdir -p $CINST_BASE/archive >/dev/null 2>/dev/null
 fi
 
 if [[ -f $CINST_BASE/$PROJECT.lock ]]; then
@@ -27,8 +29,13 @@ tar -mxvf $TGZ_NAME >/dev/null
 echo "$BRANCH" > branch >/dev/null
 popd >/dev/null
 
-if [[ ! -d /opt/continuuity/$PROJECT ]]; then
-  mkdir -p /opt/continuuity/$PROJECT
+if [[ -d /opt/continuuity/$PROJECT ]]; then
+  echo "Project dir exists ..."
+  if [[ ! -f /opt/continuuity/$PROJECT/lib ]]; then
+    echo "Not a symbolic link ..."
+    mv /opt/continuuity/$PROJECT $CINST_BASE/archive/$PROJECT.$epoch
+    mkdir -p /opt/continuuity/$PROJECT
+  fi
 fi
 
 if [[ -h /opt/continuuity/$PROJECT/lib ]]; then
@@ -48,9 +55,9 @@ fi
 ln -s -f $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/conf /opt/continuuity/$PROJECT/conf
 
 echo "Stopping all services related to project $PROJECT"
-cnt=`ls -1 $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin/svc-* 2>/dev/null | wc -l`
+cnt=`ls -1 /opt/continuuity/$PROJECT/bin/svc-* 2>/dev/null | wc -l`
 if [[ $cnt -ne 0 ]]; then
-  for service in `ls -1 $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin/svc-* 2>/dev/null`
+  for service in `ls -1 /opt/continuuity/$PROJECT/bin/svc-* 2>/dev/null`
   do
     name=`basename $service | sed 's/svc-//g'`
     name="continuuity-$name"
@@ -94,7 +101,7 @@ END
 done
 
 echo "Starting all services related to project $PROJECT"
-for service in `ls -1 $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin/svc-*`
+for service in `ls -1 /opt/continuuity/$PROJECT/bin/svc-*`
 do
   name=`basename $service | sed 's/svc-//g'`
   name="continuuity-$name"
