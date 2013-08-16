@@ -22,38 +22,6 @@ if [[ -f $CINST_BASE/$PROJECT.lock ]]; then
   exit -1
 fi
 
-cp -f $TGZ_FILE $CINST_BASE/${TGZ_NAME}/ >/dev/null 2>/dev/null
-
-pushd $CINST_BASE/$TGZ_NAME >/dev/null
-tar -mxvf $TGZ_NAME >/dev/null
-echo "$BRANCH" > branch >/dev/null
-popd >/dev/null
-
-if [[ -d /opt/continuuity/$PROJECT ]]; then
-  echo "Project dir exists ..."
-  if [[ ! -f /opt/continuuity/$PROJECT/lib ]]; then
-    echo "Not a symbolic link ..."
-    mv /opt/continuuity/$PROJECT $CINST_BASE/archive/$PROJECT.$epoch
-    mkdir -p /opt/continuuity/$PROJECT
-  fi
-fi
-
-if [[ -h /opt/continuuity/$PROJECT/lib ]]; then
-  unlink /opt/continuuity/$PROJECT/lib
-fi
-ln -s -f $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/lib /opt/continuuity/$PROJECT/lib
-
-if [[ -h /opt/continuuity/$PROJECT/bin ]]; then
-  unlink /opt/continuuity/$PROJECT/bin
-ln -s -f $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin /opt/continuuity/$PROJECT/bin
-fi
-ln -s -f $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin /opt/continuuity/$PROJECT/bin
-
-if [[ -h /opt/continuuity/$PROJECT/conf ]]; then
-  unlink /opt/continuuity/$PROJECT/conf
-fi
-ln -s -f $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/conf /opt/continuuity/$PROJECT/conf
-
 echo "Stopping all services related to project $PROJECT"
 cnt=`ls -1 /opt/continuuity/$PROJECT/bin/svc-* 2>/dev/null | wc -l`
 if [[ $cnt -ne 0 ]]; then
@@ -71,6 +39,30 @@ if [[ $cnt -ne 0 ]]; then
     fi
   done
 fi
+
+cp -f $TGZ_FILE $CINST_BASE/${TGZ_NAME}/ >/dev/null 2>/dev/null
+
+pushd $CINST_BASE/$TGZ_NAME >/dev/null
+tar -mxvf $TGZ_NAME >/dev/null
+echo "$BRANCH" > branch >/dev/null
+popd >/dev/null
+
+if [[ -d /opt/continuuity/$PROJECT ]]; then
+  if [[ ! -f /opt/continuuity/$PROJECT/lib ]]; then
+    mv /opt/continuuity/$PROJECT $CINST_BASE/archive/$PROJECT.$epoch
+    mkdir -p /opt/continuuity/$PROJECT
+  fi
+else
+  mkdir -p /opt/continuuity/$PROJECT
+fi
+
+for filedir in `ls -1 $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT`
+do 
+  if [[ -h /opt/continuuity/$PROJECT/$filedir ]]; then
+    unlink /opt/continuuity/$PROJECT/$filedir
+  fi
+  ln -s -f $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/$filedir /opt/continuuity/$PROJECT/$filedir
+done
 
 mkdir -p /var/log/continuuity /var/run/continuuity /var/continuuity/run || :
 chown -R continuuity.continuuity /opt/continuuity/$PROJECT

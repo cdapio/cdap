@@ -15,11 +15,11 @@ branch=`git branch | grep '*' | awk ' { print $2 } '`
 
 function build() {
   local component=$1; shift
+  local xcomponent=$1; shift
   local release=$1; shift
   local tests=$1; shift
 
   pushd $build_home >/dev/null
-  rm -fr $build_home/$component/build 2>/dev/null >/dev/null
 
   tag="snapshot"
   info=""
@@ -39,23 +39,23 @@ function build() {
     info="$info, with test"
   fi
 
-  echo "Locally building component $component, version $version, branch $branch, $info"
-
-  $build_home/gradlew :${component}:rpmPrepackager $xcmd
+  echo "Locally building component $xcomponent, version $version, branch $branch, $info"
+  rm -rf $build_home/$component/build >/dev/null 2>/dev/null
+  $build_home/gradlew :${component}:rpmPrepackager $xcmd >/dev/null 2>/dev/null
   if [[ $? -ne 0 ]]; then
     echo "Build for component ${component} failed"
     exit 0
   fi
 
-  package="continuuity-${component}-${user}-${version}-${tag}.${epoch}.tgz"
-  echo "Packaging component : $component, Package : $package"
+  package="continuuity-${xcomponent}-${user}-${version}-${tag}.${epoch}.tgz"
+  echo "Packaging component : $xcomponent, Package : $package"
   popd >/dev/null
   pushd $build_home/$component/build/stage-packaging >/dev/null
   tar cvzf $build_home/$component/build/$package * >/dev/null 2>/dev/null
   if [[ $? -eq 0 ]]; then
     echo $build_home/$component/build/$package > $build_home/$component/build/receipt
   else
-    echo "Component $component packaging failed" >/dev/null
+    echo "Component $xcomponent packaging failed" >/dev/null
     popd >/dev/null
     exit -1
   fi
@@ -108,22 +108,12 @@ function install() {
   local cluster=$1; shift
   local host=$1; shift
   local component=$1; shift
+  local xcomponent=$1; shift
   local release=$1; shift
   local tests=$1; shift
 
-  echo "Installing component $component on cluster $cluster"
-  if [[ -f $build_home/$component/build/receipt ]]; then
-    t=`cat $build_home/$component/build/receipt`
-    tar=`basename $t`
-    read -p "Previous build exists ($tar). Want to push that build (y/n) : " option
-    option=${option:-n}
-    if [[ "x${option}" == "xn" ]]; then
-      build $component $release $tests
-    fi
-  else
-    build $component $release $tests
-  fi
-
+  echo "Installing component $xcomponent on cluster $cluster"
+  build $component $xcomponent $release $tests 
   tar=`cat $build_home/$component/build/receipt`
   tar_name=`basename $tar`
   tar_remote_path=/tmp/$tar_name
@@ -131,7 +121,7 @@ function install() {
   installer=/tmp/beamer.deployer.$epoch.sh
   scp -q $bin/beamer-project-deployer $cuser@$host:$installer
   ssh -oStrictHostKeyChecking=no -l $cuser $host sudo chmod +x $installer
-  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo $installer $component $tar_remote_path $branch
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo $installer $xcomponent $tar_remote_path $branch
   ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f $installer $tar_remote_path
 }
 
@@ -292,15 +282,15 @@ if [[ "x${section}" == "xsoftware" ]]; then
   fi
 
   case "$cmd" in 
-    install) install $cluster $host $component $release $tests;;
-    list) list $cluster $host $component;;
-    activate) activate $cluster $host $component $package;;
-    lock) lock $cluster $host $component;;
-    unlock) unlock $cluster $host $component;;
-    start) service start $cluster $host $component;;
-    stop)  service stop $cluster $host $component;;
-    restart) service restart $cluster $host $component;;
-    status) service status $cluster $host $component;;
+    install) install $cluster $host $component $xcomponent $release $tests;;
+    list) list $cluster $host $xcomponent;;
+    activate) activate $cluster $host $xcomponent $package;;
+    lock) lock $cluster $host $xcomponent;;
+    unlock) unlock $cluster $host $xcomponent;;
+    start) service start $cluster $host $xcomponent;;
+    stop)  service stop $cluster $host $xcomponent;;
+    restart) service restart $cluster $host $xcomponent;;
+    status) service status $cluster $host $xcomponent;;
     *) usage; exit 1
   esac
   exit 0
