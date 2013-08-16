@@ -18,24 +18,33 @@ function build() {
   local release=$1; shift
   local tests=$1; shift
 
-  echo "Locally building component $component, version $version, branch $branch"
   pushd $build_home >/dev/null
   rm -fr $build_home/$component/build 2>/dev/null >/dev/null
 
   tag="snapshot"
+  info=""
   xcmd=" "
   if [[ "x${release}" == "x1" ]]; then
+    info="release"
     tag="release"
     xcmd="$xcmd -PfinalRelease=true"
+  else
+    info="snapshot"
   fi
  
-  if [[ "x${tests}" == "x1" ]]; then
+  if [[ "x${tests}" == "x0" ]]; then
     xcmd="$xcmd -x test"
+    info="$info, without test"
+  else
+    info="$info, with test"
   fi
+
+  echo "Locally building component $component, version $version, branch $branch, $info"
 
   $build_home/gradlew :${component}:rpmPrepackager $xcmd >/dev/null 2>/dev/null
   if [[ $? -ne 0 ]]; then
     echo "Build for component ${component} failed"
+    exit 0
   fi
 
   package="continuuity-${component}-${user}-${version}-${tag}.${epoch}.tgz"
@@ -271,7 +280,7 @@ if [[ "x${section}" == "xsoftware" ]]; then
   fi
 
   case "$cmd" in 
-    install) install $cluster $host $component $release $test;;
+    install) install $cluster $host $component $release $tests;;
     list) list $cluster $host $component;;
     activate) activate $cluster $host $component $package;;
     lock) lock $cluster $host $component;;
