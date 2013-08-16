@@ -255,7 +255,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     if (GeneratorFlowlet.class.isAssignableFrom(flowletType.getRawType())) {
       Method method = flowletType.getRawType().getMethod("generate");
       ProcessMethod generatorMethod = processMethodFactory.create(method);
-      ConsumerConfig dummyConfig = new ConsumerConfig(0, 0, 0, DequeueStrategy.FIFO, null);
+      ConsumerConfig dummyConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
 
       return ImmutableList.of(processSpecFactory.create(ImmutableSet.<String>of(),
                                                         Schema.of(Schema.Type.NULL), TypeToken.of(void.class),
