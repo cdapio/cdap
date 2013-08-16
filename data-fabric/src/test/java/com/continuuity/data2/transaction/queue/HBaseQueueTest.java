@@ -28,7 +28,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -51,12 +50,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class HBaseQueueTest extends HBaseTestBase {
 
-  private static Logger LOG = LoggerFactory.getLogger(HBaseQueueTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static Configuration hConf;
   private static InMemoryZKServer zkServer;
   private static OperationExecutorService opexService;
   private static OperationExecutor opex;
@@ -324,9 +322,9 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     // Start hbase
     HBaseTestBase.startHBase();
-    hConf = HBaseTestBase.getConfiguration();
 
-    final DataFabricDistributedModule dataFabricModule = new DataFabricDistributedModule(hConf);
+    final DataFabricDistributedModule dataFabricModule =
+      new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
 
     // Customize test configuration
     final CConfiguration cConf = dataFabricModule.getConfiguration();
