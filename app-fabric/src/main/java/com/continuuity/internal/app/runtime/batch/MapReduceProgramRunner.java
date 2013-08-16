@@ -131,7 +131,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       tx = opex.startTransaction(opexContext, false);
       txAgent = new SmartTransactionAgent(opex,
                                           opexContext,
-                                          dataSetContext.getTxAwareDataSets(),
+                                          dataSetContext.getTransactionAware(),
                                           txSystemClient,
                                           tx);
       txAgent.start();

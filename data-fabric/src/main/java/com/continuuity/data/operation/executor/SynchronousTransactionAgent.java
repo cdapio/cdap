@@ -15,7 +15,6 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +37,7 @@ public class SynchronousTransactionAgent extends AbstractTransactionAgent {
    */
   public SynchronousTransactionAgent(OperationExecutor opex,
                                      OperationContext context,
-                                     Collection<TransactionAware> txAware,
+                                     Iterable<TransactionAware> txAware,
                                      TransactionSystemClient txSystemClient) {
     super(opex, context, txAware, txSystemClient);
   }

@@ -5,16 +5,13 @@ package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.Queue2Consumer;
-import com.continuuity.data2.queue.Queue2Producer;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -25,20 +22,18 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 /**
  * HBase queue tests.
  */
 public class HBaseQueueTest extends QueueTest {
 
-  private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  protected static InMemoryZKServer zkServer;
-  protected static OperationExecutorService opexService;
+  private static InMemoryZKServer zkServer;
+  private static OperationExecutorService opexService;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -75,6 +70,7 @@ public class HBaseQueueTest extends QueueTest {
 
     // Get the remote opex
     opex = injector.getInstance(OperationExecutor.class);
+    queueClientFactory = injector.getInstance(QueueClientFactory.class);
   }
 
   @AfterClass
@@ -84,14 +80,4 @@ public class HBaseQueueTest extends QueueTest {
     zkServer.stopAndWait();
   }
 
-  @Override
-  protected Queue2Producer createProducer(String tableName, QueueName queueName) throws IOException {
-    return new HBaseQueueClientFactory(HBaseTestBase.getHBaseAdmin(), tableName).createProducer(queueName);
-  }
-
-  @Override
-  protected Queue2Consumer createConsumer(String tableName, QueueName queueName, ConsumerConfig config)
-    throws IOException {
-    return new HBaseQueueClientFactory(HBaseTestBase.getHBaseAdmin(), tableName).createConsumer(queueName, config);
-  }
 }

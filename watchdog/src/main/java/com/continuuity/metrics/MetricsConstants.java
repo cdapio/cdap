@@ -47,6 +47,9 @@ public final class MetricsConstants {
   // Number of seconds to subtract from current timestamp when query without "end" time.
   public static final long QUERY_SECOND_DELAY = 2;
 
+  public static final int DEFAULT_THREAD_POOL_SIZE = 30;
+  public static final int DEFAULT_KEEP_ALIVE_SECONDS = 30;
+
   private MetricsConstants() {
   }
 }

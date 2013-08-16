@@ -19,16 +19,28 @@ import java.util.List;
  */
 public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware {
 
-  Transaction currentTx;
-  boolean committed = false;
-  final InMemoryQueue queue;
-  final ConsumerConfig config;
-  List<InMemoryQueue.Key> dequeuedKeys;
-  final InMemoryQueue.ConsumerState state = new InMemoryQueue.ConsumerState();
+  private final QueueName queueName;
+  private Transaction currentTx;
+  private boolean committed = false;
+  private final InMemoryQueue queue;
+  private final ConsumerConfig config;
+  private List<InMemoryQueue.Key> dequeuedKeys;
+  private final InMemoryQueue.ConsumerState state = new InMemoryQueue.ConsumerState();
 
   public InMemoryQueue2Consumer(QueueName queueName, ConsumerConfig config) {
+    this.queueName = queueName;
     this.queue = InMemoryQueueService.getQueue(queueName);
     this.config = config;
+  }
+
+  @Override
+  public QueueName getQueueName() {
+    return queueName;
+  }
+
+  @Override
+  public ConsumerConfig getConfig() {
+    return config;
   }
 
   @Override
@@ -69,7 +81,7 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
 
   @Override
   public void postTxCommit() {
-    // TODO do eviction here?
+    queue.evict(dequeuedKeys, config);
   }
 
   @Override

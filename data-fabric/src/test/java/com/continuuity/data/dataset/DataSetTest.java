@@ -124,7 +124,7 @@ public class DataSetTest extends DataSetTestBase {
     inst.setDataSets(Collections.singletonList(spec));
     KeyValueTable kvTable = inst.getDataSet("testtest");
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT,
-                                                              inst.getTxAwareDataSets(), txSystemClient));
+                                                              inst.getTransactionAware(), txSystemClient));
     kvTable.write("a".getBytes(), "b".getBytes());
 
     // test with a double nested table - a dataset that embeds a table and a kv table that in turn embeds another table
@@ -132,7 +132,7 @@ public class DataSetTest extends DataSetTestBase {
     inst.setDataSets(Collections.singletonList(spec));
     DoubleNestedTable dn = inst.getDataSet("testtest");
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT,
-                                                              inst.getTxAwareDataSets(), txSystemClient));
+                                                              inst.getTransactionAware(), txSystemClient));
     dn.writeAndInc("a", 17);
   }
 }

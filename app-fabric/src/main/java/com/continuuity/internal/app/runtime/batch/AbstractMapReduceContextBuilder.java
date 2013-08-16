@@ -101,7 +101,7 @@ public abstract class AbstractMapReduceContextBuilder {
       dataSetContext, program.getSpecification().getDataSets().keySet());
 
     TransactionAgent txAgent = new DetachedSmartTransactionAgent(opex, opexContext,
-                                                                 dataSetContext.getTxAwareDataSets(),
+                                                                 dataSetContext.getTransactionAware(),
                                                                  txSystemClient,
                                                                  tx, tx2);
     try {

@@ -7,7 +7,6 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.collect.Lists;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,7 +29,7 @@ public class BatchTransactionAgentWithSyncReads extends SynchronousTransactionAg
    * @param context the operation context for all operations
    */
   public BatchTransactionAgentWithSyncReads(OperationExecutor opex, OperationContext context,
-                                            Collection<TransactionAware> txAware,
+                                            Iterable<TransactionAware> txAware,
                                             TransactionSystemClient txSystemClient) {
     super(opex, context, txAware, txSystemClient);
   }

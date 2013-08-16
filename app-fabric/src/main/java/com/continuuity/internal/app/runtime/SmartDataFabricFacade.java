@@ -12,16 +12,21 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.queue.ConsumerConfig;
+import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.internal.app.queue.QueueConsumerFactory;
-import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
-import com.continuuity.internal.app.queue.QueueConsumerFactoryImpl;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * A {@link DataFabricFacade} that will create a new {@link SmartTransactionAgent} every time
@@ -58,7 +63,7 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   @Override
   public TransactionAgent createAndUpdateTransactionAgentProxy() {
     OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
-    TransactionAgent agent = new SmartTransactionAgent(opex, ctx, dataSetContext.getTxAwareDataSets(), txSystemClient);
+    TransactionAgent agent = new SmartTransactionAgent(opex, ctx, dataSetContext.getTransactionAware(), txSystemClient);
     transactionProxy.setTransactionAgent(agent);
     return agent;
   }
@@ -66,22 +71,33 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   @Override
   public TransactionAgent createTransactionAgent() {
     OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
-    return new SmartTransactionAgent(opex, ctx, dataSetContext.getTxAwareDataSets(), txSystemClient);
+    return new SmartTransactionAgent(opex, ctx, dataSetContext.getTransactionAware(), txSystemClient);
   }
 
   @Override
-  public QueueConsumerFactory createQueueConsumerFactory(int instanceId, long groupId, String groupName,
-                                                         QueueName queueName, QueueInfo queueInfo,
-                                                         boolean singleEntry) {
-    return new QueueConsumerFactoryImpl(opex, program, instanceId, groupId, groupName, queueName, queueInfo,
-                                        singleEntry, queueClientFactory);
+  public Queue2Producer createProducer(QueueName queueName) throws IOException {
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    if (producer instanceof TransactionAware) {
+      dataSetContext.addTransactionAware((TransactionAware) producer);
+    }
+    return producer;
+  }
+
+  @Override
+  public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig) throws IOException {
+    Queue2Consumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig);
+    if (consumer instanceof TransactionAware) {
+      dataSetContext.addTransactionAware((TransactionAware) consumer);
+      // TODO: Need to deal with removing from the transaction aware list when no longer used.
+    }
+    return consumer;
   }
 
   private DataSetInstantiator createDataSetContext(Program program,
-                                              OperationExecutor opex,
-                                              LocationFactory locationFactory,
-                                              DataSetAccessor dataSetAccessor,
-                                              TransactionProxy proxy) {
+                                                   OperationExecutor opex,
+                                                   LocationFactory locationFactory,
+                                                   DataSetAccessor dataSetAccessor,
+                                                   TransactionProxy proxy) {
     try {
       OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
       DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, ctx);

@@ -72,7 +72,7 @@ public class MapReduceProgramRunnerTest {
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
 
     TransactionAgent txAgent = new SynchronousTransactionAgent(opex, opCtx,
-                                                               dataSetInstantiator.getTxAwareDataSets(),
+                                                               dataSetInstantiator.getTransactionAware(),
                                                                txSystemClient);
     proxy.setTransactionAgent(txAgent);
     KeyValueTable jobConfigTable = (KeyValueTable) dataSetInstantiator.getDataSet("jobConfig");
@@ -123,7 +123,7 @@ public class MapReduceProgramRunnerTest {
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
 
     TransactionAgent txAgent = new SynchronousTransactionAgent(opex, opCtx,
-                                                               dataSetInstantiator.getTxAwareDataSets(),
+                                                               dataSetInstantiator.getTransactionAware(),
                                                                txSystemClient);
     proxy.setTransactionAgent(txAgent);
 

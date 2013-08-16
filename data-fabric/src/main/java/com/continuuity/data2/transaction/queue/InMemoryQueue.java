@@ -26,7 +26,11 @@ public class InMemoryQueue {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryQueue.class);
 
-  final ConcurrentNavigableMap<Key, Item> entries = new ConcurrentSkipListMap<Key, Item>();
+  private final ConcurrentNavigableMap<Key, Item> entries = new ConcurrentSkipListMap<Key, Item>();
+
+  public int getSize() {
+    return entries.size();
+  }
 
   public void enqueue(long txId, int seqId, QueueEntry entry) {
     entries.put(new Key(txId, seqId), new Item(entry));
@@ -117,7 +121,6 @@ public class InMemoryQueue {
         continue;
       }
       item.setConsumerState(config.getGroupId(), ConsumerEntryState.PROCESSED);
-      item.incrementProcessed();
     }
   }
 
@@ -132,8 +135,25 @@ public class InMemoryQueue {
         continue;
       }
       ConsumerEntryState state = item.removeConsumerState(config.getGroupId());
-      if (ConsumerEntryState.PROCESSED.equals(state)) {
-        item.decrementProcessed();
+    }
+  }
+
+  public void evict(List<Key> dequeuedKeys, ConsumerConfig config) {
+    if (config.getNumGroups() < 1) {
+      return; // this means no eviction because number of groups is not known
+    }
+    if (dequeuedKeys == null) {
+      return;
+    }
+    for (Key key : dequeuedKeys) {
+      Item item = entries.get(key);
+      if (item == null) {
+        LOG.warn("Attempting to evict non-existing entry " + key);
+        continue;
+      }
+      if (item.incrementProcessed() >= config.getNumGroups()) {
+        // all consumer groups have processed _and_ reached the post-commit hook: safe to evict
+        entries.remove(key);
       }
     }
   }
@@ -210,10 +230,6 @@ public class InMemoryQueue {
 
     int incrementProcessed() {
       return processedCount.incrementAndGet();
-    }
-
-    void decrementProcessed() {
-      processedCount.decrementAndGet();
     }
   }
 

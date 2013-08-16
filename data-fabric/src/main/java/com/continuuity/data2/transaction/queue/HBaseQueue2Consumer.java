@@ -15,7 +15,6 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -37,6 +36,7 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -50,7 +50,7 @@ import java.util.SortedMap;
 /**
  *
  */
-final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
+final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Closeable {
 
   // TODO: Make these configurable.
   private static final int MAX_CACHE_ROWS = 100;
@@ -58,10 +58,11 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
   private final ConsumerConfig consumerConfig;
   private final HTable hTable;
   private final QueueName queueName;
-  private final SortedMap<byte[], Entry> entryCache;
-  private final SortedMap<byte[], Entry> consumingEntries;
+  private final SortedMap<byte[], HBaseQueueEntry> entryCache;
+  private final SortedMap<byte[], HBaseQueueEntry> consumingEntries;
   private final Function<byte[], byte[]> rowKeyToChangeTx;
   private final byte[] stateColumnName;
+  private final byte[] queueRowPrefix;
   private byte[] startRow;
   private Transaction transaction;
 
@@ -71,7 +72,8 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    this.startRow = queueName.toBytes();
+    this.queueRowPrefix = HBaseQueueUtils.getQueueRowPrefix(queueName);
+    this.startRow = queueRowPrefix;
     this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
 
@@ -87,6 +89,16 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
         return Bytes.add(changeTxPrefix, rowKey);
       }
     };
+  }
+
+  @Override
+  public QueueName getQueueName() {
+    return queueName;
+  }
+
+  @Override
+  public ConsumerConfig getConfig() {
+    return consumerConfig;
   }
 
   @Override
@@ -108,9 +120,9 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
 
       // For FIFO, need to try claiming the entry if group size > 1
       if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
-        Iterator<Map.Entry<byte[], Entry>> iterator = consumingEntries.entrySet().iterator();
+        Iterator<Map.Entry<byte[], HBaseQueueEntry>> iterator = consumingEntries.entrySet().iterator();
         while (iterator.hasNext()) {
-          Entry entry = iterator.next().getValue();
+          HBaseQueueEntry entry = iterator.next().getValue();
 
           // If the state is already in CLAIMED state, no need to claim it again
           // It happens for rollbacked entries or restart from failure
@@ -126,7 +138,6 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
             // If not able to claim it, remove it, and move to next one.
             if (!claimed) {
               iterator.remove();
-              continue;
             }
           }
         }
@@ -138,7 +149,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
       return DequeueResult.EMPTY_RESULT;
     }
 
-    return new DequeueResultImpl(consumingEntries.values());
+    return new HBaseDequeueResult(consumingEntries.values(), queueName, consumerConfig);
   }
 
   @Override
@@ -214,6 +225,11 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
     return true;
   }
 
+  @Override
+  public void close() throws IOException {
+    hTable.close();
+  }
+
   /**
    * Try to dequeue (claim) entries up to a maximum size.
    * @param entries For claimed entries to fill in.
@@ -221,7 +237,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
    * @return The entries instance.
    * @throws IOException
    */
-  private boolean getEntries(SortedMap<byte[], Entry> entries, int maxBatchSize) throws IOException {
+  private boolean getEntries(SortedMap<byte[], HBaseQueueEntry> entries, int maxBatchSize) throws IOException {
     boolean hasEntry = fetchFromCache(entries, maxBatchSize);
 
     // If not enough entries from the cache, try to get more.
@@ -235,14 +251,14 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
     return hasEntry;
   }
 
-  private boolean fetchFromCache(SortedMap<byte[], Entry> entries, int maxBatchSize) {
+  private boolean fetchFromCache(SortedMap<byte[], HBaseQueueEntry> entries, int maxBatchSize) {
     if (entryCache.isEmpty()) {
       return false;
     }
 
-    Iterator<Map.Entry<byte[], Entry>> iterator = entryCache.entrySet().iterator();
+    Iterator<Map.Entry<byte[], HBaseQueueEntry>> iterator = entryCache.entrySet().iterator();
     while (entries.size() < maxBatchSize && iterator.hasNext()) {
-      Map.Entry<byte[], Entry> entry = iterator.next();
+      Map.Entry<byte[], HBaseQueueEntry> entry = iterator.next();
       entries.put(entry.getKey(), entry.getValue());
       iterator.remove();
     }
@@ -260,9 +276,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.DATA_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.META_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName);
-
-    // TODO: Need more test before enabling it.
-//    scan.setFilter(createFilter());
+    scan.setFilter(createFilter());
 
     long readPointer = transaction.getReadPointer();
     long[] excludedList = transaction.getExcludedList();
@@ -283,7 +297,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
         }
 
         // Row key is queue_name + writePointer + counter
-        long writePointer = Bytes.toLong(rowKey, queueName.toBytes().length, Longs.BYTES);
+        long writePointer = Bytes.toLong(rowKey, queueRowPrefix.length, Longs.BYTES);
 
         // If writes later than the reader pointer, abort the loop, as entries that comes later are all uncommitted.
         if (writePointer > readPointer) {
@@ -309,7 +323,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
           continue;
         }
 
-        entryCache.put(rowKey, new Entry(rowKey,
+        entryCache.put(rowKey, new HBaseQueueEntry(rowKey,
                                          result.getValue(HBaseQueueConstants.COLUMN_FAMILY,
                                                          HBaseQueueConstants.DATA_COLUMN),
                                          result.getValue(HBaseQueueConstants.COLUMN_FAMILY,
@@ -419,57 +433,10 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
    * Gets the stop row for scan. Stop row is queueName + (readPointer + 1).
    */
   private byte[] getStopRow() {
-    return Bytes.add(queueName.toBytes(), Bytes.toBytes(transaction.getReadPointer() + 1L));
+    return Bytes.add(queueRowPrefix, Bytes.toBytes(transaction.getReadPointer() + 1L));
   }
 
   private byte[] getNextRow(long writePointer, int count) {
-    return Bytes.add(queueName.toBytes(), Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
-  }
-
-  private static final class Entry {
-    private final byte[] rowKey;
-    private final byte[] data;
-    private final byte[] state;
-
-    private Entry(byte[] rowKey, byte[] data, byte[] state) {
-      this.rowKey = rowKey;
-      this.data = data;
-      this.state = state;
-    }
-
-    private byte[] getRowKey() {
-      return rowKey;
-    }
-
-    private byte[] getData() {
-      return data;
-    }
-
-    private byte[] getState() {
-      return state;
-    }
-  }
-
-  private static final class DequeueResultImpl implements DequeueResult {
-
-    private final List<byte[]> data;
-
-    DequeueResultImpl(Collection<Entry> entries) {
-      ImmutableList.Builder<byte[]> builder = ImmutableList.builder();
-      for (Entry entry : entries) {
-        builder.add(entry.getData());
-      }
-      this.data = builder.build();
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return data.isEmpty();
-    }
-
-    @Override
-    public Collection<byte[]> getData() {
-      return data;
-    }
+    return Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
   }
 }

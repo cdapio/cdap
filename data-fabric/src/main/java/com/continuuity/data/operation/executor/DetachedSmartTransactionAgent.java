@@ -23,7 +23,7 @@ public class DetachedSmartTransactionAgent extends SmartTransactionAgent {
    * @param context the operation context for all operations
    */
   public DetachedSmartTransactionAgent(OperationExecutor opex, OperationContext context,
-                                       Collection<TransactionAware> txAware, TransactionSystemClient txSystemClient,
+                                       Iterable<TransactionAware> txAware, TransactionSystemClient txSystemClient,
                                        com.continuuity.data.operation.executor.Transaction tx,
                                        com.continuuity.data2.transaction.Transaction tx2) {
     super(opex, context, txAware, txSystemClient, tx);

@@ -4,11 +4,14 @@
 package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -26,6 +29,12 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   private final HBaseAdmin admin;
   private final byte[] tableName;
 
+  @Inject
+  public HBaseQueueClientFactory(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
+                                 @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf) throws IOException {
+    this(hConf, cConf.get(HBaseQueueConstants.ConfigKeys.QUEUE_TABLE_NAME));
+  }
+
   public HBaseQueueClientFactory(Configuration hConf, String tableName) throws IOException {
     this(new HBaseAdmin(hConf), tableName);
   }
@@ -33,8 +42,8 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   public HBaseQueueClientFactory(HBaseAdmin admin, String tableName) throws IOException {
     this.admin = admin;
     this.tableName = Bytes.toBytes(tableName);
-    HBaseUtils.createTableIfNotExists(admin, tableName,
-                                      HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.MAX_CREATE_TABLE_WAIT);
+    HBaseQueueUtils.createTableIfNotExists(admin, tableName, HBaseQueueConstants.COLUMN_FAMILY,
+                                           HBaseQueueConstants.MAX_CREATE_TABLE_WAIT);
   }
 
   @Override

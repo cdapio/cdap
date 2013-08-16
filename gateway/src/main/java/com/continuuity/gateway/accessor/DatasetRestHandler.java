@@ -728,14 +728,14 @@ public class DatasetRestHandler extends NettyRestHandler {
 
   private Transaction startTx() {
     Transaction tx = accessor.getTxSystemClient().start();
-    for (TransactionAware txAware : accessor.getInstantiator().getInstantiator().getTxAwareDataSets()) {
+    for (TransactionAware txAware : accessor.getInstantiator().getInstantiator().getTransactionAware()) {
       txAware.startTx(tx);
     }
     return tx;
   }
 
   private void commitTx(Transaction tx) {
-    for (TransactionAware txAware : accessor.getInstantiator().getInstantiator().getTxAwareDataSets()) {
+    for (TransactionAware txAware : accessor.getInstantiator().getInstantiator().getTransactionAware()) {
       try {
         txAware.commitTx();
       } catch (Exception e) {
