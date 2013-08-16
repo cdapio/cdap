@@ -10,7 +10,6 @@ import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -28,7 +27,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Map;
 
 /**
  * Class for handling requests for aggregate application metrics of the
@@ -39,17 +37,32 @@ public final class AppMetricsHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppMetricsHandler.class);
   private static final String CONTENT_TYPE_JSON = "application/json";
-  private static final Map<String, String> typeMapping;
-  private static final String PROCEDURES = "procedures";
-  private static final String FLOWLETS = "flowlets";
-  private static final String[] validTypes = {FLOWLETS, PROCEDURES};
 
   private final AggregatesTable aggregatesTable;
 
-  static {
-    typeMapping = Maps.newHashMap();
-    typeMapping.put(PROCEDURES, "p");
-    typeMapping.put(FLOWLETS, "f");
+  private enum MetricType {
+    FLOWLETS("flowlets"),
+    PROCEDURES("procedures");
+    private String name;
+
+    private MetricType(String name) {
+      this.name = name;
+    }
+
+    private String getName() {
+      return this.name;
+    }
+
+    private String getContextProgramType() {
+      switch (this) {
+        case FLOWLETS:
+          return "f";
+        case PROCEDURES:
+          return "p";
+        default:
+          return null;
+      }
+    }
   }
 
   @Inject
@@ -64,14 +77,14 @@ public final class AppMetricsHandler extends AbstractHttpHandler {
    *     {
    *       "flow":flowid,
    *       "flowlet":flowletid,
-   *       "metric":metric
+   *       "metricPrefix":metric
    *     }
    *     ...
    *   ],
    *   "procedures": [
    *     {
    *       "procedure":procedureid,
-   *       "metric":metric
+   *       "metricPrefix":metric
    *     }
    *     ...
    *   ]
@@ -83,7 +96,7 @@ public final class AppMetricsHandler extends AbstractHttpHandler {
    *     {
    *       "flow":flowid,
    *       "flowlet":flowletid,
-   *       "metric":metric,
+   *       "metricPrefix":metric,
    *       "data":count
    *     }
    *     ...
@@ -91,13 +104,12 @@ public final class AppMetricsHandler extends AbstractHttpHandler {
    *   "procedures": [
    *     {
    *       "procedure":procedureid,
-   *       "metric":metric,
+   *       "metricPrefix":metric,
    *       "data":count
    *     }
    *     ...
    *   ]
    * }
-   *
    */
   @POST
   @Path("/{app-id}")
@@ -114,18 +126,18 @@ public final class AppMetricsHandler extends AbstractHttpHandler {
     try {
       JsonObject requestJson = new Gson().fromJson(reader, JsonObject.class);
 
-      for (String type : validTypes) {
+      for (MetricType type : MetricType.values()) {
         JsonArray outputArray = new JsonArray();
-        JsonArray metricRequests = requestJson.get(type).getAsJsonArray();
+        JsonArray metricRequests = requestJson.get(type.getName()).getAsJsonArray();
         for (JsonElement metricJson : metricRequests) {
           JsonObject metricReq = metricJson.getAsJsonObject();
-          String metricPrefix = metricReq.get("metric").getAsString();
+          String metricPrefix = metricReq.get("metricPrefix").getAsString();
           String contextPrefix = computeContextPrefix(appId, type, metricReq);
           long data = getAggregate(contextPrefix, metricPrefix);
           metricReq.addProperty("data", data);
           outputArray.add(metricReq);
         }
-        output.add(type, outputArray);
+        output.add(type.getName(), outputArray);
       }
     } finally {
       reader.close();
@@ -134,15 +146,15 @@ public final class AppMetricsHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, output);
   }
 
-  private String computeContextPrefix(String appId, String type, JsonObject req) {
+  private String computeContextPrefix(String appId, MetricType type, JsonObject req) {
     StringBuilder sb = new StringBuilder();
     sb.append(appId);
     sb.append(".");
-    sb.append(typeMapping.get(type));
+    sb.append(type.getContextProgramType());
     sb.append(".");
-    if (type.equals(PROCEDURES)) {
+    if (type == MetricType.PROCEDURES) {
       sb.append(req.get("procedure").getAsString());
-    } else if (type.equals(FLOWLETS)) {
+    } else if (type == MetricType.FLOWLETS) {
       sb.append(req.get("flow").getAsString());
       sb.append(".");
       sb.append(req.get("flowlet").getAsString());
