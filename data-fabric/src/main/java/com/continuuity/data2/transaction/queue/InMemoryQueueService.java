@@ -25,4 +25,10 @@ public final class InMemoryQueueService {
     return queue;
   }
 
+  public static void dumpInfo() {
+    for (String qname : queues.keySet()) {
+      System.out.println("Queue '" + qname + "': size is " + queues.get(qname).getSize());
+    }
+  }
+
 }
