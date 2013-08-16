@@ -84,7 +84,8 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.startRow = queueName.toBytes();
-    this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX, Bytes.toBytes(consumerConfig.getGroupId()));
+    this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX,
+                                     Bytes.toBytes(consumerConfig.getGroupId()));
 
     byte[] tableName = hTable.getTableName();
     final byte[] changeTxPrefix = ByteBuffer.allocate(tableName.length + 1)

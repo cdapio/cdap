@@ -26,23 +26,8 @@ import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.primitives.Ints;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
-import org.apache.hadoop.hbase.filter.BitComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.RowFilter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -53,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -66,12 +50,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class HBaseQueueTest extends HBaseTestBase {
 
-  private static Logger LOG = LoggerFactory.getLogger(HBaseQueueTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static Configuration hConf;
   private static InMemoryZKServer zkServer;
   private static OperationExecutorService opexService;
   private static OperationExecutor opex;
@@ -111,7 +94,7 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
     LOG.info("Enqueue {} entries in {} ms", count, elapsed);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
+    LOG.info("Average {} entries per seconds", (double) count * 1000 / elapsed);
 
     // Try to dequeue
     final long expectedSum = ((long) count / 2 * ((long) count - 1));
@@ -130,7 +113,7 @@ public class HBaseQueueTest extends HBaseTestBase {
             Queue2Consumer consumer = createConsumer(tableName, queueName,
                                                      new ConsumerConfig(0, instanceId, consumerSize,
                                                                         DequeueStrategy.FIFO, null));
-            TransactionAware txAware = (TransactionAware)consumer;
+            TransactionAware txAware = (TransactionAware) consumer;
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.start();
@@ -163,7 +146,7 @@ public class HBaseQueueTest extends HBaseTestBase {
 
             long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
             LOG.info("Dequeue {} entries in {} ms", dequeueCount, elapsed);
-            LOG.info("Average {} entries per seconds", (double)dequeueCount * 1000 / elapsed);
+            LOG.info("Average {} entries per seconds", (double) dequeueCount * 1000 / elapsed);
             completeLatch.countDown();
           } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -215,12 +198,12 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
     LOG.info("Enqueue {} entries in {} ms", count, elapsed);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
+    LOG.info("Average {} entries per seconds", (double) count * 1000 / elapsed);
 
     // Try to dequeue
     Queue2Consumer consumer = createConsumer(tableName, queueName,
                                              new ConsumerConfig(0, 0, 1, DequeueStrategy.HASH, "key"));
-    txAware = (TransactionAware)consumer;
+    txAware = (TransactionAware) consumer;
 
     stopwatch = new Stopwatch();
     stopwatch.start();
@@ -249,7 +232,7 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
     LOG.info("Dequeue {} entries in {} ms", count, elapsed);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
+    LOG.info("Average {} entries per seconds", (double) count * 1000 / elapsed);
 
     Assert.assertEquals(expectedSum, sum);
   }
@@ -293,13 +276,13 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
     LOG.info("Enqueue {} entries of batch size {} in {} ms", count, batchSize, elapsed);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
+    LOG.info("Average {} entries per seconds", (double) count * 1000 / elapsed);
 
     // Try to dequeue
     batchSize = 50;
     Queue2Consumer consumer = createConsumer(tableName, queueName,
                                              new ConsumerConfig(0, 0, 1, DequeueStrategy.HASH, "key"));
-    txAware = (TransactionAware)consumer;
+    txAware = (TransactionAware) consumer;
 
     stopwatch = new Stopwatch();
     stopwatch.start();
@@ -328,7 +311,7 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
     LOG.info("Dequeue {} entries in {} ms of batch size {}", count, elapsed, batchSize);
-    LOG.info("Average {} entries per seconds", (double)count * 1000 / elapsed);
+    LOG.info("Average {} entries per seconds", (double) count * 1000 / elapsed);
   }
 
   @BeforeClass
@@ -339,9 +322,9 @@ public class HBaseQueueTest extends HBaseTestBase {
 
     // Start hbase
     HBaseTestBase.startHBase();
-    hConf = HBaseTestBase.getConfiguration();
 
-    final DataFabricDistributedModule dataFabricModule = new DataFabricDistributedModule(hConf);
+    final DataFabricDistributedModule dataFabricModule =
+      new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
 
     // Customize test configuration
     final CConfiguration cConf = dataFabricModule.getConfiguration();
