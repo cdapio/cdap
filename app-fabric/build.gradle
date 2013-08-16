@@ -37,6 +37,7 @@ dependencies {
   // Dependencies required by api.
 
   // Dependencies required by main.
+  compile libraries.asm
   compile libraries.slf4j_api
   compile libraries.apache_commons_cli
   compile libraries.google_gson

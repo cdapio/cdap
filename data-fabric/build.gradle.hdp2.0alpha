@@ -30,7 +30,6 @@ dependencies {
   apiCompile libraries.google_guava
   apiCompile libraries.netty
 
-  compile libraries.kryo
   compile libraries.hsql
   compile('org.apache.hbase:hbase:0.94.2.1') { exclude module: 'junit' }
 
