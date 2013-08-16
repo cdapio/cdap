@@ -19,7 +19,9 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.queue.HBaseQueueClientFactory;
 import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
@@ -299,6 +301,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
         bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(cConf);
         bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hConf);
+        bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
 
         bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
           @Override
