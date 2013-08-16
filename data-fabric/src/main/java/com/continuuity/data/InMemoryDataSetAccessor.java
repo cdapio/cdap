@@ -1,9 +1,9 @@
 package com.continuuity.data;
 
+import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
-import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
 
 /**

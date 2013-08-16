@@ -10,7 +10,7 @@ import com.google.inject.Inject;
 import java.util.Collection;
 
 /**
- * Temporary tx client that talks to tx server thru opex (easier faster integration)
+ * Temporary tx client that talks to tx server thru opex (easier faster integration).
  */
 // todo: handle exceptions well
 public class TalkingToOpexTxSystemClient implements TransactionSystemClient {

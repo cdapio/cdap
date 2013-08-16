@@ -212,7 +212,7 @@ public class HBaseQueueTest extends HBaseTestBase {
               long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
               LOG.info("Dequeue {} entries in {} ms for {}", dequeueCount, elapsed, queueName.getSimpleName());
               LOG.info("Dequeue avg {} entries per seconds for {}",
-                       (double)dequeueCount * 1000 / elapsed, queueName.getSimpleName());
+                       (double) dequeueCount * 1000 / elapsed, queueName.getSimpleName());
               completeLatch.countDown();
             } finally {
               if (consumer instanceof Closeable) {
@@ -278,7 +278,7 @@ public class HBaseQueueTest extends HBaseTestBase {
             long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
             LOG.info("Enqueue {} entries in {} ms for {}", count, elapsed, queueName.getSimpleName());
             LOG.info("Enqueue avg {} entries per seconds for {}",
-                     (double)count * 1000 / elapsed, queueName.getSimpleName());
+                     (double) count * 1000 / elapsed, queueName.getSimpleName());
             stopwatch.stop();
           } finally {
             if (producer instanceof Closeable) {

@@ -4,10 +4,13 @@
 package com.continuuity.data2.transaction.queue;
 
 /**
- *
+ * Constants for queue implementation in HBase.
  */
 public final class HBaseQueueConstants {
 
+  /**
+   * Configuration keys for queues in HBase.
+   */
   public static final class ConfigKeys {
     public static final String QUEUE_TABLE_NAME = "data.queue.table.name";
   }
@@ -17,8 +20,7 @@ public final class HBaseQueueConstants {
   public static final byte[] META_COLUMN = new byte[] {'m'};
   public static final byte[] STATE_COLUMN_PREFIX = new byte[] {'s'};
 
-  public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait for 5 seconds for table creation.
-
+  public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
 
   private HBaseQueueConstants() {
   }

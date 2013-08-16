@@ -1,10 +1,10 @@
 package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableManager;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

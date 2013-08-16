@@ -36,8 +36,8 @@ public abstract class AbstractOVCTableHandle implements OVCTableHandle {
   @Override
   public abstract OrderedVersionedColumnarTable getTable(byte[] tableName) throws OperationException;
 
-  public static final byte [] queueOVCTable = Bytes.toBytes("queueOVCTable");
-  public static final byte [] streamOVCTable = Bytes.toBytes("streamOVCTable");
+  public static final byte [] QUEUE_OVC_TABLES = Bytes.toBytes("QUEUE_OVC_TABLES");
+  public static final byte [] STREAM_OVC_TABLES = Bytes.toBytes("STREAM_OVC_TABLES");
 
   @Override
   public TTQueueTable getQueueTable(byte[] queueTableName)
@@ -46,9 +46,8 @@ public abstract class AbstractOVCTableHandle implements OVCTableHandle {
     if (queueTable != null) {
       return queueTable;
     }
-    OrderedVersionedColumnarTable table = getTable(queueOVCTable);
+    OrderedVersionedColumnarTable table = getTable(QUEUE_OVC_TABLES);
 
-    // queueTable = new TTQueueTableOnVCTable(table, oracle, conf);
     queueTable = new TTQueueTableOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
         queueTableName, queueTable);
@@ -62,9 +61,8 @@ public abstract class AbstractOVCTableHandle implements OVCTableHandle {
     if (streamTable != null) {
       return streamTable;
     }
-    OrderedVersionedColumnarTable table = getTable(streamOVCTable);
+    OrderedVersionedColumnarTable table = getTable(STREAM_OVC_TABLES);
 
-    // streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
     streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
         streamTableName, streamTable);

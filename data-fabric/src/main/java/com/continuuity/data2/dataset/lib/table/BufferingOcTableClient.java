@@ -48,9 +48,9 @@ import java.util.NavigableMap;
  *       persisted store even if all needed data is in-memory buffer. See more info at method javadoc
  */
 public abstract class BufferingOcTableClient implements OrderedColumnarTable, DataSetClient, TransactionAware {
-  /** name of the table */
+  // name of the table
   private final String name;
-  /** name length + name of the table: handy to have one cached */
+  // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
 
   // In-memory buffer that keeps not yet persisted data. It is row->(column->value) map. Value can be null which means
@@ -58,7 +58,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   private NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff;
 
   /**
-   * Creates an instance of {@link BufferingOcTableClient}
+   * Creates an instance of {@link BufferingOcTableClient}.
    * @param name table name
    */
   public BufferingOcTableClient(String name) {

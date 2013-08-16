@@ -42,8 +42,8 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   public HBaseQueueClientFactory(HBaseAdmin admin, String tableName) throws IOException {
     this.admin = admin;
     this.tableName = Bytes.toBytes(tableName);
-    HBaseQueueUtils.createTableIfNotExists(admin, tableName,
-                                           HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.MAX_CREATE_TABLE_WAIT);
+    HBaseQueueUtils.createTableIfNotExists(admin, tableName, HBaseQueueConstants.COLUMN_FAMILY,
+                                           HBaseQueueConstants.MAX_CREATE_TABLE_WAIT);
   }
 
   @Override
