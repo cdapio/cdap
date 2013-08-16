@@ -3,6 +3,7 @@
 PROJECT=$1; shift
 TGZ_FILE=$1;shift
 BRANCH=$1; shift
+KEEP=$1; shift
 TGZ_NAME=`basename $TGZ_FILE`
 CINST_BASE=/var/beamer
 epoch=`date +%s`
@@ -103,4 +104,14 @@ do
     echo "Failed to start service $name"
     exit -1
   fi
+done
+
+# Cleans up packages. Keeps at least KEEP number of packages.
+c=0
+for dir in `find $CINST_BASE -name "continuuity-${PROJECT}*" -type d -printf '%T@ %p\n' | sort -k 1nr | sed 's/^[^ ]* //'`
+do
+  if [[ $c -ge $KEEP ]]; then
+    rm -rf $dir 2>/dev/null >/dev/null
+  fi
+  ((c++))
 done
