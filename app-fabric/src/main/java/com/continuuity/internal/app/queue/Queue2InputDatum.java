@@ -6,6 +6,7 @@ package com.continuuity.internal.app.queue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data2.queue.DequeueResult;
 import com.google.common.base.Function;
@@ -33,13 +34,13 @@ public final class Queue2InputDatum implements InputDatum {
   private final AtomicInteger retry;
   private final InputContext inputContext;
 
-  public Queue2InputDatum(final DequeueResult result) {
+  public Queue2InputDatum(final QueueName queueName, final DequeueResult result) {
     this.result = result;
     this.retry = new AtomicInteger(0);
     this.inputContext = new InputContext() {
       @Override
       public String getOrigin() {
-        return result.getQueueName().getSimpleName();
+        return queueName.getSimpleName();
       }
 
       @Override

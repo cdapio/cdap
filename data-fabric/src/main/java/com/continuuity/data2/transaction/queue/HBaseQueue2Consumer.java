@@ -15,7 +15,6 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -63,7 +62,6 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
   private final SortedMap<byte[], HBaseQueueEntry> consumingEntries;
   private final Function<byte[], byte[]> rowKeyToChangeTx;
   private final byte[] stateColumnName;
-  private final DequeueResult emptyResult;
   private byte[] startRow;
   private Transaction transaction;
 
@@ -76,7 +74,6 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     this.startRow = queueName.toBytes();
     this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
-    this.emptyResult = new SimpleDequeueResult(ImmutableList.<HBaseQueueEntry>of(), queueName, consumerConfig);
 
     byte[] tableName = hTable.getTableName();
     final byte[] changeTxPrefix = ByteBuffer.allocate(tableName.length + 1)
@@ -147,10 +144,10 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
 
     // If nothing get dequeued, return the empty result.
     if (consumingEntries.isEmpty()) {
-      return emptyResult;
+      return DequeueResult.EMPTY_RESULT;
     }
 
-    return new SimpleDequeueResult(consumingEntries.values(), queueName, consumerConfig);
+    return new HBaseDequeueResult(consumingEntries.values(), queueName, consumerConfig);
   }
 
   @Override

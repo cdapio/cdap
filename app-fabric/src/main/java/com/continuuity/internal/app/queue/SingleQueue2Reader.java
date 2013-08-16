@@ -33,7 +33,7 @@ public final class SingleQueue2Reader implements QueueReader {
   public InputDatum dequeue() throws OperationException {
     Queue2Consumer consumer = consumerSupplier.get();
     try {
-      return new Queue2InputDatum(consumer.dequeue(batchSize));
+      return new Queue2InputDatum(consumer.getQueueName(), consumer.dequeue(batchSize));
     } catch (IOException e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }

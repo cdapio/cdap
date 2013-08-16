@@ -16,7 +16,7 @@ import java.util.Collection;
 /**
 *
 */
-final class SimpleDequeueResult implements DequeueResult {
+final class HBaseDequeueResult implements DequeueResult {
 
   private static final Function<HBaseQueueEntry, byte[]> ENTRY_TO_BYTE_ARRAY = new Function<HBaseQueueEntry, byte[]>() {
     @Override
@@ -29,7 +29,7 @@ final class SimpleDequeueResult implements DequeueResult {
   private final QueueName queueName;
   private final ConsumerConfig config;
 
-  SimpleDequeueResult(Collection<HBaseQueueEntry> entries, QueueName queueName, ConsumerConfig config) {
+  HBaseDequeueResult(Collection<HBaseQueueEntry> entries, QueueName queueName, ConsumerConfig config) {
     this.queueName = queueName;
     this.config = config;
     this.size = entries.size();
@@ -41,16 +41,6 @@ final class SimpleDequeueResult implements DequeueResult {
     } else {
       data = Iterables.transform(entries, ENTRY_TO_BYTE_ARRAY);
     }
-  }
-
-  @Override
-  public QueueName getQueueName() {
-    return queueName;
-  }
-
-  @Override
-  public ConsumerConfig getConsumerConfig() {
-    return config;
   }
 
   @Override
