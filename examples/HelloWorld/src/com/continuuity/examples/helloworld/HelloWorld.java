@@ -85,6 +85,7 @@ public class HelloWorld implements Application {
     @UseDataSet("whom")
     KeyValueTable whom;
 
+
     public void processInput(StreamEvent event) throws OperationException {
       byte[] name = Bytes.toBytes(event.getBody());
       if (name != null && name.length > 0) {
