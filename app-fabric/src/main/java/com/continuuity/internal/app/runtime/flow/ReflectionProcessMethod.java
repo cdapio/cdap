@@ -11,7 +11,6 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
-import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.app.runtime.PostProcess;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -39,27 +38,21 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   private final BasicFlowletContext flowletContext;
   private final Method method;
   private final DataFabricFacade txAgentSupplier;
-  private final OutputSubmitter outputSubmitter;
   private final boolean hasParam;
   private final boolean needsBatch;
   private final boolean needContext;
 
   public static ReflectionProcessMethod create(Flowlet flowlet, BasicFlowletContext flowletContext,
-                                                      Method method,
-                                                      DataFabricFacade txAgentSupplier,
-                                                      OutputSubmitter outputSubmitter) {
-    return new ReflectionProcessMethod(flowlet, flowletContext, method, txAgentSupplier, outputSubmitter);
+                                                      Method method, DataFabricFacade txAgentSupplier) {
+    return new ReflectionProcessMethod(flowlet, flowletContext, method, txAgentSupplier);
   }
 
   private ReflectionProcessMethod(Flowlet flowlet, BasicFlowletContext flowletContext,
-                                  Method method,
-                                  DataFabricFacade txAgentSupplier,
-                                  OutputSubmitter outputSubmitter) {
+                                  Method method, DataFabricFacade txAgentSupplier) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.method = method;
     this.txAgentSupplier = txAgentSupplier;
-    this.outputSubmitter = outputSubmitter;
 
     this.hasParam = method.getGenericParameterTypes().length > 0;
     this.needsBatch = hasParam &&
@@ -120,8 +113,6 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
         return getPostProcess(txAgent, input, event, inputContext);
       } catch (Throwable t) {
         return getFailurePostProcess(t, txAgent, input, event, inputContext);
-      } finally {
-        outputSubmitter.submit(txAgent);
       }
     } catch (Exception e) {
       // If it reaches here, something very wrong.

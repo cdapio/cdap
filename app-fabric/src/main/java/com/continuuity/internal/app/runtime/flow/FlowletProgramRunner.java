@@ -38,9 +38,9 @@ import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.dataset.DataSetContext;
-import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
+import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
@@ -48,8 +48,6 @@ import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
-import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.InstantiatorFactory;
@@ -167,28 +165,21 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
-        new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId()))
-            .create(flowSpec);
+        new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId())).create(flowSpec);
 
       Flowlet flowlet = new InstantiatorFactory(false).get(TypeToken.of(flowletClass)).create();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
       // Inject DataSet, OutputEmitter, Metric fields
       flowletContext.injectFields(flowlet);
-      OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType,
-                                                     outputEmitterFactory(flowletName, flowletContext,
-                                                                          flowletContext.getQueueProducer(),
-                                                                          queueSpecs));
+      injectFields(flowlet, flowletType, outputEmitterFactory(flowletName, dataFabricFacade, queueSpecs));
 
       ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder = ImmutableList.builder();
       Collection<ProcessSpecification> processSpecs =
         createProcessSpecification(flowletContext, flowletType,
-                                   processMethodFactory(flowlet, flowletContext, dataFabricFacade, outputSubmitter),
-                                   processSpecificationFactory(queueReaderFactory,
-                                                               dataFabricFacade,
-                                                               flowletName,
-                                                               queueSpecs,
-                                                               queueConsumerSupplierBuilder,
+                                   processMethodFactory(flowlet, flowletContext, dataFabricFacade),
+                                   processSpecificationFactory(queueReaderFactory, dataFabricFacade, flowletName,
+                                                               queueSpecs, queueConsumerSupplierBuilder,
                                                                createSchemaCache(program)),
                                    Lists.<ProcessSpecification>newLinkedList());
       List<QueueConsumerSupplier> queueConsumerSuppliers = queueConsumerSupplierBuilder.build();
@@ -216,15 +207,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   /**
    * Injects all {@link DataSet} and {@link OutputEmitter} fields.
-   *
-   * @return an {@link OutputSubmitter} that encapsulate all injected {@link OutputEmitter}
-   *         that are {@link OutputSubmitter} as well.
    */
-  private OutputSubmitter injectFields(Flowlet flowlet,
-                                       TypeToken<? extends Flowlet> flowletType,
-                                       OutputEmitterFactory outputEmitterFactory) {
-
-    ImmutableList.Builder<OutputSubmitter> outputSubmitters = ImmutableList.builder();
+  private void injectFields(Flowlet flowlet, TypeToken<? extends Flowlet> flowletType,
+                            OutputEmitterFactory outputEmitterFactory) {
 
     // Walk up the hierarchy of flowlet class.
     for (TypeToken<?> type : flowletType.getTypes().classes()) {
@@ -246,14 +231,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
           OutputEmitter<?> outputEmitter = outputEmitterFactory.create(outputName, outputType);
           setField(flowlet, field, outputEmitter);
-          if (outputEmitter instanceof OutputSubmitter) {
-            outputSubmitters.add((OutputSubmitter) outputEmitter);
-          }
         }
       }
     }
-
-    return new MultiOutputSubmitter(outputSubmitters.build());
   }
 
   /**
@@ -394,8 +374,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private OutputEmitterFactory outputEmitterFactory(final String flowletName,
-                                                    final BasicFlowletContext flowletContext,
-                                                    final QueueProducer queueProducer,
+                                                    final QueueClientFactory queueClientFactory,
                                                     final Table<Node, String, Set<QueueSpecification>> queueSpecs) {
     return new OutputEmitterFactory() {
       @Override
@@ -406,15 +385,15 @@ public final class FlowletProgramRunner implements ProgramRunner {
           for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
-              return new DatumOutputEmitter<T>(flowletContext, queueProducer, queueSpec.getQueueName(),
-                                                    schema, datumWriterFactory.create(type, schema));
+              Queue2Producer producer = queueClientFactory.createProducer(queueSpec.getQueueName());
+              return new DatumOutputEmitter<T>(producer,  schema, datumWriterFactory.create(type, schema));
             }
           }
 
           throw new IllegalArgumentException(String.format("No queue specification found for %s, %s",
                                                            flowletName, type));
 
-        } catch (UnsupportedTypeException e) {
+        } catch (Exception e) {
           throw Throwables.propagate(e);
         }
       }
@@ -423,13 +402,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private ProcessMethodFactory processMethodFactory(final Flowlet flowlet,
                                                     final BasicFlowletContext flowletContext,
-                                                    final DataFabricFacade txAgentSupplier,
-                                                    final OutputSubmitter outputSubmitter) {
+                                                    final DataFabricFacade dataFabricFacade) {
     return new ProcessMethodFactory() {
       @Override
       public ProcessMethod create(Method method) {
-        return ReflectionProcessMethod.create(flowlet, flowletContext, method,
-                                              txAgentSupplier, outputSubmitter);
+        return ReflectionProcessMethod.create(flowlet, flowletContext, method, dataFabricFacade);
 
 
       }
