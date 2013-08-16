@@ -94,7 +94,7 @@ public final class AvroFileWriter implements Closeable {
 
     long timestamp = events.get(0).getLogEvent().getTimeStamp();
     AvroFile avroFile = getAvroFile(loggingContext, timestamp);
-    rotateFile(avroFile, loggingContext, timestamp);
+    avroFile = rotateFile(avroFile, loggingContext, timestamp);
 
     for (KafkaLogEvent event : events) {
       avroFile.append(event);
@@ -155,14 +155,15 @@ public final class AvroFileWriter implements Closeable {
     return new Path(pathRoot, String.format("%s/%s/%s.avro", pathFragment, date, timestamp));
   }
 
-  private void rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws IOException,
+  private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws IOException,
     OperationException {
     if (avroFile.getPos() > maxFileSize) {
       LOG.info(String.format("Rotating file %s", avroFile.getPath()));
       checkPoint(true);
       avroFile.close();
-      createAvroFile(loggingContext, timestamp);
+      return createAvroFile(loggingContext, timestamp);
     }
+    return avroFile;
   }
 
   private void checkPoint(boolean force) throws IOException, OperationException {

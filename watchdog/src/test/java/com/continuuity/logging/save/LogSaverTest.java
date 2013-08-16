@@ -14,10 +14,16 @@ import com.continuuity.logging.appender.kafka.KafkaLogAppender;
 import com.continuuity.logging.appender.kafka.TestKafkaLogging;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.filter.Filter;
+import com.continuuity.logging.read.AvroFileLogReader;
 import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogEvent;
+import com.continuuity.logging.serialize.LogSchema;
+import com.google.common.collect.Maps;
 import junit.framework.Assert;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -26,8 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.logging.appender.file.TestFileLogging.LogCallback;
@@ -61,7 +71,7 @@ public class LogSaverTest extends KafkaTestBase {
     LogSaver logSaver = new LogSaver(OPEX, 0, new Configuration(), cConf);
     logSaver.startAndWait();
     publishLogs();
-    TimeUnit.SECONDS.sleep(5);
+    waitTillLogSaverDone(logBaseDir);
     logSaver.stopAndWait();
   }
 
@@ -183,7 +193,7 @@ public class LogSaverTest extends KafkaTestBase {
       for (int i = 0; i < 10; ++i) {
         logger.warn("Test log message " + (10 * j + i) + " {} {}", "arg1", "arg2", e2);
       }
-      TimeUnit.MILLISECONDS.sleep(800);
+      TimeUnit.MILLISECONDS.sleep(1200);
     }
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -192,5 +202,49 @@ public class LogSaverTest extends KafkaTestBase {
     System.out.println(bos.toString());
 
     appender.stop();
+  }
+
+  private static void waitTillLogSaverDone(String logBaseDir) throws Exception {
+    long start = System.currentTimeMillis();
+
+    while (true) {
+      String latestFile = getLatestFile(logBaseDir);
+      if (latestFile != null) {
+        AvroFileLogReader logReader = new AvroFileLogReader(new Configuration(), new LogSchema().getAvroSchema());
+        LogCallback logCallback = new LogCallback();
+        logCallback.init();
+        logReader.readLog(new Path(latestFile), Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
+        logCallback.close();
+        List<LogEvent> events = logCallback.getEvents();
+        if (events.size() > 0) {
+          LogEvent event = events.get(events.size() - 1);
+          if (event.getLoggingEvent().getFormattedMessage().equals("Test log message 59 arg1 arg2")) {
+            break;
+          }
+        }
+      }
+
+      Assert.assertTrue("Time exceeded", System.currentTimeMillis() - start < 30 * 1000);
+      TimeUnit.SECONDS.sleep(1);
+    }
+
+    LOG.info("Done waiting!");
+    TimeUnit.SECONDS.sleep(1);
+  }
+
+  private static String getLatestFile(String logBaseDir) throws Exception {
+    String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+    File dir = new File(logBaseDir, String.format("ACCT_1/APP_1/flow-FLOW_1/%s", date));
+    File[] files = FileUtil.listFiles(dir);
+    if (files.length == 0) {
+      return null;
+    }
+
+    SortedMap<Long, String> map = Maps.newTreeMap();
+    for (File file : files) {
+      String filename = FilenameUtils.getBaseName(file.getAbsolutePath());
+      map.put(Long.parseLong(filename), file.getAbsolutePath());
+    }
+    return map.get(map.lastKey());
   }
 }
