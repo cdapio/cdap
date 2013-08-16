@@ -29,7 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public final class HBaseQueue2Producer implements Queue2Producer, TransactionAware, Closeable {
 
   private final BlockingQueue<QueueEntry> queue;
-  private final QueueName queueName;
+  private final byte[] queueRowPrefix;
   private final HTable hTable;
   private final List<byte[]> rollbackKeys;
   private Transaction transaction;
@@ -37,7 +37,7 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
 
   public HBaseQueue2Producer(HTable hTable, QueueName queueName) {
     this.queue = new LinkedBlockingQueue<QueueEntry>();
-    this.queueName = queueName;
+    this.queueRowPrefix = HBaseQueueUtils.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;
   }
@@ -113,7 +113,7 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
   private void persist(Iterable<QueueEntry> entries) throws IOException {
     // TODO: What key should it be if transaction is null?
     long writePointer = transaction.getWritePointer();
-    byte[] rowKeyPrefix = Bytes.add(queueName.toBytes(), Bytes.toBytes(writePointer));
+    byte[] rowKeyPrefix = Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer));
     int count = 0;
     List<Put> puts = Lists.newArrayList();
 

@@ -28,8 +28,8 @@ final class HBaseConsumerState {
   private final HTable hTable;
 
   HBaseConsumerState(HBaseAdmin admin, String tableName) throws IOException {
-    HBaseUtils.createTableIfNotExists(admin, tableName,
-                                      HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.MAX_CREATE_TABLE_WAIT);
+    HBaseQueueUtils.createTableIfNotExists(admin, tableName,
+                                           HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.MAX_CREATE_TABLE_WAIT);
     hTable = new HTable(admin.getConfiguration(), tableName);
   }
 

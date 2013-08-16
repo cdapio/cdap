@@ -17,9 +17,9 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public final class HBaseUtils {
+public final class HBaseQueueUtils {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseUtils.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueUtils.class);
 
   /**
    * Creates a HBase table if the table doesn't exists.

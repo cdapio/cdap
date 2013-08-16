@@ -62,6 +62,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
   private final SortedMap<byte[], HBaseQueueEntry> consumingEntries;
   private final Function<byte[], byte[]> rowKeyToChangeTx;
   private final byte[] stateColumnName;
+  private final byte[] queueRowPrefix;
   private byte[] startRow;
   private Transaction transaction;
 
@@ -71,7 +72,8 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    this.startRow = queueName.toBytes();
+    this.queueRowPrefix = HBaseQueueUtils.getQueueRowPrefix(queueName);
+    this.startRow = queueRowPrefix;
     this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
 
@@ -295,7 +297,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
         }
 
         // Row key is queue_name + writePointer + counter
-        long writePointer = Bytes.toLong(rowKey, queueName.toBytes().length, Longs.BYTES);
+        long writePointer = Bytes.toLong(rowKey, queueRowPrefix.length, Longs.BYTES);
 
         // If writes later than the reader pointer, abort the loop, as entries that comes later are all uncommitted.
         if (writePointer > readPointer) {
@@ -431,10 +433,10 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
    * Gets the stop row for scan. Stop row is queueName + (readPointer + 1).
    */
   private byte[] getStopRow() {
-    return Bytes.add(queueName.toBytes(), Bytes.toBytes(transaction.getReadPointer() + 1L));
+    return Bytes.add(queueRowPrefix, Bytes.toBytes(transaction.getReadPointer() + 1L));
   }
 
   private byte[] getNextRow(long writePointer, int count) {
-    return Bytes.add(queueName.toBytes(), Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
+    return Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
   }
 }
