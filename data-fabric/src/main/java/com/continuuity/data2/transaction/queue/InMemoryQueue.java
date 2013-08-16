@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -35,18 +36,29 @@ public class InMemoryQueue {
     entries.remove(new Key(txId, seqId));
   }
 
-  public ImmutablePair<List<Key>, List<byte[]>> dequeue(Transaction tx, ConsumerConfig config, int maxBatchSize) {
+  public ImmutablePair<List<Key>, List<byte[]>> dequeue(Transaction tx, ConsumerConfig config,
+                                                        ConsumerState consumerState, int maxBatchSize) {
 
     List<Key> keys = Lists.newArrayListWithCapacity(maxBatchSize);
     List<byte[]> datas = Lists.newArrayListWithCapacity(maxBatchSize);
+    NavigableSet<Key> keysToScan = consumerState.startKey == null ? entries.navigableKeySet() :
+      entries.tailMap(consumerState.startKey).navigableKeySet();
+    boolean updateStartKey = true;
 
     // navigableKeySet is immune to concurrent modification
-    for (Key key : entries.navigableKeySet()) {
+    for (Key key : keysToScan) {
+      if (keys.size() >= maxBatchSize) {
+        break;
+      }
+      if (updateStartKey) {
+        consumerState.startKey = key;
+      }
       if (tx.getReadPointer() < key.txId) {
         // the entry is newer than the current transaction. so are all subsequent entries. bail out.
         break;
       } else if (Arrays.binarySearch(tx.getExcludedList(), key.txId) >= 0) {
         // the entry is in the exclude list of current transaction. There is a chance that visible entries follow.
+        updateStartKey = false; // next time we have to revisit this entry
         continue;
       }
       Item item = entries.get(key);
@@ -54,19 +66,27 @@ public class InMemoryQueue {
         // entry was deleted (evicted or undone) after we started iterating
         continue;
       }
+      // check whether this is processed already
+      ConsumerEntryState state = item.getConsumerState(config.getGroupId());
+      if (ConsumerEntryState.PROCESSED.equals(state)) {
+        // already processed but not yet evicted. move on
+        continue;
+      }
       if (config.getDequeueStrategy().equals(DequeueStrategy.FIFO)) {
         // for FIFO, attempt to claim the entry and return it
         if (item.claim(config.getGroupId())) {
           keys.add(key);
           datas.add(item.entry.getData());
-        } else {
-          continue; // someone else claimed it, or it was already processed, move on
         }
+        // else: someone else claimed it, or it was already processed, move on, but we may have to revisit this.
+        updateStartKey = false;
+        continue;
       }
-      // check whether this is processed already
-      ConsumerEntryState state = item.getConsumerState(config.getGroupId());
-      if (ConsumerEntryState.PROCESSED.equals(state)) {
-        // already processed but not yet evicted. move on
+      // for hash/round robin, if group size is 1, just take it
+      if (config.getGroupSize() == 1) {
+        keys.add(key);
+        datas.add(item.entry.getData());
+        updateStartKey = false;
         continue;
       }
       // hash by entry hash key or entry id
@@ -80,12 +100,16 @@ public class InMemoryQueue {
       if (hash % config.getGroupSize() == config.getInstanceId()) {
         keys.add(key);
         datas.add(item.entry.getData());
+        updateStartKey = false;
       }
     }
     return keys.isEmpty() ? null : new ImmutablePair<List<Key>, List<byte[]>>(keys, datas);
   }
 
   public void ack(List<Key> dequeuedKeys, ConsumerConfig config) {
+    if (dequeuedKeys == null) {
+      return;
+    }
     for (Key key : dequeuedKeys) {
       Item item = entries.get(key);
       if (item == null) {
@@ -98,6 +122,9 @@ public class InMemoryQueue {
   }
 
   public void undoDequeue(List<Key> dequeuedKeys, ConsumerConfig config) {
+    if (dequeuedKeys == null) {
+      return;
+    }
     for (Key key : dequeuedKeys) {
       Item item = entries.get(key);
       if (item == null) {
@@ -188,6 +215,13 @@ public class InMemoryQueue {
     void decrementProcessed() {
       processedCount.decrementAndGet();
     }
+  }
+
+  /**
+   * The state of a single consumer, gets modified.
+   */
+  public static class ConsumerState {
+    Key startKey = null;
   }
 
 }
