@@ -178,7 +178,7 @@ public class MultiConsumerTest {
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new MultiApp().configure().getDataSets().values()));
 
     TransactionAgent txAgent = new SynchronousTransactionAgent(opex, opCtx,
-                                                               dataSetInstantiator.getTxAwareDataSets(),
+                                                               dataSetInstantiator.getTransactionAware(),
                                                                txSystemClient);
     proxy.setTransactionAgent(txAgent);
 

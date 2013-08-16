@@ -3,6 +3,8 @@
  */
 package com.continuuity.data2.queue;
 
+import com.continuuity.common.queue.QueueName;
+
 import java.io.IOException;
 
 /**
@@ -10,6 +12,17 @@ import java.io.IOException;
  * way to avoid name conflicts and make it easier for auto-complete.
  */
 public interface Queue2Consumer {
+
+  /**
+   * Returns the queue name that this consumer is working on.
+   */
+  QueueName getQueueName();
+
+  /**
+   * Returns the configuration of this consumer.
+   * @return
+   */
+  ConsumerConfig getConfig();
 
   /**
    * Dequeue an entry from the queue.

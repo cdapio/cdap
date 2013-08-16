@@ -60,7 +60,7 @@ libraries.flume_ng_core = "org.apache.flume:flume-ng-core:$versions.flumeVersion
 libraries.akka_actor = "com.typesafe.akka:akka-actor:2.0.3"
 
 // Http Client
-libraries.http_client = "com.ning:async-http-client:1.7.5"
+libraries.http_client = "com.ning:async-http-client:1.7.18"
 
 // Apache Commons
 libraries.apache_commons_cli = "commons-cli:commons-cli:1.2"
@@ -100,7 +100,7 @@ libraries.jetty_management = "jetty:jetty-management:6.0.0"
 libraries.yammer_metrics = "com.yammer.metrics:metrics-core:2.1.5"
 
 // Netty
-libraries.netty = "org.jboss.netty:netty:3.2.4.Final"
+libraries.netty = "io.netty:netty:3.6.6.Final"
 
 // Jersey Server
 libraries.jersey_server = "com.sun.jersey:jersey-server:$versions.jerseyVersion"

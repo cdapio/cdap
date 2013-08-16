@@ -11,14 +11,12 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.weave.api.RunId;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -32,7 +30,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private final FlowletSpecification flowletSpec;
 
   private volatile int instanceCount;
-  private final QueueProducer queueProducer;
   private final boolean asyncMode;
   private final FlowletMetrics flowletMetrics;
   private final Arguments runtimeArguments;
@@ -53,7 +50,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.asyncMode = asyncMode;
 
     this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
-    this.queueProducer = new QueueProducer(getMetricContext());
 
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
     this.systemMetricsCollector = getMetricsCollector(MetricsScope.REACTOR,
@@ -86,12 +82,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
    */
   @Override
   public Map<String, String> getRuntimeArguments() {
-    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    Iterator<Map.Entry<String, String>> it = runtimeArguments.iterator();
-    while (it.hasNext()) {
-      arguments.put(it.next());
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (Map.Entry<String, String> entry : runtimeArguments) {
+      builder.put(entry);
     }
-    return arguments.build();
+    return builder.build();
   }
 
   public MetricsCollector getSystemMetrics() {
@@ -116,10 +111,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   public int getInstanceId() {
     return instanceId;
-  }
-
-  public QueueProducer getQueueProducer() {
-    return queueProducer;
   }
 
   public LoggingContext getLoggingContext() {

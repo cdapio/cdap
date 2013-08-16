@@ -4,11 +4,14 @@
 package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -25,6 +28,12 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   private final HBaseAdmin admin;
   private final byte[] tableName;
+
+  @Inject
+  public HBaseQueueClientFactory(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
+                                 @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf) throws IOException {
+    this(hConf, cConf.get(HBaseQueueConstants.ConfigKeys.QUEUE_TABLE_NAME));
+  }
 
   public HBaseQueueClientFactory(Configuration hConf, String tableName) throws IOException {
     this(new HBaseAdmin(hConf), tableName);

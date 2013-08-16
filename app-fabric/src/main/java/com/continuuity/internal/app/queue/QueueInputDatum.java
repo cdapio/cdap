@@ -23,6 +23,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class QueueInputDatum implements InputDatum {
 
   private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.allocate(0);
+  private static final Function<QueueEntry, ByteBuffer> QUEUE_ENTRY_TO_BYTE_BUFFER =
+    new Function<QueueEntry, ByteBuffer>() {
+      @Override
+      public ByteBuffer apply(@Nullable QueueEntry input) {
+        return input == null ? EMPTY_BUFFER : ByteBuffer.wrap(input.getData());
+      }
+    };
 
   private final QueueConsumer consumer;
   private final DequeueResult dequeueResult;
@@ -64,15 +71,7 @@ public final class QueueInputDatum implements InputDatum {
       return Iterators.singletonIterator(ByteBuffer.wrap(dequeueResult.getEntries()[0].getData()));
     }
 
-    return Iterators.transform(Iterators.forArray(dequeueResult.getEntries()),
-                               new Function<QueueEntry, ByteBuffer>() {
-                                 @Nullable
-                                 @Override
-                                 public ByteBuffer apply(@Nullable QueueEntry input) {
-                                   return input == null ? EMPTY_BUFFER : ByteBuffer.wrap(input.getData());
-                                 }
-                               }
-    );
+    return Iterators.transform(Iterators.forArray(dequeueResult.getEntries()), QUEUE_ENTRY_TO_BYTE_BUFFER);
   }
 
   @Override

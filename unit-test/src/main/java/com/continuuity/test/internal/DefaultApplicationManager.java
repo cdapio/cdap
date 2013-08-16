@@ -96,7 +96,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
 
     agent = new SynchronousTransactionAgent(opex, ctx,
-                                            dataSetInstantiator.getTxAwareDataSets(),
+                                            dataSetInstantiator.getTransactionAware(),
                                             txSystemClient);
     proxy.setTransactionAgent(agent);
   }

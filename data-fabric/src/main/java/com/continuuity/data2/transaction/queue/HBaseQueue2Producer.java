@@ -16,18 +16,19 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  *
  */
-public final class HBaseQueue2Producer implements Queue2Producer, TransactionAware {
+public final class HBaseQueue2Producer implements Queue2Producer, TransactionAware, Closeable {
 
-  private final Queue<QueueEntry> queue;
+  private final BlockingQueue<QueueEntry> queue;
   private final QueueName queueName;
   private final HTable hTable;
   private final List<byte[]> rollbackKeys;
@@ -35,7 +36,7 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
 
 
   public HBaseQueue2Producer(HTable hTable, QueueName queueName) {
-    this.queue = new ConcurrentLinkedQueue<QueueEntry>();
+    this.queue = new LinkedBlockingQueue<QueueEntry>();
     this.queueName = queueName;
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;
@@ -75,7 +76,9 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
 
   @Override
   public boolean commitTx() throws Exception {
-    persist(queue);
+    List<QueueEntry> entries = Lists.newLinkedList();
+    queue.drainTo(entries);
+    persist(entries);
     return true;
   }
 
@@ -97,6 +100,11 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
     hTable.flushCommits();
 
     return true;
+  }
+
+  @Override
+  public void close() throws IOException {
+    hTable.close();
   }
 
   /**

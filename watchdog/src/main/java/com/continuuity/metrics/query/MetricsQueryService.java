@@ -28,9 +28,6 @@ public final class MetricsQueryService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsQueryService.class);
 
-  private static final int DEFAULT_THREAD_POOL_SIZE = 30;
-  private static final int DEFAULT_KEEP_ALIVE_SECONDS = 30;
-
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
 
@@ -44,12 +41,12 @@ public final class MetricsQueryService extends AbstractIdleService {
     this.httpService = NettyHttpService.builder()
                                        .setHost(hostname.getCanonicalHostName())
                                        .setPort(cConf.getInt(MetricsConstants.ConfigKeys.SERVER_PORT, 0))
-                                       .setThreadPoolSize(
+                                       .setExecThreadPoolSize(
                                          cConf.getInt(MetricsConstants.ConfigKeys.THREAD_POOL_SIZE,
-                                                      DEFAULT_THREAD_POOL_SIZE))
-                                       .setThreadKeepAliveSeconds(
+                                                      MetricsConstants.DEFAULT_THREAD_POOL_SIZE))
+                                       .setExecThreadKeepAliveSeconds(
                                          cConf.getInt(MetricsConstants.ConfigKeys.KEEP_ALIVE_SECONDS,
-                                                      DEFAULT_KEEP_ALIVE_SECONDS))
+                                                      MetricsConstants.DEFAULT_KEEP_ALIVE_SECONDS))
                                        .addHttpHandlers(handlers)
                                        .build();
     this.discoveryService = discoveryService;

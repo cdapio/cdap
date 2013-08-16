@@ -2,7 +2,6 @@ package com.continuuity.gateway;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
@@ -119,14 +118,14 @@ public class DatasetRestAccessorTest {
 
   static Transaction startTx(DataSetInstantiatorFromMetaData instantiator) throws Exception {
     Transaction tx = txSystemClient.start();
-    for (TransactionAware txAware : instantiator.getInstantiator().getTxAwareDataSets()) {
+    for (TransactionAware txAware : instantiator.getInstantiator().getTransactionAware()) {
       txAware.startTx(tx);
     }
     return tx;
   }
 
   static void commitTx(DataSetInstantiatorFromMetaData instantiator, Transaction tx) throws Exception {
-    for (TransactionAware txAware : instantiator.getInstantiator().getTxAwareDataSets()) {
+    for (TransactionAware txAware : instantiator.getInstantiator().getTransactionAware()) {
       txAware.commitTx();
     }
     txSystemClient.commit(tx);

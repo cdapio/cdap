@@ -3,14 +3,25 @@
  */
 package com.continuuity.data2.queue;
 
+
+import com.continuuity.common.queue.QueueName;
 import com.google.common.collect.ImmutableList;
 
-import java.util.Collection;
 
 /**
  *
  */
 public interface DequeueResult {
+
+  /**
+   * Returns the queue where the dequeue happens.
+   */
+  QueueName getQueueName();
+
+  /**
+   * Returns consumer configuration for the consumer who dequeue.
+   */
+  ConsumerConfig getConsumerConfig();
 
   /**
    * Returns {@code true} if there is no data in the queue.
@@ -21,7 +32,7 @@ public interface DequeueResult {
   /**
    * Returns entries being dequeued. If the dequeue result is empty, this method returns an empty collection.
    */
-  Collection<byte[]> getData();
+  Iterable<byte[]> getData();
 
   /**
    * An (immutable) empty dequeue result
@@ -33,7 +44,7 @@ public interface DequeueResult {
     }
 
     @Override
-    public Collection<byte[]> getData() {
+    public Iterable<byte[]> getData() {
       return ImmutableList.of();
     }
   };
