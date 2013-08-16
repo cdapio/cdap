@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MetricsQueryTest {
+public class MetricsQueryTest extends BaseMetricsQueryTest {
 
   private static File dataDir;
   private static Injector injector;
@@ -104,76 +104,6 @@ public class MetricsQueryTest {
       Assert.assertEquals(4, resultObj.getAsJsonPrimitive("data").getAsInt());
     } finally {
       reader.close();
-    }
-  }
-
-  private InetSocketAddress getMetricsQueryEndpoint() throws InterruptedException {
-    Iterable<Discoverable> endpoints = injector.getInstance(DiscoveryServiceClient.class)
-                                               .discover(Constants.SERVICE_METRICS);
-    Iterator<Discoverable> itor = endpoints.iterator();
-    while (!itor.hasNext()) {
-      TimeUnit.SECONDS.sleep(1);
-      itor = endpoints.iterator();
-    }
-    return itor.next().getSocketAddress();
-  }
-
-  @BeforeClass
-  public static void init() {
-    dataDir = Files.createTempDir();
-    System.out.println(dataDir);
-
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, "0");
-
-    injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new DiscoveryRuntimeModule().getSingleNodeModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
-            .to(dataDir.getAbsolutePath());
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
-            .to(Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
-            .to(Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
-
-          bind(TransactionOracle.class).to(NoopTransactionOracle.class);
-          bind(OVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
-        }
-      },
-      new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new MetricsQueryRuntimeModule().getSingleNodeModules()
-    );
-
-    collectionService = injector.getInstance(MetricsCollectionService.class);
-    collectionService.startAndWait();
-
-    queryService = injector.getInstance(MetricsQueryService.class);
-    queryService.startAndWait();
-  }
-
-  @AfterClass
-  public static void finish() {
-    queryService.stopAndWait();
-    collectionService.stopAndWait();
-
-    Deque<File> files = Lists.newLinkedList();
-    files.add(dataDir);
-
-    File file = files.peekLast();
-    while (file != null) {
-      File[] children = file.listFiles();
-      if (children == null || children.length == 0) {
-        files.pollLast().delete();
-      } else {
-        Collections.addAll(files, children);
-      }
-      file = files.peekLast();
     }
   }
 }
