@@ -2,17 +2,29 @@ package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.common.queue.QueueName;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+import java.io.PrintStream;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * Maintains all in-memory queues in the system.
  */
+@Singleton
 public final class InMemoryQueueService {
 
-  private static final ConcurrentMap<String, InMemoryQueue> queues = Maps.newConcurrentMap();
+  private final ConcurrentMap<String, InMemoryQueue> queues;
 
-  public static InMemoryQueue getQueue(QueueName queueName) {
+  /**
+   * Package visible constructor so that instance of this class can only be created through Guice.
+   */
+  @Inject
+  private InMemoryQueueService() {
+    queues = Maps.newConcurrentMap();
+  }
+
+  InMemoryQueue getQueue(QueueName queueName) {
     String name = queueName.toString();
     InMemoryQueue queue = queues.get(name);
     if (queue == null) {
@@ -25,10 +37,9 @@ public final class InMemoryQueueService {
     return queue;
   }
 
-  public static void dumpInfo() {
+  public void dumpInfo(PrintStream out) {
     for (String qname : queues.keySet()) {
-      System.out.println("Queue '" + qname + "': size is " + queues.get(qname).getSize());
+      out.println("Queue '" + qname + "': size is " + queues.get(qname).getSize());
     }
   }
-
 }

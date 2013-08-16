@@ -27,9 +27,9 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
   private List<InMemoryQueue.Key> dequeuedKeys;
   private final InMemoryQueue.ConsumerState state = new InMemoryQueue.ConsumerState();
 
-  public InMemoryQueue2Consumer(QueueName queueName, ConsumerConfig config) {
+  public InMemoryQueue2Consumer(QueueName queueName, ConsumerConfig config, InMemoryQueueService queueService) {
     this.queueName = queueName;
-    this.queue = InMemoryQueueService.getQueue(queueName);
+    this.queue = queueService.getQueue(queueName);
     this.config = config;
   }
 

@@ -17,13 +17,13 @@ import java.util.List;
  */
 public class InMemoryQueue2Producer implements Queue2Producer, TransactionAware {
 
-  final InMemoryQueue queue;
-  final List<QueueEntry> toEnqueue = Lists.newArrayList();
-  Transaction currentTx = null;
-  boolean committed = false;
+  private final InMemoryQueue queue;
+  private final List<QueueEntry> toEnqueue = Lists.newArrayList();
+  private Transaction currentTx = null;
+  private boolean committed = false;
 
-  public InMemoryQueue2Producer(QueueName queueName) {
-    this.queue = InMemoryQueueService.getQueue(queueName);
+  public InMemoryQueue2Producer(QueueName queueName, InMemoryQueueService queueService) {
+    this.queue = queueService.getQueue(queueName);
   }
 
   @Override

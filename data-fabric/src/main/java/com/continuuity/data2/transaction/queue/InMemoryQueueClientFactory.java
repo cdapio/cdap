@@ -5,6 +5,7 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 
@@ -13,13 +14,20 @@ import java.io.IOException;
  */
 public class InMemoryQueueClientFactory implements QueueClientFactory {
 
+  private final InMemoryQueueService queueService;
+
+  @Inject
+  public InMemoryQueueClientFactory(InMemoryQueueService queueService) {
+    this.queueService = queueService;
+  }
+
   @Override
   public Queue2Producer createProducer(QueueName queueName) throws IOException {
-    return new InMemoryQueue2Producer(queueName);
+    return new InMemoryQueue2Producer(queueName, queueService);
   }
 
   @Override
   public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig) throws IOException {
-    return new InMemoryQueue2Consumer(queueName, consumerConfig);
+    return new InMemoryQueue2Consumer(queueName, consumerConfig, queueService);
   }
 }

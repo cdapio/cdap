@@ -17,6 +17,8 @@ import org.junit.BeforeClass;
  */
 public class InMemoryQueueTest extends QueueTest {
 
+  private static InMemoryQueueService queueService;
+
   @BeforeClass
   public static void init() throws Exception {
 
@@ -25,10 +27,12 @@ public class InMemoryQueueTest extends QueueTest {
     // Get the in-memory opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+
+    queueService = injector.getInstance(InMemoryQueueService.class);
   }
 
   @AfterClass
   public static void finish() {
-    InMemoryQueueService.dumpInfo();
+    queueService.dumpInfo(System.out);
   }
 }
