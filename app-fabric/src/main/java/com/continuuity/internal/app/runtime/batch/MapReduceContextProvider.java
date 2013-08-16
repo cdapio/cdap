@@ -11,7 +11,6 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.batch.distributed.DistributedMapReduceContextBuilder;
 import com.continuuity.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
-import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.Path;
@@ -234,7 +233,7 @@ public final class MapReduceContextProvider {
     if (!(readPointer instanceof MemoryReadPointer)) {
       String message = String.format("Unsupported readPointer implementation %s, only MemoryReadPointer is supported",
                                      readPointer.getClass().getName());
-      Log.error(message);
+      LOG.error(message);
       throw new IllegalArgumentException(message);
 
     }

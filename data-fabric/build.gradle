@@ -28,7 +28,6 @@ dependencies {
     apiCompile libraries.netty
     apiCompile libraries.jsr_305
 
-    compile libraries.kryo
     compile libraries.hsql
     compile libraries.jcl_over_slf4j
 
