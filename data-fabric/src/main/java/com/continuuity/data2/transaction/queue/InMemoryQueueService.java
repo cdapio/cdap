@@ -27,7 +27,7 @@ public final class InMemoryQueueService {
 
   public static void dumpInfo() {
     for (String qname : queues.keySet()) {
-      System.out.println("Queue '" + qname + "': " + queues.get(qname).getSize());
+      System.out.println("Queue '" + qname + "': size is " + queues.get(qname).getSize());
     }
   }
 
