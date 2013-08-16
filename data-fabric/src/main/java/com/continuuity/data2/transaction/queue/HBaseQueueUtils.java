@@ -3,6 +3,7 @@
  */
 package com.continuuity.data2.transaction.queue;
 
+import com.continuuity.common.queue.QueueName;
 import com.google.common.base.Stopwatch;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -63,4 +65,18 @@ public final class HBaseQueueUtils {
     }
   }
 
+
+  public static byte[] getQueueRowPrefix(QueueName queueName) {
+    byte[] bytes = Arrays.copyOf(queueName.toBytes(), queueName.toBytes().length);
+    int i = 0;
+    int j = bytes.length - 1;
+    while (i < j) {
+      byte tmp = bytes[i];
+      bytes[i] = bytes[j];
+      bytes[j] = tmp;
+      i++;
+      j--;
+    }
+    return bytes;
+  }
 }
