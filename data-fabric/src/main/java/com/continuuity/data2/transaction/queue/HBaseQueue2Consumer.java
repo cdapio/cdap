@@ -55,18 +55,6 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
   // TODO: Make these configurable.
   private static final int MAX_CACHE_ROWS = 100;
 
-  private static final DequeueResult EMPTY_RESULT = new DequeueResult() {
-    @Override
-    public boolean isEmpty() {
-      return true;
-    }
-
-    @Override
-    public Collection<byte[]> getData() {
-      return ImmutableList.of();
-    }
-  };
-
   private final ConsumerConfig consumerConfig;
   private final HTable hTable;
   private final QueueName queueName;
@@ -146,7 +134,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
 
     // If nothing get dequeued, return the empty result.
     if (consumingEntries.isEmpty()) {
-      return EMPTY_RESULT;
+      return DequeueResult.EMPTY_RESULT;
     }
 
     return new DequeueResultImpl(consumingEntries.values());
@@ -184,6 +172,11 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware {
     hTable.put(puts);
     hTable.flushCommits();
     return true;
+  }
+
+  @Override
+  public void postTxCommit() {
+    // for now, do nothing. But this can be a place to perform eviction of queue entries.
   }
 
   @Override

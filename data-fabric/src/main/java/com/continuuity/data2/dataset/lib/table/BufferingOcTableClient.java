@@ -170,6 +170,11 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   }
 
   @Override
+  public void postTxCommit() {
+    // nothing to do for tables
+  }
+
+  @Override
   public boolean rollbackTx() throws Exception {
     // ANDREAS: so we never undo any writes. we just add txid to the excludes? That means we accumulate a lot of
     // invalid transactions, hence exclude lists become really large.

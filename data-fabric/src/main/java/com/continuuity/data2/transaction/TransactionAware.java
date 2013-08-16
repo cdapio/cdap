@@ -53,6 +53,15 @@ public interface TransactionAware {
   boolean commitTx() throws Exception;
 
   /**
+   * Called after transaction has been committed.
+   * Can be used e.g. evict entries from a cache etc. Because this is called after the transaction is committed,
+   * the success or failure of the transaction cannot depend on it. Hence this method returns nothing and it is not
+   * expected to throw exceptions.
+   * @throws RuntimeException in case of serious failure that should not be ignored.
+   */
+  void postTxCommit();
+
+  /**
    * Called during transaction rollback (for whatever reason: conflicts, errors, etc.).
    * @return true if all changes made during transaction were rolled back, false otherwise (e.g. if more cleanup needed
    *         or changes cannot be undone). True also means that this transaction can be made visible to others without

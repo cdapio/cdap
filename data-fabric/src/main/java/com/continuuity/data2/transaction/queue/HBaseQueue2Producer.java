@@ -80,6 +80,12 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
   }
 
   @Override
+  public void postTxCommit() {
+    // nothing to do
+  }
+
+
+  @Override
   public boolean rollbackTx() throws Exception {
     // Delete the persisted entries
     List<Delete> deletes = Lists.newArrayList();

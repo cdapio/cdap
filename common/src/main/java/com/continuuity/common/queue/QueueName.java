@@ -28,6 +28,11 @@ public final class QueueName {
   private final byte[] byteName;
 
   /**
+   * Represents the queue name as a string.
+   */
+  private final String stringName;
+
+  /**
    * Constructs this class from an URI.
    *
    * @param uri of the queue
@@ -74,7 +79,8 @@ public final class QueueName {
   private QueueName(URI uri) {
     this.uri = uri;
     this.simpleName = new File(uri.getPath()).getName();
-    this.byteName = uri.toASCIIString().getBytes(Charsets.US_ASCII);
+    this.stringName = uri.toASCIIString();
+    this.byteName = stringName.getBytes(Charsets.US_ASCII);
   }
 
   public boolean isStream() {
@@ -110,7 +116,7 @@ public final class QueueName {
    */
   @Override
   public String toString() {
-    return uri.toASCIIString();
+    return stringName;
   }
 
   /**

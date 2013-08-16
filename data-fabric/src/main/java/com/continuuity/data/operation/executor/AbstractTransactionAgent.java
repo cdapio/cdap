@@ -75,6 +75,7 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
   public void finish() throws OperationException {
     commitTxAwareDataSets();
     currentTx = null;
+    postCommitTxAwareDataSets();
   }
 
   @Override
@@ -125,6 +126,23 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
    */
   protected void failedSome(int count) {
     failed.addAndGet(count);
+  }
+
+  private void postCommitTxAwareDataSets() throws OperationException {
+    OperationException error = null;
+    for (TransactionAware txAware : this.txAware) {
+      try {
+        txAware.postTxCommit();
+      } catch (Exception e) {
+        LOG.error("failed to post commmit transaction " + currentTx.getWritePointer(), e);
+        // NOTE: this does not cause roll back since the transaction is already committed.
+        error = new OperationException(StatusCode.INVALID_TRANSACTION,
+                                       "failed to post commit tx" + currentTx.getWritePointer(), e);
+      }
+    }
+    if (error != null) {
+      throw error;
+    }
   }
 
   private void commitTxAwareDataSets() throws OperationException {
