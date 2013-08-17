@@ -57,13 +57,12 @@ public class DataFabricModules extends RuntimeModule {
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
         bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
+        bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
 
         // We don't need caching for in-memory
         conf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
           .toInstance(conf);
-
-        bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
       }
     };
   }

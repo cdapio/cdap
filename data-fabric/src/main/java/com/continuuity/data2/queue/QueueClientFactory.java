@@ -4,6 +4,7 @@
 package com.continuuity.data2.queue;
 
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data2.transaction.queue.QueueMetrics;
 
 import java.io.IOException;
 
@@ -15,4 +16,6 @@ public interface QueueClientFactory {
   Queue2Producer createProducer(QueueName queueName) throws IOException;
 
   Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig) throws IOException;
+
+  Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException;
 }

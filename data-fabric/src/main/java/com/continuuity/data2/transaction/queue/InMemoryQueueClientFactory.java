@@ -23,11 +23,16 @@ public class InMemoryQueueClientFactory implements QueueClientFactory {
 
   @Override
   public Queue2Producer createProducer(QueueName queueName) throws IOException {
-    return new InMemoryQueue2Producer(queueName, queueService);
+    return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
   public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig) throws IOException {
     return new InMemoryQueue2Consumer(queueName, consumerConfig, queueService);
+  }
+
+  @Override
+  public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+    return new InMemoryQueue2Producer(queueName, queueService, queueMetrics);
   }
 }

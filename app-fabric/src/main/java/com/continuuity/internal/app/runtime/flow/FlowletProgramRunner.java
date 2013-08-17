@@ -42,6 +42,7 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -172,7 +173,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Inject DataSet, OutputEmitter, Metric fields
       flowletContext.injectFields(flowlet);
-      injectFields(flowlet, flowletType, outputEmitterFactory(flowletName, dataFabricFacade, queueSpecs));
+      injectFields(flowlet, flowletType, outputEmitterFactory(flowletContext, flowletName,
+                                                              dataFabricFacade, queueSpecs));
 
       ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder = ImmutableList.builder();
       Collection<ProcessSpecification> processSpecs =
@@ -373,7 +375,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  private OutputEmitterFactory outputEmitterFactory(final String flowletName,
+  private OutputEmitterFactory outputEmitterFactory(final BasicFlowletContext flowletContext,
+                                                    final String flowletName,
                                                     final QueueClientFactory queueClientFactory,
                                                     final Table<Node, String, Set<QueueSpecification>> queueSpecs) {
     return new OutputEmitterFactory() {
@@ -385,7 +388,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
           for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
-              Queue2Producer producer = queueClientFactory.createProducer(queueSpec.getQueueName());
+
+              final String queueMetricsName = "process.events.outs." + queueSpec.getQueueName().getSimpleName();
+              Queue2Producer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
+                @Override
+                public void emitEnqueue(int count) {
+                  flowletContext.getSystemMetrics().gauge(queueMetricsName, count);
+                }
+              });
               return new DatumOutputEmitter<T>(producer,  schema, datumWriterFactory.create(type, schema));
             }
           }

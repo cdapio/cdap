@@ -18,13 +18,12 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -76,11 +75,7 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
 
   @Override
   public Queue2Producer createProducer(QueueName queueName) throws IOException {
-    Queue2Producer producer = queueClientFactory.createProducer(queueName);
-    if (producer instanceof TransactionAware) {
-      dataSetContext.addTransactionAware((TransactionAware) producer);
-    }
-    return producer;
+    return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
@@ -91,6 +86,15 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
       // TODO: Need to deal with removing from the transaction aware list when no longer used.
     }
     return consumer;
+  }
+
+  @Override
+  public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+    Queue2Producer producer = queueClientFactory.createProducer(queueName, queueMetrics);
+    if (producer instanceof TransactionAware) {
+      dataSetContext.addTransactionAware((TransactionAware) producer);
+    }
+    return producer;
   }
 
   private DataSetInstantiator createDataSetContext(Program program,

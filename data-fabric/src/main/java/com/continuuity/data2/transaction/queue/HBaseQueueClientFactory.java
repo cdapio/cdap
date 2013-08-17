@@ -48,11 +48,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   @Override
   public Queue2Producer createProducer(QueueName queueName) throws IOException {
-    HTable hTable = new HTable(admin.getConfiguration(), tableName);
-    // TODO: make configurable
-    hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlush(false);
-    return new HBaseQueue2Producer(hTable, queueName);
+    return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
@@ -62,5 +58,14 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     consumerTable.setAutoFlush(false);
     return new HBaseQueue2Consumer(consumerConfig, consumerTable, queueName);
+  }
+
+  @Override
+  public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+    HTable hTable = new HTable(admin.getConfiguration(), tableName);
+    // TODO: make configurable
+    hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
+    hTable.setAutoFlush(false);
+    return new HBaseQueue2Producer(hTable, queueName, queueMetrics);
   }
 }

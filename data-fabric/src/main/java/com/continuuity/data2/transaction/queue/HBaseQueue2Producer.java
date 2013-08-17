@@ -6,9 +6,7 @@ package com.continuuity.data2.transaction.queue;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -26,16 +24,17 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  *
  */
-public final class HBaseQueue2Producer implements Queue2Producer, TransactionAware, Closeable {
+public final class HBaseQueue2Producer extends AbstractQueue2Producer implements Closeable {
 
   private final BlockingQueue<QueueEntry> queue;
   private final byte[] queueRowPrefix;
   private final HTable hTable;
   private final List<byte[]> rollbackKeys;
   private Transaction transaction;
+  private int lastEnqueueCount;
 
-
-  public HBaseQueue2Producer(HTable hTable, QueueName queueName) {
+  public HBaseQueue2Producer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics) {
+    super(queueMetrics);
     this.queue = new LinkedBlockingQueue<QueueEntry>();
     this.queueRowPrefix = HBaseQueueUtils.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
@@ -76,17 +75,17 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
 
   @Override
   public boolean commitTx() throws Exception {
-    List<QueueEntry> entries = Lists.newLinkedList();
+    List<QueueEntry> entries = Lists.newArrayListWithCapacity(queue.size());
     queue.drainTo(entries);
+    lastEnqueueCount = entries.size();
     persist(entries);
     return true;
   }
 
   @Override
-  public void postTxCommit() {
-    // nothing to do
+  protected int getLastEnqueueCount() {
+    return lastEnqueueCount;
   }
-
 
   @Override
   public boolean rollbackTx() throws Exception {
@@ -98,6 +97,8 @@ public final class HBaseQueue2Producer implements Queue2Producer, TransactionAwa
     }
     hTable.delete(deletes);
     hTable.flushCommits();
+
+    lastEnqueueCount = 0;
 
     return true;
   }

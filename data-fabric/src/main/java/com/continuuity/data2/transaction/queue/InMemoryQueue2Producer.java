@@ -2,27 +2,30 @@ package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Producer for an in-memory queue.
  */
-public class InMemoryQueue2Producer implements Queue2Producer, TransactionAware {
+public class InMemoryQueue2Producer extends AbstractQueue2Producer {
 
   private final InMemoryQueue queue;
-  private final List<QueueEntry> toEnqueue = Lists.newArrayList();
+  private final BlockingQueue<QueueEntry> toEnqueue = new LinkedBlockingQueue<QueueEntry>();
   private Transaction currentTx = null;
   private boolean committed = false;
+  private int lastEnqueueCount;
 
-  public InMemoryQueue2Producer(QueueName queueName, InMemoryQueueService queueService) {
+  public InMemoryQueue2Producer(QueueName queueName, InMemoryQueueService queueService, QueueMetrics queueMetrics) {
+    super(queueMetrics);
     this.queue = queueService.getQueue(queueName);
   }
 
@@ -39,9 +42,7 @@ public class InMemoryQueue2Producer implements Queue2Producer, TransactionAware 
     if (committed) {
       throw new RuntimeException("enqueue called after commit. ");
     }
-    for (QueueEntry entry : entries) {
-      toEnqueue.add(entry);
-    }
+    Iterables.addAll(toEnqueue, entries);
   }
 
   @Override
@@ -61,23 +62,26 @@ public class InMemoryQueue2Producer implements Queue2Producer, TransactionAware 
     if (committed) {
       throw new RuntimeException("commit called again after commit. ");
     }
+    List<QueueEntry> entries = Lists.newArrayListWithCapacity(toEnqueue.size());
+    toEnqueue.drainTo(entries);
     int seqId = 0;
-    for (QueueEntry entry : toEnqueue) {
+    for (QueueEntry entry : entries) {
       queue.enqueue(currentTx.getWritePointer(), seqId++, entry);
     }
     committed = true;
+    lastEnqueueCount = entries.size();
     return true;
   }
 
   @Override
-  public void postTxCommit() {
-    toEnqueue.clear(); // get rid of the references to committed queue entries
+  protected int getLastEnqueueCount() {
+    return lastEnqueueCount;
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
     if (committed) {
-      for (int seqId = 0; seqId < toEnqueue.size(); seqId++) {
+      for (int seqId = 0; seqId < lastEnqueueCount; seqId++) {
         queue.undoEnqueue(currentTx.getWritePointer(), seqId);
       }
     }

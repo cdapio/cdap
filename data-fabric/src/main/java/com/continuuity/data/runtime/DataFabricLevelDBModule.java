@@ -17,8 +17,10 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.queue.InMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
@@ -91,6 +93,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     // Bind TxDs2 stuff
     bind(DataSetAccessor.class).to(LevelDBDataSetAccessor.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
+    bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
 
     // Bind named fields
     
