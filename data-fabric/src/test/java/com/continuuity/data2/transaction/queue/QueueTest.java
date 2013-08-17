@@ -1,7 +1,9 @@
 package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
@@ -15,14 +17,18 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -74,6 +80,42 @@ public abstract class QueueTest {
     enqueueDequeue(queueName, 60000, 30000, 10, 1, DequeueStrategy.HASH, 50, 120, TimeUnit.SECONDS);
   }
 
+  @Test
+  public void testQueueAbortRetry() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuefailure");
+    createEnqueueRunnable(queueName, 5, 1, null).run();
+
+    Queue2Consumer fifoConsumer = queueClientFactory.createConsumer(queueName,
+                                                                    new ConsumerConfig(0, 0, 1, 2,
+                                                                                       DequeueStrategy.FIFO, null));
+    Queue2Consumer hashConsumer = queueClientFactory.createConsumer(queueName,
+                                                                    new ConsumerConfig(1, 0, 1, 2,
+                                                                                       DequeueStrategy.HASH, "key"));
+
+    TxManager txManager = new TxManager((TransactionAware) fifoConsumer, (TransactionAware) hashConsumer);
+    txManager.start();
+
+    Assert.assertEquals(0, Bytes.toInt(fifoConsumer.dequeue().getData().iterator().next()));
+    Assert.assertEquals(0, Bytes.toInt(hashConsumer.dequeue().getData().iterator().next()));
+
+    // Abort the consumer transaction
+    txManager.abort();
+
+    // Dequeue again in a new transaction, should see the same entries
+    txManager.start();
+    Assert.assertEquals(0, Bytes.toInt(fifoConsumer.dequeue().getData().iterator().next()));
+    Assert.assertEquals(0, Bytes.toInt(hashConsumer.dequeue().getData().iterator().next()));
+
+    txManager.commit();
+
+    // Dequeue again, now should get next entry
+    txManager.start();
+    Assert.assertEquals(1, Bytes.toInt(fifoConsumer.dequeue().getData().iterator().next()));
+    Assert.assertEquals(1, Bytes.toInt(hashConsumer.dequeue().getData().iterator().next()));
+
+    txManager.commit();
+  }
+
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,
                               final int consumerSize, final DequeueStrategy dequeueStrategy,
@@ -93,7 +135,7 @@ public abstract class QueueTest {
 
     // Dequeue
     final long expectedSum = ((long) preEnqueueCount / 2 * ((long) preEnqueueCount - 1)) +
-      ((long) concurrentCount / 2 * ((long) concurrentCount - 1));
+                             ((long) concurrentCount / 2 * ((long) concurrentCount - 1));
     final AtomicLong valueSum = new AtomicLong();
     final CountDownLatch completeLatch = new CountDownLatch(consumerSize);
 
@@ -110,24 +152,18 @@ public abstract class QueueTest {
                                                                                            consumerSize, 1,
                                                                                            dequeueStrategy, "key"));
             try {
-              TransactionAware txAware = (TransactionAware) consumer;
+              TxManager txManager = new TxManager((TransactionAware) consumer);
 
               Stopwatch stopwatch = new Stopwatch();
               stopwatch.start();
 
               int dequeueCount = 0;
               while (valueSum.get() != expectedSum) {
-                Transaction transaction = opex.start();
-                txAware.startTx(transaction);
+                txManager.start();
 
                 try {
                   DequeueResult result = consumer.dequeue(dequeueBatchSize);
-
-                  Preconditions.checkState(opex.canCommit(transaction, txAware.getTxChanges()),
-                                           "Conflicts in pre commit check.");
-                  Preconditions.checkState(txAware.commitTx(), "Fails to commit.");
-                  Preconditions.checkState(opex.commit(transaction), "Fails to commit transaction.");
-                  txAware.postTxCommit();
+                  txManager.commit();
 
                   if (result.isEmpty()) {
                     continue;
@@ -137,8 +173,9 @@ public abstract class QueueTest {
                     valueSum.addAndGet(Bytes.toInt(data));
                     dequeueCount++;
                   }
-                } catch (Exception e) {
-                  opex.abort(transaction);
+                } catch (OperationException e) {
+                  LOG.error("Operation error", e);
+                  txManager.abort();
                   throw Throwables.propagate(e);
                 }
               }
@@ -180,7 +217,7 @@ public abstract class QueueTest {
           }
           Queue2Producer producer = queueClientFactory.createProducer(queueName);
           try {
-            TransactionAware txAware = (TransactionAware) producer;
+            TxManager txManager = new TxManager((TransactionAware) producer);
 
             LOG.info("Start enqueue {} entries.", count);
 
@@ -191,22 +228,23 @@ public abstract class QueueTest {
             int batches = count / batchSize;
             List<QueueEntry> queueEntries = Lists.newArrayListWithCapacity(batchSize);
             for (int i = 0; i < batches; i++) {
-              Transaction transaction = opex.start();
-              txAware.startTx(transaction);
+              txManager.start();
 
-              queueEntries.clear();
-              for (int j = 0; j < batchSize; j++) {
-                int val = i * batchSize + j;
-                byte[] queueData = Bytes.toBytes(val);
-                queueEntries.add(new QueueEntry("key", val, queueData));
+              try {
+                queueEntries.clear();
+                for (int j = 0; j < batchSize; j++) {
+                  int val = i * batchSize + j;
+                  byte[] queueData = Bytes.toBytes(val);
+                  queueEntries.add(new QueueEntry("key", val, queueData));
+                }
+
+                producer.enqueue(queueEntries);
+                txManager.commit();
+              } catch (OperationException e) {
+                LOG.error("Operation error", e);
+                txManager.abort();
+                throw Throwables.propagate(e);
               }
-
-              producer.enqueue(queueEntries);
-
-              Preconditions.checkState(opex.canCommit(transaction, txAware.getTxChanges()),
-                                       "Conflicts in pre commit check.");
-              Preconditions.checkState(txAware.commitTx(), "Fails to commit.");
-              Preconditions.checkState(opex.commit(transaction), "Fails to commit transaction.");
             }
 
             long elapsed = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
@@ -226,4 +264,71 @@ public abstract class QueueTest {
     };
   }
 
+
+  private static final class TxManager {
+    private final Collection<TransactionAware> txAwares;
+    private Transaction transaction;
+
+    TxManager(TransactionAware...txAware) {
+      txAwares = ImmutableList.copyOf(txAware);
+    }
+
+    public void start() throws OperationException {
+      transaction = opex.start();
+      for (TransactionAware txAware : txAwares) {
+        txAware.startTx(transaction);
+      }
+    }
+
+    public void commit() throws OperationException {
+      // Collects change sets
+      Set<byte[]> changeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+      for (TransactionAware txAware : txAwares) {
+        changeSet.addAll(txAware.getTxChanges());
+      }
+
+      // Check for conflicts
+      if (!opex.canCommit(transaction, changeSet)) {
+        throw new OperationException(StatusCode.TRANSACTION_CONFLICT, "Cannot commit tx: conflict detected");
+      }
+
+      // Persist changes
+      for (TransactionAware txAware : txAwares) {
+        try {
+          if (!txAware.commitTx()) {
+            throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to commit tx.");
+          }
+        } catch (Exception e) {
+          throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to commit tx.", e);
+        }
+      }
+
+      // Make visible
+      if (!opex.commit(transaction)) {
+        throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to make tx visible.");
+      }
+
+      // Post commit call
+      for (TransactionAware txAware : txAwares) {
+        try {
+          txAware.postTxCommit();
+        } catch (Throwable t) {
+          LOG.error("Post commit call failure.", t);
+        }
+      }
+    }
+
+    public void abort() throws OperationException {
+      for (TransactionAware txAware : txAwares) {
+        try {
+          if (!txAware.rollbackTx()) {
+            LOG.error("Fail to rollback: {}", txAware);
+          }
+        } catch (Exception e) {
+          LOG.error("Exception in rollback: {}", txAware, e);
+        }
+      }
+      opex.abort(transaction);
+    }
+  }
 }
