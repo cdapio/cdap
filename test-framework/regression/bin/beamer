@@ -100,7 +100,7 @@ function usage() {
   echo "    -r Specifies to use a release version (no SNAPSHOT)"
   echo "    -t Specifies to run tests for the component locally before uploading"
   echo ""
-  echo "Commands for section config"
+  echo "Commands for section cluster"
   echo ""
   echo "  create         Create cluster"
   echo "  destroy        Destroy cluster"
