@@ -4,25 +4,45 @@
 package com.continuuity.data2.queue;
 
 
-import com.continuuity.common.queue.QueueName;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+
+import java.util.Iterator;
 
 
 /**
- *
+ * Represents result of an dequeue. The iterable gives dequeued data entries in the order of dequeue.
  */
-public interface DequeueResult {
+public interface DequeueResult extends Iterable<byte[]> {
 
   /**
    * Returns {@code true} if there is no data in the queue.
    */
   boolean isEmpty();
 
-
   /**
-   * Returns entries being dequeued. If the dequeue result is empty, this method returns an empty collection.
+   * Skips all dequeue entries represented by this result. Note that call to this method is transactional
+   * and requires a new transaction on the {@link Queue2Consumer} instance who provides the instance of this
+   * {@link DequeueResult}.
+   *
+   * E.g.
+   * <pre>
+   *   startTransaction();
+   *   DequeueResult result;
+   *   try {
+   *     result = consumer.dequeue();
+   *     commitTransaction();
+   *   } catch (Exception e) {
+   *     rollbackTransaction();
+   *
+   *     // Skip the result.
+   *     startTransaction();
+   *     result.skip;
+   *     commitTransaction();
+   *   }
+   *
+   * </pre>
    */
-  Iterable<byte[]> getData();
+  void skip();
 
   /**
    * An (immutable) empty dequeue result
@@ -34,8 +54,13 @@ public interface DequeueResult {
     }
 
     @Override
-    public Iterable<byte[]> getData() {
-      return ImmutableList.of();
+    public void skip() {
+      // No-op
+    }
+
+    @Override
+    public Iterator<byte[]> iterator() {
+      return Iterators.emptyIterator();
     }
   };
 }

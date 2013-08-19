@@ -107,7 +107,7 @@ public class InMemoryQueue {
         updateStartKey = false;
       }
     }
-    return keys.isEmpty() ? null : new ImmutablePair<List<Key>, List<byte[]>>(keys, datas);
+    return keys.isEmpty() ? null : ImmutablePair.of(keys, datas);
   }
 
   public void ack(List<Key> dequeuedKeys, ConsumerConfig config) {

@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -56,7 +57,7 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
       return DequeueResult.EMPTY_RESULT;
     } else {
       dequeuedKeys = result.getFirst();
-      return new InMemoryDequeueResult(result.getSecond());
+      return new InMemoryDequeueResult(result);
     }
   }
 
@@ -95,12 +96,14 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
     return true;
   }
 
-  private static final class InMemoryDequeueResult implements DequeueResult {
+  private final class InMemoryDequeueResult implements DequeueResult {
 
+    private final List<InMemoryQueue.Key> keys;
     private final List<byte[]> data;
 
-    InMemoryDequeueResult(Collection<byte[]> entries) {
-      this.data = ImmutableList.copyOf(entries);
+    InMemoryDequeueResult(ImmutablePair<List<InMemoryQueue.Key>, List<byte[]>> result) {
+      this.keys = ImmutableList.copyOf(result.getFirst());
+      this.data = ImmutableList.copyOf(result.getSecond());
     }
 
     @Override
@@ -109,8 +112,13 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
     }
 
     @Override
-    public Collection<byte[]> getData() {
-      return data;
+    public void skip() {
+      dequeuedKeys = keys;
+    }
+
+    @Override
+    public Iterator<byte[]> iterator() {
+      return data.iterator();
     }
   }
 

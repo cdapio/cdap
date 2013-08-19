@@ -81,7 +81,7 @@ public abstract class QueueTest {
   }
 
   @Test
-  public void testQueueAbortRetry() throws Exception {
+  public void testQueueAbortRetrySkip() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuefailure");
     createEnqueueRunnable(queueName, 5, 1, null).run();
 
@@ -95,24 +95,43 @@ public abstract class QueueTest {
     TxManager txManager = new TxManager((TransactionAware) fifoConsumer, (TransactionAware) hashConsumer);
     txManager.start();
 
-    Assert.assertEquals(0, Bytes.toInt(fifoConsumer.dequeue().getData().iterator().next()));
-    Assert.assertEquals(0, Bytes.toInt(hashConsumer.dequeue().getData().iterator().next()));
+    Assert.assertEquals(0, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
+    Assert.assertEquals(0, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
 
     // Abort the consumer transaction
     txManager.abort();
 
     // Dequeue again in a new transaction, should see the same entries
     txManager.start();
-    Assert.assertEquals(0, Bytes.toInt(fifoConsumer.dequeue().getData().iterator().next()));
-    Assert.assertEquals(0, Bytes.toInt(hashConsumer.dequeue().getData().iterator().next()));
-
+    Assert.assertEquals(0, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
+    Assert.assertEquals(0, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
     txManager.commit();
 
     // Dequeue again, now should get next entry
     txManager.start();
-    Assert.assertEquals(1, Bytes.toInt(fifoConsumer.dequeue().getData().iterator().next()));
-    Assert.assertEquals(1, Bytes.toInt(hashConsumer.dequeue().getData().iterator().next()));
+    Assert.assertEquals(1, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
+    Assert.assertEquals(1, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
+    txManager.commit();
 
+    // Dequeue a result and abort.
+    txManager.start();
+    DequeueResult fifoResult = fifoConsumer.dequeue();
+    DequeueResult hashResult = hashConsumer.dequeue();
+
+    Assert.assertEquals(2, Bytes.toInt(fifoResult.iterator().next()));
+    Assert.assertEquals(2, Bytes.toInt(hashResult.iterator().next()));
+    txManager.abort();
+
+    // Now skip the result with a new transaction.
+    txManager.start();
+    fifoResult.skip();
+    hashResult.skip();
+    txManager.commit();
+
+    // Dequeue again, it should see a new entry
+    txManager.start();
+    Assert.assertEquals(3, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
+    Assert.assertEquals(3, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
     txManager.commit();
   }
 
@@ -169,7 +188,7 @@ public abstract class QueueTest {
                     continue;
                   }
 
-                  for (byte[] data : result.getData()) {
+                  for (byte[] data : result) {
                     valueSum.addAndGet(Bytes.toInt(data));
                     dequeueCount++;
                   }

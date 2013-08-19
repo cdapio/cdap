@@ -62,7 +62,7 @@ public final class Queue2InputDatum implements InputDatum {
 
   @Override
   public Iterator<ByteBuffer> getData() {
-    return Iterators.transform(result.getData().iterator(), BYTE_ARRAY_TO_BYTE_BUFFER);
+    return Iterators.transform(result.iterator(), BYTE_ARRAY_TO_BYTE_BUFFER);
   }
 
   @Override

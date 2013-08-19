@@ -27,6 +27,10 @@ public final class ImmutablePair<A, B> {
   private final A first;
   private final B second;
 
+  public static <A, B> ImmutablePair<A, B> of(A first, B second) {
+    return new ImmutablePair<A, B>(first, second);
+  }
+
   /**
    * Constructs a Immutable Pair.
    * @param first object in pair

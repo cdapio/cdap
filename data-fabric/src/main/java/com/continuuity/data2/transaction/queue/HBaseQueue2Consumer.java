@@ -15,7 +15,7 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -38,7 +38,6 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -55,12 +54,18 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
   // TODO: Make these configurable.
   private static final int MAX_CACHE_ROWS = 100;
 
+  private static final Function<HBaseQueueEntry, byte[]> ENTRY_TO_BYTE_ARRAY = new Function<HBaseQueueEntry, byte[]>() {
+    @Override
+    public byte[] apply(HBaseQueueEntry input) {
+      return input.getData();
+    }
+  };
+
   private final ConsumerConfig consumerConfig;
   private final HTable hTable;
   private final QueueName queueName;
   private final SortedMap<byte[], HBaseQueueEntry> entryCache;
   private final SortedMap<byte[], HBaseQueueEntry> consumingEntries;
-  private final Function<byte[], byte[]> rowKeyToChangeTx;
   private final byte[] stateColumnName;
   private final byte[] queueRowPrefix;
   private byte[] startRow;
@@ -76,19 +81,6 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     this.startRow = queueRowPrefix;
     this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
-
-    byte[] tableName = hTable.getTableName();
-    final byte[] changeTxPrefix = ByteBuffer.allocate(tableName.length + 1)
-                                      .put((byte) tableName.length)
-                                      .put(tableName)
-                                      .array();
-
-    rowKeyToChangeTx = new Function<byte[], byte[]>() {
-      @Override
-      public byte[] apply(byte[] rowKey) {
-        return Bytes.add(changeTxPrefix, rowKey);
-      }
-    };
   }
 
   @Override
@@ -149,7 +141,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
       return DequeueResult.EMPTY_RESULT;
     }
 
-    return new HBaseDequeueResult(consumingEntries.values(), queueName, consumerConfig);
+    return new HBaseDequeueResult(consumingEntries.values());
   }
 
   @Override
@@ -160,10 +152,8 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    // ANDREAS: can there ever be a conflict on dequeue? since we claim the entries using checkAndPut, I feel that
-    // all rows modified are exclusively modified by this consumer. But there may be other consumer groups that
-    // update the entry state for the same entry, and that would cause a conflict. We don't want these conflicts.
-    return ImmutableSet.copyOf(Iterators.transform(consumingEntries.keySet().iterator(), rowKeyToChangeTx));
+    // No conflicts guaranteed in dequeue logic.
+    return ImmutableList.of();
   }
 
   @Override
@@ -438,5 +428,48 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
 
   private byte[] getNextRow(long writePointer, int count) {
     return Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
+  }
+
+  /**
+   * Implementation of dequeue result.
+   */
+  private final class HBaseDequeueResult implements DequeueResult {
+
+    private final List<HBaseQueueEntry> entries;
+
+    private HBaseDequeueResult(Iterable<HBaseQueueEntry> entries) {
+      this.entries = ImmutableList.copyOf(entries);
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return entries.isEmpty();
+    }
+
+    @Override
+    public void skip() {
+      // Simply put all entries into consumingEntries and clear those up from the entry cache as well.
+      for (HBaseQueueEntry entry : entries) {
+        consumingEntries.put(entry.getRowKey(), entry);
+        entryCache.remove(entry.getRowKey());
+      }
+    }
+
+    @Override
+    public Iterator<byte[]> iterator() {
+      if (isEmpty()) {
+        return Iterators.emptyIterator();
+      }
+      return Iterators.transform(entries.iterator(), ENTRY_TO_BYTE_ARRAY);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("size", entries.size())
+        .add("queue", queueName)
+        .add("config", consumerConfig)
+        .toString();
+    }
   }
 }
