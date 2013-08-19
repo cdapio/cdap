@@ -85,12 +85,24 @@ public class TestReactorClientCommandParsing {
     assertTrue("start".equals(client.parseArguments(
       new String[]{"start", "--application", "appId", "--flow", "processor"}, CConfiguration.create())));
 
+    assertTrue("start".equals(client.parseArguments(
+      new String[]{"start", "--application", "appId", "--flow", "processor", "--host", "localhost"},
+      CConfiguration.create())));
+
+    assertTrue("start".equals(client.parseArguments(
+      new String[]{"start", "--application", "appId", "--flow", "processor", "--host", "localhost", "-RV=1", "-RU=2"},
+      CConfiguration.create())));
+
+
     assertTrue("stop".equals(client.parseArguments(
       new String[]{"stop", "--application", "appId", "--procedure", "processor"}, CConfiguration.create())));
 
     assertTrue("stop".equals(client.parseArguments(
       new String[]{"stop", "--application", "appId", "--flow", "processor"}, CConfiguration.create())));
 
+    assertTrue("stop".equals(client.parseArguments(
+      new String[]{"stop", "--application", "appId", "--flow", "processor", "--host", "localhost"},
+      CConfiguration.create())));
 
     assertTrue("status".equals(client.parseArguments(
       new String[]{"status", "--application", "appId", "--procedure", "processor"}, CConfiguration.create())));
