@@ -52,12 +52,13 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
-  public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig) throws IOException {
+  public Queue2Consumer createConsumer(QueueName queueName,
+                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
     HTable consumerTable = new HTable(admin.getConfiguration(), tableName);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     consumerTable.setAutoFlush(false);
-    return new HBaseQueue2Consumer(consumerConfig, consumerTable, queueName);
+    return new HBaseQueue2Consumer(consumerConfig, numGroups, consumerTable, queueName);
   }
 
   @Override

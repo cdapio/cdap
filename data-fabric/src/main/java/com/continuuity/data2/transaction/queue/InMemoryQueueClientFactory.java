@@ -27,8 +27,9 @@ public class InMemoryQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
-  public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig) throws IOException {
-    return new InMemoryQueue2Consumer(queueName, consumerConfig, queueService);
+  public Queue2Consumer createConsumer(QueueName queueName,
+                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
+    return new InMemoryQueue2Consumer(queueName, consumerConfig, numGroups, queueService);
   }
 
   @Override

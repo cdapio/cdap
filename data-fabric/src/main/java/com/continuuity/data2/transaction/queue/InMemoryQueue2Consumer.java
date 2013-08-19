@@ -25,13 +25,16 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
   private boolean committed = false;
   private final InMemoryQueue queue;
   private final ConsumerConfig config;
+  private final int numGroups;
   private List<InMemoryQueue.Key> dequeuedKeys;
   private final InMemoryQueue.ConsumerState state = new InMemoryQueue.ConsumerState();
 
-  public InMemoryQueue2Consumer(QueueName queueName, ConsumerConfig config, InMemoryQueueService queueService) {
+  public InMemoryQueue2Consumer(QueueName queueName, ConsumerConfig config,
+                                int numGroups, InMemoryQueueService queueService) {
     this.queueName = queueName;
     this.queue = queueService.getQueue(queueName);
     this.config = config;
+    this.numGroups = numGroups;
   }
 
   @Override
@@ -82,7 +85,7 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
 
   @Override
   public void postTxCommit() {
-    queue.evict(dequeuedKeys, config);
+    queue.evict(dequeuedKeys, numGroups);
   }
 
   @Override

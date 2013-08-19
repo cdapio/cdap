@@ -37,22 +37,22 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
   private final Method method;
-  private final DataFabricFacade txAgentSupplier;
+  private final DataFabricFacade dataFabricFacade;
   private final boolean hasParam;
   private final boolean needsBatch;
   private final boolean needContext;
 
   public static ReflectionProcessMethod create(Flowlet flowlet, BasicFlowletContext flowletContext,
-                                                      Method method, DataFabricFacade txAgentSupplier) {
-    return new ReflectionProcessMethod(flowlet, flowletContext, method, txAgentSupplier);
+                                                      Method method, DataFabricFacade dataFabricFacade) {
+    return new ReflectionProcessMethod(flowlet, flowletContext, method, dataFabricFacade);
   }
 
   private ReflectionProcessMethod(Flowlet flowlet, BasicFlowletContext flowletContext,
-                                  Method method, DataFabricFacade txAgentSupplier) {
+                                  Method method, DataFabricFacade dataFabricFacade) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.method = method;
-    this.txAgentSupplier = txAgentSupplier;
+    this.dataFabricFacade = dataFabricFacade;
 
     this.hasParam = method.getGenericParameterTypes().length > 0;
     this.needsBatch = hasParam &&
@@ -70,26 +70,18 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   }
 
   @Override
-  public PostProcess invoke(InputDatum input, Function<ByteBuffer, T> inputDatumTransformer) {
-    return doInvoke(input, inputDatumTransformer);
-  }
-
-  @Override
   public String toString() {
     return flowlet.getClass() + "." + method.toString();
   }
 
-  private PostProcess doInvoke(final InputDatum input, final Function<ByteBuffer, T> inputDatumTransformer) {
-    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateTransactionAgentProxy();
-
+  @Override
+  public PostProcess invoke(TransactionAgent txAgent, InputDatum input, Function<ByteBuffer, T> inputDatumTransformer) {
     try {
-      txAgent.start();
       Preconditions.checkState(!hasParam || input.needProcess(), "Empty input provided to method that needs input.");
 
       T event = null;
       if (hasParam) {
-        Iterator<ByteBuffer> inputIterator = input.getData();
-        Iterator<T> dataIterator = Iterators.transform(inputIterator, inputDatumTransformer);
+        Iterator<T> dataIterator = Iterators.transform(input.iterator(), inputDatumTransformer);
 
         if (needsBatch) {
           //noinspection unchecked
@@ -133,14 +125,13 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
           @Override
           public void run() {
             try {
-              input.submitAck(txAgent);
               txAgent.finish();
               callback.onSuccess(event, inputContext);
             } catch (Throwable t) {
               LOGGER.error("Fail to commit transaction: " + input, t);
               callback.onFailure(event, inputContext,
                                  new FailureReason(FailureReason.Type.IO_ERROR, t.getMessage(), t),
-                                 new SimpleInputAcknowledger(txAgentSupplier, input));
+                                 new SimpleInputAcknowledger(dataFabricFacade, input));
             } finally {
               // we want to emit metrics after every retry after finish() so that deferred operations are also logged
               flowletContext.getSystemMetrics().gauge("store.ops", txAgent.getSucceededCount());
@@ -172,7 +163,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
             } finally {
               callback.onFailure(event, inputContext,
                                  new FailureReason(FailureReason.Type.USER, t.getMessage(), t),
-                                 new SimpleInputAcknowledger(txAgentSupplier, input));
+                                 new SimpleInputAcknowledger(dataFabricFacade, input));
             }
           }
         });
@@ -195,7 +186,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
     public void ack() throws OperationException {
       TransactionAgent txAgent = txAgentSupplier.createTransactionAgent();
       txAgent.start();
-      input.submitAck(txAgent);
+      input.skip();
       txAgent.finish();
     }
   }

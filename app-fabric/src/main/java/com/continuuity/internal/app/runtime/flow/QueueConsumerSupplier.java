@@ -21,13 +21,16 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
 
   private final QueueClientFactory clientFactory;
   private final QueueName queueName;
+  private final int numGroups;
   private ConsumerConfig consumerConfig;
   private Queue2Consumer consumer;
 
-  QueueConsumerSupplier(QueueClientFactory clientFactory, QueueName queueName, ConsumerConfig consumerConfig) {
+  QueueConsumerSupplier(QueueClientFactory clientFactory, QueueName queueName,
+                        ConsumerConfig consumerConfig, int numGroups) {
     this.clientFactory = clientFactory;
     this.queueName = queueName;
     this.consumerConfig = consumerConfig;
+    this.numGroups = numGroups;
   }
 
   void updateInstanceCount(int groupSize) {
@@ -43,7 +46,7 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
   public Queue2Consumer get() {
     try {
       if (consumer == null) {
-        consumer = clientFactory.createConsumer(queueName, consumerConfig);
+        consumer = clientFactory.createConsumer(queueName, consumerConfig, numGroups);
       }
       return consumer;
     } catch (IOException e) {

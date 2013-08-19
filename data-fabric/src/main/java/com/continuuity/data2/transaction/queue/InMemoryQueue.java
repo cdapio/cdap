@@ -138,8 +138,8 @@ public class InMemoryQueue {
     }
   }
 
-  public void evict(List<Key> dequeuedKeys, ConsumerConfig config) {
-    if (config.getNumGroups() < 1) {
+  public void evict(List<Key> dequeuedKeys, int numGroups) {
+    if (numGroups < 1) {
       return; // this means no eviction because number of groups is not known
     }
     if (dequeuedKeys == null) {
@@ -151,7 +151,7 @@ public class InMemoryQueue {
         LOG.warn("Attempting to evict non-existing entry " + key);
         continue;
       }
-      if (item.incrementProcessed() >= config.getNumGroups()) {
+      if (item.incrementProcessed() >= numGroups) {
         // all consumer groups have processed _and_ reached the post-commit hook: safe to evict
         entries.remove(key);
       }

@@ -68,10 +68,11 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
   private final SortedMap<byte[], HBaseQueueEntry> consumingEntries;
   private final byte[] stateColumnName;
   private final byte[] queueRowPrefix;
+  private final int numGroups;
   private byte[] startRow;
   private Transaction transaction;
 
-  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName) {
+  HBaseQueue2Consumer(ConsumerConfig consumerConfig, int numGroups, HTable hTable, QueueName queueName) {
     this.consumerConfig = consumerConfig;
     this.hTable = hTable;
     this.queueName = queueName;
@@ -79,6 +80,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.queueRowPrefix = HBaseQueueUtils.getQueueRowPrefix(queueName);
     this.startRow = queueRowPrefix;
+    this.numGroups = numGroups;
     this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
   }

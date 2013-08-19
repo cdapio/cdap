@@ -85,12 +85,10 @@ public abstract class QueueTest {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuefailure");
     createEnqueueRunnable(queueName, 5, 1, null).run();
 
-    Queue2Consumer fifoConsumer = queueClientFactory.createConsumer(queueName,
-                                                                    new ConsumerConfig(0, 0, 1, 2,
-                                                                                       DequeueStrategy.FIFO, null));
-    Queue2Consumer hashConsumer = queueClientFactory.createConsumer(queueName,
-                                                                    new ConsumerConfig(1, 0, 1, 2,
-                                                                                       DequeueStrategy.HASH, "key"));
+    Queue2Consumer fifoConsumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
+    Queue2Consumer hashConsumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(1, 0, 1, DequeueStrategy.HASH, "key"), 2);
 
     TxManager txManager = new TxManager((TransactionAware) fifoConsumer, (TransactionAware) hashConsumer);
     txManager.start();
@@ -166,10 +164,8 @@ public abstract class QueueTest {
           try {
             startBarrier.await();
             LOG.info("Consumer {} starts consuming {}", instanceId, queueName.getSimpleName());
-            Queue2Consumer consumer = queueClientFactory.createConsumer(queueName,
-                                                                        new ConsumerConfig(0, instanceId,
-                                                                                           consumerSize, 1,
-                                                                                           dequeueStrategy, "key"));
+            Queue2Consumer consumer = queueClientFactory.createConsumer(
+              queueName, new ConsumerConfig(0, instanceId, consumerSize, dequeueStrategy, "key"), 1);
             try {
               TxManager txManager = new TxManager((TransactionAware) consumer);
 

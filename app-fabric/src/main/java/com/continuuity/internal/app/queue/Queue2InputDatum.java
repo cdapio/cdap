@@ -3,11 +3,9 @@
  */
 package com.continuuity.internal.app.queue;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data2.queue.DequeueResult;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
@@ -51,17 +49,12 @@ public final class Queue2InputDatum implements InputDatum {
   }
 
   @Override
-  public void submitAck(TransactionAgent txAgent) throws OperationException {
-    // No-op. This method is for old transaction system.
-  }
-
-  @Override
   public boolean needProcess() {
     return !result.isEmpty();
   }
 
   @Override
-  public Iterator<ByteBuffer> getData() {
+  public Iterator<ByteBuffer> iterator() {
     return Iterators.transform(result.iterator(), BYTE_ARRAY_TO_BYTE_BUFFER);
   }
 
@@ -78,6 +71,11 @@ public final class Queue2InputDatum implements InputDatum {
   @Override
   public InputContext getInputContext() {
     return inputContext;
+  }
+
+  @Override
+  public void skip() {
+    result.skip();
   }
 
   @Override

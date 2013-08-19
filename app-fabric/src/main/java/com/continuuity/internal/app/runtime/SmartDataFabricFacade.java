@@ -79,8 +79,9 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig) throws IOException {
-    Queue2Consumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig);
+  public Queue2Consumer createConsumer(QueueName queueName,
+                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
+    Queue2Consumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, numGroups);
     if (consumer instanceof TransactionAware) {
       dataSetContext.addTransactionAware((TransactionAware) consumer);
       // TODO: Need to deal with removing from the transaction aware list when no longer used.

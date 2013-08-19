@@ -5,7 +5,6 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.Output;
@@ -14,6 +13,7 @@ import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
@@ -161,7 +161,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
                                                options.getUserArguments(),
                                                flowletDef.getFlowletSpec(),
-                                               flowletClass.isAnnotationPresent(Async.class),
+//                                               flowletClass.isAnnotationPresent(Async.class),
+                                               false,
                                                metricsCollectionService);
 
       // Creates QueueSpecification
@@ -187,7 +188,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       List<QueueConsumerSupplier> queueConsumerSuppliers = queueConsumerSupplierBuilder.build();
 
       FlowletProcessDriver driver = new FlowletProcessDriver(flowlet, flowletContext, processSpecs,
-                                                             createCallback(flowlet, flowletDef.getFlowletSpec()));
+                                                             createCallback(flowlet, flowletDef.getFlowletSpec()),
+                                                             dataFabricFacade);
 
       LOG.info("Starting flowlet: " + flowletContext);
       driver.start();
@@ -340,7 +342,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     }
 
     return new ConsumerConfig(flowletContext.getGroupId(), flowletContext.getInstanceId(),
-                                                       flowletContext.getInstanceCount(), strategy, hashKey);
+                              flowletContext.getInstanceCount(), strategy, hashKey);
   }
 
   /**
@@ -355,6 +357,16 @@ public final class FlowletProgramRunner implements ProgramRunner {
       return batchSize;
     }
     return null;
+  }
+
+  private int getNumGroups(Iterable<QueueSpecification> queueSpecs, QueueName queueName) {
+    int numGroups = 0;
+    for (QueueSpecification queueSpec : queueSpecs) {
+      if (queueName.equals(queueSpec.getQueueName())) {
+        numGroups++;
+      }
+    }
+    return numGroups;
   }
 
   private Callback createCallback(Flowlet flowlet, FlowletSpecification flowletSpec) {
@@ -443,8 +455,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
               && (inputNames.contains(queueName.getSimpleName())
               || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
 
+              int numGroups = (entry.getKey().getType() == FlowletConnection.Type.STREAM)
+                ? -1
+                : getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
+
               QueueConsumerSupplier consumerSupplier = new QueueConsumerSupplier(queueClientFactory,
-                                                                                 queueName, consumerConfig);
+                                                                                 queueName, consumerConfig, numGroups);
               queueConsumerSupplierBuilder.add(consumerSupplier);
               queueReaders.add(queueReaderFactory.create(consumerSupplier, batchSize));
             }

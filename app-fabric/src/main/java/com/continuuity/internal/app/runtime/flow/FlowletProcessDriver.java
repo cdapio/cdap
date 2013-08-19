@@ -9,7 +9,9 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.PostProcess;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
@@ -68,18 +70,20 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private final AtomicReference<CountDownLatch> suspension;
   private final CyclicBarrier suspendBarrier;
   private final AtomicInteger inflight;
+  private final DataFabricFacade dataFabricFacade;
   private ExecutorService transactionExecutor;
   private Thread runnerThread;
 
   FlowletProcessDriver(Flowlet flowlet, BasicFlowletContext flowletContext,
                        Collection<ProcessSpecification> processSpecs,
-                       Callback txCallback) {
+                       Callback txCallback, DataFabricFacade dataFabricFacade) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.loggingContext = flowletContext.getLoggingContext();
     this.processSpecs = processSpecs;
     this.txCallback = txCallback;
-    inflight = new AtomicInteger(0);
+    this.dataFabricFacade = dataFabricFacade;
+    this.inflight = new AtomicInteger(0);
 
     this.suspension = new AtomicReference<CountDownLatch>();
     this.suspendBarrier = new CyclicBarrier(2);
@@ -210,31 +214,39 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           if (processMethod.needsInput()) {
             flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
           }
-          InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          if (!input.needProcess()) {
-            entry.backOff();
-            continue;
-          }
 
-          // Resetting back-off time to minimum back-off time, since an entry to process was de-queued and most likely
-          // more entries will follow.
-          entry.resetBackOff();
-
-          if (!entry.isRetry()) {
-            // Only increment the inflight count for non-retry entries.
-            // The inflight count would get decrement when the transaction committed successfully or input get ignored.
-            // See the processMethodCallback function.
-            inflight.getAndIncrement();
-          }
+          // Begin transaction and dequeue
+          TransactionAgent txAgent = dataFabricFacade.createAndUpdateTransactionAgentProxy();
+          txAgent.start();
 
           try {
+            InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
+            if (!input.needProcess()) {
+              entry.backOff();
+              // End the transaction if nothing in the queue
+              txAgent.finish();
+              continue;
+            }
+
+            // Resetting back-off time to minimum back-off time, since an entry to process was de-queued and most likely
+            // more entries will follow.
+            entry.resetBackOff();
+
+            if (!entry.isRetry()) {
+              // Only increment the inflight count for non-retry entries.
+              // The inflight count would get decrement when the transaction committed successfully or input get ignored.
+              // See the processMethodCallback function.
+              inflight.getAndIncrement();
+            }
+
             invoked = true;
             // Call the process method and commit the transaction
-            processMethod.invoke(input, wrapInputDatumDecoder(input, entry.getProcessSpec().getInputDatumDecoder()))
+            processMethod.invoke(txAgent, input, wrapInputDecoder(input, entry.getProcessSpec().getInputDatumDecoder()))
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
             LOG.error("Fail to invoke process method: {}, {}", entry.getProcessSpec(), flowletContext, t);
+            txAgent.abort();
           }
         } catch (OperationException e) {
           LOG.error("Queue operation failure: " + flowletContext, e);
@@ -253,8 +265,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     destroyFlowlet();
   }
 
-  private <T> Function<ByteBuffer, T> wrapInputDatumDecoder(final InputDatum input,
-                                                            final Function<ByteBuffer, T> inputDatumDecoder) {
+  private <T> Function<ByteBuffer, T> wrapInputDecoder(final InputDatum input,
+                                                       final Function<ByteBuffer, T> inputDatumDecoder) {
     return new Function<ByteBuffer, T>() {
       @Override
       public T apply(ByteBuffer byteBuffer) {
@@ -287,16 +299,19 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         hasRetry = true;
         try {
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
-          InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
 
+          TransactionAgent txAgent = dataFabricFacade.createAndUpdateTransactionAgentProxy();
           try {
+            InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
+            flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
+
             // Call the process method and commit the transaction
-            processMethod.invoke(input, wrapInputDatumDecoder(input, entry.getProcessSpec().getInputDatumDecoder()))
+            processMethod.invoke(txAgent, input, wrapInputDecoder(input, entry.getProcessSpec().getInputDatumDecoder()))
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
             LOG.error("Fail to invoke process method: {}, {}", entry.getProcessSpec(), flowletContext, t);
+            txAgent.abort();
           }
         } catch (OperationException e) {
           // This should never happen for retry entries
