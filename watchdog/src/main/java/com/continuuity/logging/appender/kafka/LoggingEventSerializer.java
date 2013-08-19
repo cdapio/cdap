@@ -8,7 +8,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.serialize.LoggingEvent;
 import com.google.common.base.Throwables;
-import kafka.serializer.Encoder;
 import kafka.utils.VerifiableProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -27,8 +26,7 @@ import java.nio.ByteBuffer;
 /**
  * Avro serializer for ILoggingEvent.
  */
-@SuppressWarnings("UnusedDeclaration")
-public final class LoggingEventSerializer implements Encoder<ILoggingEvent> {
+public final class LoggingEventSerializer {
   private final LogSchema logSchema;
 
   public LoggingEventSerializer() throws IOException {
@@ -43,7 +41,6 @@ public final class LoggingEventSerializer implements Encoder<ILoggingEvent> {
     return logSchema.getAvroSchema();
   }
 
-  @Override
   public byte[] toBytes(ILoggingEvent loggingEvent) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(out, null);

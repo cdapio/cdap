@@ -141,7 +141,7 @@ task developer_suite_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
   }
 
   //docs
-  into("docs/api"){
+  into("javadoc"){
     from project(':singlenode').tasks.getByName('javadoc').outputs
   }
 

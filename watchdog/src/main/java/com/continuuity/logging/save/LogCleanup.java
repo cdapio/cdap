@@ -34,10 +34,14 @@ public final class LogCleanup implements Runnable, Closeable {
     this.fileMetaDataManager = fileMetaDataManager;
     this.logBaseDir = logBaseDir;
     this.retentionDurationMs = retentionDurationMs;
+
+    LOG.info("Log base dir = {}", logBaseDir);
+    LOG.info("Log retention duration = {} ms", retentionDurationMs);
   }
 
   @Override
   public void run() {
+    LOG.info("Running log cleanup...");
     try {
       long tillTime = System.currentTimeMillis() - retentionDurationMs;
       final Set<Path> parentDirs = Sets.newHashSet();

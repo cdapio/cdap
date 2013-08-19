@@ -55,13 +55,13 @@ public class AvroFileLogReader {
         datum = dataFileReader.next();
         loggingEvent = LoggingEvent.decode(datum);
         long prevPrevSyncPos = 0;
-        long prevSyncPos;
+        long prevSyncPos = 0;
         // Seek to time fromTimeMs
         while (loggingEvent.getTimeStamp() < fromTimeMs && dataFileReader.hasNext()) {
           // Seek to the next sync point
           long curPos = dataFileReader.tell();
-          prevSyncPos = dataFileReader.previousSync();
           prevPrevSyncPos = prevSyncPos;
+          prevSyncPos = dataFileReader.previousSync();
           dataFileReader.sync(curPos);
           if (dataFileReader.hasNext()) {
             loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
@@ -78,7 +78,7 @@ public class AvroFileLogReader {
           loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
           if (loggingEvent.getTimeStamp() >= fromTimeMs && logFilter.match(loggingEvent)) {
             ++count;
-            if ((count > maxEvents || loggingEvent.getTimeStamp() > toTimeMs)
+            if ((count > maxEvents || loggingEvent.getTimeStamp() >= toTimeMs)
               && loggingEvent.getTimeStamp() != prevTimestamp) {
               break;
             }

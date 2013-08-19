@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKOperations;
@@ -36,9 +37,6 @@ public class KafkaServerMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    int brokerId = generateBrokerId();
-    LOG.info(String.format("Initializing server with broker id %d", brokerId));
-
     CConfiguration cConf = CConfiguration.create();
     String zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
     String zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
@@ -46,18 +44,18 @@ public class KafkaServerMain extends DaemonMain {
     int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);
     String hostname = cConf.get(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG);
 
-    // Convert wildcard address to proper hostname
-    if (hostname != null) {
-      InetSocketAddress socketAddress = new InetSocketAddress(hostname, 0);
-      InetAddress address = socketAddress.getAddress();
-      if (address.isAnyLocalAddress()) {
-        try {
-          hostname = InetAddress.getLocalHost().getCanonicalHostName();
-        } catch (UnknownHostException e) {
-          throw Throwables.propagate(e);
-        }
+    InetAddress address = Networks.resolve(hostname, new InetSocketAddress("localhost", 0).getAddress());
+    if (address.isAnyLocalAddress()) {
+      try {
+        address = InetAddress.getLocalHost();
+      } catch (UnknownHostException e) {
+        throw Throwables.propagate(e);
       }
     }
+    if (address.isLoopbackAddress()) {
+      LOG.warn("Binding to loopback address!");
+    }
+    hostname = address.getCanonicalHostName();
 
     int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
                                      KafkaConstants.DEFAULT_NUM_PARTITIONS);
@@ -87,6 +85,9 @@ public class KafkaServerMain extends DaemonMain {
         client.stopAndWait();
       }
     }
+
+    int brokerId = generateBrokerId(address);
+    LOG.info(String.format("Initializing server with broker id %d", brokerId));
 
     kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions,
                                           replicationFactor, logDir);
@@ -145,9 +146,10 @@ public class KafkaServerMain extends DaemonMain {
     return prop;
   }
 
-  private static int generateBrokerId() {
+  private static int generateBrokerId(InetAddress address) {
+    LOG.info("Generating broker ID with address {}", address);
     try {
-      return Math.abs(InetAddresses.coerceToInteger(InetAddress.getLocalHost()));
+      return Math.abs(InetAddresses.coerceToInteger(address));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
