@@ -234,7 +234,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
             if (!entry.isRetry()) {
               // Only increment the inflight count for non-retry entries.
-              // The inflight count would get decrement when the transaction committed successfully or input get ignored.
+              // The inflight would get decrement when the transaction committed successfully or input get ignored.
               // See the processMethodCallback function.
               inflight.getAndIncrement();
             }
