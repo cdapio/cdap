@@ -428,7 +428,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new ProcessMethodFactory() {
       @Override
       public ProcessMethod create(Method method) {
-        return ReflectionProcessMethod.create(flowlet, flowletContext, method, dataFabricFacade);
+        return ReflectionProcessMethod.create(flowlet, method);
 
 
       }

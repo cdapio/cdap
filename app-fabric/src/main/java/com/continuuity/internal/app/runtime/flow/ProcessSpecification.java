@@ -30,7 +30,7 @@ final class ProcessSpecification<T> {
     return processMethod;
   }
 
-  public Function<ByteBuffer, T> getInputDatumDecoder() {
+  public Function<ByteBuffer, T> getInputDecoder() {
     return inputDatumDecoder;
   }
 

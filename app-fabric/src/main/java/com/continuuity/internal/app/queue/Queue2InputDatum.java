@@ -8,6 +8,7 @@ import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.DequeueResult;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 
 import java.nio.ByteBuffer;
@@ -44,6 +45,13 @@ public final class Queue2InputDatum implements InputDatum {
       @Override
       public int getRetryCount() {
         return retry.get();
+      }
+
+      @Override
+      public String toString() {
+        return Objects.toStringHelper(InputContext.class)
+          .add("queue", queueName)
+          .toString();
       }
     };
   }
