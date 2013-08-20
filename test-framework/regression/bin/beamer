@@ -245,10 +245,8 @@ function create_cluster() {
   local cluster=$1; shift
   local type=$1; shift
   echo "Creating cluster $cluster of type $type (This will take approximately 10-15 minutes)"
-  ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh $cuser create $cluster >/dev/null
+  ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh $cuser create $cluster
   echo "Install as much as you want to cluster $cluster. Host $cluster.dev.continuuity.net is accesible"
-  echo "Starting all services on cluster $cluster"
-  ssh -oStrictHostKeyChecking=no -l $cuser $cluster.dev.continuuity.net 'for i in `ls /etc/init.d/ | grep continuuity` ; do sudo service $i restart ; done'
 }
 
 echoerr() { 

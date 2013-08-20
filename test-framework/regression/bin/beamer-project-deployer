@@ -3,7 +3,7 @@
 PROJECT=$1; shift
 TGZ_FILE=$1;shift
 BRANCH=$1; shift
-KEEP=$1; shift
+KEEP=10; shift
 TGZ_NAME=`basename $TGZ_FILE`
 CINST_BASE=/var/beamer
 epoch=`date +%s`
