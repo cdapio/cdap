@@ -18,7 +18,6 @@ import org.apache.hadoop.fs.RemoteIterator;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Writes a logging event to file with rotation. File name will be the current timestamp. This class is not
@@ -34,7 +33,7 @@ public class LogFileWriter implements Closeable {
 
   private FSDataOutputStream outputStream;
   private DataFileWriter<GenericRecord> dataFileWriter;
-  private long currentTimeInterval = -1;
+  private long currentFileTs = -1;
 
   private static final String FILE_SUFFIX = "avro";
 
@@ -71,12 +70,16 @@ public class LogFileWriter implements Closeable {
     }
   }
 
-  private void rotate(long ts) throws IOException {
-    long timeInterval = getMinuteInterval(ts);
-    if ((currentTimeInterval != timeInterval && timeInterval % fileRotateIntervalMs == 0) || dataFileWriter == null) {
+  /**
+   * Rotates the current log file file when current log file is open for more than fileRotateIntervalMs.
+   * @param ts Timestamp to use for creating the new log file.
+   * @throws IOException
+   */
+  void rotate(long ts) throws IOException {
+    if ((currentFileTs != ts && ts - currentFileTs > fileRotateIntervalMs) || dataFileWriter == null) {
       close();
-      create(timeInterval);
-      currentTimeInterval = timeInterval;
+      create(ts);
+      currentFileTs = ts;
 
       cleanUp();
     }
@@ -95,15 +98,13 @@ public class LogFileWriter implements Closeable {
     RemoteIterator<LocatedFileStatus> filesIt = fileSystem.listFiles(logBaseDir, false);
     while (filesIt.hasNext()) {
       LocatedFileStatus status = filesIt.next();
-      if (status.getModificationTime() < retentionTs && status.getPath().getName().endsWith(FILE_SUFFIX)) {
+      String fileName = status.getPath().getName();
+      String currentFilePrefix = String.valueOf(currentFileTs);
+      if (status.getModificationTime() < retentionTs && fileName.endsWith(FILE_SUFFIX)
+        && !fileName.startsWith(currentFilePrefix)) {
         fileSystem.delete(status.getPath(), false);
       }
     }
-  }
-
-  private static long getMinuteInterval(long ts) {
-    long minutes =  TimeUnit.MINUTES.convert(ts, TimeUnit.MILLISECONDS);
-    return TimeUnit.MILLISECONDS.convert(minutes, TimeUnit.MINUTES);
   }
 }
 
