@@ -97,7 +97,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogCallback logCallback2 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(10).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(20).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback2);
+                                allEvents.get(20).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback2);
     List<LogEvent> events = logCallback2.getEvents();
     Assert.assertEquals(10, events.size());
     Assert.assertEquals("Test log message 10 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -105,7 +105,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogCallback logCallback3 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(5).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(55).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback3);
+                                allEvents.get(55).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback3);
     events = logCallback3.getEvents();
     Assert.assertEquals(50, events.size());
     Assert.assertEquals("Test log message 5 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -113,7 +113,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogCallback logCallback4 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(30).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(53).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback4);
+                                allEvents.get(53).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback4);
     events = logCallback4.getEvents();
     Assert.assertEquals(23, events.size());
     Assert.assertEquals("Test log message 30 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -121,7 +121,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogCallback logCallback5 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(35).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(38).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback5);
+                                allEvents.get(38).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback5);
     events = logCallback5.getEvents();
     Assert.assertEquals(3, events.size());
     Assert.assertEquals("Test log message 35 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -129,7 +129,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogCallback logCallback6 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(53).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback6);
+                                allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback6);
     events = logCallback6.getEvents();
     Assert.assertEquals(6, events.size());
     Assert.assertEquals("Test log message 53 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -137,25 +137,25 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogCallback logCallback7 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(59).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback7);
+                                allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback7);
     events = logCallback7.getEvents();
     Assert.assertEquals(0, events.size());
 
     LogCallback logCallback8 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(0).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(0).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback8);
+                                allEvents.get(0).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback8);
     events = logCallback8.getEvents();
     Assert.assertEquals(0, events.size());
 
     LogCallback logCallback9 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(20).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(20).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback9);
+                                allEvents.get(20).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback9);
     events = logCallback9.getEvents();
     Assert.assertEquals(0, events.size());
 
     LogCallback logCallback10 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(32).getLoggingEvent().getTimeStamp() - 15,
-                                allEvents.get(45).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER,logCallback10);
+                                allEvents.get(45).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback10);
     events = logCallback10.getEvents();
     Assert.assertTrue(events.size() > 13);
     Assert.assertEquals("Test log message 32 arg1 arg2",
@@ -166,7 +166,7 @@ public class LogSaverTest extends KafkaTestBase {
     LogCallback logCallback11 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(18).getLoggingEvent().getTimeStamp(),
                                 allEvents.get(34).getLoggingEvent().getTimeStamp() + 18,
-                                Filter.EMPTY_FILTER,logCallback11);
+                                Filter.EMPTY_FILTER, logCallback11);
     events = logCallback11.getEvents();
     Assert.assertTrue(events.size() > 16);
     Assert.assertEquals("Test log message 18 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
