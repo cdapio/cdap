@@ -244,6 +244,11 @@ function(Components, Embeddables, HTTP, Socket, Util){
 	assignments['Util'] = Util;
 
 	/*
+	 * Configure upload handler.
+	 */
+	Util.Upload.configure();
+
+	/*
 	 * Shortcut for modal dialogues.
 	 */
 	assignments['Modal'] = assignments['Embed'].Modal.create();

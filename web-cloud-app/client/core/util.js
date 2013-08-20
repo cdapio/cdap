@@ -58,6 +58,49 @@ define([], function () {
 			fileQueue: [],
 			entityType: null,
 
+			configure: function () {
+
+				function ignoreDrag(e) {
+					e.originalEvent.stopPropagation();
+					e.originalEvent.preventDefault();
+				}
+
+				var self = this;
+				var element = $('body');
+
+				function drop (e) {
+					ignoreDrag(e);
+
+					$('#drop-label').hide();
+					$('#drop-loading').show();
+
+					if (!C.Util.Upload.processing) {
+						var dt = e.originalEvent.dataTransfer;
+						C.Util.Upload.sendFiles(dt.files, self.get('entityType'));
+						$('#far-upload-alert').hide();
+					}
+				}
+
+				var entered = 0;
+
+				element.bind('dragenter', function (e) {
+
+					ignoreDrag(e);
+					entered = new Date().getTime();
+					$('#drop-hover').fadeIn();
+
+				}).bind('dragleave', function (e) {
+
+					var now = new Date().getTime();
+					if (now - entered > 50) {
+						$('#drop-hover').fadeOut();
+					}
+
+				}).bind('dragover', ignoreDrag)
+					.bind('drop', drop);
+
+			},
+
 			__sendFile: function () {
 
 				var file = this.fileQueue.shift();
@@ -102,6 +145,10 @@ define([], function () {
 
 				if (response.error) {
 					C.Modal.show("Deployment Error", response.error);
+					$('#drop-hover').fadeOut(function () {
+						$('#drop-label').show();
+						$('#drop-loading').hide();
+					});
 					this.processing = false;
 
 				} else {
@@ -133,7 +180,10 @@ define([], function () {
 							$('.modal').modal('hide');
 
 							C.Modal.show("Deployment Error", response.message);
-
+							$('#drop-hover').fadeOut(function () {
+								$('#drop-label').show();
+								$('#drop-loading').hide();
+							});
 					}
 				}
 			}

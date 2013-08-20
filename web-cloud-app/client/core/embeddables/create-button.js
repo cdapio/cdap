@@ -11,10 +11,17 @@ define([], function () {
 		entityType: 'Application',
 		click: function () {
 
+			$('#drop-hover').one('click', function () {
+				$('#drop-hover').fadeOut();
+			});
+			$('#drop-hover').fadeIn();
+
+			/*
 			var view = this.createChildView(C.Embed.Create, {
 				entityType: this.get('entityType')
 			});
 			view.append();
+			*/
 
 		},
 		didInsertElement: function () {

@@ -699,6 +699,52 @@ text {
 	background-repeat: no-repeat;
 	background-position: center center;
 }
+
+#drop-hover {
+	display: none;
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	background-color: #000;
+	opacity: .8;
+	filter: alpha(opacity=80);
+}
+#drop-border {
+	position: fixed;
+	top: 20px;
+	left: 20px;
+	right: 20px;
+	bottom: 20px;
+	border: 8px dotted #555;
+	border-radius: 20px;
+}
+
+#drop-label {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	width: auto;
+	color: #fff;
+	font-family: "HelveticaNeueW01-55Roma";
+	font-size: 28px;
+	text-align: center;
+	margin-left: -240px;
+	margin-top: -20px;
+}
+#drop-loading {
+	position: fixed;
+	display: none;
+	width: 66px;
+	height: 66px;
+	top: 50%;
+	left: 50%;
+	margin-left: -33px;
+	margin-top: -33px;
+	background-image: url(../img/upload-pending.gif);
+}
+
 input {
 	margin: 0 !important;
 }
