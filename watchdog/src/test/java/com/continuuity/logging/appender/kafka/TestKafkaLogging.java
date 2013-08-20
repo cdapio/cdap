@@ -27,6 +27,9 @@ import java.util.List;
 
 import static com.continuuity.logging.appender.file.TestFileLogging.LogCallback;
 
+/**
+ * Kafka Test for logging.
+ */
 public class TestKafkaLogging extends KafkaTestBase {
 
   @BeforeClass
