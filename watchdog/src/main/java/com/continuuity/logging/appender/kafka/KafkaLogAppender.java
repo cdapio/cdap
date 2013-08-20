@@ -5,12 +5,14 @@
 package com.continuuity.logging.appender.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.status.InfoStatus;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.logging.appender.LogAppender;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+
+import java.io.IOException;
 
 /**
  * Log appender that publishes log messages to Kafka.
@@ -18,19 +20,29 @@ import com.google.inject.Inject;
 public final class KafkaLogAppender extends LogAppender {
   public static final String APPENDER_NAME = "KafkaLogAppender";
   private final SimpleKafkaProducer producer;
+  private final LoggingEventSerializer loggingEventSerializer;
 
   @Inject
   public KafkaLogAppender(CConfiguration configuration) {
-    this.producer = new SimpleKafkaProducer(configuration);
     setName(APPENDER_NAME);
-    addStatus(new InfoStatus("Initializing KafkaLogAppender", this));
+    addInfo("Initializing KafkaLogAppender...");
+
+    this.producer = new SimpleKafkaProducer(configuration);
+    try {
+      this.loggingEventSerializer = new LoggingEventSerializer();
+    } catch (IOException e) {
+      addError("Error initializing KafkaLogAppender.", e);
+      throw Throwables.propagate(e);
+    }
+    addInfo("Successfully initialized KafkaLogAppender.");
   }
 
   @Override
   protected void append(ILoggingEvent eventObject) {
     LoggingContext loggingContext = LoggingContextAccessor.getLoggingContext();
     eventObject.prepareForDeferredProcessing();
-    producer.publish(loggingContext.getLogPartition(), eventObject);
+    byte [] bytes = loggingEventSerializer.toBytes(eventObject);
+    producer.publish(loggingContext.getLogPartition(), bytes);
   }
 
   @Override

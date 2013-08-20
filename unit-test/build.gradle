@@ -54,6 +54,10 @@ sonar {
   }
 }
 
+configurations {
+    all*.exclude group: 'asm', module: 'asm'
+}
+
 uploadArchives {
     repositories {
         repositories.mavenDeployer {

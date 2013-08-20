@@ -6,12 +6,13 @@ package com.continuuity.logging.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
+import com.google.common.primitives.Longs;
 import org.apache.avro.generic.GenericRecord;
 
 /**
  * Represents a log event fetched from Kafka.
  */
-public final class KafkaLogEvent {
+public final class KafkaLogEvent implements Comparable<KafkaLogEvent> {
   private final GenericRecord  genericRecord;
   private final ILoggingEvent logEvent;
   private final LoggingContext loggingContext;
@@ -39,5 +40,10 @@ public final class KafkaLogEvent {
 
   public LoggingContext getLoggingContext() {
     return loggingContext;
+  }
+
+  @Override
+  public int compareTo(KafkaLogEvent event) {
+    return Longs.compare(logEvent.getTimeStamp(), event.getLogEvent().getTimeStamp());
   }
 }
