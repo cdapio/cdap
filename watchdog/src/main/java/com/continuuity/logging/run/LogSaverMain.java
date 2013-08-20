@@ -14,23 +14,31 @@ import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
+import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.Iterator;
 
 /**
  * Wrapper class to run LogSaver as a process.
  */
 public final class LogSaverMain extends DaemonMain {
+  private static final Logger LOG = LoggerFactory.getLogger(LogSaverMain.class);
+
   private WeaveRunnerService weaveRunnerService;
   private WeaveController weaveController;
 
@@ -52,20 +60,52 @@ public final class LogSaverMain extends DaemonMain {
   @Override
   public void start() {
     weaveRunnerService.startAndWait();
-    WeavePreparer weavePreparer = doInit(weaveRunnerService, hConf, cConf);
-    weaveController = weavePreparer.start();
+
+    // If LogSaver is already running, return handle to that instance
+    Iterable<WeaveController> weaveControllers = weaveRunnerService.lookup(LogSaverWeaveApplication.getName());
+    Iterator<WeaveController> iterator = weaveControllers.iterator();
+
+    if (iterator.hasNext()) {
+      LOG.info("{} application is already running", LogSaverWeaveApplication.getName());
+      weaveController = iterator.next();
+
+      if (iterator.hasNext()) {
+        LOG.warn("Found more than one instance of {} running. Stopping the others...",
+                 LogSaverWeaveApplication.getName());
+        for (; iterator.hasNext(); ) {
+          WeaveController controller = iterator.next();
+          LOG.warn("Stopping one extra instance of {}", LogSaverWeaveApplication.getName());
+          controller.stopAndWait();
+        }
+        LOG.warn("Done stopping extra instances of {}", LogSaverWeaveApplication.getName());
+      }
+    } else {
+      LOG.info("Starting {} application", LogSaverWeaveApplication.getName());
+      WeavePreparer weavePreparer = doInit(weaveRunnerService, hConf, cConf);
+      weaveController = weavePreparer.start();
+
+      weaveController.addListener(new ServiceListenerAdapter() {
+        @Override
+        public void failed(Service.State from, Throwable failure) {
+          LOG.error("{} failed with exception... stopping LogSaverMain.", LogSaverWeaveApplication.getName(), failure);
+          System.exit(1);
+        }
+      }, MoreExecutors.sameThreadExecutor());
+    }
   }
 
   @Override
   public void stop() {
-    if (weaveController != null) {
+    LOG.info("Stopping {}", LogSaverWeaveApplication.getName());
+    if (weaveController != null && weaveController.isRunning()) {
       weaveController.stopAndWait();
     }
   }
 
   @Override
   public void destroy() {
-    if (weaveRunnerService != null) {
+    LOG.info("Destroying {}", LogSaverWeaveApplication.getName());
+    if (weaveRunnerService != null && weaveRunnerService.isRunning()) {
       weaveRunnerService.stopAndWait();
     }
   }
