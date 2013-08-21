@@ -1,4 +1,4 @@
-# checks if there exists a PID that is already running. If it is, then it fails with exit code of 1.
+# checks if there exists a PID that is already running. return 0 idempotently
 check_before_start()
 {
   if [ ! -d "$PID_DIR" ]; then
@@ -8,7 +8,7 @@ check_before_start()
     if kill -0 `cat $pid` > /dev/null 2>&1; then
       #echo "$APP $SERVICE running as process `cat $pid`. Stop it first."
       echo "$APP running as process `cat $pid`. Stop it first."
-      exit 1
+      exit 0
     fi
   fi
 }
