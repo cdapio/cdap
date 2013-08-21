@@ -1,5 +1,6 @@
 package com.continuuity.gateway.v2;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
@@ -10,24 +11,31 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.gateway.Constants;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This class caches stream events and enqueues them in batch.
@@ -42,8 +50,7 @@ public class CachedStreamEventConsumer {
 
   private final StreamEventCodec serializer = new StreamEventCodec();
 
-  private final AtomicReference<CachedStreamEvents> cachedStreamEventsRef =
-    new AtomicReference<CachedStreamEvents>(new CachedStreamEvents());
+  private final CachedStreamEvents cachedStreamEvents;
 
   private final int maxCachedEvents;
   private final long maxCachedSizeBytes;
@@ -56,12 +63,14 @@ public class CachedStreamEventConsumer {
     this.queueClientFactory = queueClientFactory;
     this.timer = new Timer(String.format("%s-thread", getClass().getCanonicalName()), true);
 
-    maxCachedEvents = cConfig.getInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM,
-                                     GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
-    maxCachedSizeBytes = cConfig.getLong(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES,
-                                         GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
-    flushIntervalMs = cConfig.getLong(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS,
-                                      GatewayConstants.DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS);
+    this.maxCachedEvents = cConfig.getInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM,
+                                          GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
+    this.maxCachedSizeBytes = cConfig.getLong(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES,
+                                              GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
+    this.flushIntervalMs = cConfig.getLong(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS,
+                                           GatewayConstants.DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS);
+
+    this.cachedStreamEvents = new CachedStreamEvents();
   }
 
   public void start() {
@@ -69,7 +78,7 @@ public class CachedStreamEventConsumer {
       new TimerTask() {
         @Override
         public void run() {
-          flush();
+          cachedStreamEvents.flush();
         }
       },
       flushIntervalMs, flushIntervalMs
@@ -77,9 +86,8 @@ public class CachedStreamEventConsumer {
   }
 
   public void stop() {
-    // flush
-    flush();
     timer.cancel();
+    cachedStreamEvents.flush();
   }
 
   public ListenableFuture<Void> consume(StreamEvent event, String accountId) throws Exception {
@@ -96,88 +104,123 @@ public class CachedStreamEventConsumer {
     }
 
     QueueName queueName = QueueName.fromStream(accountId, destination);
-    return cachedStreamEventsRef.get().put(queueName, new QueueEntry(bytes));
-  }
-
-  private void flush() {
-    try {
-      // Atomically replace the CachedStreamEvents
-      CachedStreamEvents cachedStreamEvents = cachedStreamEventsRef.getAndSet(new CachedStreamEvents());
-
-      // Enqueue
-      ListMultimap<QueueName, QueueEntry> eventsMap = cachedStreamEvents.prepareForFlush();
-      Map<QueueName, TransactionAware> producerMap = Maps.newHashMap();
-      for (Map.Entry<QueueName, Collection<QueueEntry>> entry : eventsMap.asMap().entrySet()) {
-        Queue2Producer producer = queueClientFactory.createProducer(entry.getKey());
-        producerMap.put(entry.getKey(), (TransactionAware) producer);
-      }
-
-      TxManager txManager = new TxManager(opex, producerMap.values());
-      try {
-        txManager.start();
-
-        for (Map.Entry<QueueName, Collection<QueueEntry>> entry : eventsMap.asMap().entrySet()) {
-          ((Queue2Producer) producerMap.get(entry.getKey())).enqueue(entry.getValue());
-        }
-
-        // Commit
-        txManager.commit();
-        cachedStreamEvents.getFuture().set(null);
-      } catch (Exception e){
-        LOG.error("Exception while committing stream events. Aborting transaction", e);
-        cachedStreamEvents.getFuture().setException(e);
-        txManager.abort();
-      }
-    } catch (Exception e) {
-      LOG.error("Exception while aborting stream events transaction", e);
-    }
+    return cachedStreamEvents.put(queueName, new QueueEntry(bytes));
   }
 
   private final class CachedStreamEvents {
-    private final ListMultimap<QueueName, QueueEntry> streamEventsMap =
-      Multimaps.synchronizedListMultimap(ArrayListMultimap.<QueueName, QueueEntry>create());
-
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final LoadingCache<QueueName, BlockingQueue<QueueEntry>> eventCache;
 
     private final SettableFuture<Void> future = SettableFuture.create();
     private final AtomicLong cachedBytes = new AtomicLong(0);
-    private final AtomicBoolean stop = new AtomicBoolean(false);
+    private final AtomicInteger cachedNumEntries = new AtomicInteger(0);
 
-    public ListenableFuture<Void> put(QueueName queueUri, QueueEntry queueEntry) {
-      try {
-        lock.readLock().lock();
+    private CachedStreamEvents() {
+      this.eventCache = CacheBuilder.newBuilder()
+        .maximumSize(maxCachedEvents * 2)
+        .expireAfterWrite(flushIntervalMs * 100, TimeUnit.MILLISECONDS)
+        .removalListener(
+          new RemovalListener<QueueName, BlockingQueue<QueueEntry>>() {
+            @Override
+            public void onRemoval(RemovalNotification<QueueName, BlockingQueue<QueueEntry>> notification) {
+              try {
+                flushQueues(
+                  ImmutableMap.of(notification.getKey(),
+                                  (TransactionAware) queueClientFactory.createProducer(notification.getKey())));
+              } catch (IOException e) {
+                LOG.error("Error while creating queue producer", e);
+              }
+            }
+          }
+        )
+        .build(
+          new CacheLoader<QueueName, BlockingQueue<QueueEntry>>() {
+            @Override
+            public BlockingQueue<QueueEntry> load(QueueName key) throws Exception {
+              return new ArrayBlockingQueue<QueueEntry>(maxCachedEvents);
+            }
+          });
+    }
 
-        if (stop.get()) {
-          throw new IllegalStateException("Cannot add new stream events when ready for flush");
-        }
+    public ListenableFuture<Void> put(QueueName queueName, QueueEntry queueEntry)
+      throws ExecutionException, InterruptedException {
 
-        streamEventsMap.put(queueUri, queueEntry);
-      } finally {
-        lock.readLock().unlock();
-      }
+      eventCache.get(queueName).put(queueEntry);
 
       long cachedSize = cachedBytes.addAndGet(queueEntry.getData().length);
-      if (streamEventsMap.size() >= maxCachedEvents || cachedSize >= maxCachedSizeBytes) {
-        flush();
+      int cachedEntries = cachedNumEntries.incrementAndGet();
+      if (cachedEntries >= maxCachedEvents || cachedSize >= maxCachedSizeBytes) {
+        checkedFlush();
       }
       return future;
     }
 
-    public ListMultimap<QueueName, QueueEntry> prepareForFlush() {
+    public void checkedFlush() {
+      // Only one thread needs to run flush
+      int cachedEntries = cachedNumEntries.get();
+      if ((cachedEntries < maxCachedEvents && cachedBytes.get() < maxCachedSizeBytes)
+        || !cachedNumEntries.compareAndSet(cachedEntries, 0)) {
+        return;
+      }
+      cachedBytes.set(0);
+
+      flush();
+    }
+
+    public void flush() {
+      // Create producers
+      Map<QueueName, TransactionAware> producerMap = Maps.newHashMap();
       try {
-        lock.writeLock().lock();
-        stop.set(true);
-      } finally {
-        lock.writeLock().unlock();
+        for (Map.Entry<QueueName, BlockingQueue<QueueEntry>> entry : eventCache.asMap().entrySet()) {
+          if (!entry.getValue().isEmpty()) {
+            Queue2Producer producer = queueClientFactory.createProducer(entry.getKey());
+            producerMap.put(entry.getKey(), (TransactionAware) producer);
+          }
+        }
+      } catch (IOException e) {
+        LOG.error("Error while creating queue producer during flush", e);
       }
-      return streamEventsMap;
+
+      if (producerMap.isEmpty()) {
+        return;
+      }
+
+      flushQueues(producerMap);
     }
 
-    public SettableFuture<Void> getFuture() {
-      if (!stop.get()) {
-        throw new IllegalStateException("Writable future cannot be accessed until prepareForFlush is called");
+    public void flushQueues(Map<QueueName, TransactionAware> producerMap) {
+      try {
+        TxManager txManager = new TxManager(opex, producerMap.values());
+        try {
+          txManager.start();
+
+          // Enqueue
+          for (Map.Entry<QueueName, TransactionAware> entry : producerMap.entrySet()) {
+            BlockingQueue<QueueEntry> queue = eventCache.get(entry.getKey());
+            if (queue.isEmpty()) {
+              continue;
+            }
+
+            int size = queue.size();
+            List<QueueEntry> entries = Lists.newArrayListWithCapacity(size);
+            queue.drainTo(entries, size);
+            if (entries.isEmpty()) {
+              continue;
+            }
+
+            ((Queue2Producer) entry.getValue()).enqueue(entries);
+          }
+
+          // Commit
+          txManager.commit();
+          future.set(null);
+        } catch (Exception e){
+          LOG.error("Exception while committing stream events. Aborting transaction", e);
+          future.setException(e);
+          txManager.abort();
+        }
+      } catch (OperationException e) {
+        LOG.error("Exception while aborting stream events transaction", e);
       }
-      return future;
     }
   }
 }
