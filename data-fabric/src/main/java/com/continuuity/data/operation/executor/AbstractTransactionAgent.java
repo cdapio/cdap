@@ -155,25 +155,28 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
         throw new OperationException(StatusCode.TRANSACTION_CONFLICT, "Cannot commit tx: conflict detected");
       }
     }
-    boolean committed = true;
+
     for (TransactionAware txAware : this.txAware) {
       try {
-        committed = txAware.commitTx() && committed;
+        if (!txAware.commitTx()) {
+          // the app-fabric runtime will call abort() after that, so no need to do extra steps here
+          throw new OperationException(StatusCode.INVALID_TRANSACTION,
+                                       String.format("failed to commit tx for %s", txAware.getClass()));
+        }
       } catch (Exception e) {
         // the app-fabric runtime will call abort() after that, so no need to do extra steps here
         throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx", e);
       }
     }
 
-    if (!committed) {
-      // the app-fabric runtime will call abort() after that, so no need to do extra steps here
-      throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx");
-    }
-
     // ANDREAS: isn't there a race condition here? canCommit() returns true, then we commit all datasets,
     // then we attempt to commit() which detects a conflict. Now the dataset changes will not be rolled back.
     // chances for this are high: until we call canCommit(), all changes happen in memory and are fast. The
     // committing/flushing of all datasets is the slow part... so conflicts most likely happen now.
+
+    // TERENCE: The commit call will check for conflicts again in the TX oracle, hence the call to commit
+    // could fail if there are new conflicts introduced between canCommit and commit call, causing exception
+    // to be thrown, hence triggering rollback from the app-fabric.
     if (!txSystemClient.commit(currentTx)) {
       // the app-fabric runtime will call abort() after that, so no need to do extra steps here
       throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx");

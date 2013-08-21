@@ -235,6 +235,9 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     // If not enough entries from the cache, try to get more.
     // ANDREAS: I think this is wrong. If the batch=10, and the cache has 5 entries, but populateCache cannot
     // fetch more entries, then we have 5 and should return true. But this code will return false.
+    // TERENCE: If there are 5 entries in the cache, the first call to fetchFromCache will return true,
+    // the second call to fetchFromCache from call to populateCache will return false, but
+    // hasEntry = false || true => true, hence returning true.
     if (entries.size() < maxBatchSize) {
       populateRowCache(entries.keySet());
       hasEntry = fetchFromCache(entries, maxBatchSize) || hasEntry;
@@ -264,6 +267,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     scan.setStartRow(startRow);
     // ANDREAS it seems that startRow never gets updated. That means we will always rescan entries that we have
     // already read and decided to ignore.
+    // TERENCE: The update is done in the shouldInclude() method.
     scan.setStopRow(getStopRow());
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.DATA_COLUMN);
     scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.META_COLUMN);
@@ -296,6 +300,8 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
           // ANDREAS: since we limit the scan to end at getStopRow(), I don't think this can ever happen? Also,
           // it would not be visible under the read pointer... but why do we not limit the scan's versions to the
           // read pointer?
+          // TERENCE: I think you are right, this condition is not needed. We are not using scan versions because
+          // entries are written with timestamp, not with enqueue write pointer.
           break;
         }
 
