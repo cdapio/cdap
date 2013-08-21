@@ -60,7 +60,7 @@ public class HttpResponder {
    * @param status status of the Http response.
    * @param data string data to be sent back.
    */
-  public synchronized void sendString(HttpResponseStatus status, String data){
+  public void sendString(HttpResponseStatus status, String data){
     try {
       ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(data));
       sendContent(status, channelBuffer, "text/plain; charset=utf-8");
@@ -70,12 +70,20 @@ public class HttpResponder {
   }
 
   /**
+   * Send only a status code back to client without any content.
+   * @param status status of the Http response.
+   */
+  public void sendStatus(HttpResponseStatus status) {
+    sendContent(status, null, null);
+  }
+
+  /**
    * Sends error message back to the client.
    *
    * @param status Status of the response.
    * @param errorMessage Error message sent back to the client.
    */
-  public synchronized void sendError(HttpResponseStatus status, String errorMessage){
+  public void sendError(HttpResponseStatus status, String errorMessage){
     Preconditions.checkArgument(!status.equals(HttpResponseStatus.OK), "Response status cannot be OK for errors");
 
     ChannelBuffer errorContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage));
@@ -84,9 +92,13 @@ public class HttpResponder {
 
   private void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType){
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
-    response.setContent(content);
-    response.setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
-    response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+
+    if (content != null) {
+      response.setContent(content);
+      response.setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
+      response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+    }
+
     if (keepalive) {
       response.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
     }
