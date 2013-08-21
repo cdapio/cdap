@@ -36,6 +36,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class caches stream events and enqueues them in batch.
@@ -113,6 +115,7 @@ public class CachedStreamEventConsumer {
     private final SettableFuture<Void> future = SettableFuture.create();
     private final AtomicLong cachedBytes = new AtomicLong(0);
     private final AtomicInteger cachedNumEntries = new AtomicInteger(0);
+    private final Lock flushLock = new ReentrantLock();
 
     private CachedStreamEvents() {
       this.eventCache = CacheBuilder.newBuilder()
@@ -154,18 +157,25 @@ public class CachedStreamEventConsumer {
       return future;
     }
 
+    /**
+     * Performs a flush of cached stream events making sure that only one thread does the flush.
+     */
     public void checkedFlush() {
       // Only one thread needs to run flush
-      int cachedEntries = cachedNumEntries.get();
-      if ((cachedEntries < maxCachedEvents && cachedBytes.get() < maxCachedSizeBytes)
-        || !cachedNumEntries.compareAndSet(cachedEntries, 0)) {
-        return;
+      if (flushLock.tryLock()) {
+        try {
+          if (cachedNumEntries.get() >= maxCachedEvents || cachedBytes.get() >= maxCachedSizeBytes) {
+            flush();
+          }
+        } finally {
+          flushLock.unlock();
+        }
       }
-      cachedBytes.set(0);
-
-      flush();
     }
 
+    /**
+     * Flushes the cached stream events. This method can be called concurrently from multiple threads.
+     */
     public void flush() {
       // Create producers
       Map<QueueName, TransactionAware> producerMap = Maps.newHashMap();
@@ -187,7 +197,7 @@ public class CachedStreamEventConsumer {
       flushQueues(producerMap);
     }
 
-    public void flushQueues(Map<QueueName, TransactionAware> producerMap) {
+    private void flushQueues(Map<QueueName, TransactionAware> producerMap) {
       try {
         TxManager txManager = new TxManager(opex, producerMap.values());
         try {
@@ -207,6 +217,8 @@ public class CachedStreamEventConsumer {
               continue;
             }
 
+            cachedNumEntries.addAndGet(-1 * entries.size());
+            cachedBytes.addAndGet(-1 * numBytesInList(entries));
             ((Queue2Producer) entry.getValue()).enqueue(entries);
           }
 
@@ -221,6 +233,14 @@ public class CachedStreamEventConsumer {
       } catch (OperationException e) {
         LOG.error("Exception while aborting stream events transaction", e);
       }
+    }
+
+    private long numBytesInList(List<QueueEntry> list) {
+      long numBytes = 0;
+      for (QueueEntry queueEntry : list) {
+        numBytes += queueEntry.getData().length;
+      }
+      return numBytes;
     }
   }
 }
