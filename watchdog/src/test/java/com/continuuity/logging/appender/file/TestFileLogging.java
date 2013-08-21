@@ -249,6 +249,9 @@ public class TestFileLogging {
 
   }
 
+  /**
+   * Log Call back for TestFileLogging.
+   */
   public static class LogCallback implements Callback {
     private long firstOffset;
     private long lastOffset;
