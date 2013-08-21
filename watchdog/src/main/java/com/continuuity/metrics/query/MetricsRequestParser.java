@@ -31,7 +31,7 @@ final class MetricsRequestParser {
     COLLECT,
     PROCESS,
     STORE,
-    QUERY
+    QUERY;
   }
 
   private enum ProgramType {
