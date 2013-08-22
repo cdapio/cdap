@@ -1,9 +1,9 @@
-Continuuity (tm) Development Kit
+Continuuity (tm) Reactor Development Kit
 
 Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 ================================================================================
-Continuuity Developer Suite includes a Local Reactor: a fully functioning single
-node edition of the Continuuity Reactor runtime. You can use this edition to
+Continuuity Reactor Development Kit  includes a Local Reactor: a fully functioning 
+single node edition of the Continuuity Reactor runtime. You can use this edition to
 write, debug and test your Big Data applications, before deploying them to a
 remote staging or production Reactor.
 
