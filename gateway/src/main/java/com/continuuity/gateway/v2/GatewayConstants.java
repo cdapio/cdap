@@ -14,6 +14,7 @@ public final class GatewayConstants {
     public static final String BACKLOG = "gateway.connection.backlog";
     public static final String EXEC_THREADS = "gateway.exec.threads";
     public static final String MAX_CACHED_STREAM_EVENTS_NUM = "gateway.max.cached.stream.events.num";
+    public static final String MAX_CACHED_EVENTS_PER_STREAM_NUM = "gateway.max.cached.events.per.stream.num";
     public static final String MAX_CACHED_STREAM_EVENTS_BYTES = "gateway.max.cached.stream.events.bytes";
     public static final String STREAM_EVENTS_FLUSH_INTERVAL_MS = "gateway.stream.events.flush.interval.ms";
   }
@@ -22,6 +23,7 @@ public final class GatewayConstants {
   public static final int DEFAULT_BACKLOG = 20000;
   public static final int DEFAULT_EXEC_THREADS = 20;
   public static final int DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM = 10000;
+  public static final int DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM = 5000;
   public static final long DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES = 50 * 1024 * 1024;
   public static final long DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS = 150;
 }

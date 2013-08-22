@@ -16,23 +16,26 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -55,6 +58,7 @@ public class CachedStreamEventConsumer {
   private final CachedStreamEvents cachedStreamEvents;
 
   private final int maxCachedEvents;
+  private final int maxCachedEventsPerStream;
   private final long maxCachedSizeBytes;
   private final long flushIntervalMs;
 
@@ -67,6 +71,8 @@ public class CachedStreamEventConsumer {
 
     this.maxCachedEvents = cConfig.getInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM,
                                           GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
+    this.maxCachedEventsPerStream = cConfig.getInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
+                                                   GatewayConstants.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
     this.maxCachedSizeBytes = cConfig.getLong(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES,
                                               GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
     this.flushIntervalMs = cConfig.getLong(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS,
@@ -110,7 +116,10 @@ public class CachedStreamEventConsumer {
   }
 
   private final class CachedStreamEvents {
-    private final LoadingCache<QueueName, BlockingQueue<QueueEntry>> eventCache;
+    private final LoadingCache<QueueName, CachedEntry> eventCache;
+    private final BlockingQueue<Map.Entry<QueueName, CachedEntry>> removalNotifications;
+
+    private final TxManager txManager = new TxManager(opex);
 
     private final SettableFuture<Void> future = SettableFuture.create();
     private final AtomicLong cachedBytes = new AtomicLong(0);
@@ -118,28 +127,28 @@ public class CachedStreamEventConsumer {
     private final Lock flushLock = new ReentrantLock();
 
     private CachedStreamEvents() {
+      this.removalNotifications = new LinkedBlockingQueue<Map.Entry<QueueName, CachedEntry>>();
       this.eventCache = CacheBuilder.newBuilder()
-        .maximumSize(maxCachedEvents * 2)
-        .expireAfterWrite(flushIntervalMs * 100, TimeUnit.MILLISECONDS)
+        .expireAfterWrite(1, TimeUnit.HOURS)
         .removalListener(
-          new RemovalListener<QueueName, BlockingQueue<QueueEntry>>() {
+          new RemovalListener<QueueName, CachedEntry>() {
             @Override
-            public void onRemoval(RemovalNotification<QueueName, BlockingQueue<QueueEntry>> notification) {
-              try {
-                flushQueues(
-                  ImmutableMap.of(notification.getKey(),
-                                  (TransactionAware) queueClientFactory.createProducer(notification.getKey())));
-              } catch (IOException e) {
-                LOG.error("Error while creating queue producer", e);
+            public void onRemoval(RemovalNotification<QueueName, CachedEntry> notification) {
+              //noinspection ConstantConditions
+              if (notification.getValue() != null && !notification.getValue().isEmpty()) {
+                // Will need to be comitted during the next flush
+                removalNotifications.add(notification);
               }
             }
           }
         )
         .build(
-          new CacheLoader<QueueName, BlockingQueue<QueueEntry>>() {
+          new CacheLoader<QueueName, CachedEntry>() {
             @Override
-            public BlockingQueue<QueueEntry> load(QueueName key) throws Exception {
-              return new ArrayBlockingQueue<QueueEntry>(maxCachedEvents);
+            public CachedEntry load(QueueName key) throws Exception {
+              Queue2Producer producer = queueClientFactory.createProducer(key);
+              txManager.add((TransactionAware) producer);
+              return new CachedEntry(producer, new ArrayBlockingQueue<QueueEntry>(maxCachedEventsPerStream));
             }
           });
     }
@@ -147,7 +156,15 @@ public class CachedStreamEventConsumer {
     public ListenableFuture<Void> put(QueueName queueName, QueueEntry queueEntry)
       throws ExecutionException, InterruptedException {
 
-      eventCache.get(queueName).put(queueEntry);
+      int tries = 0;
+      while (!eventCache.get(queueName).offer(queueEntry)) {
+        flush();
+        ++tries;
+
+        if (tries > 4) {
+          throw new IllegalStateException(String.format("Cannot add stream entry into queue %s", queueName));
+        }
+      }
 
       long cachedSize = cachedBytes.addAndGet(queueEntry.getData().length);
       int cachedEntries = cachedNumEntries.incrementAndGet();
@@ -164,9 +181,7 @@ public class CachedStreamEventConsumer {
       // Only one thread needs to run flush
       if (flushLock.tryLock()) {
         try {
-          if (cachedNumEntries.get() >= maxCachedEvents || cachedBytes.get() >= maxCachedSizeBytes) {
-            flush();
-          }
+          flush();
         } finally {
           flushLock.unlock();
         }
@@ -176,50 +191,38 @@ public class CachedStreamEventConsumer {
     /**
      * Flushes the cached stream events. This method can be called concurrently from multiple threads.
      */
-    public void flush() {
-      // Create producers
-      Map<QueueName, TransactionAware> producerMap = Maps.newHashMap();
+    private void flush() {
+      flushLock.lock();
       try {
-        for (Map.Entry<QueueName, BlockingQueue<QueueEntry>> entry : eventCache.asMap().entrySet()) {
-          if (!entry.getValue().isEmpty()) {
-            Queue2Producer producer = queueClientFactory.createProducer(entry.getKey());
-            producerMap.put(entry.getKey(), (TransactionAware) producer);
-          }
-        }
-      } catch (IOException e) {
-        LOG.error("Error while creating queue producer during flush", e);
-      }
-
-      if (producerMap.isEmpty()) {
-        return;
-      }
-
-      flushQueues(producerMap);
-    }
-
-    private void flushQueues(Map<QueueName, TransactionAware> producerMap) {
-      try {
-        TxManager txManager = new TxManager(opex, producerMap.values());
+        Set<Map.Entry<QueueName, CachedEntry>> removalEntries = ImmutableSet.of();
         try {
           txManager.start();
 
+          // Get cache entries that were evicted, if any
+          if (!removalNotifications.isEmpty()) {
+            int removalSize = removalNotifications.size();
+            removalEntries = Sets.newHashSetWithExpectedSize(removalSize);
+            removalNotifications.drainTo(removalEntries, removalSize);
+          }
+
           // Enqueue
-          for (Map.Entry<QueueName, TransactionAware> entry : producerMap.entrySet()) {
-            BlockingQueue<QueueEntry> queue = eventCache.get(entry.getKey());
-            if (queue.isEmpty()) {
+          for (Map.Entry<QueueName, CachedEntry> entry :
+            Iterables.concat(eventCache.asMap().entrySet(), removalEntries)) {
+            CachedEntry cachedEntry = entry.getValue();
+            if (cachedEntry.isEmpty()) {
               continue;
             }
 
-            int size = queue.size();
+            int size = cachedEntry.size();
             List<QueueEntry> entries = Lists.newArrayListWithCapacity(size);
-            queue.drainTo(entries, size);
+            cachedEntry.drainTo(entries, size);
             if (entries.isEmpty()) {
               continue;
             }
 
             cachedNumEntries.addAndGet(-1 * entries.size());
             cachedBytes.addAndGet(-1 * numBytesInList(entries));
-            ((Queue2Producer) entry.getValue()).enqueue(entries);
+            cachedEntry.getProducer().enqueue(entries);
           }
 
           // Commit
@@ -230,8 +233,15 @@ public class CachedStreamEventConsumer {
           future.setException(e);
           txManager.abort();
         }
+
+        // Remove producers from removalNotifications
+        for (Map.Entry<QueueName, CachedEntry> entry : removalEntries) {
+          txManager.remove((TransactionAware) entry.getValue().getProducer());
+        }
       } catch (OperationException e) {
         LOG.error("Exception while aborting stream events transaction", e);
+      } finally {
+        flushLock.unlock();
       }
     }
 
@@ -241,6 +251,36 @@ public class CachedStreamEventConsumer {
         numBytes += queueEntry.getData().length;
       }
       return numBytes;
+    }
+
+    private class CachedEntry {
+      private final Queue2Producer producer;
+      private final BlockingQueue<QueueEntry> queueEntries;
+
+      public CachedEntry(Queue2Producer producer, BlockingQueue<QueueEntry> queueEntries) {
+        this.producer = producer;
+        this.queueEntries = queueEntries;
+      }
+
+      public boolean offer(QueueEntry queueEntry) {
+        return queueEntries.offer(queueEntry);
+      }
+      
+      public void drainTo(Collection<QueueEntry> collection, int maxEntries) {
+        queueEntries.drainTo(collection, maxEntries);
+      }
+
+      public boolean isEmpty() {
+        return queueEntries.isEmpty();
+      }
+
+      public int size() {
+        return queueEntries.size();
+      }
+
+      public Queue2Producer getProducer() {
+        return producer;
+      }
     }
   }
 }

@@ -6,12 +6,13 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -21,17 +22,31 @@ public class TxManager {
   private static final Logger LOG = LoggerFactory.getLogger(TxManager.class);
 
   private final OperationExecutor opex;
-  private final Collection<TransactionAware> txAwares;
+
+  // All TransactionAware objects
+  private final Set<TransactionAware> txAwares =
+    Collections.newSetFromMap(Maps.<TransactionAware, Boolean>newConcurrentMap());
+
+  // TransactionAware objects involved in the ongoing txn
+  private Set<TransactionAware> txnTxAwares;
   private Transaction transaction;
 
-  public TxManager(OperationExecutor opex, Iterable<TransactionAware> txAware) {
+  public TxManager(OperationExecutor opex) {
     this.opex = opex;
-    this.txAwares = ImmutableList.copyOf(txAware);
+  }
+
+  public void add(TransactionAware txAware) {
+    txAwares.add(txAware);
+  }
+
+  public void remove(TransactionAware txAware) {
+    txAwares.remove(txAware);
   }
 
   public void start() throws OperationException {
     transaction = opex.start();
-    for (TransactionAware txAware : txAwares) {
+    txnTxAwares = ImmutableSet.copyOf(txAwares);
+    for (TransactionAware txAware : txnTxAwares) {
       txAware.startTx(transaction);
     }
   }
@@ -39,7 +54,7 @@ public class TxManager {
   public void commit() throws OperationException {
     // Collects change sets
     Set<byte[]> changeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-    for (TransactionAware txAware : txAwares) {
+    for (TransactionAware txAware : txnTxAwares) {
       changeSet.addAll(txAware.getTxChanges());
     }
 
@@ -49,7 +64,7 @@ public class TxManager {
     }
 
     // Persist changes
-    for (TransactionAware txAware : txAwares) {
+    for (TransactionAware txAware : txnTxAwares) {
       try {
         if (!txAware.commitTx()) {
           throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to commit tx.");
@@ -65,7 +80,7 @@ public class TxManager {
     }
 
     // Post commit call
-    for (TransactionAware txAware : txAwares) {
+    for (TransactionAware txAware : txnTxAwares) {
       try {
         txAware.postTxCommit();
       } catch (Throwable t) {
@@ -75,7 +90,7 @@ public class TxManager {
   }
 
   public void abort() throws OperationException {
-    for (TransactionAware txAware : txAwares) {
+    for (TransactionAware txAware : txnTxAwares) {
       try {
         if (!txAware.rollbackTx()) {
           LOG.error("Fail to rollback: {}", txAware);
