@@ -192,12 +192,13 @@ public final class FlowletDefinition {
           datasets.add(dataset.value());
 
         } else if (OutputEmitter.class.equals(field.getType())) {
-          Type emitterType = field.getGenericType();
+          Type emitterType = flowletType.resolveType(field.getGenericType()).getType();
           Preconditions.checkArgument(emitterType instanceof ParameterizedType,
                                       "Type info missing from OutputEmitter; class: %s; field: %s.", type, field);
 
           // Extract the Output type from the first type argument of OutputEmitter
           Type outputType = ((ParameterizedType) emitterType).getActualTypeArguments()[0];
+          outputType = flowletType.resolveType(outputType).getType();
           String outputName = field.isAnnotationPresent(Output.class) ?
                                   field.getAnnotation(Output.class).value() : DEFAULT_OUTPUT;
 
