@@ -154,7 +154,7 @@ public class LogSaverTest extends KafkaTestBase {
     Assert.assertEquals(0, events.size());
 
     LogCallback logCallback10 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(32).getLoggingEvent().getTimeStamp() - 15,
+    distributedLogReader.getLog(loggingContext, allEvents.get(32).getLoggingEvent().getTimeStamp() - 999999,
                                 allEvents.get(45).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback10);
     events = logCallback10.getEvents();
     Assert.assertTrue(events.size() > 13);
@@ -165,7 +165,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogCallback logCallback11 = new LogCallback();
     distributedLogReader.getLog(loggingContext, allEvents.get(18).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(34).getLoggingEvent().getTimeStamp() + 18,
+                                allEvents.get(34).getLoggingEvent().getTimeStamp() + 999999,
                                 Filter.EMPTY_FILTER, logCallback11);
     events = logCallback11.getEvents();
     Assert.assertTrue(events.size() > 16);
