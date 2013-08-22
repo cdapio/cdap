@@ -87,12 +87,12 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   public BatchMetricsHandler(final MetricsTableFactory metricsTableFactory) {
     this.metricsTableCaches = Maps.newHashMap();
     this.aggregatesTables = Maps.newHashMap();
-    for (MetricsScope scope : MetricsScope.values()) {
+    for (final MetricsScope scope : MetricsScope.values()) {
       LoadingCache<Integer, TimeSeriesTable> cache =
         CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
           @Override
           public TimeSeriesTable load(Integer key) throws Exception {
-            return metricsTableFactory.createTimeSeries(MetricsScope.REACTOR.name(), key);
+            return metricsTableFactory.createTimeSeries(scope.name(), key);
           }
         });
       this.metricsTableCaches.put(scope, cache);

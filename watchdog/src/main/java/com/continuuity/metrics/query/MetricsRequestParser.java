@@ -110,6 +110,7 @@ final class MetricsRequestParser {
           parseProgram(metricName, pathParts, builder);
           break;
         case USER:
+          // getting the metric from the end... need to clean this up.
           String uriPath = requestURI.getPath();
           int index = uriPath.lastIndexOf("/");
           metricName = uriPath.substring(index + 1);

@@ -20,6 +20,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,7 +117,16 @@ public final class HttpResourceHandler implements HttpHandler {
   public void handle(HttpRequest request, HttpResponder responder){
 
     Map<String, String> groupValues = Maps.newHashMap();
-    List<HttpResourceModel> resourceModels = patternRouter.getDestinations(request.getUri(), groupValues);
+    String path;
+    try {
+      URI uri = new URI(request.getUri());
+      path = uri.getPath();
+    } catch (URISyntaxException e) {
+      responder.sendError(HttpResponseStatus.NOT_FOUND, String.format("Problem accessing: %s. Reason: invalid URI",
+                                                                      request.getUri()));
+      return;
+    }
+    List<HttpResourceModel> resourceModels = patternRouter.getDestinations(path, groupValues);
 
     HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
 

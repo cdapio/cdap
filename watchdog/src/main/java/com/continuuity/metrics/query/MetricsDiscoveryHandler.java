@@ -41,7 +41,12 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
-  private final AggregatesTable aggregatesTable;
+  private final Map<MetricsScope, AggregatesTable> aggregatesTables;
+
+  // just user metrics for now.  Can add reactor metrics when theres a unified way to query for them
+  // currently you query differently depending on the metric, and some metrics you can query for in the
+  // BatchMetricsHandler are computed in the handler and not in the table.
+  private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
 
   private enum PathProgramType {
     PROCEDURES("p"),
@@ -104,7 +109,10 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
   @Inject
   public MetricsDiscoveryHandler(final MetricsTableFactory metricsTableFactory) {
-    this.aggregatesTable = metricsTableFactory.createAggregates(MetricsScope.USER.name());
+    this.aggregatesTables = Maps.newHashMap();
+    for (MetricsScope scope : scopesToDiscover) {
+      aggregatesTables.put(scope, metricsTableFactory.createAggregates(scope.name()));
+    }
   }
 
   @GET
@@ -154,20 +162,23 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   }
 
   private JsonArray getMetrics(HttpRequest request, String contextPrefix) {
+    // TODO(albert): add ability to pass in maxAge through query params
     Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
     List<String> prefixEntity = queryParams.get("prefixEntity");
     // shouldn't be in params more than once, but if it is, just take any one
     String metricPrefix = (prefixEntity == null) ? "" : prefixEntity.get(0);
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
-    AggregatesScanner scanner = this.aggregatesTable.scan(contextPrefix, metricPrefix);
+    for (AggregatesTable table : aggregatesTables.values()) {
+      AggregatesScanner scanner = table.scan(contextPrefix, metricPrefix);
 
-    // scanning through all metric rows in the aggregates table
-    // row has context plus metric info
-    // each metric can show up in multiple contexts
-    while (scanner.hasNext()) {
-      AggregatesScanResult result = scanner.next();
-      addContext(result.getContext(), result.getMetric(), metricContextsMap);
+      // scanning through all metric rows in the aggregates table
+      // row has context plus metric info
+      // each metric can show up in multiple contexts
+      while (scanner.hasNext()) {
+        AggregatesScanResult result = scanner.next();
+        addContext(result.getContext(), result.getMetric(), metricContextsMap);
+      }
     }
 
     JsonArray output = new JsonArray();
