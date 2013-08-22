@@ -6,7 +6,6 @@
 ##
 ##############################################################################
 
-REACTOR_PORT=9999
 if [ -d /opt/continuuity ]; then
  CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME
  DEFAULT_JVM_OPTS="-Xmx3072m"
