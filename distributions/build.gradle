@@ -77,11 +77,11 @@ configurations{
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.tasks.bundling.Compression
 
-task developer_suite_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
+task reactor_sdk_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
   group = 'Continuuity'
 
   baseName = "continuuity"
-  appendix = "developer-suite"
+  appendix = "reactor-development-kit"
   into "${baseName}-${appendix}-${version}"
   description = 'Generates the singlenode distribution zip file'
 
@@ -206,7 +206,7 @@ task sandbox_dist (type: Zip) {
   baseName = "continuuity"
   appendix = "developer-sandbox"
   into "${baseName}-${appendix}-${version}"
-  description = 'Generates the dev suite distribution zip file for cloud'
+  description = 'Generates the dev kit distribution zip file for cloud'
 
   //copySpec:
   //root
@@ -293,7 +293,7 @@ task sandbox_dist (type: Zip) {
 
 artifacts{
   // Asigning the artifact to the configuration
-  distributions developer_suite_dist
+  distributions reactor_sdk_dist
   distributions sandbox_dist
 }
 
@@ -306,13 +306,13 @@ uploadDistributions {
       snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
         authentication(userName: nexusUsername, password: nexusPassword)
       }
-      addFilter('developer_suite') {artifact, file ->
-        file.name == developer_suite_dist.archiveName
+      addFilter('sdk') {artifact, file ->
+        file.name == reactor_sdk_dist.archiveName
       }
       addFilter('sandbox') {artifact, file ->
         file.name == sandbox_dist.archiveName
       }
-      pom('developer_suite').artifactId = developer_suite_dist.distName
+      pom('sdk').artifactId = reactor_sdk_dist.distName
       pom('sandbox').artifactId = sandbox_dist.distName
     }
   }
