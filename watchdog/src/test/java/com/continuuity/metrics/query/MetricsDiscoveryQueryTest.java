@@ -72,7 +72,6 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
     setupMetrics();
 
     JsonArray expected = new JsonArray();
-    expected.add(expectedWrites());
     JsonArray contexts =
       children(
         node("app", "app10", children(
@@ -82,6 +81,7 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
     expectedReads.addProperty("metric", "reads");
     expectedReads.add("contexts", contexts);
     expected.add(expectedReads);
+    expected.add(expectedWrites());
 
     // Query for queue length
     InetSocketAddress endpoint = getMetricsQueryEndpoint();

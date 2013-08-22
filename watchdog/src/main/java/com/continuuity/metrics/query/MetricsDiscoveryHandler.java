@@ -43,9 +43,9 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
   private final Map<MetricsScope, AggregatesTable> aggregatesTables;
 
-  // just user metrics for now.  Can add reactor metrics when theres a unified way to query for them
+  // just user metrics for now.  Can add reactor metrics when there is a unified way to query for them
   // currently you query differently depending on the metric, and some metrics you can query for in the
-  // BatchMetricsHandler are computed in the handler and not in the table.
+  // BatchMetricsHandler are computed in the handler and are not stored in the table.
   private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
 
   private enum PathProgramType {
@@ -89,7 +89,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     B,
     F,
     STREAM,
-    DATASET;
+    DATASET
   }
 
   private enum MapReduceTask {
@@ -166,11 +166,11 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
     List<String> prefixEntity = queryParams.get("prefixEntity");
     // shouldn't be in params more than once, but if it is, just take any one
-    String metricPrefix = (prefixEntity == null) ? "" : prefixEntity.get(0);
+    String metricPrefix = (prefixEntity == null) ? null : prefixEntity.get(0);
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
     for (AggregatesTable table : aggregatesTables.values()) {
-      AggregatesScanner scanner = table.scan(contextPrefix, metricPrefix);
+      AggregatesScanner scanner = table.scanRowsOnly(contextPrefix, metricPrefix);
 
       // scanning through all metric rows in the aggregates table
       // row has context plus metric info
@@ -263,11 +263,11 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
     public void deepAdd(Iterator<String> ids, ContextNodeType... types) {
       ContextNode node = this;
-      for (int i = 0; i < types.length; i++) {
+      for (ContextNodeType type : types) {
         if (!ids.hasNext()) {
           break;
         }
-        node = node.getOrAddChild(types[i], ids.next());
+        node = node.getOrAddChild(type, ids.next());
       }
     }
 

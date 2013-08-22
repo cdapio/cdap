@@ -10,6 +10,8 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.PathParam;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
@@ -79,9 +81,16 @@ public final class HttpResourceModel {
 
         if (method.getParameterTypes().length > 2) {
           Class<?>[] parameterTypes = method.getParameterTypes();
-          for (Map.Entry<String, String> entry : groupValues.entrySet()){
-            index++;
-            args[index] = ConvertUtils.convert(entry.getValue(), parameterTypes[index]);
+
+          // match args to their annotation values.
+          Annotation[][] paramAnnotations = method.getParameterAnnotations();
+          for (; index < paramAnnotations.length; index++) {
+            Annotation[] annotations = paramAnnotations[index];
+            if (annotations.length > 0) {
+              PathParam annotation = (PathParam) annotations[0];
+              String argValue = groupValues.get(annotation.value());
+              args[index] = ConvertUtils.convert(argValue, parameterTypes[index]);
+            }
           }
         }
         method.invoke(handler, args);
