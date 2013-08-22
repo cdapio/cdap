@@ -373,7 +373,7 @@ if [[ "x${section}" == "xcluster" ]]; then
   while [ $# -gt 0 ]
   do
      case "$1" in
-       -c) shift; cluster=$1; shift;;
+       -c) shift; cluster="$1.$BEAMER_USER"; shift;;
        -t) shift; type=$1; shift;;
        *)  usage; exit 1
      esac
