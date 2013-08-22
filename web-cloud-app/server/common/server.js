@@ -415,11 +415,9 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
     } else {
 
-          self.logger.warn(method);
-
     if (method === 'getQuery' || method === 'getMapreduce') {
       params[1].application = ids[0];
-    } else {
+    }
 
     if (method === 'getFlow') {
 
@@ -454,7 +452,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
       });
 
-    }}}
+    }}
 
   });
 

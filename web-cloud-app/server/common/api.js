@@ -90,7 +90,7 @@ logger.setLevel(LOG_LEVEL);
 				try {
 					MetaData[method].apply(MetaData, params.concat(done));
 				} catch (e) {
-					logger.warn(done);
+					logger.warn(e);
 					done(e);
 				}
 			} else {

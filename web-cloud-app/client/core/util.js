@@ -552,10 +552,15 @@ define([], function () {
 			return [value, 'B'];
 		},
 		reset: function () {
+
 			C.Modal.show(
 				"Reset Reactor",
 				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor. Are you sure you would like to do this?",
 				function () {
+
+					$('#drop-label').hide();
+					$('#drop-loading').show();
+					$('#drop-hover').show();
 
 					C.get('far', {
 						method: 'reset',
@@ -564,16 +569,16 @@ define([], function () {
 
 						if (error) {
 
-							setTimeout(function () {
-								C.Modal.show(
-									"Reset Error",
-									error.message
-									);
-							}, 1000);
+							$('#drop-hover').fadeOut(function () {
+								$('#drop-label').show();
+								$('#drop-loading').hide();
+								C.Modal.show("Reset Error", error.message);
+							});
 
 						} else {
-							window.location.href = '/';
-							window.location.reload();
+
+							window.location = '/';
+
 						}
 
 					});
