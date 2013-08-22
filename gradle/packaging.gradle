@@ -43,7 +43,7 @@ task ('prepackager', dependsOn : ['build']) {
       into "${installDir}/lib"
     }
     copy {
-      from "$rootProject.projectDir/distributions/src/LICENSE.txt"
+      from "$rootProject.projectDir/distributions/src/LICENSE-2.0.txt"
       into "${installDir}"
     }
   }
