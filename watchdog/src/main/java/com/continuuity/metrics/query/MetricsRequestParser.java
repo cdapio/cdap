@@ -170,7 +170,7 @@ final class MetricsRequestParser {
 
     if (programType == null) {
       // Metrics for the application.
-      builder.setContextPrefix(contextPrefix);
+      return builder.setContextPrefix(contextPrefix);
     }
 
     contextPrefix += "." + programType.getId();

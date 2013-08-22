@@ -145,6 +145,11 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("metric", request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());
 
+    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/metric?aggregate=true"));
+    Assert.assertEquals("app1", request.getContextPrefix());
+    Assert.assertEquals("metric", request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
+
     request = MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/flow1/flowlet1/metric?aggregate=true"));
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
     Assert.assertEquals("metric", request.getMetricPrefix());

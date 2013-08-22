@@ -96,7 +96,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
           }
         });
       this.metricsTableCaches.put(scope, cache);
-      this.aggregatesTables.put(scope, metricsTableFactory.createAggregates(MetricsScope.REACTOR.name()));
+      this.aggregatesTables.put(scope, metricsTableFactory.createAggregates(scope.name()));
     }
   }
 
