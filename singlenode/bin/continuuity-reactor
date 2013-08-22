@@ -6,6 +6,7 @@
 ##
 ##############################################################################
 
+REACTOR_PORT=9999
 if [ -d /opt/continuuity ]; then
  CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME
  DEFAULT_JVM_OPTS="-Xmx3072m"
@@ -83,7 +84,7 @@ if [ -d /opt/continuuity ]; then
 fi
 
 # PID Location
-PID_DIR=$APP_HOME/data
+PID_DIR=/var/tmp
 BASENAME=${PRG##*/}
 pid=$PID_DIR/$BASENAME.pid
 
@@ -96,11 +97,6 @@ check_before_start() {
   # Checks if nodejs is available before it starts reactor.
   command -v node >/dev/null 2>&1 || \
     { echo >&2 "Continuuity Reactor requires nodeJS but it's either not installed or not in path.  Aborting."; exit 1; }
-
-  # Check if node JS is running
-  exec 6<>/dev/tcp/localhost/9999 && {     }
-  exec 6>&- # close output connection
-  exec 6<&- # close input connection
 
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
