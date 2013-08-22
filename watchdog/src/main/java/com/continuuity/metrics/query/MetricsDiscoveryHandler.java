@@ -19,6 +19,7 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,14 +27,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Class for handling requests for aggregate application metrics of the
@@ -44,11 +41,11 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
-  private final Map<MetricsScope, AggregatesTable> aggregatesTables;
+  private final AggregatesTable aggregatesTable;
 
   private enum PathProgramType {
     PROCEDURES("p"),
-    MAPREDUCES("b"),
+    MAPREDUCE("b"),
     FLOWS("f");
     String id;
 
@@ -90,28 +87,39 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     DATASET;
   }
 
+  private enum MapReduceTask {
+    M("mappers"),
+    R("reducers");
+
+    private final String name;
+
+    private MapReduceTask(String name) {
+      this.name = name;
+    }
+
+    private String getName() {
+      return name;
+    }
+  }
+
   @Inject
   public MetricsDiscoveryHandler(final MetricsTableFactory metricsTableFactory) {
-    this.aggregatesTables = Maps.newHashMap();
-    for (MetricsScope scope : MetricsScope.values()) {
-      this.aggregatesTables.put(scope, metricsTableFactory.createAggregates(scope.name()));
-    }
+    this.aggregatesTable = metricsTableFactory.createAggregates(MetricsScope.USER.name());
   }
 
   @GET
   @Path("/available")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder) throws IOException {
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(null, ""));
+    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, null));
   }
 
   @GET
   @Path("/available/apps/{app-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId) throws IOException {
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(appId, ""));
+    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, appId));
   }
 
-  // @TODO(albert) add query params for metric prefix
   @GET
   @Path("/available/apps/{app-id}/{program-type}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
@@ -119,7 +127,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
                                       @PathParam("program-type") String programType) throws IOException {
     String programTypeId = PathProgramType.valueOf(programType.toUpperCase()).getId();
     String context = Joiner.on(".").join(appId, programTypeId);
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(context, ""));
+    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
 
   @GET
@@ -130,7 +138,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
                                       @PathParam("program-id") String programId) throws IOException {
     String programTypeId = PathProgramType.valueOf(programType.toUpperCase()).getId();
     String context = Joiner.on(".").join(appId, programTypeId, programId);
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(context, ""));
+    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
 
   @GET
@@ -142,23 +150,24 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
                                       @PathParam("component-id") String componentId) throws IOException {
     String programTypeId = PathProgramType.valueOf(programType.toUpperCase()).getId();
     String context = Joiner.on(".").join(appId, programTypeId, programId, componentId);
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(context, ""));
+    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
 
-  private JsonArray getMetrics(String contextPrefix, String metricPrefix) {
+  private JsonArray getMetrics(HttpRequest request, String contextPrefix) {
+    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+    List<String> prefixEntity = queryParams.get("prefixEntity");
+    // shouldn't be in params more than once, but if it is, just take any one
+    String metricPrefix = (prefixEntity == null) ? "" : prefixEntity.get(0);
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
-    for (Map.Entry<MetricsScope, AggregatesTable> entry : this.aggregatesTables.entrySet()) {
-      AggregatesTable table = entry.getValue();
-      AggregatesScanner scanner = table.scan(contextPrefix, metricPrefix);
+    AggregatesScanner scanner = this.aggregatesTable.scan(contextPrefix, metricPrefix);
 
-      // scanning through all metric rows in the aggregates table
-      // row has context plus metric info
-      // each metric can show up in multiple contexts
-      while (scanner.hasNext()) {
-        AggregatesScanResult result = scanner.next();
-        addContext(result.getContext(), result.getMetric(), metricContextsMap);
-      }
+    // scanning through all metric rows in the aggregates table
+    // row has context plus metric info
+    // each metric can show up in multiple contexts
+    while (scanner.hasNext()) {
+      AggregatesScanResult result = scanner.next();
+      addContext(result.getContext(), result.getMetric(), metricContextsMap);
     }
 
     JsonArray output = new JsonArray();
@@ -202,7 +211,13 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
         metricContexts.deepAdd(contextParts, ContextNodeType.PROCEDURE);
         break;
       case B:
-        metricContexts.deepAdd(contextParts, ContextNodeType.MAPREDUCE, ContextNodeType.MAPREDUCE_TASK);
+        if (contextParts.hasNext()) {
+          metricContexts = metricContexts.getOrAddChild(ContextNodeType.MAPREDUCE, contextParts.next());
+          if (contextParts.hasNext()) {
+            String taskStr = MapReduceTask.valueOf(contextParts.next().toUpperCase()).getName();
+            metricContexts.addChild(new ContextNode(ContextNodeType.MAPREDUCE_TASK, taskStr));
+          }
+        }
         break;
       // dataset and stream are special cases, currently the only "context" for them is "-.dataset" and "-.stream"
       case DATASET:
@@ -269,9 +284,9 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       JsonObject output = new JsonObject();
       output.addProperty("type", type.getName());
       output.addProperty("id", id);
-      // sort children by
 
       if (children.size() > 0) {
+        // maybe make the sort optional based on query params
         List<ContextNode> childList = Lists.newArrayList(children.values());
         Collections.sort(childList);
         JsonArray childrenJson = new JsonArray();

@@ -3,6 +3,8 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.metrics.MetricsScope;
+
 import java.net.URI;
 
 /**
@@ -18,6 +20,7 @@ final class MetricsRequestBuilder {
   private long endTime;
   private MetricsRequest.Type type;
   private int count;
+  private MetricsScope scope;
 
   MetricsRequestBuilder(URI requestURI) {
     this.requestURI = requestURI;
@@ -63,9 +66,14 @@ final class MetricsRequestBuilder {
     return this;
   }
 
+  MetricsRequestBuilder setScope(MetricsScope scope) {
+    this.scope = scope;
+    return this;
+  }
+
   MetricsRequest build() {
     return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricPrefix,
-                                  tagPrefix, startTime, endTime, type, count);
+                                  tagPrefix, startTime, endTime, type, count, scope);
   }
 
   private static class MetricsRequestImpl implements MetricsRequest {
@@ -78,9 +86,10 @@ final class MetricsRequestBuilder {
     private final long endTime;
     private final Type type;
     private final int count;
+    private MetricsScope scope;
 
-    public MetricsRequestImpl(URI requestURI, String contextPrefix, String runId, String metricPrefix,
-                              String tagPrefix, long startTime, long endTime, Type type, int count) {
+    public MetricsRequestImpl(URI requestURI, String contextPrefix, String runId, String metricPrefix, String tagPrefix,
+                              long startTime, long endTime, Type type, int count, MetricsScope scope) {
       this.contextPrefix = contextPrefix;
       this.requestURI = requestURI;
       this.runId = runId;
@@ -90,6 +99,7 @@ final class MetricsRequestBuilder {
       this.endTime = endTime;
       this.type = type;
       this.count = count;
+      this.scope = scope;
     }
 
     @Override
@@ -135,6 +145,11 @@ final class MetricsRequestBuilder {
     @Override
     public int getCount() {
       return count;
+    }
+
+    @Override
+    public MetricsScope getScope() {
+      return scope;
     }
   }
 }
