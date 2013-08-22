@@ -18,7 +18,7 @@ if [ ! -f "$build_home/version.txt" ] ; then
 fi
 
 version=`cat $build_home/version.txt`
-branch=`git branch | grep '*' | awk ' { print $2 } '`
+branch="branch"
 
 function build() {
   local component=$1; shift
