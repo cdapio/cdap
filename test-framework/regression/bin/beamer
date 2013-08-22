@@ -4,15 +4,21 @@ version="0.0.1"
 bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 conf="$bin/../conf"
-build_home="$bin/../../.."
 script=`basename $0`
 command=$1;
 user=$USER
-version=`cat $build_home/version.txt`
 epoch=`date +%s`
-cuser=${CINST_USER:-$USER}
-branch=`git branch | grep '*' | awk ' { print $2 } '`
+build_home=${REACTOR_HOME:-$bin/../../..}
+cuser=${BEAMER_USER:-$USER}
 jumpbox="lm101.sw.joyent.continuuity.com"
+
+if [ ! -f "$build_home/version.txt" ] ; then
+  echo "$build_home does not exists. Set REACTOR_HOME."
+  exit 1 
+fi
+
+version=`cat $build_home/version.txt`
+branch=`git branch | grep '*' | awk ' { print $2 } '`
 
 function build() {
   local component=$1; shift
@@ -104,12 +110,19 @@ function usage() {
   echo ""
   echo "  create         Create cluster"
   echo "  destroy        Destroy cluster"
+  echo "  list           List clusters owned by you"
+  echo "  activity       List all the activity across all users and clusters"
   echo "  show-mapping   Shows cluster component host mapping"
   echo "  show-installed Shows installed components on the cluster"
   echo ""
   echo "  Options"
   echo "    -c Specifies the name of the cluster"
   echo "    -t Specifies the type of the cluster"
+  echo ""
+  echo "Environment Variables"
+  echo ""
+  echo "  REACTOR_HOME   Specifies the path to where reactor git project exists"
+  echo "  BEAMER_USER    Specifies the name of the user to be used for communicating with cluster (default: $USER"
   echo ""
 }
 
