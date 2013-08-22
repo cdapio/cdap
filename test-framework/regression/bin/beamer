@@ -121,8 +121,8 @@ function usage() {
   echo ""
   echo "Environment Variables"
   echo ""
-  echo "  REACTOR_HOME   Specifies the path to where reactor git project exists"
-  echo "  BEAMER_USER    Specifies the name of the user to be used for communicating with cluster (default: $USER"
+  echo "  REACTOR_HOME   Specifies the path to where reactor git project exists (Current : $REACTOR_HOME)"
+  echo "  BEAMER_USER    Specifies the name of the user to be used for communicating with cluster (default: $USER)"
   echo ""
 }
 
