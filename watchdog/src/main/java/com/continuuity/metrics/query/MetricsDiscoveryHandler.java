@@ -12,6 +12,7 @@ import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -25,8 +26,14 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Class for handling requests for aggregate application metrics of the
@@ -62,7 +69,8 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     MAPREDUCE("mapreduce"),
     MAPREDUCE_TASK("mapreduceTask"),
     STREAM("stream"),
-    DATASET("dataset");
+    DATASET("dataset"),
+    ROOT("root");
     String name;
 
     private ContextNodeType(String name) {
@@ -97,7 +105,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/available/app/{app-id}")
+  @Path("/available/apps/{app-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId) throws IOException {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(appId, ""));
@@ -105,7 +113,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
   // @TODO(albert) add query params for metric prefix
   @GET
-  @Path("/available/app/{app-id}/{program-type}")
+  @Path("/available/apps/{app-id}/{program-type}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType) throws IOException {
@@ -115,7 +123,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/available/app/{app-id}/{program-type}/{program-id}")
+  @Path("/available/apps/{app-id}/{program-type}/{program-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType,
@@ -126,7 +134,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/available/app/{app-id}/{program-type}/{program-id}/{component-id}")
+  @Path("/available/apps/{app-id}/{program-type}/{program-id}/{component-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType,
@@ -139,8 +147,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
   private JsonArray getMetrics(String contextPrefix, String metricPrefix) {
 
-    // metric -> app -> appContext
-    Map<String, Map<String, ContextNode>> metricContextsMap = Maps.newHashMap();
+    Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
     for (Map.Entry<MetricsScope, AggregatesTable> entry : this.aggregatesTables.entrySet()) {
       AggregatesTable table = entry.getValue();
       AggregatesScanner scanner = table.scan(contextPrefix, metricPrefix);
@@ -150,30 +157,27 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       // each metric can show up in multiple contexts
       while (scanner.hasNext()) {
         AggregatesScanResult result = scanner.next();
-        String metric = result.getMetric();
-        if (!metricContextsMap.containsKey(metric)) {
-          Map<String, ContextNode> metricContext = Maps.newHashMap();
-          metricContextsMap.put(metric, metricContext);
-        }
-        addContext(result.getContext(), metricContextsMap.get(metric));
+        addContext(result.getContext(), result.getMetric(), metricContextsMap);
       }
     }
 
     JsonArray output = new JsonArray();
-    for (Map.Entry<String, Map<String, ContextNode>> metricContexts : metricContextsMap.entrySet()) {
+    List<String> sortedMetrics = Lists.newArrayList(metricContextsMap.keySet());
+    Collections.sort(sortedMetrics);
+    for (String metric : sortedMetrics) {
       JsonObject metricNode = new JsonObject();
-      metricNode.addProperty("metric", metricContexts.getKey());
-      JsonArray contexts = new JsonArray();
-      for (ContextNode appContext : metricContexts.getValue().values()) {
-        contexts.add(appContext.toJson());
-      }
-      metricNode.add("contexts", contexts);
+      metricNode.addProperty("metric", metric);
+      ContextNode metricContexts = metricContextsMap.get(metric);
+      // the root node has junk for its type and id, but has the list of contexts as its "children"
+      JsonObject tmp = metricContexts.toJson();
+      metricNode.add("contexts", tmp.getAsJsonArray("children"));
       output.add(metricNode);
     }
+
     return output;
   }
 
-  private void addContext(String context, Map<String, ContextNode> metricContextsMap) {
+  private void addContext(String context, String metric, Map<String, ContextNode> metricContextsMap) {
     Iterator<String> contextParts = Splitter.on('.').split(context).iterator();
     if (!contextParts.hasNext()) {
       return;
@@ -183,10 +187,11 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       return;
     }
 
-    if (!metricContextsMap.containsKey(appId)) {
-      metricContextsMap.put(appId, new ContextNode(ContextNodeType.APP, appId));
+    if (!metricContextsMap.containsKey(metric)) {
+      metricContextsMap.put(metric, new ContextNode(ContextNodeType.ROOT, ""));
     }
-    ContextNode metricContexts = metricContextsMap.get(appId);
+    ContextNode metricContexts = metricContextsMap.get(metric);
+    metricContexts = metricContexts.getOrAddChild(ContextNodeType.APP, appId);
 
     ProgramType type = ProgramType.valueOf(contextParts.next().toUpperCase());
     switch(type) {
@@ -211,7 +216,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     }
   }
 
-  private class ContextNode {
+  private class ContextNode implements Comparable<ContextNode> {
     ContextNodeType type;
     String id;
     Map<String, ContextNode> children;
@@ -252,6 +257,10 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       return id;
     }
 
+    public String getKey() {
+      return type.name() + ":" + id;
+    }
+
     private String getChildKey(ContextNodeType type, String id) {
       return type.name() + ":" + id;
     }
@@ -260,14 +269,22 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       JsonObject output = new JsonObject();
       output.addProperty("type", type.getName());
       output.addProperty("id", id);
+      // sort children by
+
       if (children.size() > 0) {
+        List<ContextNode> childList = Lists.newArrayList(children.values());
+        Collections.sort(childList);
         JsonArray childrenJson = new JsonArray();
-        for (ContextNode child : children.values()) {
+        for (ContextNode child : childList) {
           childrenJson.add(child.toJson());
         }
         output.add("children", childrenJson);
       }
       return output;
+    }
+
+    public int compareTo(ContextNode other) {
+      return getKey().compareTo(other.getKey());
     }
   }
 
