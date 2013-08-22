@@ -3,8 +3,10 @@
  */
 package com.continuuity.data2.transaction.queue;
 
-import com.continuuity.common.queue.QueueName;
+import com.continuuity.api.common.Bytes;
 import com.google.common.base.Stopwatch;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
@@ -13,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,26 +25,37 @@ public final class HBaseQueueUtils {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueUtils.class);
 
   /**
-   * Creates a HBase table if the table doesn't exists.
+   * Creates a HBase queue table if the table doesn't exists.
    * @param admin
    * @param tableName
    * @param maxWaitMs
+   * @param coProcessorJar
+   * @param coProcessors
    * @throws IOException
    */
-  public static void createTableIfNotExists(HBaseAdmin admin, String tableName,
-                                            byte[] columnFamily, long maxWaitMs) throws IOException {
+  public static void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+                                            byte[] columnFamily, long maxWaitMs,
+                                            Path coProcessorJar, String...coProcessors) throws IOException {
     if (!admin.tableExists(tableName)) {
       HTableDescriptor htd = new HTableDescriptor(tableName);
+      if (coProcessorJar != null) {
+        for (String coProcessor : coProcessors) {
+          htd.addCoprocessor(coProcessor, coProcessorJar, Coprocessor.PRIORITY_USER, null);
+        }
+      }
+
       HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
       htd.addFamily(hcd);
+      String tableNameString = Bytes.toString(tableName);
+
       try {
-        LOG.info("Creating queue table '{}'", tableName);
+        LOG.info("Creating queue table '{}'", tableNameString);
         admin.createTable(htd);
         return;
       } catch (TableExistsException e) {
         // table may exist because someone else is creating it at the same
         // time. But it may not be available yet, and opening it might fail.
-        LOG.info("Failed to create queue table '{}'. {}.", tableName, e.getMessage(), e);
+        LOG.info("Failed to create queue table '{}'. {}.", tableNameString, e.getMessage(), e);
       }
 
       // Wait for table to materialize
@@ -52,7 +64,8 @@ public final class HBaseQueueUtils {
         stopwatch.start();
         while (stopwatch.elapsedTime(TimeUnit.MILLISECONDS) < maxWaitMs) {
           if (admin.tableExists(tableName)) {
-            LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.", tableName);
+            LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
+                     tableNameString);
             return;
           } else {
             TimeUnit.MILLISECONDS.sleep(100);
@@ -61,22 +74,7 @@ public final class HBaseQueueUtils {
       } catch (InterruptedException e) {
         LOG.warn("Sleeping thread interrupted.");
       }
-      LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableName, maxWaitMs);
+      LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableNameString, maxWaitMs);
     }
-  }
-
-
-  public static byte[] getQueueRowPrefix(QueueName queueName) {
-    byte[] bytes = Arrays.copyOf(queueName.toBytes(), queueName.toBytes().length);
-    int i = 0;
-    int j = bytes.length - 1;
-    while (i < j) {
-      byte tmp = bytes[i];
-      bytes[i] = bytes[j];
-      bytes[j] = tmp;
-      i++;
-      j--;
-    }
-    return bytes;
   }
 }

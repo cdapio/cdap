@@ -354,11 +354,11 @@ public abstract class QueueTest {
   }
 
 
-  private static final class TxManager {
+  protected static final class TxManager {
     private final Collection<TransactionAware> txAwares;
     private Transaction transaction;
 
-    TxManager(TransactionAware...txAware) {
+    protected TxManager(TransactionAware...txAware) {
       txAwares = ImmutableList.copyOf(txAware);
     }
 

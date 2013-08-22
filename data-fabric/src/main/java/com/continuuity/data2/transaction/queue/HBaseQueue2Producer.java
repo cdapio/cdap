@@ -27,7 +27,7 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
 
   public HBaseQueue2Producer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics) {
     super(queueMetrics);
-    this.queueRowPrefix = HBaseQueueUtils.getQueueRowPrefix(queueName);
+    this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;
   }
@@ -36,25 +36,6 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
   public void startTx(Transaction tx) {
     super.startTx(tx);
     rollbackKeys.clear();
-  }
-
-  @Override
-  public boolean rollbackTx() throws Exception {
-    // If nothing to rollback, simply return
-    if (rollbackKeys.isEmpty()) {
-      return true;
-    }
-
-    // Delete the persisted entries
-    List<Delete> deletes = Lists.newArrayList();
-    for (byte[] rowKey : rollbackKeys) {
-      Delete delete = new Delete(rowKey);
-      deletes.add(delete);
-    }
-    hTable.delete(deletes);
-    hTable.flushCommits();
-
-    return true;
   }
 
   @Override
@@ -77,16 +58,33 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
       rollbackKeys.add(rowKey);
       // No need to write ts=writePointer, as the row key already contains the writePointer
       Put put = new Put(rowKey);
-      put.add(HBaseQueueConstants.COLUMN_FAMILY,
-              HBaseQueueConstants.DATA_COLUMN,
+      put.add(QueueConstants.COLUMN_FAMILY,
+              QueueConstants.DATA_COLUMN,
               entry.getData());
-      put.add(HBaseQueueConstants.COLUMN_FAMILY,
-              HBaseQueueConstants.META_COLUMN,
+      put.add(QueueConstants.COLUMN_FAMILY,
+              QueueConstants.META_COLUMN,
               QueueEntry.serializeHashKeys(entry.getHashKeys()));
 
       puts.add(put);
     }
     hTable.put(puts);
+    hTable.flushCommits();
+  }
+
+  @Override
+  protected void doRollback(Transaction transaction) throws Exception {
+    // If nothing to rollback, simply return
+    if (rollbackKeys.isEmpty()) {
+      return;
+    }
+
+    // Delete the persisted entries
+    List<Delete> deletes = Lists.newArrayList();
+    for (byte[] rowKey : rollbackKeys) {
+      Delete delete = new Delete(rowKey);
+      deletes.add(delete);
+    }
+    hTable.delete(deletes);
     hTable.flushCommits();
   }
 }

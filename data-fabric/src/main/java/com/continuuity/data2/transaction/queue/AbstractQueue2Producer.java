@@ -49,6 +49,7 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
   public void startTx(Transaction tx) {
     queue.clear();
     transaction = tx;
+    lastEnqueueCount = 0;
   }
 
   @Override
@@ -76,5 +77,15 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
     }
   }
 
+  @Override
+  public boolean rollbackTx() throws Exception {
+    Transaction tx = transaction;
+    transaction = null;
+    doRollback(tx);
+    return true;
+  }
+
   protected abstract void persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception;
+
+  protected abstract void doRollback(Transaction transaction) throws Exception;
 }

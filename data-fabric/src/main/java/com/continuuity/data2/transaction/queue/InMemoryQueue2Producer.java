@@ -10,7 +10,6 @@ import com.continuuity.data2.transaction.Transaction;
 public class InMemoryQueue2Producer extends AbstractQueue2Producer {
 
   private final InMemoryQueue queue;
-  private long lastWritePointer;
   private int lastEnqueueCount;
 
   public InMemoryQueue2Producer(QueueName queueName, InMemoryQueueService queueService, QueueMetrics queueMetrics) {
@@ -19,21 +18,18 @@ public class InMemoryQueue2Producer extends AbstractQueue2Producer {
   }
 
   @Override
-  public boolean rollbackTx() throws Exception {
-    for (int seqId = 0; seqId < lastEnqueueCount; seqId++) {
-      queue.undoEnqueue(lastWritePointer, seqId);
+  protected void persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception {
+    int seqId = 0;
+    for (QueueEntry entry : entries) {
+      queue.enqueue(transaction.getWritePointer(), seqId++, entry);
     }
-    return true;
+    lastEnqueueCount = seqId;
   }
 
   @Override
-  protected void persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception {
-    lastWritePointer = transaction.getWritePointer();
-
-    int seqId = 0;
-    for (QueueEntry entry : entries) {
-      queue.enqueue(lastWritePointer, seqId++, entry);
+  protected void doRollback(Transaction transaction) {
+    for (int seqId = 0; seqId < lastEnqueueCount; seqId++) {
+      queue.undoEnqueue(transaction.getWritePointer(), seqId);
     }
-    lastEnqueueCount = seqId;
   }
 }

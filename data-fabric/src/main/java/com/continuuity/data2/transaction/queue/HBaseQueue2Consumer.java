@@ -78,10 +78,10 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    this.queueRowPrefix = HBaseQueueUtils.getQueueRowPrefix(queueName);
+    this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
     this.startRow = queueRowPrefix;
     this.numGroups = numGroups;
-    this.stateColumnName = Bytes.add(HBaseQueueConstants.STATE_COLUMN_PREFIX,
+    this.stateColumnName = Bytes.add(QueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
   }
 
@@ -126,8 +126,8 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
           if (entry.getState() == null) {
             Put put = new Put(entry.getRowKey());
             byte[] stateValue = encodeStateColumn(ConsumerEntryState.CLAIMED);
-            put.add(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, stateValue);
-            boolean claimed = hTable.checkAndPut(entry.getRowKey(), HBaseQueueConstants.COLUMN_FAMILY,
+            put.add(QueueConstants.COLUMN_FAMILY, stateColumnName, stateValue);
+            boolean claimed = hTable.checkAndPut(entry.getRowKey(), QueueConstants.COLUMN_FAMILY,
                                                  stateColumnName, null, put);
             // If not able to claim it, remove it, and move to next one.
             if (!claimed) {
@@ -169,7 +169,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     List<Put> puts = Lists.newArrayListWithCapacity(consumingEntries.size());
     for (byte[] rowKey : consumingEntries.keySet()) {
       Put put = new Put(rowKey);
-      put.add(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, stateContent);
+      put.add(QueueConstants.COLUMN_FAMILY, stateColumnName, stateContent);
       puts.add(put);
     }
 
@@ -201,13 +201,13 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
       byte[] stateContent = encodeStateColumn(ConsumerEntryState.CLAIMED);
       for (byte[] rowKey : consumingEntries.keySet()) {
         Put put = new Put(rowKey);
-        put.add(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, stateContent);
+        put.add(QueueConstants.COLUMN_FAMILY, stateColumnName, stateContent);
         ops.add(put);
       }
     } else {
       for (byte[] rowKey : consumingEntries.keySet()) {
         Delete delete = new Delete(rowKey);
-        delete.deleteColumn(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName);
+        delete.deleteColumn(QueueConstants.COLUMN_FAMILY, stateColumnName);
         ops.add(delete);
       }
     }
@@ -269,9 +269,9 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     // already read and decided to ignore.
     // TERENCE: The update is done in the shouldInclude() method.
     scan.setStopRow(getStopRow());
-    scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.DATA_COLUMN);
-    scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, HBaseQueueConstants.META_COLUMN);
-    scan.addColumn(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName);
+    scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.DATA_COLUMN);
+    scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.META_COLUMN);
+    scan.addColumn(QueueConstants.COLUMN_FAMILY, stateColumnName);
     scan.setFilter(createFilter());
 
     long readPointer = transaction.getReadPointer();
@@ -311,9 +311,9 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
         }
 
         // Based on the strategy to determine if include the given entry or not.
-        KeyValue metaColumn = result.getColumnLatest(HBaseQueueConstants.COLUMN_FAMILY,
-                                                     HBaseQueueConstants.META_COLUMN);
-        KeyValue stateColumn = result.getColumnLatest(HBaseQueueConstants.COLUMN_FAMILY,
+        KeyValue metaColumn = result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
+                                                     QueueConstants.META_COLUMN);
+        KeyValue stateColumn = result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
                                                       stateColumnName);
 
         int counter = Bytes.toInt(rowKey, rowKey.length - 4, Ints.BYTES);
@@ -322,9 +322,9 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
         }
 
         entryCache.put(rowKey, new HBaseQueueEntry(rowKey,
-                                         result.getValue(HBaseQueueConstants.COLUMN_FAMILY,
-                                                         HBaseQueueConstants.DATA_COLUMN),
-                                         result.getValue(HBaseQueueConstants.COLUMN_FAMILY,
+                                         result.getValue(QueueConstants.COLUMN_FAMILY,
+                                                         QueueConstants.DATA_COLUMN),
+                                         result.getValue(QueueConstants.COLUMN_FAMILY,
                                                          stateColumnName)));
       }
     }
@@ -334,12 +334,12 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
   private Filter createFilter() {
     byte[] processedMask = new byte[Ints.BYTES * 2 + 1];
     processedMask[processedMask.length - 1] = ConsumerEntryState.PROCESSED.getState();
-    Filter stateFilter = new SingleColumnValueFilter(HBaseQueueConstants.COLUMN_FAMILY, stateColumnName,
+    Filter stateFilter = new SingleColumnValueFilter(QueueConstants.COLUMN_FAMILY, stateColumnName,
                                                      CompareFilter.CompareOp.NOT_EQUAL,
                                                      new BitComparator(processedMask, BitComparator.BitwiseOp.AND));
 
     return new FilterList(FilterList.Operator.MUST_PASS_ONE, stateFilter, new SingleColumnValueFilter(
-      HBaseQueueConstants.COLUMN_FAMILY, stateColumnName, CompareFilter.CompareOp.GREATER,
+      QueueConstants.COLUMN_FAMILY, stateColumnName, CompareFilter.CompareOp.GREATER,
       new BinaryPrefixComparator(Bytes.toBytes(transaction.getReadPointer()))
     ));
   }
