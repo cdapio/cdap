@@ -39,6 +39,11 @@ public final class NullInputDatum implements InputDatum {
       public int getRetryCount() {
         return Integer.MAX_VALUE;
       }
+
+      @Override
+      public String toString() {
+        return "nullInput";
+      }
     };
   }
 

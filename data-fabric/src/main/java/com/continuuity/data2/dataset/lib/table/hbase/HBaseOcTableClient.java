@@ -69,6 +69,28 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) throws Exception {
+    // NOTE: we use Put with null values because we need to delete only specific version, while Delete op deletes all
+    //       up to specified
+    List<Put> puts = Lists.newArrayList();
+    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
+      Put put = new Put(row.getKey());
+      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+        // we want support tx and non-tx modes
+        if (tx != null) {
+          // TODO: hijacking timestamp... bad
+          put.add(DATA_COLFAM, column.getKey(), tx.getWritePointer(), null);
+        } else {
+          put.add(DATA_COLFAM, column.getKey(), null);
+        }
+      }
+      puts.add(put);
+    }
+    hTable.put(puts);
+    hTable.flushCommits();
+  }
+
+  @Override
   protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
     NavigableMap<byte[], byte[]> result = getInternal(row, new byte[][]{column});
     return result.get(column);

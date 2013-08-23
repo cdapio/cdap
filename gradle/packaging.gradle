@@ -43,7 +43,7 @@ task ('prepackager', dependsOn : ['build']) {
       into "${installDir}/lib"
     }
     copy {
-      from "$rootProject.projectDir/distributions/src/LICENSE.txt"
+      from "$rootProject.projectDir/distributions/src/LICENSE-2.0.txt"
       into "${installDir}"
     }
   }
@@ -226,11 +226,17 @@ if (project.name == 'distributions') {
 uploadPackages {
   repositories {
     repositories.mavenDeployer {
-      repository(url: finalRelease ? "https://repository.continuuity.com/service/local/staging/deploy/maven2" : "https://repository.continuuity.com/content/repositories/packages") {
+      repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
         authentication(userName: nexusUsername, password: nexusPassword)
         pom.groupId = 'com.continuuity.distributions.release'
-        pom.version = getPomVersion()
+        pom.version = rootProject.version
       }
+      snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
+        authentication(userName: nexusUsername, password: nexusPassword)
+        pom.groupId = 'com.continuuity.distributions.snapshots'
+        pom.version = rootProject.version
+      }
+
       pom.whenConfigured { pom ->
         // Removes groovy dependency and test dependencies from generated pom file
         pom.dependencies = pom.dependencies.findAll { dep ->

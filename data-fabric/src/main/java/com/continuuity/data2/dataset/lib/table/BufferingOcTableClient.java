@@ -57,6 +57,9 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   // that the corresponded column was removed.
   private NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff;
 
+  // Keeps track of what was persisted so far
+  private NavigableMap<byte[], NavigableMap<byte[], byte[]>> toUndo;
+
   /**
    * Creates an instance of {@link BufferingOcTableClient}.
    * @param name table name
@@ -86,6 +89,16 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
    * @throws Exception
    */
   protected abstract void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff)
+    throws Exception;
+
+  /**
+   * Undos previously persisted changes. After this method returns we assume that data can be visible to other table
+   * clients (of course other clients may choose still not to see it based on transaction isolation logic).
+   * @param persisted previously persisted changes. Map is described as row->(column->value). Map can contain null
+   *                  values which means that the corresponded column was deleted
+   * @throws Exception
+   */
+  protected abstract void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted)
     throws Exception;
 
   /**
@@ -144,12 +157,14 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   public void close() {
     // releasing resources
     buff = null;
+    toUndo = null;
   }
 
   @Override
   public void startTx(Transaction tx) {
     // starting with fresh buffer when tx starts
     buff.clear();
+    toUndo = null;
   }
 
   @Override
@@ -163,22 +178,36 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   }
 
   @Override
-  public boolean commitTx() throws Exception{
-    persist(buff);
-    buff.clear();
+  public boolean commitTx() throws Exception {
+    if (!buff.isEmpty()) {
+      // We first assume that all data will be persisted. So that if exception happen during persist we try to
+      // rollback everything we had in in-memory buffer.
+      toUndo = buff;
+      // clearing up in-memory buffer by initializing new map.
+      // NOTE: we want to init map here so that if no changes are made we re-use same instance of the map in next tx
+      // NOTE: we could cache two maps and swap them to avoid creation of map instances, but code would be ugly
+      buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      // TODO: tracking of persisted items can be optimized by returning a pair {succeededOrNot, persisted} which
+      //       tells if persisting succeeded and what was persisted (i.e. what we will have to undo in case of rollback)
+      persist(toUndo);
+    }
     return true;
   }
 
   @Override
   public void postTxCommit() {
-    // nothing to do for tables
+    // don't need buffer anymore: tx has been committed
+    buff.clear();
+    toUndo = null;
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
-    // ANDREAS: so we never undo any writes. we just add txid to the excludes? That means we accumulate a lot of
-    // invalid transactions, hence exclude lists become really large.
     buff.clear();
+    if (toUndo != null) {
+      undo(toUndo);
+      toUndo = null;
+    }
     return true;
   }
 

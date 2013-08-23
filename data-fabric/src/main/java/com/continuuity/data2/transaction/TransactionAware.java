@@ -15,12 +15,18 @@ import java.util.Collection;
  *  dataSet.write(...);
  *  // ... do other operations on dataSet
  *  Collection<byte[]> changes = dataSet.getTxChanges();
+ *  boolean rollback = true;
  *  if (txClient.canCommit(changes)) {             // checking conflicts before commit, if none, commit tx
  *    if (dataSet.commitTx()) {                    // try persisting changes
- *      txClient.commit(tx);                       // if OK, make tx visible; if not - tx stays invisible to others
+ *      if (txClient.commit(tx)) {                 // if OK, make tx visible; if not - tx stays invisible to others
+ *        dataSet.postTxCommit();                  // notifying dataset about tx commit success via callback
+ *        rollback = false;
+ *      }
  *    }
- *  } else {                                       // if there are conflicts (or cannot commit), try rollback changes
- *    if (dataSet.rollbackTx()) {                   // try undo changes
+ *  }
+ *
+ *  if (rollback) {                                // if there are conflicts (or cannot commit), try rollback changes
+ *    if (dataSet.rollbackTx()) {                  // try undo changes
  *      txClient.abort(tx);                        // if OK, make tx visible; if not - tx stays invisible to others
  *    }
  *  }

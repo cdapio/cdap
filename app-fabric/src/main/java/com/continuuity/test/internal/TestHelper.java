@@ -8,7 +8,11 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
+import com.continuuity.api.procedure.AbstractProcedure;
+import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
@@ -37,6 +41,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -280,14 +285,25 @@ public class TestHelper {
     Map<String, String> flowletClassNames = Maps.newHashMap();
     for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
       for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
-        flowletClassNames.put(flowletDef.getFlowletSpec().getClassName(), flowSpec.getName());
+        String className = flowletDef.getFlowletSpec().getClassName();
+        // Walk up class hierachy and put all the parent classes that are Flowlet type into the map
+        for (TypeToken<?> type : TypeToken.of(Class.forName(className)).getTypes().classes()) {
+          if (Flowlet.class.isAssignableFrom(type.getRawType()) && !type.getRawType().equals(AbstractFlowlet.class)) {
+            flowletClassNames.put(type.getRawType().getName(), flowSpec.getName());
+          }
+        }
       }
     }
 
     // Find all procedure classes
     Set<String> procedureClassNames = Sets.newHashSet();
     for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
-      procedureClassNames.add(procedureSpec.getClassName());
+      String className = procedureSpec.getClassName();
+      for (TypeToken<?> type : TypeToken.of(Class.forName(className)).getTypes().classes()) {
+        if (Procedure.class.isAssignableFrom(type.getRawType()) && !type.getRawType().equals(AbstractProcedure.class)) {
+          procedureClassNames.add(type.getRawType().getName());
+        }
+      }
     }
 
     FlowletRewriter flowletRewriter = new FlowletRewriter(appSpec.getName(), false);

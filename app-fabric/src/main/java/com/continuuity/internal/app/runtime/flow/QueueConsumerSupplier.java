@@ -9,8 +9,11 @@ import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
@@ -18,6 +21,8 @@ import java.io.IOException;
  */
 @NotThreadSafe
 final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(QueueConsumerSupplier.class);
 
   private final QueueClientFactory clientFactory;
   private final QueueName queueName;
@@ -31,6 +36,7 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
     this.queueName = queueName;
     this.consumerConfig = consumerConfig;
     this.numGroups = numGroups;
+    this.consumer = createConsumer(null);
   }
 
   void updateInstanceCount(int groupSize) {
@@ -39,16 +45,26 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
                                         groupSize,
                                         consumerConfig.getDequeueStrategy(),
                                         consumerConfig.getHashKey());
-    consumer = null;
+    consumer = createConsumer(consumer);
   }
 
   @Override
   public Queue2Consumer get() {
+    return consumer;
+  }
+
+
+  private Queue2Consumer createConsumer(Queue2Consumer oldConsumer) {
     try {
-      if (consumer == null) {
-        consumer = clientFactory.createConsumer(queueName, consumerConfig, numGroups);
+      if (oldConsumer != null && oldConsumer instanceof Closeable) {
+        ((Closeable) oldConsumer).close();
       }
-      return consumer;
+    } catch (IOException e) {
+      LOG.warn("Fail to close queue consumer.", e);
+    }
+
+    try {
+      return clientFactory.createConsumer(queueName, consumerConfig, numGroups);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

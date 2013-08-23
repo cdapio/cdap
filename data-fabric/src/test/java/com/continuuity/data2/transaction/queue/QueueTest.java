@@ -133,6 +133,80 @@ public abstract class QueueTest {
     txManager.commit();
   }
 
+  @Test
+  public void testRollback() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuerollback");
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    Queue2Consumer consumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+
+    TxManager txManager = new TxManager((TransactionAware) producer,
+                                        (TransactionAware) consumer,
+                                        new TransactionAware() {
+
+      boolean canCommit = false;
+
+      @Override
+      public void startTx(Transaction tx) {
+      }
+
+      @Override
+      public Collection<byte[]> getTxChanges() {
+        return ImmutableList.of();
+      }
+
+      @Override
+      public boolean commitTx() throws Exception {
+        // Flip-flop between commit success/failure.
+        boolean res = canCommit;
+        canCommit = !canCommit;
+        return res;
+      }
+
+      @Override
+      public void postTxCommit() {
+      }
+
+      @Override
+      public boolean rollbackTx() throws Exception {
+        return true;
+      }
+    });
+
+    // First, try to enqueue and commit would fail
+    txManager.start();
+    try {
+      producer.enqueue(new QueueEntry(Bytes.toBytes(1)));
+      txManager.commit();
+      // If reaches here, it's wrong, as exception should be thrown.
+      Assert.assertTrue(false);
+    } catch (OperationException e) {
+      txManager.abort();
+    }
+
+    // Try to enqueue again. Within the same transaction, dequeue should be empty.
+    txManager.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(1)));
+    Assert.assertTrue(consumer.dequeue().isEmpty());
+    txManager.commit();
+
+    // This time, enqueue has been committed, dequeue would see the item
+    txManager.start();
+    try {
+      Assert.assertEquals(1, Bytes.toInt(consumer.dequeue().iterator().next()));
+      txManager.commit();
+      // If reaches here, it's wrong, as exception should be thrown.
+      Assert.assertTrue(false);
+    } catch (OperationException e) {
+      txManager.abort();
+    }
+
+    // Dequeue again, since last tx was rollback, this dequeue should see the item again.
+    txManager.start();
+    Assert.assertEquals(1, Bytes.toInt(consumer.dequeue().iterator().next()));
+    txManager.commit();
+  }
+
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,
                               final int consumerSize, final DequeueStrategy dequeueStrategy,
@@ -280,11 +354,11 @@ public abstract class QueueTest {
   }
 
 
-  private static final class TxManager {
+  protected static final class TxManager {
     private final Collection<TransactionAware> txAwares;
     private Transaction transaction;
 
-    TxManager(TransactionAware...txAware) {
+    protected TxManager(TransactionAware...txAware) {
       txAwares = ImmutableList.copyOf(txAware);
     }
 

@@ -18,7 +18,7 @@
 # drop permissions to continuuity user and run service script
 
 if [[ $UID -eq 0 ]]; then
-    su continuuity -l -c "cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*"
+    su continuuity -c "cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*"
 else
     cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*
 fi

@@ -225,10 +225,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
       for (Field field : type.getRawType().getDeclaredFields()) {
         // Inject OutputEmitter
         if (OutputEmitter.class.equals(field.getType())) {
-          java.lang.reflect.Type fieldType = flowletType.resolveType(field.getGenericType()).getType();
-          Preconditions.checkArgument(fieldType instanceof ParameterizedType,
+          TypeToken<?> emitterType = flowletType.resolveType(field.getGenericType());
+          Preconditions.checkArgument(emitterType.getType() instanceof ParameterizedType,
                                       "Only ParameterizeType is supported for OutputEmitter.");
-          TypeToken<?> outputType = TypeToken.of(((ParameterizedType) fieldType).getActualTypeArguments()[0]);
+
+          TypeToken<?> outputType = flowletType.resolveType(((ParameterizedType) emitterType.getType())
+                                                              .getActualTypeArguments()[0]);
 
           String outputName = field.isAnnotationPresent(Output.class) ?
             field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
@@ -292,12 +294,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
         try {
           // If batch mode then generate schema for Iterator's parameter type
           TypeToken<?> dataType = flowletType.resolveType(method.getGenericParameterTypes()[0]);
+
           if (batchSize != null) {
             Preconditions.checkArgument(dataType.getRawType().equals(Iterator.class),
                                         "Only Iterator is supported.");
             Preconditions.checkArgument(dataType.getType() instanceof ParameterizedType,
                                         "Only ParameterizedType is supported for batch Iterator.");
-            dataType = TypeToken.of(((ParameterizedType) dataType.getType()).getActualTypeArguments()[0]);
+            dataType = flowletType.resolveType(((ParameterizedType) dataType.getType()).getActualTypeArguments()[0]);
           }
           Schema schema = schemaGenerator.generate(dataType.getType());
 
@@ -428,7 +431,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new ProcessMethodFactory() {
       @Override
       public ProcessMethod create(Method method) {
-        return ReflectionProcessMethod.create(flowlet, flowletContext, method, dataFabricFacade);
+        return ReflectionProcessMethod.create(flowlet, method);
 
 
       }

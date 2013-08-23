@@ -1,11 +1,11 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
+import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
-public class TestFrameworkTest extends AppFabricTestBase {
+public class TestFrameworkTest extends ReactorTestBase {
 
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
@@ -62,8 +62,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      // TODO: ENG-3151
-//      clearAppFabric();
+      clear();
     }
   }
 
@@ -120,8 +119,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      // TODO: ENG-3151
-//      clearAppFabric();
+      clear();
     }
   }
 
@@ -147,8 +145,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      // TODO: ENG-3151
-//      clearAppFabric();
+      clear();
     }
   }
 }
