@@ -31,7 +31,7 @@ You are now ready to start Reactor. Do so by running the
 
 Directory Structure
 ===================
-The directory structure for the Developer Suite is shown below.
+The directory structure for the Reactor Development Kit is shown below.
 
 continuuity-reactor-development-kit-1.6.1
  |-- README                                                         (this file)
