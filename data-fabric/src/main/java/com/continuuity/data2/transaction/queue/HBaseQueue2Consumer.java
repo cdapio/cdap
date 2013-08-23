@@ -69,8 +69,10 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
   private final byte[] stateColumnName;
   private final byte[] queueRowPrefix;
   private final int numGroups;
+  private final Filter processedStateFilter;
   private byte[] startRow;
   private Transaction transaction;
+  private boolean committed;
 
   HBaseQueue2Consumer(ConsumerConfig consumerConfig, int numGroups, HTable hTable, QueueName queueName) {
     this.consumerConfig = consumerConfig;
@@ -83,6 +85,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     this.numGroups = numGroups;
     this.stateColumnName = Bytes.add(QueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
+    this.processedStateFilter = createStateFilter();
   }
 
   @Override
@@ -150,6 +153,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
   public void startTx(Transaction tx) {
     consumingEntries.clear();
     this.transaction = tx;
+    this.committed = false;
   }
 
   @Override
@@ -175,6 +179,7 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
 
     hTable.put(puts);
     hTable.flushCommits();
+    committed = true;
     return true;
   }
 
@@ -192,11 +197,17 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     // Put the consuming entries back to cache
     entryCache.putAll(consumingEntries);
 
+    // If not committed, no need to update HBase.
+    if (!committed) {
+      return true;
+    }
+
     // Revert changes in HBase rows
     List<Row> ops = Lists.newArrayListWithCapacity(consumingEntries.size());
 
     // If it is FIFO, restore to the CLAIMED state. This instance will retry it on the next dequeue.
     // ANDREAS: this is only needed if commitTx() was called to ack the entries.
+    // TERENCE: Agree. Fixed
     if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
       byte[] stateContent = encodeStateColumn(ConsumerEntryState.CLAIMED);
       for (byte[] rowKey : consumingEntries.keySet()) {
@@ -331,17 +342,25 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     scanner.close();
   }
 
+  /**
+   * Creates a HBase filter that will filter out rows that that has committed state = PROCESSED
+   */
   private Filter createFilter() {
-    byte[] processedMask = new byte[Ints.BYTES * 2 + 1];
-    processedMask[processedMask.length - 1] = ConsumerEntryState.PROCESSED.getState();
-    Filter stateFilter = new SingleColumnValueFilter(QueueConstants.COLUMN_FAMILY, stateColumnName,
-                                                     CompareFilter.CompareOp.NOT_EQUAL,
-                                                     new BitComparator(processedMask, BitComparator.BitwiseOp.AND));
-
-    return new FilterList(FilterList.Operator.MUST_PASS_ONE, stateFilter, new SingleColumnValueFilter(
+    return new FilterList(FilterList.Operator.MUST_PASS_ONE, processedStateFilter, new SingleColumnValueFilter(
       QueueConstants.COLUMN_FAMILY, stateColumnName, CompareFilter.CompareOp.GREATER,
       new BinaryPrefixComparator(Bytes.toBytes(transaction.getReadPointer()))
     ));
+  }
+
+  /**
+   * Creates a HBase filter that will filter out rows with state column state = PROCESSED (ignoring transaction)
+   */
+  private Filter createStateFilter() {
+    byte[] processedMask = new byte[Ints.BYTES * 2 + 1];
+    processedMask[processedMask.length - 1] = ConsumerEntryState.PROCESSED.getState();
+    return new SingleColumnValueFilter(QueueConstants.COLUMN_FAMILY, stateColumnName,
+                                       CompareFilter.CompareOp.NOT_EQUAL,
+                                       new BitComparator(processedMask, BitComparator.BitwiseOp.AND));
   }
 
   private byte[] encodeStateColumn(ConsumerEntryState state) {

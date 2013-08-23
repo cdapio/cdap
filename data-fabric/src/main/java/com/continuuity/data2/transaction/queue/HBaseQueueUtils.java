@@ -46,6 +46,7 @@ public final class HBaseQueueUtils {
 
       HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
       htd.addFamily(hcd);
+      hcd.setMaxVersions(1);
       String tableNameString = Bytes.toString(tableName);
 
       try {

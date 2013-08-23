@@ -83,8 +83,8 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
                                        ConsumerConfig consumerConfig, int numGroups) throws IOException {
     Queue2Consumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, numGroups);
     if (consumer instanceof TransactionAware) {
+      consumer = new CloseableQueue2Consumer(dataSetContext, consumer);
       dataSetContext.addTransactionAware((TransactionAware) consumer);
-      // TODO: Need to deal with removing from the transaction aware list when no longer used.
     }
     return consumer;
   }
@@ -114,4 +114,5 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
       throw Throwables.propagate(e);
     }
   }
+
 }

@@ -14,6 +14,9 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseEndpointCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
+import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -24,12 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * A CoProcessor endpoint that do eviction on Queue table.
  */
 public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor implements HBaseQueueEvictionProtocol {
 
   private static final Log LOG = LogFactory.getLog(HBaseQueueEvictionEndpoint.class);
-  private static final byte PROCESSED = 2;
 
   @Override
   public int evict(Scan scan, long readPointer, long smallestExclude, int numGroups) throws IOException {
@@ -51,6 +53,17 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
     List<Pair<Mutation, Integer>> deletes = new ArrayList<Pair<Mutation, Integer>>();
 
     HRegion region = ((RegionCoprocessorEnvironment) env).getRegion();
+
+    // Setup scan filter to gives state columns only.
+    Filter filter = scan.getFilter();
+    if (filter == null) {
+      filter = new ColumnPrefixFilter(QueueConstants.STATE_COLUMN_PREFIX);
+    } else {
+      filter = new FilterList(new ColumnPrefixFilter(QueueConstants.STATE_COLUMN_PREFIX), filter);
+    }
+    scan.setFilter(filter);
+
+    // Scan and delete rows
     RegionScanner scanner = region.getScanner(scan);
     try {
       while (hasMore) {
@@ -87,7 +100,7 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
       return 0;
     }
 
-    region.batchMutate(deletes.toArray(new Pair[0]));
+    region.batchMutate(deletes.toArray(new Pair[deletes.size()]));
 
     LOG.info(String.format("Evicted %d entries from region %s", deletes.size(), region));
 
@@ -99,6 +112,7 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
     if (writePointer > readPointer || writePointer >= smallestExclude) {
       return false;
     }
-    return stateColumn.getBuffer()[stateColumn.getValueOffset() + Longs.BYTES + Ints.BYTES] == PROCESSED;
+    byte state = stateColumn.getBuffer()[stateColumn.getValueOffset() + Longs.BYTES + Ints.BYTES];
+    return state == ConsumerEntryState.PROCESSED.getState();
   }
 }
