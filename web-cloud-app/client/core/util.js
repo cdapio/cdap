@@ -407,7 +407,7 @@ define([], function () {
 				.attr('preserveAspectRatio', 'none');
 
 			var g = vis.append("svg:g");
-			var line = d3.svg.line().interpolate("basis")
+			var line = d3.svg.line().interpolate("monotone")
 				.x(function(d,i) { return x(i); })
 				.y(function(d) { return y(d); });
 
@@ -465,12 +465,12 @@ define([], function () {
 							.range([margin, h - margin]);
 					}
 
-					var line = d3.svg.line().interpolate("basis")
+					var line = d3.svg.line().interpolate("monotone")
 						.x(function(d,i) { return x(i); })
 						.y(function(d) { return y(d); });
 
 					if (this.percent || this.shade) {
-						var area = d3.svg.area().interpolate("basis")
+						var area = d3.svg.area().interpolate("monotone")
 							.x(line.x())
 							.y1(line.y())
 							.y0(y(-100));
