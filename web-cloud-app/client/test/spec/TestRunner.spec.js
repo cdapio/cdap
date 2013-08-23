@@ -1,7 +1,7 @@
 
 require.config({
 		urlArgs : 'bust=',
-		baseUrl: '../../client',
+		baseUrl: '../../',
 		paths: {
 			"jasmine-jquery": 'core/lib/jasmine-jquery',
 			'jquery' : 'core/lib/jquery-1.9.1',
