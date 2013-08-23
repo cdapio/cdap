@@ -43,6 +43,8 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
@@ -127,6 +129,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Log handler.
    */
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAppFabricService.class);
+
+  /**
+   * Number of seconds for timing out a service endpoint discovery.
+   */
+  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
 
   /**
    * Maintains a mapping of transient session state. The state is stored in memory,
@@ -1072,7 +1079,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private void deleteMetrics(String accountId) throws IOException, TException, MetadataServiceException {
 
     List<Application> applications = this.mds.getApplications(new Account(accountId));
-    Discoverable discoverable = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS).iterator().next();
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      return;
+    }
 
     for (Application application : applications){
       String url = String.format("http://%s:%d/metrics/app/%s",
@@ -1100,7 +1114,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
 
   private void deleteMetrics(String account, String application) throws IOException {
-    Discoverable discoverable = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS).iterator().next();
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      return;
+    }
+
     String url = String.format("http://%s:%d/metrics/app/%s",
                                     discoverable.getSocketAddress().getHostName(),
                                     discoverable.getSocketAddress().getPort(),
