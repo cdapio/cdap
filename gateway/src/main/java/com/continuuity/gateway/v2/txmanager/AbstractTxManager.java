@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2;
+package com.continuuity.gateway.v2.txmanager;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -7,45 +7,34 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
- * Transaction manager to handle transactions.
+ * Base class for Transaction Managers. This class is not thread-safe, if one thread has started a txn,
+ * then no other threads can start a txn using the same manager till the txn is complete.
  */
-public class TxManager {
-  private static final Logger LOG = LoggerFactory.getLogger(TxManager.class);
+public abstract class AbstractTxManager {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractTxManager.class);
 
   private final OperationExecutor opex;
-
-  // All TransactionAware objects
-  private final Set<TransactionAware> txAwares =
-    Collections.newSetFromMap(Maps.<TransactionAware, Boolean>newConcurrentMap());
 
   // TransactionAware objects involved in the ongoing txn
   private Set<TransactionAware> txnTxAwares;
   private Transaction transaction;
 
-  public TxManager(OperationExecutor opex) {
+  public AbstractTxManager(OperationExecutor opex) {
     this.opex = opex;
   }
 
-  public void add(TransactionAware txAware) {
-    txAwares.add(txAware);
-  }
-
-  public void remove(TransactionAware txAware) {
-    txAwares.remove(txAware);
-  }
+  protected abstract Set<TransactionAware> getTransactionAwares();
 
   public void start() throws OperationException {
     transaction = opex.start();
-    txnTxAwares = ImmutableSet.copyOf(txAwares);
+    txnTxAwares = ImmutableSet.copyOf(getTransactionAwares());
     for (TransactionAware txAware : txnTxAwares) {
       txAware.startTx(transaction);
     }

@@ -28,7 +28,7 @@ import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
 import com.continuuity.gateway.v2.CachedStreamEventConsumer;
-import com.continuuity.gateway.v2.TxManager;
+import com.continuuity.gateway.v2.txmanager.SingletonTxManager;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
@@ -337,9 +337,8 @@ public class StreamHandler extends AbstractHttpHandler {
     DequeueResult result;
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (consumer) {
-      TxManager txManager = new TxManager(opex);
+      SingletonTxManager txManager = new SingletonTxManager(opex, (TransactionAware) consumer);
       try {
-        txManager.add((TransactionAware) consumer);
         txManager.start();
         result = consumer.dequeue();
         txManager.commit();

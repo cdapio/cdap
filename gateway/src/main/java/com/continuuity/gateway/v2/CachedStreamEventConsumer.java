@@ -10,6 +10,7 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
@@ -21,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -54,7 +56,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * This class caches stream events and enqueues them in batch.
  */
-public class CachedStreamEventConsumer {
+public class CachedStreamEventConsumer extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(CachedStreamEventConsumer.class);
 
   private final OperationExecutor opex;
@@ -98,7 +100,8 @@ public class CachedStreamEventConsumer {
     );
   }
 
-  public void start() {
+  @Override
+  protected void doStart() {
     flushTimer.scheduleAtFixedRate(
       new TimerTask() {
         @Override
@@ -110,12 +113,20 @@ public class CachedStreamEventConsumer {
     );
   }
 
-  public void stop() {
+  @Override
+  protected void doStop() {
     flushTimer.cancel();
     cachedStreamEvents.flush();
     callbackExecutorService.shutdown();
   }
 
+  /**
+   * Used to enqueue a StreamEvent.
+   * @param event StreamEvent to enqueue.
+   * @param accountId accountId of the entity making the call.
+   * @param callback Callback to be called after enqueuing the event
+   * @throws Exception
+   */
   public void consume(StreamEvent event, String accountId, FutureCallback<?> callback)
     throws Exception {
     byte[] bytes = serializer.encodePayload(event);
@@ -134,6 +145,9 @@ public class CachedStreamEventConsumer {
     cachedStreamEvents.put(queueName, new QueueEntry(bytes), callback);
   }
 
+  /**
+   * Caches StreamEvents and flushes them periodically.
+   */
   private final class CachedStreamEvents {
     private final LoadingCache<QueueName, ProducerStreamEntries> eventCache;
     private final BlockingQueue<Map.Entry<QueueName, ProducerStreamEntries>> removalNotifications;
@@ -154,7 +168,7 @@ public class CachedStreamEventConsumer {
             public void onRemoval(RemovalNotification<QueueName, ProducerStreamEntries> notification) {
               //noinspection ConstantConditions
               if (notification.getValue() != null && !notification.getValue().isEmpty()) {
-                // Will need to be comitted during the next flush
+                // Will need to be committed during the next flush
                 removalNotifications.add(notification);
               }
             }
@@ -171,6 +185,14 @@ public class CachedStreamEventConsumer {
           });
     }
 
+    /**
+     * Add a QueueEntry to the Queue Producer list so that it can be flushed later.
+     * @param queueName queue name
+     * @param queueEntry queue entry
+     * @param callback callback to be called after the queue entry is enqueued.
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
     public void put(QueueName queueName, QueueEntry queueEntry, FutureCallback<?> callback)
       throws ExecutionException, InterruptedException {
 
@@ -204,7 +226,7 @@ public class CachedStreamEventConsumer {
     }
 
     /**
-     * Flushes the cached stream events. This method blocks.
+     * Flushes the cached stream events. This method blocks if some other thread is already running flush.
      */
     private void flush() {
       flushLock.lock();
@@ -282,6 +304,9 @@ public class CachedStreamEventConsumer {
       return numBytes;
     }
 
+    /**
+     * Contains a Queue Producer along with the stream entries belonging to the queue.
+     */
     private class ProducerStreamEntries {
       private final Queue2Producer producer;
       private final BlockingQueue<StreamEntry> streamEntries;
@@ -313,6 +338,9 @@ public class CachedStreamEventConsumer {
     }
   }
 
+  /**
+   * Represents a stream entry with a callback to be called after enqueuing the entry.
+   */
   private class StreamEntry {
     private final QueueEntry queueEntry;
     private final FutureCallback<?> callback;
