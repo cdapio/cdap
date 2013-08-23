@@ -179,8 +179,6 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
     while (iterator.hasNext()) {
       Map.Entry<byte[], byte[]> entry = iterator.peekNext();
 
-      // System.out.println("Scan received key " + Bytes.toStringBinary(entry.getKey()));
-
       // if we have reached past the endKey, nothing was found, return null
       if (endKey != null && KeyValue.KEY_COMPARATOR.compare(entry.getKey(), endKey) >= 0) {
         break;
@@ -273,40 +271,27 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
   // ------- helpers to create the keys for writes and scans ----------
 
   private byte[] createPutKey(byte[] rowKey, byte[] columnKey, long version) {
-    byte[] key = new KeyValue(rowKey, DATA_COLFAM, columnKey, version, KeyValue.Type.Put).getKey();
-    // System.out.println("Key for " + Bytes.toStringBinary(rowKey) + ":" + Bytes.toStringBinary(columnKey) + ":" +
-    //                     version + " is " + Bytes.toStringBinary(key));
-    return key;
+    return new KeyValue(rowKey, DATA_COLFAM, columnKey, version, KeyValue.Type.Put).getKey();
   }
 
   private byte[] createStartKey(byte[] row) { // the first possible key of a row
-    byte[] key = new KeyValue(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
-    // System.out.println("Start for " + Bytes.toStringBinary(row) + " is " + Bytes.toStringBinary(key));
-    return key;
+    return new KeyValue(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
   }
   private byte[] createEndKey(byte[] row) {
     return createStartKey(row); // the first key of the stop is the first to be excluded
   }
 
   private byte[] createStartKey(byte[] row, byte[] column) {
-    byte[] key = new KeyValue(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
-    // System.out.println("Start for " + Bytes.toStringBinary(row) + ":" + Bytes.toStringBinary(column)
-    //                      + " is " + Bytes.toStringBinary(key));
-    return key;
+    return new KeyValue(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
   }
 
   private byte[] createEndKey(byte[] row, byte[] column) {
     if (column != null) {
       // we have a stop column and can use that as an upper bound
-      byte[] key = new KeyValue(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
-      // System.out.println("End for " + Bytes.toStringBinary(row) + ":" + Bytes.toStringBinary(column)
-      //                      + " is " + Bytes.toStringBinary(key));
-      return key;
+      return new KeyValue(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
     } else {
       // no stop column - use next column family as upper bound
-      byte[] key = new KeyValue(row, NEXT_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
-      // System.out.println("End for " + Bytes.toStringBinary(row) + ":null is " + Bytes.toStringBinary(key));
-      return key;
+      return new KeyValue(row, NEXT_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
     }
   }
 }
