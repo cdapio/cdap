@@ -1,0 +1,53 @@
+/**
+ * Set Nexus Instance-specific properties
+ */
+// nexusBaseUrl: nexus server to send api requests
+// mavenStagingProfileId: nexus staging profile configured to intercept maven-deployed artifacts
+['nexusBaseUrl':'https://repository.continuuity.com',
+ 'mavenStagingProfileId':'479fb37454df9a'].each{name, value ->
+    if(!project.hasProperty(name)){
+        project.ext.set(name, value);
+    }
+}
+
+/**
+ * Applies Nexus workflow plugin to parent
+ */
+
+buildscript {
+    repositories {
+        maven {
+            credentials {
+                username "gradle"
+                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+            }
+            url "https://repository.continuuity.com/content/groups/smartifacts"
+        }
+    }
+
+    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+
+    dependencies {
+        classpath "com.continuuity.gradle:nexus-staging-workflow:1.0.10-SNAPSHOT"
+    }
+}
+
+project.apply(plugin: com.continuuity.gradle.nexusstagingworkflow.NexusWorkflowPlugin)
+
+
+/**
+ * Set task dependencies on all projects
+ */
+
+// all "upload*" tasks depend on nexusStagingPrepare
+// nexusStagingClose depends on all "upload*" tasks
+allprojects {
+    configure(tasks.matching { it.name.startsWith('upload') }) { task ->
+        task.dependsOn rootProject._ci_nexusStagingPrepare
+        rootProject._ci_nexusStagingClose.dependsOn task
+    }
+
+}
+
+
