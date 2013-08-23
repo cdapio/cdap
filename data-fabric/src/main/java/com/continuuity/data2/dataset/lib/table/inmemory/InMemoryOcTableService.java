@@ -55,6 +55,23 @@ public class InMemoryOcTableService {
     }
   }
 
+  public static synchronized void undo(String tableName,
+                                       NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes,
+                                       long version) {
+    // todo: handle nulls
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
+    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> change : changes.entrySet()) {
+      byte[] row = change.getKey();
+      NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = table.get(row);
+      if (rowMap != null) {
+        for (byte[] column : change.getValue().keySet()) {
+          NavigableMap<Long, byte[]> values = rowMap.get(column);
+          values.remove(version);
+        }
+      }
+    }
+  }
+
   public static synchronized NavigableMap<byte[], NavigableMap<Long, byte[]>> get(String tableName,
                                                                                   byte[] row,
                                                                                   long version) {

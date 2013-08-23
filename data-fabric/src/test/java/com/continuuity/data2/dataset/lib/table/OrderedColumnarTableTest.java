@@ -22,35 +22,36 @@ import java.util.Map;
 
 /**
  * Base test for OrderedColumnarTable.
+ * @param <T> table type
  */
-public abstract class OrderedColumnarTableTest {
-  private static final byte[] R1 = Bytes.toBytes("r1");
-  private static final byte[] R2 = Bytes.toBytes("r2");
-  private static final byte[] R3 = Bytes.toBytes("r3");
-  private static final byte[] R4 = Bytes.toBytes("r4");
-  private static final byte[] R5 = Bytes.toBytes("r5");
+public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
+  static final byte[] R1 = Bytes.toBytes("r1");
+  static final byte[] R2 = Bytes.toBytes("r2");
+  static final byte[] R3 = Bytes.toBytes("r3");
+  static final byte[] R4 = Bytes.toBytes("r4");
+  static final byte[] R5 = Bytes.toBytes("r5");
 
-  private static final byte[] C1 = Bytes.toBytes("c1");
-  private static final byte[] C2 = Bytes.toBytes("c2");
-  private static final byte[] C3 = Bytes.toBytes("c3");
-  private static final byte[] C4 = Bytes.toBytes("c4");
-  private static final byte[] C5 = Bytes.toBytes("c5");
+  static final byte[] C1 = Bytes.toBytes("c1");
+  static final byte[] C2 = Bytes.toBytes("c2");
+  static final byte[] C3 = Bytes.toBytes("c3");
+  static final byte[] C4 = Bytes.toBytes("c4");
+  static final byte[] C5 = Bytes.toBytes("c5");
 
-  private static final byte[] V1 = Bytes.toBytes("v1");
-  private static final byte[] V2 = Bytes.toBytes("v2");
-  private static final byte[] V3 = Bytes.toBytes("v3");
-  private static final byte[] V4 = Bytes.toBytes("v4");
-  private static final byte[] V5 = Bytes.toBytes("v5");
+  static final byte[] V1 = Bytes.toBytes("v1");
+  static final byte[] V2 = Bytes.toBytes("v2");
+  static final byte[] V3 = Bytes.toBytes("v3");
+  static final byte[] V4 = Bytes.toBytes("v4");
+  static final byte[] V5 = Bytes.toBytes("v5");
 
-  private static final byte[] L1 = Bytes.toBytes(1L);
-  private static final byte[] L2 = Bytes.toBytes(2L);
-  private static final byte[] L3 = Bytes.toBytes(3L);
-  private static final byte[] L4 = Bytes.toBytes(4L);
-  private static final byte[] L5 = Bytes.toBytes(5L);
+  static final byte[] L1 = Bytes.toBytes(1L);
+  static final byte[] L2 = Bytes.toBytes(2L);
+  static final byte[] L3 = Bytes.toBytes(3L);
+  static final byte[] L4 = Bytes.toBytes(4L);
+  static final byte[] L5 = Bytes.toBytes(5L);
 
-  private TransactionSystemClient txClient;
+  protected TransactionSystemClient txClient;
 
-  protected abstract OrderedColumnarTable getTable(String name) throws Exception;
+  protected abstract T getTable(String name) throws Exception;
   protected abstract DataSetManager getTableManager() throws Exception;
   void closeTable(OrderedColumnarTable table) throws Exception {
     if (table != null && table instanceof DataSetClient) {
@@ -630,11 +631,48 @@ public abstract class OrderedColumnarTableTest {
     }
   }
 
+  @Test
+  public void testRollingBackPersistedChanges() throws Exception {
+    DataSetManager manager = getTableManager();
+    manager.create("myTable");
+    try {
+
+      Transaction tx1 = txClient.start();
+      OrderedColumnarTable myTable1 = getTable("myTable");
+      ((TransactionAware) myTable1).startTx(tx1);
+      // write r1->c1,v1 but not commit
+      myTable1.put(R1, $(C1), $(V1));
+      // verify can see changes inside tx
+      verify($(C1, V1), myTable1.get(R1, $(C1)));
+
+      // persisting changes
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+
+      // let's pretend that after persisting changes we still got conflict when finalizing tx, so
+      // rolling back changes
+      Assert.assertTrue(((TransactionAware) myTable1).rollbackTx());
+
+      // making tx visible
+      txClient.abort(tx1);
+
+      // start new tx
+      Transaction tx2 = txClient.start();
+      OrderedColumnarTable myTable2 = getTable("myTable");
+      ((TransactionAware) myTable2).startTx(tx2);
+
+      // verify don't see rolled back changes
+      verify($(), myTable2.get(R1, $(C1)));
+
+    } finally {
+      manager.drop("myTable");
+    }
+  }
+
   // todo: verify changing different cols of one row causes conflict
   // todo: check race: table committed, but txClient doesn't know yet (visibility, conflict detection)
   // todo: test overwrite + delete, that delete doesn't cause getting from persisted again
 
-  private void verify(byte[][] expected, OperationResult<Map<byte[], byte[]>> actual) {
+  void verify(byte[][] expected, OperationResult<Map<byte[], byte[]>> actual) {
     Preconditions.checkArgument(expected.length % 2 == 0, "expected [key,val] pairs in first param");
     if (expected.length == 0) {
       Assert.assertTrue(actual.isEmpty());
@@ -643,7 +681,7 @@ public abstract class OrderedColumnarTableTest {
     verify(expected, actual.getValue());
   }
 
-  private void verify(byte[][] expected, Map<byte[], byte[]> rowMap) {
+  void verify(byte[][] expected, Map<byte[], byte[]> rowMap) {
     Assert.assertEquals(expected.length / 2, rowMap.size());
     for (int i = 0; i < expected.length; i += 2) {
       byte[] key = expected[i];
@@ -652,14 +690,14 @@ public abstract class OrderedColumnarTableTest {
     }
   }
 
-  private void verify(byte[][] expectedColumns, long[] expectedValues, Map<byte[], Long> actual) {
+  void verify(byte[][] expectedColumns, long[] expectedValues, Map<byte[], Long> actual) {
     Assert.assertEquals(expectedColumns.length, actual.size());
     for (int i = 0; i < expectedColumns.length; i++) {
       Assert.assertEquals(expectedValues[i], (long) actual.get(expectedColumns[i]));
     }
   }
 
-  private void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
+  void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
     for (int i = 0; i < expectedRows.length; i++) {
       ImmutablePair<byte[], Map<byte[], byte[]>> next = scan.next();
       Assert.assertArrayEquals(expectedRows[i], next.getFirst());
@@ -670,15 +708,15 @@ public abstract class OrderedColumnarTableTest {
     Assert.assertNull(scan.next());
   }
 
-  private static long[] l(long... elems) {
+  static long[] l(long... elems) {
     return elems;
   }
 
-  private static byte[][] $(byte[]... elems) {
+  static byte[][] $(byte[]... elems) {
     return elems;
   }
 
-  private static byte[][][] $$(byte[][]... elems) {
+  static byte[][][] $$(byte[][]... elems) {
     return elems;
   }
 }
