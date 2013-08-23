@@ -5,6 +5,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -20,7 +21,7 @@ import org.junit.Test;
 import java.util.Map;
 
 /**
- * Base test for OrderedColumnarTable
+ * Base test for OrderedColumnarTable.
  */
 public abstract class OrderedColumnarTableTest {
   private static final byte[] R1 = Bytes.toBytes("r1");
@@ -51,6 +52,11 @@ public abstract class OrderedColumnarTableTest {
 
   protected abstract OrderedColumnarTable getTable(String name) throws Exception;
   protected abstract DataSetManager getTableManager() throws Exception;
+  void closeTable(OrderedColumnarTable table) throws Exception {
+    if (table != null && table instanceof DataSetClient) {
+      ((DataSetClient) table).close();
+    }
+  }
 
   @Before
   public void before() {
@@ -241,9 +247,10 @@ public abstract class OrderedColumnarTableTest {
   public void testBasicIncrementWithTx() throws Exception {
     DataSetManager manager = getTableManager();
     manager.create("myTable");
+    OrderedColumnarTable myTable1 = null, myTable2 = null, myTable3 = null, myTable4 = null;
     try {
       Transaction tx1 = txClient.start();
-      OrderedColumnarTable myTable1 = getTable("myTable");
+      myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, $(C1), $(L4));
       verify($(C1), l(1L), myTable1.increment(R1, $(C1), l(-3L)));
@@ -269,7 +276,7 @@ public abstract class OrderedColumnarTableTest {
 
       // check that tx2 doesn't see changes (even though they were flushed) of tx1
       // assuming current value is null
-      OrderedColumnarTable myTable2 = getTable("myTable");
+      myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       verify($(), myTable2.get(R1, $(C1, C2, C5)));
@@ -277,7 +284,7 @@ public abstract class OrderedColumnarTableTest {
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.start();
-      OrderedColumnarTable myTable3 = getTable("myTable");
+      myTable3 = getTable("myTable");
       ((TransactionAware) myTable3).startTx(tx3);
       verify($(), myTable3.get(R1, $(C1, C2, C5)));
       verify($(C1), l(4L), myTable3.increment(R1, $(C1), l(4L)));
@@ -290,7 +297,7 @@ public abstract class OrderedColumnarTableTest {
 
       // start tx4 and verify that changes of tx1 are now visible
       Transaction tx4 = txClient.start();
-      OrderedColumnarTable myTable4 = getTable("myTable");
+      myTable4 = getTable("myTable");
       ((TransactionAware) myTable4).startTx(tx4);
       verify($(C1, L1, C2, L2, C5, V5), myTable4.get(R1, $(C1, C2, C3, C4, C5)));
 
@@ -323,6 +330,8 @@ public abstract class OrderedColumnarTableTest {
       manager.drop("myTable");
     }
   }
+
+
 
   @Test
   public void testBasicDeleteWithTx() throws Exception {
