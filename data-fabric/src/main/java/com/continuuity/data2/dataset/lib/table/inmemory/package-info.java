@@ -3,6 +3,6 @@
  */
 
 /**
- * This package contains in-memory implemenations of table datasets.
+ * This package contains in-memory implementations of table datasets.
  */
 package com.continuuity.data2.dataset.lib.table.inmemory;
