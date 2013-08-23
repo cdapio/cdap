@@ -34,6 +34,12 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) {
+    // NOTE: we could just use merge and pass the changes with all values = null, but separate method is more efficient
+    InMemoryOcTableService.undo(getName(), persisted, tx.getWritePointer());
+  }
+
+  @Override
   protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
     NavigableMap<byte[], byte[]> internal = getInternal(row, new byte[][]{column});
     return internal.get(column);

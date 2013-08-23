@@ -2,15 +2,14 @@ package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data2.dataset.api.DataSetManager;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTableTest;
+import com.continuuity.data2.dataset.lib.table.BufferingOcTableClientTest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
  *
  */
-public class HBaseOcTableClientTest extends OrderedColumnarTableTest {
+public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTableClient> {
   @BeforeClass
   public static void beforeClass() throws Exception{
     HBaseTestBase.startHBase();
@@ -22,7 +21,7 @@ public class HBaseOcTableClientTest extends OrderedColumnarTableTest {
   }
 
   @Override
-  protected OrderedColumnarTable getTable(String name) throws Exception {
+  protected HBaseOcTableClient getTable(String name) throws Exception {
     return new HBaseOcTableClient(name, HBaseTestBase.getConfiguration());
   }
 
