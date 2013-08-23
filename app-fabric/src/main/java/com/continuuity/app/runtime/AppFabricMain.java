@@ -7,6 +7,7 @@ import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -50,7 +51,7 @@ public final class AppFabricMain extends DaemonMain {
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(cConf.get("zookeeper.quorum")).setSessionTimeout(10000).build(),
+            ZKClientService.Builder.of(cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE)).setSessionTimeout(10000).build(),
             RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
           )
         )

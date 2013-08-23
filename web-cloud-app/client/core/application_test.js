@@ -47,10 +47,6 @@ define(['core/application'], function(App) {
     });
 
     it('should set time range', function() {
-      var millis = 86400;
-      app.setTimeRange(millis);
-      expect(app.get('__timeRange')).toEqual(millis);
-      expect(app.get('__timeLabel')).toEqual('Last 24 Hours');
       millis = 3600;
       app.setTimeRange(millis);
       expect(app.get('__timeRange')).toEqual(millis);

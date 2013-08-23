@@ -4,7 +4,14 @@
 
 package com.continuuity.api.log;
 
+/**
+ *
+ */
 public interface LogMessage {
+
+  /**
+   *
+   */
   public static enum LogLevel {
     TRACE,
     DEBUG,

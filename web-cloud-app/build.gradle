@@ -165,6 +165,14 @@ task prepackager(dependsOn: 'build', overwrite: true) {
   }
 }
 
+packaging {
+  extraOptions['--config-files'] = "/opt/continuuity/web-cloud-app/server/continuuity-local.xml"
+}
+
+rpm.doFirst {
+  packaging.extraOptions['--config-files'] = "/opt/continuuity/web-cloud-app/server/continuuity-local.xml"
+}
+
 debianPrepackager.dependsOn prepackager
 rpmPrepackager.dependsOn prepackager
 

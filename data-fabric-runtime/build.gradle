@@ -2,6 +2,7 @@ apply plugin:'java'
 
 // set project component name for packaging, and apply packaging plugin
 project.ext.componentName = "data-fabric"
+
 apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 smartyFacts {
@@ -14,6 +15,7 @@ smartyFacts {
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
     compile libraries.slf4j_api
     compile libraries.logback_core
@@ -35,3 +37,10 @@ test {
  */
 jar.exclude '*.xml'
 
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+    all*.exclude group: 'asm', module: 'asm'
+}

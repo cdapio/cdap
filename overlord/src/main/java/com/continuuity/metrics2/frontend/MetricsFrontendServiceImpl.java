@@ -3,7 +3,6 @@ package com.continuuity.metrics2.frontend;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
@@ -37,9 +36,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.thrift.TException;
-import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -79,19 +77,11 @@ public class MetricsFrontendServiceImpl
 
 
   /**
-   * Connection string to connect to database.
+   * Log reader. Marked as optional injection as currently log reader is piggy-backing on metricsfrontend service
+   * We should remove it.
+   * TODO: ENG-3102
    */
-  private String connectionUrl;
-
-  /**
-   * Type of Database we are configured with.
-   */
-  private DBUtils.DBType type;
-
-  /**
-   * Log reader.
-   */
-  @Inject
+  @Inject(optional = true)
   private LogReader logReader;
   private final String logPattern;
 
@@ -113,31 +103,7 @@ public class MetricsFrontendServiceImpl
   private static DBConnectionPoolManager poolManager;
 
   @Inject
-  public MetricsFrontendServiceImpl(CConfiguration configuration)
-    throws ClassNotFoundException, SQLException {
-    /*
-    Connection string to connect to database.
-   */
-    String connectionUrl = configuration.get(Constants.CFG_METRICS_CONNECTION_URL,
-                                             Constants.DEFAULT_METIRCS_CONNECTION_URL);
-    /*
-    Type of Database we are configured with.
-   */
-    DBUtils.DBType type = DBUtils.loadDriver(connectionUrl);
-
-    // Creates a pooled data source.
-    if (type == DBUtils.DBType.MYSQL) {
-      MysqlConnectionPoolDataSource mysqlDataSource =
-        new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(mysqlDataSource, 1000);
-    } else if (type == DBUtils.DBType.HSQLDB) {
-      JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
-      jdbcDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(jdbcDataSource, 1000);
-    }
-
-    DBUtils.createMetricsTables(getConnection(), this.type);
+  public MetricsFrontendServiceImpl(CConfiguration configuration) {
 
     this.logPattern = configuration.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
   }
@@ -226,7 +192,7 @@ public class MetricsFrontendServiceImpl
     LogCallback logCallback = new LogCallback(maxEvents, logPattern);
     try {
       Filter filter = FilterParser.parse(filterStr);
-      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback).get();
+      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -242,7 +208,7 @@ public class MetricsFrontendServiceImpl
     LogCallback logCallback = new LogCallback(maxEvents, logPattern);
     try {
       Filter filter = FilterParser.parse(filterStr);
-      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback).get();
+      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -255,6 +221,8 @@ public class MetricsFrontendServiceImpl
   private static class LogCallback implements Callback {
     private final List<TLogResult> logResults;
     private final PatternLayout patternLayout;
+
+    private final CountDownLatch doneLatch = new CountDownLatch(1);
 
     private LogCallback(int maxEvents, String logPattern) {
       logResults = Lists.newArrayListWithExpectedSize(maxEvents);
@@ -281,9 +249,15 @@ public class MetricsFrontendServiceImpl
     @Override
     public void close() {
       patternLayout.stop();
+      doneLatch.countDown();
     }
 
     public List<TLogResult> getLogResults() {
+      try {
+        doneLatch.await();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
       return Collections.unmodifiableList(logResults);
     }
   }

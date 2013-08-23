@@ -82,6 +82,18 @@ public class AppFabricConnectorTest {
     restConnector.start();
   } // end of setupGateway
 
+  @Test
+  public void testDeployWithHttpPut() throws Exception {
+    String deployStatusUrl = baseURL + "/status";
+    Assert.assertEquals(200, deploy("WordCount.jar", true));
+
+    Map<String, String> headers = Maps.newHashMap();
+    headers.put(CONTINUUITY_API_KEY, "api-key-example");
+    headers.put("Content-Type", "application/json");
+
+    HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
 
   @Test
   public void testDeploy() throws Exception {
@@ -95,6 +107,25 @@ public class AppFabricConnectorTest {
     HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
+// TODO(ENG-3120, ENG-3119): The test doesn't pass since we need to inject metrics discovery client.
+//  @Test
+//  public void testDelete() throws Exception {
+//    String deployStatusUrl = baseURL + "/status";
+//    Assert.assertEquals(200, deploy("WordCount.jar"));
+//
+//    Map<String, String> headers = Maps.newHashMap();
+//    headers.put(CONTINUUITY_API_KEY, "api-key-example");
+//    headers.put("Content-Type", "application/json");
+//
+//    HttpResponse response = TestUtil.sendGetRequest(deployStatusUrl, headers);
+//    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+//
+//    String deleteUrl = baseURL + "/WordCountApp";
+//    int responseCode = TestUtil.sendDeleteRequest(deleteUrl);
+//    Assert.assertEquals(200, responseCode);
+//
+//  }
+
 
   @Test
   public void testDeployStatus() throws Exception {
@@ -197,6 +228,10 @@ public class AppFabricConnectorTest {
   }
 
   private int deploy(String jarFileName) throws Exception {
+    return deploy(jarFileName, false);
+  }
+
+  private int deploy(String jarFileName, boolean useHttpPut) throws Exception {
     // JAR file is stored in test/resource/WordCount.jar.
     File archive = FileUtils.toFile(getClass().getResource("/" + jarFileName));
 
@@ -210,6 +245,10 @@ public class AppFabricConnectorTest {
     } finally {
       bos.close();
     }
-    return TestUtil.sendPostRequest(baseURL, bos.toByteArray(), headers);
+    if (useHttpPut) {
+      return TestUtil.sendPutRequest(baseURL, bos.toByteArray(), headers);
+    } else {
+      return TestUtil.sendPostRequest(baseURL, bos.toByteArray(), headers);
+    }
   }
 }

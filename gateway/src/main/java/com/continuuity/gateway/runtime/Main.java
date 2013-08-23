@@ -94,10 +94,6 @@ public class Main {
     // Now, initialize the Gateway
     try {
 
-      // enable metrics for this JVM. Note this may only be done once
-      // per JVM, hence we do it only in the gateway.Main.
-      OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, configuration);
-
       // Start the gateway!
       theGateway.start(null, configuration);
 

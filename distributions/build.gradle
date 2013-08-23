@@ -1,6 +1,6 @@
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':unit-test')
-evaluationDependsOn(':performance')
+//evaluationDependsOn(':test-framework:performance')
 evaluationDependsOn(':passport')
 
 apply plugin:'maven'
@@ -96,9 +96,8 @@ task developer_suite_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
   into ("bin"){
     // :singlenode/bin contains the startscript, not using startScripts task
     // include project bin directories
-    from project.parent.subprojects.collect { project ->
-      project.file('bin')
-    }
+    from project.parent.subprojects.findAll { ! ['performance','commandLine'].contains(it.name) }
+                                           .collect { project -> project.file('bin') }
 
     exclude 'node'
     exclude 'far-server'
@@ -106,8 +105,6 @@ task developer_suite_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
     exclude 'flow-config.sh'
     exclude 'service'
     exclude 'dfbench'
-    exclude 'benchmark'
-    exclude 'event-gen'
     exclude 'flume-client'
     exclude 'NonceCleanup.sh'
     exclude 'common*'
@@ -144,8 +141,8 @@ task developer_suite_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
   }
 
   //docs
-  into("docs/api"){
-    from project(':singlenode').tasks.getByName('javadoc').outputs
+  into("javadoc"){
+    from project(':distributions').tasks.getByName('javadoc').outputs
   }
 
   //examples
@@ -221,9 +218,8 @@ task sandbox_dist (type: Zip) {
   into ("bin"){
     // :singlenode/bin contains the startscript, not using startScripts task
     // include project bin directories
-    from project.parent.subprojects.collect { project ->
-      project.file('bin')
-    }
+    from project.parent.subprojects.findAll { ! ['performance','commandLine'].contains(it.name) }
+                                           .collect { project -> project.file('bin') }
 
     exclude 'node'
     exclude 'far-server'
@@ -231,8 +227,6 @@ task sandbox_dist (type: Zip) {
     exclude 'flow-config.sh'
     exclude 'service'
     exclude 'dfbench'
-    exclude 'benchmark'
-    exclude 'event-gen'
     exclude 'flume-client'
     exclude 'NonceCleanup.sh'
     exclude 'common*'

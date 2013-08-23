@@ -7,12 +7,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -57,7 +57,7 @@ public class HttpServerTest {
     service.startAndWait();
     Service.State state = service.state();
     assertEquals(Service.State.RUNNING, state);
-    port = service.getServicePort();
+    port = service.getBindAddress().getPort();
   }
 
   @AfterClass
@@ -152,6 +152,16 @@ public class HttpServerTest {
     assertEquals(405, response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testKeepAlive() throws IOException {
+    String endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
+    HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity("data"));
+    HttpResponse response = request(put, true);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("keep-alive", response.getFirstHeader("Connection").getValue());
+  }
+
   /**
    * Test handler.
    */
@@ -231,7 +241,15 @@ public class HttpServerTest {
   }
 
   private HttpResponse request(HttpUriRequest uri) throws IOException {
-    HttpClient client = new DefaultHttpClient();
+    return request(uri, false);
+  }
+
+  private HttpResponse request(HttpUriRequest uri, boolean keepalive) throws IOException {
+    DefaultHttpClient client = new DefaultHttpClient();
+
+    if (keepalive) {
+      client.setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy());
+    }
     HttpResponse response = client.execute(uri);
     return response;
   }

@@ -7,7 +7,6 @@ package com.continuuity.internal.app.services;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -20,7 +19,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * AppFabric Server that implements {@link AbstractExecutionThreadService}.
@@ -85,15 +83,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       .workerThreads(THREAD_COUNT);
     options.maxReadBufferBytes = Constants.DEFAULT_MAX_READ_BUFFER;
     server = new TThreadedSelectorServer(options);
-
-    // Start the flow metrics reporter.
-    OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    OverlordMetricsReporter.disable();
-    executor.shutdownNow();
   }
 
   /**
@@ -111,6 +100,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    * Invoked during shutdown of the thread.
    */
   protected void triggerShutdown() {
+    executor.shutdownNow();
     server.stop();
   }
 }

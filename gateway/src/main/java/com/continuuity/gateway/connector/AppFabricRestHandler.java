@@ -78,6 +78,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * a Post of http://<hostname>:<port>/app with the jar file of the to be deployed app in the content of the request
  * can be used to deploy a new app.
  * a Get http://<hostname>:<port>/app/status returns the current deployment status
+ * a Delete /app/<app-id> to remove the application
  * a Post /app/<app-id>/<entity-type>/<flow id>?op=<op> with <op> as start, stop to start a flow, procedure or mapreduce
  * a Get  /app/<app-id>/<entity-type>/<flow id>?op=status to get the status of a flow, procedure or mapreduce
  * a Put/Get /app/<app-id>/flow/<flow id>/<flowlet id>?op=instances to change or get the number of flowlet instances
@@ -93,7 +94,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
    * The allowed methods for this handler.
    */
   private static final Set<HttpMethod> ALLOWED_HTTP_METHODS = Sets.newHashSet(HttpMethod.PUT, HttpMethod.POST,
-                                                                              HttpMethod.GET);
+                                                                              HttpMethod.GET, HttpMethod.DELETE);
 
   private static final String DEPLOY_PATH = "";
 
@@ -108,28 +109,33 @@ public class AppFabricRestHandler extends NettyRestHandler {
   private static final String FLOWLET_INSTANCES_PATH =
     "/([A-Za-z0-9_]+)/flow/([A-Za-z0-9_]+)/([A-Za-z0-9_]+)\\?op=instances";
 
+  private static final String DELETE_APP_PATH = "/([A-Za-z0-9_]+)";
+
   /**
    * The allowed URI and Http methods for this handler.
    */
 //  private static final Map<String, List<HttpMethod>> ALLOWED_PATHS = generateAllowedURIs();
   private static final Map<String, ImmutablePair<List<HttpMethod>, Pattern>> ALLOWED_PATHS =
-    ImmutableMap.of(
-      DEPLOY_PATH,
-        new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST),
-                                                     Pattern.compile(DEPLOY_PATH)),
-      DEPLOY_STATUS_PATH,
-        new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                     Pattern.compile(DEPLOY_STATUS_PATH)),
-      FLOW_START_STOP_PATH,
-        new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST),
-                                                     Pattern.compile(FLOW_START_STOP_PATH)),
-      FLOW_STATUS_PATH,
-        new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                     Pattern.compile(FLOW_STATUS_PATH)),
-      FLOWLET_INSTANCES_PATH,
-      new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
-                                                   Pattern.compile(FLOWLET_INSTANCES_PATH))
-    );
+      new  ImmutableMap.Builder<String, ImmutablePair<List<HttpMethod>, Pattern>>().
+                put(DEPLOY_PATH,
+                    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST, HttpMethod.PUT),
+                                                                 Pattern.compile(DEPLOY_PATH))).
+                put(DEPLOY_STATUS_PATH,
+                    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                                 Pattern.compile(DEPLOY_STATUS_PATH))).
+                put(FLOW_START_STOP_PATH,
+                    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST),
+                                                                 Pattern.compile(FLOW_START_STOP_PATH))).
+                put(FLOW_STATUS_PATH,
+                    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                                 Pattern.compile(FLOW_STATUS_PATH))).
+                put(FLOWLET_INSTANCES_PATH,
+                     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
+                                                                  Pattern.compile(FLOWLET_INSTANCES_PATH))).
+                put(DELETE_APP_PATH,
+                     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.DELETE),
+                                                                  Pattern.compile(DELETE_APP_PATH))).
+                build();
 
   /**
    * Will help validate URL paths, authenticate and get a metrics helper.
@@ -291,6 +297,18 @@ public class AppFabricRestHandler extends NettyRestHandler {
           return;
         }
 
+        if (opPath.equals(DELETE_APP_PATH)) { // '/app/<app-id>/metrics
+          Pattern p = ALLOWED_PATHS.get(DELETE_APP_PATH).getSecond();
+          Matcher m = p.matcher(requestUri.substring(pathPrefix.length()));
+          m.find();
+          //Note: remove application needs to be refactored. for now, the remove app uses just the appId.
+          FlowIdentifier flowIdent = new FlowIdentifier(accountId, m.group(1), "", 1);
+          client.removeApplication(token, flowIdent);
+
+          respondSuccess(message.getChannel(), request);
+          return;
+        }
+
         // from here on, path is either
         // /app/<app-id>/<entity-type>/<flow id>?op=<op> with <op> as start, stop, status
         // or
@@ -340,6 +358,10 @@ public class AppFabricRestHandler extends NettyRestHandler {
         message.getChannel().close();
       }
     }
+  }
+
+  private void handleMetricsDelete(MessageEvent event, HttpRequest request, String appId){
+    respondSuccess(event.getChannel(), request);
   }
 
   private void handleFlowOperation(MessageEvent message, HttpRequest request, GatewayMetricsHelperWrapper metricsHelper,

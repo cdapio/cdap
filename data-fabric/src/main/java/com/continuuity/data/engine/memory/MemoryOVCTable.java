@@ -13,6 +13,7 @@ import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.ArrayList;
@@ -185,14 +186,20 @@ public class MemoryOVCTable extends AbstractOVCTable {
   public void deleteDirty(byte[][] rows) throws OperationException {
     for (byte[] row : rows) {
       RowLockTable.Row r = new RowLockTable.Row(row);
-      getAndLockRow(r);
       try {
         // this row is gone, remove it from the table and also from the lock table
         this.map.remove(r); // safe to remove because we have the lock
       } finally {
-        this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
+        this.locks.removeLock(r); // now remove, invalidate and unlock the lock
       }
     }
+  }
+
+  @Override
+  public void deleteRowsDirtily(byte[] startRow, byte[] stopRow) throws OperationException {
+    Preconditions.checkNotNull(startRow, "start row cannot be null");
+    getRowRange(startRow, stopRow).clear();
+    locks.removeRange(new RowLockTable.Row(startRow), stopRow == null ? null : new RowLockTable.Row(stopRow));
   }
 
   @Override
@@ -430,20 +437,17 @@ public class MemoryOVCTable extends AbstractOVCTable {
     return false;
   }
 
-  @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    ConcurrentNavigableMap<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> submap;
-
+  private NavigableMap<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>>
+  getRowRange(byte[] startRow, byte[] stopRow) {
     if (startRow == null && stopRow == null) {
-      submap = this.map;
+      return this.map;
     } else if (startRow == null) {
-      submap = this.map.headMap(new RowLockTable.Row(stopRow));
+      return this.map.headMap(new RowLockTable.Row(stopRow));
     } else if (stopRow == null) {
-      submap = this.map.tailMap(new RowLockTable.Row(startRow));
+      return this.map.tailMap(new RowLockTable.Row(startRow));
     } else {
-      submap = this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow));
+      return this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow));
     }
-    return new MemoryScanner(submap.entrySet().iterator(), readPointer);
   }
 
   @Override
@@ -452,22 +456,13 @@ public class MemoryOVCTable extends AbstractOVCTable {
   }
 
   @Override
+  public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
+    return new MemoryScanner(getRowRange(startRow, stopRow).entrySet().iterator(), readPointer);
+  }
+
+  @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
-    ConcurrentNavigableMap<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> submap;
-    if (startRow != null) {
-      if (stopRow != null) {
-        submap = this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow));
-      } else {
-        submap = this.map.tailMap(new RowLockTable.Row(startRow));
-      }
-    } else {
-      if (stopRow != null) {
-        submap = this.map.headMap(new RowLockTable.Row(stopRow));
-      } else {
-        submap = this.map;
-      }
-    }
-    return new MemoryScanner(submap.entrySet().iterator(), columns, readPointer);
+    return new MemoryScanner(getRowRange(startRow, stopRow).entrySet().iterator(), readPointer);
   }
 
   /**

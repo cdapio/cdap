@@ -2,7 +2,6 @@
  * Application
  */
 
-
 define(['core/components', 'core/embeddables/index', 'core/http', 'core/socket',
 				'core/util'],
 function(Components, Embeddables, HTTP, Socket, Util) {
@@ -71,10 +70,8 @@ function(Components, Embeddables, HTTP, Socket, Util) {
 						$('#warning').html('<div>New version available: ' + version.current + ' » ' +
 							version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
 							'Click here to download</a>.</div>').show();
-
 					}
-
-				}				
+				}			
 			}
 		}),
 
@@ -145,7 +142,9 @@ function(Components, Embeddables, HTTP, Socket, Util) {
 		setTimeRange: function (millis) {
 			this.set('__timeRange', millis);
 			this.set('__timeLabel', {
+				/*
 				86400: 'Last 24 Hours',
+				*/
 				3600: 'Last 1 Hour',
 				600: 'Last 10 Minutes',
 				60: 'Last 1 Minute'

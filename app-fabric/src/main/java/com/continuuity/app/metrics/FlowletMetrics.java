@@ -1,24 +1,17 @@
 package com.continuuity.app.metrics;
 
-import com.continuuity.common.metrics.AbstractCMetrcisBasedMetrics;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsScope;
 
 /**
  * Metrics collector for Flowlet
  */
-public class FlowletMetrics extends AbstractCMetrcisBasedMetrics {
+public class FlowletMetrics extends AbstractProgramMetrics {
 
-  public FlowletMetrics(final String accountId,
-                           final String applicationId,
-                           final String flowId,
-                           final String flowletId,
-                           final String pid,
-                           final int instanceId) {
-    super(String.format("%s.%s.%s.%s.%s.%d",
-                        accountId,
-                        applicationId,
-                        flowId,
-                        pid,
-                        flowletId,
-                        instanceId));
+  public FlowletMetrics(MetricsCollectionService collectionService,
+                        String applicationId, String flowId, String flowletId) {
+    // Not support runID for now.
+    super(collectionService.getCollector(
+      MetricsScope.USER, String.format("%s.f.%s.%s", applicationId, flowId, flowletId), "0"));
   }
 }

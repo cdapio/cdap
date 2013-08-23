@@ -97,7 +97,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       }
 
       @Override
-      public void error() {
+      public void error(Throwable cause) {
         remove(runtimeInfo);
       }
     }, Threads.SAME_THREAD_EXECUTOR);

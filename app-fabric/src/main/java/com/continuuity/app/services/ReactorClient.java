@@ -10,10 +10,13 @@ import com.continuuity.common.utils.UsageException;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.thrift.TException;
@@ -22,12 +25,15 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -53,7 +59,7 @@ public final class ReactorClient {
 
   private static final String DEVELOPER_ACCOUNT_ID = Constants.DEVELOPER_ACCOUNT_ID;
   private static final Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
-                                                                        "status", "scale");
+                                                                        "status", "scale", "delete");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";
   private static final String APPLICATION_LONG_OPT_ARG = "application";
   private static final String PROCEDURE_LONG_OPT_ARG = "procedure";
@@ -62,7 +68,9 @@ public final class ReactorClient {
   private static final String FLOWLET_INSTANCES_LONG_OPT_ARG = "instances";
   private static final String MAPREDUCE_LONG_OPT_ARG = "mapreduce";
   private static final String HOSTNAME_LONG_OPT_ARG = "host";
+  private static final String REMOTE_LONG_OPT_ARG = "remote";
   private static final String APIKEY_LONG_OPT_ARG = "apikey";
+  private static final String DEBUG_LONG_OPT_ARG = "debug";
 
   private String resource;
   private String application;
@@ -72,7 +80,9 @@ public final class ReactorClient {
   private short flowletInstances;
   private String mapReduce;
   private String hostname;
+  private String remoteHostname;
   private String authToken;
+  private Properties runtimeArguments = new Properties();
 
   private String command;
 
@@ -94,12 +104,17 @@ public final class ReactorClient {
     }
     Copyright.print(out);
     out.println("Usage:");
-    out.println("  reactor-client deploy    --archive <filename>");
-    out.println("  reactor-client start     --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  reactor-client stop      --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  reactor-client status    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
-    out.println("  reactor-client scale     --application <id> --flow <id> --flowlet <id> --instances <number>");
-    out.println("  reactor-client promote   --application <id> --host <hostname> --apikey <key>");
+    out.println("  reactor-client deploy    --archive <filename> [--host <hostname>]");
+    out.println("  reactor-client start     --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)  " +
+                  "[--host <hostname>] [-R<property>=<value>]");
+    out.println("  reactor-client stop      --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>) " +
+                  "[--host <hostname>]");
+    out.println("  reactor-client status    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>) " +
+                  "[--host <hostname>]");
+    out.println("  reactor-client scale     --application <id> --flow <id> --flowlet <id> --instances <number> " +
+                  "[--host <hostname>]");
+    out.println("  reactor-client promote   --application <id> --remote <hostname> --apikey <key> [--host <hostname>]");
+    out.println("  reactor-client delete    --application <id> [--host <hostname>]");
     out.println("  reactor-client help");
 
     out.println("Options:");
@@ -108,8 +123,10 @@ public final class ReactorClient {
     out.println("  --flow <id> \t\t Flow id of the application.");
     out.println("  --procedure <id> \t Procedure of in the application.");
     out.println("  --mapreduce <id> \t MapReduce job of in the application.");
-    out.println("  --host <hostname> \t Hostname to push the application to.");
+    out.println("  --host <hostname> \t Specifies reactor host [Default: localhost]");
+    out.println("  --remote <hostname> \t Specifies remote reactor host");
     out.println("  --apikey <key> \t Apikey of the account.");
+    out.flush();
     if (error) {
       throw new UsageException();
     }
@@ -134,13 +151,12 @@ public final class ReactorClient {
     Preconditions.checkNotNull(command, "App client is not configured to run");
     Preconditions.checkNotNull(configuration, "App client configuration is not set");
 
-    String address = "localhost";
     int port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
     TTransport transport = null;
     TProtocol protocol;
 
     try {
-      transport = new TFramedTransport(new TSocket(address, port));
+      transport = new TFramedTransport(new TSocket(hostname, port));
       protocol = new TBinaryProtocol(transport);
       transport.open();
       AppFabricService.Client client = new AppFabricService.Client(protocol);
@@ -149,46 +165,57 @@ public final class ReactorClient {
         deploy(client);
       }
 
+      if ("delete".equals(command)) {
+        System.out.print("Deleting the app...");
+        AuthToken dummyAuthToken = new AuthToken("ReactorClient");
+        client.removeApplication(dummyAuthToken, new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, "", 1));
+        System.out.println("Deleted");
+      }
+
       if ("start".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier;
         if (flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, flow, 1);
           identifier.setType(EntityType.FLOW);
-          System.out.println(String.format("Starting flow %s for application %s ", flow, application));
+          System.out.print(String.format("Starting flow %s for application %s...", flow, application));
         } else if (mapReduce != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
-          System.out.println(String.format("Starting mapreduce job %s for application %s ", mapReduce, application));
+          System.out.print(String.format("Starting mapreduce job %s for application %s...", mapReduce, application));
         } else {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, procedure, 1);
           identifier.setType(EntityType.QUERY);
-          System.out.println(String.format("Starting procedure %s for application %s ", procedure, application));
+          System.out.print(String.format("Starting procedure %s for application %s...", procedure, application));
         }
-        client.start(dummyAuthToken, new FlowDescriptor(identifier, ImmutableMap.<String, String>of()));
-        System.out.println("Started ");
+
+        Map<String, String> arguments = Maps.newHashMap();
+        for (Map.Entry<Object, Object> entry : runtimeArguments.entrySet()) {
+          arguments.put((String) entry.getKey(), (String) entry.getValue());
+        }
+        client.start(dummyAuthToken, new FlowDescriptor(identifier, arguments));
+        System.out.println("Started");
         return;
       }
 
       if ("stop".equals(command)) {
-
         AuthToken dummyAuthToken = new AuthToken("ReactorClient");
         FlowIdentifier identifier;
         if (flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, flow, 1);
           identifier.setType(EntityType.FLOW);
-          System.out.println(String.format("Stopping flow %s for application %s ", flow, application));
+          System.out.print(String.format("Stopping flow %s for application %s...", flow, application));
         } else if (mapReduce != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
-          System.out.println(String.format("Killing mapreduce job %s for application %s ", mapReduce, application));
+          System.out.print(String.format("Killing mapreduce job %s for application %s...", mapReduce, application));
         } else {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, procedure, 1);
           identifier.setType(EntityType.QUERY);
-          System.out.println(String.format("Stopping procedure %s for application %s ", procedure, application));
+          System.out.print(String.format("Stopping procedure %s for application %s...", procedure, application));
         }
         client.stop(dummyAuthToken, identifier);
-        System.out.println("Stopped ");
+        System.out.println("Stopped");
         return;
       }
 
@@ -204,12 +231,13 @@ public final class ReactorClient {
       }
 
       if ("promote".equals(command)) {
+        System.out.print("Promoting to the reactor '" + remoteHostname + "'...");
         ResourceIdentifier identifier = new ResourceIdentifier(DEVELOPER_ACCOUNT_ID, application, "noresource", 1);
-        boolean status = client.promote(new AuthToken(authToken), identifier, hostname);
+        boolean status = client.promote(new AuthToken(authToken), identifier, remoteHostname);
         if (status) {
-          System.out.println("Promoted to cloud");
+          System.out.println("OK");
         } else {
-          System.out.println("Promote to cloud failed");
+          System.err.println("Failed");
         }
       }
       if ("status".equals(command)) {
@@ -218,16 +246,18 @@ public final class ReactorClient {
         if (flow != null) {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, flow, 1);
           identifier.setType(EntityType.FLOW);
-          System.out.println(String.format("Getting status for flow %s in application %s ", flow, application));
+          System.out.print(String.format("Getting status for flow %s in application %s...", flow, application));
         } else {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, procedure, 1);
           identifier.setType(EntityType.QUERY);
-          System.out.println(String.format("Getting status for procedure %s in application %s ", flow, application));
+          System.out.print(String.format("Getting status for procedure %s in application %s...", flow, application));
         }
         FlowStatus flowStatus = client.status(dummyAuthToken, identifier);
         Preconditions.checkNotNull(flowStatus, "Problem getting the status the application");
-        System.out.println(String.format("Status: %s", flowStatus.toString()));
+        System.out.println(String.format("%s", flowStatus.getStatus()));
       }
+    } catch (TTransportException e) {
+      System.err.println("Unable to connect to host '" + hostname + "'");
     } finally {
       transport.close();
     }
@@ -251,7 +281,9 @@ public final class ReactorClient {
     }
 
     if (!AVAILABLE_COMMANDS.contains(command)) {
-      usage("Unsupported command '" + command + "'.");
+      usage(false);
+      System.err.println(String.format("Unsupported command: %s", command));
+      return "help";
     }
 
     CommandLineParser commandLineParser = new GnuParser();
@@ -261,24 +293,45 @@ public final class ReactorClient {
     options.addOption("a", APPLICATION_LONG_OPT_ARG, true, "Application Id.");
     options.addOption("r", ARCHIVE_LONG_OPT_ARG, true, "Archive that contains the application.");
     options.addOption("p", PROCEDURE_LONG_OPT_ARG, true, "Procedure Id.");
-    options.addOption("h", HOSTNAME_LONG_OPT_ARG, true, "Hostname to push the application to.");
+    options.addOption("h", HOSTNAME_LONG_OPT_ARG, true, "Specifies local reactor hostname [Default: localhost]");
+    options.addOption("r", REMOTE_LONG_OPT_ARG, true, "Specifies remote reactor hostname");
     options.addOption("k", APIKEY_LONG_OPT_ARG, true, "Apikey of the account.");
     options.addOption("f", FLOW_LONG_OPT_ARG, true, "Flow Id.");
     options.addOption("l", FLOWLET_LONG_OPT_ARG, true, "Flowlet Id.");
     options.addOption("i", FLOWLET_INSTANCES_LONG_OPT_ARG, true, "Flowlet Instances.");
     options.addOption("m", MAPREDUCE_LONG_OPT_ARG, true, "MapReduce job Id.");
+    options.addOption("d", DEBUG_LONG_OPT_ARG, false, "Debug");
+
+    Option runtimeArgOptions = OptionBuilder.withArgName("property=value")
+      .hasArgs(2)
+      .withValueSeparator()
+      .withDescription("use value for a given property")
+      .create("R");
+    options.addOption(runtimeArgOptions);
 
     try {
       CommandLine commandLine = commandLineParser.parse(options, Arrays.copyOfRange(args, 1, args.length));
+      debug = commandLine.getOptionValue(DEBUG_LONG_OPT_ARG) == null ? false : true;
+
+      hostname = "localhost";
+      if (commandLine.hasOption(HOSTNAME_LONG_OPT_ARG)) {
+        hostname = commandLine.getOptionValue(HOSTNAME_LONG_OPT_ARG);
+      }
+
+      System.out.println("Connecting to '" + hostname + "'");
 
       //Check if the appropriate args are passed in for each of the commands
       if ("deploy".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(ARCHIVE_LONG_OPT_ARG),
                                     "deploy command should have archive argument");
         resource = commandLine.getOptionValue(ARCHIVE_LONG_OPT_ARG);
-      }
 
-      if ("start".equals(command)) {
+      } else if ("delete".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
+          "application argument");
+        application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
+
+      } else if ("start".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
@@ -290,9 +343,8 @@ public final class ReactorClient {
         procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
         mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
-      }
-
-      if ("stop".equals(command)) {
+        runtimeArguments = commandLine.getOptionProperties("R");
+      } else if ("stop".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
@@ -304,9 +356,8 @@ public final class ReactorClient {
         procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
         mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
-      }
 
-      if ("status".equals(command)) {
+      } else if ("status".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
@@ -318,9 +369,8 @@ public final class ReactorClient {
         procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
         mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
-      }
 
-      if ("scale".equals(command)) {
+      } else if ("scale".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
         Preconditions.checkArgument(commandLine.hasOption(FLOW_LONG_OPT_ARG),
@@ -336,17 +386,16 @@ public final class ReactorClient {
 
         flowletInstances = Short.parseShort(commandLine.getOptionValue(FLOWLET_INSTANCES_LONG_OPT_ARG));
         Preconditions.checkArgument(flowletInstances > 0, "number of flowlet instances needs to be greater than 0");
-      }
 
-      if ("promote".equals(command)) {
-        Preconditions.checkArgument(commandLine.hasOption(HOSTNAME_LONG_OPT_ARG), "promote command should have" +
-          "vpc argument");
+      } else if ("promote".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(REMOTE_LONG_OPT_ARG), "promote command should have" +
+          "remote reactor hostname");
         Preconditions.checkArgument(commandLine.hasOption(APIKEY_LONG_OPT_ARG), "promote command should " +
           "have auth token argument");
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "promote command should have" +
           " application argument");
 
-        hostname = commandLine.getOptionValue(HOSTNAME_LONG_OPT_ARG);
+        remoteHostname = commandLine.getOptionValue(REMOTE_LONG_OPT_ARG);
         authToken = commandLine.getOptionValue(APIKEY_LONG_OPT_ARG);
         application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
       }
@@ -354,6 +403,8 @@ public final class ReactorClient {
     } catch (ParseException e) {
       usage(e.getMessage());
     } catch (IllegalArgumentException e) {
+      usage(e.getMessage());
+    } catch (Exception e) {
       usage(e.getMessage());
     }
     return command;
@@ -383,8 +434,7 @@ public final class ReactorClient {
     try {
       executeInternal();
     } catch (Exception e) {
-      System.err.println(String.format("Caught Exception while running %s ", command));
-      System.err.println(String.format("Error: %s", e.getMessage()));
+      System.err.println(String.format("\nError: %s", e.getMessage()));
       return null;
     }
     return command;
@@ -407,7 +457,7 @@ public final class ReactorClient {
     File file = new File(resource);
 
     AuthToken dummyAuthToken = new AuthToken("ReactorClient");
-    System.out.println(String.format("Deploying... :%s", resource));
+    System.out.print(String.format("Deploying application %s ...", resource));
 
     ResourceIdentifier identifier =
       client.init(dummyAuthToken, new ResourceInfo(DEVELOPER_ACCOUNT_ID, "", file.getName(), (int) file.getTotalSpace(),
@@ -437,10 +487,10 @@ public final class ReactorClient {
     if (DeployStatus.DEPLOYED.getCode() == status.getOverall()) {
       System.out.println("Deployed");
     } else if (DeployStatus.FAILED.getCode() == status.getOverall()) {
-      System.out.println(String.format("Deployment failed: %s. Check Reactor log file for more details.",
+      System.err.println(String.format("Deployment failed: %s. Check Reactor log file for more details.",
                                        DeployStatus.FAILED.getMessage()));
     } else {
-      System.out.println("Deployment taking more than 5 seconds. Please check the Reactor Dashboard for status");
+      System.err.println("Deployment taking more than 5 seconds. Please check the Reactor Dashboard for status");
     }
     return;
   }

@@ -5,24 +5,21 @@
 define([], function () {
 
 	var Model = Em.Object.extend({
+		type: 'Flow',
+		plural: 'Flows',
 
 		href: function () {
 			return '#/flows/' + this.get('id');
 		}.property('id'),
-		metricData: null,
-		metricNames: null,
-		__loadingData: false,
+
 		instances: 0,
 		version: -1,
 		currentState: '',
-		type: 'Flow',
-		plural: 'Flows',
+
 		init: function() {
 			this._super();
 
-			this.set('metricData', Em.Object.create());
-			this.set('metricNames', {});
-
+			this.set('timeseries', Em.Object.create());
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
 			this.set('app', this.get('applicationId') || this.get('application') || this.get('meta').app);
@@ -30,30 +27,27 @@ define([], function () {
 				(this.get('flowId') || this.get('id') || this.get('meta').name));
 
 		},
-		addMetricName: function (name) {
 
-			this.get('metricNames')[name] = 1;
+		interpolate: function (path) {
+
+			return path.replace(/\{parent\}/, this.get('app'))
+				.replace(/\{id\}/, this.get('name'));
 
 		},
-		getUpdateRequest: function (http) {
+
+		trackMetric: function (path, kind, label) {
+
+			this.get(kind).set(path = this.interpolate(path), label || []);
+			return path;
+
+		},
+
+		updateState: function (http) {
 
 			var self = this;
 
 			var app_id = this.get('app'),
-				flow_id = this.get('name'),
-				start = C.__timeRange * -1;
-
-			var metrics = [];
-			var metricNames = this.get('metricNames');
-			for (var name in metricNames) {
-				if (metricNames[name] === 1) {
-					metrics.push(name);
-				}
-			}
-			if (!metrics.length) {
-				this.set('__loadingData', false);
-				return;
-			}
+				flow_id = this.get('name');
 
 			http.rpc('runnable', 'status', [app_id, flow_id, -1],
 				function (response) {
@@ -64,36 +58,8 @@ define([], function () {
 
 			});
 
-			return ['monitor', {
-				method: 'getTimeSeries',
-				params: [app_id, flow_id, metrics, start, undefined, 'FLOW_LEVEL']
-			}, function (error, response) {
-
-				if (!response.params) {
-					return;
-				}
-
-				var data, points = response.params.points,
-					latest = response.params.latest;
-
-				for (var metric in points) {
-					data = points[metric];
-
-					var k = data.length;
-
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-
-					metric = metric.replace(/\./g, '');
-					self.get('metricData').set(metric, data);
-					self.set('__loadingData', false);
-				}
-
-			}];
-
 		},
+
 		getMeta: function () {
 			var arr = [];
 			for (var m in this.meta) {
@@ -104,6 +70,7 @@ define([], function () {
 			}
 			return arr;
 		}.property('meta'),
+
 		isRunning: function() {
 
 			if (this.currentState !== 'RUNNING') {
@@ -154,6 +121,9 @@ define([], function () {
 
 		}.property('currentState'),
 		defaultAction: function () {
+			if (!this.currentState) {
+				return '...';
+			}
 			return {
 				'deployed': 'Start',
 				'stopped': 'Start',
@@ -184,14 +154,14 @@ define([], function () {
 				model = C.Flow.create(model);
 
 				http.rpc('runnable', 'status', [app_id, flow_id, -1],
-					function (response) {
+					function (response, error) {
 
-						if (response.error) {
-							promise.reject(response.error);
-						} else {
+					if (response.error) {
+							promise.reject(error);
+					} else {
 							model.set('currentState', response.result.status);
 							promise.resolve(model);
-						}
+					}
 
 				});
 

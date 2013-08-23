@@ -26,6 +26,8 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
+			model.trackMetric('/store/bytes/apps/{id}', 'aggregates', 'storage');
+
 			/*
 			 * Load Streams
 			 */
@@ -33,7 +35,9 @@ define([], function () {
 
 				var i = objects.length;
 				while (i--) {
+
 					objects[i] = C.Stream.create(objects[i]);
+
 				}
 				self.get('elements.Stream').pushObjects(objects);
 				self.__loaded();
@@ -54,19 +58,19 @@ define([], function () {
 
 			});
 
-            /*
-             * Load Mapreduces
-             */
-            this.HTTP.get('rest', 'apps', model.id, 'mapreduce', function (objects) {
+      /*
+       * Load Mapreduces
+       */
+      this.HTTP.get('rest', 'apps', model.id, 'mapreduce', function (objects) {
 
-                var i = objects.length;
-                while (i--) {
-                    objects[i] = C.Flow.create(objects[i]);
-                }
-                self.get('elements.Batch').pushObjects(objects);
-                self.__loaded();
+          var i = objects.length;
+          while (i--) {
+              objects[i] = C.Batch.create(objects[i]);
+          }
+          self.get('elements.Batch').pushObjects(objects);
+          self.__loaded();
 
-            });
+      });
 
 			/*
 			 * Load Datasets
@@ -128,35 +132,37 @@ define([], function () {
 
 		updateStats: function () {
 
+			if (C.currentPath !== 'App') {
+				return;
+			}
+
 			var self = this, types = ['Flow', 'Batch', 'Stream', 'Procedure', 'Dataset'];
 
 			if (this.get('model')) {
 
-				C.get.apply(C, this.get('model').getUpdateRequest(this.HTTP));
+				var i, models = [this.get('model')];
+				for (i = 0; i < types.length; i ++) {
+					models = models.concat(this.get('elements').get(types[i]).get('content'));
+				}
 
-				for (var i = 0; i < types.length; i ++) {
-
-					var content = this.get('elements').get(types[i]).get('content');
-					for (var j = 0; j < content.length; j ++) {
-						if (typeof content[j].getUpdateRequest === 'function') {
-							C.get.apply(C, content[j].getUpdateRequest(this.HTTP));
-						}
+				/*
+				 * Hax until we have a pub/sub system for state.
+				 */
+				i = models.length;
+				while (i--) {
+					if (typeof models[i].updateState === 'function') {
+						models[i].updateState(this.HTTP);
 					}
 				}
+				/*
+				 * End hax
+				 */
 
+				// Scans models for timeseries metrics and updates them.
+				C.Util.updateTimeSeries(models, this.HTTP);
 
-				var storage = 0;
-				var streams = this.get('elements.Stream').content;
-				for (var i = 0; i < streams.length; i ++) {
-					storage += streams[i].get('storage');
-				}
-				var datasets = this.get('elements.Dataset').content;
-				for (var i = 0; i < datasets.length; i ++) {
-					storage += datasets[i].get('storage');
-				}
-
-				self.get('model').set('storageLabel', C.Util.bytes(storage)[0]);
-				self.get('model').set('storageUnits', C.Util.bytes(storage)[1]);
+				// Scans models for aggregate metrics and udpates them.
+				C.Util.updateAggregates(models, this.HTTP);
 
 			}
 
@@ -420,6 +426,8 @@ define([], function () {
 
 		"delete": function () {
 
+			var self = this;
+
 			C.Modal.show(
 				"Delete Application",
 				"Are you sure you would like to delete this Application? This action is not reversible.",
@@ -427,24 +435,15 @@ define([], function () {
 
 					var app = this.get('model');
 
-					C.get('metadata', {
-						method: 'deleteApplication',
-						params: ['Application', {
-							id: app.id
-						}]
-					}, function (error, response) {
+					C.get('far', {
+						method: 'remove',
+						params: [app.id]
+					}, function () {
 
-						C.Modal.hide(function () {
-
-							if (error) {
-								C.Modal.show('Error Deleting', error.message);
-							} else {
-								window.history.go(-1);
-							}
-
-						});
+						self.transitionToRoute('index');
 
 					});
+
 				}, this));
 
 		},

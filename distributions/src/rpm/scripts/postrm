@@ -3,4 +3,10 @@
 package_name="<%= project %>"
 version="<%= @version %>"
 
+# if remaining packages after uninstall, perform conditional restart
+if [ $1 -ge 1 ]; then 
+  for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
+    service continuuity-$svcname condrestart > /dev/null 2>&1
+  done
+fi
 

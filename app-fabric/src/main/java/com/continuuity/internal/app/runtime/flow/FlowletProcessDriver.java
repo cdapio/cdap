@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
@@ -20,7 +19,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
@@ -45,11 +43,22 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProcessDriver.class);
   private static final int TX_EXECUTOR_POOL_SIZE = 4;
 
-  private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1); // 1ms
-  private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
+  // Minimum back-off time in nanoseconds, 1ms.
+  private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1);
+
+  // Maximum back-off time in nanoseconds when increasing exponentially, 100ms.
+  private static final long BACKOFF_MAX = TimeUnit.MILLISECONDS.toNanos(100);
+
+  // Start time for switching from constant to exponentially increasing back-off time, 20ms.
+  private static final long BACKOFF_EXP_START = TimeUnit.MILLISECONDS.toNanos(20);
+
+  // Incrementing back-off time by this until reaching exponential increase range.
+  private static final long BACKOFF_CONSTANT_INCREMENT = TimeUnit.MILLISECONDS.toNanos(1);
+
+  // Doubling back-off time during exponential increase, up to maximum back-off time.
   private static final int BACKOFF_EXP = 2;
+
   private static final int PROCESS_MAX_RETRY = 10;
-  private static final String INPUT_METRIC_POSTFIX = FlowletDefinition.INPUT_ENDPOINT_POSTFIX + ".stream.in";
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -104,7 +113,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       transactionExecutor = MoreExecutors.sameThreadExecutor();
     }
     runnerThread = Thread.currentThread();
-    flowletContext.getSystemMetrics().counter("instance", 1);
+    flowletContext.getSystemMetrics().gauge("process.instance", 1);
   }
 
   @Override
@@ -140,7 +149,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   }
 
   /**
-   * Resume the running of flowlet
+   * Resume the running of flowlet.
    */
   public void resume() {
     CountDownLatch latch = suspension.getAndSet(null);
@@ -151,6 +160,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   protected void run() {
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
@@ -194,9 +204,11 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           if (!entry.shouldProcess()) {
             continue;
           }
+
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
+
           if (processMethod.needsInput()) {
-            flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.attempt.read", 1);
+            flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
           }
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
           if (!input.needProcess()) {
@@ -204,7 +216,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             continue;
           }
 
-          entry.nextDeque = 0;
+          // Resetting back-off time to minimum back-off time, since an entry to process was de-queued and most likely
+          // more entries will follow.
+          entry.resetBackOff();
+
           if (!entry.isRetry()) {
             // Only increment the inflight count for non-retry entries.
             // The inflight count would get decrement when the transaction committed successfully or input get ignored.
@@ -231,6 +246,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
         }
       }
+
     }
     waitForInflight(processQueue);
 
@@ -240,11 +256,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private <T> Function<ByteBuffer, T> wrapInputDatumDecoder(final InputDatum input,
                                                             final Function<ByteBuffer, T> inputDatumDecoder) {
     return new Function<ByteBuffer, T>() {
-      @Nullable
       @Override
-      public T apply(@Nullable ByteBuffer byteBuffer) {
-        flowletContext.getSystemMetrics().counter(input.getInputContext().getOrigin() + INPUT_METRIC_POSTFIX, 1);
-        flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
+      public T apply(ByteBuffer byteBuffer) {
+        flowletContext.getSystemMetrics().gauge("process.events.ins." + input.getInputContext().getOrigin(), 1);
+        flowletContext.getSystemMetrics().gauge("process.tuples.read", 1);
         return inputDatumDecoder.apply(byteBuffer);
       }
     };
@@ -254,6 +269,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
    * Wait for all inflight processes in the queue.
    * @param processQueue list of inflight processes
    */
+  @SuppressWarnings("unchecked")
   private void waitForInflight(PriorityBlockingQueue<ProcessEntry<?>> processQueue) {
     List<ProcessEntry> processList = Lists.newArrayListWithCapacity(processQueue.size());
     boolean hasRetry;
@@ -272,7 +288,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.attempt.read", 1);
+          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
 
           try {
             // Call the process method and commit the transaction
@@ -318,7 +334,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getMetrics().count("processed", 1);
+          flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.info("Exception on onSuccess call: " + flowletContext, t);
@@ -335,7 +351,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         LOG.info("Process failure. " + reason.getMessage() + ", input: " + input, reason.getCause().getCause());
         FailurePolicy failurePolicy;
         try {
-          flowletContext.getMetrics().count("flowlet.failure", 1);
+          flowletContext.getSystemMetrics().gauge("process.errors", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {
           LOG.error("Exception on onFailure call: " + flowletContext, t);
@@ -359,7 +375,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getMetrics().count("processed", 1);
+            flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
             inputAcknowledger.ack();
           } catch (OperationException e) {
             LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);
@@ -420,9 +436,18 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       return nextDeque > o.nextDeque ? 1 : -1;
     }
 
+    public void resetBackOff() {
+      nextDeque = 0;
+      currentBackOff = BACKOFF_MIN;
+    }
+
     public void backOff() {
       nextDeque = System.nanoTime() + currentBackOff;
-      currentBackOff = Math.min(currentBackOff * BACKOFF_EXP, BACKOFF_MAX);
+      if (currentBackOff < BACKOFF_EXP_START) {
+        currentBackOff += BACKOFF_CONSTANT_INCREMENT;
+      } else {
+        currentBackOff = Math.min(currentBackOff * BACKOFF_EXP, BACKOFF_MAX);
+      }
     }
 
     public ProcessSpecification<T> getProcessSpec() {

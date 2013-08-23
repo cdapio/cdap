@@ -42,8 +42,6 @@ import java.util.Set;
 public final class FlowletDefinition {
   public static final String PROCESS_METHOD_PREFIX = "process";
   public static final String DEFAULT_OUTPUT = "queue";
-  public static final String INPUT_ENDPOINT_POSTFIX = "_in";
-  public static final String OUTPUT_ENDPOINT_POSTFIX = "_out";
   public static final String ANY_INPUT = "";
 
   private final FlowletSpecification flowletSpec;
@@ -194,12 +192,13 @@ public final class FlowletDefinition {
           datasets.add(dataset.value());
 
         } else if (OutputEmitter.class.equals(field.getType())) {
-          Type emitterType = field.getGenericType();
+          Type emitterType = flowletType.resolveType(field.getGenericType()).getType();
           Preconditions.checkArgument(emitterType instanceof ParameterizedType,
                                       "Type info missing from OutputEmitter; class: %s; field: %s.", type, field);
 
           // Extract the Output type from the first type argument of OutputEmitter
           Type outputType = ((ParameterizedType) emitterType).getActualTypeArguments()[0];
+          outputType = flowletType.resolveType(outputType).getType();
           String outputName = field.isAnnotationPresent(Output.class) ?
                                   field.getAnnotation(Output.class).value() : DEFAULT_OUTPUT;
 

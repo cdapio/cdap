@@ -27,7 +27,6 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator.Node;
@@ -37,6 +36,8 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
@@ -99,18 +100,21 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DatumWriterFactory datumWriterFactory;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
+  private final MetricsCollectionService metricsCollectionService;
 
   private volatile List<QueueConsumerSupplier> queueConsumerSuppliers;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
                               DataFabricFacadeFactory txAgentSupplierFactory,
-                              QueueReaderFactory queueReaderFactory) {
+                              QueueReaderFactory queueReaderFactory,
+                              MetricsCollectionService metricsCollectionService) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
-    queueConsumerSuppliers = ImmutableList.of();
+    this.queueConsumerSuppliers = ImmutableList.of();
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Inject(optional = true)
@@ -166,7 +170,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
                                                options.getUserArguments(),
                                                flowletDef.getFlowletSpec(),
-                                               flowletClass.isAnnotationPresent(Async.class));
+                                               flowletClass.isAnnotationPresent(Async.class),
+                                               metricsCollectionService);
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
@@ -256,8 +261,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
       for (Field field : type.getRawType().getDeclaredFields()) {
         // Inject OutputEmitter
         if (OutputEmitter.class.equals(field.getType())) {
-          TypeToken<?> outputType = TypeToken.of(((ParameterizedType) field.getGenericType())
-                                                   .getActualTypeArguments()[0]);
+          TypeToken<?> emitterType = flowletType.resolveType(field.getGenericType());
+          TypeToken<?> outputType = flowletType.resolveType(((ParameterizedType) emitterType.getType())
+                                                              .getActualTypeArguments()[0]);
           String outputName = field.isAnnotationPresent(Output.class) ?
             field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
 
@@ -345,7 +351,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
         try {
           // If batch mode then generate schema for Iterator's parameter type
-          TypeToken<?> dataType = TypeToken.of(method.getGenericParameterTypes()[0]);
+          TypeToken<?> dataType = flowletType.resolveType(method.getGenericParameterTypes()[0]);
           if (batch != null) {
             Preconditions.checkArgument(dataType.getRawType().equals(Iterator.class), "" +
               "Batch mode without an Iterator as first parameter is not supported yet.");
@@ -355,7 +361,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
             Preconditions.checkArgument(
               pType.getActualTypeArguments().length > 0,
               "Iterator does not define actual type parameters, cannot extract type information.");
-            dataType = TypeToken.of(pType.getActualTypeArguments()[0]);
+            dataType = flowletType.resolveType(pType.getActualTypeArguments()[0]);
           }
           Schema schema = schemaGenerator.generate(dataType.getType());
 
@@ -468,7 +474,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 dataFabricFacade.createQueueConsumerFactory(
                   flowletContext.getInstanceId(),
                   flowletContext.getGroupId(),
-                  flowletContext.getMetricName(),
+                  flowletContext.getMetricContext(),
                   queueName, queueInfo,
                   !flowletContext.isAsyncMode()
                 ),

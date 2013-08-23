@@ -29,22 +29,22 @@ define(['core/util'], function(util) {
 
     it('should prettify number', function() {
       var number = 100;
-      expect(util.number(number)).toEqual(100);
+      expect(util.numberArrayToString(number)).toEqual('100');
       number = 1000;
-      expect(util.number(number)).toEqual(1000);
+      expect(util.numberArrayToString(number)).toEqual('1000');
       number = 1000000;
-      expect(util.number(number)).toEqual('1000K');
+      expect(util.numberArrayToString(number)).toEqual('1000K');
       number = 51000000;
-      expect(util.number(number)).toEqual('51M');
+      expect(util.numberArrayToString(number)).toEqual('51M');
       number = 51000000000;
-      expect(util.number(number)).toEqual('51B');
+      expect(util.numberArrayToString(number)).toEqual('51B');
     });
 
     it('should prettify bytes', function() {
       var bytes = 51024;
       expect(util.bytes(bytes)).toEqual([49.8, 'KB']);
       bytes = 1024;
-      expect(util.bytes(bytes)).toEqual([1024, 'BYTES']);
+      expect(util.bytes(bytes)).toEqual([1024, 'B']);
       bytes = 51048576;
       expect(util.bytes(bytes)).toEqual([48.68, 'MB']);
       bytes = 51073741824;

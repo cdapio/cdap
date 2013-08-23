@@ -2,18 +2,24 @@ package com.continuuity.kafka.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKOperations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.net.InetAddresses;
+import com.google.common.util.concurrent.Service;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 /**
@@ -25,33 +31,39 @@ public class KafkaServerMain extends DaemonMain {
   private Properties kafkaProperties;
   private EmbeddedKafkaServer kafkaServer;
 
-  private String zkConnectStr;
-  private String zkNamespace;
-
   public static void main(String [] args) throws Exception {
     new KafkaServerMain().doMain(args);
   }
 
   @Override
   public void init(String[] args) {
-    LOG.info(String.format("Got args - %s", Arrays.toString(args)));
-
-    if (args.length != 1) {
-      String name = KafkaServerMain.class.getSimpleName();
-      throw new IllegalArgumentException(String.format("Usage: %s <brokerId>", name));
-    }
-
-    int brokerId = Integer.parseInt(args[0]);
-
     CConfiguration cConf = CConfiguration.create();
-    zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
-    zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    String zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    String zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
     int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);
     String hostname = cConf.get(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG);
+
+    InetAddress address = Networks.resolve(hostname, new InetSocketAddress("localhost", 0).getAddress());
+    if (address.isAnyLocalAddress()) {
+      try {
+        address = InetAddress.getLocalHost();
+      } catch (UnknownHostException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+    if (address.isLoopbackAddress()) {
+      LOG.warn("Binding to loopback address!");
+    }
+    hostname = address.getCanonicalHostName();
+
     int numPartitions = cConf.getInt(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
                                      KafkaConstants.DEFAULT_NUM_PARTITIONS);
     String logDir = cConf.get(KafkaConstants.ConfigKeys.LOG_DIR_CONFIG);
+
+    int replicationFactor = cConf.getInt(KafkaConstants.ConfigKeys.REPLICATION_FACTOR,
+                                         KafkaConstants.DEFAULT_REPLICATION_FACTOR);
+    LOG.info("Using replication factor {}", replicationFactor);
 
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
@@ -74,7 +86,11 @@ public class KafkaServerMain extends DaemonMain {
       }
     }
 
-    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions, logDir);
+    int brokerId = generateBrokerId(address);
+    LOG.info(String.format("Initializing server with broker id %d", brokerId));
+
+    kafkaProperties = generateKafkaConfig(brokerId, zkConnectStr, hostname, port, numPartitions,
+                                          replicationFactor, logDir);
   }
 
   @Override
@@ -82,7 +98,11 @@ public class KafkaServerMain extends DaemonMain {
     LOG.info("Starting embedded kafka server...");
 
     kafkaServer = new EmbeddedKafkaServer(KafkaServerMain.class.getClassLoader(), kafkaProperties);
-    kafkaServer.startAndWait();
+    Service.State state = kafkaServer.startAndWait();
+
+    if (state != Service.State.RUNNING) {
+      throw new  IllegalStateException("Kafka server has not started... terminating.");
+    }
 
     LOG.info("Embedded kafka server started successfully.");
   }
@@ -90,7 +110,7 @@ public class KafkaServerMain extends DaemonMain {
   @Override
   public void stop() {
     LOG.info("Stopping embedded kafka server...");
-    if (kafkaServer != null) {
+    if (kafkaServer != null && kafkaServer.isRunning()) {
       kafkaServer.stopAndWait();
     }
   }
@@ -101,8 +121,8 @@ public class KafkaServerMain extends DaemonMain {
   }
 
   private Properties generateKafkaConfig(int brokerId, String zkConnectStr, String hostname, int port,
-                                         int numPartitions, String logDir) {
-    Preconditions.checkState(port > 0, "Failed to get random port.");
+                                         int numPartitions, int replicationFactor, String logDir) {
+    Preconditions.checkState(port > 0, "Port number is invalid.");
     Preconditions.checkState(numPartitions > 0, "Num partitions should be greater than zero.");
 
     Properties prop = new Properties();
@@ -116,11 +136,22 @@ public class KafkaServerMain extends DaemonMain {
     prop.setProperty("socket.request.max.bytes", "104857600");
     prop.setProperty("log.dir", logDir);
     prop.setProperty("num.partitions", Integer.toString(numPartitions));
+    prop.setProperty("log.retention.hours", "24");
     prop.setProperty("log.flush.interval.messages", "10000");
     prop.setProperty("log.flush.interval.ms", "1000");
     prop.setProperty("log.segment.bytes", "536870912");
     prop.setProperty("zookeeper.connect", zkConnectStr);
     prop.setProperty("zookeeper.connection.timeout.ms", "1000000");
+    prop.setProperty("default.replication.factor", Integer.toString(replicationFactor));
     return prop;
+  }
+
+  private static int generateBrokerId(InetAddress address) {
+    LOG.info("Generating broker ID with address {}", address);
+    try {
+      return Math.abs(InetAddresses.coerceToInteger(address));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

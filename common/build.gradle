@@ -77,6 +77,7 @@ dependencies {
     compile (libraries.commons_beanutils_core) {
         exclude group: 'commons-logging'
     }
+    compile libraries.netty
 
     testCompile libraries.hadoop_minicluster
     testCompile libraries.jersey_server
@@ -92,4 +93,12 @@ checkstyleTest {
     source = sourceSets.main.allJava.matching {
         exclude '**/stubs/**/*'
     }
+}
+
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+    all*.exclude group: 'asm', module: 'asm'
 }

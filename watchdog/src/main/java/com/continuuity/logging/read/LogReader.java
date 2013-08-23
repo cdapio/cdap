@@ -3,8 +3,6 @@ package com.continuuity.logging.read;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.filter.Filter;
 
-import java.util.concurrent.Future;
-
 /**
  * Interface to read logs.
  */
@@ -16,9 +14,8 @@ public interface LogReader {
    * @param maxEvents max log events to return.
    * @param filter filter to select log events
    * @param callback callback to handle the log events.
-   * @return Future of Runnable that reads the log events.
    */
-  Future<?> getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
+  void getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
                        Callback callback);
 
   /**
@@ -28,9 +25,8 @@ public interface LogReader {
    * @param maxEvents max log events to return.
    * @param filter filter to select log events
    * @param callback callback to handle the log events.
-   * @return Future of Runnable that reads the log events.
    */
-  Future<?> getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
+  void getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
                        Callback callback);
 
   /**
@@ -41,7 +37,7 @@ public interface LogReader {
    * @param filter filter to select log events
    * @param callback Callback to handle the log events.
    */
-  Future<?> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
+  void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
                    Callback callback);
 
   /**

@@ -44,7 +44,7 @@ define (['core/application'], function (Application) {
 				 */
 				require(mocks, function () {
 
-					mocks = Array.prototype.slice.call(arguments, 0);
+					mocks = [].slice.call(arguments, 0);
 
 					var i = mocks.length, type, resource;
 					while (i--) {
@@ -68,20 +68,6 @@ define (['core/application'], function (Application) {
 								resource.connect();
 							}
 
-						}
-
-						/*
-						 * Temporary for Backwards Compat.
-						 */
-						if (type === 'Socket') {
-							C.Socket = container.lookup('Socket:main');
-							C.get = function () {
-								C.Socket.request.apply(C.Socket, arguments);
-							};
-						}
-
-						if (type === 'HTTP') {
-							C.HTTP = container.lookup('HTTP:main');
 						}
 					}
 				});
