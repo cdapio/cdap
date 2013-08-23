@@ -2,7 +2,6 @@ package com.continuuity.gateway.v2.handlers;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.verification.VerifyResult;
@@ -11,11 +10,7 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
-import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -393,6 +388,8 @@ public class StreamHandler extends AbstractHttpHandler {
     helper.setMethod("getNewId");
     helper.setScope(destination);
 
+    // TODO: ENG-3203. The new queue implementation does not have getGroupId method yet.
+    // Hence temporarily generating groupID using stream name, accountId and nano time.
     HashCode hashCode = Hashing.md5().newHasher()
       .putInt(destination.length())
       .putString(destination)
@@ -416,51 +413,25 @@ public class StreamHandler extends AbstractHttpHandler {
     helper.setMethod("getQueueInfo");
     helper.setScope(destination);
 
-    String queueURI = QueueName.fromStream(accountId, destination).toString();
-    GetQueueInfo getInfo = new GetQueueInfo(queueURI.getBytes());
-    OperationResult<QueueInfo> info = null;
-    boolean noEventsInDF = false;
-
+    // TODO: ENG-3203. The new queue implementation does not have getQueueInfo method yet.
+    // Hence for now just checking whether stream exists or not.
     try {
-      OperationContext operationContext = new OperationContext(accountId);
-      info = opex.execute(operationContext, getInfo);
-      noEventsInDF = info.isEmpty()
-        || info.getValue().getJSONString() == null;
-    } catch (Exception e) {
-      if (e instanceof OperationException) {
-        OperationException oe = (OperationException) e;
-        noEventsInDF = oe.getStatus() == StatusCode.QUEUE_NOT_FOUND;
-      }
-      if (!noEventsInDF) {
-        LOG.error("Exception for GetQueueInfo: " + e.getMessage(), e);
-        helper.finish(Error);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        return;
-      }
-    }
-    if (noEventsInDF) {
-      try {
-        //Check if a stream exists
-        Stream existingStream = metadataService.getStream(new Account(accountId), new Stream(destination));
-        boolean existsInMDS = existingStream.isExists();
+      //Check if a stream exists
+      Stream existingStream = metadataService.getStream(new Account(accountId), new Stream(destination));
+      boolean existsInMDS = existingStream.isExists();
 
-        if (existsInMDS) {
-          byte[] responseBody = "{}".getBytes();
-          responder.sendJson(HttpResponseStatus.OK, responseBody);
-          helper.finish(Success);
-        } else {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          helper.finish(NotFound);
-        }
-        streamCache.refreshStream(accountId, destination);
-      } catch (Exception e) {
-        LOG.error("Exception while fetching metadata for stream {}", destination);
-        helper.finish(Error);
+      if (existsInMDS) {
+        byte[] responseBody = "{}".getBytes();
+        responder.sendJson(HttpResponseStatus.OK, responseBody);
+        helper.finish(Success);
+      } else {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        helper.finish(NotFound);
       }
-    } else {
-      byte[] responseBody = info.getValue().getJSONString().getBytes();
-      responder.sendJson(HttpResponseStatus.OK, responseBody);
-      helper.finish(Success);
+      streamCache.refreshStream(accountId, destination);
+    } catch (Exception e) {
+      LOG.error("Exception while fetching metadata for stream {}", destination);
+      helper.finish(Error);
     }
   }
 
