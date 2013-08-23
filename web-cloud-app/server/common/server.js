@@ -15,7 +15,6 @@ var express = require('express'),
   cookie = require('cookie'),
   utils = require('connect').utils,
   crypto = require('crypto'),
-  engines = require('consolidate'),
   path = require('path');
 
 var Api = require('../common/api');
