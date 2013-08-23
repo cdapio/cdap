@@ -2,7 +2,6 @@ package com.continuuity.flow.queue;
 
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
-import com.continuuity.test.FlowManager;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
@@ -20,19 +19,16 @@ public class TestFlowQueueIntegration extends AppFabricTestBase {
   public void testQueuePartition() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestFlowQueueIntegrationApp.class);
     try {
-      FlowManager flowManager = applicationManager.startFlow("QueuePartitionFlow");
+      applicationManager.startFlow("QueuePartitionFlow");
 
       StreamWriter s1 = applicationManager.getStreamWriter("s1");
       RuntimeMetrics flowletMetrics1 = RuntimeStats.getFlowletMetrics("TestFlowQueueIntegrationApp",
                                                                       "QueuePartitionFlow",
                                                                       "QueuePartitionTestFlowlet");
-      flowManager.setFlowletInstances("QueuePartitionTestFlowlet",
-                                      TestFlowQueueIntegrationApp.QueuePartitionTestFlowlet.NUM_INSTANCES);
 
       RuntimeMetrics flowletMetrics2 = RuntimeStats.getFlowletMetrics("TestFlowQueueIntegrationApp",
                                                                       "QueuePartitionFlow", "QueueBatchTestFlowlet");
-      flowManager.setFlowletInstances("QueueBatchTestFlowlet",
-                                      TestFlowQueueIntegrationApp.QueueBatchTestFlowlet.NUM_INSTANCES);
+
       for (int i = 0; i < TestFlowQueueIntegrationApp.MAX_ITERATIONS; i++) {
         s1.send(String.valueOf(i));
       }
