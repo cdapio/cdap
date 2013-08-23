@@ -44,6 +44,7 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   private DB db;
   private Transaction tx;
+  private long persistedVersion;
 
   public LevelDBOcTableClient(String tableName, DB db) throws IOException {
     super(tableName);
@@ -58,18 +59,31 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff) throws Exception {
+  protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes) throws Exception {
     WriteBatch batch = db.createWriteBatch();
-    long versionForBatch = tx == null ? System.currentTimeMillis() : tx.getWritePointer();
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : buff.entrySet()) {
+    persistedVersion= tx == null ? System.currentTimeMillis() : tx.getWritePointer();
+    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : changes.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
-        byte[] key = createPutKey(row.getKey(), column.getKey(), versionForBatch);
+        byte[] key = createPutKey(row.getKey(), column.getKey(), persistedVersion);
         // we want support tx and non-tx modes
         if (tx != null) {
           batch.put(key, wrapDeleteIfNeeded(column.getValue()));
         } else {
           batch.put(key, column.getValue());
         }
+      }
+    }
+    db.write(batch, WRITE_OPTIONS);
+  }
+
+  @Override
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) throws Exception {
+    WriteBatch batch = db.createWriteBatch();
+    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
+      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+        // delete the version that was persisted earlier
+        byte[] key = createPutKey(row.getKey(), column.getKey(), persistedVersion);
+        batch.delete(key);
       }
     }
     db.write(batch, WRITE_OPTIONS);
