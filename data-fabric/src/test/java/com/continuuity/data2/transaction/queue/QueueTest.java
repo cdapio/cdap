@@ -273,6 +273,11 @@ public abstract class QueueTest {
               LOG.info("Dequeue {} entries in {} ms for {}", dequeueCount, elapsed, queueName.getSimpleName());
               LOG.info("Dequeue avg {} entries per seconds for {}",
                        (double) dequeueCount * 1000 / elapsed, queueName.getSimpleName());
+
+              if (consumer instanceof Closeable) {
+                ((Closeable) consumer).close();
+              }
+
               completeLatch.countDown();
             } finally {
               if (consumer instanceof Closeable) {
