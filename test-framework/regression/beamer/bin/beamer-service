@@ -33,5 +33,5 @@ for service in `ls -1 $CINST_BASE/$TGZ_NAME/opt/continuuity/$COMPONENT/bin/svc-*
 do
   name=`basename $service | sed 's/svc-//g'`
   name="continuuity-$name"
-  /etc/init.d/$name $COMMAND
+  service $name $COMMAND
 done

@@ -14,7 +14,6 @@ else
   exit 0
 fi
 
-# Determine service name from the name of the symlink being run
 SVCNAME=`basename $0`
 
 if [[ "X$SVCNAME" == "Xsvc" ]]; then

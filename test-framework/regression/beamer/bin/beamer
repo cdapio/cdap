@@ -10,7 +10,7 @@ user=$USER
 epoch=`date +%s`
 build_home=${REACTOR_HOME:-$bin/../../..}
 cuser=${BEAMER_USER:-$USER}
-jumpbox="lm101.sw.joyent.continuuity.com"
+jumpbox=${BEAMER_JUMPBOX:-lm101.sw.joyent.continuuity.com}
 
 if [ ! -f "$build_home/version.txt" ] ; then
   echo "$build_home does not exists. Set REACTOR_HOME."
@@ -123,6 +123,7 @@ function usage() {
   echo ""
   echo "  REACTOR_HOME   Specifies the path to where reactor git project exists (Current : $REACTOR_HOME)"
   echo "  BEAMER_USER    Specifies the name of the user to be used for communicating with cluster (default: $USER)"
+  echo "  BEAMER_JUMPBOX Specifies the jumpbox to be used for cluster operations"
   echo ""
 }
 
@@ -259,7 +260,7 @@ function create_cluster() {
   local type=$1; shift
   echo "Creating cluster $cluster of type $type (This will take approximately 10-15 minutes)"
   ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh $cuser create $cluster
-  echo "Install as much as you want to cluster $cluster. Host $cluster.dev.continuuity.net is accesible"
+  echo "Install as much as you want to cluster $cluster. Host $cluster.dev.continuuity.net is created."
 }
 
 echoerr() { 
@@ -345,7 +346,7 @@ if [[ "x${section}" == "xsoftware" ]]; then
   host=$(hostname $xcomponent $cluster)
 
   if [[ "x${host}" == "x" ]]; then
-    echo "Component has not host assigned in the cluster $cluster"
+    echo "Component has no host assigned in the cluster $cluster"
     usage
     exit -1
   fi
@@ -373,7 +374,7 @@ if [[ "x${section}" == "xcluster" ]]; then
   while [ $# -gt 0 ]
   do
      case "$1" in
-       -c) shift; cluster="$1.$BEAMER_USER"; shift;;
+       -c) shift; cluster="$1"; shift;;
        -t) shift; type=$1; shift;;
        *)  usage; exit 1
      esac

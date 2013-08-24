@@ -31,8 +31,8 @@ if [[ $cnt -ne 0 ]]; then
     name=`basename $service | sed 's/svc-//g'`
     name="continuuity-$name"
     if [[ -f /etc/init.d/$name ]]; then
-      /etc/init.d/$name stop
-      /etc/init.d/$name status
+      service $name stop
+      service $name status
       if [[ $? -eq 0 ]]; then
         echo "Failed to stop service $name"
         exit -1
@@ -98,8 +98,8 @@ for service in `ls -1 /opt/continuuity/$PROJECT/bin/svc-*`
 do
   name=`basename $service | sed 's/svc-//g'`
   name="continuuity-$name"
-  /etc/init.d/$name start
-  /etc/init.d/$name status
+  service $name start
+  service $name status
   if [[ $? -eq 1 ]]; then
     echo "Failed to start service $name"
     exit -1
