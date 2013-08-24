@@ -5,8 +5,8 @@ package com.continuuity.data2.transaction.queue;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import com.sun.org.apache.commons.logging.Log;
-import com.sun.org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.util.Pair;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -34,6 +35,9 @@ import java.util.List;
 public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor implements HBaseQueueEvictionProtocol {
 
   private static final Log LOG = LogFactory.getLog(HBaseQueueEvictionEndpoint.class);
+
+  // Some reasonable size for collection rows to delete to avoid too frequent overhead of resizing the array.
+  private static final int COLLECTION_SIZE = 1000;
 
   private final Filter stateColumnFilter = new ColumnPrefixFilter(QueueConstants.STATE_COLUMN_PREFIX);
 
@@ -51,10 +55,7 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
     // Scan this region and deletes rows that have numGroups of state columns and all have committed process state
     List<KeyValue> keyValues = new ArrayList<KeyValue>();
     boolean hasMore = true;
-    byte[] currentRow = null;
-    // Track how many committed processed state of the current row
-    int committedProcess = 0;
-    List<Pair<Mutation, Integer>> deletes = new ArrayList<Pair<Mutation, Integer>>();
+    List<Pair<Mutation, Integer>> deletes = new ArrayList<Pair<Mutation, Integer>>(COLLECTION_SIZE);
 
     HRegion region = ((RegionCoprocessorEnvironment) env).getRegion();
 
@@ -66,6 +67,7 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
       filter = new FilterList(stateColumnFilter, filter);
     }
     scan.setFilter(filter);
+    scan.setBatch(numGroups);
 
     // Scan and delete rows
     RegionScanner scanner = region.getScanner(scan);
@@ -75,33 +77,26 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
       synchronized (scanner) {
         while (hasMore) {
           keyValues.clear();
-          hasMore = scanner.nextRaw(keyValues, 1000, null);
+          hasMore = scanner.nextRaw(keyValues, null);
 
-          // Collect all the state columns of a row
-          for (KeyValue keyValue : keyValues) {
-            byte[] row = keyValue.getRow();
-            if (currentRow == null || Bytes.BYTES_COMPARATOR.compare(currentRow, row) != 0) {
-              if (currentRow != null && committedProcess == numGroups) {
-                // Delete it
-                deletes.add(Pair.<Mutation, Integer>newPair(new Delete(currentRow), null));
-              }
-              currentRow = row;
-              committedProcess = 0;
-            }
-
+          // Count how many committed processed of a row
+          int committedProcess = 0;
+          KeyValue keyValue = null;
+          Iterator<KeyValue> iterator = keyValues.iterator();
+          while (iterator.hasNext()) {
+            keyValue = iterator.next();
             if (isCommittedProcessed(keyValue, readPointer, excludes)) {
               committedProcess++;
             }
+          }
+          if (keyValue != null && committedProcess == numGroups) {
+            deletes.add(Pair.<Mutation, Integer>newPair(new Delete(keyValue.getRow()), null));
           }
         }
       }
     } finally {
       scanner.close();
       region.closeRegionOperation();
-    }
-
-    if (currentRow != null && committedProcess == numGroups) {
-      deletes.add(Pair.<Mutation, Integer>newPair(new Delete(currentRow), null));
     }
 
     if (deletes.isEmpty()) {
