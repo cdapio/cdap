@@ -221,7 +221,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
 
   @Override
   public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns) throws Exception {
-    dataOpsMetrics.recordRead(1);
+    reportRead(1);
     NavigableMap<byte[], byte[]> result = getRowMap(row, columns);
     return createOperationResult(result);
   }
@@ -229,7 +229,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   @Override
   public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
     throws Exception {
-    dataOpsMetrics.recordRead(1);
+    reportRead(1);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], byte[]> buffCols = buff.get(row);
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
@@ -267,7 +267,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
    */
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) throws Exception {
-    dataOpsMetrics.recordWrite(1, getSize(row) + getSize(columns) + getSize(values));
+    reportWrite(1, getSize(row) + getSize(columns) + getSize(values));
     NavigableMap<byte[], byte[]> colVals = buff.get(row);
     if (colVals == null) {
       colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -282,7 +282,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   @Override
   public void delete(byte[] row, byte[][] columns) throws Exception {
     // "0" because we don't know what gets deleted
-    dataOpsMetrics.recordWrite(1, 0);
+    reportWrite(1, 0);
     // same as writing null for every column
     // ANDREAS: shouldn't this be DELETE_MARKER?
     put(row, columns, new byte[columns.length][]);
@@ -290,8 +290,8 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
 
   @Override
   public Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
-    dataOpsMetrics.recordRead(1);
-    dataOpsMetrics.recordWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
+    reportRead(1);
+    reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
     // Logic:
     // * fetching current values
     // * updating values
@@ -330,8 +330,8 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
 
   @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) throws Exception {
-    dataOpsMetrics.recordRead(1);
-    dataOpsMetrics.recordWrite(1, getSize(row) + getSize(column) + getSize(newValue));
+    reportRead(1);
+    reportWrite(1, getSize(row) + getSize(column) + getSize(newValue));
     // NOTE: there is more efficient way to do it, but for now we want more simple implementation, not over-optimizing
     byte[][] columns = new byte[][]{column};
     byte[] currentValue = getRowMap(row, columns).get(column);
@@ -457,6 +457,18 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
       } else {
         dest.put(keyVal.getKey(), keyVal.getValue());
       }
+    }
+  }
+
+  private void reportWrite(int numOps, int dataSize) {
+    if (dataOpsMetrics != null) {
+      dataOpsMetrics.recordWrite(numOps, dataSize);
+    }
+  }
+
+  private void reportRead(int numOps) {
+    if (dataOpsMetrics != null) {
+      dataOpsMetrics.recordRead(numOps);
     }
   }
 
