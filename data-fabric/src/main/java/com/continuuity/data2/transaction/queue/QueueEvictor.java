@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.data2.transaction.Transaction;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
@@ -18,4 +19,12 @@ public interface QueueEvictor {
    *         carries number of entries being evicted.
    */
   ListenableFuture<Integer> evict(Transaction transaction);
+
+  static final QueueEvictor NOOP = new QueueEvictor() {
+
+    @Override
+    public ListenableFuture<Integer> evict(Transaction transaction) {
+      return Futures.immediateFuture(0);
+    }
+  };
 }
