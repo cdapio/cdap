@@ -18,12 +18,14 @@ import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.MultiVersionConsistencyControl;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -33,16 +35,18 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
 
   private static final Log LOG = LogFactory.getLog(HBaseQueueEvictionEndpoint.class);
 
+  private final Filter stateColumnFilter = new ColumnPrefixFilter(QueueConstants.STATE_COLUMN_PREFIX);
+
   @Override
-  public int evict(Scan scan, long readPointer, long smallestExclude, int numGroups) throws IOException {
+  public int evict(Scan scan, long readPointer, long[] excludes, int numGroups) throws IOException {
     CoprocessorEnvironment env = getEnvironment();
     if (!(env instanceof RegionCoprocessorEnvironment)) {
       LOG.warn("Environment is not RegionCoprocessorEnvironment. Ignore request.");
       return 0;
     }
 
-    LOG.info(String.format("Evict request received: readPointer=%d, smallestExclude=%d, numGroups=%d",
-                           readPointer, smallestExclude, numGroups));
+    LOG.debug(String.format("Evict request received: readPointer=%d, exclude size=%d, numGroups=%d",
+                           readPointer, excludes.length, numGroups));
 
     // Scan this region and deletes rows that have numGroups of state columns and all have committed process state
     List<KeyValue> keyValues = new ArrayList<KeyValue>();
@@ -57,38 +61,43 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
     // Setup scan filter to gives state columns only.
     Filter filter = scan.getFilter();
     if (filter == null) {
-      filter = new ColumnPrefixFilter(QueueConstants.STATE_COLUMN_PREFIX);
+      filter = stateColumnFilter;
     } else {
-      filter = new FilterList(new ColumnPrefixFilter(QueueConstants.STATE_COLUMN_PREFIX), filter);
+      filter = new FilterList(stateColumnFilter, filter);
     }
     scan.setFilter(filter);
 
     // Scan and delete rows
     RegionScanner scanner = region.getScanner(scan);
+    MultiVersionConsistencyControl.setThreadReadPoint(scanner.getMvccReadPoint());
+    region.startRegionOperation();
     try {
-      while (hasMore) {
-        keyValues.clear();
-        hasMore = scanner.next(keyValues);
+      synchronized (scanner) {
+        while (hasMore) {
+          keyValues.clear();
+          hasMore = scanner.nextRaw(keyValues, 1000, null);
 
-        // Collect all the state columns of a row
-        for (KeyValue keyValue : keyValues) {
-          byte[] row = keyValue.getRow();
-          if (currentRow == null || Bytes.BYTES_COMPARATOR.compare(currentRow, row) != 0) {
-            if (currentRow != null && committedProcess == numGroups) {
-              // Delete it
-              deletes.add(Pair.<Mutation, Integer>newPair(new Delete(currentRow), null));
+          // Collect all the state columns of a row
+          for (KeyValue keyValue : keyValues) {
+            byte[] row = keyValue.getRow();
+            if (currentRow == null || Bytes.BYTES_COMPARATOR.compare(currentRow, row) != 0) {
+              if (currentRow != null && committedProcess == numGroups) {
+                // Delete it
+                deletes.add(Pair.<Mutation, Integer>newPair(new Delete(currentRow), null));
+              }
+              currentRow = row;
+              committedProcess = 0;
             }
-            currentRow = row;
-            committedProcess = 0;
-          }
 
-          if (isCommittedProcessed(keyValue, readPointer, smallestExclude)) {
-            committedProcess++;
+            if (isCommittedProcessed(keyValue, readPointer, excludes)) {
+              committedProcess++;
+            }
           }
         }
       }
     } finally {
       scanner.close();
+      region.closeRegionOperation();
     }
 
     if (currentRow != null && committedProcess == numGroups) {
@@ -96,20 +105,20 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
     }
 
     if (deletes.isEmpty()) {
-      LOG.info(String.format("No entry to evict from region %s", region));
+      LOG.debug(String.format("No entry to evict from region %s", region));
       return 0;
     }
 
     region.batchMutate(deletes.toArray(new Pair[deletes.size()]));
 
-    LOG.info(String.format("Evicted %d entries from region %s", deletes.size(), region));
+    LOG.debug(String.format("Evicted %d entries from region %s", deletes.size(), region));
 
     return deletes.size();
   }
 
-  private boolean isCommittedProcessed(KeyValue stateColumn, long readPointer, long smallestExclude) {
+  private boolean isCommittedProcessed(KeyValue stateColumn, long readPointer, long[] excludes) {
     long writePointer = Bytes.toLong(stateColumn.getBuffer(), stateColumn.getValueOffset(), Longs.BYTES);
-    if (writePointer > readPointer || writePointer >= smallestExclude) {
+    if (writePointer > readPointer || Arrays.binarySearch(excludes, writePointer) >= 0) {
       return false;
     }
     byte state = stateColumn.getBuffer()[stateColumn.getValueOffset() + Longs.BYTES + Ints.BYTES];

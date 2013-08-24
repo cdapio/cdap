@@ -11,6 +11,7 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -32,6 +33,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -42,9 +47,12 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   // 4M write buffer for HTable
   private static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
+  private static final int MAX_EVICTION_THREAD_POOL_SIZE = 10;
+  private static final int EVICTION_THREAD_POOL_KEEP_ALIVE_SECONDS = 60;
 
   private final HBaseAdmin admin;
   private final byte[] tableName;
+  private final ExecutorService evictionExecutor;
 
   @Inject
   public HBaseQueueClientFactory(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
@@ -55,6 +63,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   public HBaseQueueClientFactory(HBaseAdmin admin, CConfiguration cConf) throws IOException {
     this.admin = admin;
     this.tableName = Bytes.toBytes(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME));
+    this.evictionExecutor = createEvictionExecutor();
 
     String jarDir = cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                               System.getProperty("java.io.tmpdir") + "/queue");
@@ -73,21 +82,34 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   @Override
   public Queue2Consumer createConsumer(QueueName queueName,
                                        ConsumerConfig consumerConfig, int numGroups) throws IOException {
-    HTable consumerTable = new HTable(admin.getConfiguration(), tableName);
-    // TODO: make configurable
-    consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-    consumerTable.setAutoFlush(false);
-    return new HBaseQueue2Consumer(consumerConfig, numGroups, consumerTable, queueName);
+    if (numGroups > 0 && consumerConfig.getInstanceId() == 0) {
+      return new HBaseQueue2Consumer(consumerConfig, createHTable(), queueName,
+                                     new HBaseQueueEvictor(createHTable(), queueName, evictionExecutor, numGroups));
+    }
+    return new HBaseQueue2Consumer(consumerConfig, createHTable(), queueName, QueueEvictor.NOOP);
   }
 
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    HTable hTable = new HTable(admin.getConfiguration(), tableName);
-    // TODO: make configurable
-    hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlush(false);
-    return new HBaseQueue2Producer(hTable, queueName, queueMetrics);
+    return new HBaseQueue2Producer(createHTable(), queueName, queueMetrics);
   }
+
+  private ExecutorService createEvictionExecutor() {
+    return new ThreadPoolExecutor(0, MAX_EVICTION_THREAD_POOL_SIZE,
+                                  EVICTION_THREAD_POOL_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
+                                  new SynchronousQueue<Runnable>(),
+                                  Threads.createDaemonThreadFactory("queue-eviction-%d"),
+                                  new ThreadPoolExecutor.CallerRunsPolicy());
+  }
+
+  private HTable createHTable() throws IOException {
+    HTable consumerTable = new HTable(admin.getConfiguration(), tableName);
+    // TODO: make configurable
+    consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
+    consumerTable.setAutoFlush(false);
+    return consumerTable;
+  }
+
 
   private FileSystem getFileSystem(CConfiguration cConfig, Configuration hConfig) throws IOException {
     String hdfsUser = cConfig.get(Constants.CFG_HDFS_USER);

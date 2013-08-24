@@ -40,8 +40,7 @@ public class RuntimeTable extends Table {
    * @param metricName the name to use for emitting metrics
    * @return the new ReadWriteTable
    */
-  public static RuntimeTable setRuntimeTable(Table table, DataFabric fabric,
-                                                 String metricName) throws Exception {
+  public static RuntimeTable setRuntimeTable(Table table, DataFabric fabric, String metricName) throws Exception {
 
     DataSetManager dataSetManager = fabric.getDataSetManager(OrderedColumnarTable.class);
 
@@ -145,18 +144,6 @@ public class RuntimeTable extends Table {
                                      "Read failed for table " + tableName(), e);
       }
     }
-  }
-
-  /**
-   * Helper to convert an increment operation.
-   * @param increment the table increment
-   * @return a corresponding data fabric increment operation
-   */
-  private com.continuuity.data.operation.Increment toOperation(Increment increment) {
-    com.continuuity.data.operation.Increment operation = new com.continuuity.data.operation.Increment(
-      this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues());
-    operation.setMetricName(getMetricName());
-    return operation;
   }
 
   @Override
