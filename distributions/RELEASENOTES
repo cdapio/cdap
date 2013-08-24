@@ -1,20 +1,15 @@
-Version 1.2.1
-    - API Changes
-        - Support for logging from within the flowlet
-        - Support for generating new metrics from within the flowlet
-              (only counters)
-    - Metrics
-        - Support for retrieving metrics for a flow through REST
-              interface (Gateway). Includes system as well as user metrics
-        - Added backend support for collecting 'FlowUser' metrics
-        - Nagios plugin providing status and metrics for a given flow
-    - Logging
-        - Support for collecting user logs centralized
-        - Integration for viewing logs from within web cloud app
-    - Other features
-        - Fabric reset from web cloud app
-        - Version of continuuity added to web cloud app
-    - Bugs and Fixes
-        - Dataset initialization intermittently fails
-        - Filter push down for HBase ReadColumnRange
-        - Cleaned logging, moved lot of logs to trace
+Version 1.6.1 (HOTFIX)
+
+Fixed Issues
+[ENG-3169] - AppFabric hangs on instance expansion 
+Increasing the number of flowlets for any given flow can cause the AppFabric service to hang indefinitely.
+
+[ENG-3183] - Opex still trying to connect to Metrics service 
+Opex service has been updated to prevent leaks and connection issue. This can cause thus service from becoming unresponsive which results in metrics not being displayed properly during flow execution.
+
+[ENG-3184] - gateway still initializing an OverlordMetricsReporter 
+Gateway service has been updated to prevent leaks and connection issue. This can cause the services from becoming unresponsive which results in metrics not being displayed properly during flow execution.
+
+[ENG-3190] - html javadoc does not contain all APIs 
+HTML Javadoc missing some API classes. Now updated with latest API changes.
+

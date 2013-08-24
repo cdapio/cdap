@@ -3,7 +3,7 @@
  */
 
 define([
-	'lib/text!../partials/timeselector.html'
+	'../lib/text!../partials/timeselector.html'
 	], function (Template) {
 
 	var Embeddable = Em.View.extend({

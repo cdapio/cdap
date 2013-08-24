@@ -14,7 +14,8 @@ var express = require('express'),
   https = require('https'),
   cookie = require('cookie'),
   utils = require('connect').utils,
-  crypto = require('crypto');
+  crypto = require('crypto'),
+  path = require('path');
 
 var Api = require('../common/api');
 
@@ -294,6 +295,13 @@ WebAppServer.prototype.bindRoutes = function(io) {
     'datasets': 'ByDataset'
   };
 
+  /**
+   * Enable testing.
+   */
+  this.app.get('/test', function (req, res) {
+    res.sendfile(path.resolve(__dirname + '../../../client/test/TestRunner.html'));
+  });
+
   /*
    * REST handler
    */
@@ -382,7 +390,6 @@ WebAppServer.prototype.bindRoutes = function(io) {
       });
 
     }
-
 
   });
 

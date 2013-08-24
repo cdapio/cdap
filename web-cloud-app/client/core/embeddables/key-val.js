@@ -1,5 +1,5 @@
 define([
-	'lib/text!../partials/key-val.html'
+	'../lib/text!../partials/key-val.html'
 	], function (Template) {
 
 		var Embeddable = Em.View.extend({

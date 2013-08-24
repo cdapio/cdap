@@ -1,10 +1,12 @@
 /*
- * Models Index
+ * . Index
  */
 
-define(['models/app', 'models/flow', 'models/flowlet', 'models/batch',
-	'models/run', 'models/stream', 'models/dataset', 'models/procedure', 'models/queue'],
-	function () {
+define([
+  'core/models/app', 'core/models/flow', 'core/models/flowlet', 'core/models/batch',
+	'core/models/run', 'core/models/stream', 'core/models/dataset', 'core/models/procedure',
+  'core/models/queue'
+  ], function () {
 
 		return Array.prototype.slice.call(arguments, 0);
 
