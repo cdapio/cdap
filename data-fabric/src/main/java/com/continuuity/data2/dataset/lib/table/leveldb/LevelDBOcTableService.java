@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBComparator;
 import org.iq80.leveldb.Options;
+import org.iq80.leveldb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ public class LevelDBOcTableService {
   private final int blockSize;
   private final long cacheSize;
   private final String basePath;
+  private final WriteOptions writeOptions;
 
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
@@ -38,10 +40,15 @@ public class LevelDBOcTableService {
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     blockSize = config.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
-
+    boolean doSync = config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC);
+    writeOptions = new WriteOptions().sync(doSync);
     if (basePath == null) {
       throw new IOException("No base directory configured for LevelDB.");
     }
+  }
+
+  public WriteOptions getWriteOptions() {
+    return writeOptions;
   }
 
   public DB getTable(String tableName) throws IOException {

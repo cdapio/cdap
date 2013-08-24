@@ -15,7 +15,7 @@ import org.iq80.leveldb.WriteBatch;
 import java.util.List;
 
 /**
- *
+ * A queue producer for levelDB.
  */
 public final class LevelDBQueue2Producer extends AbstractQueue2Producer {
 

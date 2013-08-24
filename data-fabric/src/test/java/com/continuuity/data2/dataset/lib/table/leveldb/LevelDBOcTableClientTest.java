@@ -33,7 +33,7 @@ public class LevelDBOcTableClientTest extends OrderedColumnarTableTest {
 
   @Override
   protected OrderedColumnarTable getTable(String name) throws IOException {
-    return new LevelDBOcTableClient(name, service.getTable(name));
+    return new LevelDBOcTableClient(name, service);
   }
 
   @Override
