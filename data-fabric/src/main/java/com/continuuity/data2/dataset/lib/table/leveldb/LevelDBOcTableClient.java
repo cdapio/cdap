@@ -61,7 +61,7 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
   @Override
   protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes) throws Exception {
     WriteBatch batch = db.createWriteBatch();
-    persistedVersion= tx == null ? System.currentTimeMillis() : tx.getWritePointer();
+    persistedVersion = tx == null ? System.currentTimeMillis() : tx.getWritePointer();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : changes.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
         byte[] key = createPutKey(row.getKey(), column.getKey(), persistedVersion);

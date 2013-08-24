@@ -358,7 +358,9 @@ public abstract class QueueTest {
     };
   }
 
-
+  /**
+   *
+   */
   protected static final class TxManager {
     private final Collection<TransactionAware> txAwares;
     private Transaction transaction;

@@ -6,11 +6,16 @@ import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data2.RuntimeTable;
+import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -40,7 +45,9 @@ public class DataSetInstantiationBase {
   private Map<String, DataSetSpecification> datasets =
     new HashMap<String, DataSetSpecification>();
 
-  private Set<TransactionAware> txAwareDataSets = Sets.newIdentityHashSet();
+  private Set<TransactionAware> txAware = Sets.newIdentityHashSet();
+  // in this collection we have only datasets initialized with getDataSet() which is OK for now...
+  private Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   public DataSetInstantiationBase() {
     this.classLoader = null;
@@ -159,15 +166,15 @@ public class DataSetInstantiationBase {
    */
   // NOTE: this is needed for now to minimize destruction of early integration of txds2
   public Iterable<TransactionAware> getTransactionAware() {
-    return Iterables.unmodifiableIterable(txAwareDataSets);
+    return Iterables.unmodifiableIterable(txAware);
   }
 
   public void addTransactionAware(TransactionAware transactionAware) {
-    txAwareDataSets.add(transactionAware);
+    txAware.add(transactionAware);
   }
 
   public void removeTransactionAware(TransactionAware transactionAware) {
-    txAwareDataSets.remove(transactionAware);
+    txAware.remove(transactionAware);
   }
 
   /**
@@ -228,7 +235,8 @@ public class DataSetInstantiationBase {
 
       TransactionAware txAware = runtimeTable.getTxAware();
       if (txAware != null) {
-        txAwareDataSets.add(txAware);
+        this.txAware.add(txAware);
+        this.txAwareToMetricNames.put(txAware, metricName);
       }
       return;
     }
@@ -297,4 +305,42 @@ public class DataSetInstantiationBase {
     return exn;
   }
 
+  private static final String DATASET_CONTEXT = "-.dataset";
+
+  public void setMetricsCollector(MetricsCollectionService metricsCollectionService,
+                                  final MetricsCollector programContextMetrics) {
+
+    final MetricsCollector dataSetMetrics =
+      metricsCollectionService.getCollector(MetricsScope.REACTOR, DATASET_CONTEXT, "0");
+
+    for (Map.Entry<TransactionAware, String> txAware : this.txAwareToMetricNames.entrySet()) {
+      if (txAware.getKey() instanceof DataSetClient) {
+        final String metricName = txAware.getValue();
+        DataSetClient.DataOpsMetrics dataOpsMetrics = new DataSetClient.DataOpsMetrics() {
+          @Override
+          public void recordRead(int opsCount) {
+            if (dataSetMetrics != null) {
+              dataSetMetrics.gauge("store.reads", 1, metricName);
+            }
+            if (programContextMetrics != null) {
+              programContextMetrics.gauge("store.ops", 1);
+            }
+          }
+
+          @Override
+          public void recordWrite(int opsCount, int dataSize) {
+            if (dataSetMetrics != null) {
+              dataSetMetrics.gauge("store.writes", 1, metricName);
+              dataSetMetrics.gauge("store.bytes", dataSize, metricName);
+            }
+            if (programContextMetrics != null) {
+              programContextMetrics.gauge("store.ops", 1);
+            }
+          }
+        };
+
+        ((DataSetClient) txAware.getKey()).setMetricsCollector(dataOpsMetrics);
+      }
+    }
+  }
 }

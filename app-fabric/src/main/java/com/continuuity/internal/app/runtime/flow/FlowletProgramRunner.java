@@ -38,6 +38,7 @@ import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.dataset.DataSetContext;
+import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Producer;
@@ -164,6 +165,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
 //                                               flowletClass.isAnnotationPresent(Async.class),
                                                false,
                                                metricsCollectionService);
+
+      // hack for propagating metrics collector to datasets
+      if (dataSetContext instanceof DataSetInstantiationBase) {
+        ((DataSetInstantiationBase) dataSetContext).setMetricsCollector(metricsCollectionService,
+                                                                        flowletContext.getSystemMetrics());
+      }
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
