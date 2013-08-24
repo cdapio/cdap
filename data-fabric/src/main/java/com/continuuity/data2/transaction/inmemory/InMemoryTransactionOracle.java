@@ -110,6 +110,11 @@ public class InMemoryTransactionOracle {
     return true;
   }
 
+  // hack for exposing important metric
+  public static int getExcludedListSize() {
+    return excludedList.size();
+  }
+
 //  private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
 //    if (changeIds.isEmpty()) {
 //      return false;

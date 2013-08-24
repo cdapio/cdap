@@ -43,7 +43,9 @@ public final class HBaseQueueEvictor implements QueueEvictor {
       public void run() {
         try {
           final AtomicInteger count = new AtomicInteger();
-          hTable.coprocessorExec(HBaseQueueEvictionProtocol.class, startRow, endRow, new Batch.Call<HBaseQueueEvictionProtocol, Integer>() {
+          hTable.coprocessorExec(HBaseQueueEvictionProtocol.class,
+                                 startRow, endRow,
+                                 new Batch.Call<HBaseQueueEvictionProtocol, Integer>() {
 
             @Override
             public Integer call(HBaseQueueEvictionProtocol protocol) throws IOException {
