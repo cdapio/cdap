@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
@@ -35,6 +36,8 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -45,6 +48,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -53,6 +59,11 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
 
   // TODO: Make these configurable.
   private static final int MAX_CACHE_ROWS = 100;
+  private static final long EVICTION_TIMEOUT_SECONDS = 10;
+  // How many commits to trigger eviction.
+  private static final int EVICTION_LIMIT = 1000;
+
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueue2Consumer.class);
 
   private static final Function<HBaseQueueEntry, byte[]> ENTRY_TO_BYTE_ARRAY = new Function<HBaseQueueEntry, byte[]>() {
     @Override
@@ -68,13 +79,14 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
   private final SortedMap<byte[], HBaseQueueEntry> consumingEntries;
   private final byte[] stateColumnName;
   private final byte[] queueRowPrefix;
-  private final int numGroups;
   private final Filter processedStateFilter;
+  private final QueueEvictor queueEvictor;
   private byte[] startRow;
   private Transaction transaction;
   private boolean committed;
+  private int commitCount;
 
-  HBaseQueue2Consumer(ConsumerConfig consumerConfig, int numGroups, HTable hTable, QueueName queueName) {
+  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName, QueueEvictor queueEvictor) {
     this.consumerConfig = consumerConfig;
     this.hTable = hTable;
     this.queueName = queueName;
@@ -82,10 +94,10 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
     this.startRow = queueRowPrefix;
-    this.numGroups = numGroups;
     this.stateColumnName = Bytes.add(QueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
     this.processedStateFilter = createStateFilter();
+    this.queueEvictor = queueEvictor;
   }
 
   @Override
@@ -185,7 +197,12 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
 
   @Override
   public void postTxCommit() {
-    // for now, do nothing. But this can be a place to perform eviction of queue entries.
+    commitCount++;
+    if (commitCount >= EVICTION_LIMIT) {
+      commitCount = 0;
+      // Fire and forget
+      queueEvictor.evict(transaction);
+    }
   }
 
   @Override
@@ -230,7 +247,20 @@ final class HBaseQueue2Consumer implements Queue2Consumer, TransactionAware, Clo
 
   @Override
   public void close() throws IOException {
-    hTable.close();
+    try {
+      if (transaction != null) {
+        // Use whatever last transaction for eviction.
+        // Has to block until eviction is completed
+        Uninterruptibles.getUninterruptibly(queueEvictor.evict(transaction),
+                                            EVICTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      }
+    } catch (ExecutionException e) {
+      LOG.warn("Failed to perform queue eviction.", e.getCause());
+    } catch (TimeoutException e) {
+      LOG.warn("Timeout when performing queue eviction.", e);
+    } finally {
+      hTable.close();
+    }
   }
 
   /**

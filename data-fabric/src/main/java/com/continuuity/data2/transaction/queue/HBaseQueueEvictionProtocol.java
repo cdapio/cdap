@@ -15,13 +15,12 @@ public interface HBaseQueueEvictionProtocol extends CoprocessorProtocol {
 
   /**
    * Evicts queue entries.
-   * @param scan The scan object for scanning table. The assumption is the scan object should be only
-   *             giving KeyValue of the state columns only.
+   * @param scan The scan object for scanning table.
    * @param readPointer
-   * @param smallestExclude
+   * @param excludes Sorted list of excluded pointers
    * @param numGroups
    * @return
    * @throws IOException
    */
-  int evict(Scan scan, long readPointer, long smallestExclude, int numGroups) throws IOException;
+  int evict(Scan scan, long readPointer, long[] excludes, int numGroups) throws IOException;
 }
