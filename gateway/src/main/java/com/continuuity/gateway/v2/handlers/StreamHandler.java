@@ -5,7 +5,9 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.verification.VerifyResult;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.http.core.AbstractHttpHandler;
+import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
@@ -71,6 +73,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 @Path("/stream")
 public class StreamHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
+  private static final String NAME = "stream.rest";
 
   private final OperationExecutor opex;
   private final StreamCache streamCache;
@@ -80,21 +83,20 @@ public class StreamHandler extends AbstractHttpHandler {
   private final GatewayAuthenticator authenticator;
 
   private final LoadingCache<ConsumerKey, Queue2Consumer> queueConsumerCache;
-  private final String name = "stream.rest";
 
   @Inject
-  public StreamHandler(OperationExecutor opex, StreamCache streamCache,
+  public StreamHandler(OperationExecutor opex, CConfiguration cConfig, StreamCache streamCache,
                        MetadataService metadataService, CMetrics cMetrics, GatewayMetrics gatewayMetrics,
-                       CachedStreamEventConsumer consumer, final QueueClientFactory queueClientFactory,
-                       GatewayAuthenticator authenticator) {
+                       final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator) {
     this.opex = opex;
     this.streamCache = streamCache;
     this.metadataService = metadataService;
     this.helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + name),
+      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME),
       gatewayMetrics);
-    this.consumer = consumer;
     this.authenticator = authenticator;
+
+    this.consumer = new CachedStreamEventConsumer(cConfig, opex, queueClientFactory);
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -127,6 +129,16 @@ public class StreamHandler extends AbstractHttpHandler {
               new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null), 1);
           }
         });
+  }
+
+  @Override
+  public void init(HandlerContext context) {
+    consumer.startAndWait();
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    consumer.stopAndWait();
   }
 
   @PUT
@@ -191,7 +203,7 @@ public class StreamHandler extends AbstractHttpHandler {
       // build a new event from the request, start with the headers
       Map<String, String> headers = Maps.newHashMap();
       // set some built-in headers
-      headers.put(Constants.HEADER_FROM_COLLECTOR, name);
+      headers.put(Constants.HEADER_FROM_COLLECTOR, NAME);
       headers.put(Constants.HEADER_DESTINATION_STREAM, destination);
       // and transfer all other headers that are to be preserved
       String prefix = destination + ".";

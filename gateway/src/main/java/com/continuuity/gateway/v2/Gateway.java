@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
@@ -24,7 +25,7 @@ public class Gateway extends AbstractIdleService {
   @Inject
   public Gateway(CConfiguration cConf,
                  @Named(MetricsConstants.ConfigKeys.SERVER_ADDRESS) InetAddress hostname,
-                 Set<HttpHandler> handlers) {
+                 Set<? extends HttpHandler> handlers) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
@@ -52,5 +53,9 @@ public class Gateway extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping Gateway...");
     httpService.stopAndWait();
+  }
+
+  public InetSocketAddress getBindAddress() {
+    return httpService.getBindAddress();
   }
 }
