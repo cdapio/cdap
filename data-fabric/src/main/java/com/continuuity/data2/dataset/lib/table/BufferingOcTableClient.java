@@ -486,6 +486,6 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   }
 
   private static int getSize(byte[] item) {
-    return item.length;
+    return item == null ? 0 : item.length;
   }
 }
