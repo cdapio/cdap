@@ -54,7 +54,7 @@ public class LevelDBOcTableCore {
     this.writeOptions = service.getWriteOptions();
   }
 
-  public void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes, long version) throws Exception {
+  public void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes, long version) throws IOException {
     WriteBatch batch = db.createWriteBatch();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : changes.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
@@ -65,7 +65,10 @@ public class LevelDBOcTableCore {
     db.write(batch, writeOptions);
   }
 
-  protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted, long version) throws Exception {
+  public void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted, long version) {
+    if (persisted.isEmpty()) {
+      return;
+    }
     WriteBatch batch = db.createWriteBatch();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
@@ -76,7 +79,7 @@ public class LevelDBOcTableCore {
     db.write(batch, writeOptions);
   }
 
-  protected Scanner scan(byte[] startRow, byte[] stopRow, Transaction tx) throws Exception {
+  public Scanner scan(byte[] startRow, byte[] stopRow, Transaction tx) throws IOException {
     DBIterator iterator = db.iterator();
     try {
       if (startRow != null) {
@@ -84,7 +87,7 @@ public class LevelDBOcTableCore {
       } else {
         iterator.seekToFirst();
       }
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       try {
         iterator.close();
       } catch (IOException ioe) {

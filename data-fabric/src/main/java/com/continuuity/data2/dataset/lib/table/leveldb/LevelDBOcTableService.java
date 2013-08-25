@@ -78,7 +78,7 @@ public class LevelDBOcTableService {
     return factory.open(new File(dbPath), options);
   }
 
-  public void createTable(String name) throws Exception {
+  public void createTable(String name) throws IOException {
     String dbPath = getDBPath(basePath, name);
 
     Options options = new Options();

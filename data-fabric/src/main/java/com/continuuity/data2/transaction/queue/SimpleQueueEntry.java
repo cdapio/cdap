@@ -4,14 +4,14 @@
 package com.continuuity.data2.transaction.queue;
 
 /**
- * Representing a queue entry fetched from HBase.
+ * Representing a queue entry fetched from persisted storage.
  */
-final class HBaseQueueEntry {
+final class SimpleQueueEntry {
   private final byte[] rowKey;
   private final byte[] data;
   private final byte[] state;
 
-  HBaseQueueEntry(byte[] rowKey, byte[] data, byte[] state) {
+  SimpleQueueEntry(byte[] rowKey, byte[] data, byte[] state) {
     this.rowKey = rowKey;
     this.data = data;
     this.state = state;

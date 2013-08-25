@@ -3,71 +3,32 @@
  */
 package com.continuuity.data2.transaction.queue;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.engine.leveldb.KeyValue;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import org.fusesource.leveldbjni.JniDBFactory;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBComparator;
-import org.iq80.leveldb.Options;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  *
  */
 public final class LevelDBQueueClientFactory implements QueueClientFactory {
 
-  private static final String DB_FILE_PREFIX = "ldb_";
+  private LevelDBOcTableService service;
 
-  private static final LevelDBQueueClientFactory INSTANCE = new LevelDBQueueClientFactory();
-
-  public static LevelDBQueueClientFactory getInstance() {
-    return INSTANCE;
-  }
+  public static final String QUEUE_TABLE_NAME = "__queues";
+  private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
-  @Named("LevelDBOVCTableHandleBasePath")
-  private String basePath;
-
-  @Inject
-  @Named("LevelDBOVCTableHandleBlockSize")
-  private Integer blockSize;
-
-  @Inject
-  @Named("LevelDBOVCTableHandleCacheSize")
-  private Long cacheSize;
-
-  @Inject
-  @Named("DataFabricOperationExecutorConfig")
-  private CConfiguration cConf;
-
-  private final LoadingCache<String, DB> dbCache;
-
-  private LevelDBQueueClientFactory() {
-    dbCache = CacheBuilder.newBuilder().build(new CacheLoader<String, DB>() {
-      @Override
-      public DB load(String key) throws Exception {
-        try {
-          return JniDBFactory.factory.open(generateDBPath(key), generateDBOptions(false, false));
-        } catch (Exception e) {
-          // Table not exists, try creating it
-          return JniDBFactory.factory.open(generateDBPath(key), generateDBOptions(true, false));
-        }
-      }
-    });
+  LevelDBQueueClientFactory(LevelDBOcTableService service) {
+    this.service = service;
   }
 
   @Override
@@ -76,56 +37,28 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
-  public Queue2Consumer createConsumer(QueueName queueName,
-                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
-    return new LevelDBQueue2Consumer(dbCache.getUnchecked(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME)),
-                                     queueName, consumerConfig);
+  public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
+    throws IOException {
+    return new LevelDBQueue2Consumer(new LevelDBOcTableCore(QUEUE_TABLE_NAME, service),
+                                     getQueueLock(queueName.toString()),
+                                     consumerConfig, queueName, QueueEvictor.NOOP);
   }
 
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    return new LevelDBQueue2Producer(dbCache.getUnchecked(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME)),
+    return new LevelDBQueue2Producer(new LevelDBOcTableCore(QUEUE_TABLE_NAME, service),
                                      queueName, queueMetrics);
-
   }
 
-  private File generateDBPath(String tableName) throws UnsupportedEncodingException {
-    return new File(basePath, DB_FILE_PREFIX + URLEncoder.encode(tableName, "UTF-8"));
-  }
-
-  private Options generateDBOptions(boolean createIfMissing, boolean errorIfExists) {
-    Options options = new Options();
-    options.createIfMissing(createIfMissing);
-    options.errorIfExists(errorIfExists);
-    options.comparator(new KeyValueDBComparator());
-    options.blockSize(blockSize);
-    options.cacheSize(cacheSize);
-    return options;
-  }
-
-  /**
-   * A comparator for the keys of {@link KeyValue} pairs.
-   */
-  public static class KeyValueDBComparator implements DBComparator {
-
-    @Override
-    public int compare(byte[] left, byte[] right) {
-      return KeyValue.KEY_COMPARATOR.compare(left, right);
+  private Object getQueueLock(String queueName) {
+    Object lock = queueLocks.get(queueName);
+    if (lock == null) {
+      lock = new Object();
+      Object existing = queueLocks.putIfAbsent(queueName, lock);
+      if (existing != null) {
+        lock = existing;
+      }
     }
-
-    @Override
-    public byte[] findShortSuccessor(byte[] key) {
-      return key;
-    }
-
-    @Override
-    public byte[] findShortestSeparator(byte[] start, byte[] limit) {
-      return start;
-    }
-
-    @Override
-    public String name() {
-      return "ldb-kv";
-    }
+    return lock;
   }
 }

@@ -5,6 +5,7 @@ import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClie
 import com.continuuity.data2.transaction.Transaction;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.NavigableMap;
 
 /**

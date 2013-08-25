@@ -5,108 +5,104 @@ package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.leveldb.KeyValue;
+import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.DequeueResult;
-import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.google.common.collect.ImmutableList;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBIterator;
+import com.google.common.collect.Maps;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
 
 /**
- *
+ * Queue consumer for levelDB
  */
-public final class LevelDBQueue2Consumer implements Queue2Consumer, TransactionAware {
+public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
 
-  private final DB db;
-  private final QueueName queueName;
-  private final ConsumerConfig consumerConfig;
-  private Transaction transaction;
-  private byte[] queueRowPrefix;
-  private byte[] startRow;
+  // used for undoing state. The value does not matter, but the OcTable interface was written to expect some value...
+  private static final byte[] DUMMY_STATE_CONTENT = { };
+  private static final long[] NO_EXCLUDES = { };
+  private static final Transaction ALL_LATEST_TRANSACTION =
+    new Transaction(KeyValue.LATEST_TIMESTAMP, KeyValue.LATEST_TIMESTAMP, NO_EXCLUDES);
 
-  public LevelDBQueue2Consumer(DB db, QueueName queueName, ConsumerConfig consumerConfig) {
-    this.db = db;
-    this.queueName = queueName;
-    this.consumerConfig = consumerConfig;
-    this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
-    this.startRow = queueRowPrefix;
+  private final LevelDBOcTableCore core;
+  private final Object lock;
+
+  LevelDBQueue2Consumer(LevelDBOcTableCore tableCore, Object queueLock, ConsumerConfig consumerConfig,
+                        QueueName queueName, QueueEvictor queueEvictor) {
+    super(consumerConfig, queueName, queueEvictor);
+    core = tableCore;
+    lock = queueLock;
   }
 
-  @Override
-  public QueueName getQueueName() {
-    return queueName;
-  }
+  private final NavigableMap<byte[], NavigableMap<byte[], byte[]>>
+    rowMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+  private final NavigableMap<byte[], byte[]>
+    colMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
   @Override
-  public ConsumerConfig getConfig() {
-    return consumerConfig;
-  }
+  protected boolean claimEntry(byte[] rowKey, byte[] stateContent) throws IOException {
+    synchronized (this.lock) {
+      Map<byte[], byte[]> row =
+        core.getRow(rowKey, new byte[][] { stateColumnName }, null, null, -1, ALL_LATEST_TRANSACTION);
+      if (row.get(stateColumnName) != null) {
+        return false;
+      }
+      rowMapForClaim.clear();
+      colMapForClaim.clear();
+      colMapForClaim.put(stateColumnName, stateContent);
+      rowMapForClaim.put(rowKey, colMapForClaim);
 
-  @Override
-  public DequeueResult dequeue() throws IOException {
-    return dequeue(1);
-  }
-
-  @Override
-  public DequeueResult dequeue(int maxBatchSize) throws IOException {
-    DBIterator iterator = db.iterator();
-    KeyValue startKV = new KeyValue(startRow, QueueConstants.COLUMN_FAMILY, null,
-                               KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Put);
-
-    iterator.seek(startKV.getKey());
-    while (iterator.hasNext()) {
-      KeyValue keyValue = createKeyValue(iterator.next());
-
-      System.out.println(Bytes.toString(keyValue.getQualifier()));
-      System.out.println(keyValue.getValueLength());
+      core.persist(rowMapForClaim, KeyValue.LATEST_TIMESTAMP);
+      return true;
     }
-
-    return null;
   }
 
   @Override
-  public void startTx(Transaction tx) {
-    transaction = tx;
+  protected void updateState(Set<byte[]> rowKeys, byte[] stateColumnName, byte[] stateContent) throws IOException {
+    if (rowKeys.isEmpty()) {
+      return;
+    }
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (byte[] rowKey : rowKeys) {
+      NavigableMap<byte[], byte[]> row = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      row.put(stateColumnName, stateContent);
+      changes.put(rowKey, row);
+    }
+    core.persist(changes, KeyValue.LATEST_TIMESTAMP);
   }
 
   @Override
-  public Collection<byte[]> getTxChanges() {
-    return ImmutableList.of();
+  protected void undoState(Set<byte[]> rowKeys, byte[] stateColumnName) throws IOException, InterruptedException {
+    if (rowKeys.isEmpty()) {
+      return;
+    }
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (byte[] rowKey : rowKeys) {
+      NavigableMap<byte[], byte[]> row = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      row.put(stateColumnName, DUMMY_STATE_CONTENT);
+      changes.put(rowKey, row);
+    }
+    core.undo(changes, KeyValue.LATEST_TIMESTAMP);
   }
 
   @Override
-  public boolean commitTx() throws Exception {
-    return true;
-  }
+  protected QueueScanner getScanner(byte[] startRow, byte[] stopRow) throws IOException {
+    final Scanner scanner = core.scan(startRow, stopRow, ALL_LATEST_TRANSACTION);
+    return new QueueScanner() {
+      @Override
+      public ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException {
+        return scanner.next();
+      }
 
-  @Override
-  public void postTxCommit() {
-    // No-op
-  }
-
-  @Override
-  public boolean rollbackTx() throws Exception {
-    return true;
-  }
-
-  private KeyValue createKeyValue(Map.Entry<byte[], byte[]> entry) {
-    byte[] key = entry.getKey();
-    byte[] value = entry.getValue();
-
-    int len = key.length + value.length + (2 * Bytes.SIZEOF_INT);
-    byte[] kvBytes = new byte[len];
-    int pos = 0;
-    pos = Bytes.putInt(kvBytes, pos, key.length);
-    pos = Bytes.putInt(kvBytes, pos, value.length);
-    pos = Bytes.putBytes(kvBytes, pos, key, 0, key.length);
-    Bytes.putBytes(kvBytes, pos, value, 0, value.length);
-    return new KeyValue(kvBytes);
+      @Override
+      public void close() throws IOException {
+        scanner.close();
+      }
+    };
   }
 }

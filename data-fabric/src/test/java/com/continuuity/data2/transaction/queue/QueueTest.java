@@ -43,6 +43,8 @@ public abstract class QueueTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
+  private static final int ROUNDS = 30000;
+
   protected static OperationExecutor opex;
   protected static QueueClientFactory queueClientFactory;
 
@@ -50,34 +52,34 @@ public abstract class QueueTest {
   @Test
   public void testSingleFifo() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlefifo");
-    enqueueDequeue(queueName, 30000, 30000, 1, 1, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
   }
 
   // Simple enqueue and dequeue with three consumers, no batch
   @Test
   public void testMultiFifo() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multififo");
-    enqueueDequeue(queueName, 30000, 30000, 1, 3, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 3, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test
   public void testSingleHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlehash");
-    enqueueDequeue(queueName, 60000, 30000, 1, 1, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
   }
 
   @Test
   public void testMultiHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multihash");
-    enqueueDequeue(queueName, 60000, 30000, 1, 3, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 3, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
   }
 
   // Batch enqueue and batch dequeue with one consumer.
   @Test
   public void testBatchHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "batchhash");
-    enqueueDequeue(queueName, 60000, 30000, 10, 1, DequeueStrategy.HASH, 50, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 50, 120, TimeUnit.SECONDS);
   }
 
   @Test
