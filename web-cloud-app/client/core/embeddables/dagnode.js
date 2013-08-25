@@ -3,7 +3,7 @@
  */
 
 define([
-	'lib/text!../partials/dagnode.html'
+	'../lib/text!../partials/dagnode.html'
 	], function (Template) {
 
 		var Embeddable = Em.View.extend({

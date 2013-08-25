@@ -149,8 +149,7 @@ define([], function () {
 
 		},
 
-		exec: function (action) {
-
+		exec: function () {
 			var control = $(event.target);
 			if (event.target.tagName === "SPAN") {
 				control = control.parent();

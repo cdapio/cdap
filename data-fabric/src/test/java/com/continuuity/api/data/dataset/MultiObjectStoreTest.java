@@ -33,8 +33,6 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   private static final byte[] a = { 'a' };
   private static final byte[] DEFAULT_OBJECT_STORE_COLUMN = { 'c' };
 
-  private static TransactionAgent txAgent;
-
   @BeforeClass
   public static void configure() throws Exception {
     DataSet stringStore = new MultiObjectStore<String>("strings", String.class);
@@ -51,13 +49,6 @@ public class MultiObjectStoreTest extends DataSetTestBase {
 
     setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore,
                                          batchStore, intStore, multiStringStore, batchTestsMultiCol));
-    // this test runs all operations synchronously
-    txAgent = newTransaction();
-  }
-
-  @AfterClass
-  public static void finish() throws OperationException {
-    commitTransaction(txAgent);
   }
 
   @Test
@@ -126,6 +117,9 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   public void testInstantiateWrongClass() throws Exception {
     // note: due to type erasure, this succeeds
     MultiObjectStore<Custom> store = instantiator.getDataSet("pairs");
+    MultiObjectStore<ImmutablePair<Integer, String>> pairStore = instantiator.getDataSet("pairs");
+    TransactionAgent txAgent = newTransaction();
+
     // but now it must fail with incompatible type
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     try {
@@ -137,13 +131,14 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       }
     }
     // write a correct object to the pair store
-    MultiObjectStore<ImmutablePair<Integer, String>> pairStore = instantiator.getDataSet("pairs");
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair); // should succeed
+    commitTransaction(txAgent);
     // now try to read that as a custom object, should fail with class cast
+    txAgent = newTransaction();
     try {
       custom = store.read(a);
-      Assert.fail("write should have failed with class cast exception");
+      Assert.fail("read should have failed with class cast exception");
     } catch (ClassCastException e) {
       // only this exception is expected (read will return a pair, but the assignment implicitly casts).
     }
