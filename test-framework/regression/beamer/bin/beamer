@@ -1,0 +1,410 @@
+#!/usr/bin/env bash
+
+version="0.0.1"
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+conf="$bin/../conf"
+script=`basename $0`
+command=$1;
+user=$USER
+epoch=`date +%s`
+build_home=${REACTOR_HOME:-$bin/../../..}
+cuser=${BEAMER_USER:-$USER}
+jumpbox=${BEAMER_JUMPBOX:-lm101.sw.joyent.continuuity.com}
+
+if [ ! -f "$build_home/version.txt" ] ; then
+  echo "$build_home does not exists. Set REACTOR_HOME."
+  exit 1 
+fi
+
+version=`cat $build_home/version.txt`
+branch="branch"
+
+function build() {
+  local component=$1; shift
+  local xcomponent=$1; shift
+  local release=$1; shift
+  local tests=$1; shift
+
+  pushd $build_home >/dev/null
+
+  tag="snapshot"
+  info=""
+  xcmd=" "
+  if [[ "x${release}" == "x1" ]]; then
+    info="release"
+    tag="release"
+    xcmd="$xcmd -PfinalRelease=true"
+  else
+    info="snapshot"
+  fi
+ 
+  if [[ "x${tests}" == "x0" ]]; then
+    xcmd="$xcmd -x test"
+    info="$info, without test"
+  else
+    info="$info, with test"
+  fi
+
+  echo "Locally building component $xcomponent, version $version, branch $branch, $info"
+  rm -rf $build_home/$component/build >/dev/null 2>/dev/null
+  $build_home/gradlew :${component}:rpmPrepackager $xcmd >/dev/null 2>/dev/null
+  if [[ $? -ne 0 ]]; then
+    echo "Build for component ${component} failed"
+    exit 0
+  fi
+
+  package="continuuity-${xcomponent}-${user}-${version}-${tag}.${epoch}.tgz"
+  echo "Packaging component : $xcomponent, Package : $package"
+  popd >/dev/null
+  pushd $build_home/$component/build/stage-packaging >/dev/null
+  tar cvzf $build_home/$component/build/$package * >/dev/null 2>/dev/null
+  if [[ $? -eq 0 ]]; then
+    echo $build_home/$component/build/$package > $build_home/$component/build/receipt
+  else
+    echo "Component $xcomponent packaging failed" >/dev/null
+    popd >/dev/null
+    exit -1
+  fi
+  popd >/dev/null
+}
+
+function hostname() {
+  component=$1; shift
+  cluster=$1; shift
+  l=`grep $component $conf/cluster/$cluster.conf 2>/dev/null`
+  host=`echo $l | awk ' { print $2 }'`
+  echo $host
+}
+
+function usage() {
+  echo ""
+  echo "Developer Beamer v$version"
+  echo ""
+  echo "$script <section> <command> <component> -c <cluster> [ -p <package>] [-r] [-t]"
+  echo ""
+  echo "Section"
+  echo "  software     All software related operations"
+  echo "  cluster      All cluster related operations"
+  echo "  config       All config operations"
+  echo ""
+  echo "Commands for section software"
+  echo ""
+  echo "  install      Install a components on the cluster from local build"
+  echo "  list         List all the snapshot builds available on the cluster (*) indicates currently active"
+  echo "  lock         Lock the component on the cluster."
+  echo "  unlock       Unlock the component on the cluster"
+  echo "  activate     Activate a older version of snapshot on the cluster"
+  echo "  start        Start of all the services in a component"
+  echo "  stop         Stop of all the services in a component"
+  echo "  restart      Restart of all the services in a component"
+  echo "  status       Status of all the services in a component"
+  echo ""
+  echo "  Options"
+  echo "    -c Specifies the cluster on which the command would operate on"
+  echo "    -p Specifies the package"
+  echo "    -r Specifies to use a release version (no SNAPSHOT)"
+  echo "    -t Specifies to run tests for the component locally before uploading"
+  echo ""
+  echo "Commands for section cluster"
+  echo ""
+  echo "  create         Create cluster"
+  echo "  destroy        Destroy cluster"
+  echo "  list           List clusters owned by you"
+  echo "  activity       List all the activity across all users and clusters"
+  echo "  show-mapping   Shows cluster component host mapping"
+  echo "  show-installed Shows installed components on the cluster"
+  echo ""
+  echo "  Options"
+  echo "    -c Specifies the name of the cluster"
+  echo "    -t Specifies the type of the cluster"
+  echo ""
+  echo "Environment Variables"
+  echo ""
+  echo "  REACTOR_HOME   Specifies the path to where reactor git project exists (Current : $REACTOR_HOME)"
+  echo "  BEAMER_USER    Specifies the name of the user to be used for communicating with cluster (default: $USER)"
+  echo "  BEAMER_JUMPBOX Specifies the jumpbox to be used for cluster operations"
+  echo ""
+}
+
+function install() {
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  local xcomponent=$1; shift
+  local release=$1; shift
+  local tests=$1; shift
+
+  echo "Installing component $xcomponent on cluster $cluster"
+  build $component $xcomponent $release $tests 
+  tar=`cat $build_home/$component/build/receipt`
+  tar_name=`basename $tar`
+  tar_remote_path=/tmp/$tar_name
+  scp $tar $cuser@$host:/tmp
+  installer=/tmp/beamer.deployer.$epoch.sh
+  scp -q $bin/beamer-project-deployer $cuser@$host:$installer
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo chmod +x $installer
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo $installer $xcomponent $tar_remote_path $branch
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f $installer $tar_remote_path
+}
+
+function list() {
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  echo "Listing component $component on cluster $cluster"
+
+  pkg=`ssh -oStrictHostKeyChecking=no -l $cuser $host sudo readlink /opt/continuuity/$component/lib | awk -F"/" ' { print $4 } '`
+  for file in `ssh -oStrictHostKeyChecking=no -l $cuser $host sudo ls -1 /var/beamer | grep $component | grep -v lock`
+  do
+    if [[ "x${pkg}" == "x$file" ]]; then
+      echo "$file (*)"
+    else
+      echo "$file"
+    fi
+  done
+}
+
+function activate() {
+  local cluster=$1; shift;
+  local host=$1; shift
+  local component=$1; shift
+  local package=$1; shift
+
+  echo "Activating package $package on cluster $cluster"
+  installer=/tmp/beamer.deployer.$epoch.sh
+  scp -q $bin/beamer-project-deployer $cuser@$host:$installer
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo chmod +x $installer
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo $installer $component /tmp/$package
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f $installer
+}
+
+function lock() {
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo touch /var/beamer/$component.lock
+  echo "Component $component has been locked on cluster $cluster"
+}
+
+function unlock() {
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f /var/beamer/$component.lock
+  echo "Component $component has been unlocked on cluster $cluster"
+}
+
+function pre_service_op() {
+  local host=$1; shift
+  scp -q $bin/beamer-service $cuser@$host:/tmp/beamer-service-$epoch.sh
+  ssh -oStrictHostKeyChecking=no -l $cuser $host chmod +x /tmp/beamer-service-$epoch.sh
+}
+
+function post_service_op() {
+  local host=$1; shift
+  ssh -oStrictHostKeyChecking=no -l $cuser $host rm -f /tmp/beamer-service-$epoch.sh
+}
+
+function service() {
+  local command=$1; shift
+  local cluster=$1; shift
+  local host=$1; shift
+  local component=$1; shift
+  pre_service_op $host
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo /tmp/beamer-service-$epoch.sh $command $component
+  post_service_op $host
+}
+
+function map() {
+  local cluster=$1; shift
+  echo "Mapping for cluster $cluster"
+  echo ""
+  cat $conf/cluster/$cluster.conf
+}
+
+function project_map() {
+  local component=$1; shift
+  mapped_component=`grep $component $conf/project.map 2>/dev/null`
+  if [[ "x${mapped_component}" == "x" ]]; then
+    echo $component
+    return
+  fi
+  echo $mapped_component | awk ' { print $2 } '
+}
+
+function show_installed() {
+  local cluster=$1; shift
+  echo "Installed continuuity components on cluster $cluster"
+  if [[ ! -f $conf/cluster/$cluster.host.conf ]]; then
+   echo "Invalid cluster $cluster"
+   return   
+  fi
+
+  v=0
+  for host in `cat $conf/cluster/$cluster.host.conf`
+  do
+    for component in `ssh -oStrictHostKeyChecking=no -l $cuser $host ls -1 /opt/continuuity 2>/dev/null`
+    do
+      v=1
+      printf "%-30s %20s\n" $component $host
+    done
+  done
+  if [[ "x${v}" == "x0" ]]; then
+    echo "No continuuity components are installed on this cluster"
+  fi
+}
+
+function create_cluster() {
+  local cluster=$1; shift
+  local type=$1; shift
+  echo "Creating cluster $cluster of type $type (This will take approximately 10-15 minutes)"
+  ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh $cuser create $cluster
+  echo "Install as much as you want to cluster $cluster. Host $cluster.dev.continuuity.net is created."
+}
+
+echoerr() { 
+  echo "$@" 1>&2; 
+}
+
+function destroy_cluster() {
+  local cluster=$1; shift
+  local type=$1; shift
+  echo "Destroying cluster $cluster of type $type"
+  ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh $cuser delete $cluster
+}
+
+function list_clusters() {
+  local type=$1; shift
+  c=0
+  for cluster in `ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh A list B | grep $cuser | grep create | sed 's/ /%/g'`
+  do 
+     c=1
+     echo $cluster | awk -F"%" ' { print $3 } '
+  done
+
+  if [[ "x${c}" == "x0" ]]; then
+    echo "No clusters for user $cuser"
+  fi
+}
+
+function activity_log() {
+  local type=$1; shift
+  local c=1
+  echoerr "Activity log of all creations & deletions of ${type} clusters"
+  for line in `ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh A list B | sed 's/ /%/g'`
+  do
+    local user=`echo $line | awk -F"%" ' { print $1 } '`
+    local action=`echo $line | awk -F"%" ' { print $2 }'`
+    local cluster=`echo $line | awk -F"%" ' { print $3}'`
+    printf "%03d %10s %10s %20s\n" $c $user $action $cluster
+    ((c++))
+  done
+}
+
+section=$1; shift
+
+if [[ "x${section}" == "xsoftware" ]]; then
+  cmd=$1; shift
+
+  if [[ "x${cmd}" == "x" ]]; then
+    echo "Command not specified"
+    usage 
+    exit -1
+  fi
+
+  xcomponent=$1; shift
+  if [[ "x${xcomponent}" == "x" ]] || [[ ! -d $build_home/$xcomponent ]]; then
+    echo "Component is missing or doesn't exist"
+    usage
+    exit -1
+  fi
+
+  component=$(project_map $xcomponent)
+
+  cluster=
+  package=
+  release=0
+  tests=0
+  while [ $# -gt 0 ]
+  do
+     case "$1" in 
+       -c) shift; cluster=$1; shift;;
+       -p) shift; package=$1; shift;;
+       -r) shift; release=1;;
+       -t) shift; tests=1;;
+       *)  usage; exit 1
+     esac  
+  done
+
+  if [[ "x${cluster}" == "x" ]]; then
+    echo "Cluster not specified. Please use -c option"
+    usage
+    exit -1
+  fi
+
+  host=$(hostname $xcomponent $cluster)
+
+  if [[ "x${host}" == "x" ]]; then
+    echo "Component has no host assigned in the cluster $cluster"
+    usage
+    exit -1
+  fi
+
+  case "$cmd" in 
+    install) install $cluster $host $component $xcomponent $release $tests;;
+    list) list $cluster $host $xcomponent;;
+    activate) activate $cluster $host $xcomponent $package;;
+    lock) lock $cluster $host $xcomponent;;
+    unlock) unlock $cluster $host $xcomponent;;
+    start) service start $cluster $host $xcomponent;;
+    stop)  service stop $cluster $host $xcomponent;;
+    restart) service restart $cluster $host $xcomponent;;
+    status) service status $cluster $host $xcomponent;;
+    *) usage; exit 1
+  esac
+  exit 0
+fi
+
+if [[ "x${section}" == "xcluster" ]]; then
+  cmd=$1; shift
+
+  cluster=
+  type=
+  while [ $# -gt 0 ]
+  do
+     case "$1" in
+       -c) shift; cluster="$1"; shift;;
+       -t) shift; type=$1; shift;;
+       *)  usage; exit 1
+     esac
+  done
+
+  if [[ "x${cluster}" == "x" ]] && [[ "x${cmd}" != "xlist" ]] && [[ "x${cmd}" != "xactivity" ]]; then
+    echo "Cluster not specified. Please use -c option"
+    usage
+    exit -1
+  fi
+
+  if [[ "x${type}" == "x" ]]; then
+    type="dev"
+  fi
+
+  if [[ "x${type}" != "xdev" ]]; then
+    echo "Invalid type specified. Only 'dev' is currently supported"
+    exit -1
+  fi
+
+  case "$cmd" in
+    show-mapping) map $cluster;;
+    show-installed) show_installed $cluster;;
+    create) create_cluster $cluster $type;;
+    destroy) destroy_cluster $cluster $type;;
+    list) list_clusters $type;;
+    activity) activity_log $type;;
+  esac
+  exit 0
+fi
+
+usage
+exit 1

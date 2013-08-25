@@ -14,7 +14,6 @@ else
   exit 0
 fi
 
-# Determine service name from the name of the symlink being run
 SVCNAME=`basename $0`
 
 if [[ "X$SVCNAME" == "Xsvc" ]]; then
@@ -35,7 +34,8 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # Determine package name by applying regex to the target of the symlink being run
-PKGNAME=`echo $TARGET | sed -e 's:/opt/continuuity/\([^/]*\)/.*:\1:'`
+D1=`dirname $TARGET`; D2=`dirname $D1`
+PKGNAME=`basename $D2`
 if [[ "X$PKGNAME" == "X" ]]; then
   echo "Create a soft link to this script as svc-<component>"
   echo "E.g. ln -s service svc-<component>"
