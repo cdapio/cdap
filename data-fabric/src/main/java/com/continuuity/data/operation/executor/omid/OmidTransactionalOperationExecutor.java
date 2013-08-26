@@ -1454,16 +1454,18 @@ public class OmidTransactionalOperationExecutor
   // this is a hack for reporting gauge metric: current metrics system supports only counters that are aggregated on
   // 10-sec basis, so we need to report gauge not more frequently than every 10 sec.
   private void startTxSystemMetricsReporter() {
-    Thread txSystemMetricsReporter = new Thread() {
+    Thread txSystemMetricsReporter = new Thread("tx-reporter") {
       @Override
       public void run() {
         while (true) {
           int excludedListSize = InMemoryTransactionOracle.getExcludedListSize();
-          if (txSystemMetrics != null) {
-            txSystemMetrics.gauge("tx.excluded", excludedListSize);
+          if (excludedListSize > 0) {
+            if (txSystemMetrics != null) {
+              txSystemMetrics.gauge("tx.excluded", excludedListSize);
+            }
+            // This hack is needed because current metrics system is not flexible when it comes to adding new metrics
+            Log.info("tx.excluded=" + excludedListSize);
           }
-          // This hack is needed because current metrics system is not flexible when it comes to adding new metrics
-          Log.info("tx.excluded=" + excludedListSize);
           try {
             TimeUnit.SECONDS.sleep(10);
           } catch (InterruptedException e) {

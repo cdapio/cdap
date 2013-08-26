@@ -267,7 +267,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
     if (GeneratorFlowlet.class.isAssignableFrom(flowletType.getRawType())) {
       Method method = flowletType.getRawType().getMethod("generate");
-      ProcessMethod generatorMethod = processMethodFactory.create(method);
+      ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
+      int maxRetries = processInputAnnotation == null ? ProcessInput.DEFAULT_MAX_RETRIES
+                                                      : processInputAnnotation.maxRetries();
+      ProcessMethod generatorMethod = processMethodFactory.create(method, maxRetries);
       ConsumerConfig dummyConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
 
       return ImmutableList.of(processSpecFactory.create(ImmutableSet.<String>of(),
@@ -294,6 +297,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
         } else {
           inputNames = ImmutableSet.copyOf(processInputAnnotation.value());
         }
+        int maxRetries = processInputAnnotation == null ? ProcessInput.DEFAULT_MAX_RETRIES
+                                                        : processInputAnnotation.maxRetries();
 
         ConsumerConfig consumerConfig = getConsumerConfig(flowletContext, method);
         Integer batchSize = getBatchSize(method);
@@ -311,7 +316,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
           }
           Schema schema = schemaGenerator.generate(dataType.getType());
 
-          ProcessMethod processMethod = processMethodFactory.create(method);
+          ProcessMethod processMethod = processMethodFactory.create(method, maxRetries);
           ProcessSpecification processSpec = processSpecFactory.create(inputNames, schema, dataType,
                                                                        processMethod, consumerConfig,
                                                                        (batchSize == null) ? 1 : batchSize);
@@ -437,8 +442,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                     final DataFabricFacade dataFabricFacade) {
     return new ProcessMethodFactory() {
       @Override
-      public ProcessMethod create(Method method) {
-        return ReflectionProcessMethod.create(flowlet, method);
+      public ProcessMethod create(Method method, int maxRetries) {
+        return ReflectionProcessMethod.create(flowlet, method, maxRetries);
 
 
       }
@@ -547,7 +552,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface ProcessMethodFactory {
-    ProcessMethod create(Method method);
+    ProcessMethod create(Method method, int maxRetries);
   }
 
   private static interface ProcessSpecificationFactory {

@@ -117,6 +117,7 @@ public class MultiConsumerTest {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
 
+    @ProcessInput(maxRetries = Integer.MAX_VALUE)
     public void process(long l) throws OperationException {
       accumulated.increment(KEY, l);
     }
@@ -129,7 +130,7 @@ public class MultiConsumerTest {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
 
-    @ProcessInput("str")
+    @ProcessInput(value = "str", maxRetries = Integer.MAX_VALUE)
     public void process(String str) throws OperationException {
       accumulated.increment(KEY, Long.valueOf(str));
     }

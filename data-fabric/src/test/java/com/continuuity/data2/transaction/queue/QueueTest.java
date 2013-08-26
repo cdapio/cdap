@@ -125,8 +125,8 @@ public abstract class QueueTest {
 
     // Now skip the result with a new transaction.
     txManager.start();
-    fifoResult.skip();
-    hashResult.skip();
+    fifoResult.reclaim();
+    hashResult.reclaim();
     txManager.commit();
 
     // Dequeue again, it should see a new entry

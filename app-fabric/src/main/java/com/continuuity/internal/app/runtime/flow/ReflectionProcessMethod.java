@@ -34,14 +34,16 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   private final boolean hasParam;
   private final boolean needsBatch;
   private final boolean needContext;
+  private final int maxRetries;
 
-  public static ReflectionProcessMethod create(Flowlet flowlet, Method method) {
-    return new ReflectionProcessMethod(flowlet, method);
+  public static ReflectionProcessMethod create(Flowlet flowlet, Method method, int maxRetries) {
+    return new ReflectionProcessMethod(flowlet, method, maxRetries);
   }
 
-  private ReflectionProcessMethod(Flowlet flowlet, Method method) {
+  private ReflectionProcessMethod(Flowlet flowlet, Method method, int maxRetries) {
     this.flowlet = flowlet;
     this.method = method;
+    this.maxRetries = maxRetries;
 
     this.hasParam = method.getGenericParameterTypes().length > 0;
     this.needsBatch = hasParam &&
@@ -56,6 +58,11 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   @Override
   public boolean needsInput() {
     return hasParam;
+  }
+
+  @Override
+  public int getMaxRetries() {
+    return maxRetries;
   }
 
   @Override

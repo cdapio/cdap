@@ -83,7 +83,7 @@ public final class Queue2InputDatum implements InputDatum {
 
   @Override
   public void reclaim() {
-    result.skip();
+    result.reclaim();
   }
 
   @Override

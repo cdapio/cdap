@@ -420,7 +420,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     }
 
     @Override
-    public void skip() {
+    public void reclaim() {
       // Simply put all entries into consumingEntries and clear those up from the entry cache as well.
       for (SimpleQueueEntry entry : entries) {
         consumingEntries.put(entry.getRowKey(), entry);

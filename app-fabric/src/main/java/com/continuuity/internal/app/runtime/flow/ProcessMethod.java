@@ -28,6 +28,11 @@ interface ProcessMethod<T> {
   boolean needsInput();
 
   /**
+   * Returns the max failure retries on this process method.
+   */
+  int getMaxRetries();
+
+  /**
    * Invoke the process method for the given input, using the given decoder to convert raw
    * data into event object.
    * @param input The input to process
