@@ -80,7 +80,7 @@ public final class HttpResourceModel {
         parameterIndex++;
         args[parameterIndex] = responder;
 
-          if (method.getParameterTypes().length > 2) {
+        if (method.getParameterTypes().length > 2) {
           Class<?>[] parameterTypes = method.getParameterTypes();
           for (Annotation[] annotations : method.getParameterAnnotations()) {
              for (Annotation annotation : annotations){
