@@ -88,9 +88,9 @@ public class LevelDBQueueEvictor implements QueueEvictor {
     }
     if (!rowsToDelete.isEmpty()) {
       core.deleteRows(rowsToDelete);
-      LOG.info("Evicted {} entries from queue {}", rowsToDelete.size(), name);
+      LOG.trace("Evicted {} entries from queue {}", rowsToDelete.size(), name);
     } else {
-      LOG.info("Nothing to evict from queue {}", name);
+      LOG.trace("Nothing to evict from queue {}", name);
     }
     return rowsToDelete.size();
   }
