@@ -228,13 +228,9 @@ uploadPackages {
     repositories.mavenDeployer {
       repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
         authentication(userName: nexusUsername, password: nexusPassword)
-        pom.groupId = 'com.continuuity.distributions.release'
-        pom.version = rootProject.version
       }
       snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
         authentication(userName: nexusUsername, password: nexusPassword)
-        pom.groupId = 'com.continuuity.distributions.snapshots'
-        pom.version = rootProject.version
       }
 
       pom.whenConfigured { pom ->
@@ -242,6 +238,8 @@ uploadPackages {
         pom.dependencies = pom.dependencies.findAll { dep ->
           dep.artifactId != 'groovy-all' && (dep.scope != 'test' || dep.scope != 'integration' || dep.scope != 'sources')
         }
+        pom.groupId = finalRelease ? 'com.continuuity.distributions.release' : 'com.continuuity.distributions.snapshots'
+        pom.version = rootProject.version
       }
     }
   }
