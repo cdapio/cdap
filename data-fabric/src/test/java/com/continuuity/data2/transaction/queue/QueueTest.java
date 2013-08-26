@@ -442,14 +442,13 @@ public abstract class QueueTest {
     public void abort() throws OperationException {
       for (TransactionAware txAware : txAwares) {
         try {
-          if (!txAware.rollbackTx()) {
+          if (!txAware.rollbackTx() || !opex.abort(transaction)) {
             LOG.error("Fail to rollback: {}", txAware);
           }
         } catch (Exception e) {
           LOG.error("Exception in rollback: {}", txAware, e);
         }
       }
-      opex.abort(transaction);
     }
   }
 

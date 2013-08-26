@@ -207,7 +207,10 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
                                     "failed to abort tx" + currentTx.getWritePointer());
     }
 
-    txSystemClient.abort(currentTx);
+    // it can be null to allow doing abort multiple times
+    if (currentTx != null) {
+      txSystemClient.abort(currentTx);
+    }
     currentTx = null;
   }
 

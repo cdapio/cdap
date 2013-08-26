@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+COMMAND=$1; shift
+
+if [[ "x${COMMAND}" == "x" ]]; then
+  echo "Command not specified"
+  exit -1
+fi
+
+COMPONENT=$1; shift
+
+if [[ "x${COMPONENT}" == "x" ]]; then
+  echo "Component not specified"
+  exit -1
+fi
+
+v=0
+cmd=""
+case "$COMMAND" in
+  start) v=1; cmd="Starting";;
+  stop) v=1; cmd="Stopping";;
+  restart) v=1; cmd="Restart";;
+  status) v=1; cmd="Status";;
+esac
+
+if [[ "x${v}" == "x0" ]]; then
+ echo "Unknown command $COMMAND for operating component $component service"
+ exit -1
+fi
+
+echo "$cmd service(s) for component $COMPONENT ..."
+for service in `ls -1 $CINST_BASE/$TGZ_NAME/opt/continuuity/$COMPONENT/bin/svc-*`
+do
+  name=`basename $service | sed 's/svc-//g'`
+  name="continuuity-$name"
+  service $name $COMMAND
+done

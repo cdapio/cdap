@@ -57,7 +57,7 @@ public final class LevelDBQueue2Producer extends AbstractQueue2Producer {
   }
 
   @Override
-  protected void doRollback(Transaction transaction) throws Exception {
+  protected void doRollback() throws Exception {
     core.undo(changes, KeyValue.LATEST_TIMESTAMP);
   }
 }

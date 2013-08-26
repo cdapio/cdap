@@ -76,7 +76,7 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
   }
 
   @Override
-  protected void doRollback(Transaction transaction) throws Exception {
+  protected void doRollback() throws Exception {
     // If nothing to rollback, simply return
     if (rollbackKeys.isEmpty()) {
       return;

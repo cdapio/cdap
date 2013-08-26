@@ -78,13 +78,12 @@ public class MultiConsumerTest {
         .withFlowlets()
           .add("gen", new Generator())
           .add("c1", new Consumer(), 2)
-//          .add("c1", new Consumer())
-//          .add("c2", new Consumer())
-//          .add("c3", new ConsumerStr())
+          .add("c2", new Consumer(), 2)
+          .add("c3", new ConsumerStr(), 2)
         .connect()
           .from("gen").to("c1")
-//          .from("gen").to("c2")
-//          .from("gen").to("c3")
+          .from("gen").to("c2")
+          .from("gen").to("c3")
         .build();
     }
   }
@@ -95,15 +94,15 @@ public class MultiConsumerTest {
   public static final class Generator extends AbstractGeneratorFlowlet {
 
     private OutputEmitter<Integer> output;
-//    @Output("str")
-//    private OutputEmitter<String> outString;
+    @Output("str")
+    private OutputEmitter<String> outString;
     private int i;
 
     @Override
     public void generate() throws Exception {
       if (i < 100) {
         output.emit(i);
-//        outString.emit(Integer.toString(i));
+        outString.emit(Integer.toString(i));
         i++;
       }
     }
@@ -119,7 +118,7 @@ public class MultiConsumerTest {
     private KeyValueTable accumulated;
 
     public void process(long l) throws OperationException {
-      accumulated.increment(KEY, 1L);
+      accumulated.increment(KEY, l);
     }
   }
 
@@ -132,7 +131,7 @@ public class MultiConsumerTest {
 
     @ProcessInput("str")
     public void process(String str) throws OperationException {
-      accumulated.increment(KEY, 1L);
+      accumulated.increment(KEY, Long.valueOf(str));
     }
   }
 
@@ -190,9 +189,7 @@ public class MultiConsumerTest {
     txAgent.finish();
 
     // Sum(1..100) * 3
-//    Assert.assertEquals(14850L, Longs.fromByteArray(value));
-
-    Assert.assertEquals(100L, Longs.fromByteArray(value));
+    Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
 
     for (ProgramController controller : controllers) {
       controller.stop().get();

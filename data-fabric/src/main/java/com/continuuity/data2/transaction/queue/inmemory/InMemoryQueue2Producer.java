@@ -13,6 +13,7 @@ public class InMemoryQueue2Producer extends AbstractQueue2Producer {
 
   private final InMemoryQueue queue;
   private int lastEnqueueCount;
+  private Transaction commitTransaction;
 
   public InMemoryQueue2Producer(QueueName queueName, InMemoryQueueService queueService, QueueMetrics queueMetrics) {
     super(queueMetrics);
@@ -20,7 +21,14 @@ public class InMemoryQueue2Producer extends AbstractQueue2Producer {
   }
 
   @Override
+  public void startTx(Transaction tx) {
+    super.startTx(tx);
+    commitTransaction = null;
+  }
+
+  @Override
   protected void persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception {
+    commitTransaction = transaction;
     int seqId = 0;
     for (QueueEntry entry : entries) {
       queue.enqueue(transaction.getWritePointer(), seqId++, entry);
@@ -29,9 +37,11 @@ public class InMemoryQueue2Producer extends AbstractQueue2Producer {
   }
 
   @Override
-  protected void doRollback(Transaction transaction) {
-    for (int seqId = 0; seqId < lastEnqueueCount; seqId++) {
-      queue.undoEnqueue(transaction.getWritePointer(), seqId);
+  protected void doRollback() {
+    if (commitTransaction != null) {
+      for (int seqId = 0; seqId < lastEnqueueCount; seqId++) {
+        queue.undoEnqueue(commitTransaction.getWritePointer(), seqId);
+      }
     }
   }
 }
