@@ -132,7 +132,9 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
           // The pickup logic in populateCache and shouldInclude() make sure that's the case
           // ANDREAS: but how do we know that it was claimed by THIS consumer. If there are multiple consumers,
           // then they all will pick it up, right?
-          if (entry.getState() == null) {
+          // TERENCE: The populateCache has logic to make sure only THIS consumer will pick it up again, except for
+          // the case that group size reduced and the claimed consumer is no longer available.
+          if (entry.getState() == null || getStateInstanceId(entry.getState()) >= consumerConfig.getGroupSize()) {
             // If not able to claim it, remove it, and move to next one.
             if (!claimEntry(entry.getRowKey(), claimedStateValue)) {
               iterator.remove();
@@ -308,7 +310,8 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
           continue;
         }
 
-        entryCache.put(rowKey, new SimpleQueueEntry(rowKey, entry.getSecond().get(QueueConstants.DATA_COLUMN), stateBytes));
+        entryCache.put(rowKey,
+                       new SimpleQueueEntry(rowKey, entry.getSecond().get(QueueConstants.DATA_COLUMN), stateBytes));
       }
     } finally {
       scanner.close();

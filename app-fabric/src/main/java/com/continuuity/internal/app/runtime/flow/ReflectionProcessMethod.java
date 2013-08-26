@@ -89,11 +89,11 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
 
         return new ReflectionProcessResult<T>(event, true, null);
       } catch (Throwable t) {
-        return new ReflectionProcessResult<T>(event, false, t);
+        return new ReflectionProcessResult<T>(event, false, t.getCause());
       }
     } catch (Exception e) {
       // If it reaches here, something very wrong.
-      LOG.error("Fail to process input: " + method, e);
+      LOG.error("Fail to process input: {}", method, e);
       throw Throwables.propagate(e);
     }
   }

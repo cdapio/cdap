@@ -79,7 +79,7 @@ public class InMemoryQueue {
       }
       if (config.getDequeueStrategy().equals(DequeueStrategy.FIFO)) {
         // for FIFO, attempt to claim the entry and return it
-        if (item.claim(config.getGroupId())) {
+        if (item.claim(config)) {
           keys.add(key);
           datas.add(item.entry.getData());
         }
@@ -121,7 +121,7 @@ public class InMemoryQueue {
         LOG.warn("Attempting to ack non-existing entry " + key);
         continue;
       }
-      item.setConsumerState(config.getGroupId(), ConsumerEntryState.PROCESSED);
+      item.setConsumerState(config, ConsumerEntryState.PROCESSED);
     }
   }
 
@@ -135,7 +135,7 @@ public class InMemoryQueue {
         LOG.warn("Attempting to undo dequeue for non-existing entry " + key);
         continue;
       }
-      ConsumerEntryState state = item.removeConsumerState(config.getGroupId());
+      item.revokeConsumerState(config, config.getDequeueStrategy() == DequeueStrategy.FIFO);
     }
   }
 
@@ -206,7 +206,8 @@ public class InMemoryQueue {
   // represents an entry of the queue plus meta data
   private static final class Item {
     final QueueEntry entry;
-    ConcurrentMap<Long, ConsumerEntryState> consumerStates = Maps.newConcurrentMap();
+//    ConcurrentMap<Long, ConsumerEntryState> consumerStates = Maps.newConcurrentMap();
+    ConcurrentMap<Long, ItemEntryState> consumerStates = Maps.newConcurrentMap();
     AtomicInteger processedCount = new AtomicInteger();
 
     Item(QueueEntry entry) {
@@ -214,23 +215,64 @@ public class InMemoryQueue {
     }
 
     ConsumerEntryState getConsumerState(long consumerGroupId) {
-      return consumerStates.get(consumerGroupId);
+      ItemEntryState entryState = consumerStates.get(consumerGroupId);
+      return entryState == null ? null : entryState.getState();
     }
 
-    void setConsumerState(long consumerGroupId, ConsumerEntryState newState) {
-      consumerStates.put(consumerGroupId, newState);
+    void setConsumerState(ConsumerConfig config, ConsumerEntryState newState) {
+      consumerStates.put(config.getGroupId(), new ItemEntryState(config.getInstanceId(), newState));
     }
 
-    ConsumerEntryState removeConsumerState(long consumerGroupId) {
-      return consumerStates.remove(consumerGroupId);
+    void revokeConsumerState(ConsumerConfig config, boolean revokeToClaim) {
+      if (revokeToClaim) {
+        consumerStates.put(config.getGroupId(), new ItemEntryState(config.getInstanceId(), ConsumerEntryState.CLAIMED));
+      } else {
+        consumerStates.remove(config.getGroupId());
+      }
     }
 
-    boolean claim(long consumerGroupId) {
-      return consumerStates.putIfAbsent(consumerGroupId, ConsumerEntryState.CLAIMED) == null;
+    boolean claim(ConsumerConfig config) {
+      ItemEntryState state = consumerStates.get(config.getGroupId());
+      if (state == null) {
+        state = consumerStates.putIfAbsent(config.getGroupId(),
+                                           new ItemEntryState(config.getInstanceId(), ConsumerEntryState.CLAIMED));
+        if (state == null) {
+          return true;
+        }
+      }
+      // If the old claimed consumer is gone or if it has been claimed by the same consumer before,
+      // then it can be claimed.
+      return state.getInstanceId() >= config.getGroupSize()
+        || (state.getInstanceId() == config.getInstanceId() && state.getState() == ConsumerEntryState.CLAIMED);
     }
 
     int incrementProcessed() {
       return processedCount.incrementAndGet();
+    }
+  }
+
+  /**
+   * Represents the state of an item entry
+   */
+  private static final class ItemEntryState {
+    final int instanceId;
+    ConsumerEntryState state;
+
+    ItemEntryState(int instanceId, ConsumerEntryState state) {
+      this.instanceId = instanceId;
+      this.state = state;
+    }
+
+    int getInstanceId() {
+      return instanceId;
+    }
+
+    ConsumerEntryState getState() {
+      return state;
+    }
+
+    void setState(ConsumerEntryState state) {
+      this.state = state;
     }
   }
 
