@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.leveldb;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
@@ -11,6 +11,9 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.queue.AbstractQueue2Consumer;
+import com.continuuity.data2.transaction.queue.QueueEvictor;
+import com.continuuity.data2.transaction.queue.QueueScanner;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;

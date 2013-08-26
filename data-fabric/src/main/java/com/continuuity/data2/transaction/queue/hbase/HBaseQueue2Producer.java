@@ -1,12 +1,16 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.queue.AbstractQueue2Producer;
+import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueMetrics;
+import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;

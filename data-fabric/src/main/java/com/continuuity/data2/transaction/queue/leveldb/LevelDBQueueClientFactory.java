@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.leveldb;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
@@ -10,6 +10,8 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueEvictor;
+import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -27,7 +29,7 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
-  LevelDBQueueClientFactory(LevelDBOcTableService service) {
+  public LevelDBQueueClientFactory(LevelDBOcTableService service) {
     this.service = service;
   }
 

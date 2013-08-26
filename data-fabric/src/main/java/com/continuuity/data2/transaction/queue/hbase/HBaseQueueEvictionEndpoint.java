@@ -1,8 +1,10 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.hbase;
 
+import com.continuuity.data2.transaction.queue.ConsumerEntryState;
+import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.commons.logging.Log;

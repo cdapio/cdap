@@ -4,7 +4,7 @@
 package com.continuuity.data2.transaction.queue;
 
 /**
- *
+ * The state of a queue entry with respect to a consumer.
  */
 public enum ConsumerEntryState {
 

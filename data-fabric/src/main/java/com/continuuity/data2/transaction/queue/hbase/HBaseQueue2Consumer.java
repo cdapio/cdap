@@ -1,12 +1,18 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.queue.ConsumerConfig;
+import com.continuuity.data2.transaction.queue.AbstractQueue2Consumer;
+import com.continuuity.data2.transaction.queue.ConsumerEntryState;
+import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEvictor;
+import com.continuuity.data2.transaction.queue.QueueScanner;
+import com.continuuity.data2.transaction.queue.SimpleQueueEntry;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;

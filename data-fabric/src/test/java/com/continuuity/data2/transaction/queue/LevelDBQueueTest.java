@@ -8,6 +8,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;

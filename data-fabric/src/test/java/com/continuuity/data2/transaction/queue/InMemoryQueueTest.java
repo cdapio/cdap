@@ -6,6 +6,7 @@ package com.continuuity.data2.transaction.queue;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueService;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;

@@ -6,7 +6,7 @@ package com.continuuity.data2.transaction.queue;
 /**
  * Representing a queue entry fetched from persisted storage.
  */
-final class SimpleQueueEntry {
+public final class SimpleQueueEntry {
   private final byte[] rowKey;
   private final byte[] data;
   private final byte[] state;
@@ -17,15 +17,15 @@ final class SimpleQueueEntry {
     this.state = state;
   }
 
-  byte[] getRowKey() {
+  public byte[] getRowKey() {
     return rowKey;
   }
 
-  byte[] getData() {
+  public byte[] getData() {
     return data;
   }
 
-  byte[] getState() {
+  public byte[] getState() {
     return state;
   }
 }

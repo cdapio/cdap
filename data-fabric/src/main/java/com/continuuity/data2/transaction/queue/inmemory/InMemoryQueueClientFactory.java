@@ -1,10 +1,11 @@
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.inmemory;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.google.inject.Inject;
 
 import java.io.IOException;

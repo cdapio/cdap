@@ -41,7 +41,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Common queue consumer for persisting engines such as HBase and LevelDB.
  */
-abstract class AbstractQueue2Consumer implements Queue2Consumer, TransactionAware, Closeable {
+public abstract class AbstractQueue2Consumer implements Queue2Consumer, TransactionAware, Closeable {
 
   // TODO: Make these configurable.
   protected static final int MAX_CACHE_ROWS = 100;
@@ -77,7 +77,7 @@ abstract class AbstractQueue2Consumer implements Queue2Consumer, TransactionAwar
     throws IOException, InterruptedException;
   protected abstract QueueScanner getScanner(byte[] startRow, byte[] stopRow) throws IOException;
 
-  AbstractQueue2Consumer(ConsumerConfig consumerConfig, QueueName queueName, QueueEvictor queueEvictor) {
+  protected AbstractQueue2Consumer(ConsumerConfig consumerConfig, QueueName queueName, QueueEvictor queueEvictor) {
     this.consumerConfig = consumerConfig;
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);

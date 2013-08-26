@@ -1,11 +1,13 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.queue.QueueEvictor;
+import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.hbase.client.HTable;
@@ -17,7 +19,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A {@link QueueEvictor} for HBase queue.
+ * A {@link com.continuuity.data2.transaction.queue.QueueEvictor} for HBase queue.
  */
 public final class HBaseQueueEvictor implements QueueEvictor {
 
