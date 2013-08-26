@@ -4,19 +4,13 @@ import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
-import com.continuuity.common.http.core.HttpHandler;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricType;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.auth.NoAuthenticator;
-import com.continuuity.gateway.v2.Gateway;
-import com.continuuity.gateway.v2.GatewayConstants;
-import com.continuuity.gateway.v2.handlers.PingHandler;
+import com.continuuity.gateway.v2.GatewayV2;
+import com.continuuity.gateway.v2.GatewayV2Constants;
+import com.continuuity.gateway.v2.runtime.GatewayV2Modules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.common.base.Throwables;
@@ -24,10 +18,6 @@ import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
 import junit.framework.Assert;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -41,8 +31,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -53,23 +41,23 @@ import java.util.concurrent.Future;
  * Test stream handler.
  */
 public class StreamHandlerTest {
-  private static Gateway gateway;
+  private static GatewayV2 gatewayV2;
   private static final String hostname = "127.0.0.1";
   private static int port;
 
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration configuration = CConfiguration.create();
-    configuration.setInt(GatewayConstants.ConfigKeys.PORT, 0);
-    configuration.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM, 5);
+    configuration.setInt(GatewayV2Constants.ConfigKeys.PORT, 0);
+    configuration.set(GatewayV2Constants.ConfigKeys.ADDRESS, hostname);
+    configuration.setInt(GatewayV2Constants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM, 5);
 
     // Set up our Guice injections
-    final CMetrics cMetrics = new CMetrics(MetricType.System);
     Injector injector = Guice.createInjector(
       new DataFabricModules().getInMemoryModules(),
       new ConfigModule(configuration),
       new LocationRuntimeModule().getInMemoryModules(),
+      new GatewayV2Modules(configuration).getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -78,31 +66,18 @@ public class StreamHandlerTest {
           bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
           bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
           bind(StoreFactory.class).to(MDSStoreFactory.class);
-          bind(GatewayAuthenticator.class).to(NoAuthenticator.class);
-          bind(CMetrics.class).toInstance(cMetrics);
-
-          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
-          handlerBinder.addBinding().to(StreamHandler.class).in(Scopes.SINGLETON);
-          handlerBinder.addBinding().to(PingHandler.class).in(Scopes.SINGLETON);
-        }
-
-        @Provides
-        @Named(GatewayConstants.ConfigKeys.ADDRESS)
-        public final InetAddress providesHostname(CConfiguration cConf) {
-          return Networks.resolve(cConf.get(GatewayConstants.ConfigKeys.ADDRESS),
-                                  new InetSocketAddress(hostname, 0).getAddress());
         }
       }
     );
 
-    gateway = injector.getInstance(Gateway.class);
-    gateway.startAndWait();
-    port = gateway.getBindAddress().getPort();
+    gatewayV2 = injector.getInstance(GatewayV2.class);
+    gatewayV2.startAndWait();
+    port = gatewayV2.getBindAddress().getPort();
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    gateway.stopAndWait();
+    gatewayV2.stopAndWait();
   }
 
   @Test

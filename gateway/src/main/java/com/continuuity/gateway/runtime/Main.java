@@ -11,6 +11,8 @@ import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.remote.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
+import com.continuuity.gateway.v2.GatewayV2;
+import com.continuuity.gateway.v2.runtime.GatewayV2Modules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.metadata.thrift.MetadataService;
@@ -59,16 +61,10 @@ public class Main {
         ));
     zkClientService.startAndWait();
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        zkClientService.stopAndWait();
-      }
-    });
-
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
         new GatewayModules().getDistributedModules(),
+        new GatewayV2Modules(configuration).getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
         new ConfigModule(configuration),
         new IOModule(),
@@ -90,11 +86,25 @@ public class Main {
     // Get our fully wired Gateway
     Gateway theGateway = injector.getInstance(Gateway.class);
 
+    // Get Gateway v2
+    final GatewayV2 v2Gateway =
+      injector.getInstance(GatewayV2.class);
+
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        v2Gateway.stopAndWait();
+        zkClientService.stopAndWait();
+      }
+    });
+
     // Now, initialize the Gateway
     try {
 
       // Start the gateway!
       theGateway.start(null, configuration);
+
+      v2Gateway.startAndWait();
 
     } catch (Exception e) {
       LOG.error(e.toString(), e);
