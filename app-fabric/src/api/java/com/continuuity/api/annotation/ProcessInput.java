@@ -18,6 +18,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface ProcessInput {
 
+  static final int DEFAULT_MAX_RETRIES = 20;
+
   /**
    * Optionally tag the name of inputs to the process method.
    */
@@ -29,4 +31,10 @@ public @interface ProcessInput {
    */
   @Deprecated
   String partition() default "";
+
+  /**
+   * Optionally specifies the maximum number of retries of failure inputs before giving up on it.
+   * Defaults to {@link #DEFAULT_MAX_RETRIES}.
+   */
+  int maxRetries() default DEFAULT_MAX_RETRIES;
 }

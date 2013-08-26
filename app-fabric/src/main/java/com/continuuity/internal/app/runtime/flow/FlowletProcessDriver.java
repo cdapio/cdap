@@ -45,7 +45,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProcessDriver.class);
   private static final int TX_EXECUTOR_POOL_SIZE = 4;
-  private static final int PROCESS_MAX_RETRY = 100;
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -431,7 +430,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           failurePolicy = FailurePolicy.RETRY;
         }
 
-        if (input.getRetry() >= PROCESS_MAX_RETRY) {
+        if (input.getRetry() >= processEntry.getProcessSpec().getProcessMethod().getMaxRetries()) {
           LOG.info("Too many retries, ignores the input: {}", input);
           failurePolicy = FailurePolicy.IGNORE;
         }
