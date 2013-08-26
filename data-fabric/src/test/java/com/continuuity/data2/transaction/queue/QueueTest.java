@@ -72,7 +72,7 @@ public abstract class QueueTest {
 
   @Test
   public void testMultiHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multihash");
+    QueueName queueName = QueueName.fromStream("bingo", "bang");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 3, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
   }
 

@@ -6,7 +6,7 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.LevelDBDataSetAccessor;
+import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
@@ -101,7 +101,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
     bind(LevelDBOcTableService.class).in(Singleton.class);
     bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(conf);
-    bind(DataSetAccessor.class).to(LevelDBDataSetAccessor.class).in(Singleton.class);
+    bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
 
     // Bind named fields
