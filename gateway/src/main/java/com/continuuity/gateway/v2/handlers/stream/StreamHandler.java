@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2.handlers;
+package com.continuuity.gateway.v2.handlers.stream;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -24,7 +24,6 @@ import com.continuuity.gateway.GatewayMetrics;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
-import com.continuuity.gateway.v2.CachedStreamEventConsumer;
 import com.continuuity.gateway.v2.txmanager.SingletonTxManager;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
@@ -68,7 +67,9 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
- * Handler that handles stream event requests.
+ * Handler that handles stream event requests. This supports
+ * POST requests to send an event to a stream, and GET requests to inspect
+ * or retrieve events from the stream.
  */
 @Path("/stream")
 public class StreamHandler extends AbstractHttpHandler {

@@ -11,6 +11,7 @@ import com.google.common.collect.Sets;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +61,8 @@ public final class HttpResourceHandler implements HttpHandler {
       for (Method method:  handler.getClass().getDeclaredMethods()){
         if (method.getParameterTypes().length >= 2 &&
           method.getParameterTypes()[0].isAssignableFrom(HttpRequest.class) &&
-          method.getParameterTypes()[1].isAssignableFrom(HttpResponder.class)) {
+          method.getParameterTypes()[1].isAssignableFrom(HttpResponder.class) &&
+          Modifier.isPublic(method.getModifiers())) {
 
           String relativePath = "";
           if (method.getAnnotation(Path.class) != null) {
@@ -115,7 +118,8 @@ public final class HttpResourceHandler implements HttpHandler {
   public void handle(HttpRequest request, HttpResponder responder){
 
     Map<String, String> groupValues = Maps.newHashMap();
-    List<HttpResourceModel> resourceModels = patternRouter.getDestinations(request.getUri(), groupValues);
+    String path = new QueryStringDecoder(request.getUri()).getPath();
+    List<HttpResourceModel> resourceModels = patternRouter.getDestinations(path, groupValues);
 
     HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
 

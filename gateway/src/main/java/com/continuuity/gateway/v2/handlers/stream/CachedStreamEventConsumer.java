@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2;
+package com.continuuity.gateway.v2.handlers.stream;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -10,6 +10,7 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.base.Function;
@@ -22,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -56,7 +57,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * This class caches stream events and enqueues them in batch.
  */
-public class CachedStreamEventConsumer extends AbstractService {
+public class CachedStreamEventConsumer extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(CachedStreamEventConsumer.class);
 
   private final OperationExecutor opex;
@@ -101,7 +102,7 @@ public class CachedStreamEventConsumer extends AbstractService {
   }
 
   @Override
-  protected void doStart() {
+  protected void startUp() throws Exception {
     flushTimer.scheduleAtFixedRate(
       new TimerTask() {
         @Override
@@ -114,7 +115,7 @@ public class CachedStreamEventConsumer extends AbstractService {
   }
 
   @Override
-  protected void doStop() {
+  protected void shutDown() throws Exception {
     flushTimer.cancel();
     cachedStreamEvents.flush();
     callbackExecutorService.shutdown();
@@ -127,7 +128,7 @@ public class CachedStreamEventConsumer extends AbstractService {
    * @param callback Callback to be called after enqueuing the event
    * @throws Exception
    */
-  public void consume(StreamEvent event, String accountId, FutureCallback<?> callback)
+  public void consume(StreamEvent event, String accountId, FutureCallback<Void> callback)
     throws Exception {
     byte[] bytes = serializer.encodePayload(event);
     if (bytes == null) {
@@ -193,7 +194,7 @@ public class CachedStreamEventConsumer extends AbstractService {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public void put(QueueName queueName, QueueEntry queueEntry, FutureCallback<?> callback)
+    public void put(QueueName queueName, QueueEntry queueEntry, FutureCallback<Void> callback)
       throws ExecutionException, InterruptedException {
 
       if (!eventCache.get(queueName).offer(new StreamEntry(queueEntry, callback))) {
@@ -232,7 +233,7 @@ public class CachedStreamEventConsumer extends AbstractService {
       flushLock.lock();
       try {
         Set<Map.Entry<QueueName, ProducerStreamEntries>> removalEntries = ImmutableSet.of();
-        SettableFuture<?> future = SettableFuture.create();
+        SettableFuture<Void> future = SettableFuture.create();
         try {
           txManager.start();
 
@@ -343,9 +344,9 @@ public class CachedStreamEventConsumer extends AbstractService {
    */
   private class StreamEntry {
     private final QueueEntry queueEntry;
-    private final FutureCallback<?> callback;
+    private final FutureCallback<Void> callback;
 
-    private StreamEntry(QueueEntry queueEntry, FutureCallback<?> callback) {
+    private StreamEntry(QueueEntry queueEntry, FutureCallback<Void> callback) {
       this.queueEntry = queueEntry;
       this.callback = callback;
     }
@@ -354,7 +355,7 @@ public class CachedStreamEventConsumer extends AbstractService {
       return queueEntry;
     }
 
-    public FutureCallback<?> getCallback() {
+    public FutureCallback<Void> getCallback() {
       return callback;
     }
   }
@@ -368,7 +369,7 @@ public class CachedStreamEventConsumer extends AbstractService {
       }
     };
 
-  private void addCallbacksToFuture(ListenableFuture<?> future, Iterable<StreamEntry> entries) {
+  private void addCallbacksToFuture(ListenableFuture<Void> future, Iterable<StreamEntry> entries) {
     for (StreamEntry entry : entries) {
       Futures.addCallback(future, entry.getCallback(), callbackExecutorService);
     }

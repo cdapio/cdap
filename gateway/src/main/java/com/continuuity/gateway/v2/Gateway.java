@@ -3,7 +3,6 @@ package com.continuuity.gateway.v2;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.http.core.NettyHttpService;
-import com.continuuity.metrics.MetricsConstants;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -24,8 +23,8 @@ public class Gateway extends AbstractIdleService {
 
   @Inject
   public Gateway(CConfiguration cConf,
-                 @Named(MetricsConstants.ConfigKeys.SERVER_ADDRESS) InetAddress hostname,
-                 Set<? extends HttpHandler> handlers) {
+                 @Named(GatewayConstants.ConfigKeys.ADDRESS) InetAddress hostname,
+                 Set<HttpHandler> handlers) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);

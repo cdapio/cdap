@@ -6,6 +6,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,7 @@ public class StreamCache {
   private MetadataService mds;
   private ConcurrentMap<ImmutablePair<String, String>, Stream> knownStreams;
 
+  @Inject
   public StreamCache(MetadataService mds) {
     this.mds = mds;
     this.knownStreams = new
