@@ -51,7 +51,8 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractQueue2Consumer.class);
 
-  private static final Function<SimpleQueueEntry, byte[]> ENTRY_TO_BYTE_ARRAY = new Function<SimpleQueueEntry, byte[]>() {
+  private static final Function<SimpleQueueEntry, byte[]> ENTRY_TO_BYTE_ARRAY =
+    new Function<SimpleQueueEntry, byte[]>() {
     @Override
     public byte[] apply(SimpleQueueEntry input) {
       return input.getData();
