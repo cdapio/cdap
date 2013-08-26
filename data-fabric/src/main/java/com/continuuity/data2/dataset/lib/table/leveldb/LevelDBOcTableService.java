@@ -3,8 +3,10 @@ package com.continuuity.data2.dataset.lib.table.leveldb;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.engine.leveldb.KeyValue;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBComparator;
 import org.iq80.leveldb.Options;
@@ -36,15 +38,15 @@ public class LevelDBOcTableService {
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
   @Inject
-  public LevelDBOcTableService(CConfiguration config) throws IOException {
+  public LevelDBOcTableService(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
+
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
+    Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
+
     blockSize = config.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
-    boolean doSync = config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC);
-    writeOptions = new WriteOptions().sync(doSync);
-    if (basePath == null) {
-      throw new IOException("No base directory configured for LevelDB.");
-    }
+    writeOptions = new WriteOptions().sync(
+      config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
   }
 
   public WriteOptions getWriteOptions() {
@@ -83,7 +85,7 @@ public class LevelDBOcTableService {
 
     Options options = new Options();
     options.createIfMissing(true);
-    options.errorIfExists(true);
+    options.errorIfExists(false);
     options.comparator(new KeyValueDBComparator());
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);

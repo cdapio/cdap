@@ -19,18 +19,19 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- *
+ * Factory for LevelDB queue clients.
  */
 public final class LevelDBQueueClientFactory implements QueueClientFactory {
 
-  private LevelDBOcTableService service;
+  private final LevelDBOcTableService service;
 
   public static final String QUEUE_TABLE_NAME = "__queues";
   private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
-  public LevelDBQueueClientFactory(LevelDBOcTableService service) {
+  public LevelDBQueueClientFactory(LevelDBOcTableService service) throws IOException {
     this.service = service;
+    service.createTable(QUEUE_TABLE_NAME);
   }
 
   @Override

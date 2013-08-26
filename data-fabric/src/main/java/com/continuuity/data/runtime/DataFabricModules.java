@@ -72,6 +72,10 @@ public class DataFabricModules extends RuntimeModule {
     return new DataFabricLocalModule();
   }
 
+  public Module getLevelDBModules() {
+    return new DataFabricLevelDBModule(CConfiguration.create());
+  }
+
   @Override
   public Module getDistributedModules() {
     return new DataFabricDistributedModule();

@@ -9,7 +9,6 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueService;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -18,22 +17,20 @@ import org.junit.BeforeClass;
  */
 public class InMemoryQueueTest extends QueueTest {
 
-  private static InMemoryQueueService queueService;
+  private static Injector injector;
 
   @BeforeClass
   public static void init() throws Exception {
 
-    final Module dataFabricModule = new DataFabricModules().getInMemoryModules();
-    final Injector injector = Guice.createInjector(dataFabricModule);
+    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
     // Get the in-memory opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
-
-    queueService = injector.getInstance(InMemoryQueueService.class);
   }
 
   @AfterClass
   public static void finish() {
+    InMemoryQueueService queueService = injector.getInstance(InMemoryQueueService.class);
     queueService.dumpInfo(System.out);
   }
 }
