@@ -19,10 +19,6 @@ public final class RoundRobinQueueReader implements QueueReader {
 
   private final Iterator<QueueReader> readers;
 
-  public RoundRobinQueueReader(QueueReader... readers) {
-    this.readers = Iterables.cycle(readers).iterator();
-  }
-
   public RoundRobinQueueReader(Iterable<QueueReader> readers) {
     this.readers = Iterables.cycle(readers).iterator();
   }

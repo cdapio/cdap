@@ -4,6 +4,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -18,11 +19,14 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -73,9 +77,9 @@ public class MultiConsumerTest {
         .setDescription("MultiFlow")
         .withFlowlets()
           .add("gen", new Generator())
-          .add("c1", new Consumer())
-          .add("c2", new Consumer())
-          .add("c3", new ConsumerStr())
+          .add("c1", new Consumer(), 2)
+          .add("c2", new Consumer(), 2)
+          .add("c3", new ConsumerStr(), 2)
         .connect()
           .from("gen").to("c1")
           .from("gen").to("c2")
@@ -113,6 +117,7 @@ public class MultiConsumerTest {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
 
+    @ProcessInput(maxRetries = Integer.MAX_VALUE)
     public void process(long l) throws OperationException {
       accumulated.increment(KEY, l);
     }
@@ -125,9 +130,9 @@ public class MultiConsumerTest {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
 
-    @ProcessInput("str")
+    @ProcessInput(value = "str", maxRetries = Integer.MAX_VALUE)
     public void process(String str) throws OperationException {
-      accumulated.increment(KEY, Long.parseLong(str));
+      accumulated.increment(KEY, Long.valueOf(str));
     }
   }
 
@@ -162,20 +167,30 @@ public class MultiConsumerTest {
 
     OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
     LocationFactory locationFactory = TestHelper.getInjector().getInstance(LocationFactory.class);
+    DataSetAccessor dataSetAccessor = TestHelper.getInjector().getInstance(DataSetAccessor.class);
+    TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 
     TransactionProxy proxy = new TransactionProxy();
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, opCtx));
-    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, opCtx),
-                                                                      proxy,
-                                                                      getClass().getClassLoader());
+    DataSetInstantiator dataSetInstantiator =
+      new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, dataSetAccessor, opCtx),
+                              proxy,
+                              getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new MultiApp().configure().getDataSets().values()));
 
-    KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
-    byte[] value = accumulated.read(KEY);
+    TransactionAgent txAgent = new SynchronousTransactionAgent(opex, opCtx,
+                                                               dataSetInstantiator.getTransactionAware(),
+                                                               txSystemClient);
+    proxy.setTransactionAgent(txAgent);
 
-    Assert.assertEquals(14850L, Longs.fromByteArray(value));
+    KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
+    txAgent.start();
+    byte[] value = accumulated.read(KEY);
+    txAgent.finish();
+
+    // Sum(1..100) * 3
+    Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
 
     for (ProgramController controller : controllers) {
       controller.stop().get();

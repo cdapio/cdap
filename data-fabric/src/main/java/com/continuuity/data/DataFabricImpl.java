@@ -12,12 +12,12 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.google.common.base.Throwables;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -30,11 +30,35 @@ public class DataFabricImpl implements DataFabric {
   private OperationExecutor opex;
   private OperationContext context;
   private LocationFactory locationFactory;
+  private DataSetAccessor dataSetAccessor;
 
-  public DataFabricImpl(OperationExecutor opex, LocationFactory locationFactory, OperationContext context) {
+  public DataFabricImpl(OperationExecutor opex,
+                        LocationFactory locationFactory,
+                        DataSetAccessor dataSetAccessor,
+                        OperationContext context) {
     this.opex = opex;
     this.context = context;
     this.locationFactory = locationFactory;
+    this.dataSetAccessor = dataSetAccessor;
+  }
+
+  // These are to support new TxDs2 system. DataFabric will go away once we fully migrate to it.
+  @Override
+  public <T> T getDataSetClient(String name, Class<? extends T> type) {
+    try {
+      return dataSetAccessor.getDataSetClient(name, type);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public <T> DataSetManager getDataSetManager(Class<? extends T> type) {
+    try {
+      return dataSetAccessor.getDataSetManager(type);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

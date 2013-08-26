@@ -19,6 +19,11 @@ public interface FlowletContext extends RuntimeContext {
   int getInstanceCount();
 
   /**
+   * @return The instance id of this flowlet.
+   */
+  int getInstanceId();
+
+  /**
    * @return Name of this flowlet.
    */
   String getName();

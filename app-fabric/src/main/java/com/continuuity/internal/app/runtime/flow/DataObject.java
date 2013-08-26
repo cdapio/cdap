@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * Represents an event with partition hashes that needs to be emitted by the
- * {@link com.continuuity.api.flow.flowlet.Flowlet}
+ * {@link com.continuuity.api.flow.flowlet.Flowlet}.
  * @param <T> type of event
  */
 public class DataObject<T> {

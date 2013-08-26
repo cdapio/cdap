@@ -2,8 +2,12 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
 
 /**
  * Same as {@link SmartTransactionAgent} but that operates on a single given transaction. It will never attempt to
@@ -18,8 +22,12 @@ public class DetachedSmartTransactionAgent extends SmartTransactionAgent {
    * @param opex the actual operation executor
    * @param context the operation context for all operations
    */
-  public DetachedSmartTransactionAgent(OperationExecutor opex, OperationContext context, Transaction tx) {
-    super(opex, context, tx);
+  public DetachedSmartTransactionAgent(OperationExecutor opex, OperationContext context,
+                                       Iterable<TransactionAware> txAware, TransactionSystemClient txSystemClient,
+                                       com.continuuity.data.operation.executor.Transaction tx,
+                                       com.continuuity.data2.transaction.Transaction tx2) {
+    super(opex, context, txAware, txSystemClient, tx);
+    propagateToTxAwares(tx2);
   }
 
   @Override

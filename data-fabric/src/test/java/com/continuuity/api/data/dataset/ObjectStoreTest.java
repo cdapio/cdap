@@ -9,6 +9,7 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.dataset.DataSetTestBase;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -42,7 +43,7 @@ public class ObjectStoreTest extends DataSetTestBase {
     DataSet intStore = new IntegerStore("ints");
     setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore, batchStore, intStore));
     // this test runs all operations synchronously
-    newTransaction(Mode.Sync);
+    TransactionAgent txAgent = newTransaction();
   }
 
   @Test
@@ -89,6 +90,7 @@ public class ObjectStoreTest extends DataSetTestBase {
   public void testInstantiateWrongClass() throws Exception {
     // note: due to type erasure, this succeeds
     ObjectStore<Custom> store = instantiator.getDataSet("pairs");
+    TransactionAgent txAgent = newTransaction();
     // but now it must fail with incompatible type
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     try {
@@ -101,9 +103,14 @@ public class ObjectStoreTest extends DataSetTestBase {
     }
     // write a correct object to the pair store
     ObjectStore<ImmutablePair<Integer, String>> pairStore = instantiator.getDataSet("pairs");
+    txAgent = newTransaction();
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair); // should succeed
+    commitTransaction(txAgent);
+
     // now try to read that as a custom object, should fail with class cast
+    store = instantiator.getDataSet("pairs");
+    txAgent = newTransaction();
     try {
       custom = store.read(a);
       Assert.fail("write should have failed with class cast exception");
@@ -155,7 +162,7 @@ public class ObjectStoreTest extends DataSetTestBase {
     ObjectStore<String> t = instantiator.getDataSet("batch");
 
     // start a transaction
-    newTransaction(DataSetTestBase.Mode.Smart);
+    TransactionAgent txAgent = newTransaction();
     // write 1000 random values to the table and remember them in a set
     SortedSet<Long> keysWritten = Sets.newTreeSet();
     Random rand = new Random(451);
@@ -166,10 +173,10 @@ public class ObjectStoreTest extends DataSetTestBase {
       keysWritten.add(keyLong);
     }
     // commit transaction
-    commitTransaction();
+    commitTransaction(txAgent);
 
     // start a sync transaction
-    newTransaction(DataSetTestBase.Mode.Sync);
+    txAgent = newTransaction();
     // get the splits for the table
     List<Split> splits = t.getSplits();
     // read each split and verify the keys
@@ -177,7 +184,7 @@ public class ObjectStoreTest extends DataSetTestBase {
     verifySplits(t, splits, keysToVerify);
 
     // start a sync transaction
-    newTransaction(DataSetTestBase.Mode.Sync);
+    txAgent = newTransaction();
     // get specific number of splits for a subrange
     keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
     splits = t.getSplits(5, Bytes.toBytes(0x10000000L), Bytes.toBytes(0x40000000L));

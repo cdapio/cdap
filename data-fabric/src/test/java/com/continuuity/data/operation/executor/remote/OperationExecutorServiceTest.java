@@ -566,8 +566,7 @@ public abstract class OperationExecutorServiceTest extends
         continue;
       }
       byte[] value = Integer.toString(next).getBytes();
-      QueueEntry entry = new QueueEntry(value);
-      entry.addHashKey(hashKey, next);
+      QueueEntry entry = new QueueEntry(hashKey, next, value);
       QueueEnqueue enqueue = new QueueEnqueue(q, entry);
       remote.commit(context, enqueue);
       remote.commit(context, enqueue);

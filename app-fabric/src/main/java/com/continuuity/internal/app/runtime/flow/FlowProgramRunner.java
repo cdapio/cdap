@@ -219,7 +219,6 @@ public final class FlowProgramRunner implements ProgramRunner {
       lock.lock();
       try {
         for (Map.Entry<String, Integer> entry : command.entrySet()) {
-          String flowletName = entry.getKey();
           changeInstances(entry.getKey(), entry.getValue());
         }
       } catch (Throwable t) {

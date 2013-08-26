@@ -2,13 +2,21 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.RuntimeTable;
+import com.continuuity.data2.dataset.api.DataSetClient;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
@@ -35,6 +44,10 @@ public class DataSetInstantiationBase {
   // the known data set specifications
   private Map<String, DataSetSpecification> datasets =
     new HashMap<String, DataSetSpecification>();
+
+  private Set<TransactionAware> txAware = Sets.newIdentityHashSet();
+  // in this collection we have only datasets initialized with getDataSet() which is OK for now...
+  private Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   public DataSetInstantiationBase() {
     this.classLoader = null;
@@ -147,6 +160,23 @@ public class DataSetInstantiationBase {
     return this.convert(ds, className);
   }
 
+
+  /**
+   * Returns an immutable life Iterable of {@link TransactionAware} objects.
+   */
+  // NOTE: this is needed for now to minimize destruction of early integration of txds2
+  public Iterable<TransactionAware> getTransactionAware() {
+    return Iterables.unmodifiableIterable(txAware);
+  }
+
+  public void addTransactionAware(TransactionAware transactionAware) {
+    txAware.add(transactionAware);
+  }
+
+  public void removeTransactionAware(TransactionAware transactionAware) {
+    txAware.remove(transactionAware);
+  }
+
   /**
    * Helper method to cast the created data set object to its correct class.
    * This method is to isolate the unchecked cast (it has to be unchecked
@@ -193,16 +223,20 @@ public class DataSetInstantiationBase {
     throws DataSetInstantiationException {
     // for base data set types, directly inject the df fields
     if (obj instanceof Table) {
-      // this sets the delegate table of the Table to a new ReadWriteTable
-      RuntimeTable runtimeTable = this.isReadOnly()
-        ? ReadOnlyTable.setReadOnlyTable((Table) obj, fabric, metricName, proxy)
-        : ReadWriteTable.setReadWriteTable((Table) obj, fabric, metricName, proxy);
-      // also ensure that the table exists in the data fabric
+      // this sets the delegate table of the Table
+      Table table = (Table) obj;
+      RuntimeTable runtimeTable;
       try {
-        runtimeTable.open();
-      } catch (OperationException e) {
+        runtimeTable = RuntimeTable.setRuntimeTable(table, fabric, metricName);
+      } catch (Exception e) {
         throw new DataSetInstantiationException(
-          "Failed to open table '" + runtimeTable.getName() + "'.", e);
+          "Failed to open table '" + table.getName() + "'.", e);
+      }
+
+      TransactionAware txAware = runtimeTable.getTxAware();
+      if (txAware != null) {
+        this.txAware.add(txAware);
+        this.txAwareToMetricNames.put(txAware, metricName);
       }
       return;
     }
@@ -271,4 +305,42 @@ public class DataSetInstantiationBase {
     return exn;
   }
 
+  private static final String DATASET_CONTEXT = "-.dataset";
+
+  public void setMetricsCollector(MetricsCollectionService metricsCollectionService,
+                                  final MetricsCollector programContextMetrics) {
+
+    final MetricsCollector dataSetMetrics =
+      metricsCollectionService.getCollector(MetricsScope.REACTOR, DATASET_CONTEXT, "0");
+
+    for (Map.Entry<TransactionAware, String> txAware : this.txAwareToMetricNames.entrySet()) {
+      if (txAware.getKey() instanceof DataSetClient) {
+        final String metricName = txAware.getValue();
+        DataSetClient.DataOpsMetrics dataOpsMetrics = new DataSetClient.DataOpsMetrics() {
+          @Override
+          public void recordRead(int opsCount) {
+            if (dataSetMetrics != null) {
+              dataSetMetrics.gauge("store.reads", 1, metricName);
+            }
+            if (programContextMetrics != null) {
+              programContextMetrics.gauge("store.ops", 1);
+            }
+          }
+
+          @Override
+          public void recordWrite(int opsCount, int dataSize) {
+            if (dataSetMetrics != null) {
+              dataSetMetrics.gauge("store.writes", 1, metricName);
+              dataSetMetrics.gauge("store.bytes", dataSize, metricName);
+            }
+            if (programContextMetrics != null) {
+              programContextMetrics.gauge("store.ops", 1);
+            }
+          }
+        };
+
+        ((DataSetClient) txAware.getKey()).setMetricsCollector(dataOpsMetrics);
+      }
+    }
+  }
 }

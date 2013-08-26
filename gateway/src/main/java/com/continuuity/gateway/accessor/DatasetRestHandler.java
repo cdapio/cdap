@@ -16,12 +16,17 @@ import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.TruncateTable;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -263,6 +268,14 @@ public class DatasetRestHandler extends NettyRestHandler {
       DataSet ds = this.accessor.getInstantiator().getDataSet(spec.getName(), opContext);
       if (ds instanceof Table) {
         this.accessor.getExecutor().execute(opContext, new TruncateTable(ds.getName()));
+      }
+      // also truncating using TxDs2
+      try {
+        DataSetManager dataSetManager =
+          this.accessor.getDataSetAccessor().getDataSetManager(OrderedColumnarTable.class);
+        dataSetManager.truncate(ds.getName());
+      } catch (Exception e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);
       }
     }
   }
@@ -573,7 +586,9 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
       OperationResult<Map<byte[], byte[]>> result;
       try {
+        Transaction tx = startTx();
         result = table.read(read);
+        commitTx(tx);
       } catch (OperationException e) {
         helper.finish(Error);
         LOG.error("Error during Read: " + e.getMessage(), e);
@@ -612,7 +627,9 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
       // now execute the delete operation
       try {
+        Transaction tx = startTx();
         table.write(delete);
+        commitTx(tx);
       } catch (OperationException e) {
         helper.finish(Error);
         LOG.error("Error during Delete: " + e.getMessage(), e);
@@ -646,7 +663,9 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
       // now execute the write
       try {
+        Transaction tx = startTx();
         table.write(write);
+        commitTx(tx);
       } catch (OperationException e) {
         helper.finish(Error);
         LOG.error("Error during Writte: " + e.getMessage(), e);
@@ -680,7 +699,9 @@ public class DatasetRestHandler extends NettyRestHandler {
       // now execute the write
       Map<byte[], Long> results;
       try {
+        Transaction tx = startTx();
         results = table.incrementAndGet(increment);
+        commitTx(tx);
       } catch (OperationException e) {
         // if this was an illegal increment, then it was a bad request
         if (StatusCode.ILLEGAL_INCREMENT == e.getStatus()) {
@@ -703,6 +724,26 @@ public class DatasetRestHandler extends NettyRestHandler {
       respondSuccess(message.getChannel(), request, response);
       helper.finish(Success);
     }
+  }
+
+  private Transaction startTx() {
+    Transaction tx = accessor.getTxSystemClient().start();
+    for (TransactionAware txAware : accessor.getInstantiator().getInstantiator().getTransactionAware()) {
+      txAware.startTx(tx);
+    }
+    return tx;
+  }
+
+  private void commitTx(Transaction tx) {
+    for (TransactionAware txAware : accessor.getInstantiator().getInstantiator().getTransactionAware()) {
+      try {
+        txAware.commitTx();
+      } catch (Exception e) {
+        // todo
+        throw Throwables.propagate(e);
+      }
+    }
+    accessor.getTxSystemClient().commit(tx);
   }
 
   private void handleGlobalOperation(MessageEvent message, HttpRequest request, MetricsHelper helper,
@@ -748,16 +789,47 @@ public class DatasetRestHandler extends NettyRestHandler {
     }
     ClearFabric clearFabric = new ClearFabric(toClear);
     try {
-      this.accessor.getExecutor().
-        execute(context, clearFabric);
+      // remove from ds2 if needed (it uses mds, so doing it before mds cleanup)
+      if (toClear.contains(ClearFabric.ToClear.ALL) || toClear.contains(ClearFabric.ToClear.TABLES)) {
+        removeDs2Tables(context.getAccount(), context);
+      }
+
+      this.accessor.getExecutor().execute(context, clearFabric);
+
     } catch (Exception e) {
       LOG.error("Exception clearing data fabric: ", e);
       helper.finish(Error);
       respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
     }
+
     respondSuccess(message.getChannel(), request);
     helper.finish(Success);
+  }
+
+  private void removeDs2Tables(String account, OperationContext context) throws Exception {
+    List<Dataset> datasets = this.accessor.getMetadataService().getDatasets(new Account(account));
+    for (Dataset ds : datasets) {
+      removeDataset(ds.getName(), context);
+    }
+  }
+
+  private void removeDataset(String datasetName, OperationContext opContext) throws OperationException {
+    // NOTE: for now we just try to do the best we can: find all used DataSets of type Table and remove them. This
+    //       should be done better, when we refactor DataSet API (towards separating user API and management parts)
+    DataSet dataSet = this.accessor.getInstantiator().getDataSet(datasetName, opContext);
+    DataSetSpecification config = dataSet.configure();
+    List<DataSetSpecification> allDataSets = getAllUsedDataSets(config);
+    for (DataSetSpecification spec : allDataSets) {
+      DataSet ds = this.accessor.getInstantiator().getDataSet(spec.getName(), opContext);
+      try {
+        DataSetManager dataSetManager =
+          this.accessor.getDataSetAccessor().getDataSetManager(OrderedColumnarTable.class);
+        dataSetManager.drop(ds.getName());
+      } catch (Exception e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);
+      }
+    }
   }
 
   @Override

@@ -1,6 +1,8 @@
 package com.continuuity.gateway;
 
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.weave.filesystem.LocationFactory;
 
 /**
@@ -20,6 +22,12 @@ public abstract class Accessor extends Connector implements DataAccessor {
    */
   protected LocationFactory locationFactory;
 
+  // to support early integration with TxDs2
+  private DataSetAccessor dataSetAccessor;
+
+  // to support early integration with TxDs2
+  private TransactionSystemClient txSystemClient;
+
   @Override
   public void setExecutor(OperationExecutor executor) {
     this.executor = executor;
@@ -38,6 +46,26 @@ public abstract class Accessor extends Connector implements DataAccessor {
   @Override
   public LocationFactory getLocationFactory() {
     return this.locationFactory;
+  }
+
+  @Override
+  public DataSetAccessor getDataSetAccessor() {
+    return dataSetAccessor;
+  }
+
+  @Override
+  public void setDataSetAccessor(DataSetAccessor dataSetAccessor) {
+    this.dataSetAccessor = dataSetAccessor;
+  }
+
+  @Override
+  public TransactionSystemClient getTxSystemClient() {
+    return txSystemClient;
+  }
+
+  @Override
+  public void setTxSystemClient(TransactionSystemClient txSystemClient) {
+    this.txSystemClient = txSystemClient;
   }
 }
 

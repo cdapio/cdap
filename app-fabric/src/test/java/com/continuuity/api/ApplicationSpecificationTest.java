@@ -2,9 +2,9 @@ package com.continuuity.api;
 
 
 import com.continuuity.WordCountApp;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import org.junit.Assert;
 import org.junit.Test;
 

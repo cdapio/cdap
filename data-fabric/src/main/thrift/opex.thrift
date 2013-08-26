@@ -268,6 +268,12 @@ struct TTransaction {
   4: optional bool trackChanges,
 }
 
+struct TTransaction2 {
+  1: i64 writePointer,
+  2: i64 readPointer,
+  3: list<i64> excludes,
+}
+
 struct TKeyRange {
   1: binary start,
   2: binary stop,
@@ -311,4 +317,9 @@ service TOperationExecutor {
   void configureQueueGroups(1: TOperationContext context, 2: TQueueConfigureGroups configure) throws (1: TOperationException ex),
   void queueDropInflight(1: TOperationContext context, 2: TQueueDropInflight op) throws (1: TOperationException ex),
 
+  // temporary tx2 stuff
+  TTransaction2 startTx() throws (1: TOperationException ex),
+  bool canCommitTx(1: TTransaction2 tx, 2: set<binary> changes) throws (1: TOperationException ex),
+  bool commitTx(1: TTransaction2 tx) throws (1: TOperationException ex),
+  bool abortTx(1: TTransaction2 tx) throws (1: TOperationException ex),
 }

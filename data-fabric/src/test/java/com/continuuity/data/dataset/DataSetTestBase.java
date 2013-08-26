@@ -5,14 +5,14 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
-import com.continuuity.data.operation.executor.BatchTransactionAgentWithSyncReads;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
-import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.util.OperationUtil;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
@@ -39,8 +39,8 @@ public class DataSetTestBase {
 
   private static OperationExecutor opex;
   protected static DataFabric fabric;
+  protected static TransactionSystemClient txSystemClient;
 
-  private static TransactionAgent agent;
   protected static final TransactionProxy PROXY = new TransactionProxy();
 
   protected static List<DataSetSpecification> specs;
@@ -65,9 +65,11 @@ public class DataSetTestBase {
                              }
                            });
     opex = injector.getInstance(OperationExecutor.class);
+    txSystemClient = injector.getInstance(TransactionSystemClient.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     // and create a data fabric with the default operation context
-    fabric = new DataFabricImpl(opex, locationFactory, OperationUtil.DEFAULT);
+    fabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, OperationUtil.DEFAULT);
   }
 
   /**
@@ -99,14 +101,11 @@ public class DataSetTestBase {
    * configured through the instantiator (@see #setupInstantiator) will start using that
    * transaction agent immediately.
    */
-  public static void newTransaction(Mode mode) throws OperationException {
-    switch (mode) {
-      case Sync: agent = new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT); break;
-      case Batch: agent = new BatchTransactionAgentWithSyncReads(opex, OperationUtil.DEFAULT); break;
-      case Smart: agent = new SmartTransactionAgent(opex, OperationUtil.DEFAULT);
-    }
+  public static TransactionAgent newTransaction() throws OperationException {
+    SmartTransactionAgent agent = new SmartTransactionAgent(opex, OperationUtil.DEFAULT,
+                                      instantiator.getTransactionAware(), txSystemClient);
     agent.start();
-    PROXY.setTransactionAgent(agent);
+    return agent;
   }
 
   /**
@@ -115,7 +114,7 @@ public class DataSetTestBase {
    * unsuccessful - a new transaction agent should be started for subsequent operations.
    * @throws OperationException if the transaction fails for any reason
    */
-  public static void commitTransaction() throws OperationException {
+  public static void commitTransaction(TransactionAgent agent) throws OperationException {
     agent.finish();
   }
 }
