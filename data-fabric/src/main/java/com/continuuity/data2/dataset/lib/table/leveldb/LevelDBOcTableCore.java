@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -196,6 +198,51 @@ public class LevelDBOcTableCore {
     }
     // note this will return null for the row being read if multiRow is false (because the caller knows the row)
     return new ImmutablePair<byte[], NavigableMap<byte[], byte[]>>(rowBeingRead, map);
+  }
+
+  /**
+   * Delete a list of rows from the table entirely, disregarding transactions.
+   * @param toDelete the sorted list of row keys to delete.
+   */
+  public void deleteRows(List<byte[]> toDelete) throws IOException {
+    if (toDelete.isEmpty()) {
+      return;
+    }
+    // find first row to delete and first entry in the DB to examine
+    Iterator<byte[]> rows = toDelete.iterator();
+    byte[] currentRow = rows.next();
+    byte[] startKey = createStartKey(currentRow);
+    DBIterator iterator = db.iterator();
+    WriteBatch batch = db.createWriteBatch();
+    try {
+      iterator.seek(startKey);
+      if (!iterator.hasNext()) {
+        return; // nothing in the db to delete
+      }
+      Map.Entry<byte[], byte[]> entry = iterator.next();
+
+      // iterate over the database and the rows to delete, collecting (raw) keys to delete
+      while (entry != null && currentRow != null) {
+        KeyValue kv = KeyValue.fromKey(entry.getKey());
+        int comp = Bytes.compareTo(kv.getRow(), currentRow);
+        if (comp == 0) {
+          // same row -> delete
+          batch.delete(entry.getKey());
+          entry = iterator.hasNext() ? iterator.next() : null;
+        } else if (comp > 0) {
+          // read past current row -> move to next row
+          currentRow = rows.hasNext() ? rows.next() : null;
+        } else if (comp < 0) {
+          // iterator must seek to current row
+          iterator.seek(createStartKey(currentRow));
+          entry = iterator.hasNext() ? iterator.next() : null;
+        }
+      }
+    } finally {
+      iterator.close();
+    }
+    // delete all the entries that were found
+    db.write(batch, writeOptions);
   }
 
   /**

@@ -12,25 +12,36 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueEvictor;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
+import com.continuuity.weave.common.Threads;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Factory for LevelDB queue clients.
  */
 public final class LevelDBQueueClientFactory implements QueueClientFactory {
 
-  private final LevelDBOcTableService service;
-
   public static final String QUEUE_TABLE_NAME = "__queues";
+
+  private static final int MAX_EVICTION_THREAD_POOL_SIZE = 10;
+  private static final int EVICTION_THREAD_POOL_KEEP_ALIVE_SECONDS = 60;
+
+  private final LevelDBOcTableService service;
+  private final ExecutorService evictionExecutor;
+
   private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
   public LevelDBQueueClientFactory(LevelDBOcTableService service) throws IOException {
     this.service = service;
+    this.evictionExecutor = createEvictionExecutor();
     service.createTable(QUEUE_TABLE_NAME);
   }
 
@@ -42,9 +53,11 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   @Override
   public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
     throws IOException {
-    return new LevelDBQueue2Consumer(new LevelDBOcTableCore(QUEUE_TABLE_NAME, service),
-                                     getQueueLock(queueName.toString()),
-                                     consumerConfig, queueName, QueueEvictor.NOOP);
+    LevelDBOcTableCore core = new LevelDBOcTableCore(QUEUE_TABLE_NAME, service);
+    // only the first consumer of each group runs eviction; and only if the number of consumers is known (> 0).
+    QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0) ? QueueEvictor.NOOP :
+      new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
+    return new LevelDBQueue2Consumer(core, getQueueLock(queueName.toString()), consumerConfig, queueName, evictor);
   }
 
   @Override
@@ -63,5 +76,13 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
       }
     }
     return lock;
+  }
+
+  private ExecutorService createEvictionExecutor() {
+    return new ThreadPoolExecutor(0, MAX_EVICTION_THREAD_POOL_SIZE,
+                                  EVICTION_THREAD_POOL_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
+                                  new SynchronousQueue<Runnable>(),
+                                  Threads.createDaemonThreadFactory("queue-eviction-%d"),
+                                  new ThreadPoolExecutor.CallerRunsPolicy());
   }
 }

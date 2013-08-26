@@ -270,7 +270,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     long[] excludedList = transaction.getExcludedList();
 
     // Scan the table for queue entries.
-    QueueScanner scanner = getScanner(startRow, getStopRow());
+    QueueScanner scanner = getScanner(startRow, QueueUtils.getStopRowForTransaction(queueRowPrefix, transaction));
 
     try {
       // Try fill up the cache with at most MAX_CACHE_ROWS
@@ -393,13 +393,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
       default:
         throw new UnsupportedOperationException("Strategy " + consumerConfig.getDequeueStrategy() + " not supported.");
     }
-  }
-
-  /**
-   * Gets the stop row for scan. Stop row is queueName + (readPointer + 1).
-   */
-  private byte[] getStopRow() {
-    return Bytes.add(queueRowPrefix, Bytes.toBytes(transaction.getReadPointer() + 1L));
   }
 
   private byte[] getNextRow(long writePointer, int count) {

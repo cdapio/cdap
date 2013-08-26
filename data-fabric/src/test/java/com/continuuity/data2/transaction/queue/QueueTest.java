@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -133,6 +134,23 @@ public abstract class QueueTest {
     Assert.assertEquals(3, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
     Assert.assertEquals(3, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
     txManager.commit();
+
+    // Dequeue again, it should see a new entry
+    txManager.start();
+    Assert.assertEquals(4, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
+    Assert.assertEquals(4, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
+    txManager.commit();
+
+    txManager.start();
+    if (fifoConsumer instanceof Closeable) {
+      ((Closeable) fifoConsumer).close();
+    }
+    if (hashConsumer instanceof Closeable) {
+      ((Closeable) hashConsumer).close();
+    }
+    txManager.commit();
+
+    verifyQueueIsEmpty(queueName, 2);
   }
 
   @Test
@@ -277,12 +295,15 @@ public abstract class QueueTest {
                        (double) dequeueCount * 1000 / elapsed, queueName.getSimpleName());
 
               if (consumer instanceof Closeable) {
+                txManager.start();
                 ((Closeable) consumer).close();
+                txManager.commit();
               }
 
               completeLatch.countDown();
             } finally {
               if (consumer instanceof Closeable) {
+
                 ((Closeable) consumer).close();
               }
             }
@@ -298,6 +319,8 @@ public abstract class QueueTest {
     TimeUnit.SECONDS.sleep(2);
 
     Assert.assertEquals(expectedSum, valueSum.get());
+
+    verifyQueueIsEmpty(queueName, 1);
     executor.shutdownNow();
   }
 
@@ -428,5 +451,17 @@ public abstract class QueueTest {
       }
       opex.abort(transaction);
     }
+  }
+
+  private void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws IOException, OperationException {
+    // the queue has been consumed by n consumers. Use a consumerId greater than n to make sure it can dequeue.
+    Queue2Consumer consumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(numActualConsumers + 1, 0, 1, DequeueStrategy.FIFO, null), -1);
+
+    TxManager txManager = new TxManager((TransactionAware) consumer);
+    txManager.start();
+    Assert.assertTrue("Entire queue should be evicted after test but dequeue succeeds.",
+                       consumer.dequeue().isEmpty());
+    txManager.abort();
   }
 }

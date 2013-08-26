@@ -3,7 +3,6 @@
  */
 package com.continuuity.data2.transaction.queue.hbase;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.QueueEvictor;
@@ -25,19 +24,19 @@ public final class HBaseQueueEvictor implements QueueEvictor {
 
   private final HTable hTable;
   private final Executor executor;
-  private final byte[] startRow;
+  private final byte[] rowPrefix;
   private final int numGroups;
 
   public HBaseQueueEvictor(HTable hTable, QueueName queueName, Executor executor, int numGroups) {
     this.hTable = hTable;
     this.executor = executor;
-    this.startRow = QueueUtils.getQueueRowPrefix(queueName);
+    this.rowPrefix = QueueUtils.getQueueRowPrefix(queueName);
     this.numGroups = numGroups;
   }
 
   @Override
   public ListenableFuture<Integer> evict(final Transaction transaction) {
-    final byte[] endRow = getEndRow(transaction);
+    final byte[] endRow = QueueUtils.getStopRowForTransaction(rowPrefix, transaction);
     final SettableFuture<Integer> result = SettableFuture.create();
     executor.execute(new Runnable() {
 
@@ -45,13 +44,13 @@ public final class HBaseQueueEvictor implements QueueEvictor {
       public void run() {
         try {
           final AtomicInteger count = new AtomicInteger();
-          hTable.coprocessorExec(HBaseQueueEvictionProtocol.class, startRow, endRow,
+          hTable.coprocessorExec(HBaseQueueEvictionProtocol.class, rowPrefix, endRow,
                                  new Batch.Call<HBaseQueueEvictionProtocol, Integer>() {
 
             @Override
             public Integer call(HBaseQueueEvictionProtocol protocol) throws IOException {
               Scan scan = new Scan();
-              scan.setStartRow(startRow);
+              scan.setStartRow(rowPrefix);
               scan.setStopRow(endRow);
 
               return protocol.evict(scan, transaction.getReadPointer(), transaction.getExcludedList(), numGroups);
@@ -70,9 +69,5 @@ public final class HBaseQueueEvictor implements QueueEvictor {
       }
     });
     return result;
-  }
-
-  private byte[] getEndRow(Transaction transaction) {
-    return Bytes.add(startRow, Bytes.toBytes(transaction.getReadPointer() + 1));
   }
 }
