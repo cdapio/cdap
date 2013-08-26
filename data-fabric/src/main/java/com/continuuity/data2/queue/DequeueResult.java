@@ -43,7 +43,7 @@ public interface DequeueResult extends Iterable<byte[]> {
    *
    * </pre>
    */
-  void skip();
+  void reclaim();
 
   /**
    * An (immutable) empty dequeue result
@@ -55,7 +55,7 @@ public interface DequeueResult extends Iterable<byte[]> {
     }
 
     @Override
-    public void skip() {
+    public void reclaim() {
       // No-op
     }
 

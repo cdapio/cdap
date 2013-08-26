@@ -115,7 +115,7 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
     }
 
     @Override
-    public void skip() {
+    public void reclaim() {
       if (dequeuedKeys != null) {
         dequeuedKeys.addAll(keys);
       } else {
