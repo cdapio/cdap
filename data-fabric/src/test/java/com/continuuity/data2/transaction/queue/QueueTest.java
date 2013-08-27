@@ -44,46 +44,47 @@ public abstract class QueueTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
-  private static final int ROUNDS = 30000;
+  private static final int ROUNDS = 1000;
+  private static final long TIMEOUT_MS = 2 * 60 * 1000L;
 
   protected static OperationExecutor opex;
   protected static QueueClientFactory queueClientFactory;
 
   // Simple enqueue and dequeue with one consumer, no batch
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testSingleFifo() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlefifo");
-    enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with three consumers, no batch
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testMultiFifo() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multififo");
-    enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 3, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 3, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testSingleHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlehash");
-    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1);
   }
 
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testMultiHash() throws Exception {
     QueueName queueName = QueueName.fromStream("bingo", "bang");
-    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 3, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 3, DequeueStrategy.HASH, 1);
   }
 
   // Batch enqueue and batch dequeue with one consumer.
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testBatchHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "batchhash");
-    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 50, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 50);
   }
 
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testQueueAbortRetrySkip() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuefailure");
     createEnqueueRunnable(queueName, 5, 1, null).run();
@@ -153,7 +154,7 @@ public abstract class QueueTest {
     verifyQueueIsEmpty(queueName, 2);
   }
 
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testRollback() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuerollback");
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
@@ -230,8 +231,7 @@ public abstract class QueueTest {
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,
                               final int consumerSize, final DequeueStrategy dequeueStrategy,
-                              final int dequeueBatchSize,
-                              long timeout, TimeUnit timeoutUnit) throws Exception {
+                              final int dequeueBatchSize) throws Exception {
 
     Preconditions.checkArgument(preEnqueueCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
     Preconditions.checkArgument(concurrentCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
@@ -267,7 +267,7 @@ public abstract class QueueTest {
               stopwatch.start();
 
               int dequeueCount = 0;
-              while (valueSum.get() != expectedSum) {
+              while (valueSum.get() < expectedSum) {
                 txManager.start();
 
                 try {
@@ -315,7 +315,7 @@ public abstract class QueueTest {
     }
 
     startBarrier.await();
-    Assert.assertTrue(completeLatch.await(timeout, timeoutUnit));
+    completeLatch.await();
     TimeUnit.SECONDS.sleep(2);
 
     Assert.assertEquals(expectedSum, valueSum.get());
