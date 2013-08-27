@@ -5,8 +5,6 @@ package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
@@ -40,6 +38,9 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
 
   // Some reasonable size for collection rows to delete to avoid too frequent overhead of resizing the array.
   private static final int COLLECTION_SIZE = 1000;
+
+  private static final int LONG_SIZE = Long.SIZE / Byte.SIZE;
+  private static final int INT_SIZE = Integer.SIZE / Byte.SIZE;
 
   private final Filter stateColumnFilter = new ColumnPrefixFilter(QueueConstants.STATE_COLUMN_PREFIX);
 
@@ -114,11 +115,11 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
   }
 
   private boolean isCommittedProcessed(KeyValue stateColumn, long readPointer, long[] excludes) {
-    long writePointer = Bytes.toLong(stateColumn.getBuffer(), stateColumn.getValueOffset(), Longs.BYTES);
+    long writePointer = Bytes.toLong(stateColumn.getBuffer(), stateColumn.getValueOffset(), LONG_SIZE);
     if (writePointer > readPointer || Arrays.binarySearch(excludes, writePointer) >= 0) {
       return false;
     }
-    byte state = stateColumn.getBuffer()[stateColumn.getValueOffset() + Longs.BYTES + Ints.BYTES];
+    byte state = stateColumn.getBuffer()[stateColumn.getValueOffset() + LONG_SIZE + INT_SIZE];
     return state == ConsumerEntryState.PROCESSED.getState();
   }
 }

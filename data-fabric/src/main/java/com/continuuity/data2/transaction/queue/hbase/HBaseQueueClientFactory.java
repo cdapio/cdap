@@ -17,11 +17,8 @@ import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -35,7 +32,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -52,6 +48,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   private static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
   private static final int MAX_EVICTION_THREAD_POOL_SIZE = 10;
   private static final int EVICTION_THREAD_POOL_KEEP_ALIVE_SECONDS = 60;
+  private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
 
   private final HBaseAdmin admin;
   private final byte[] tableName;
@@ -135,10 +132,8 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
    * @throws IOException
    */
   private Path createCoProcessorJar(FileSystem fileSystem, Path jarDir) throws IOException {
-    // Assuming the endpoint and protocol class doesn't have dependencies other than those comes with HBase and Java.
-    final Set<String> acceptClasses = ImmutableSet.of(HBaseQueueEvictionEndpoint.class.getName(),
-                                                      HBaseQueueEvictionProtocol.class.getName());
-
+    final Hasher hasher = Hashing.md5().newHasher();
+    final byte[] buffer = new byte[COPY_BUFFER_SIZE];
     File jarFile = File.createTempFile("queue", ".jar");
     try {
       final JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
@@ -146,17 +141,24 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
         Dependencies.findClassDependencies(HBaseQueueEvictionEndpoint.class.getClassLoader(),
                                            new Dependencies.ClassAcceptor() {
            @Override
-           public boolean accept(String className, final URL classUrl,
-                                 URL classPathUrl) {
-             if (acceptClasses.contains(className)) {
+           public boolean accept(String className, final URL classUrl, URL classPathUrl) {
+             // Assuming the endpoint and protocol class doesn't have dependencies
+             // other than those comes with HBase and Java.
+             if (className.startsWith("com.continuuity")) {
                try {
                  jarOutput.putNextEntry(new JarEntry(className.replace('.', File.separatorChar) + ".class"));
-                 ByteStreams.copy(new InputSupplier<InputStream>() {
-                   @Override
-                   public InputStream getInput() throws IOException {
-                     return classUrl.openStream();
+                 InputStream inputStream = classUrl.openStream();
+
+                 try {
+                   int len = inputStream.read(buffer);
+                   while (len >= 0) {
+                     hasher.putBytes(buffer, 0, len);
+                     jarOutput.write(buffer, 0, len);
+                     len = inputStream.read(buffer);
                    }
-                 }, jarOutput);
+                 } finally {
+                   inputStream.close();
+                 }
                  return true;
                } catch (IOException e) {
                  throw Throwables.propagate(e);
@@ -170,7 +172,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
       }
       // Copy jar file into HDFS
       // Target path is the jarDir + jarMD5.jar
-      Path targetPath = new Path(jarDir, Files.hash(jarFile, Hashing.md5()).toString() + ".jar");
+      Path targetPath = new Path(jarDir, "coprocessor" + hasher.hash().toString() + ".jar");
 
       // If the file exists and having same since, assume the file doesn't changed
       if (fileSystem.exists(targetPath) && fileSystem.getFileStatus(targetPath).getLen() == jarFile.length()) {

@@ -87,6 +87,11 @@ public final class Queue2InputDatum implements InputDatum {
   }
 
   @Override
+  public int size() {
+    return result.size();
+  }
+
+  @Override
   public String toString() {
     return String.format("%s %d", result, retry.get());
   }
