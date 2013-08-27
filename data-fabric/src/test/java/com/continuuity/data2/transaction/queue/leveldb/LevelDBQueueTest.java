@@ -1,13 +1,14 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueTest;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
