@@ -355,7 +355,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           txAgent.start();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
+          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", input.size());
 
           // Call the process method and commit the transaction
           ProcessMethod.ProcessResult result =
@@ -402,7 +402,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
+          flowletContext.getSystemMetrics().gauge("process.events.processed", input.size());
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.error("Exception on onSuccess call: {}", flowletContext, t);
@@ -446,7 +446,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
+            flowletContext.getSystemMetrics().gauge("process.events.processed", input.size());
             inputAcknowledger.ack();
           } catch (OperationException e) {
             LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);

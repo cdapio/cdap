@@ -174,13 +174,13 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     // TODO pre-compute this in constructor
     byte[] stateContent = encodeStateColumn(ConsumerEntryState.PROCESSED);
     updateState(consumingEntries.keySet(), stateColumnName, stateContent);
+    commitCount += consumingEntries.size();
     committed = true;
     return true;
   }
 
   @Override
   public void postTxCommit() {
-    commitCount++;
     if (commitCount >= EVICTION_LIMIT) {
       commitCount = 0;
       // Fire and forget
@@ -201,6 +201,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     if (!committed) {
       return true;
     }
+    commitCount -= consumingEntries.size();
 
     // Revert changes in HBase rows
     // If it is FIFO, restore to the CLAIMED state. This instance will retry it on the next dequeue.
@@ -426,6 +427,11 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         consumingEntries.put(entry.getRowKey(), entry);
         entryCache.remove(entry.getRowKey());
       }
+    }
+
+    @Override
+    public int size() {
+      return entries.size();
     }
 
     @Override

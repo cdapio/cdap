@@ -3,10 +3,12 @@
  */
 package com.continuuity.internal.app.runtime.flow;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
-import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -24,15 +26,15 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
 
   private static final Logger LOG = LoggerFactory.getLogger(QueueConsumerSupplier.class);
 
-  private final QueueClientFactory clientFactory;
+  private final DataFabricFacade dataFabricFacade;
   private final QueueName queueName;
   private final int numGroups;
   private ConsumerConfig consumerConfig;
   private Queue2Consumer consumer;
 
-  QueueConsumerSupplier(QueueClientFactory clientFactory, QueueName queueName,
-                        ConsumerConfig consumerConfig, int numGroups) {
-    this.clientFactory = clientFactory;
+  QueueConsumerSupplier(DataFabricFacade dataFabricFacade,
+                        QueueName queueName, ConsumerConfig consumerConfig, int numGroups) {
+    this.dataFabricFacade = dataFabricFacade;
     this.queueName = queueName;
     this.consumerConfig = consumerConfig;
     this.numGroups = numGroups;
@@ -57,14 +59,24 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
   private Queue2Consumer createConsumer(Queue2Consumer oldConsumer) {
     try {
       if (oldConsumer != null && oldConsumer instanceof Closeable) {
-        ((Closeable) oldConsumer).close();
+        // Call close in a new transaction.
+        // TODO (terence): Actually need to coordinates with other flowlets to drain the queue.
+        TransactionAgent txAgent = dataFabricFacade.createTransactionAgent();
+        txAgent.start();
+        try {
+          ((Closeable) oldConsumer).close();
+          txAgent.finish();
+        } catch (OperationException e) {
+          LOG.warn("Fail to commit transaction when closing consumer.");
+          txAgent.abort();
+        }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       LOG.warn("Fail to close queue consumer.", e);
     }
 
     try {
-      return clientFactory.createConsumer(queueName, consumerConfig, numGroups);
+      return dataFabricFacade.createConsumer(queueName, consumerConfig, numGroups);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

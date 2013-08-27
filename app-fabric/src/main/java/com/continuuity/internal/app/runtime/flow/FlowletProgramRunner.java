@@ -188,7 +188,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Collection<ProcessSpecification> processSpecs =
         createProcessSpecification(flowletContext, flowletType,
                                    processMethodFactory(flowlet),
-                                   processSpecificationFactory(queueReaderFactory, dataFabricFacade, flowletName,
+                                   processSpecificationFactory(dataFabricFacade, queueReaderFactory, flowletName,
                                                                queueSpecs, queueConsumerSupplierBuilder,
                                                                createSchemaCache(program)),
                                    Lists.<ProcessSpecification>newLinkedList());
@@ -447,8 +447,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private ProcessSpecificationFactory processSpecificationFactory(
-    final QueueReaderFactory queueReaderFactory, final QueueClientFactory queueClientFactory, final String flowletName,
-    final Table<Node, String, Set<QueueSpecification>> queueSpecs,
+    final DataFabricFacade dataFabricFacade, final QueueReaderFactory queueReaderFactory,
+    final String flowletName, final Table<Node, String, Set<QueueSpecification>> queueSpecs,
     final ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder,
     final SchemaCache schemaCache) {
 
@@ -470,7 +470,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 ? -1
                 : getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
 
-              QueueConsumerSupplier consumerSupplier = new QueueConsumerSupplier(queueClientFactory,
+              QueueConsumerSupplier consumerSupplier = new QueueConsumerSupplier(dataFabricFacade,
                                                                                  queueName, consumerConfig, numGroups);
               queueConsumerSupplierBuilder.add(consumerSupplier);
               queueReaders.add(queueReaderFactory.create(consumerSupplier, batchSize));

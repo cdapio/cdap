@@ -46,6 +46,11 @@ public interface DequeueResult extends Iterable<byte[]> {
   void reclaim();
 
   /**
+   * Returns number of entries in this result.
+   */
+  int size();
+
+  /**
    * An (immutable) empty dequeue result
    */
   static final DequeueResult EMPTY_RESULT = new DequeueResult() {
@@ -57,6 +62,11 @@ public interface DequeueResult extends Iterable<byte[]> {
     @Override
     public void reclaim() {
       // No-op
+    }
+
+    @Override
+    public int size() {
+      return 0;
     }
 
     @Override

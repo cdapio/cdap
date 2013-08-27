@@ -53,6 +53,11 @@ public final class NullInputDatum implements InputDatum {
   }
 
   @Override
+  public int size() {
+    return 0;
+  }
+
+  @Override
   public Iterator<ByteBuffer> iterator() {
     return Iterators.emptyIterator();
   }
