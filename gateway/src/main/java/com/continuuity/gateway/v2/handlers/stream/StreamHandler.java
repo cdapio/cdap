@@ -24,13 +24,14 @@ import com.continuuity.gateway.GatewayMetrics;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
-import com.continuuity.gateway.v2.txmanager.SingletonTxManager;
+import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
+import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -76,58 +77,51 @@ public class StreamHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private static final String NAME = "stream.rest";
 
-  private final OperationExecutor opex;
   private final StreamCache streamCache;
   private final MetadataService metadataService;
   private final CMetrics cMetrics;
   private final GatewayMetrics gatewayMetrics;
-  private final CachedStreamEventConsumer consumer;
+  private final CachedStreamEventCollector consumer;
   private final GatewayAuthenticator authenticator;
 
-  private final LoadingCache<ConsumerKey, Queue2Consumer> queueConsumerCache;
+  private final LoadingCache<ConsumerKey, ConsumerHolder> queueConsumerCache;
 
   @Inject
-  public StreamHandler(OperationExecutor opex, CConfiguration cConfig, StreamCache streamCache,
+  public StreamHandler(final OperationExecutor opex, CConfiguration cConfig, StreamCache streamCache,
                        MetadataService metadataService, CMetrics cMetrics, GatewayMetrics gatewayMetrics,
                        final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator) {
-    this.opex = opex;
     this.streamCache = streamCache;
     this.metadataService = metadataService;
     this.cMetrics = cMetrics;
     this.gatewayMetrics = gatewayMetrics;
     this.authenticator = authenticator;
 
-    this.consumer = new CachedStreamEventConsumer(cConfig, opex, queueClientFactory);
+    this.consumer = new CachedStreamEventCollector(cConfig, opex, queueClientFactory);
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .removalListener(
-        new RemovalListener<ConsumerKey, Queue2Consumer>() {
+        new RemovalListener<ConsumerKey, ConsumerHolder>() {
           @Override
-          public void onRemoval(RemovalNotification<ConsumerKey, Queue2Consumer> notification) {
-            Queue2Consumer consumer = notification.getValue();
-            if (consumer == null) {
+          public void onRemoval(RemovalNotification<ConsumerKey, ConsumerHolder> notification) {
+            ConsumerHolder holder = notification.getValue();
+            if (holder == null) {
               return;
             }
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (consumer) {
-              if (consumer instanceof Closeable) {
-                try {
-                  ((Closeable) consumer).close();
-                } catch (IOException e) {
-                  LOG.error("Exception while closing consumer {}", consumer, e);
-                }
-              }
+
+            try {
+              holder.close();
+            } catch (IOException e) {
+              LOG.error("Exception while closing consumer {}", holder, e);
             }
           }
         }
       )
       .build(
-        new CacheLoader<ConsumerKey, Queue2Consumer>() {
+        new CacheLoader<ConsumerKey, ConsumerHolder>() {
           @Override
-          public Queue2Consumer load(ConsumerKey key) throws Exception {
-            return queueClientFactory.createConsumer(key.getQueueName(),
-              new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null), 1);
+          public ConsumerHolder load(ConsumerKey key) throws Exception {
+            return new ConsumerHolder(key, opex, queueClientFactory);
           }
         });
   }
@@ -338,10 +332,9 @@ public class StreamHandler extends AbstractHttpHandler {
 
     // valid group id, dequeue and return
     QueueName queueName = QueueName.fromStream(accountId, destination);
-    Queue2Consumer consumer;
+    ConsumerHolder consumerHolder;
     try {
-      // 0th instance of group 'groupId' of size 1
-      consumer = queueConsumerCache.get(new ConsumerKey(queueName, groupId));
+      consumerHolder = queueConsumerCache.get(new ConsumerKey(queueName, groupId));
     } catch (Exception e) {
       LOG.error("Caught exception during creation of consumer for stream {}", destination, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -350,26 +343,19 @@ public class StreamHandler extends AbstractHttpHandler {
 
     // perform dequeue
     DequeueResult result;
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (consumer) {
-      SingletonTxManager txManager = new SingletonTxManager(opex, (TransactionAware) consumer);
+    try {
+      result = consumerHolder.dequeue();
+    } catch (Throwable e) {
+      helper.finish(Error);
+      LOG.error("Error dequeueing from stream {} with consumer {}", queueName, consumerHolder, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       try {
-        txManager.start();
-        result = consumer.dequeue();
-        txManager.commit();
-      } catch (Exception e) {
-        helper.finish(Error);
-        LOG.error("Error dequeueing from stream {} with consumer {}", queueName, consumer, e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        try {
-          txManager.abort();
-          // refresh the cache for this stream, it may have been deleted
-          streamCache.refreshStream(accountId, destination);
-        } catch (OperationException e1) {
-          LOG.error("Exception while aborting dequeue of stream {} with consumer {}", destination, consumer, e1);
-        }
-        return;
+        // refresh the cache for this stream, it may have been deleted
+        streamCache.refreshStream(accountId, destination);
+      } catch (OperationException e1) {
+        LOG.error("Exception while refreshing stream {} with account {}", destination, accountId, e1);
       }
+      return;
     }
 
     if (result.isEmpty()) {
@@ -541,6 +527,58 @@ public class StreamHandler extends AbstractHttpHandler {
       int result = queueName != null ? queueName.hashCode() : 0;
       result = 31 * result + (int) (groupId ^ (groupId >>> 32));
       return result;
+    }
+  }
+
+  /**
+   * Handles dequeue of stream making sure that access to consumer is serialized.
+   */
+  private static final class ConsumerHolder implements Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(ConsumerHolder.class);
+
+    private final Queue2Consumer consumer;
+    private final TxManager txManager;
+
+    public ConsumerHolder(ConsumerKey key, OperationExecutor opex,
+                           QueueClientFactory queueClientFactory) throws Exception {
+      // 0th instance of group 'groupId' of size 1
+      this.consumer =
+        queueClientFactory.createConsumer(key.getQueueName(),
+                                          new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null), 1);
+      this.txManager = new TxManager(opex);
+      this.txManager.add((TransactionAware) consumer);
+    }
+
+    public DequeueResult dequeue() throws Throwable {
+      synchronized (this) {
+        try {
+          txManager.start();
+          DequeueResult result = consumer.dequeue();
+          txManager.commit();
+          return result;
+        } catch (Throwable e) {
+          LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
+          txManager.abort();
+          throw e;
+        }
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+      if (consumer instanceof Closeable) {
+        synchronized (this) {
+          ((Closeable) consumer).close();
+        }
+      }
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("consumer", consumer)
+        .add("txManager", txManager)
+        .toString();
     }
   }
 }

@@ -2,6 +2,7 @@ package com.continuuity.gateway.v2.txmanager;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
 import java.util.Collections;
@@ -38,5 +39,12 @@ public class TxManager extends AbstractTxManager {
   @Override
   protected Set<TransactionAware> getTransactionAwares() {
     return txAwares;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("txAwares", txAwares)
+      .toString();
   }
 }

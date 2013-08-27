@@ -41,11 +41,7 @@ public class GatewayV2 extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting Gateway...");
-    State state = httpService.startAndWait();
-    if (state != State.RUNNING) {
-      throw new IllegalStateException("Gateway could not be started properly... terminating");
-    }
-
+    httpService.startAndWait();
     LOG.info("Gateway started successfully on {}", httpService.getBindAddress());
   }
 
