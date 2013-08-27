@@ -12,8 +12,6 @@ import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEvictor;
 import com.continuuity.data2.transaction.queue.QueueScanner;
-import com.continuuity.data2.transaction.queue.SimpleQueueEntry;
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
 import org.apache.hadoop.hbase.client.Delete;
@@ -41,15 +39,6 @@ import java.util.Set;
  * Queue consumer for HBase.
  */
 final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
-
-  private static final Function<SimpleQueueEntry, byte[]> ENTRY_TO_BYTE_ARRAY =
-    new Function<SimpleQueueEntry, byte[]>() {
-    @Override
-    public byte[] apply(SimpleQueueEntry input) {
-      return input.getData();
-    }
-  };
-  private static final long[] NO_EXCLUDES = { };
 
   private final HTable hTable;
   private final Filter processedStateFilter;
@@ -127,7 +116,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   }
 
   /**
-   * Creates a HBase filter that will filter out rows that that has committed state = PROCESSED
+   * Creates a HBase filter that will filter out rows that that has committed state = PROCESSED.
    */
   private Filter createFilter() {
     return new FilterList(FilterList.Operator.MUST_PASS_ONE, processedStateFilter, new SingleColumnValueFilter(
@@ -137,7 +126,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   }
 
   /**
-   * Creates a HBase filter that will filter out rows with state column state = PROCESSED (ignoring transaction)
+   * Creates a HBase filter that will filter out rows with state column state = PROCESSED (ignoring transaction).
    */
   private Filter createStateFilter() {
     byte[] processedMask = new byte[Ints.BYTES * 2 + 1];

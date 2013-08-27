@@ -124,6 +124,11 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
     }
 
     @Override
+    public int size() {
+      return keys.size();
+    }
+
+    @Override
     public Iterator<byte[]> iterator() {
       return data.iterator();
     }

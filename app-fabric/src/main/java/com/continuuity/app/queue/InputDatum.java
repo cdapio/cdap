@@ -21,4 +21,9 @@ public interface InputDatum extends Iterable<ByteBuffer> {
    * Reclaim the input from the queue consumer. It is needed for processing retried entries.
    */
   void reclaim();
+
+  /**
+   * Returns number of entries in this Iterable.
+   */
+  int size();
 }
