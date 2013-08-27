@@ -20,6 +20,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,20 +116,27 @@ public final class HttpResourceHandler implements HttpHandler {
   public void handle(HttpRequest request, HttpResponder responder){
 
     Map<String, String> groupValues = Maps.newHashMap();
-    List<HttpResourceModel> resourceModels = patternRouter.getDestinations(request.getUri(), groupValues);
+    String path = URI.create(request.getUri()).getPath();
+
+    List<HttpResourceModel> resourceModels = patternRouter.getDestinations(path, groupValues);
 
     HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
-
-    if (httpResourceModel != null){
-      //Found a httpresource route to it.
-      httpResourceModel.handle(request, responder, groupValues);
-    } else if (resourceModels.size() > 0)  {
-      //Found a matching resource but could not find the right HttpMethod so return 405
-      responder.sendError(HttpResponseStatus.METHOD_NOT_ALLOWED,
-                          String.format("Problem accessing: %s. Reason: Method Not Allowed", request.getUri()));
-    } else {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, String.format("Problem accessing: %s. Reason: Not Found",
-                                                                      request.getUri()));
+    try {
+      if (httpResourceModel != null){
+        //Found a httpresource route to it.
+        httpResourceModel.handle(request, responder, groupValues);
+      } else if (resourceModels.size() > 0)  {
+        //Found a matching resource but could not find the right HttpMethod so return 405
+        responder.sendError(HttpResponseStatus.METHOD_NOT_ALLOWED,
+                            String.format("Problem accessing: %s. Reason: Method Not Allowed", request.getUri()));
+      } else {
+        responder.sendError(HttpResponseStatus.NOT_FOUND, String.format("Problem accessing: %s. Reason: Not Found",
+                                                                        request.getUri()));
+      }
+    } catch (Throwable t){
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                          String.format("Caught exception processing request. Reason: %s",
+                                         t.getMessage()));
     }
   }
 
