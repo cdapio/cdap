@@ -20,6 +20,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,7 +116,7 @@ public final class HttpResourceHandler implements HttpHandler {
   public void handle(HttpRequest request, HttpResponder responder){
 
     Map<String, String> groupValues = Maps.newHashMap();
-    String path = request.getUri().split("\\?")[0];
+    String path = URI.create(request.getUri()).getPath();
 
     List<HttpResourceModel> resourceModels = patternRouter.getDestinations(path, groupValues);
 
