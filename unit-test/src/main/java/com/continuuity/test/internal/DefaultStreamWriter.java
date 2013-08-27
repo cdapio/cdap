@@ -97,10 +97,9 @@ public final class DefaultStreamWriter implements StreamWriter {
     } catch (Exception e) {
       try {
         txAware.rollbackTx();
+        txSystemClient.abort(tx);
       } catch (Exception ex) {
         throw new IOException(ex);
-      } finally {
-        txSystemClient.abort(tx);
       }
       throw new IOException(e);
     }
