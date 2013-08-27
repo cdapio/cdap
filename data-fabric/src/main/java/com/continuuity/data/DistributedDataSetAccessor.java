@@ -37,7 +37,7 @@ public class DistributedDataSetAccessor implements DataSetAccessor {
   }
 
   @Override
-  public DataSetManager getDataSetManager(Class<?> type) throws Exception {
+  public DataSetManager getDataSetManager(Class type) throws Exception {
     if (type == OrderedColumnarTable.class) {
       return new HBaseOcTableManager(cConf, hConf);
     }

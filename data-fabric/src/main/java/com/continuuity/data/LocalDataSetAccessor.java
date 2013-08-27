@@ -32,7 +32,7 @@ public class LocalDataSetAccessor implements DataSetAccessor {
   }
 
   @Override
-  public DataSetManager getDataSetManager(Class<?> type) throws IOException {
+  public DataSetManager getDataSetManager(Class type) throws IOException {
     if (type == OrderedColumnarTable.class) {
       return new LevelDBOcTableManager(service);
     }

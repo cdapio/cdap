@@ -21,7 +21,7 @@ public class InMemoryDataSetAccessor implements DataSetAccessor {
   }
 
   @Override
-  public DataSetManager getDataSetManager(Class<?> type) {
+  public DataSetManager getDataSetManager(Class type) {
     if (type == OrderedColumnarTable.class) {
       return new InMemoryOcTableManager();
     }
