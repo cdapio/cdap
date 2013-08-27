@@ -71,6 +71,7 @@ public class HBaseQueueTest extends QueueTest {
     // Get the remote opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+    queueAdmin = injector.getInstance(QueueAdmin.class);
   }
 
   @AfterClass

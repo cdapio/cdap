@@ -25,5 +25,6 @@ public class LevelDBQueueTest extends QueueTest {
     // Get the in-memory opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+    queueAdmin = injector.getInstance(QueueAdmin.class);
   }
 }

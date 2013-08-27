@@ -67,6 +67,18 @@ public class LevelDBOcTableService {
     return db;
   }
 
+  public void ensureTableExists(String tableName) throws IOException {
+    DB db = tables.get(tableName);
+    if (db == null) {
+      synchronized (tables) {
+        db = tables.get(tableName);
+        if (db == null) {
+          createTable(tableName);
+        }
+      }
+    }
+  }
+
   public DB openTable(String tableName) throws IOException {
     String dbPath = getDBPath(basePath, tableName);
 

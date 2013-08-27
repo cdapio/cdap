@@ -42,4 +42,20 @@ public final class InMemoryQueueService {
       out.println("Queue '" + qname + "': size is " + queues.get(qname).getSize());
     }
   }
+
+  public void reset() {
+    queues.clear();
+  }
+
+  public boolean exists(String queueName) {
+    return queues.containsKey(queueName);
+  }
+
+  public void truncate(String queueName) {
+    queues.put(queueName, new InMemoryQueue());
+  }
+
+  public void drop(String queueName) {
+    queues.remove(queueName);
+  }
 }

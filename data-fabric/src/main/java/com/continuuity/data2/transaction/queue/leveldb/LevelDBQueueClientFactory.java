@@ -27,33 +27,43 @@ import java.util.concurrent.TimeUnit;
  * Factory for LevelDB queue clients.
  */
 public final class LevelDBQueueClientFactory implements QueueClientFactory {
-
-  public static final String QUEUE_TABLE_NAME = "__queues";
-
   private static final int MAX_EVICTION_THREAD_POOL_SIZE = 10;
   private static final int EVICTION_THREAD_POOL_KEEP_ALIVE_SECONDS = 60;
 
   private final LevelDBOcTableService service;
   private final ExecutorService evictionExecutor;
+  private final LevelDBQueueAdmin queueAdmin;
 
   private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
-  public LevelDBQueueClientFactory(LevelDBOcTableService service) throws IOException {
+  public LevelDBQueueClientFactory(LevelDBOcTableService service, LevelDBQueueAdmin queueAdmin) throws Exception {
     this.service = service;
     this.evictionExecutor = createEvictionExecutor();
-    service.createTable(QUEUE_TABLE_NAME);
+    this.queueAdmin = queueAdmin;
   }
 
   @Override
   public Queue2Producer createProducer(QueueName queueName) throws IOException {
+    try {
+      // it will create table if it is missing
+      queueAdmin.create(LevelDBQueueAdmin.QUEUE_TABLE_NAME);
+    } catch (Exception e) {
+      throw new IOException("Failed to open queue table " + LevelDBQueueAdmin.QUEUE_TABLE_NAME, e);
+    }
     return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
   public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
     throws IOException {
-    LevelDBOcTableCore core = new LevelDBOcTableCore(QUEUE_TABLE_NAME, service);
+    try {
+      // it will create table if it is missing
+      queueAdmin.create(LevelDBQueueAdmin.QUEUE_TABLE_NAME);
+    } catch (Exception e) {
+      throw new IOException("Failed to open queue table " + LevelDBQueueAdmin.QUEUE_TABLE_NAME, e);
+    }
+    LevelDBOcTableCore core = new LevelDBOcTableCore(LevelDBQueueAdmin.QUEUE_TABLE_NAME, service);
     // only the first consumer of each group runs eviction; and only if the number of consumers is known (> 0).
     QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0) ? QueueEvictor.NOOP :
       new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
@@ -62,7 +72,7 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
 
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    return new LevelDBQueue2Producer(new LevelDBOcTableCore(QUEUE_TABLE_NAME, service),
+    return new LevelDBQueue2Producer(new LevelDBOcTableCore(LevelDBQueueAdmin.QUEUE_TABLE_NAME, service),
                                      queueName, queueMetrics);
   }
 
