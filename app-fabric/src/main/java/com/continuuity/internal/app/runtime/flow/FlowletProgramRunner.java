@@ -187,7 +187,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder = ImmutableList.builder();
       Collection<ProcessSpecification> processSpecs =
         createProcessSpecification(flowletContext, flowletType,
-                                   processMethodFactory(flowlet, flowletContext, dataFabricFacade),
+                                   processMethodFactory(flowlet),
                                    processSpecificationFactory(queueReaderFactory, dataFabricFacade, flowletName,
                                                                queueSpecs, queueConsumerSupplierBuilder,
                                                                createSchemaCache(program)),
@@ -437,15 +437,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  private ProcessMethodFactory processMethodFactory(final Flowlet flowlet,
-                                                    final BasicFlowletContext flowletContext,
-                                                    final DataFabricFacade dataFabricFacade) {
+  private ProcessMethodFactory processMethodFactory(final Flowlet flowlet) {
     return new ProcessMethodFactory() {
       @Override
       public ProcessMethod create(Method method, int maxRetries) {
         return ReflectionProcessMethod.create(flowlet, method, maxRetries);
-
-
       }
     };
   }
