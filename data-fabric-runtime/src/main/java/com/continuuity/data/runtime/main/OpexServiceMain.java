@@ -6,7 +6,6 @@ import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;

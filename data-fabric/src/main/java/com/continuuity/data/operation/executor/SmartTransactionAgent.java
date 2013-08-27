@@ -13,6 +13,8 @@ import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,19 +87,25 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
    * @param opex the actual operation executor
    * @param context the operation context for all operations
    */
-  public SmartTransactionAgent(OperationExecutor opex, OperationContext context) {
-    this(opex, context, null);
+  public SmartTransactionAgent(OperationExecutor opex, OperationContext context,
+                               Iterable<TransactionAware> txAware, TransactionSystemClient txSystemClient) {
+    this(opex, context, txAware, txSystemClient, null);
   }
 
   /**
-   * Same as {@link #SmartTransactionAgent(OperationExecutor, com.continuuity.data.operation.OperationContext)} but
+   * Same as {@link #SmartTransactionAgent(OperationExecutor, com.continuuity.data.operation.OperationContext,
+   * java.lang.Iterable, com.continuuity.data2.transaction.TransactionSystemClient)} but
    * takes transaction to operate with.
    * @param opex the actual operation executor
    * @param context the operation context for all operations
    * @param tx optional transaction to use for all operations, if not provided this agent will use new one
    */
-  public SmartTransactionAgent(OperationExecutor opex, OperationContext context, Transaction tx) {
-    super(opex, context);
+  public SmartTransactionAgent(OperationExecutor opex,
+                               OperationContext context,
+                               Iterable<TransactionAware> txAware,
+                               TransactionSystemClient txSystemClient,
+                               Transaction tx) {
+    super(opex, context, txAware, txSystemClient);
     this.xaction = tx;
   }
 
@@ -147,6 +155,8 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
 
   @Override
   public void abort() throws OperationException {
+    super.abort();
+
     if (this.state == State.Aborted || this.state == State.Finished) {
       // might be called by some generic exception handler even though already aborted/finished - we allow that
       return;
@@ -167,7 +177,6 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
       abortTransaction();
     } finally {
       this.state = State.Aborted;
-      super.abort();
     }
   }
 
@@ -203,6 +212,10 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
     // it will be counted either as succeeded or failed a few lines down
     this.executed.addAndGet(this.deferred.size());
     try {
+      // Until we migrate completely on new tx system, two tx systems are separate. We may be in inconsistent state
+      // when we committed work for one of them and not for other. It is more likely that user code (dataset ops, etc)
+      // will fail during commit, so we
+      super.finish();
       if (this.xaction == null) {
         if (this.deferred.isEmpty()) {
           return;
@@ -231,12 +244,12 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
     } finally {
       this.xaction = null;
       clearDeferred();
-      super.finish();
     }
   }
 
   @Override
   public void flush() throws OperationException {
+    super.flush();
     // check state and get rid of deferred operations
     executeDeferred();
   }

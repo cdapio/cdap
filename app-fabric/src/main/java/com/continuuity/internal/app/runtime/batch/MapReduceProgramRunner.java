@@ -19,13 +19,15 @@ import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
-import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataSets;
@@ -56,6 +58,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -70,6 +73,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final Configuration hConf;
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
+  private final DataSetAccessor dataSetAccessor;
+  private final TransactionSystemClient txSystemClient;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -78,12 +83,15 @@ public class MapReduceProgramRunner implements ProgramRunner {
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
                                 OperationExecutor opex, LocationFactory locationFactory,
+                                DataSetAccessor dataSetAccessor, TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.opex = opex;
     this.locationFactory = locationFactory;
     this.metricsCollectionService = metricsCollectionService;
+    this.dataSetAccessor = dataSetAccessor;
+    this.txSystemClient = txSystemClient;
   }
 
   @Inject (optional = true)
@@ -107,31 +115,38 @@ public class MapReduceProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getProgramName());
 
     OperationContext opexContext = new OperationContext(program.getAccountId(), program.getApplicationId());
+    TransactionProxy transactionProxy = new TransactionProxy();
+
+    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, opexContext);
+    DataSetInstantiator dataSetContext =
+      new DataSetInstantiator(dataFabric, transactionProxy, program.getClassLoader());
+    dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
+
+    // creating dataset instances earlier so that we can pass them to txAgent
+    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetContext, spec.getDataSets());
 
     // Starting long-running transaction that we will also use in mapreduce tasks
-    Transaction tx;
+    com.continuuity.data.operation.executor.Transaction tx;
     try {
       tx = opex.startTransaction(opexContext, false);
-      txAgent = new SmartTransactionAgent(opex, opexContext, tx);
+      txAgent = new SmartTransactionAgent(opex,
+                                          opexContext,
+                                          dataSetContext.getTransactionAware(),
+                                          txSystemClient,
+                                          tx);
       txAgent.start();
     } catch (OperationException e) {
       LOG.error("Failed to start transaction for mapreduce job: " + program.getProgramName());
       throw Throwables.propagate(e);
     }
 
-    TransactionProxy transactionProxy = new TransactionProxy();
     transactionProxy.setTransactionAgent(txAgent);
-
-    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, opexContext);
-    DataSetInstantiator dataSetContext =
-      new DataSetInstantiator(dataFabric, transactionProxy, program.getClassLoader());
-    dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
 
     try {
       RunId runId = RunIds.generate();
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, options.getUserArguments(), txAgent,
-                                  DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec,
+                                  dataSets, spec,
                                   metricsCollectionService);
 
       try {
@@ -144,7 +159,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
         controller = new MapReduceProgramController(context);
 
         LOG.info("Starting MapReduce job: " + context.toString());
-        submit(job, program.getProgramJarLocation(), context, tx);
+        submit(job, program.getProgramJarLocation(), context, tx, txAgent.getCurrentTx());
 
       } catch (Throwable e) {
         // failed before job even started - release all resources of the context
@@ -181,7 +196,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
   }
 
-  private void submit(final MapReduce job, Location jobJarLocation, final BasicMapReduceContext context, Transaction tx)
+  private void submit(final MapReduce job, Location jobJarLocation, final BasicMapReduceContext context,
+                      com.continuuity.data.operation.executor.Transaction tx, Transaction tx2)
     throws Exception {
     jobConf = Job.getInstance(hConf);
     context.setJob(jobConf);
@@ -216,7 +232,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
     // apart from everything we also remember tx, so that we can re-use it in mapreduce tasks
-    contextProvider.set(context, cConf, tx, programJarCopy.getName());
+    contextProvider.set(context, cConf, tx, tx2, programJarCopy.getName());
 
     new Thread() {
       @Override

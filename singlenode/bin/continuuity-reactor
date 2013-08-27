@@ -83,7 +83,7 @@ if [ -d /opt/continuuity ]; then
 fi
 
 # PID Location
-PID_DIR=$APP_HOME/data
+PID_DIR=/var/tmp
 BASENAME=${PRG##*/}
 pid=$PID_DIR/$BASENAME.pid
 
@@ -92,6 +92,11 @@ check_before_start() {
   if [ ! -d "$PID_DIR" ]; then
     mkdir -p "$PID_DIR"
   fi
+
+  # Checks if nodejs is available before it starts reactor.
+  command -v node >/dev/null 2>&1 || \
+    { echo >&2 "Continuuity Reactor requires nodeJS but it's either not installed or not in path.  Aborting."; exit 1; }
+
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
       echo "$0 running as process `cat $pid`. Stop it first."

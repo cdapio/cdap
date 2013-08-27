@@ -2,7 +2,7 @@
  * Batch Controller
  */
 
-define(['../../helpers/plumber'], function (Plumber) {
+define(['helpers/plumber'], function (Plumber) {
 
   var Controller = Em.Controller.extend({
     typesBinding: 'model.types',

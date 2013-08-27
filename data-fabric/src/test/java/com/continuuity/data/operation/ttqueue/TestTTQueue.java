@@ -1432,8 +1432,7 @@ public abstract class TestTTQueue {
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
-      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
-      queueEntry.addHashKey(hashKey, i);
+      QueueEntry queueEntry = new QueueEntry(hashKey, i, Bytes.toBytes("value" + i % numConsumers));
       assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
     // dequeue it with HASH partitioner
@@ -1450,8 +1449,7 @@ public abstract class TestTTQueue {
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
-      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
-      queueEntry.addHashKey(hashKey, i);
+      QueueEntry queueEntry = new QueueEntry(hashKey, i, Bytes.toBytes("value" + i % numConsumers));
       assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
     // dequeue and verify
@@ -1545,8 +1543,7 @@ public abstract class TestTTQueue {
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
-      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
-      queueEntry.addHashKey(hashKey, i);
+      QueueEntry queueEntry = new QueueEntry(hashKey, i, Bytes.toBytes(i));
       assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
     // dequeue it with HASH partitioner
@@ -1565,8 +1562,7 @@ public abstract class TestTTQueue {
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
-      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
-      queueEntry.addHashKey(hashKey, i);
+      QueueEntry queueEntry = new QueueEntry(hashKey, i, Bytes.toBytes(i));
       assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
     // dequeue and verify
@@ -2004,8 +2000,7 @@ public abstract class TestTTQueue {
     // Enqueue numEntries
     for (int i = 0; i < numEntries; ++i) {
       expectedEntries.add(i + 1);
-      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
-      queueEntry.addHashKey(hashKey, i + 1);
+      QueueEntry queueEntry = new QueueEntry(hashKey, i + 1, Bytes.toBytes(i + 1));
       assertTrue(debugCollector.toString(), queue.enqueue(queueEntry, transaction).isSuccess());
     }
 
@@ -3135,8 +3130,7 @@ public abstract class TestTTQueue {
     // enqueue 20, then invalidate a batch of 10 in the middle
     QueueEntry[] entries = new QueueEntry[20];
     for (int i = 1; i <= entries.length; i++) {
-      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
-      entries[i - 1].addHashKey("p", i);
+      entries[i - 1] = new QueueEntry("p", i, Bytes.toBytes(i));
     }
     Transaction t = oracle.startTransaction(true);
     EnqueueResult enqResult = queue.enqueue(entries, t);

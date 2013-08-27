@@ -7,6 +7,8 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.util.OperationUtil;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -15,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +27,7 @@ import java.util.Map;
 public class BatchTransactionAgentTest {
 
   static OperationExecutor opex;
+  static TransactionSystemClient txSystemClient;
 
   /**
    * Sets up the in-memory operation executor and the data fabric.
@@ -34,10 +38,14 @@ public class BatchTransactionAgentTest {
     final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules());
     opex = injector.getInstance(OperationExecutor.class);
+    txSystemClient = injector.getInstance(TransactionSystemClient.class);
   }
 
   static TransactionAgent newAgent() throws OperationException {
-    TransactionAgent agent = new BatchTransactionAgentWithSyncReads(opex, OperationUtil.DEFAULT);
+    TransactionAgent agent = new BatchTransactionAgentWithSyncReads(opex,
+                                                                    OperationUtil.DEFAULT,
+                                                                    Collections.<TransactionAware>emptyList(),
+                                                                    txSystemClient);
     agent.start();
     return agent;
   }

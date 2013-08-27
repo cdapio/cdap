@@ -2,7 +2,6 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
-import com.continuuity.data.operation.executor.TransactionAgent;
 import com.google.common.collect.Iterators;
 
 import java.nio.ByteBuffer;
@@ -14,18 +13,8 @@ import java.util.Iterator;
 public final class NullInputDatum implements InputDatum {
 
   @Override
-  public void submitAck(TransactionAgent txAgent) {
-    // no-op
-  }
-
-  @Override
   public boolean needProcess() {
     return true;
-  }
-
-  @Override
-  public Iterator<ByteBuffer> getData() {
-    return Iterators.emptyIterator();
   }
 
   @Override
@@ -50,6 +39,26 @@ public final class NullInputDatum implements InputDatum {
       public int getRetryCount() {
         return Integer.MAX_VALUE;
       }
+
+      @Override
+      public String toString() {
+        return "nullInput";
+      }
     };
+  }
+
+  @Override
+  public void reclaim() {
+    // No-op
+  }
+
+  @Override
+  public int size() {
+    return 0;
+  }
+
+  @Override
+  public Iterator<ByteBuffer> iterator() {
+    return Iterators.emptyIterator();
   }
 }

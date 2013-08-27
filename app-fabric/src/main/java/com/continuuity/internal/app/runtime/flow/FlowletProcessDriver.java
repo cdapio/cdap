@@ -9,8 +9,9 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
-import com.continuuity.internal.app.runtime.PostProcess;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -22,9 +23,11 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
@@ -43,23 +46,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProcessDriver.class);
   private static final int TX_EXECUTOR_POOL_SIZE = 4;
 
-  // Minimum back-off time in nanoseconds, 1ms.
-  private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1);
-
-  // Maximum back-off time in nanoseconds when increasing exponentially, 100ms.
-  private static final long BACKOFF_MAX = TimeUnit.MILLISECONDS.toNanos(100);
-
-  // Start time for switching from constant to exponentially increasing back-off time, 20ms.
-  private static final long BACKOFF_EXP_START = TimeUnit.MILLISECONDS.toNanos(20);
-
-  // Incrementing back-off time by this until reaching exponential increase range.
-  private static final long BACKOFF_CONSTANT_INCREMENT = TimeUnit.MILLISECONDS.toNanos(1);
-
-  // Doubling back-off time during exponential increase, up to maximum back-off time.
-  private static final int BACKOFF_EXP = 2;
-
-  private static final int PROCESS_MAX_RETRY = 10;
-
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
   private final LoggingContext loggingContext;
@@ -68,18 +54,20 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private final AtomicReference<CountDownLatch> suspension;
   private final CyclicBarrier suspendBarrier;
   private final AtomicInteger inflight;
+  private final DataFabricFacade dataFabricFacade;
   private ExecutorService transactionExecutor;
   private Thread runnerThread;
 
   FlowletProcessDriver(Flowlet flowlet, BasicFlowletContext flowletContext,
                        Collection<ProcessSpecification> processSpecs,
-                       Callback txCallback) {
+                       Callback txCallback, DataFabricFacade dataFabricFacade) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.loggingContext = flowletContext.getLoggingContext();
     this.processSpecs = processSpecs;
     this.txCallback = txCallback;
-    inflight = new AtomicInteger(0);
+    this.dataFabricFacade = dataFabricFacade;
+    this.inflight = new AtomicInteger(0);
 
     this.suspension = new AtomicReference<CountDownLatch>();
     this.suspendBarrier = new CyclicBarrier(2);
@@ -133,6 +121,11 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     runnerThread.interrupt();
   }
 
+  @Override
+  protected String getServiceName() {
+    return getClass().getSimpleName() + "-" + flowletContext.getName() + "-" + flowletContext.getInstanceId();
+  }
+
   /**
    * Suspend the running of flowlet. This method will block until the flowlet running thread actually suspended.
    */
@@ -167,12 +160,12 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     initFlowlet();
 
     // Insert all into priority queue, ordered by next deque time.
-    PriorityBlockingQueue<ProcessEntry<?>> processQueue =
-      new PriorityBlockingQueue<ProcessEntry<?>>(processSpecs.size());
+    BlockingQueue<FlowletProcessEntry<?>> processQueue =
+      new PriorityBlockingQueue<FlowletProcessEntry<?>>(processSpecs.size());
     for (ProcessSpecification<?> spec : processSpecs) {
-      processQueue.offer(ProcessEntry.create(spec));
+      processQueue.offer(FlowletProcessEntry.create(spec));
     }
-    List<ProcessEntry<?>> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
+    List<FlowletProcessEntry<?>> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
 
     while (isRunning()) {
       CountDownLatch suspendLatch = suspension.get();
@@ -198,7 +191,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       processList.clear();
       processQueue.drainTo(processList);
 
-      for (ProcessEntry<?> entry : processList) {
+      for (FlowletProcessEntry<?> entry : processList) {
         boolean invoked = false;
         try {
           if (!entry.shouldProcess()) {
@@ -206,38 +199,52 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
 
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
-
           if (processMethod.needsInput()) {
             flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
           }
-          InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          if (!input.needProcess()) {
-            entry.backOff();
-            continue;
-          }
 
-          // Resetting back-off time to minimum back-off time, since an entry to process was de-queued and most likely
-          // more entries will follow.
-          entry.resetBackOff();
-
-          if (!entry.isRetry()) {
-            // Only increment the inflight count for non-retry entries.
-            // The inflight count would get decrement when the transaction committed successfully or input get ignored.
-            // See the processMethodCallback function.
-            inflight.getAndIncrement();
-          }
-
+          // Begin transaction and dequeue
+          TransactionAgent txAgent = dataFabricFacade.createAndUpdateTransactionAgentProxy();
           try {
-            invoked = true;
-            // Call the process method and commit the transaction
-            processMethod.invoke(input, wrapInputDatumDecoder(input, entry.getProcessSpec().getInputDatumDecoder()))
-              .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
+            txAgent.start();
+
+            InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
+            if (!input.needProcess()) {
+              entry.backOff();
+              // End the transaction if nothing in the queue
+              txAgent.finish();
+              continue;
+            }
+
+            // Resetting back-off time to minimum back-off time, since an entry to process was de-queued and most likely
+            // more entries will follow.
+            entry.resetBackOff();
+
+            if (!entry.isRetry()) {
+              // Only increment the inflight count for non-retry entries.
+              // The inflight would get decrement when the transaction committed successfully or input get ignored.
+              // See the processMethodCallback function.
+              inflight.getAndIncrement();
+            }
+
+            try {
+              // Call the process method and commit the transaction
+              ProcessMethod.ProcessResult result =
+                processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
+              postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txAgent, input,
+                          result);
+            } finally {
+              invoked = true;
+            }
 
           } catch (Throwable t) {
-            LOG.error("Fail to invoke process method: {}, {}", entry.getProcessSpec(), flowletContext, t);
+            LOG.error("Unexpected exception: {}", flowletContext, t);
+            try {
+              txAgent.abort();
+            } catch (OperationException e) {
+              LOG.error("Fail to abort transaction: {}", flowletContext, e);
+            }
           }
-        } catch (OperationException e) {
-          LOG.error("Queue operation failure: " + flowletContext, e);
         } finally {
           // In async mode, always put it back as long as it is not a retry entry,
           // otherwise let the committer do the job.
@@ -253,14 +260,71 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     destroyFlowlet();
   }
 
-  private <T> Function<ByteBuffer, T> wrapInputDatumDecoder(final InputDatum input,
-                                                            final Function<ByteBuffer, T> inputDatumDecoder) {
+  private <T> Function<ByteBuffer, T> wrapInputDecoder(final InputDatum input,
+                                                       final Function<ByteBuffer, T> inputDecoder) {
+    final String eventsMetricsName = "process.events.ins." + input.getInputContext().getOrigin();
     return new Function<ByteBuffer, T>() {
       @Override
       public T apply(ByteBuffer byteBuffer) {
-        flowletContext.getSystemMetrics().gauge("process.events.ins." + input.getInputContext().getOrigin(), 1);
+        flowletContext.getSystemMetrics().gauge(eventsMetricsName, 1);
         flowletContext.getSystemMetrics().gauge("process.tuples.read", 1);
-        return inputDatumDecoder.apply(byteBuffer);
+        return inputDecoder.apply(byteBuffer);
+      }
+    };
+  }
+
+  private void postProcess(Executor executor, final ProcessMethodCallback callback, final TransactionAgent txAgent,
+                           final InputDatum input, final ProcessMethod.ProcessResult result) {
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        InputContext inputContext = input.getInputContext();
+        Throwable failureCause = null;
+        try {
+          if (result.isSuccess()) {
+            // If it is a retry input, force the dequeued entries into current transaction.
+            if (input.getRetry() > 0) {
+              input.reclaim();
+            }
+            txAgent.finish();
+          } else {
+            failureCause = result.getCause();
+            txAgent.abort();
+          }
+        } catch (OperationException e) {
+          LOG.error("Transaction operation failed: {}", e.getMessage(), e);
+          failureCause = e;
+          try {
+            if (result.isSuccess()) {
+              txAgent.abort();
+            }
+          } catch (OperationException ex) {
+            LOG.error("Fail to abort transaction: {}", inputContext, ex);
+          }
+        } finally {
+          // we want to emit metrics after every retry after finish() so that deferred operations are also logged
+          flowletContext.getSystemMetrics().gauge("store.ops", txAgent.getSucceededCount());
+        }
+
+        if (failureCause == null) {
+          callback.onSuccess(result.getEvent(), inputContext);
+        } else {
+          callback.onFailure(result.getEvent(), inputContext,
+                             new FailureReason(FailureReason.Type.USER, failureCause.getMessage(), failureCause),
+                             createInputAcknowledger(input));
+        }
+      }
+    });
+  }
+
+  private InputAcknowledger createInputAcknowledger(final InputDatum input) {
+    return new InputAcknowledger() {
+      @Override
+      public void ack() throws OperationException {
+        TransactionAgent txAgent = dataFabricFacade.createTransactionAgent();
+        txAgent.start();
+        input.reclaim();
+        txAgent.finish();
       }
     };
   }
@@ -270,8 +334,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
    * @param processQueue list of inflight processes
    */
   @SuppressWarnings("unchecked")
-  private void waitForInflight(PriorityBlockingQueue<ProcessEntry<?>> processQueue) {
-    List<ProcessEntry> processList = Lists.newArrayListWithCapacity(processQueue.size());
+  private void waitForInflight(BlockingQueue<FlowletProcessEntry<?>> processQueue) {
+    List<FlowletProcessEntry> processList = Lists.newArrayListWithCapacity(processQueue.size());
     boolean hasRetry;
 
     do {
@@ -279,28 +343,32 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       processList.clear();
       processQueue.drainTo(processList);
 
-      for (ProcessEntry<?> entry : processList) {
+      for (FlowletProcessEntry<?> entry : processList) {
         if (!entry.isRetry()) {
           processQueue.offer(entry);
           continue;
         }
         hasRetry = true;
+        ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
+
+        TransactionAgent txAgent = dataFabricFacade.createAndUpdateTransactionAgentProxy();
         try {
-          ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
+          txAgent.start();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
+          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", input.size());
 
+          // Call the process method and commit the transaction
+          ProcessMethod.ProcessResult result =
+            processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
+          postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txAgent, input, result);
+
+        } catch (Throwable t) {
+          LOG.error("Unexpected exception: {}", flowletContext, t);
           try {
-            // Call the process method and commit the transaction
-            processMethod.invoke(input, wrapInputDatumDecoder(input, entry.getProcessSpec().getInputDatumDecoder()))
-              .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
-
-          } catch (Throwable t) {
-            LOG.error("Fail to invoke process method: {}, {}", entry.getProcessSpec(), flowletContext, t);
+            txAgent.abort();
+          } catch (OperationException e) {
+            LOG.error("Fail to abort transaction: {}", flowletContext, e);
           }
-        } catch (OperationException e) {
-          // This should never happen for retry entries
-          LOG.error("Queue operation failure: " + flowletContext, e);
         }
       }
     } while (hasRetry || inflight.get() != 0);
@@ -327,17 +395,17 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     }
   }
 
-  private <T> PostProcess.Callback processMethodCallback(final PriorityBlockingQueue<ProcessEntry<?>> processQueue,
-                                                     final ProcessEntry<T> processEntry,
-                                                     final InputDatum input) {
-    return new PostProcess.Callback() {
+  private <T> ProcessMethodCallback processMethodCallback(final BlockingQueue<FlowletProcessEntry<?>> processQueue,
+                                                          final FlowletProcessEntry<T> processEntry,
+                                                          final InputDatum input) {
+    return new ProcessMethodCallback() {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
+          flowletContext.getSystemMetrics().gauge("process.events.processed", input.size());
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
-          LOG.info("Exception on onSuccess call: " + flowletContext, t);
+          LOG.error("Exception on onSuccess call: {}", flowletContext, t);
         } finally {
           enqueueEntry();
           inflight.decrementAndGet();
@@ -346,39 +414,42 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       @Override
       public void onFailure(Object inputObject, InputContext inputContext, FailureReason reason,
-                            PostProcess.InputAcknowledger inputAcknowledger) {
+                            InputAcknowledger inputAcknowledger) {
 
-        LOG.info("Process failure. " + reason.getMessage() + ", input: " + input, reason.getCause().getCause());
+        LOG.warn("Process failure: {}, {}, input: {}", flowletContext, reason.getMessage(), input, reason.getCause());
         FailurePolicy failurePolicy;
         try {
           flowletContext.getSystemMetrics().gauge("process.errors", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
+          if (failurePolicy == null) {
+            failurePolicy = FailurePolicy.RETRY;
+            LOG.info("Callback returns null for failure policy. Default to {}.", failurePolicy);
+          }
         } catch (Throwable t) {
-          LOG.error("Exception on onFailure call: " + flowletContext, t);
+          LOG.error("Exception on onFailure call: {}", flowletContext, t);
           failurePolicy = FailurePolicy.RETRY;
         }
 
-        if (input.getRetry() >= PROCESS_MAX_RETRY) {
-          LOG.info("Too many retries, ignoring the input: " + input);
+        if (input.getRetry() >= processEntry.getProcessSpec().getProcessMethod().getMaxRetries()) {
+          LOG.info("Too many retries, ignores the input: {}", input);
           failurePolicy = FailurePolicy.IGNORE;
         }
 
         if (failurePolicy == FailurePolicy.RETRY) {
-          ProcessEntry retryEntry = processEntry.isRetry() ?
+          FlowletProcessEntry retryEntry = processEntry.isRetry() ?
             processEntry :
-            new ProcessEntry<T>(processEntry.getProcessSpec(),
-              new ProcessSpecification<T>(new SingleItemQueueReader(input),
-                                       processEntry.getProcessSpec().getInputDatumDecoder(),
-                                       processEntry.getProcessSpec().getProcessMethod()));
-
+            FlowletProcessEntry.create(processEntry.getProcessSpec(),
+                                       new ProcessSpecification<T>(new SingleItemQueueReader(input),
+                                                                   processEntry.getProcessSpec().getInputDecoder(),
+                                                                   processEntry.getProcessSpec().getProcessMethod()));
           processQueue.offer(retryEntry);
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
+            flowletContext.getSystemMetrics().gauge("process.events.processed", input.size());
             inputAcknowledger.ack();
           } catch (OperationException e) {
-            LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);
+            LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);
           } finally {
             enqueueEntry();
             inflight.decrementAndGet();
@@ -392,70 +463,5 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         }
       }
     };
-  }
-
-  private static final class ProcessEntry<T> implements Comparable<ProcessEntry> {
-    private final ProcessSpecification<T> processSpec;
-    private final ProcessSpecification<T> retrySpec;
-    private long nextDeque;
-    private long currentBackOff = BACKOFF_MIN;
-
-    private static <T> ProcessEntry<T> create(ProcessSpecification<T> processSpec) {
-      return new ProcessEntry<T>(processSpec);
-    }
-
-    private ProcessEntry(ProcessSpecification<T> processSpec) {
-      this(processSpec, null);
-    }
-
-    private ProcessEntry(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec) {
-      this.processSpec = processSpec;
-      this.retrySpec = retrySpec;
-    }
-
-    public boolean isRetry() {
-      return retrySpec != null;
-    }
-
-    public void await() throws InterruptedException {
-      long waitTime = nextDeque - System.nanoTime();
-      if (waitTime > 0) {
-        TimeUnit.NANOSECONDS.sleep(waitTime);
-      }
-    }
-
-    public boolean shouldProcess() {
-      return nextDeque - System.nanoTime() <= 0;
-    }
-
-    @Override
-    public int compareTo(ProcessEntry o) {
-      if (nextDeque == o.nextDeque) {
-        return 0;
-      }
-      return nextDeque > o.nextDeque ? 1 : -1;
-    }
-
-    public void resetBackOff() {
-      nextDeque = 0;
-      currentBackOff = BACKOFF_MIN;
-    }
-
-    public void backOff() {
-      nextDeque = System.nanoTime() + currentBackOff;
-      if (currentBackOff < BACKOFF_EXP_START) {
-        currentBackOff += BACKOFF_CONSTANT_INCREMENT;
-      } else {
-        currentBackOff = Math.min(currentBackOff * BACKOFF_EXP, BACKOFF_MAX);
-      }
-    }
-
-    public ProcessSpecification<T> getProcessSpec() {
-      return retrySpec == null ? processSpec : retrySpec;
-    }
-
-    public ProcessEntry<T> resetRetry() {
-      return retrySpec == null ? this : new ProcessEntry<T>(processSpec);
-    }
   }
 }

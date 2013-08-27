@@ -5,8 +5,8 @@ import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
 
 /**
- * An implementation of {@link QueueReader} that always returns the same {@link QueueInputDatum}.
- * Each {@link #dequeue()} call would also increment the retry count of the given {@link QueueInputDatum} by 1.
+ * An implementation of {@link QueueReader} that always returns the same {@link InputDatum}.
+ * Each {@link #dequeue()} call would also increment the retry count of the given {@link InputDatum} by 1.
  */
 public class SingleItemQueueReader implements QueueReader {
 

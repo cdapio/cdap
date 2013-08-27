@@ -55,6 +55,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TReadPointer;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
+import com.continuuity.data.operation.executor.remote.stubs.TTransaction2;
 import com.continuuity.data.operation.executor.remote.stubs.TTruncateTable;
 import com.continuuity.data.operation.executor.remote.stubs.TWrite;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
@@ -76,6 +77,7 @@ import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
@@ -86,6 +88,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility methods to convert to thrift and back.
@@ -1318,5 +1321,26 @@ public class ConverterUtils {
    */
   OperationException unwrap(TOperationException te) {
     return new OperationException(te.getStatus(), te.getMessage());
+  }
+
+  // temporary TxDs2 stuff
+
+  TTransaction2 wrap(com.continuuity.data2.transaction.Transaction tx) {
+    List<Long> excludes = Lists.newArrayList();
+    for (long excluded : tx.getExcludedList()) {
+      excludes.add(excluded);
+    }
+    return new TTransaction2(tx.getWritePointer(),
+                             tx.getReadPointer(),
+                             excludes);
+  }
+
+  com.continuuity.data2.transaction.Transaction unwrap(TTransaction2 tx) {
+    long[] excludes = new long[tx.excludes.size()];
+    int i = 0;
+    for (Long excluded : tx.excludes) {
+      excludes[i++] = excluded;
+    }
+    return new com.continuuity.data2.transaction.Transaction(tx.readPointer, tx.writePointer, excludes);
   }
 }

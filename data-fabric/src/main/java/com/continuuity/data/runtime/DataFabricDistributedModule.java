@@ -1,6 +1,8 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -10,6 +12,10 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
+import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
@@ -97,6 +103,11 @@ public class DataFabricDistributedModule extends AbstractModule {
     // Bind our configurations
     bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(conf);
     bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
+
+    // Bind TxDs2 stuff
+    bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
+    bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
+    bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
   }
 
   public CConfiguration getConfiguration() {

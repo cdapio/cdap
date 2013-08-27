@@ -3,6 +3,7 @@
  */
 package com.continuuity.common.http.core;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -74,24 +75,26 @@ public final class HttpResourceModel {
       if (httpMethods.contains(request.getMethod())){
         //Setup args for reflection call
         Object [] args = new Object[method.getParameterTypes().length];
-        int index = 0;
-        args[index] = request;
-        index++;
-        args[index] = responder;
+        int parameterIndex = 0;
+        args[parameterIndex] = request;
+        parameterIndex++;
+        args[parameterIndex] = responder;
 
         if (method.getParameterTypes().length > 2) {
           Class<?>[] parameterTypes = method.getParameterTypes();
-
-          // match args to their annotation values.
-          Annotation[][] paramAnnotations = method.getParameterAnnotations();
-          for (; index < paramAnnotations.length; index++) {
-            Annotation[] annotations = paramAnnotations[index];
-            if (annotations.length > 0) {
-              PathParam annotation = (PathParam) annotations[0];
-              String argValue = groupValues.get(annotation.value());
-              args[index] = ConvertUtils.convert(argValue, parameterTypes[index]);
-            }
+          for (Annotation[] annotations : method.getParameterAnnotations()) {
+             for (Annotation annotation : annotations){
+               if (annotation.annotationType().isAssignableFrom(PathParam.class)){
+                 PathParam param = (PathParam) annotation;
+                 String value = groupValues.get(param.value());
+                 Preconditions.checkArgument(value != null, "Could not resolve value for parameter %s", param.value());
+                 parameterIndex++;
+                 args[parameterIndex] = ConvertUtils.convert(value, parameterTypes[parameterIndex]);
+               }
+             }
           }
+          Preconditions.checkArgument(method.getParameterTypes().length == parameterIndex + 1,
+                                      "Could not resolve all parameters for method %s", method.getName());
         }
         method.invoke(handler, args);
       } else {

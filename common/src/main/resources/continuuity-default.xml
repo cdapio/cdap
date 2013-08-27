@@ -397,6 +397,12 @@
             Valid values are "pool" and "thread-local". </description>
     </property>
 
+    <property>
+        <name>data.queue.table.name</name>
+        <value>data.queue</value>
+        <description>Specifies the name of the table for queues.</description>
+    </property>
+
     <!--
         Overlord Metrics & Other overlord related configuration.
     -->

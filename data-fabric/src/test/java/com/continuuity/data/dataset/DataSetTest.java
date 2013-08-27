@@ -7,6 +7,9 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.InMemoryDataSetAccessor;
+import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
@@ -15,6 +18,9 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.util.OperationUtil;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
@@ -109,21 +115,26 @@ public class DataSetTest extends DataSetTestBase {
     OperationExecutor opex = new DummyOpex();
     TransactionProxy proxy = new TransactionProxy();
     LocationFactory locFactory = new LocalLocationFactory();
-    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, locFactory, OperationUtil.DEFAULT),
-                                                       proxy, this.getClass().getClassLoader());
+    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor();
+    TransactionSystemClient txSystemClient = new InMemoryTxSystemClient();
+    DataSetInstantiator inst =
+      new DataSetInstantiator(new DataFabricImpl(opex, locFactory, dataSetAccessor, OperationUtil.DEFAULT),
+                              proxy, this.getClass().getClassLoader());
 
     // test with a single nested table (KeyValueTable embeds a Table with a modifeied name)
     DataSetSpecification spec = new KeyValueTable("testtest").configure();
     inst.setDataSets(Collections.singletonList(spec));
     KeyValueTable kvTable = inst.getDataSet("testtest");
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT));
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT,
+                                                              inst.getTransactionAware(), txSystemClient));
     kvTable.write("a".getBytes(), "b".getBytes());
 
     // test with a double nested table - a dataset that embeds a table and a kv table that in turn embeds another table
     spec = new DoubleNestedTable("testtest").configure();
     inst.setDataSets(Collections.singletonList(spec));
     DoubleNestedTable dn = inst.getDataSet("testtest");
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT));
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT,
+                                                              inst.getTransactionAware(), txSystemClient));
     dn.writeAndInc("a", 17);
   }
 }

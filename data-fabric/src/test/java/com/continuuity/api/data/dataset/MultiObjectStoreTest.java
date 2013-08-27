@@ -9,10 +9,12 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.dataset.DataSetTestBase;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,8 +49,6 @@ public class MultiObjectStoreTest extends DataSetTestBase {
 
     setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore,
                                          batchStore, intStore, multiStringStore, batchTestsMultiCol));
-    // this test runs all operations synchronously
-    newTransaction(Mode.Sync);
   }
 
   @Test
@@ -117,6 +117,9 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   public void testInstantiateWrongClass() throws Exception {
     // note: due to type erasure, this succeeds
     MultiObjectStore<Custom> store = instantiator.getDataSet("pairs");
+    MultiObjectStore<ImmutablePair<Integer, String>> pairStore = instantiator.getDataSet("pairs");
+    TransactionAgent txAgent = newTransaction();
+
     // but now it must fail with incompatible type
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     try {
@@ -128,13 +131,14 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       }
     }
     // write a correct object to the pair store
-    MultiObjectStore<ImmutablePair<Integer, String>> pairStore = instantiator.getDataSet("pairs");
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair); // should succeed
+    commitTransaction(txAgent);
     // now try to read that as a custom object, should fail with class cast
+    txAgent = newTransaction();
     try {
       custom = store.read(a);
-      Assert.fail("write should have failed with class cast exception");
+      Assert.fail("read should have failed with class cast exception");
     } catch (ClassCastException e) {
       // only this exception is expected (read will return a pair, but the assignment implicitly casts).
     }
@@ -183,7 +187,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
     MultiObjectStore<String> t = instantiator.getDataSet("batch");
 
     // start a transaction
-    newTransaction(DataSetTestBase.Mode.Smart);
+    TransactionAgent txAgent = newTransaction();
     // write 1000 random values to the table and remember them in a set
     SortedSet<Long> keysWritten = Sets.newTreeSet();
     Random rand = new Random(451);
@@ -194,24 +198,28 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       keysWritten.add(keyLong);
     }
     // commit transaction
-    commitTransaction();
+    commitTransaction(txAgent);
 
     // start a sync transaction
-    newTransaction(DataSetTestBase.Mode.Sync);
+    txAgent = newTransaction();
     // get the splits for the table
     List<Split> splits = t.getSplits();
     // read each split and verify the keys
     SortedSet<Long> keysToVerify = Sets.newTreeSet(keysWritten);
     verifySplits(t, splits, keysToVerify);
 
+    commitTransaction(txAgent);
+
     // start a sync transaction
-    newTransaction(DataSetTestBase.Mode.Sync);
+    txAgent = newTransaction();
     // get specific number of splits for a subrange
     keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
     splits = t.getSplits(5, Bytes.toBytes(0x10000000L), Bytes.toBytes(0x40000000L));
     Assert.assertTrue(splits.size() <= 5);
     // read each split and verify the keys
     verifySplits(t, splits, keysToVerify);
+
+    commitTransaction(txAgent);
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
@@ -246,7 +254,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
     byte [] col2 = Bytes.toBytes("c2");
 
     // start a transaction
-    newTransaction(DataSetTestBase.Mode.Smart);
+    TransactionAgent txAgent = newTransaction();
     // write 1000 random values to the table and remember them in a set
     SortedSet<Integer> keysWritten = Sets.newTreeSet();
     Random rand = new Random(451);
@@ -260,13 +268,10 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       keysWritten.add(keyInt);
     }
     // commit transaction
-    commitTransaction();
-
-    // commit transaction
-    commitTransaction();
+    commitTransaction(txAgent);
 
     // start a sync transaction
-    newTransaction(DataSetTestBase.Mode.Sync);
+    txAgent = newTransaction();
     // get the splits for the table
     List<Split> splits = t.getSplits();
     // read each split and verify the keys
@@ -288,6 +293,8 @@ public class MultiObjectStoreTest extends DataSetTestBase {
         Assert.assertTrue(keysToVerify.remove(Bytes.toInt(key)));
       }
     }
+
+    commitTransaction(txAgent);
 
   }
 

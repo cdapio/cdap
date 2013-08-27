@@ -11,6 +11,7 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.transaction.Transaction;
 
 import java.util.List;
 import java.util.Map;
@@ -136,4 +137,10 @@ public interface TransactionAgent {
    * @return the number of operations
    */
   public int getFailedCount();
+
+  /**
+   * NOTE: TransactionAgent will go away once we fully migrate to new tx system.
+   * @return current value of {@link com.continuuity.data2.transaction.Transaction} or null
+   */
+  public Transaction getCurrentTx();
 }

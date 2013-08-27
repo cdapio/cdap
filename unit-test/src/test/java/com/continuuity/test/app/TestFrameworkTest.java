@@ -1,11 +1,11 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
+import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
@@ -27,9 +27,9 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
-public class TestFrameworkTest extends AppFabricTestBase {
+public class TestFrameworkTest extends ReactorTestBase {
 
-  @Test
+  @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
     try {
@@ -62,11 +62,11 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      clearAppFabric();
+      clear();
     }
   }
 
-  @Test
+  @Test(timeout = 240000)
   public void testApp() throws InterruptedException, IOException, TimeoutException, OperationException {
     ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
 
@@ -101,6 +101,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
       // Verify by looking into dataset
       MyKeyValueTable mydataset = applicationManager.getDataSet("mydataset");
+
       Assert.assertEquals(100L, Longs.fromByteArray(mydataset.read("title:title".getBytes(Charsets.UTF_8))));
 
       // check the metrics
@@ -110,7 +111,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
       // Run mapreduce job
       MapReduceManager mrManager = applicationManager.startMapReduce("countTotal");
-      mrManager.waitForFinish(15L, TimeUnit.SECONDS);
+      mrManager.waitForFinish(60L, TimeUnit.SECONDS);
 
       long totalCount = Long.valueOf(procedureClient.query("total", Collections.<String, String>emptyMap()));
       // every event has 5 tokens
@@ -118,7 +119,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      clearAppFabric();
+      clear();
     }
   }
 
@@ -144,7 +145,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
-      clearAppFabric();
+      clear();
     }
   }
 }

@@ -10,7 +10,9 @@ import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.performance.gateway.stream.MultiThreadedStreamWriter;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.internal.DefaultApplicationManager;
@@ -39,6 +41,8 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
   @Inject
   public DefaultBenchmarkManager(OperationExecutor opex,
                                  LocationFactory locationFactory,
+                                 DataSetAccessor dataSetAccessor,
+                                 TransactionSystemClient txSystemClient,
                                  BenchmarkStreamWriterFactory streamWriterFactory,
                                  ProcedureClientFactory procedureClientFactory,
                                  @Assisted AuthToken token,
@@ -47,7 +51,9 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
                                  @Assisted AppFabricService.Iface appFabricServer,
                                  @Assisted Location deployedJar,
                                  @Assisted ApplicationSpecification appSpec) {
-    super(opex, locationFactory, streamWriterFactory, procedureClientFactory,
+    super(opex, locationFactory,
+          dataSetAccessor, txSystemClient,
+          streamWriterFactory, procedureClientFactory,
           token, accountId, applicationId,
           appFabricServer, deployedJar, appSpec);
     benchmarkStreamWriterFactory = streamWriterFactory;
