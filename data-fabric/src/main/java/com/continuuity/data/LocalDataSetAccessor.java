@@ -15,8 +15,12 @@ import java.io.IOException;
  */
 public class LocalDataSetAccessor implements DataSetAccessor {
 
+  private final LevelDBOcTableService service;
+
   @Inject
-  private final LevelDBOcTableService service = null;
+  public LocalDataSetAccessor(LevelDBOcTableService service) {
+    this.service = service;
+  }
 
   @Override
   public DataSetClient getDataSetClient(String name, Class type) throws IOException {
