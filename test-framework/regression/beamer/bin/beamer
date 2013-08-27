@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-version="0.0.1"
 bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 conf="$bin/../conf"
@@ -14,7 +13,17 @@ jumpbox=${BEAMER_JUMPBOX:-lm101.sw.joyent.continuuity.com}
 
 if [ ! -f "$build_home/version.txt" ] ; then
   echo "$build_home does not exists. Set REACTOR_HOME."
+  usage
   exit 1 
+fi
+
+if [ ! -f "$conf/project.map" ]; then
+  conf=/etc/beamer
+  if [ ! -f "$conf/project.map" ]; then
+    err "Beamer not installed correctly or running from wrong path"  
+    usage
+    exit 1
+  fi
 fi
 
 version=`cat $build_home/version.txt`
@@ -114,6 +123,8 @@ function usage() {
   echo "  activity       List all the activity across all users and clusters"
   echo "  show-mapping   Shows cluster component host mapping"
   echo "  show-installed Shows installed components on the cluster"
+  echo "  truncate-tables Truncates cluster tables"
+  echo "  delete-tables  Delete cluster tables"
   echo ""
   echo "  Options"
   echo "    -c Specifies the name of the cluster"
@@ -171,7 +182,7 @@ function activate() {
   local component=$1; shift
   local package=$1; shift
 
-  echo "Activating package $package on cluster $cluster"
+  err "Activating package $package on cluster $cluster"
   installer=/tmp/beamer.deployer.$epoch.sh
   scp -q $bin/beamer-project-deployer $cuser@$host:$installer
   ssh -oStrictHostKeyChecking=no -l $cuser $host sudo chmod +x $installer
@@ -184,7 +195,7 @@ function lock() {
   local host=$1; shift
   local component=$1; shift
   ssh -oStrictHostKeyChecking=no -l $cuser $host sudo touch /var/beamer/$component.lock
-  echo "Component $component has been locked on cluster $cluster"
+  err "Component $component has been locked on cluster $cluster"
 }
 
 function unlock() {
@@ -192,7 +203,7 @@ function unlock() {
   local host=$1; shift
   local component=$1; shift
   ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f /var/beamer/$component.lock
-  echo "Component $component has been unlocked on cluster $cluster"
+  err "Component $component has been unlocked on cluster $cluster"
 }
 
 function pre_service_op() {
@@ -218,8 +229,7 @@ function service() {
 
 function map() {
   local cluster=$1; shift
-  echo "Mapping for cluster $cluster"
-  echo ""
+  err "Mapping for cluster $cluster"
   cat $conf/cluster/$cluster.conf
 }
 
@@ -235,9 +245,9 @@ function project_map() {
 
 function show_installed() {
   local cluster=$1; shift
-  echo "Installed continuuity components on cluster $cluster"
+  err "Installed continuuity components on cluster $cluster"
   if [[ ! -f $conf/cluster/$cluster.host.conf ]]; then
-   echo "Invalid cluster $cluster"
+   err "Invalid cluster $cluster"
    return   
   fi
 
@@ -251,7 +261,7 @@ function show_installed() {
     done
   done
   if [[ "x${v}" == "x0" ]]; then
-    echo "No continuuity components are installed on this cluster"
+    err "No continuuity components are installed on this cluster"
   fi
 }
 
@@ -263,14 +273,14 @@ function create_cluster() {
   echo "Install as much as you want to cluster $cluster. Host $cluster.dev.continuuity.net is created."
 }
 
-echoerr() { 
+err() { 
   echo "$@" 1>&2; 
 }
 
 function destroy_cluster() {
   local cluster=$1; shift
   local type=$1; shift
-  echo "Destroying cluster $cluster of type $type"
+  err "Destroying cluster $cluster of type $type"
   ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh $cuser delete $cluster
 }
 
@@ -291,7 +301,7 @@ function list_clusters() {
 function activity_log() {
   local type=$1; shift
   local c=1
-  echoerr "Activity log of all creations & deletions of ${type} clusters"
+  err "Activity log of all creations & deletions of ${type} clusters"
   for line in `ssh -oStrictHostKeyChecking=no -l $cuser $jumpbox sudo /root/run${type}cluster.sh A list B | sed 's/ /%/g'`
   do
     local user=`echo $line | awk -F"%" ' { print $1 } '`
@@ -300,6 +310,26 @@ function activity_log() {
     printf "%03d %10s %10s %20s\n" $c $user $action $cluster
     ((c++))
   done
+}
+
+function reset_tables() {
+  local cluster=$1; shift
+  err "Reseting tables on cluster $cluster"
+  host=$(hostname hbase $cluster)
+  if [[ "x${host}" == "x" ]]; then
+    err "Mapping doesn't specify where hbase is running"
+    return 1
+  fi
+}
+
+function delete_tables() {
+  local cluster=$1; shift
+  err "Deleting tables on cluster $cluster"
+  host=$(hostname hbase $cluster)
+  if [[ "x${host}" == "x" ]]; then
+    err "Mapping doesn't specify where hbase is running"
+    return 1
+  fi
 }
 
 section=$1; shift
@@ -402,6 +432,8 @@ if [[ "x${section}" == "xcluster" ]]; then
     destroy) destroy_cluster $cluster $type;;
     list) list_clusters $type;;
     activity) activity_log $type;;
+    delete-tables) reset_tables $cluster;;
+    truncate-tables) truncate_tables $cluster;;
   esac
   exit 0
 fi
