@@ -26,4 +26,6 @@ public final class GatewayV2Constants {
   public static final int DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM = 5000;
   public static final long DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES = 50 * 1024 * 1024;
   public static final long DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS = 150;
+
+  public static final String GATEWAY_V2_HTTP_HANDLERS = "gateway.v2.http.handler";
 }

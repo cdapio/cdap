@@ -21,6 +21,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -58,7 +59,9 @@ public class GatewayV2Modules extends RuntimeModule {
       protected void configure() {
         bind(CMetrics.class).toInstance(cMetrics);
 
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
+        Multibinder<HttpHandler> handlerBinder =
+          Multibinder.newSetBinder(binder(), HttpHandler.class,
+                                   Names.named(GatewayV2Constants.GATEWAY_V2_HTTP_HANDLERS));
         handlerBinder.addBinding().to(StreamHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(PingHandler.class).in(Scopes.SINGLETON);
 

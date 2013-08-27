@@ -79,7 +79,8 @@ public class StreamHandler extends AbstractHttpHandler {
   private final OperationExecutor opex;
   private final StreamCache streamCache;
   private final MetadataService metadataService;
-  private final GatewayMetricsHelperWrapper helper;
+  private final CMetrics cMetrics;
+  private final GatewayMetrics gatewayMetrics;
   private final CachedStreamEventConsumer consumer;
   private final GatewayAuthenticator authenticator;
 
@@ -92,9 +93,8 @@ public class StreamHandler extends AbstractHttpHandler {
     this.opex = opex;
     this.streamCache = streamCache;
     this.metadataService = metadataService;
-    this.helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME),
-      gatewayMetrics);
+    this.cMetrics = cMetrics;
+    this.gatewayMetrics = gatewayMetrics;
     this.authenticator = authenticator;
 
     this.consumer = new CachedStreamEventConsumer(cConfig, opex, queueClientFactory);
@@ -145,10 +145,12 @@ public class StreamHandler extends AbstractHttpHandler {
   @PUT
   @Path("/{streamId}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("streamId") String destination) {
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
+      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME), gatewayMetrics);
     helper.setMethod("create");
     helper.setScope(destination);
 
-    String accountId = authenticate(request, responder);
+    String accountId = authenticate(request, responder, helper);
     if (accountId == null) {
       return;
     }
@@ -184,10 +186,12 @@ public class StreamHandler extends AbstractHttpHandler {
   @Path("/{streamId}")
   public void enqueue(HttpRequest request, final HttpResponder responder,
                       @PathParam("streamId") final String destination) {
+    final GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
+      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME), gatewayMetrics);
     helper.setMethod("enqueue");
     helper.setScope(destination);
 
-    final String accountId = authenticate(request, responder);
+    final String accountId = authenticate(request, responder, helper);
     if (accountId == null) {
       return;
     }
@@ -259,8 +263,10 @@ public class StreamHandler extends AbstractHttpHandler {
   @Path("/{streamId}")
   public void dispatchGet(HttpRequest request, HttpResponder responder,
                           @PathParam("streamId") String destination) {
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
+      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME), gatewayMetrics);
 
-    String accountId = authenticate(request, responder);
+    String accountId = authenticate(request, responder, helper);
     if (accountId == null) {
       return;
     }
@@ -279,7 +285,7 @@ public class StreamHandler extends AbstractHttpHandler {
 
     Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
     if (queryParams == null || queryParams.isEmpty()) {
-      info(responder, destination, accountId);
+      info(responder, helper, destination, accountId);
       return;
     }
 
@@ -287,13 +293,13 @@ public class StreamHandler extends AbstractHttpHandler {
     List<String> qParams = queryParams.get("q");
     if (qParams != null && qParams.size() == 1) {
       if ("newConsumer".equals(qParams.get(0))) {
-        newId(responder, destination, accountId);
+        newId(responder, helper, destination, accountId);
         return;
       } else if ("dequeue".equals(qParams.get(0))) {
-        dequeue(request, responder, destination, accountId);
+        dequeue(request, responder, helper, destination, accountId);
         return;
       } else if ("info".equals(qParams.get(0))) {
-        info(responder, destination, accountId);
+        info(responder, helper, destination, accountId);
         return;
       }
     }
@@ -304,7 +310,8 @@ public class StreamHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
-  private void dequeue(HttpRequest request, HttpResponder responder, String destination, String accountId) {
+  private void dequeue(HttpRequest request, HttpResponder responder, GatewayMetricsHelperWrapper helper,
+                       String destination, String accountId) {
     helper.setMethod("dequeue");
     helper.setScope(destination);
 
@@ -397,7 +404,8 @@ public class StreamHandler extends AbstractHttpHandler {
     helper.finish(Success);
   }
 
-  private void newId(HttpResponder responder, String destination, String accountId) {
+  private void newId(HttpResponder responder, GatewayMetricsHelperWrapper helper,
+                     String destination, String accountId) {
     helper.setMethod("getNewId");
     helper.setScope(destination);
 
@@ -422,7 +430,8 @@ public class StreamHandler extends AbstractHttpHandler {
     helper.finish(Success);
   }
 
-  private void info(HttpResponder responder, String destination, String accountId) {
+  private void info(HttpResponder responder, GatewayMetricsHelperWrapper helper,
+                    String destination, String accountId) {
     helper.setMethod("getQueueInfo");
     helper.setScope(destination);
 
@@ -448,7 +457,7 @@ public class StreamHandler extends AbstractHttpHandler {
     }
   }
 
-  private String authenticate(HttpRequest request, HttpResponder responder) {
+  private String authenticate(HttpRequest request, HttpResponder responder, GatewayMetricsHelperWrapper helper) {
     // if authentication is enabled, verify an authentication token has been
     // passed and then verify the token is valid
     if (!authenticator.authenticateRequest(request)) {

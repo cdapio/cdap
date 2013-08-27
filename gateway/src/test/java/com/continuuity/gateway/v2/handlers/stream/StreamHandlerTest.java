@@ -15,6 +15,10 @@ import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -33,9 +37,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * Test stream handler.
@@ -167,6 +169,7 @@ public class StreamHandlerTest {
 
   @Test
   public void testBatchStreamEnqueue() throws Exception {
+    final int concurrencyLevel = 6;
     DefaultHttpClient httpclient = new DefaultHttpClient();
 
     // Create new stream.
@@ -184,18 +187,22 @@ public class StreamHandlerTest {
     String groupId = response.getFirstHeader(Constants.HEADER_STREAM_CONSUMER).getValue();
     EntityUtils.consume(response.getEntity());
 
-    ExecutorService executorService = Executors.newFixedThreadPool(5);
-    BatchEnqueue batchEnqueue1 = new BatchEnqueue(true);
-    BatchEnqueue batchEnqueue2 = new BatchEnqueue(false);
-    Future<?> future1 = executorService.submit(batchEnqueue1);
-    Future<?> future2 = executorService.submit(batchEnqueue2);
-    future1.get();
-    future2.get();
+    ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+    List<ListenableFuture<?>> futureList = Lists.newArrayList();
+
+    List<BatchEnqueue> batchEnqueues = Lists.newArrayList();
+    for (int i = 0; i < concurrencyLevel; ++i) {
+      BatchEnqueue batchEnqueue = new BatchEnqueue(i * 1000);
+      batchEnqueues.add(batchEnqueue);
+      futureList.add(executorService.submit(batchEnqueue));
+    }
+
+    Futures.allAsList(futureList).get();
     executorService.shutdown();
 
     List<Integer> actual = Lists.newArrayList();
     // Dequeue all entries
-    for (int i = 0; i < BatchEnqueue.NUM_ELEMENTS; ++i) {
+    for (int i = 0; i < concurrencyLevel * BatchEnqueue.NUM_ELEMENTS; ++i) {
       httpGet = new HttpGet(String.format("http://%s:%d/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
       httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
@@ -204,23 +211,25 @@ public class StreamHandlerTest {
       actual.add(entry);
     }
 
-    batchEnqueue1.verify(actual);
-    batchEnqueue2.verify(actual);
-
-    Collections.sort(actual);
-    for (int i = 0; i < BatchEnqueue.NUM_ELEMENTS; ++i) {
-      Assert.assertEquals((Integer) i, actual.get(i));
+    List<Integer> expected = Lists.newArrayList();
+    for (BatchEnqueue batchEnqueue : batchEnqueues) {
+      expected.addAll(batchEnqueue.expected);
+      batchEnqueue.verify(actual);
     }
+
+    Collections.sort(expected);
+    Collections.sort(actual);
+    Assert.assertEquals(expected, actual);
   }
 
   private static class BatchEnqueue implements Runnable {
-    public static final int NUM_ELEMENTS = 100;  // Should be an even number
-    private final boolean evenGenerator;
+    public static final int NUM_ELEMENTS = 100;
+    private final int startElement;
 
     private final List<Integer> expected = Lists.newArrayList();
 
-    private BatchEnqueue(boolean evenGenerator) {
-      this.evenGenerator = evenGenerator;
+    private BatchEnqueue(int startElement) {
+      this.startElement = startElement;
     }
 
     @Override
@@ -228,7 +237,7 @@ public class StreamHandlerTest {
       try {
         DefaultHttpClient httpclient = new DefaultHttpClient();
 
-        for (int i = evenGenerator ? 0 : 1; i < NUM_ELEMENTS; i += 2) {
+        for (int i = startElement; i < startElement + NUM_ELEMENTS; ++i) {
           HttpPost httpPost = new HttpPost(String.format("http://%s:%d/stream/test_batch_stream_enqueue",
                                                          hostname, port));
           httpPost.setEntity(new StringEntity(Integer.toString(i)));
@@ -244,12 +253,9 @@ public class StreamHandlerTest {
     }
 
     public void verify(List<Integer> out) {
-      Assert.assertEquals(0, NUM_ELEMENTS % 2);
-      Assert.assertEquals(NUM_ELEMENTS, out.size());
-
       List<Integer> actual = Lists.newArrayList();
       for (Integer i : out) {
-        if ((i % 2 == 0) == evenGenerator) {
+        if (startElement <= i && i < startElement + NUM_ELEMENTS) {
           actual.add(i);
         }
       }
