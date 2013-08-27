@@ -26,6 +26,7 @@ import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -201,8 +202,7 @@ public final class FlowletDefinition {
           String outputName = field.isAnnotationPresent(Output.class) ?
                                   field.getAnnotation(Output.class).value() : DEFAULT_OUTPUT;
 
-          checkArgument(outputType instanceof Class || outputType instanceof ParameterizedType, type, field,
-                        "Invalid OutputEmitter type. Only Class or ParameterizedType are supported");
+          checkType(outputType, type, field);
 
           Set<Type> types = outputs.get(outputName);
           if (types == null) {
@@ -256,9 +256,7 @@ public final class FlowletDefinition {
 
         // Extract the Input type from the first parameter of the process method
         Type inputType = type.resolveType(firstParameter).getType();
-
-        checkArgument(inputType instanceof Class || inputType instanceof ParameterizedType, type, method,
-                      "Invalid OutputEmitter type. Only Class or ParameterizedType are supported.");
+        checkType(inputType, type, method);
 
         List<String> inputNames = Lists.newLinkedList();
         if (processInputAnnotation == null || processInputAnnotation.value().length == 0) {
@@ -281,6 +279,15 @@ public final class FlowletDefinition {
 
   private <T> void checkArgument(boolean condition, TypeToken<?> type, T context, String errorMsg) {
     Preconditions.checkArgument(condition,  "%s. Class: %s, context: %s", errorMsg, type, context);
+  }
+
+  private <T> void checkType(Type type, TypeToken<?> clz, T context) {
+    if (type instanceof GenericArrayType) {
+      checkType(((GenericArrayType) type).getGenericComponentType(), clz, context);
+      return;
+    }
+    checkArgument(type instanceof Class || type instanceof ParameterizedType, clz, context,
+                  "Invalid type. Only Class or ParameterizedType are supported.");
   }
 
   private <K, V> Map<K, Set<V>> immutableCopyOf(Map<K, Set<V>> map) {
