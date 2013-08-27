@@ -23,6 +23,16 @@ public final class QueueName {
   private final String simpleName;
 
   /**
+   * Represents the queue as byte[].
+   */
+  private final byte[] byteName;
+
+  /**
+   * Represents the queue name as a string.
+   */
+  private final String stringName;
+
+  /**
    * Constructs this class from an URI.
    *
    * @param uri of the queue
@@ -69,6 +79,8 @@ public final class QueueName {
   private QueueName(URI uri) {
     this.uri = uri;
     this.simpleName = new File(uri.getPath()).getName();
+    this.stringName = uri.toASCIIString();
+    this.byteName = stringName.getBytes(Charsets.US_ASCII);
   }
 
   public boolean isStream() {
@@ -83,10 +95,13 @@ public final class QueueName {
   }
 
   /**
+   * Gets the bytes representation of the queue uri. Note that mutating the returned array will mutate the underlying
+   * byte array as well. If mutation is needed, one has to copy to a separate array.
+   *
    * @return bytes representation of queue uri.
    */
   public byte[] toBytes() {
-    return toString().getBytes(Charsets.US_ASCII);
+    return byteName;
   }
 
   /**
@@ -101,7 +116,7 @@ public final class QueueName {
    */
   @Override
   public String toString() {
-    return uri.toASCIIString();
+    return stringName;
   }
 
   /**

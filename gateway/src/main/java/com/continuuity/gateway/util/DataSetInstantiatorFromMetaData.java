@@ -3,12 +3,14 @@ package com.continuuity.gateway.util;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
@@ -27,6 +29,13 @@ public final class DataSetInstantiatorFromMetaData {
   private final OperationExecutor opex;
   // the location factory
   private LocationFactory locationFactory;
+
+  // to support early integration with TxDs2
+  private DataSetAccessor dataSetAccessor;
+
+  // to support early integration with TxDs2
+  private TransactionSystemClient txSystemClient;
+
   // the data set instantiator that will do the actual work
   private final DataSetInstantiationBase instantiator;
   // the meta data service
@@ -39,6 +48,7 @@ public final class DataSetInstantiatorFromMetaData {
    * @param mds  the meta data store to use for meta data access
    */
   public DataSetInstantiatorFromMetaData(OperationExecutor opex, LocationFactory locationFactory,
+                                         DataSetAccessor dataSetAccessor, TransactionSystemClient txSystemClient,
                                          MetadataService mds) {
     // set up the data set instantiator
     this.instantiator = new DataSetInstantiationBase();
@@ -49,6 +59,8 @@ public final class DataSetInstantiatorFromMetaData {
     this.mds = mds;
     this.opex = opex;
     this.locationFactory = locationFactory;
+    this.dataSetAccessor = dataSetAccessor;
+    this.txSystemClient = txSystemClient;
   }
 
   public <T extends DataSet> T getDataSet(String name, OperationContext context)
@@ -88,8 +100,17 @@ public final class DataSetInstantiatorFromMetaData {
     // create a new transaction proxy
     TransactionProxy proxy = new TransactionProxy();
     // set the transaction agent to synchronous
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, context));
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, context,
+                                                              instantiator.getTransactionAware(),
+                                                              txSystemClient));
     // this just gets passed through to the data set instantiator
-    return this.instantiator.getDataSet(name, new DataFabricImpl(opex, locationFactory, context), proxy);
+    return this.instantiator.getDataSet(name,
+                                        new DataFabricImpl(opex, locationFactory, dataSetAccessor, context),
+                                        proxy);
+  }
+
+  // used only for unit-tests
+  public DataSetInstantiationBase getInstantiator() {
+    return instantiator;
   }
 }

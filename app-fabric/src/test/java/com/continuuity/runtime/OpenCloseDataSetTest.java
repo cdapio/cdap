@@ -5,14 +5,15 @@ import com.continuuity.TrackingTable;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
-import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data2.queue.Queue2Producer;
+import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
@@ -44,7 +45,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class OpenCloseDataSetTest {
 
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testDataSetsAreClosed() throws Exception {
     TrackingTable.resetTracker();
 
@@ -61,21 +62,28 @@ public class OpenCloseDataSetTest {
       controllers.add(runner.run(program, new SimpleProgramOptions(program)));
     }
 
-    // send something to the flow via stream
-    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
-    QueueProducer queueProducer = new QueueProducer("Testing");
+    // write some data to queue
+    TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
+
     QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "xx");
+    QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+
+    // start tx to write in queue in tx
+    Transaction tx = txSystemClient.start();
+    ((TransactionAware) producer).startTx(tx);
+
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 4; i++) {
       String msg = "x" + i;
       StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(),
                                                  ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
-      QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
-                                              new QueueEntry(codec.encodePayload(event)));
-      opex.commit(opCtx, enqueue);
+      producer.enqueue(new QueueEntry(codec.encodePayload(event)));
     }
+
+    // commit tx
+    ((TransactionAware) producer).commitTx();
+    txSystemClient.commit(tx);
 
     while (TrackingTable.getTracker("foo", "write") < 4) {
       TimeUnit.MILLISECONDS.sleep(50);

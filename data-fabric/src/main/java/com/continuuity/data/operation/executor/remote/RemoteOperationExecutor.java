@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -587,4 +588,54 @@ public class RemoteOperationExecutor
   public String getName() {
     return "remote";
   }
+
+  @Override
+  public com.continuuity.data2.transaction.Transaction start() throws OperationException {
+    return this.execute(
+      new Operation<com.continuuity.data2.transaction.Transaction>("startTx") {
+        @Override
+        public com.continuuity.data2.transaction.Transaction execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          return client.start();
+        }
+      });
+  }
+
+  @Override
+  public boolean canCommit(final com.continuuity.data2.transaction.Transaction tx, final Collection<byte[]> changeIds)
+    throws OperationException {
+    return this.execute(
+      new Operation<Boolean>("canCommit") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          return client.canCommit(tx, changeIds);
+        }
+      });
+  }
+
+  @Override
+  public boolean commit(final com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    return this.execute(
+      new Operation<Boolean>("commit") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          return client.commit(tx);
+        }
+      });
+  }
+
+  @Override
+  public boolean abort(final com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    return this.execute(
+      new Operation<Boolean>("abort") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          return client.abort(tx);
+        }
+      });
+  }
+
 }

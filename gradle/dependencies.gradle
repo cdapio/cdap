@@ -29,6 +29,9 @@ libraries.jcl_over_slf4j = "org.slf4j:jcl-over-slf4j:1.6.4"
 libraries.mockito_core =  "org.mockito:mockito-core:1.9.5"
 libraries.junit = "junit:junit:4.11"
 
+// Fastutil
+libraries.fastutil = "it.unimi.dsi:fastutil:6.5.6"
+
 // Google Libraries
 libraries.google_guava = "com.google.guava:guava:$versions.googleGuavaVersion"
 libraries.google_gson = "com.google.code.gson:gson:2.2.4"

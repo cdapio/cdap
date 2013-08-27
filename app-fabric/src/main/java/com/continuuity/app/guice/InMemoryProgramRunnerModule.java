@@ -12,7 +12,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
-import com.continuuity.internal.app.queue.SingleQueueReader;
+import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -89,7 +89,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // For Binding queue stuff
     install(new FactoryModuleBuilder()
-            .implement(QueueReader.class, SingleQueueReader.class)
+            .implement(QueueReader.class, SingleQueue2Reader.class)
             .build(QueueReaderFactory.class));
   }
 

@@ -56,7 +56,7 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
   }
 
   /**
-   * Given a {@link FlowSpecification}
+   * Given a {@link FlowSpecification}.
    *
    * @param input {@link FlowSpecification}
    * @return A {@link Table}

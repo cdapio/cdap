@@ -2,19 +2,9 @@
  * Application
  */
 
-require.config({
-	paths: {
-		"lib": "../core/lib",
-		"models": "../core/models",
-		"views": "../core/views",
-		"controllers": "../core/controllers",
-		"embeddables": "../core/embeddables",
-		"partials": "../core/partials"
-	}
-});
-
-define(['core/components', 'core/embeddables/index', 'core/http', 'core/socket', 'core/util'],
-function(Components, Embeddables, HTTP, Socket, Util){
+define(['core/components', 'core/embeddables/index', 'core/http', 'core/socket',
+				'core/util'],
+function(Components, Embeddables, HTTP, Socket, Util) {
 
 	var Application = Ember.Application.extend({
 		/*
@@ -65,26 +55,23 @@ function(Components, Embeddables, HTTP, Socket, Util){
 
 				Em.debug('Routing started');
 
-				if (C.Env.location !== 'remote') {
-					/*
-					 * Do version check.
-					 */
-					this.HTTP.get('version', function (version) {
+				/*
+				 * Do version check.
+				 */
+				this.HTTP.get('version', this.checkVersion);
+			},
 
-						if (version && version.current !== 'UNKNOWN') {
+			checkVersion: function(version) {
 
-							if (version.current !== version.newest) {
+				if (version && version.current !== 'UNKNOWN') {
 
-								$('#warning').html('<div>New version available: ' + version.current + ' » ' +
-									version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
-									'Click here to download</a>.</div>').show();
+					if (version.current !== version.newest) {
 
-							}
-
-						}
-
-					});
-				}
+						$('#warning').html('<div>New version available: ' + version.current + ' » ' +
+							version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
+							'Click here to download</a>.</div>').show();
+					}
+				}			
 			}
 		}),
 
@@ -122,10 +109,7 @@ function(Components, Embeddables, HTTP, Socket, Util){
 			/*
 			 * Append the product theme CSS
 			 */
-			var themeLink = document.createElement('link');
-			themeLink.setAttribute("rel", "stylesheet");
-			themeLink.setAttribute("type", "text/css");
-			themeLink.setAttribute("href", "/assets/css/" + C.Env.get('productName') + ".css");
+			var themeLink = this.getThemeLink();
 			document.getElementsByTagName("head")[0].appendChild(themeLink);
 
 			/*
@@ -146,6 +130,15 @@ function(Components, Embeddables, HTTP, Socket, Util){
 			});
 
 		},
+
+		getThemeLink: function() {
+			var themeLink = document.createElement('link');
+			themeLink.setAttribute("rel", "stylesheet");
+			themeLink.setAttribute("type", "text/css");
+			themeLink.setAttribute("href", "/assets/css/" + C.Env.get('productName') + ".css");
+			return themeLink;
+		},
+
 		setTimeRange: function (millis) {
 			this.set('__timeRange', millis);
 			this.set('__timeLabel', {
@@ -210,31 +203,25 @@ function(Components, Embeddables, HTTP, Socket, Util){
 
 	var assignments = {};
 
+	assignments['Embed'] = {};
+
 	/*
-	 * Setup Models, Views and Controllers.
+	 * Setup Models, Views, Controllers and Embeddables.
 	 *
 	 * Referenced automatically by Ember. Format:
 	 * Model:		Application.Flow
 	 * View:		Application.FlowView
 	 * Controller:	Application.FlowController
-	 *
 	 */
 
 	Components.forEach(function (component) {
 
-		assignments[component.kind === 'Model' ?
+		if (component.kind === 'Embeddable') {
+			assignments['Embed'][component.type] = component;
+		} else {
+			assignments[component.kind === 'Model' ?
 			component.type : component.type + component.kind] = component;
-
-	});
-
-	/*
-	 * Assign Embeddables for reference within Handlebars view helpers.
-	 */
-	assignments['Embed'] = {};
-
-	Embeddables.forEach(function (embeddable) {
-
-		assignments['Embed'][embeddable.type] = embeddable;
+		}
 
 	});
 

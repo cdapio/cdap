@@ -9,11 +9,10 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.weave.filesystem.Location;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +21,11 @@ import java.util.Map;
  * This is the abstract base class for data fabric.
  */
 public interface DataFabric {
+
+  // These are to support new TxDs2 system. DataFabric will go away once we fully migrate to it.
+  <T> T getDataSetClient(String name, Class<? extends T> type);
+
+  <T> DataSetManager getDataSetManager(Class<? extends T> type);
 
   /**
    * Executes a {@link com.continuuity.data.operation.Read} operation.

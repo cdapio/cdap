@@ -1,7 +1,9 @@
 package com.continuuity.gateway.collector;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.DataAccessor;
 import com.continuuity.gateway.util.HttpConfig;
@@ -39,6 +41,12 @@ public class RestCollector extends Collector
    */
   protected LocationFactory locationFactory;
 
+  // To support early integration of TxDs2
+  private DataSetAccessor dataSetAccessor;
+
+  // to support early integration with TxDs2
+  private TransactionSystemClient txSystemClient;
+
   @Override
   public void setExecutor(OperationExecutor executor) {
     this.executor = executor;
@@ -57,6 +65,26 @@ public class RestCollector extends Collector
   @Override
   public LocationFactory getLocationFactory() {
     return this.locationFactory;
+  }
+
+  @Override
+  public DataSetAccessor getDataSetAccessor() {
+    return dataSetAccessor;
+  }
+
+  @Override
+  public void setDataSetAccessor(DataSetAccessor dataSetAccessor) {
+    this.dataSetAccessor = dataSetAccessor;
+  }
+
+  @Override
+  public TransactionSystemClient getTxSystemClient() {
+    return txSystemClient;
+  }
+
+  @Override
+  public void setTxSystemClient(TransactionSystemClient txSystemClient) {
+    this.txSystemClient = txSystemClient;
   }
 
   /**

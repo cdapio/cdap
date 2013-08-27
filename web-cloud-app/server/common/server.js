@@ -14,7 +14,8 @@ var express = require('express'),
   https = require('https'),
   cookie = require('cookie'),
   utils = require('connect').utils,
-  crypto = require('crypto');
+  crypto = require('crypto'),
+  path = require('path');
 
 var Api = require('../common/api');
 
@@ -332,6 +333,13 @@ WebAppServer.prototype.bindRoutes = function(io) {
     var type = req.params.type;
     res.send(availableMetrics[type]);
 
+  });
+
+  /**
+   * Enable testing.
+   */
+  this.app.get('/test', function (req, res) {
+    res.sendfile(path.resolve(__dirname + '../../../client/test/TestRunner.html'));
   });
 
   /*

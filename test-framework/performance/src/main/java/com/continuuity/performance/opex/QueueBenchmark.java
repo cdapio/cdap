@@ -1,8 +1,8 @@
 package com.continuuity.performance.opex;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
@@ -129,18 +129,11 @@ public class QueueBenchmark extends OpexBenchmark {
 
     QueueEnqueue enqueue;
     if (enqueueSize <= 1) {
-      QueueEntry entry = new QueueEntry(Bytes.toBytes(iteration));
-      if (hashKey != null) {
-        entry.addHashKey(hashKey, randomm.nextInt());
-      }
-      enqueue = new QueueEnqueue(queueBytes, entry);
+      enqueue = new QueueEnqueue(queueBytes, createQueueEntry(iteration, hashKey, randomm));
     } else {
       QueueEntry[] entries = new QueueEntry[enqueueSize];
       for (int i = 0; i < enqueueSize; ++i) {
-        entries[i] = new QueueEntry(Bytes.toBytes(iteration + i));
-        if (hashKey != null) {
-          entries[i].addHashKey(hashKey, randomm.nextInt());
-        }
+        entries[i] = createQueueEntry(iteration + i, hashKey, randomm);
       }
       enqueue = new QueueEnqueue(queueBytes, entries);
     }
@@ -151,6 +144,14 @@ public class QueueBenchmark extends OpexBenchmark {
       return 0L;
     }
     return enqueueSize;
+  }
+
+  private QueueEntry createQueueEntry(long value, String hashKey, Random random) {
+    if (hashKey == null) {
+      return new QueueEntry(Bytes.toBytes(value));
+    } else {
+      return new QueueEntry(hashKey, random.nextInt(), Bytes.toBytes(value));
+    }
   }
 
   long doDequeue(int consumerId, QueueConsumer consumer) throws BenchmarkException {

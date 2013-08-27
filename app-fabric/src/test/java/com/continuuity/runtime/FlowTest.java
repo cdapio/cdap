@@ -17,6 +17,11 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data2.queue.Queue2Producer;
+import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -139,21 +144,28 @@ public class FlowTest {
     }
 
     TimeUnit.SECONDS.sleep(1);
-    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
 
-    QueueProducer queueProducer = new QueueProducer("Testing");
+    TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
+
     QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "text");
+    QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+
+    // start tx to write in queue in tx
+    Transaction tx = txSystemClient.start();
+    ((TransactionAware) producer).startTx(tx);
+
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 10; i++) {
       String msg = "Testing message " + i;
       StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(),
                                                  ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
-      QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
-                                              new QueueEntry(codec.encodePayload(event)));
-      opex.commit(opCtx, enqueue);
+      producer.enqueue(new QueueEntry(codec.encodePayload(event)));
     }
+
+    // commit tx
+    ((TransactionAware) producer).commitTx();
+    txSystemClient.commit(tx);
 
     TimeUnit.SECONDS.sleep(10);
 

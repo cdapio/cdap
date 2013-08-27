@@ -911,4 +911,14 @@ public class KeyValue {
     out.writeInt(this.length);
     out.write(this.bytes, this.offset, this.length);
   }
+
+  public static KeyValue fromKey(byte[] key) {
+    int len = key.length + (2 * Bytes.SIZEOF_INT);
+    byte[] kvBytes = new byte[len];
+    int pos = 0;
+    pos = Bytes.putInt(kvBytes, pos, key.length);
+    pos = Bytes.putInt(kvBytes, pos, 0);
+    Bytes.putBytes(kvBytes, pos, key, 0, key.length);
+    return new KeyValue(kvBytes);
+  }
 }

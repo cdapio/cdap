@@ -60,6 +60,7 @@ import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionOracle;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
@@ -76,6 +77,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -142,6 +144,7 @@ public class OmidTransactionalOperationExecutor
   private MetricsCollectionService metricsCollectionService;
   private MetricsCollector streamMetrics;
   private MetricsCollector dataSetMetrics;
+  private MetricsCollector txSystemMetrics;
 
   @Inject
   public OmidTransactionalOperationExecutor(TransactionOracle oracle, OVCTableHandle tableHandle, CConfiguration conf) {
@@ -156,6 +159,8 @@ public class OmidTransactionalOperationExecutor
 
     this.streamMetrics = createNoopMetricsCollector();
     this.dataSetMetrics = createNoopMetricsCollector();
+    this.txSystemMetrics = createNoopMetricsCollector();
+    startTxSystemMetricsReporter();
   }
 
   // Optional injection of MetricsCollectionService
@@ -164,6 +169,7 @@ public class OmidTransactionalOperationExecutor
     this.metricsCollectionService = metricsCollectionService;
     this.streamMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, STREAM_CONTEXT, "0");
     this.dataSetMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, DATASET_CONTEXT, "0");
+    this.txSystemMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, TX_CONTEXT, "0");
   }
 
   private MetricsCollector createNoopMetricsCollector() {
@@ -241,6 +247,9 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_QUEUE_DROP_INFLIGHT_LATENCY =
     METRIC_PREFIX + "QueueDropInflight" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_SCAN_LATENCY = METRIC_PREFIX + "Scan" + LATENCY_METRIC_SUFFIX;
+
+  // TxDs2 Metrics
+  private static final String TX_CONTEXT = "-.tx";
 
   // Expiration seconds of cache queue metrics entries after it's been accessed.
   // It's to avoid keeping unused MetricsCollector for queues that are not active.
@@ -1402,6 +1411,72 @@ public class OmidTransactionalOperationExecutor
     end(REQ_TYPE_SCAN_LATENCY, begin);
     dataSetMetric_read(scan.getMetricName());
     return scanner;
+  }
+
+
+  @Override
+  public com.continuuity.data2.transaction.Transaction start() throws OperationException {
+    txSystemMetrics.gauge("tx.start.ops", 1);
+    return InMemoryTransactionOracle.start();
+  }
+
+  @Override
+  public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
+    throws OperationException {
+    txSystemMetrics.gauge("tx.canCommit.ops", 1);
+    boolean canCommit = InMemoryTransactionOracle.canCommit(tx, changeIds);
+    if (canCommit) {
+      txSystemMetrics.gauge("tx.canCommit.successful", 1);
+    }
+    return canCommit;
+  }
+
+  @Override
+  public boolean commit(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    txSystemMetrics.gauge("tx.commit.ops", 1);
+    boolean committed = InMemoryTransactionOracle.commit(tx);
+    if (committed) {
+      txSystemMetrics.gauge("tx.commit.successful", 1);
+    }
+    return committed;
+  }
+
+  @Override
+  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    txSystemMetrics.gauge("tx.abort.ops", 1);
+    boolean aborted = InMemoryTransactionOracle.abort(tx);
+    if (aborted) {
+      txSystemMetrics.gauge("tx.abort.successful", 1);
+    }
+    return aborted;
+  }
+
+  // this is a hack for reporting gauge metric: current metrics system supports only counters that are aggregated on
+  // 10-sec basis, so we need to report gauge not more frequently than every 10 sec.
+  private void startTxSystemMetricsReporter() {
+    Thread txSystemMetricsReporter = new Thread("tx-reporter") {
+      @Override
+      public void run() {
+        while (true) {
+          int excludedListSize = InMemoryTransactionOracle.getExcludedListSize();
+          if (excludedListSize > 0) {
+            if (txSystemMetrics != null) {
+              txSystemMetrics.gauge("tx.excluded", excludedListSize);
+            }
+            // This hack is needed because current metrics system is not flexible when it comes to adding new metrics
+            Log.info("tx.excluded=" + excludedListSize);
+          }
+          try {
+            TimeUnit.SECONDS.sleep(10);
+          } catch (InterruptedException e) {
+            this.interrupt();
+            break;
+          }
+        }
+      }
+    };
+    txSystemMetricsReporter.setDaemon(true);
+    txSystemMetricsReporter.start();
   }
 
   Transaction startTransaction(boolean trackChanges) {
