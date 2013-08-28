@@ -87,7 +87,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
     multiStringStore.write(a, col3, string3);
     multiStringStore.write(a, col4, string4);
 
-    List<String> result = multiStringStore.readAll(a);
+    Map<byte[], String> result = multiStringStore.readAll(a);
     Assert.assertEquals(4, result.size());
   }
 

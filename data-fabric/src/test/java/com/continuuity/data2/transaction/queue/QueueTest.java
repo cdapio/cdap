@@ -49,6 +49,7 @@ public abstract class QueueTest {
 
   protected static OperationExecutor opex;
   protected static QueueClientFactory queueClientFactory;
+  protected static QueueAdmin queueAdmin;
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
@@ -225,6 +226,34 @@ public abstract class QueueTest {
     // Dequeue again, since last tx was rollback, this dequeue should see the item again.
     txManager.start();
     Assert.assertEquals(1, Bytes.toInt(consumer.dequeue().iterator().next()));
+    txManager.commit();
+  }
+
+  @Test
+  public void testReset() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
+    createEnqueueRunnable(queueName, 5, 1, null).run();
+
+    Queue2Consumer consumer1 = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
+
+    TxManager txManager = new TxManager((TransactionAware) consumer1);
+
+    // Check that there's smth in the queue, but do not consume: abort tx after check
+    txManager.start();
+    Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
+    txManager.abort();
+
+    // Reset queues
+    queueAdmin.dropAll();
+
+    // we gonna need another one to check again to avoid caching side-affects
+    Queue2Consumer consumer2 = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(1, 0, 1, DequeueStrategy.FIFO, null), 2);
+    txManager = new TxManager((TransactionAware) consumer2);
+    // Check again: should be nothing in the queue
+    txManager.start();
+    Assert.assertFalse(consumer2.dequeue().iterator().hasNext());
     txManager.commit();
   }
 

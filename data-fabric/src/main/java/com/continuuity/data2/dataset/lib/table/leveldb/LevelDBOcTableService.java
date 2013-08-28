@@ -6,6 +6,7 @@ import com.continuuity.data.engine.leveldb.KeyValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBComparator;
@@ -25,6 +26,7 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 /**
  * Service maintaining all LevelDB tables.
  */
+@Singleton
 public class LevelDBOcTableService {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBOcTableService.class);
@@ -67,7 +69,19 @@ public class LevelDBOcTableService {
     return db;
   }
 
-  public DB openTable(String tableName) throws IOException {
+  public void ensureTableExists(String tableName) throws IOException {
+    DB db = tables.get(tableName);
+    if (db == null) {
+      synchronized (tables) {
+        db = tables.get(tableName);
+        if (db == null) {
+          createTable(tableName);
+        }
+      }
+    }
+  }
+
+  private DB openTable(String tableName) throws IOException {
     String dbPath = getDBPath(basePath, tableName);
 
     Options options = new Options();
@@ -80,7 +94,7 @@ public class LevelDBOcTableService {
     return factory.open(new File(dbPath), options);
   }
 
-  public void createTable(String name) throws IOException {
+  private void createTable(String name) throws IOException {
     String dbPath = getDBPath(basePath, name);
 
     Options options = new Options();

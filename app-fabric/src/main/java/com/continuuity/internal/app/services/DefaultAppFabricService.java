@@ -49,6 +49,7 @@ import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.SessionInfo;
@@ -192,6 +193,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private final String archiveDir;
 
+  // We need it here now to be able to reset queues data
+  private final QueueAdmin queueAdmin;
+
   /**
    * Timeout to upload to remote app fabric.
    */
@@ -209,7 +213,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public DefaultAppFabricService(CConfiguration configuration, OperationExecutor opex,
                                  LocationFactory locationFactory, ManagerFactory managerFactory,
                                  AuthorizationFactory authFactory, StoreFactory storeFactory,
-                                 ProgramRuntimeService runtimeService, DiscoveryServiceClient discoveryServiceClient) {
+                                 ProgramRuntimeService runtimeService, DiscoveryServiceClient discoveryServiceClient,
+                                 QueueAdmin queueAdmin) {
     this.opex = opex;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
@@ -217,6 +222,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.authFactory = authFactory;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.queueAdmin = queueAdmin;
     this.store = storeFactory.create();
     this.archiveDir = configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir"))
                                           + "/archive";
@@ -1055,6 +1061,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       deleteMetrics(account);
       // delete all meta data
       store.removeAll(accountId);
+      // delete queues data
+      queueAdmin.dropAll();
+
       LOG.info("Deleting all data for account '" + account + "'.");
       opex.execute(
         new OperationContext(account),
