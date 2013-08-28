@@ -8,6 +8,9 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.engine.hypersql.HyperSQLAndMemoryOVCTableHandle;
+import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
+import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
+import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
@@ -84,7 +87,7 @@ public class DataFabricLocalModule extends AbstractModule {
     bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
 
     // This is the primary mapping of the data fabric to underlying storage
-    bind(OVCTableHandle.class).to(HyperSQLAndMemoryOVCTableHandle.class);
+    bindLevelDB();
     
     bind(OperationExecutor.class).
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
@@ -102,6 +105,44 @@ public class DataFabricLocalModule extends AbstractModule {
         .toInstance(hyperSqlJDCBString);
 
     bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
+  }
+
+  private void bindLevelDB() {
+    bind(LevelDBOVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
+    bind(MemoryOVCTableHandle.class).toInstance(MemoryOVCTableHandle.getInstance());
+    bind(OVCTableHandle.class).to(LevelDBAndMemoryOVCTableHandle.class);
+
+    String path = this.conf.get(Constants.CFG_DATA_LEVELDB_DIR);
+    if (path == null || path.isEmpty()) {
+      path =
+        System.getProperty("java.io.tmpdir") +
+          System.getProperty("file.separator") +
+          "ldb-test-" + Long.toString(System.currentTimeMillis());
+      this.conf.set(Constants.CFG_DATA_LEVELDB_DIR, path);
+    }
+
+    File p = new File(path);
+    if (!p.exists() && !p.mkdirs()) {
+      throw new RuntimeException("Unable to create directory for ldb");
+    }
+    p.deleteOnExit();
+
+    int blockSize = this.conf.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE,
+                                     Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
+    long cacheSize = this.conf.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE,
+                                       Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
+
+    bind(String.class)
+      .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
+      .toInstance(path);
+
+    bind(Integer.class)
+      .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
+      .toInstance(blockSize);
+
+    bind(Long.class)
+      .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
+      .toInstance(cacheSize);
   }
 
   private void loadHsqlDriver() {
