@@ -283,26 +283,14 @@ public class SingleNodeMain {
   private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
-    boolean inVPC = false;
     String environment =
       configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
     if (environment.equals("vpc")) {
       System.err.println("Reactor Environment : " + environment);
-      inVPC = true;
     }
 
-    boolean levelDBCompatibleOS = DataFabricLevelDBModule.isOsLevelDBCompatible();
-    boolean levelDBEnabled =
-      configuration.getBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, Constants.DEFAULT_DATA_LEVELDB_ENABLED);
-
-    boolean useLevelDB = (inVPC || levelDBCompatibleOS) && levelDBEnabled;
-    if (useLevelDB) {
-      configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
-    } else {
-      configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.HSQLDB.name());
-    }
-
-    configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, levelDBEnabled);
+    configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+    configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, true);
 
     return ImmutableList.of(
       new ConfigModule(configuration, hConf),
@@ -313,7 +301,7 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules(configuration).getSingleNodeModules(),
-      new DataFabricModules().getSingleNodeModules(),
+      new DataFabricLevelDBModule(configuration),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new MetricsQueryRuntimeModule().getSingleNodeModules(),
