@@ -4,6 +4,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
+import com.google.common.base.Preconditions;
 
 import java.net.URI;
 
@@ -90,6 +91,7 @@ final class MetricsRequestBuilder {
 
     public MetricsRequestImpl(URI requestURI, String contextPrefix, String runId, String metricPrefix, String tagPrefix,
                               long startTime, long endTime, Type type, int count, MetricsScope scope) {
+      Preconditions.checkNotNull(scope);
       this.contextPrefix = contextPrefix;
       this.requestURI = requestURI;
       this.runId = runId;

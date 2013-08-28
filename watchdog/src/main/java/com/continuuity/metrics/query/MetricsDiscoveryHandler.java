@@ -48,19 +48,32 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   // BatchMetricsHandler are computed in the handler and are not stored in the table.
   private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
 
-  // used to go from the uri path to the internal 'program type' in the context (app.programType.programId.componentId)
-  private enum PathProgramType {
+  // known 'program types' in a metric context (app.programType.programId.componentId)
+  private enum ProgramType {
     PROCEDURES("p"),
     MAPREDUCE("b"),
-    FLOWS("f");
+    FLOWS("f"),
+    STREAMS("stream"),
+    DATASETS("dataset"),
+    UNKNOWN("");
     String id;
 
-    private PathProgramType(String id) {
+    private ProgramType(String id) {
       this.id = id;
     }
 
     private String getId() {
       return id;
+    }
+
+    private static ProgramType fromId(String id) {
+      for (ProgramType p : ProgramType.values()) {
+        if (p.id.equals(id)) {
+          return p;
+        }
+      }
+      LOG.debug("unknown program type: " + id);
+      return UNKNOWN;
     }
   }
 
@@ -84,14 +97,6 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     private String getName() {
       return name;
     }
-  }
-
-  private enum ProgramType {
-    P,
-    B,
-    F,
-    STREAM,
-    DATASET
   }
 
   // the context has 'm' and 'r', but they're referred to as 'mappers' and 'reducers' in the api.
@@ -136,7 +141,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType) throws IOException {
-    String programTypeId = PathProgramType.valueOf(programType.toUpperCase()).getId();
+    String programTypeId = ProgramType.valueOf(programType.toUpperCase()).getId();
     String context = Joiner.on(".").join(appId, programTypeId);
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
@@ -147,7 +152,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType,
                                       @PathParam("program-id") String programId) throws IOException {
-    String programTypeId = PathProgramType.valueOf(programType.toUpperCase()).getId();
+    String programTypeId = ProgramType.valueOf(programType.toUpperCase()).getId();
     String context = Joiner.on(".").join(appId, programTypeId, programId);
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
@@ -159,7 +164,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
                                       @PathParam("program-type") String programType,
                                       @PathParam("program-id") String programId,
                                       @PathParam("component-id") String componentId) throws IOException {
-    String programTypeId = PathProgramType.valueOf(programType.toUpperCase()).getId();
+    String programTypeId = ProgramType.valueOf(programType.toUpperCase()).getId();
     String context = Joiner.on(".").join(appId, programTypeId, programId, componentId);
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
@@ -246,15 +251,15 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
     // different program types will have different depths in the context tree.  For example,
     // procedures have no children, whereas flows will have flowlets as children.
-    ProgramType type = ProgramType.valueOf(contextParts.next().toUpperCase());
+    ProgramType type = ProgramType.fromId(contextParts.next());
     switch(type) {
-      case F:
+      case FLOWS:
         metricContexts.deepAdd(contextParts, ContextNodeType.FLOW, ContextNodeType.FLOWLET);
         break;
-      case P:
+      case PROCEDURES:
         metricContexts.deepAdd(contextParts, ContextNodeType.PROCEDURE);
         break;
-      case B:
+      case MAPREDUCE:
         if (contextParts.hasNext()) {
           metricContexts = metricContexts.getOrAddChild(ContextNodeType.MAPREDUCE, contextParts.next());
           if (contextParts.hasNext()) {
@@ -264,10 +269,10 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
         }
         break;
       // dataset and stream are special cases, currently the only "context" for them is "-.dataset" and "-.stream"
-      case DATASET:
+      case DATASETS:
         metricContexts.addChild(new ContextNode(ContextNodeType.DATASET, ""));
         break;
-      case STREAM:
+      case STREAMS:
         metricContexts.addChild(new ContextNode(ContextNodeType.STREAM, ""));
         break;
       default:
