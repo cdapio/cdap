@@ -50,7 +50,7 @@ public final class TimeSeriesTable {
   private static final int MAX_ROLL_TIME = 0xfffe;
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
 
-  private final FilterableOVCTable timeSeriesTable;
+  private final OrderedVersionedColumnarTable timeSeriesTable;
   private final MetricsEntityCodec entityCodec;
   private final boolean isFilterable;
   private final int resolution;
@@ -74,7 +74,7 @@ public final class TimeSeriesTable {
   TimeSeriesTable(OrderedVersionedColumnarTable timeSeriesTable,
                   MetricsEntityCodec entityCodec, int resolution, int rollTime) {
 
-    this.timeSeriesTable = (FilterableOVCTable) timeSeriesTable;
+    this.timeSeriesTable = timeSeriesTable;
     this.entityCodec = entityCodec;
     this.isFilterable = timeSeriesTable instanceof FilterableOVCTable;
     this.resolution = resolution;
@@ -85,7 +85,6 @@ public final class TimeSeriesTable {
     this.deltaCache = createDeltaCache(rollTime);
 
     this.defaultTagFuzzyPair = createDefaultTagFuzzyPair();
-    ((LevelDBFilterableOVCTable) this.timeSeriesTable).setCodec(entityCodec);
   }
 
   /**
@@ -154,15 +153,16 @@ public final class TimeSeriesTable {
                                  query.getMetricPrefix(), query.getTagPrefix(), endTimeBase + 1, 0xff);
 
     Scanner scanner;
-    if (timeSeriesTable instanceof HBaseFilterableOVCTable &&
+    if (isFilterable && (timeSeriesTable instanceof HBaseFilterableOVCTable) &&
       ((FilterableOVCTable) timeSeriesTable).isFilterSupported(FuzzyRowFilter.class)) {
-      scanner = timeSeriesTable.scan(startRow, endRow, columns,
+      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(query, startTimeBase, endTimeBase));
     } else if (timeSeriesTable instanceof LevelDBFilterableOVCTable) {
-      LevelDBFuzzyRowFilter f = new LevelDBFuzzyRowFilter(getFilter(query, startTimeBase, endTimeBase));
-      f.setCodec(entityCodec);
-      scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ, f);
+      LevelDBFuzzyRowFilter f = new LevelDBFuzzyRowFilter(
+        (FuzzyRowFilter) getFilter(query, startTimeBase, endTimeBase));
+      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
+                                                            MemoryReadPointer.DIRTY_READ, f);
     } else {
       scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ);
     }

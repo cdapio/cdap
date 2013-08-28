@@ -14,10 +14,10 @@ import java.util.List;
  *
  */
 public class LevelDBFuzzyRowFilter implements Filter {
-  private Filter filter;
+  private FuzzyRowFilter filter;
   private MetricsEntityCodec codec;
 
-  public LevelDBFuzzyRowFilter(Filter f) {
+  public LevelDBFuzzyRowFilter(FuzzyRowFilter f) {
     this.filter = f;
   }
 

@@ -38,11 +38,6 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements FilterableOVCTable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBFilterableOVCTable.class);
-  MetricsEntityCodec entityCodec;
-
-  public void setCodec(MetricsEntityCodec codec) {
-    entityCodec = codec;
-  }
 
   public LevelDBFilterableOVCTable(final String basePath, final String tableName,
                                    final Integer blockSize, final Long cacheSize) throws OperationException {
@@ -88,25 +83,6 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
     return new KeyValue(kv.getRow(), kv.getFamily(), kv.getQualifier(),
                         kv.getTimestamp(), type, kv.getValue());
   }
-
-  /*public void printRow(byte[] row) {
-    int offset = 0;
-    String context = entityCodec.decode(MetricsEntityType.CONTEXT, row, offset);
-    System.out.println("-- context = " + context);
-    offset += entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
-    String metric = entityCodec.decode(MetricsEntityType.METRIC, row, offset);
-    System.out.println("-- metric = " + metric);
-    offset += entityCodec.getEncodedSize(MetricsEntityType.METRIC);
-    String tag = entityCodec.decode(MetricsEntityType.TAG, row, offset);
-    System.out.println("-- tag = " + tag);
-    offset += entityCodec.getEncodedSize(MetricsEntityType.TAG);
-    int timeBase = Bytes.toInt(row, offset, 4);
-    System.out.println("-- timebase = " + timeBase);
-    offset += 4;
-    String runId = entityCodec.decode(MetricsEntityType.RUN, row, offset);
-    System.out.println("-- runid = " + runId);
-    System.out.println();
-  }*/
 
   /**
    * Scanner on top of levelDB dbiterator with a filter
@@ -158,8 +134,6 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
         Map.Entry<byte[], byte[]> entry = iterator.peekNext();
         KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
         byte[] row = keyValue.getRow();
-        //System.out.println("----- main loop, looking at row -----");
-        //printRow(row);
 
         if (endRow != null && Bytes.compareTo(row, endRow) >= 0) {
           //already reached the end. So break.
@@ -178,19 +152,20 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
           }
         }
 
-
         org.apache.hadoop.hbase.KeyValue currKV = convert(keyValue);
         Filter.ReturnCode rc = filter.filterKeyValue(currKV);
 
         switch (rc) {
           case SEEK_NEXT_USING_HINT:
             KeyValue nextKV = convert(filter.getNextKeyHint(currKV));
+            System.out.println("seeking");
             iterator.seek(nextKV.getKey());
             lastRow = row;
             continue;
           case SKIP:
           case NEXT_COL:
           case NEXT_ROW:
+            // this should never get hit for now with only the fuzzy row filter
             lastRow = row;
             iterator.next();
             continue;

@@ -53,7 +53,7 @@ public class LevelDBScanner {
     long begin = end - 60;
     MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
       .setContext(null)
-      .setMetric("store.ops")
+      .setMetric("process.events")
       .build(begin, end);
 
     JniDBFactory.pushMemoryPool(1024 * 1024 * 100);

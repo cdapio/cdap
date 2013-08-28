@@ -111,13 +111,16 @@ public final class AggregatesTable {
     byte[] endRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
 
     Scanner scanner;
-    if (isFilterable && ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
+    if (isFilterable && (aggregatesTable instanceof HBaseFilterableOVCTable) &&
+      ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
       scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(contextPrefix, metricPrefix, runId));
+    } else if (aggregatesTable instanceof LevelDBFilterableOVCTable) {
+      FuzzyRowFilter f = (FuzzyRowFilter) getFilter(contextPrefix, metricPrefix, runId);
+      scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow, MemoryReadPointer.DIRTY_READ, f);
     } else {
-      scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow, MemoryReadPointer.DIRTY_READ,
-                                     new LevelDBFuzzyRowFilter(getFilter(contextPrefix, metricPrefix, runId)));
+      scanner = aggregatesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
     }
 
     return new AggregatesScanner(contextPrefix, metricPrefix, runId,
