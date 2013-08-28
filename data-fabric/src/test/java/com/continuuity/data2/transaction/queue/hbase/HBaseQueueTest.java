@@ -13,6 +13,7 @@ import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.inject.Guice;
@@ -77,6 +78,7 @@ public class HBaseQueueTest extends QueueTest {
     // Get the remote opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+    queueAdmin = injector.getInstance(QueueAdmin.class);
   }
 
   @AfterClass

@@ -6,6 +6,7 @@ package com.continuuity.data2.transaction.queue.inmemory;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -25,5 +26,6 @@ public class InMemoryQueueTest extends QueueTest {
     // Get the in-memory opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+    queueAdmin = injector.getInstance(QueueAdmin.class);
   }
 }
