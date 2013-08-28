@@ -97,10 +97,8 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     }
 
     if (!(type instanceof Class || type instanceof ParameterizedType)) {
-      throw new UnsupportedTypeException(
-                                          "Type " + type + " is not supported. " +
-                                            "Only Class or ParameterizedType are supported."
-      );
+      throw new UnsupportedTypeException("Type " + type + " is not supported. " +
+                                         "Only Class or ParameterizedType are supported.");
     }
 
     // Any parameterized Collection class would be represented by ARRAY schema.
