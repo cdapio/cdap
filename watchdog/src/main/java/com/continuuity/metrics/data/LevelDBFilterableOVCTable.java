@@ -75,23 +75,21 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
   }
 
 
-  // TODO(albert) refactor obviously
+  // these are gross... need to figure out the correct way to do filters
+  // TODO: refactor properly with filters
   public static org.apache.hadoop.hbase.KeyValue convert(KeyValue kv) {
     org.apache.hadoop.hbase.KeyValue.Type type = org.apache.hadoop.hbase.KeyValue.Type.codeToType(kv.getType());
     return new org.apache.hadoop.hbase.KeyValue(kv.getRow(), kv.getFamily(), kv.getQualifier(),
                                                 kv.getTimestamp(), type, kv.getValue());
   }
 
-
-  // TODO(albert) refactor obviously
-  public static KeyValue convert(org.apache.hadoop.hbase.KeyValue nextKV, KeyValue currKV) {
-    KeyValue.Type type = KeyValue.Type.codeToType(nextKV.getType());
-    // should be in the filter logic, but hbase fuzzy doesn't look at family, qualifier, value, will return empty bytes.
-    return new KeyValue(nextKV.getRow(), currKV.getFamily(), currKV.getQualifier(),
-                        currKV.getTimestamp(), type, currKV.getValue());
+  public static KeyValue convert(org.apache.hadoop.hbase.KeyValue kv) {
+    KeyValue.Type type = KeyValue.Type.codeToType(kv.getType());
+    return new KeyValue(kv.getRow(), kv.getFamily(), kv.getQualifier(),
+                        kv.getTimestamp(), type, kv.getValue());
   }
 
-  public void printRow(byte[] row) {
+  /*public void printRow(byte[] row) {
     int offset = 0;
     String context = entityCodec.decode(MetricsEntityType.CONTEXT, row, offset);
     System.out.println("-- context = " + context);
@@ -108,7 +106,7 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
     String runId = entityCodec.decode(MetricsEntityType.RUN, row, offset);
     System.out.println("-- runid = " + runId);
     System.out.println();
-  }
+  }*/
 
   /**
    * Scanner on top of levelDB dbiterator with a filter
@@ -160,8 +158,8 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
         Map.Entry<byte[], byte[]> entry = iterator.peekNext();
         KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
         byte[] row = keyValue.getRow();
-        System.out.println("----- main loop, looking at row -----");
-        printRow(row);
+        //System.out.println("----- main loop, looking at row -----");
+        //printRow(row);
 
         if (endRow != null && Bytes.compareTo(row, endRow) >= 0) {
           //already reached the end. So break.
@@ -178,31 +176,31 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
             // as previous row and we have collected atleast one valid value in the columnValues collection. Break.
             break;
           }
-
-          org.apache.hadoop.hbase.KeyValue currKV = convert(keyValue);
-          Filter.ReturnCode rc = filter.filterKeyValue(currKV);
-
-          switch (rc) {
-            case INCLUDE:
-            case INCLUDE_AND_NEXT_COL:
-              System.out.println(" INCLUDE!");
-              printRow(row);
-              break;
-            case SEEK_NEXT_USING_HINT:
-              KeyValue nextKV = convert(filter.getNextKeyHint(currKV), keyValue);
-              byte[] nextKey = nextKV.getKey();
-              iterator.seek(nextKey);
-              lastRow = row;
-              continue;
-            case SKIP:
-            case NEXT_COL:
-            case NEXT_ROW:
-            default:
-              break;
-          }
         }
 
-        lastRow = keyValue.getRow();
+
+        org.apache.hadoop.hbase.KeyValue currKV = convert(keyValue);
+        Filter.ReturnCode rc = filter.filterKeyValue(currKV);
+
+        switch (rc) {
+          case SEEK_NEXT_USING_HINT:
+            KeyValue nextKV = convert(filter.getNextKeyHint(currKV));
+            iterator.seek(nextKV.getKey());
+            lastRow = row;
+            continue;
+          case SKIP:
+          case NEXT_COL:
+          case NEXT_ROW:
+            lastRow = row;
+            iterator.next();
+            continue;
+          case INCLUDE:
+          case INCLUDE_AND_NEXT_COL:
+          default:
+            break;
+        }
+
+        lastRow = row;
         iterator.next();
 
         if (filter.filterAllRemaining()) {

@@ -64,10 +64,15 @@ public class LevelDBFuzzyRowFilter implements Filter {
   @Override
   public KeyValue getNextKeyHint(KeyValue currentKV) {
     KeyValue next = filter.getNextKeyHint(currentKV);
-    byte[] nextRow = next.getRow();
+    KeyValue.Type type = KeyValue.Type.codeToType(next.getType());
+    // using the currentKV's family, qualifier, timestamp, and value, otherwise they will
+    // be empty byte arrays which will cause level db's KeyValue implementation to represent
+    // the actual key it uses with fewer bytes, which will mess with the seeking.
+    KeyValue output = new KeyValue(next.getRow(), currentKV.getFamily(), currentKV.getQualifier(),
+                                   currentKV.getTimestamp(), type, currentKV.getValue());
     //System.out.println("----- propose skip to row -----");
     //printRow(nextRow);
-    return next;
+    return output;
   }
 
   @Override

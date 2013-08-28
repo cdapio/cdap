@@ -154,7 +154,8 @@ public final class TimeSeriesTable {
                                  query.getMetricPrefix(), query.getTagPrefix(), endTimeBase + 1, 0xff);
 
     Scanner scanner;
-    if (timeSeriesTable instanceof HBaseFilterableOVCTable) {
+    if (timeSeriesTable instanceof HBaseFilterableOVCTable &&
+      ((FilterableOVCTable) timeSeriesTable).isFilterSupported(FuzzyRowFilter.class)) {
       scanner = timeSeriesTable.scan(startRow, endRow, columns,
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(query, startTimeBase, endTimeBase));
@@ -162,14 +163,10 @@ public final class TimeSeriesTable {
       LevelDBFuzzyRowFilter f = new LevelDBFuzzyRowFilter(getFilter(query, startTimeBase, endTimeBase));
       f.setCodec(entityCodec);
       scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ, f);
-    }
-    /*if (isFilterable && ((FilterableOVCTable) timeSeriesTable).isFilterSupported(FuzzyRowFilter.class)) {
-      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
-                                                        MemoryReadPointer.DIRTY_READ,
-                                                        getFilter(query, startTimeBase, endTimeBase));
     } else {
       scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ);
-    }*/
+    }
+
     return new MetricsScanner(query, scanner, entityCodec, resolution);
   }
 

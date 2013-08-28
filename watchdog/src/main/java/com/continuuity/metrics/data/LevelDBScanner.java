@@ -71,6 +71,9 @@ public class LevelDBScanner {
         MetricsScanResult res = scanner.next();
         System.out.println("context = " + res.getContext() + " metric = " + res.getMetric() +
                              " tag = " + res.getTag());
+        for (TimeValue tv : res) {
+          System.out.println("time = " + tv.getTime() + " val = " + tv.getValue());
+        }
         rows++;
       }
       dur = System.currentTimeMillis() - start;
