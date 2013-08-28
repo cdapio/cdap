@@ -545,8 +545,7 @@ public class StreamHandler extends AbstractHttpHandler {
       this.consumer =
         queueClientFactory.createConsumer(key.getQueueName(),
                                           new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null), 1);
-      this.txManager = new TxManager(opex);
-      this.txManager.add((TransactionAware) consumer);
+      this.txManager = new TxManager(opex, (TransactionAware) consumer);
     }
 
     public DequeueResult dequeue() throws Throwable {
@@ -566,10 +565,8 @@ public class StreamHandler extends AbstractHttpHandler {
 
     @Override
     public void close() throws IOException {
-      if (consumer instanceof Closeable) {
-        synchronized (this) {
-          ((Closeable) consumer).close();
-        }
+    if (consumer instanceof Closeable) {
+        ((Closeable) consumer).close();
       }
     }
 

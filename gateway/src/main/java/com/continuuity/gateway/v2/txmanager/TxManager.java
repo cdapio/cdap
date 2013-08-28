@@ -1,44 +1,91 @@
 package com.continuuity.gateway.v2.txmanager;
 
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Objects;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Set;
 
 /**
  * Transaction manager to handle transactions.
  */
-public class TxManager extends AbstractTxManager {
+public class TxManager {
+  private static final Logger LOG = LoggerFactory.getLogger(TxManager.class);
 
-  private final Set<TransactionAware> txAwares =
-    Collections.newSetFromMap(Maps.<TransactionAware, Boolean>newConcurrentMap());
+  private final OperationExecutor opex;
+  private final Collection<TransactionAware> txAwares;
+  private Transaction transaction;
 
-  public TxManager(OperationExecutor opex) {
-    super(opex);
+  public TxManager(OperationExecutor opex, TransactionAware...txAware) {
+    this.opex = opex;
+    txAwares = ImmutableList.copyOf(txAware);
   }
 
-  /**
-   * Add new transaction aware object. Addition can be done at any time, even when a txn is ongoing.
-   * @param txAware transaction aware object to be added.
-   */
-  public void add(TransactionAware txAware) {
-    txAwares.add(txAware);
+  public void start() throws OperationException {
+    transaction = opex.start();
+    for (TransactionAware txAware : txAwares) {
+      txAware.startTx(transaction);
+    }
   }
 
-  /**
-   * Remove a transaction aware object. Removal can be done only when txn is not ongoing.
-   * @param txAware transaction aware object to be removed.
-   */
-  public void remove(TransactionAware txAware) {
-    txAwares.remove(txAware);
+  public void commit() throws OperationException {
+    // Collects change sets
+    Set<byte[]> changeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+    for (TransactionAware txAware : txAwares) {
+      changeSet.addAll(txAware.getTxChanges());
+    }
+
+    // Check for conflicts
+    if (!opex.canCommit(transaction, changeSet)) {
+      throw new OperationException(StatusCode.TRANSACTION_CONFLICT, "Cannot commit tx: conflict detected");
+    }
+
+    // Persist changes
+    for (TransactionAware txAware : txAwares) {
+      try {
+        if (!txAware.commitTx()) {
+          throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to commit tx.");
+        }
+      } catch (Exception e) {
+        throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to commit tx.", e);
+      }
+    }
+
+    // Make visible
+    if (!opex.commit(transaction)) {
+      throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to make tx visible.");
+    }
+
+    // Post commit call
+    for (TransactionAware txAware : txAwares) {
+      try {
+        txAware.postTxCommit();
+      } catch (Throwable t) {
+        LOG.error("Post commit call failure.", t);
+      }
+    }
   }
 
-  @Override
-  protected Set<TransactionAware> getTransactionAwares() {
-    return txAwares;
+  public void abort() throws OperationException {
+    for (TransactionAware txAware : txAwares) {
+      try {
+        if (!txAware.rollbackTx()) {
+          LOG.error("Fail to rollback: {}", txAware);
+        }
+      } catch (Exception e) {
+        LOG.error("Exception in rollback: {}", txAware, e);
+      }
+    }
+    opex.abort(transaction);
   }
 
   @Override

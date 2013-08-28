@@ -14,15 +14,14 @@ import com.continuuity.gateway.v2.GatewayV2Constants;
 import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -35,10 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -46,12 +43,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class caches stream events and enqueues them in batch.
@@ -59,18 +54,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class CachedStreamEventCollector extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(CachedStreamEventCollector.class);
 
-  private final OperationExecutor opex;
-  private final QueueClientFactory queueClientFactory;
-
   private final Timer flushTimer;
 
   private final StreamEventCodec serializer = new StreamEventCodec();
 
   private final CachedStreamEvents cachedStreamEvents;
 
-  private final int maxCachedEvents;
-  private final int maxCachedEventsPerStream;
-  private final long maxCachedSizeBytes;
   private final long flushIntervalMs;
 
   private final ExecutorService callbackExecutorService;
@@ -78,35 +67,39 @@ public class CachedStreamEventCollector extends AbstractIdleService {
   @Inject
   public CachedStreamEventCollector(CConfiguration cConfig, OperationExecutor opex,
                                     QueueClientFactory queueClientFactory) {
-    this.opex = opex;
-    this.queueClientFactory = queueClientFactory;
     this.flushTimer = new Timer("stream-rest-flush-thread", true);
 
-    this.maxCachedEvents = cConfig.getInt(GatewayV2Constants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM,
-                                          GatewayV2Constants.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
-    this.maxCachedEventsPerStream = cConfig.getInt(GatewayV2Constants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
-                                                   GatewayV2Constants.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
-    this.maxCachedSizeBytes = cConfig.getLong(GatewayV2Constants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES,
+    int maxCachedEventsPerStream = cConfig.getInt(GatewayV2Constants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
+                                                  GatewayV2Constants.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
+    int maxCachedEvents = cConfig.getInt(GatewayV2Constants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM,
+                                         GatewayV2Constants.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
+    long maxCachedSizeBytes = cConfig.getLong(GatewayV2Constants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES,
                                               GatewayV2Constants.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
     this.flushIntervalMs = cConfig.getLong(GatewayV2Constants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS,
                                            GatewayV2Constants.DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS);
 
-    this.cachedStreamEvents = new CachedStreamEvents();
     this.callbackExecutorService = Executors.newFixedThreadPool(5,
                                                                 new ThreadFactoryBuilder()
                                                                   .setDaemon(true)
                                                                   .setNameFormat("stream-rest-callback-thread")
                                                                   .build()
     );
+
+    this.cachedStreamEvents = new CachedStreamEvents(opex, queueClientFactory, callbackExecutorService,
+                                                     maxCachedSizeBytes, maxCachedEvents,
+                                                     maxCachedEventsPerStream);
   }
 
   @Override
   protected void startUp() throws Exception {
+    LOG.info("Starting up {}", this.getClass().getSimpleName());
     flushTimer.scheduleAtFixedRate(
       new TimerTask() {
         @Override
         public void run() {
+          LOG.debug("Running flush from timer task.");
           cachedStreamEvents.flush(false);
+          LOG.debug("Done running flush from timer task.");
         }
       },
       flushIntervalMs, flushIntervalMs
@@ -115,6 +108,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    LOG.info("Shutting down {}", this.getClass().getSimpleName());
     flushTimer.cancel();
     cachedStreamEvents.flush(true);
     callbackExecutorService.shutdown();
@@ -148,28 +142,39 @@ public class CachedStreamEventCollector extends AbstractIdleService {
   /**
    * Caches StreamEvents and flushes them periodically.
    */
-  private final class CachedStreamEvents {
+  private static final class CachedStreamEvents {
+    private static final Logger LOG = LoggerFactory.getLogger(CachedStreamEvents.class);
+
     private final LoadingCache<QueueName, ProducerStreamEntries> eventCache;
-    private final BlockingQueue<Map.Entry<QueueName, ProducerStreamEntries>> removalNotifications;
 
-    private final TxManager txManager = new TxManager(opex);
-
+    private final long maxCachedSizeBytes;
+    private final long maxCachedEvents;
     private final AtomicLong cachedBytes = new AtomicLong(0);
     private final AtomicInteger cachedNumEntries = new AtomicInteger(0);
-    private final Lock flushLock = new ReentrantLock();
 
-    private CachedStreamEvents() {
-      this.removalNotifications = new LinkedBlockingQueue<Map.Entry<QueueName, ProducerStreamEntries>>();
+    private final AtomicBoolean flushRunning = new AtomicBoolean(false);
+
+    private CachedStreamEvents(final OperationExecutor opex, final QueueClientFactory queueClientFactory,
+                               final ExecutorService callbackExecutorService,
+                               long maxCachedSizeBytes, int maxCachedEvents,
+                               final int maxCachedEventsPerStream) {
+      this.maxCachedSizeBytes = maxCachedSizeBytes;
+      this.maxCachedEvents = maxCachedEvents;
+
       this.eventCache = CacheBuilder.newBuilder()
         .expireAfterAccess(1, TimeUnit.HOURS)
         .removalListener(
           new RemovalListener<QueueName, ProducerStreamEntries>() {
             @Override
             public void onRemoval(RemovalNotification<QueueName, ProducerStreamEntries> notification) {
-              //noinspection ConstantConditions
-              if (notification.getValue() != null && !notification.getValue().isEmpty()) {
-                // Will need to be committed during the next flush
-                removalNotifications.add(notification);
+              ProducerStreamEntries producerStreamEntries = notification.getValue();
+              if (producerStreamEntries != null) {
+                producerStreamEntries.flush();
+                try {
+                  producerStreamEntries.close();
+                } catch (IOException e) {
+                  LOG.error("Exception while closing producer {}", producerStreamEntries);
+                }
               }
             }
           }
@@ -179,8 +184,9 @@ public class CachedStreamEventCollector extends AbstractIdleService {
             @Override
             public ProducerStreamEntries load(QueueName key) throws Exception {
               Queue2Producer producer = queueClientFactory.createProducer(key);
-              txManager.add((TransactionAware) producer);
-              return new ProducerStreamEntries(producer, new ArrayBlockingQueue<StreamEntry>(maxCachedEventsPerStream));
+              return new ProducerStreamEntries(producer,
+                                               new ArrayBlockingQueue<StreamEntry>(maxCachedEventsPerStream),
+                                               opex, callbackExecutorService, cachedBytes, cachedNumEntries);
             }
           });
     }
@@ -196,153 +202,144 @@ public class CachedStreamEventCollector extends AbstractIdleService {
     public void put(QueueName queueName, QueueEntry queueEntry, FutureCallback<Void> callback)
       throws ExecutionException, InterruptedException {
 
-      for (int i = 0; i < 10; ++i) {
-        // Try enqueuing entry
-        if (eventCache.get(queueName).offer(new StreamEntry(queueEntry, callback))) {
-          // Update cached size and cached number of entries
-          long cachedSize = cachedBytes.addAndGet(queueEntry.getData().length);
-          int cachedEntries = cachedNumEntries.incrementAndGet();
+      eventCache.get(queueName).enqueue(new StreamEntry(queueEntry, callback));
+      long cachedSize = cachedBytes.addAndGet(queueEntry.getData().length);
+      int cachedEntries = cachedNumEntries.incrementAndGet();
 
-          // If reached limit, then flush
-          if (cachedEntries >= maxCachedEvents || cachedSize >= maxCachedSizeBytes) {
-            flush(false);
-          }
-          return;
-        }
-
-        // If not successfully able to enqueue, then flush and try again
-        flush(true);
+      // If reached limit, then flush
+      if (cachedEntries >= maxCachedEvents || cachedSize >= maxCachedSizeBytes) {
+        LOG.debug("Exceeded limit - cachedEntries={}, cachedSize={}", cachedEntries, cachedSize);
+        flush(false);
       }
-
-      throw new IllegalStateException(String.format("Cannot add stream entry into queue %s", queueName));
-
     }
 
     /**
-     * Performs a flush of cached stream events making sure that only one thread does the flush.
-     * @param mustFlush if true thread blocks until able to run flush, else if another thread is running flush
-     *                  the method returns.
+     * Performs a flush of cached stream events.
+     * @param mustFlush if false does not run flush if another thread is already running flush,
+     *                  if true will run a flush even if another one is running.
      */
     public void flush(boolean mustFlush) {
-      if (mustFlush) {
-        // This thread needs to run flush, so run blocking flush
-        doFlush();
-      } else {
-        // Only one thread needs to run flush
-        if (flushLock.tryLock()) {
-          try {
-            doFlush();
-          } finally {
-            flushLock.unlock();
-          }
-        }
+      if (!mustFlush && flushRunning.compareAndSet(false, true)) {
+        return;
       }
-    }
 
-    /**
-     * Flushes the cached stream events. This method blocks if some other thread is already running flush.
-     */
-    private void doFlush() {
-      List<StreamEntry> entries = Lists.newArrayListWithExpectedSize(maxCachedEventsPerStream);
-
-      flushLock.lock();
+      LOG.debug("Running flush. Must flush={}", mustFlush);
       try {
-        Set<Map.Entry<QueueName, ProducerStreamEntries>> removalEntries = ImmutableSet.of();
-        SettableFuture<Void> future = SettableFuture.create();
-        try {
-          txManager.start();
-
-          // Get cache entries that were evicted, if any
-          if (!removalNotifications.isEmpty()) {
-            int removalSize = removalNotifications.size();
-            removalEntries = Sets.newHashSetWithExpectedSize(removalSize);
-            removalNotifications.drainTo(removalEntries, removalSize);
-          }
-
-          // Enqueue
-          for (Map.Entry<QueueName, ProducerStreamEntries> entry :
-            Iterables.concat(eventCache.asMap().entrySet(), removalEntries)) {
-            ProducerStreamEntries producerStreamEntries = entry.getValue();
-            if (producerStreamEntries.isEmpty()) {
-              continue;
-            }
-
-            producerStreamEntries.drainTo(entries);
-            if (entries.isEmpty()) {
-              continue;
-            }
-
-            addCallbacksToFuture(future, entries);
-
-            StreamEntryToQueueEntryFunction transformer = new StreamEntryToQueueEntryFunction();
-            producerStreamEntries.getProducer().enqueue(
-              Iterables.transform(entries, transformer));
-
-            cachedNumEntries.addAndGet(-1 * entries.size());
-            cachedBytes.addAndGet(-1 * transformer.getNumBytes());
-
-            entries.clear();
-          }
-
-          // Commit
-          txManager.commit();
-          future.set(null);
-        } catch (Exception e){
-          LOG.error("Exception while committing stream events. Aborting transaction", e);
-          future.setException(e);
-          txManager.abort();
-        } finally {
-          // Remove producers from removalNotifications
-          for (Map.Entry<QueueName, ProducerStreamEntries> entry : removalEntries) {
-            Queue2Producer producer = entry.getValue().getProducer();
-            if (producer instanceof Closeable) {
-              try {
-                ((Closeable) producer).close();
-              } catch (IOException e) {
-                LOG.error("Caught exception while closing producer {}", producer, e);
-              }
-            }
-            txManager.remove((TransactionAware) producer);
-          }
+        for (Map.Entry<QueueName, ProducerStreamEntries> entry : eventCache.asMap().entrySet()) {
+          entry.getValue().flush();
         }
-
-      } catch (OperationException e) {
-        LOG.error("Exception while aborting stream events transaction", e);
       } finally {
-        flushLock.unlock();
+        flushRunning.set(false);
       }
+      LOG.debug("Done running flush");
     }
 
     /**
      * Contains a Queue Producer along with the stream entries belonging to the queue.
      */
-    private class ProducerStreamEntries {
+    private static class ProducerStreamEntries implements Closeable {
+      private static final Logger LOG = LoggerFactory.getLogger(ProducerStreamEntries.class);
+
       private final Queue2Producer producer;
+      private final TxManager txManager;
       private final BlockingQueue<StreamEntry> streamEntries;
 
-      public ProducerStreamEntries(Queue2Producer producer, BlockingQueue<StreamEntry> streamEntries) {
+      private final ExecutorService callbackExecutorService;
+
+      private final AtomicLong cachedBytes;
+      private final AtomicInteger cachedNumEntries;
+
+      public ProducerStreamEntries(Queue2Producer producer, BlockingQueue<StreamEntry> streamEntries,
+                                   OperationExecutor opex, ExecutorService callbackExecutorService,
+                                   AtomicLong cachedBytes, AtomicInteger cachedNumEntries) {
         this.producer = producer;
+        this.txManager = new TxManager(opex, (TransactionAware) producer);
         this.streamEntries = streamEntries;
+
+        this.callbackExecutorService = callbackExecutorService;
+
+        this.cachedBytes = cachedBytes;
+        this.cachedNumEntries = cachedNumEntries;
       }
 
-      public boolean offer(StreamEntry streamEntry) {
-        return streamEntries.offer(streamEntry);
-      }
-      
-      public void drainTo(Collection<StreamEntry> collection) {
-        streamEntries.drainTo(collection);
+      public void enqueue(StreamEntry streamEntry) {
+        for (int i = 0; i < 10; ++i) {
+          if (streamEntries.offer(streamEntry)) {
+            cachedBytes.addAndGet(streamEntry.getQueueEntry().getData().length);
+            cachedNumEntries.incrementAndGet();
+            return;
+          } else {
+            flush();
+          }
+        }
+
+        throw new IllegalStateException(String.format("Cannot add stream entry using producer %s", producer));
       }
 
-      public boolean isEmpty() {
-        return streamEntries.isEmpty();
+      public void flush() {
+        List<StreamEntry> entries = Lists.newArrayListWithExpectedSize(streamEntries.size());
+        SettableFuture<Void> future = SettableFuture.create();
+        StreamEntryToQueueEntryFunction transformer =
+          new StreamEntryToQueueEntryFunction(future, callbackExecutorService);
+
+        synchronized (txManager) {
+          try {
+            streamEntries.drainTo(entries);
+            if (entries.isEmpty()) {
+              return;
+            }
+
+            txManager.start();
+            producer.enqueue(Iterables.transform(entries, transformer));
+
+            // Commit
+            txManager.commit();
+            future.set(null);
+
+          } catch (Throwable e) {
+            LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
+
+            try {
+              txManager.abort();
+            } catch (OperationException e1) {
+              LOG.error("Exception while aborting txn", e1);
+            } finally {
+              future.setException(e);
+            }
+          } finally {
+            int numEntries = entries.size();
+            cachedNumEntries.addAndGet(-1 * numEntries);
+
+            long numBytes = transformer.getNumBytes();
+            if (numEntries != transformer.getNumEntries()) {
+              numBytes = numBytesInList(entries);
+            }
+            cachedBytes.addAndGet(-1 * numBytes);
+          }
+        }
       }
 
-      public int size() {
-        return streamEntries.size();
+      @Override
+      public void close() throws IOException {
+        if (producer instanceof Closeable) {
+          ((Closeable) producer).close();
+        }
       }
 
-      public Queue2Producer getProducer() {
-        return producer;
+      @Override
+      public String toString() {
+        return Objects.toStringHelper(this)
+          .add("producer", producer)
+          .add("txManager", txManager)
+          .toString();
+      }
+
+      private long numBytesInList(List<StreamEntry> list) {
+        long numBytes = 0;
+        for (StreamEntry entry : list) {
+          numBytes += entry.getQueueEntry().getData().length;
+        }
+        return numBytes;
       }
     }
   }
@@ -350,7 +347,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
   /**
    * Represents a stream entry with a callback to be called after enqueuing the entry.
    */
-  private class StreamEntry {
+  private static class StreamEntry {
     private final QueueEntry queueEntry;
     private final FutureCallback<Void> callback;
 
@@ -369,22 +366,34 @@ public class CachedStreamEventCollector extends AbstractIdleService {
   }
 
   private static final class StreamEntryToQueueEntryFunction implements Function<StreamEntry, QueueEntry> {
-    private int numBytes = 0;
+    private long numBytes = 0;
+    private int numEntries = 0;
+
+    private final ListenableFuture<Void> future;
+    private final ExecutorService callbackExecutorService;
+
+    private StreamEntryToQueueEntryFunction(ListenableFuture<Void> future, ExecutorService callbackExecutorService) {
+      this.future = future;
+      this.callbackExecutorService = callbackExecutorService;
+    }
 
     @Override
     public QueueEntry apply(StreamEntry input) {
+      Futures.addCallback(future, input.getCallback(), callbackExecutorService);
+
       numBytes += input.getQueueEntry().getData().length;
+      ++numEntries;
+
       return input.getQueueEntry();
     }
 
-    public int getNumBytes() {
+    public long getNumBytes() {
       return numBytes;
+    }
+
+    public int getNumEntries() {
+      return numEntries;
     }
   }
 
-  private void addCallbacksToFuture(ListenableFuture<Void> future, Iterable<StreamEntry> entries) {
-    for (StreamEntry entry : entries) {
-      Futures.addCallback(future, entry.getCallback(), callbackExecutorService);
-    }
-  }
 }
