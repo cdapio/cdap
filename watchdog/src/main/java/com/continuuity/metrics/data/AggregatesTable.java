@@ -116,7 +116,8 @@ public final class AggregatesTable {
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(contextPrefix, metricPrefix, runId));
     } else {
-      scanner = aggregatesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
+      scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow, MemoryReadPointer.DIRTY_READ,
+                                     new LevelDBFuzzyRowFilter(getFilter(contextPrefix, metricPrefix, runId)));
     }
 
     return new AggregatesScanner(contextPrefix, metricPrefix, runId,

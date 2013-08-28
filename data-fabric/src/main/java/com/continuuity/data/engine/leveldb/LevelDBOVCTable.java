@@ -56,7 +56,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   private final Integer blockSize;
   private final Long cacheSize;
 
-  private DB db;
+  protected DB db;
 
   // this will be used for row-level locking. Because the levelDB may grow very large,
   // and we want to keep the memory footprint small, we will always remove locks from
@@ -65,7 +65,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   // create a new lock. Therefore we always use validLock() to obtain a lock.
   private final RowLockTable locks = new RowLockTable();
 
-  LevelDBOVCTable(final String basePath, final String tableName, final Integer blockSize, final Long cacheSize) {
+  public LevelDBOVCTable(final String basePath, final String tableName, final Integer blockSize, final Long cacheSize) {
     this.basePath = basePath;
     this.blockSize = blockSize;
     this.cacheSize = cacheSize;
@@ -92,7 +92,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     return options;
   }
 
-  synchronized boolean openTable() throws OperationException {
+  synchronized public boolean openTable() throws OperationException {
     try {
       this.db = factory.open(new File(generateDBPath()), generateDBOptions(false, false));
       return true;
@@ -101,7 +101,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
   }
 
-  synchronized void initializeTable() throws OperationException {
+  synchronized public void initializeTable() throws OperationException {
     try {
       this.db = factory.open(new File(generateDBPath()), generateDBOptions(true, false));
     } catch (IOException e) {
@@ -138,23 +138,23 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
   // LevelDB specific helpers
 
-  private byte[] createStartKey(byte[] row) {
+  protected byte[] createStartKey(byte[] row) {
     return new KeyValue(row, FAMILY, null, KeyValue.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
-  private byte[] createStartKey(byte[] row, byte[] column) {
+  protected byte[] createStartKey(byte[] row, byte[] column) {
     return new KeyValue(row, FAMILY, column, KeyValue.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
-  private byte[] createEndKey(byte[] row) {
+  protected byte[] createEndKey(byte[] row) {
     return new KeyValue(row, null, null, KeyValue.LATEST_TIMESTAMP, Type.Minimum).getKey();
   }
 
-  private byte[] createEndKey(byte[] row, byte[] column) {
+  protected byte[] createEndKey(byte[] row, byte[] column) {
     return new KeyValue(row, FAMILY, column, 0L, Type.Minimum).getKey();
   }
 
-  private byte[] appendByte(final byte[] value, byte b) {
+  protected byte[] appendByte(final byte[] value, byte b) {
     byte[] newValue = new byte[value.length + 1];
     System.arraycopy(value, 0, newValue, 0, value.length);
     newValue[value.length] = b;
@@ -367,7 +367,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     return map;
   }
 
-  private KeyValue createKeyValue(byte[] key, byte[] value) {
+  protected KeyValue createKeyValue(byte[] key, byte[] value) {
     int len = key.length + value.length + (2 * Bytes.SIZEOF_INT);
     byte[] kvBytes = new byte[len];
     int pos = 0;
