@@ -6,6 +6,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.remote.Constants;
@@ -59,16 +60,9 @@ public class Main {
         ));
     zkClientService.startAndWait();
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        zkClientService.stopAndWait();
-      }
-    });
-
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new GatewayModules().getDistributedModules(),
+        new GatewayModules(configuration).getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
         new ConfigModule(configuration),
         new IOModule(),
@@ -88,7 +82,19 @@ public class Main {
         );
 
     // Get our fully wired Gateway
-    Gateway theGateway = injector.getInstance(Gateway.class);
+    final Gateway theGateway = injector.getInstance(Gateway.class);
+
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        try {
+          theGateway.stop(true);
+        } catch (ServerException e) {
+          LOG.error("Caught exception while trying to stop Gateway", e);
+        }
+        zkClientService.stopAndWait();
+      }
+    });
 
     // Now, initialize the Gateway
     try {

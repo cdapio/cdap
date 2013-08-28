@@ -20,9 +20,12 @@ public class StandaloneGateway {
    */
   public static void main(String[] args) {
 
+    // Load our configuration from our resource files
+    CConfiguration configuration = CConfiguration.create();
+
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-      new GatewayModules().getInMemoryModules(),
+      new GatewayModules(configuration).getInMemoryModules(),
       new DataFabricModules().getInMemoryModules());
 
     // Get our fully wired Gateway
@@ -30,9 +33,6 @@ public class StandaloneGateway {
 
     // Now, initialize the Gateway
     try {
-
-      // Load our configuration from our resource files
-      CConfiguration configuration = CConfiguration.create();
 
       // Start the gateway!
       theGateway.start(null, configuration);
