@@ -13,25 +13,19 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
-import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.GatewayMetrics;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
-import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -54,7 +48,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -486,96 +479,4 @@ public class StreamHandler extends AbstractHttpHandler {
     return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 
-  /**
-   * Key for Queue Consumer cache.
-   */
-  private static final class ConsumerKey {
-    private final QueueName queueName;
-    private final long groupId;
-
-    private ConsumerKey(QueueName queueName, long groupId) {
-      this.queueName = queueName;
-      this.groupId = groupId;
-    }
-
-    public QueueName getQueueName() {
-      return queueName;
-    }
-
-    public long getGroupId() {
-      return groupId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      ConsumerKey that = (ConsumerKey) o;
-
-      return groupId == that.groupId &&
-        !(queueName != null ? !queueName.equals(that.queueName) : that.queueName != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-      int result = queueName != null ? queueName.hashCode() : 0;
-      result = 31 * result + (int) (groupId ^ (groupId >>> 32));
-      return result;
-    }
-  }
-
-  /**
-   * Handles dequeue of stream making sure that access to consumer is serialized.
-   */
-  private static final class ConsumerHolder implements Closeable {
-    private static final Logger LOG = LoggerFactory.getLogger(ConsumerHolder.class);
-
-    private final Queue2Consumer consumer;
-    private final TxManager txManager;
-
-    public ConsumerHolder(ConsumerKey key, OperationExecutor opex,
-                           QueueClientFactory queueClientFactory) throws Exception {
-      // 0th instance of group 'groupId' of size 1
-      this.consumer =
-        queueClientFactory.createConsumer(key.getQueueName(),
-                                          new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null), 1);
-      this.txManager = new TxManager(opex, (TransactionAware) consumer);
-    }
-
-    public DequeueResult dequeue() throws Throwable {
-      synchronized (this) {
-        try {
-          txManager.start();
-          DequeueResult result = consumer.dequeue();
-          txManager.commit();
-          return result;
-        } catch (Throwable e) {
-          LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
-          txManager.abort();
-          throw e;
-        }
-      }
-    }
-
-    @Override
-    public void close() throws IOException {
-    if (consumer instanceof Closeable) {
-        ((Closeable) consumer).close();
-      }
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("consumer", consumer)
-        .add("txManager", txManager)
-        .toString();
-    }
-  }
 }
