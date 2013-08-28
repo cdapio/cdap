@@ -113,6 +113,8 @@ public class HttpResponder {
       response.setContent(content);
       response.setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
       response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+    } else {
+      response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
     }
 
     if (keepalive) {
