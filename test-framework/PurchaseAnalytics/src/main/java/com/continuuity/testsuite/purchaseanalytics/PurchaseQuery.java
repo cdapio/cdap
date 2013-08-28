@@ -24,6 +24,7 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.PurchaseHistory;
 
 /**
  * A procedure that allows to query a customer's purchase history.

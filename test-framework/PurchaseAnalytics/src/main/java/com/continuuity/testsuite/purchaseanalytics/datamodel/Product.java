@@ -1,14 +1,14 @@
-package com.continuuity.testsuite.purchaseanalytics;
+package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
 /**
  *
  */
-public class Product extends SerializedObject {
+public class Product {
 
-  private final int productId;
+  private final long productId;
   private final String description;
 
-  public int getProductId() {
+  public long getProductId() {
     return productId;
   }
 
@@ -16,7 +16,7 @@ public class Product extends SerializedObject {
     return description;
   }
 
-  public Product(int productId, String description) {
+  public Product(long productId, String description) {
     super();
     this.productId = productId;
     this.description = description;

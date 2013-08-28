@@ -1,4 +1,4 @@
-package com.continuuity.testsuite.purchaseanalytics;
+package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
 import java.util.UUID;
 

@@ -20,6 +20,7 @@ import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.StreamWriter;
+import com.continuuity.testsuite.purchaseanalytics.GeneratedPurchaseAnalyticsFlow;
 import com.continuuity.testsuite.purchaseanalytics.PurchaseAnalyticsApp;
 import com.google.common.reflect.TypeToken;
 import org.junit.Ignore;
@@ -45,9 +46,11 @@ public class TestPurchaseAnalytics extends AppFabricTestBase {
     ApplicationManager appManager = deployApplication(PurchaseAnalyticsApp.class);
 
     FlowManager purchaseAnalyticsFlow = appManager.startFlow("PurchaseAnalyticsFlow");
+    //FlowManager generatedPurchaseAnalyticsFlow = appManager.startFlow("GeneratedPurchaseAnalyticsFlow");
 
     StreamWriter s1 = appManager.getStreamWriter("transactionStream");
     s1.send("1|{\"customer\":\"alex\",\"product\":\"FisherPrice\",\"quantity\":10,\"price\":\"100\",\"purchaseTime\":\"129308132\"}");
+
 
   }
 }

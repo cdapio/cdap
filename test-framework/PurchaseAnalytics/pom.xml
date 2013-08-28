@@ -7,7 +7,7 @@
     <artifactId>purchaseanalytics</artifactId>
     <packaging>jar</packaging>
     <version>1.0</version>
-    <name>SuperPurchase</name>
+    <name>PurchaseAnalytics</name>
 
     <properties>
         <main>com.continuuity.testsuite.purchaseanalytics.PurchaseAnalyticsApp</main>
@@ -30,12 +30,6 @@
             <version>${continuuityVersion}</version>
             <scope>provided</scope>
         </dependency>
-        <!--<dependency>-->
-        <!--<groupId>com.continuuity</groupId>-->
-        <!--<artifactId>continuuity-test</artifactId>-->
-        <!--<version>${continuuityVersion}</version>-->
-        <!--<scope>test</scope>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>com.continuuity</groupId>
             <artifactId>continuuity-test</artifactId>

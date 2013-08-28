@@ -15,37 +15,44 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.testsuite.purchaseanalytics;
-
-import java.util.ArrayList;
-import java.util.List;
+package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
 /**
- * This class represents the purchase history for one customer.
+ * This represents a purchase made by a customer. It is a very simple class and only contains
+ * the name of the customer, the name of the product, the quantity and the price paid.
  */
-public class PurchaseHistory {
+public class Purchase {
 
-  private final String customer;
-  private final List<Purchase> purchases;
+  private final String customer, product;
+  private final int quantity, price;
+  private final long purchaseTime;
 
-  public PurchaseHistory(String customer) {
+  public Purchase(String customer, String product, int quantity, int price, long purchaseTime) {
+    super();
     this.customer = customer;
-    this.purchases = new ArrayList<Purchase>();
+    this.product = product;
+    this.quantity = quantity;
+    this.price = price;
+    this.purchaseTime = purchaseTime;
   }
 
   public String getCustomer() {
     return customer;
   }
 
-  public List<Purchase> getPurchases() {
-    return purchases;
+  public String getProduct() {
+    return product;
   }
 
-  /**
-   * Add a purchase to a customer's history.
-   * @param purchase the purchase
-   */
-  public void add(Purchase purchase) {
-    this.purchases.add(purchase);
+  public long getPurchaseTime() {
+    return purchaseTime;
+  }
+
+  public int getQuantity() {
+    return quantity;
+  }
+
+  public int getPrice() {
+    return price;
   }
 }

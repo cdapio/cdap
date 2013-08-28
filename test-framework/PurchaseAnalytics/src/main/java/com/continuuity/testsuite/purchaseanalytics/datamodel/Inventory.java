@@ -1,9 +1,9 @@
-package com.continuuity.testsuite.purchaseanalytics;
+package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
 /**
  *
  */
-public class Inventory extends SerializedObject {
+public class Inventory {
   private final int productId;
   private final long quantity;
 

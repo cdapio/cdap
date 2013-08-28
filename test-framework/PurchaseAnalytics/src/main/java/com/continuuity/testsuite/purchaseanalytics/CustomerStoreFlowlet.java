@@ -6,9 +6,12 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
+
+import java.util.UUID;
 
 /**
- *
+ * Stores customers to ObjectStore
  */
 public class CustomerStoreFlowlet extends AbstractFlowlet {
 

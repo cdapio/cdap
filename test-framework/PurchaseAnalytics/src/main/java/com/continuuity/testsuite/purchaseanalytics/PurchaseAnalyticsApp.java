@@ -22,8 +22,11 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.internal.io.UnsupportedTypeException;
-
-import java.util.List;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.Inventory;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.PurchaseHistory;
 
 /**
  *
@@ -38,7 +41,7 @@ public class PurchaseAnalyticsApp implements Application {
         .setName("PurchaseAnalytics")
         .setDescription("Purchase Analytics App")
         .withStreams()
-          .add(new Stream("trx"))
+          .add(new Stream("transactionStream"))
         .withDataSets()
           .add(new ObjectStore<PurchaseHistory>("history", PurchaseHistory.class))
           .add(new ObjectStore<Purchase>("purchases", Purchase.class))
@@ -47,6 +50,7 @@ public class PurchaseAnalyticsApp implements Application {
           .add(new ObjectStore<Customer>("customers", Customer.class))
         .withFlows()
           .add(new PurchaseAnalyticsFlow())
+          .add(new GeneratedPurchaseAnalyticsFlow())
         .withProcedures()
           .add(new PurchaseQuery())
         .withBatch()
