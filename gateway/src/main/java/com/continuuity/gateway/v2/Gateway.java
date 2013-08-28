@@ -16,24 +16,24 @@ import java.util.Set;
 /**
  * Gateway implemented using the common http netty framework.
  */
-public class GatewayV2 extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(GatewayV2.class);
+public class Gateway extends AbstractIdleService {
+  private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
 
   private final NettyHttpService httpService;
 
   @Inject
-  public GatewayV2(CConfiguration cConf,
-                   @Named(GatewayV2Constants.ConfigKeys.ADDRESS) InetAddress hostname,
-                   @Named(GatewayV2Constants.GATEWAY_V2_HTTP_HANDLERS) Set<HttpHandler> handlers) {
+  public Gateway(CConfiguration cConf,
+                 @Named(GatewayConstants.ConfigKeys.ADDRESS) InetAddress hostname,
+                 @Named(GatewayConstants.GATEWAY_V2_HTTP_HANDLERS) Set<HttpHandler> handlers) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
     builder.setHost(hostname.getCanonicalHostName());
-    builder.setPort(cConf.getInt(GatewayV2Constants.ConfigKeys.PORT, GatewayV2Constants.DEFAULT_PORT));
-    builder.setConnectionBacklog(cConf.getInt(GatewayV2Constants.ConfigKeys.BACKLOG,
-                                              GatewayV2Constants.DEFAULT_BACKLOG));
-    builder.setExecThreadPoolSize(cConf.getInt(GatewayV2Constants.ConfigKeys.EXEC_THREADS,
-                                               GatewayV2Constants.DEFAULT_EXEC_THREADS));
+    builder.setPort(cConf.getInt(GatewayConstants.ConfigKeys.PORT, GatewayConstants.DEFAULT_PORT));
+    builder.setConnectionBacklog(cConf.getInt(GatewayConstants.ConfigKeys.BACKLOG,
+                                              GatewayConstants.DEFAULT_BACKLOG));
+    builder.setExecThreadPoolSize(cConf.getInt(GatewayConstants.ConfigKeys.EXEC_THREADS,
+                                               GatewayConstants.DEFAULT_EXEC_THREADS));
 
     httpService = builder.build();
   }

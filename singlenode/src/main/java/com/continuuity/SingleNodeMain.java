@@ -19,8 +19,6 @@ import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
-import com.continuuity.gateway.v2.GatewayV2;
-import com.continuuity.gateway.v2.runtime.GatewayV2Modules;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.runtime.LoggingModules;
@@ -60,7 +58,6 @@ public class SingleNodeMain {
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
   private final Gateway gateway;
-  private final GatewayV2 gatewayV2;
   private final MetricsCollectionServerInterface overlordCollection;
   private final MetricsFrontendServerInterface overloadFrontend;
   private final MetadataServerInterface metaDataServer;
@@ -79,7 +76,6 @@ public class SingleNodeMain {
 
     Injector injector = Guice.createInjector(modules);
     gateway = injector.getInstance(Gateway.class);
-    gatewayV2 = injector.getInstance(GatewayV2.class);
     overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
@@ -129,7 +125,6 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
-    gatewayV2.startAndWait();
     webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -144,7 +139,6 @@ public class SingleNodeMain {
     try {
       webCloudAppService.stop(true);
       gateway.stop(true);
-      gatewayV2.stopAndWait();
       metaDataServer.stop(true);
       metaDataServer.stop(true);
       appFabricServer.stopAndWait();
@@ -277,8 +271,7 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
-      new GatewayModules().getInMemoryModules(),
-      new GatewayV2Modules(configuration).getInMemoryModules(),
+      new GatewayModules(configuration).getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -319,8 +312,7 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
-      new GatewayModules().getSingleNodeModules(),
-      new GatewayV2Modules(configuration).getSingleNodeModules(),
+      new GatewayModules(configuration).getSingleNodeModules(),
       useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),

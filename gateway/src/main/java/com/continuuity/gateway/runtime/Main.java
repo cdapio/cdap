@@ -6,13 +6,12 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.remote.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
-import com.continuuity.gateway.v2.GatewayV2;
-import com.continuuity.gateway.v2.runtime.GatewayV2Modules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.runtime.LoggingModules;
 import com.continuuity.metadata.thrift.MetadataService;
@@ -63,8 +62,7 @@ public class Main {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new GatewayModules().getDistributedModules(),
-        new GatewayV2Modules(configuration).getDistributedModules(),
+        new GatewayModules(configuration).getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
         new ConfigModule(configuration),
         new IOModule(),
@@ -84,16 +82,16 @@ public class Main {
         );
 
     // Get our fully wired Gateway
-    Gateway theGateway = injector.getInstance(Gateway.class);
-
-    // Get Gateway v2
-    final GatewayV2 v2Gateway =
-      injector.getInstance(GatewayV2.class);
+    final Gateway theGateway = injector.getInstance(Gateway.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        v2Gateway.stopAndWait();
+        try {
+          theGateway.stop(true);
+        } catch (ServerException e) {
+          LOG.error("Caught exception while trying to stop Gateway", e);
+        }
         zkClientService.stopAndWait();
       }
     });
@@ -103,8 +101,6 @@ public class Main {
 
       // Start the gateway!
       theGateway.start(null, configuration);
-
-      v2Gateway.startAndWait();
 
     } catch (Exception e) {
       LOG.error(e.toString(), e);

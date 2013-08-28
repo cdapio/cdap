@@ -10,7 +10,7 @@ import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
-import com.continuuity.gateway.v2.GatewayV2Constants;
+import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.handlers.PingHandler;
 import com.continuuity.gateway.v2.handlers.stream.StreamHandler;
 import com.continuuity.passport.PassportConstants;
@@ -29,10 +29,10 @@ import java.net.InetSocketAddress;
 /**
  * Guice modules for Gateway.
  */
-public class GatewayV2Modules extends RuntimeModule {
+public class GatewayModules extends RuntimeModule {
   private final CConfiguration cConf;
 
-  public GatewayV2Modules(CConfiguration cConf) {
+  public GatewayModules(CConfiguration cConf) {
     this.cConf = cConf;
   }
 
@@ -61,7 +61,7 @@ public class GatewayV2Modules extends RuntimeModule {
 
         Multibinder<HttpHandler> handlerBinder =
           Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                   Names.named(GatewayV2Constants.GATEWAY_V2_HTTP_HANDLERS));
+                                   Names.named(GatewayConstants.GATEWAY_V2_HTTP_HANDLERS));
         handlerBinder.addBinding().to(StreamHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(PingHandler.class).in(Scopes.SINGLETON);
 
@@ -81,9 +81,9 @@ public class GatewayV2Modules extends RuntimeModule {
       }
 
       @Provides
-      @Named(GatewayV2Constants.ConfigKeys.ADDRESS)
+      @Named(GatewayConstants.ConfigKeys.ADDRESS)
       public final InetAddress providesHostname(CConfiguration cConf) {
-        return Networks.resolve(cConf.get(GatewayV2Constants.ConfigKeys.ADDRESS),
+        return Networks.resolve(cConf.get(GatewayConstants.ConfigKeys.ADDRESS),
                                 new InetSocketAddress("localhost", 0).getAddress());
       }
     };

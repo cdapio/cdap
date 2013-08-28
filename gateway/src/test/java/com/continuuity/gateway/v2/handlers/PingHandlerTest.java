@@ -2,8 +2,8 @@ package com.continuuity.gateway.v2.handlers;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.http.core.HttpHandler;
-import com.continuuity.gateway.v2.GatewayV2;
-import com.continuuity.gateway.v2.GatewayV2Constants;
+import com.continuuity.gateway.v2.Gateway;
+import com.continuuity.gateway.v2.GatewayConstants;
 import com.google.common.collect.ImmutableSet;
 import junit.framework.Assert;
 import org.apache.http.HttpResponse;
@@ -21,15 +21,15 @@ import java.net.InetAddress;
  */
 public class PingHandlerTest {
 
-  private static GatewayV2 gatewayV2;
+  private static Gateway gatewayV2;
   private static String hostName = "localhost";
   private static int port;
 
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.setInt(GatewayV2Constants.ConfigKeys.PORT, 0);
-    gatewayV2 = new GatewayV2(cConf, InetAddress.getByName(hostName), ImmutableSet.<HttpHandler>of(new PingHandler()));
+    cConf.setInt(GatewayConstants.ConfigKeys.PORT, 0);
+    gatewayV2 = new Gateway(cConf, InetAddress.getByName(hostName), ImmutableSet.<HttpHandler>of(new PingHandler()));
     gatewayV2.startAndWait();
     port = gatewayV2.getBindAddress().getPort();
   }

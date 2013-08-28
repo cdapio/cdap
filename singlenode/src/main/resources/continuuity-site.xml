@@ -37,12 +37,6 @@
         <description>Specifies the hostname on which the Gateway will listen</description>
     </property>
 
-    <property>
-        <name>gateway.v2.bind.address</name>
-        <value>127.0.0.1</value>
-        <description>Specifies the hostname on which the Gateway will listen</description>
-    </property>
-
     <!--
         Overlord configuration
     -->

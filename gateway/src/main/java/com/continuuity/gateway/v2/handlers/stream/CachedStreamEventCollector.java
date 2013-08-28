@@ -7,7 +7,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.v2.GatewayV2Constants;
+import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
@@ -42,14 +42,14 @@ public class CachedStreamEventCollector extends AbstractIdleService {
                                     QueueClientFactory queueClientFactory) {
     this.flushTimer = new Timer("stream-rest-flush-thread", true);
 
-    int maxCachedEventsPerStream = cConfig.getInt(GatewayV2Constants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
-                                                  GatewayV2Constants.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
-    int maxCachedEvents = cConfig.getInt(GatewayV2Constants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM,
-                                         GatewayV2Constants.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
-    long maxCachedSizeBytes = cConfig.getLong(GatewayV2Constants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES,
-                                              GatewayV2Constants.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
-    this.flushIntervalMs = cConfig.getLong(GatewayV2Constants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS,
-                                           GatewayV2Constants.DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS);
+    int maxCachedEventsPerStream = cConfig.getInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
+                                                  GatewayConstants.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
+    int maxCachedEvents = cConfig.getInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM,
+                                         GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
+    long maxCachedSizeBytes = cConfig.getLong(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES,
+                                              GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
+    this.flushIntervalMs = cConfig.getLong(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS,
+                                           GatewayConstants.DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS);
 
     this.callbackExecutorService = Executors.newFixedThreadPool(5,
                                                                 new ThreadFactoryBuilder()
