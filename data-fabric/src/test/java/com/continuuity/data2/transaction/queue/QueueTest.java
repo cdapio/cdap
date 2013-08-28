@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -43,44 +44,47 @@ public abstract class QueueTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
+  private static final int ROUNDS = 1000;
+  private static final long TIMEOUT_MS = 2 * 60 * 1000L;
+
   protected static OperationExecutor opex;
   protected static QueueClientFactory queueClientFactory;
 
   // Simple enqueue and dequeue with one consumer, no batch
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testSingleFifo() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlefifo");
-    enqueueDequeue(queueName, 30000, 30000, 1, 1, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with three consumers, no batch
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testMultiFifo() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multififo");
-    enqueueDequeue(queueName, 30000, 30000, 1, 3, DequeueStrategy.FIFO, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 3, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testSingleHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlehash");
-    enqueueDequeue(queueName, 60000, 30000, 1, 1, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1);
   }
 
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testMultiHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multihash");
-    enqueueDequeue(queueName, 60000, 30000, 1, 3, DequeueStrategy.HASH, 1, 120, TimeUnit.SECONDS);
+    QueueName queueName = QueueName.fromStream("bingo", "bang");
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 3, DequeueStrategy.HASH, 1);
   }
 
   // Batch enqueue and batch dequeue with one consumer.
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testBatchHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "batchhash");
-    enqueueDequeue(queueName, 60000, 30000, 10, 1, DequeueStrategy.HASH, 50, 120, TimeUnit.SECONDS);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 50);
   }
 
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testQueueAbortRetrySkip() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuefailure");
     createEnqueueRunnable(queueName, 5, 1, null).run();
@@ -122,8 +126,8 @@ public abstract class QueueTest {
 
     // Now skip the result with a new transaction.
     txManager.start();
-    fifoResult.skip();
-    hashResult.skip();
+    fifoResult.reclaim();
+    hashResult.reclaim();
     txManager.commit();
 
     // Dequeue again, it should see a new entry
@@ -131,9 +135,26 @@ public abstract class QueueTest {
     Assert.assertEquals(3, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
     Assert.assertEquals(3, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
     txManager.commit();
+
+    // Dequeue again, it should see a new entry
+    txManager.start();
+    Assert.assertEquals(4, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
+    Assert.assertEquals(4, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
+    txManager.commit();
+
+    txManager.start();
+    if (fifoConsumer instanceof Closeable) {
+      ((Closeable) fifoConsumer).close();
+    }
+    if (hashConsumer instanceof Closeable) {
+      ((Closeable) hashConsumer).close();
+    }
+    txManager.commit();
+
+    verifyQueueIsEmpty(queueName, 2);
   }
 
-  @Test
+  @Test(timeout = TIMEOUT_MS)
   public void testRollback() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuerollback");
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
@@ -210,8 +231,7 @@ public abstract class QueueTest {
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,
                               final int consumerSize, final DequeueStrategy dequeueStrategy,
-                              final int dequeueBatchSize,
-                              long timeout, TimeUnit timeoutUnit) throws Exception {
+                              final int dequeueBatchSize) throws Exception {
 
     Preconditions.checkArgument(preEnqueueCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
     Preconditions.checkArgument(concurrentCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
@@ -247,7 +267,7 @@ public abstract class QueueTest {
               stopwatch.start();
 
               int dequeueCount = 0;
-              while (valueSum.get() != expectedSum) {
+              while (valueSum.get() < expectedSum) {
                 txManager.start();
 
                 try {
@@ -275,12 +295,15 @@ public abstract class QueueTest {
                        (double) dequeueCount * 1000 / elapsed, queueName.getSimpleName());
 
               if (consumer instanceof Closeable) {
+                txManager.start();
                 ((Closeable) consumer).close();
+                txManager.commit();
               }
 
               completeLatch.countDown();
             } finally {
               if (consumer instanceof Closeable) {
+
                 ((Closeable) consumer).close();
               }
             }
@@ -292,10 +315,12 @@ public abstract class QueueTest {
     }
 
     startBarrier.await();
-    Assert.assertTrue(completeLatch.await(timeout, timeoutUnit));
+    completeLatch.await();
     TimeUnit.SECONDS.sleep(2);
 
     Assert.assertEquals(expectedSum, valueSum.get());
+
+    verifyQueueIsEmpty(queueName, 1);
     executor.shutdownNow();
   }
 
@@ -358,7 +383,9 @@ public abstract class QueueTest {
     };
   }
 
-
+  /**
+   *
+   */
   protected static final class TxManager {
     private final Collection<TransactionAware> txAwares;
     private Transaction transaction;
@@ -415,14 +442,25 @@ public abstract class QueueTest {
     public void abort() throws OperationException {
       for (TransactionAware txAware : txAwares) {
         try {
-          if (!txAware.rollbackTx()) {
+          if (!txAware.rollbackTx() || !opex.abort(transaction)) {
             LOG.error("Fail to rollback: {}", txAware);
           }
         } catch (Exception e) {
           LOG.error("Exception in rollback: {}", txAware, e);
         }
       }
-      opex.abort(transaction);
     }
+  }
+
+  private void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws IOException, OperationException {
+    // the queue has been consumed by n consumers. Use a consumerId greater than n to make sure it can dequeue.
+    Queue2Consumer consumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(numActualConsumers + 1, 0, 1, DequeueStrategy.FIFO, null), -1);
+
+    TxManager txManager = new TxManager((TransactionAware) consumer);
+    txManager.start();
+    Assert.assertTrue("Entire queue should be evicted after test but dequeue succeeds.",
+                       consumer.dequeue().isEmpty());
+    txManager.abort();
   }
 }

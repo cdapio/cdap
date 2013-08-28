@@ -82,8 +82,13 @@ public final class Queue2InputDatum implements InputDatum {
   }
 
   @Override
-  public void skip() {
-    result.skip();
+  public void reclaim() {
+    result.reclaim();
+  }
+
+  @Override
+  public int size() {
+    return result.size();
   }
 
   @Override

@@ -2,7 +2,7 @@
  * Batch Model
  */
 
-define(['lib/date'], function (Datejs) {
+define(['core/lib/date'], function (Datejs) {
 
   var METRICS_PATHS = {
     //'/process/busyness/{{appId}}/mapreduce/{{jobId}}?count=30': 'busyness',

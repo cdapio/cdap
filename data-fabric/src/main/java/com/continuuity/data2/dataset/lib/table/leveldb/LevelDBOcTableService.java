@@ -3,11 +3,14 @@ package com.continuuity.data2.dataset.lib.table.leveldb;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.engine.leveldb.KeyValue;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBComparator;
 import org.iq80.leveldb.Options;
+import org.iq80.leveldb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,18 +33,24 @@ public class LevelDBOcTableService {
   private final int blockSize;
   private final long cacheSize;
   private final String basePath;
+  private final WriteOptions writeOptions;
 
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
   @Inject
-  public LevelDBOcTableService(CConfiguration config) throws IOException {
+  public LevelDBOcTableService(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
+
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
+    Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
+
     blockSize = config.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
+    writeOptions = new WriteOptions().sync(
+      config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
+  }
 
-    if (basePath == null) {
-      throw new IOException("No base directory configured for LevelDB.");
-    }
+  public WriteOptions getWriteOptions() {
+    return writeOptions;
   }
 
   public DB getTable(String tableName) throws IOException {
@@ -71,12 +80,12 @@ public class LevelDBOcTableService {
     return factory.open(new File(dbPath), options);
   }
 
-  public void createTable(String name) throws Exception {
+  public void createTable(String name) throws IOException {
     String dbPath = getDBPath(basePath, name);
 
     Options options = new Options();
     options.createIfMissing(true);
-    options.errorIfExists(true);
+    options.errorIfExists(false);
     options.comparator(new KeyValueDBComparator());
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);

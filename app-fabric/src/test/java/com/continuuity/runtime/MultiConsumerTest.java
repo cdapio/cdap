@@ -4,6 +4,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -76,9 +77,9 @@ public class MultiConsumerTest {
         .setDescription("MultiFlow")
         .withFlowlets()
           .add("gen", new Generator())
-          .add("c1", new Consumer())
-          .add("c2", new Consumer())
-          .add("c3", new ConsumerStr())
+          .add("c1", new Consumer(), 2)
+          .add("c2", new Consumer(), 2)
+          .add("c3", new ConsumerStr(), 2)
         .connect()
           .from("gen").to("c1")
           .from("gen").to("c2")
@@ -116,6 +117,7 @@ public class MultiConsumerTest {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
 
+    @ProcessInput(maxRetries = Integer.MAX_VALUE)
     public void process(long l) throws OperationException {
       accumulated.increment(KEY, l);
     }
@@ -128,9 +130,9 @@ public class MultiConsumerTest {
     @UseDataSet("accumulated")
     private KeyValueTable accumulated;
 
-    @ProcessInput("str")
+    @ProcessInput(value = "str", maxRetries = Integer.MAX_VALUE)
     public void process(String str) throws OperationException {
-      accumulated.increment(KEY, Long.parseLong(str));
+      accumulated.increment(KEY, Long.valueOf(str));
     }
   }
 
@@ -188,7 +190,7 @@ public class MultiConsumerTest {
     txAgent.finish();
 
     // Sum(1..100) * 3
-    Assert.assertEquals(14850L, Longs.fromByteArray(value));
+    Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
 
     for (ProgramController controller : controllers) {
       controller.stop().get();

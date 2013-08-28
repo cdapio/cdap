@@ -1,0 +1,117 @@
+#!/bin/bash
+
+PROJECT=$1; shift
+TGZ_FILE=$1;shift
+BRANCH=$1; shift
+KEEP=10; shift
+TGZ_NAME=`basename $TGZ_FILE`
+CINST_BASE=/var/beamer
+epoch=`date +%s`
+
+if [[ $UID -ne 0 ]]; then
+  echo "Please run this script as root"
+  exit -1
+fi
+
+if [[ ! -d $CINST_BASE/$TGZ_NAME ]]; then
+  mkdir -p $CINST_BASE/$TGZ_NAME >/dev/null 2>/dev/null
+  mkdir -p $CINST_BASE/archive >/dev/null 2>/dev/null
+fi
+
+if [[ -f $CINST_BASE/$PROJECT.lock ]]; then
+  echo "Project $PROJECT has been locked. Please unlock it before you can deploy or activate other package"
+  exit -1
+fi
+
+echo "Stopping all services related to project $PROJECT"
+cnt=`ls -1 /opt/continuuity/$PROJECT/bin/svc-* 2>/dev/null | wc -l`
+if [[ $cnt -ne 0 ]]; then
+  for service in `ls -1 /opt/continuuity/$PROJECT/bin/svc-* 2>/dev/null`
+  do
+    name=`basename $service | sed 's/svc-//g'`
+    name="continuuity-$name"
+    if [[ -f /etc/init.d/$name ]]; then
+      service $name stop
+      service $name status
+      if [[ $? -eq 0 ]]; then
+        echo "Failed to stop service $name"
+        exit -1
+      fi
+    fi
+  done
+fi
+
+cp -f $TGZ_FILE $CINST_BASE/${TGZ_NAME}/ >/dev/null 2>/dev/null
+
+pushd $CINST_BASE/$TGZ_NAME >/dev/null
+tar -mxvf $TGZ_NAME >/dev/null
+echo "$BRANCH" > branch >/dev/null
+popd >/dev/null
+
+if [[ -d /opt/continuuity/$PROJECT ]]; then
+  if [[ ! -f /opt/continuuity/$PROJECT/lib ]]; then
+    mv /opt/continuuity/$PROJECT $CINST_BASE/archive/$PROJECT.$epoch
+    mkdir -p /opt/continuuity/$PROJECT
+  fi
+else
+  mkdir -p /opt/continuuity/$PROJECT
+fi
+
+for filedir in `ls -1 $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT`
+do 
+  if [[ -h /opt/continuuity/$PROJECT/$filedir ]]; then
+    unlink /opt/continuuity/$PROJECT/$filedir
+  fi
+  ln -s -f $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/$filedir /opt/continuuity/$PROJECT/$filedir
+done
+
+mkdir -p /var/log/continuuity /var/run/continuuity /var/continuuity/run || :
+chown -R continuuity.continuuity /opt/continuuity/$PROJECT
+chown -R continuuity.continuuity /var/log/continuuity
+chown -R continuuity.continuuity /var/run/continuuity
+chown -R continuuity.continuuity /var/continuuity/run
+chmod +x /opt/continuuity/$PROJECT/bin/service
+for svcname in `ls /opt/continuuity/$PROJECT/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
+  if [[ -h /opt/continuuity/$PROJECT/bin/svc-$svcname ]]; then
+    unlink /opt/continuuity/$PROJECT/bin/svc-$svcname
+  fi
+  ln -s -f $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin/service $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin/svc-$svcname
+done
+
+for service in `ls -1 $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin/svc-*`
+do
+  cname=`basename $service | sed 's/svc-//g'`
+  name="continuuity-$cname"
+  cat <<END >/etc/init.d/$name
+#!/usr/bin/env bash
+if [[ $UID -eq 0 ]]; then
+    su continuuity -l -c "cd $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin; exec ./svc-$cname \$*"
+else
+    cd $CINST_BASE/$TGZ_NAME/opt/continuuity/$PROJECT/bin; exec ./svc-$cname \$*
+fi
+END
+  chmod +x /etc/init.d/$name
+done
+
+echo "Starting all services related to project $PROJECT"
+for service in `ls -1 /opt/continuuity/$PROJECT/bin/svc-*`
+do
+  name=`basename $service | sed 's/svc-//g'`
+  name="continuuity-$name"
+  service $name start
+  service $name status
+  if [[ $? -eq 1 ]]; then
+    echo "Failed to start service $name"
+    exit -1
+  fi
+done
+
+# Cleans up packages. Keeps at least KEEP number of packages.
+c=0
+for dir in `find $CINST_BASE -name "continuuity-${PROJECT}*" -type d -printf '%T@ %p\n' | sort -k 1nr | sed 's/^[^ ]* //'`
+do
+  if [[ $c -ge $KEEP ]]; then
+    rm -rf $dir 2>/dev/null >/dev/null
+  fi
+  ((c++))
+done

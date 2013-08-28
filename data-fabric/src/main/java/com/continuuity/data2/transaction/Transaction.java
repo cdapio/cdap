@@ -1,5 +1,7 @@
 package com.continuuity.data2.transaction;
 
+import java.util.Arrays;
+
 /**
  *
  */
@@ -25,5 +27,9 @@ public class Transaction {
   // todo: these are ordered
   public long[] getExcludedList() {
     return excludedList;
+  }
+
+  public boolean isVisible(long version) {
+    return version <= getReadPointer() && Arrays.binarySearch(getExcludedList(), version) < 0;
   }
 }

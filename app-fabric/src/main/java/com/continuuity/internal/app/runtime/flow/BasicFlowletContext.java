@@ -106,6 +106,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     return flowletId;
   }
 
+  @Override
   public int getInstanceId() {
     return instanceId;
   }
@@ -114,6 +115,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     return new FlowletLoggingContext(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
   }
 
+  @Override
   public Metrics getMetrics() {
     return flowletMetrics;
   }

@@ -81,11 +81,11 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
   public boolean rollbackTx() throws Exception {
     Transaction tx = transaction;
     transaction = null;
-    doRollback(tx);
+    doRollback();
     return true;
   }
 
   protected abstract void persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception;
 
-  protected abstract void doRollback(Transaction transaction) throws Exception;
+  protected abstract void doRollback() throws Exception;
 }

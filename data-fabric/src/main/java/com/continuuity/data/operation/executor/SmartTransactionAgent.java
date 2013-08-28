@@ -155,6 +155,8 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
 
   @Override
   public void abort() throws OperationException {
+    super.abort();
+
     if (this.state == State.Aborted || this.state == State.Finished) {
       // might be called by some generic exception handler even though already aborted/finished - we allow that
       return;
@@ -172,7 +174,6 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
     }
 
     try {
-      super.abort();
       abortTransaction();
     } finally {
       this.state = State.Aborted;

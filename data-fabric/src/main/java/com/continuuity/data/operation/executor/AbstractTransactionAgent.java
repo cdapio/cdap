@@ -73,8 +73,8 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
   @Override
   public void finish() throws OperationException {
     commitTxAwareDataSets();
-    currentTx = null;
     postCommitTxAwareDataSets();
+    currentTx = null;
   }
 
   @Override
@@ -179,7 +179,7 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
     // to be thrown, hence triggering rollback from the app-fabric.
     if (!txSystemClient.commit(currentTx)) {
       // the app-fabric runtime will call abort() after that, so no need to do extra steps here
-      throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx");
+      throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx (2nd phase)");
     }
   }
 
@@ -207,7 +207,10 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
                                     "failed to abort tx" + currentTx.getWritePointer());
     }
 
-    txSystemClient.abort(currentTx);
+    // it can be null to allow doing abort multiple times
+    if (currentTx != null) {
+      txSystemClient.abort(currentTx);
+    }
     currentTx = null;
   }
 

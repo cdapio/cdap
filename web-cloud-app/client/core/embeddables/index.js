@@ -1,14 +1,16 @@
 /*
- * Embeddables Index
+ * core/embeddables Index
  */
 
-define(['embeddables/breadcrumb', 'embeddables/chart', 'embeddables/create-button', 'embeddables/dash-chart',
-  'embeddables/key-val', 'embeddables/create-dialogue', 'embeddables/textfield', 'embeddables/dagnode',
-  'embeddables/dropzone', 'embeddables/injector', 'embeddables/modal', 'embeddables/timeselector',
-  'embeddables/visualizer' ],
-	function () {
+define([
+  'core/embeddables/breadcrumb', 'core/embeddables/chart', 'core/embeddables/create-button',
+  'core/embeddables/key-val', 'core/embeddables/create-dialogue', 'core/embeddables/textfield',
+  'core/embeddables/dagnode', 'core/embeddables/dropzone', 'core/embeddables/injector',
+  'core/embeddables/modal', 'core/embeddables/timeselector', 'core/embeddables/visualizer',
+  'core/embeddables/dash-chart'
+  ], function () {
 
-		Em.debug('Loading Embeddables');
+		Em.debug('Loading core/embeddables');
 
 		return Array.prototype.slice.call(arguments, 0);
 

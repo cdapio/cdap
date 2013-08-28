@@ -48,8 +48,13 @@ public final class NullInputDatum implements InputDatum {
   }
 
   @Override
-  public void skip() {
+  public void reclaim() {
     // No-op
+  }
+
+  @Override
+  public int size() {
+    return 0;
   }
 
   @Override

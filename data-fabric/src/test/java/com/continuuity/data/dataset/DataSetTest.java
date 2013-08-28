@@ -8,6 +8,7 @@ import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OperationContext;
@@ -17,6 +18,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.util.OperationUtil;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -113,7 +115,7 @@ public class DataSetTest extends DataSetTestBase {
     OperationExecutor opex = new DummyOpex();
     TransactionProxy proxy = new TransactionProxy();
     LocationFactory locFactory = new LocalLocationFactory();
-    DataSetAccessor dataSetAccessor = new LocalDataSetAccessor();
+    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor();
     TransactionSystemClient txSystemClient = new InMemoryTxSystemClient();
     DataSetInstantiator inst =
       new DataSetInstantiator(new DataFabricImpl(opex, locFactory, dataSetAccessor, OperationUtil.DEFAULT),

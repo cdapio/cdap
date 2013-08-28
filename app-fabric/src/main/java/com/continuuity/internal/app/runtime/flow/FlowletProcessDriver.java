@@ -45,7 +45,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProcessDriver.class);
   private static final int TX_EXECUTOR_POOL_SIZE = 4;
-  private static final int PROCESS_MAX_RETRY = 10;
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -283,15 +282,22 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         Throwable failureCause = null;
         try {
           if (result.isSuccess()) {
+            // If it is a retry input, force the dequeued entries into current transaction.
+            if (input.getRetry() > 0) {
+              input.reclaim();
+            }
             txAgent.finish();
           } else {
+            failureCause = result.getCause();
             txAgent.abort();
           }
         } catch (OperationException e) {
           LOG.error("Transaction operation failed: {}", e.getMessage(), e);
           failureCause = e;
           try {
-            txAgent.abort();
+            if (result.isSuccess()) {
+              txAgent.abort();
+            }
           } catch (OperationException ex) {
             LOG.error("Fail to abort transaction: {}", inputContext, ex);
           }
@@ -317,7 +323,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       public void ack() throws OperationException {
         TransactionAgent txAgent = dataFabricFacade.createTransactionAgent();
         txAgent.start();
-        input.skip();
+        input.reclaim();
         txAgent.finish();
       }
     };
@@ -349,7 +355,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           txAgent.start();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
+          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", input.size());
 
           // Call the process method and commit the transaction
           ProcessMethod.ProcessResult result =
@@ -396,7 +402,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
+          flowletContext.getSystemMetrics().gauge("process.events.processed", input.size());
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.error("Exception on onSuccess call: {}", flowletContext, t);
@@ -410,18 +416,21 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       public void onFailure(Object inputObject, InputContext inputContext, FailureReason reason,
                             InputAcknowledger inputAcknowledger) {
 
-        LOG.warn("Process failure: {}, {}, input: {}",
-                 flowletContext, reason.getMessage(), input, reason.getCause());
+        LOG.warn("Process failure: {}, {}, input: {}", flowletContext, reason.getMessage(), input, reason.getCause());
         FailurePolicy failurePolicy;
         try {
           flowletContext.getSystemMetrics().gauge("process.errors", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
+          if (failurePolicy == null) {
+            failurePolicy = FailurePolicy.RETRY;
+            LOG.info("Callback returns null for failure policy. Default to {}.", failurePolicy);
+          }
         } catch (Throwable t) {
           LOG.error("Exception on onFailure call: {}", flowletContext, t);
           failurePolicy = FailurePolicy.RETRY;
         }
 
-        if (input.getRetry() >= PROCESS_MAX_RETRY) {
+        if (input.getRetry() >= processEntry.getProcessSpec().getProcessMethod().getMaxRetries()) {
           LOG.info("Too many retries, ignores the input: {}", input);
           failurePolicy = FailurePolicy.IGNORE;
         }
@@ -437,7 +446,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getSystemMetrics().gauge("process.events.processed", 1);
+            flowletContext.getSystemMetrics().gauge("process.events.processed", input.size());
             inputAcknowledger.ack();
           } catch (OperationException e) {
             LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);

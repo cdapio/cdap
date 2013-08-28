@@ -26,6 +26,7 @@ import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -193,14 +194,15 @@ public final class FlowletDefinition {
 
         } else if (OutputEmitter.class.equals(field.getType())) {
           Type emitterType = flowletType.resolveType(field.getGenericType()).getType();
-          Preconditions.checkArgument(emitterType instanceof ParameterizedType,
-                                      "Type info missing from OutputEmitter; class: %s; field: %s.", type, field);
+          checkArgument(emitterType instanceof ParameterizedType, type, field, "Type info missing from OutputEmitter.");
 
           // Extract the Output type from the first type argument of OutputEmitter
           Type outputType = ((ParameterizedType) emitterType).getActualTypeArguments()[0];
           outputType = flowletType.resolveType(outputType).getType();
           String outputName = field.isAnnotationPresent(Output.class) ?
                                   field.getAnnotation(Output.class).value() : DEFAULT_OUTPUT;
+
+          checkType(outputType, type, field);
 
           Set<Type> types = outputs.get(outputName);
           if (types == null) {
@@ -227,15 +229,13 @@ public final class FlowletDefinition {
         }
 
         Type[] methodParams = method.getGenericParameterTypes();
-        Preconditions.checkArgument(methodParams.length > 0 && methodParams.length <= 2,
-                                    "Type parameter missing from process method; class: %s, method: %s",
-                                    type, method);
+        checkArgument(methodParams.length > 0 && methodParams.length <= 2, type, method,
+                      "Type parameter missing from process method.");
 
         // If there are more than one parameter, there be exactly two and the 2nd one should be InputContext
         if (methodParams.length == 2) {
-          Preconditions.checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()),
-                                      "The second parameter of the process method must be %s type.",
-                                      InputContext.class.getName());
+          checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()), type, method,
+                        "The second parameter of the process method must be InputContext type.");
         }
 
         Type firstParameter = type.resolveType(methodParams[0]).getType();
@@ -243,20 +243,20 @@ public final class FlowletDefinition {
         // In batch mode, if the first parameter is an iterator then extract the type information from
         // iterator's type parameter
         if (method.getAnnotation(Batch.class) != null) {
-          Preconditions.checkArgument(firstParameter instanceof ParameterizedType,
-                                      "Iterator needs to be a ParameterizedType to extract type information");
+          checkArgument(firstParameter instanceof ParameterizedType, type, method,
+                        "Iterator needs to be a ParameterizedType to extract type information.");
+
           ParameterizedType pType = (ParameterizedType) firstParameter;
-          Preconditions.checkArgument(pType.getRawType().equals(Iterator.class),
-                                      "Batch mode without an Iterator as first parameter is not supported yet.");
-          Preconditions.checkArgument(
-            pType.getActualTypeArguments().length > 0,
-            "Iterator does not define actual type parameters, cannot extract type information."
-          );
+          checkArgument(pType.getRawType().equals(Iterator.class), type, method,
+                        "Batch mode without an Iterator as first parameter is not supported yet.");
+          checkArgument(pType.getActualTypeArguments().length > 0, type, method,
+                        "Iterator does not define actual type parameters, cannot extract type information.");
           firstParameter = pType.getActualTypeArguments()[0];
         }
 
         // Extract the Input type from the first parameter of the process method
         Type inputType = type.resolveType(firstParameter).getType();
+        checkType(inputType, type, method);
 
         List<String> inputNames = Lists.newLinkedList();
         if (processInputAnnotation == null || processInputAnnotation.value().length == 0) {
@@ -271,12 +271,23 @@ public final class FlowletDefinition {
             types = Sets.newHashSet();
             inputs.put(inputName, types);
           }
-          Preconditions.checkArgument(types.add(inputType),
-                                      "Same type already defined for the same input. Type: %s, input: %s",
-                                      inputType, inputName);
+          checkArgument(types.add(inputType), type, method, "Same type already defined for the same input.");
         }
       }
     }
+  }
+
+  private <T> void checkArgument(boolean condition, TypeToken<?> type, T context, String errorMsg) {
+    Preconditions.checkArgument(condition,  "%s. Class: %s, context: %s", errorMsg, type, context);
+  }
+
+  private <T> void checkType(Type type, TypeToken<?> clz, T context) {
+    if (type instanceof GenericArrayType) {
+      checkType(((GenericArrayType) type).getGenericComponentType(), clz, context);
+      return;
+    }
+    checkArgument(type instanceof Class || type instanceof ParameterizedType, clz, context,
+                  "Invalid type. Only Class or ParameterizedType are supported.");
   }
 
   private <K, V> Map<K, Set<V>> immutableCopyOf(Map<K, Set<V>> map) {

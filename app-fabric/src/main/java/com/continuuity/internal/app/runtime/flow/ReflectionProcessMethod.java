@@ -34,14 +34,16 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   private final boolean hasParam;
   private final boolean needsBatch;
   private final boolean needContext;
+  private final int maxRetries;
 
-  public static ReflectionProcessMethod create(Flowlet flowlet, Method method) {
-    return new ReflectionProcessMethod(flowlet, method);
+  public static ReflectionProcessMethod create(Flowlet flowlet, Method method, int maxRetries) {
+    return new ReflectionProcessMethod(flowlet, method, maxRetries);
   }
 
-  private ReflectionProcessMethod(Flowlet flowlet, Method method) {
+  private ReflectionProcessMethod(Flowlet flowlet, Method method, int maxRetries) {
     this.flowlet = flowlet;
     this.method = method;
+    this.maxRetries = maxRetries;
 
     this.hasParam = method.getGenericParameterTypes().length > 0;
     this.needsBatch = hasParam &&
@@ -56,6 +58,11 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   @Override
   public boolean needsInput() {
     return hasParam;
+  }
+
+  @Override
+  public int getMaxRetries() {
+    return maxRetries;
   }
 
   @Override
@@ -89,11 +96,11 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
 
         return new ReflectionProcessResult<T>(event, true, null);
       } catch (Throwable t) {
-        return new ReflectionProcessResult<T>(event, false, t);
+        return new ReflectionProcessResult<T>(event, false, t.getCause());
       }
     } catch (Exception e) {
       // If it reaches here, something very wrong.
-      LOG.error("Fail to process input: " + method, e);
+      LOG.error("Fail to process input: {}", method, e);
       throw Throwables.propagate(e);
     }
   }

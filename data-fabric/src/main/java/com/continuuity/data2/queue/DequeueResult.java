@@ -20,7 +20,8 @@ public interface DequeueResult extends Iterable<byte[]> {
   boolean isEmpty();
 
   /**
-   * Skips all dequeue entries represented by this result. Note that call to this method is transactional
+   * Reclaim all dequeue entries represented by this result. The effect is to put entries represented by this
+   * result back to the dequeued set of the queue consumer. Note that call to this method is transactional
    * and requires a new transaction on the {@link Queue2Consumer} instance who provides the instance of this
    * {@link DequeueResult}.
    *
@@ -42,7 +43,12 @@ public interface DequeueResult extends Iterable<byte[]> {
    *
    * </pre>
    */
-  void skip();
+  void reclaim();
+
+  /**
+   * Returns number of entries in this result.
+   */
+  int size();
 
   /**
    * An (immutable) empty dequeue result
@@ -54,8 +60,13 @@ public interface DequeueResult extends Iterable<byte[]> {
     }
 
     @Override
-    public void skip() {
+    public void reclaim() {
       // No-op
+    }
+
+    @Override
+    public int size() {
+      return 0;
     }
 
     @Override
