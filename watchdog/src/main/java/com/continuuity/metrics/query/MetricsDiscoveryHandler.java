@@ -48,6 +48,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   // BatchMetricsHandler are computed in the handler and are not stored in the table.
   private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
 
+  // used to go from the uri path to the internal 'program type' in the context (app.programType.programId.componentId)
   private enum PathProgramType {
     PROCEDURES("p"),
     MAPREDUCE("b"),
@@ -63,6 +64,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     }
   }
 
+  // used to display the type of a context node in the response
   private enum ContextNodeType {
     APP("app"),
     FLOW("flow"),
@@ -92,6 +94,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     DATASET
   }
 
+  // the context has 'm' and 'r', but they're referred to as 'mappers' and 'reducers' in the api.
   private enum MapReduceTask {
     M("mappers"),
     R("reducers");
@@ -166,7 +169,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
     List<String> prefixEntity = queryParams.get("prefixEntity");
     // shouldn't be in params more than once, but if it is, just take any one
-    String metricPrefix = (prefixEntity == null) ? null : prefixEntity.get(0);
+    String metricPrefix = (prefixEntity == null || prefixEntity.size() == 0) ? null : prefixEntity.get(0);
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
     for (AggregatesTable table : aggregatesTables.values()) {
@@ -181,6 +184,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       }
     }
 
+    // return the metrics sorted by metric name so it can directly be displayed to the user.
     JsonArray output = new JsonArray();
     List<String> sortedMetrics = Lists.newArrayList(metricContextsMap.keySet());
     Collections.sort(sortedMetrics);
@@ -189,14 +193,40 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       metricNode.addProperty("metric", metric);
       ContextNode metricContexts = metricContextsMap.get(metric);
       // the root node has junk for its type and id, but has the list of contexts as its "children"
-      JsonObject tmp = metricContexts.toJson();
-      metricNode.add("contexts", tmp.getAsJsonArray("children"));
+      metricNode.add("contexts", metricContexts.toJson().getAsJsonArray("children"));
       output.add(metricNode);
     }
 
     return output;
   }
 
+  /**
+   * Eventually we need to return the tree of contexts each metric belongs to, but we're not going to get
+   * all the contexts for a metric in order.  This is to add a node to the context tree, where the tree
+   * will end up looking something like:
+   *
+   *  "contexts":[
+   *   {
+   *     "type":"app",
+   *     "id":"WordCount",
+   *     "children":[
+   *       {
+   *         "type":"flow",
+   *         "id":"WordCounter",
+   *         "children":[
+   *           {
+   *             "type":"flowlet",
+   *             "id":"Associator"
+   *           },...
+   *         ]
+   *       },...
+   *     ]
+   *   },...
+   * ]
+   * @param context
+   * @param metric
+   * @param metricContextsMap
+   */
   private void addContext(String context, String metric, Map<String, ContextNode> metricContextsMap) {
     Iterator<String> contextParts = Splitter.on('.').split(context).iterator();
     if (!contextParts.hasNext()) {
@@ -207,12 +237,15 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       return;
     }
 
+    // get the context tree for the metric
     if (!metricContextsMap.containsKey(metric)) {
       metricContextsMap.put(metric, new ContextNode(ContextNodeType.ROOT, ""));
     }
     ContextNode metricContexts = metricContextsMap.get(metric);
     metricContexts = metricContexts.getOrAddChild(ContextNodeType.APP, appId);
 
+    // different program types will have different depths in the context tree.  For example,
+    // procedures have no children, whereas flows will have flowlets as children.
     ProgramType type = ProgramType.valueOf(contextParts.next().toUpperCase());
     switch(type) {
       case F:
@@ -242,10 +275,11 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     }
   }
 
+  // Class for building up the context tree for a metric.
   private class ContextNode implements Comparable<ContextNode> {
-    ContextNodeType type;
-    String id;
-    Map<String, ContextNode> children;
+    private final ContextNodeType type;
+    private final String id;
+    private final Map<String, ContextNode> children;
 
     public ContextNode(ContextNodeType type, String id) {
       this.type = type;
@@ -253,6 +287,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       this.children = Maps.newHashMap();
     }
 
+    // get the specified child, creating and adding it if it doesn't already exist
     public ContextNode getOrAddChild(ContextNodeType type, String id) {
       String key = getChildKey(type, id);
       if (!children.containsKey(key)) {
@@ -261,6 +296,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       return children.get(key);
     }
 
+    // recursively add children of children of the given ids and types
     public void deepAdd(Iterator<String> ids, ContextNodeType... types) {
       ContextNode node = this;
       for (ContextNodeType type : types) {
@@ -291,6 +327,8 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       return type.name() + ":" + id;
     }
 
+    // convert to json to send back in a response.  Each node has a type and id, with
+    // an optional array of children.
     public JsonObject toJson() {
       JsonObject output = new JsonObject();
       output.addProperty("type", type.getName());

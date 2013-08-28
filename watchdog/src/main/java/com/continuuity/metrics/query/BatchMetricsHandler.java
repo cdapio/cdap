@@ -173,6 +173,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
       .setMetric("process.tuples.read")
       .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
     MetricsScope scope = metricsRequest.getScope();
+    scope = (scope == null) ? MetricsScope.REACTOR : scope;
 
     PeekingIterator<TimeValue> tuplesReadItor = Iterators.peekingIterator(queryTimeSeries(scope, scanQuery));
 
@@ -203,7 +204,9 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   }
 
   private Object computeQueueLength(MetricsRequest metricsRequest) {
-    AggregatesTable aggregatesTable = aggregatesTables.get(metricsRequest.getScope());
+    MetricsScope scope = metricsRequest.getScope();
+    scope = (scope == null) ? MetricsScope.REACTOR : scope;
+    AggregatesTable aggregatesTable = aggregatesTables.get(scope);
     // First scan the ack to get an aggregate and also names of queues.
     AggregatesScanner scanner = aggregatesTable.scan(metricsRequest.getContextPrefix(),
                                                      "q.ack",

@@ -110,16 +110,7 @@ final class MetricsRequestParser {
           parseProgram(metricName, pathParts, builder);
           break;
         case USER:
-          // getting the metric from the end... need to clean this up.
-          String uriPath = requestURI.getPath();
-          int index = uriPath.lastIndexOf("/");
-          metricName = uriPath.substring(index + 1);
-          String strippedPath = uriPath.substring(0, index);
-          pathParts = Splitter.on('/').omitEmptyStrings().split(strippedPath).iterator();
-          pathParts.next();
-          pathParts.next();
-          parseUser(pathParts, builder);
-          builder.setMetricPrefix(metricName);
+          parseUser(requestURI.getPath(), builder);
           break;
       }
     }
@@ -160,9 +151,20 @@ final class MetricsRequestParser {
   }
 
   /**
-   * Parses metrics request for user metrics.
+   * Parses metrics request for user metrics, where pathParts is an iterator over the path of form:
+   * /user/apps/{appid}/{programType}/{programId}/{componentId}/metricname
+   * where everything between the appid and metric name are optional.
    */
-  private static MetricsRequestBuilder parseUser(Iterator<String> pathParts, MetricsRequestBuilder builder) {
+  private static MetricsRequestBuilder parseUser(String uriPath, MetricsRequestBuilder builder) {
+    // getting the metric from the end...
+    int index = uriPath.lastIndexOf("/");
+    String metricName = uriPath.substring(index + 1);
+    String strippedPath = uriPath.substring(0, index);
+    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(strippedPath).iterator();
+    pathParts.next();
+    pathParts.next();
+    builder.setMetricPrefix(metricName);
+
     // 3. Application Id.
     String contextPrefix = pathParts.next();
 
