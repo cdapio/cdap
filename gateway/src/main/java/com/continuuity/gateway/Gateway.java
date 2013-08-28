@@ -184,7 +184,11 @@ public class Gateway implements Server {
     ServerException {
 
     // Start gateway v2
-    gatewayV2.startAndWait();
+    if (gatewayV2 != null) {
+      gatewayV2.startAndWait();
+    } else {
+      LOG.warn("Gateway v2 is null, not starting it.");
+    }
 
     // Configure ourselves first
     configure(conf);
@@ -263,7 +267,9 @@ public class Gateway implements Server {
 
     LOG.info("Gateway Shutting down");
 
-    gatewayV2.stopAndWait();
+    if (gatewayV2 != null) {
+      gatewayV2.stopAndWait();
+    }
 
     // Stop all our connectors
     for (Connector connector : this.connectorList) {
