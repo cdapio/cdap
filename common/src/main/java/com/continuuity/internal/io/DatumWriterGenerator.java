@@ -11,6 +11,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
@@ -24,11 +25,14 @@ import org.objectweb.asm.commons.Method;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Class for generating {@link DatumWriter} bytecodes using ASM. The class generated will have a skeleton looks like
@@ -390,6 +394,32 @@ final class DatumWriterGenerator {
       // For non-string object that has a String schema, invoke toString().
       mg.invokeVirtual(Type.getType(encodeType.getRawType()), getMethod(String.class, "toString"));
       encodeType = TypeToken.of(String.class);
+    } else if (schema.getType() == Schema.Type.BYTES && UUID.class.equals(encodeType.getRawType())) {
+      // Special case UUID, encode as byte array
+
+      // ByteBuffer buf = ByteBuffer.allocate(Longs.BYTES * 2)
+      //                            .putLong(uuid.getMostSignificantBits())
+      //                            .putLong(uuid.getLeastSignificantBits());
+      // encoder.writeBytes((ByteBuffer) buf.flip());
+
+      Type byteBufferType = Type.getType(ByteBuffer.class);
+      Type uuidType = Type.getType(UUID.class);
+
+      mg.push(Longs.BYTES * 2);
+      mg.invokeStatic(byteBufferType, getMethod(ByteBuffer.class, "allocate", int.class));
+      mg.swap();
+
+      mg.invokeVirtual(uuidType, getMethod(long.class, "getMostSignificantBits"));
+      mg.invokeVirtual(byteBufferType, getMethod(ByteBuffer.class, "putLong", long.class));
+
+      mg.loadArg(value);
+      mg.invokeVirtual(uuidType, getMethod(long.class, "getLeastSignificantBits"));
+      mg.invokeVirtual(byteBufferType, getMethod(ByteBuffer.class, "putLong", long.class));
+
+      mg.invokeVirtual(Type.getType(Buffer.class), getMethod(Buffer.class, "flip"));
+      mg.checkCast(byteBufferType);
+
+      encodeType = TypeToken.of(ByteBuffer.class);
     }
     mg.invokeInterface(Type.getType(Encoder.class), getMethod(Encoder.class, encodeMethod, encodeType.getRawType()));
     mg.pop();

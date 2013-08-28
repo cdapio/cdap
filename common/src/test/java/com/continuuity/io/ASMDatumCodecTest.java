@@ -30,6 +30,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -110,6 +111,22 @@ public class ASMDatumCodecTest {
     String value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals("Testing message", value);
+  }
+
+  @Test
+  public void testUUID() throws UnsupportedTypeException, IOException {
+    TypeToken<UUID> type = new TypeToken<UUID>() {};
+    PipedOutputStream os = new PipedOutputStream();
+    PipedInputStream is = new PipedInputStream(os);
+    DatumWriter<UUID> writer = getWriter(type);
+
+    UUID uuid = UUID.randomUUID();
+    writer.encode(uuid, new BinaryEncoder(os));
+
+    ReflectionDatumReader<UUID> reader = new ReflectionDatumReader<UUID>(getSchema(type), type);
+    UUID value = reader.read(new BinaryDecoder(is), getSchema(type));
+
+    Assert.assertEquals(uuid, value);
   }
 
   @Test
