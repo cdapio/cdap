@@ -30,7 +30,7 @@ public class DistributedDataSetAccessor implements DataSetAccessor {
   @Override
   public DataSetClient getDataSetClient(String name, Class type) throws Exception {
     if (type == OrderedColumnarTable.class) {
-      return new HBaseOcTableClient(name, hConf);
+      return new HBaseOcTableClient(name, cConf, hConf);
     }
 
     return null;
@@ -39,7 +39,7 @@ public class DistributedDataSetAccessor implements DataSetAccessor {
   @Override
   public DataSetManager getDataSetManager(Class type) throws Exception {
     if (type == OrderedColumnarTable.class) {
-      return new HBaseOcTableManager(hConf);
+      return new HBaseOcTableManager(cConf, hConf);
     }
 
     return null;

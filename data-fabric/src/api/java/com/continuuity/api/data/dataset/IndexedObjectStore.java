@@ -143,6 +143,11 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
     writeToObjectStore(key, object);
 
     //Update the secondaryKeys
+    //logic:
+    //  - Get existing secondary keys
+    //  - Compute diff between existing secondary keys and new secondary keys
+    //  - Remove the secondaryKeys that are removed
+    //  - Add the new keys that are added
     OperationResult<Map<byte[], byte[]>> result = index.read(new Read(getPrefixedPrimaryKey(key)));
     Set<byte[]> existingSecondaryKeys = Sets.newTreeSet(new Bytes.ByteArrayComparator());
 
@@ -159,9 +164,11 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
     List<byte[]> secondaryKeysAdded =  secondaryKeysToAdd(existingSecondaryKeys, newSecondaryKeys);
 
     //for each key store the secondaryKey. This will be used while deleting old index values.
-    index.write(new Write(getPrefixedPrimaryKey(key),
+    if (secondaryKeysAdded.size() > 0) {
+       index.write(new Write(getPrefixedPrimaryKey(key),
                           secondaryKeysAdded.toArray(new byte[secondaryKeysAdded.size()][]),
                           new byte[secondaryKeysAdded.size()][0]));
+    }
 
     for (byte[] secondaryKey : secondaryKeysAdded) {
       //update the index.

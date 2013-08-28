@@ -33,7 +33,7 @@ public class LevelDBOcTableManager implements DataSetManager {
 
   @Override
   public void create(String name) throws Exception {
-    service.createTable(name);
+    service.ensureTableExists(name);
   }
 
   @Override

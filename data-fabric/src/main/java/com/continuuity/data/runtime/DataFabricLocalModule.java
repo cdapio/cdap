@@ -18,6 +18,8 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
@@ -91,6 +93,7 @@ public class DataFabricLocalModule extends AbstractModule {
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
+    bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);
     bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(conf);
 
     // Bind named fields

@@ -14,6 +14,8 @@ import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.google.inject.AbstractModule;
@@ -108,6 +110,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
+    bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
   }
 
   public CConfiguration getConfiguration() {
