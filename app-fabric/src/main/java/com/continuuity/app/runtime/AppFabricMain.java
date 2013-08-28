@@ -75,10 +75,10 @@ public final class AppFabricMain extends DaemonMain {
           bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
           bind(QueueAdmin.class).to(HBaseQueueAdmin.class);
           bind(CConfiguration.class)
-            .annotatedWith(Names.named("HBaseOVCTableHandleHConfig"))
+            .annotatedWith(Names.named("HBaseOVCTableHandleCConfig"))
             .to(CConfiguration.class);
           bind(Configuration.class)
-            .annotatedWith(Names.named("HBaseOVCTableHandleCConfig"))
+            .annotatedWith(Names.named("HBaseOVCTableHandleHConfig"))
             .to(Configuration.class);
           bind(CConfiguration.class)
                  .annotatedWith(Names.named("RemoteOperationExecutorConfig"))
