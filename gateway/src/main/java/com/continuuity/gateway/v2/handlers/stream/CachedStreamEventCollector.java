@@ -94,7 +94,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
    * @param callback Callback to be called after enqueuing the event
    * @throws Exception
    */
-  public void consume(StreamEvent event, String accountId, FutureCallback<Void> callback)
+  public void collect(StreamEvent event, String accountId, FutureCallback<Void> callback)
     throws Exception {
     byte[] bytes = serializer.encodePayload(event);
     if (bytes == null) {

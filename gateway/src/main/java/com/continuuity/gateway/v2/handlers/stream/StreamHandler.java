@@ -74,7 +74,7 @@ public class StreamHandler extends AbstractHttpHandler {
   private final MetadataService metadataService;
   private final CMetrics cMetrics;
   private final GatewayMetrics gatewayMetrics;
-  private final CachedStreamEventCollector consumer;
+  private final CachedStreamEventCollector streamEventCollector;
   private final GatewayAuthenticator authenticator;
 
   private final LoadingCache<ConsumerKey, ConsumerHolder> queueConsumerCache;
@@ -89,7 +89,7 @@ public class StreamHandler extends AbstractHttpHandler {
     this.gatewayMetrics = gatewayMetrics;
     this.authenticator = authenticator;
 
-    this.consumer = new CachedStreamEventCollector(cConfig, opex, queueClientFactory);
+    this.streamEventCollector = new CachedStreamEventCollector(cConfig, opex, queueClientFactory);
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -121,12 +121,12 @@ public class StreamHandler extends AbstractHttpHandler {
 
   @Override
   public void init(HandlerContext context) {
-    consumer.startAndWait();
+    streamEventCollector.startAndWait();
   }
 
   @Override
   public void destroy(HandlerContext context) {
-    consumer.stopAndWait();
+    streamEventCollector.stopAndWait();
   }
 
   @PUT
@@ -210,31 +210,32 @@ public class StreamHandler extends AbstractHttpHandler {
       // and create a stream event
       StreamEvent event = new DefaultStreamEvent(headers, body);
 
-      LOG.trace("Sending event to consumer: {}", event);
-      // let the consumer process the event.
+      LOG.trace("Sending event to streamEventCollector: {}", event);
+      // let the streamEventCollector process the event.
       // in case of exception, respond with internal error
-      consumer.consume(event, accountId,
-                       new FutureCallback<Void>() {
-                         @Override
-                         public void onSuccess(Void result) {
-                           helper.finish(Success);
-                           responder.sendStatus(HttpResponseStatus.OK);
-                         }
+      streamEventCollector.collect(event, accountId,
+                                   new FutureCallback<Void>() {
+                                     @Override
+                                     public void onSuccess(Void result) {
+                                       helper.finish(Success);
+                                       responder.sendStatus(HttpResponseStatus.OK);
+                                     }
 
-                         @Override
-                         public void onFailure(Throwable t) {
-                           helper.finish(Error);
-                           responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                                     @Override
+                                     public void onFailure(Throwable t) {
+                                       LOG.error("Exception when trying to enqueue stream event", t);
+                                       helper.finish(Error);
+                                       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
 
-                           // refresh cache for this stream - apparently it has disappeared
-                           try {
-                             streamCache.refreshStream(accountId, destination);
-                           } catch (OperationException e) {
-                             LOG.error("Exception thrown during refresh of stream {} with accountId {}",
-                                       destination, accountId, e);
-                           }
-                         }
-                       }
+                                       // refresh cache for this stream - apparently it has disappeared
+                                       try {
+                                         streamCache.refreshStream(accountId, destination);
+                                       } catch (OperationException e) {
+                                         LOG.error("Exception thrown during refresh of stream {} with accountId {}",
+                                                   destination, accountId, e);
+                                       }
+                                     }
+                                   }
       );
     } catch (Exception e) {
       LOG.error("Exception while enqueing stream {} events", destination, e);
