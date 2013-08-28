@@ -110,17 +110,17 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
   }
 
   @Override
-  public void delete(byte[] key, byte[] col) throws OperationException{
+  public void delete(byte[] key, byte[] col) throws OperationException {
     this.table.write(new Delete(key, col));
   }
 
   @Override
-  public void delete(byte[] key) throws OperationException{
+  public void delete(byte[] key) throws OperationException {
     this.table.write(new Delete(key, DEFAULT_COLUMN));
   }
 
   @Override
-  public void deleteAll(byte[] key) throws OperationException{
+  public void deleteAll(byte[] key) throws OperationException {
     OperationResult<Map<byte[], byte[]>> result = this.table.read(new Read(key));
     if (!result.isEmpty()){
       List<Delete> deleteList = Lists.newArrayList();
