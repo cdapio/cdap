@@ -14,6 +14,8 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.common.Services;
@@ -70,9 +72,10 @@ public final class AppFabricMain extends DaemonMain {
         protected void configure() {
           // Bind the remote opex
           bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
+          bind(QueueAdmin.class).to(HBaseQueueAdmin.class);
           bind(CConfiguration.class)
-            .annotatedWith(Names.named("RemoteOperationExecutorConfig"))
-            .to(CConfiguration.class);
+                 .annotatedWith(Names.named("RemoteOperationExecutorConfig"))
+                 .to(CConfiguration.class);
         }
       }
     );

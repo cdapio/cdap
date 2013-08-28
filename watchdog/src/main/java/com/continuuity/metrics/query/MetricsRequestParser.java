@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -31,7 +32,8 @@ final class MetricsRequestParser {
     COLLECT,
     PROCESS,
     STORE,
-    QUERY
+    QUERY,
+    USER;
   }
 
   private enum ProgramType {
@@ -107,8 +109,12 @@ final class MetricsRequestParser {
         case QUERY:
           parseProgram(metricName, pathParts, builder);
           break;
+        case USER:
+          parseUser(requestURI.getPath(), builder);
+          break;
       }
     }
+    builder.setScope((contextType == ContextType.USER) ? MetricsScope.USER : MetricsScope.REACTOR);
 
     parseQueryString(requestURI, builder);
 
@@ -145,7 +151,67 @@ final class MetricsRequestParser {
   }
 
   /**
-   * Parses metrics request for program type (process or query).
+   * Parses metrics request for user metrics, where pathParts is an iterator over the path of form:
+   * /user/apps/{appid}/{programType}/{programId}/{componentId}/metricname
+   * where everything between the appid and metric name are optional.
+   */
+  private static MetricsRequestBuilder parseUser(String uriPath, MetricsRequestBuilder builder) {
+    // getting the metric from the end...
+    int index = uriPath.lastIndexOf("/");
+    String metricName = uriPath.substring(index + 1);
+    String strippedPath = uriPath.substring(0, index);
+    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(strippedPath).iterator();
+    pathParts.next();
+    pathParts.next();
+    builder.setMetricPrefix(metricName);
+
+    // 3. Application Id.
+    String contextPrefix = pathParts.next();
+
+    // 4. Optional program type
+    ProgramType programType = pathParts.hasNext() ? ProgramType.valueOf(pathParts.next().toUpperCase()) : null;
+
+    if (programType == null) {
+      // Metrics for the application.
+      return builder.setContextPrefix(contextPrefix);
+    }
+
+    contextPrefix += "." + programType.getId();
+
+    if (!pathParts.hasNext()) {
+      return builder.setContextPrefix(contextPrefix);
+    }
+    // 5. Program ID
+    contextPrefix += "." + pathParts.next();
+
+    if (!pathParts.hasNext()) {
+      // Metrics for the program.
+      return builder.setContextPrefix(contextPrefix);
+    }
+
+    // 6. Subtype ("mappers/reducers") for Map Reduce job or flowlet Id.
+    if (programType == ProgramType.MAPREDUCE) {
+      contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
+    } else {
+      // flowlet Id
+      contextPrefix += "." + pathParts.next();
+    }
+
+    if (!pathParts.hasNext()) {
+      // Metrics for the program component.
+      return builder.setContextPrefix(contextPrefix);
+    }
+
+    // 7. Subtype ID for map reduce job or flowlet metric suffix
+    if (programType == ProgramType.MAPREDUCE) {
+      contextPrefix += "." + pathParts.next();
+    }
+
+    return builder.setContextPrefix(contextPrefix);
+  }
+
+  /**
+   * Parses metrics request for program type.
    */
   private static MetricsRequestBuilder parseProgram(String metricName,
                                                     Iterator<String> pathParts, MetricsRequestBuilder builder) {
