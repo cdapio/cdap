@@ -159,21 +159,21 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
   }
 
   public void delete(byte[] key, byte[] column) throws OperationException{
-    if(null == this.delegate){
+    if (null == this.delegate){
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
     this.delegate.delete(key, column);
   }
 
   public void delete(byte[] key) throws OperationException{
-    if(null == this.delegate){
+    if (null == this.delegate){
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
     this.delegate.delete(key);
   }
 
   public void deleteAll(byte[] key) throws OperationException{
-    if(null == this.delegate){
+    if (null == this.delegate){
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
     this.delegate.deleteAll(key);

@@ -164,7 +164,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
     List<byte[]> secondaryKeysAdded =  secondaryKeysToAdd(existingSecondaryKeys, newSecondaryKeys);
 
     //for each key store the secondaryKey. This will be used while deleting old index values.
-    if (secondaryKeysAdded.size() > 0 ) {
+    if (secondaryKeysAdded.size() > 0) {
        index.write(new Write(getPrefixedPrimaryKey(key),
                           secondaryKeysAdded.toArray(new byte[secondaryKeysAdded.size()][]),
                           new byte[secondaryKeysAdded.size()][0]));

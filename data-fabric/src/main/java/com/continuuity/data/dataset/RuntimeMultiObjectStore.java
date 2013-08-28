@@ -125,7 +125,7 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
     if (!result.isEmpty()){
       List<Delete> deleteList = Lists.newArrayList();
       Set<byte[]> columns = result.getValue().keySet();
-      if (columns.size() > 0 ){
+      if (columns.size() > 0){
         this.table.write(new Delete(key, columns.toArray(new byte[columns.size()][])));
       }
     }
