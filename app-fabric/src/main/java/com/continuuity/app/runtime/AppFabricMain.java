@@ -29,6 +29,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.util.concurrent.TimeUnit;
@@ -73,6 +74,12 @@ public final class AppFabricMain extends DaemonMain {
           // Bind the remote opex
           bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
           bind(QueueAdmin.class).to(HBaseQueueAdmin.class);
+          bind(CConfiguration.class)
+            .annotatedWith(Names.named("HBaseOVCTableHandleCConfig"))
+            .to(CConfiguration.class);
+          bind(Configuration.class)
+            .annotatedWith(Names.named("HBaseOVCTableHandleHConfig"))
+            .to(Configuration.class);
           bind(CConfiguration.class)
                  .annotatedWith(Names.named("RemoteOperationExecutorConfig"))
                  .to(CConfiguration.class);
