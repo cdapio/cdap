@@ -213,6 +213,8 @@ final class CachedStreamEvents {
             numBytes = numBytesInList(entries);
           }
           cachedBytes.addAndGet(-1 * numBytes);
+
+          LOG.debug("Flushed {} events with producer {}", numEntries, producer);
         }
       }
     }

@@ -11,6 +11,8 @@ import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -92,24 +94,30 @@ public class CachedStreamEventCollector extends AbstractIdleService {
    * @param event StreamEvent to enqueue.
    * @param accountId accountId of the entity making the call.
    * @param callback Callback to be called after enqueuing the event
-   * @throws Exception
    */
-  public void collect(StreamEvent event, String accountId, FutureCallback<Void> callback)
-    throws Exception {
-    byte[] bytes = serializer.encodePayload(event);
-    if (bytes == null) {
-      LOG.trace("Could not serialize event: {}", event);
-      throw new Exception("Could not serialize event: " + event);
-    }
+  public void collect(StreamEvent event, String accountId, FutureCallback<Void> callback) {
+    try {
+      byte[] bytes = serializer.encodePayload(event);
+      if (bytes == null) {
+        throw new Exception(String.format("Could not serialize event: %s", event));
+      }
 
-    String destination = event.getHeaders().get(Constants.HEADER_DESTINATION_STREAM);
-    if (destination == null) {
-      LOG.trace("Enqueuing an event that has no destination. Using 'default' instead.");
-      destination = "default";
-    }
+      String destination = event.getHeaders().get(Constants.HEADER_DESTINATION_STREAM);
+      if (destination == null) {
+        LOG.trace("Enqueuing an event that has no destination. Using 'default' instead.");
+        destination = "default";
+      }
 
-    QueueName queueName = QueueName.fromStream(accountId, destination);
-    cachedStreamEvents.put(queueName, new QueueEntry(bytes), callback);
+      QueueName queueName = QueueName.fromStream(accountId, destination);
+      cachedStreamEvents.put(queueName, new QueueEntry(bytes), callback);
+    } catch (Exception e) {
+      setCallbackException(callback, e);
+    }
   }
 
+  private void setCallbackException(FutureCallback<Void> callback, Exception e) {
+    SettableFuture<Void> future = SettableFuture.create();
+    Futures.addCallback(future, callback);
+    future.setException(e);
+  }
 }
