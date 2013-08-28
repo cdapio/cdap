@@ -158,13 +158,49 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
     return this.delegate.read(key);
   }
 
+  public void delete(byte[] key, byte[] column) throws OperationException{
+    if(null == this.delegate){
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    this.delegate.delete(key, column);
+  }
+
+  public void delete(byte[] key) throws OperationException{
+    if(null == this.delegate){
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    this.delegate.delete(key);
+  }
+
+  public void deleteAll(byte[] key) throws OperationException{
+    if(null == this.delegate){
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    this.delegate.deleteAll(key);
+  }
+
+  /**
+   * Read an object with a given key.
+   * @param key the key of the object
+   * @param col to read
+   * @return the object if found, or null if not found
+   * @throws OperationException in case of errors
+   */
+  public T read(byte[] key, byte[] col) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.read(key, col);
+  }
+
+
   /**
    * Read all the objects with the given key.
    * @param key the key of the object
-   * @return ObjectStore.Entry.
+   * @return Map of column key and Object, null if entry for the key doesn't exist
    * @throws OperationException incase of errors.
    */
-  public List<T> readAll(byte[] key) throws OperationException {
+  public Map<byte[], T> readAll(byte[] key) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
