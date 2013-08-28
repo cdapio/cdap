@@ -30,4 +30,7 @@ public final class GatewayConstants {
   public static final int DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS = 5;
 
   public static final String GATEWAY_V2_HTTP_HANDLERS = "gateway.http.handler";
+
+  // Handler names
+  public static final String STREAM_HANDLER_NAME = "stream.rest";
 }
