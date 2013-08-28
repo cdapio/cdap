@@ -1,12 +1,13 @@
 package com.continuuity.gateway.v2.handlers.stream;
 
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.google.common.base.Objects;
 import org.slf4j.Logger;
@@ -24,24 +25,30 @@ final class ConsumerHolder implements Closeable {
   private final Queue2Consumer consumer;
   private final TxManager txManager;
 
-  public ConsumerHolder(ConsumerKey key, OperationExecutor opex,
+  public ConsumerHolder(ConsumerKey key, TransactionSystemClient txClient,
                         QueueClientFactory queueClientFactory) throws Exception {
     // 0th instance of group 'groupId' of size 1
     this.consumer =
       queueClientFactory.createConsumer(key.getQueueName(),
                                         new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null), 1);
-    this.txManager = new TxManager(opex, (TransactionAware) consumer);
+    this.txManager = new TxManager(txClient, (TransactionAware) consumer);
   }
 
   public synchronized DequeueResult dequeue() throws Throwable {
     try {
       txManager.start();
-      DequeueResult result = consumer.dequeue();
-      txManager.commit();
-      return result;
-    } catch (Throwable e) {
-      LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
-      txManager.abort();
+
+      try {
+        DequeueResult result = consumer.dequeue();
+        txManager.commit();
+        return result;
+      } catch (Throwable e) {
+        LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
+        txManager.abort();
+        throw e;
+      }
+    } catch (OperationException e) {
+      LOG.error("Got exception", e);
       throw e;
     }
   }

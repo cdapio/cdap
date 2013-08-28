@@ -3,9 +3,9 @@ package com.continuuity.gateway.v2.handlers.stream;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -39,7 +39,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
   private final ExecutorService callbackExecutorService;
 
   @Inject
-  public CachedStreamEventCollector(CConfiguration cConfig, OperationExecutor opex,
+  public CachedStreamEventCollector(CConfiguration cConfig, TransactionSystemClient txClient,
                                     QueueClientFactory queueClientFactory) {
     this.flushTimer = new Timer("stream-rest-flush-thread", true);
 
@@ -61,7 +61,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
                                                                   .build()
     );
 
-    this.cachedStreamEvents = new CachedStreamEvents(opex, queueClientFactory, callbackExecutorService,
+    this.cachedStreamEvents = new CachedStreamEvents(txClient, queueClientFactory, callbackExecutorService,
                                                      maxCachedSizeBytes, maxCachedEvents,
                                                      maxCachedEventsPerStream);
   }
@@ -109,7 +109,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
 
       QueueName queueName = QueueName.fromStream(accountId, destination);
       cachedStreamEvents.put(queueName, new QueueEntry(bytes), callback);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       callback.onFailure(e);
     }
   }

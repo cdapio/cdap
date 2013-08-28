@@ -2,11 +2,11 @@ package com.continuuity.gateway.v2.handlers.stream;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -18,9 +18,6 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +49,7 @@ final class CachedStreamEvents {
 
   private final AtomicBoolean flushRunning = new AtomicBoolean(false);
 
-  CachedStreamEvents(final OperationExecutor opex, final QueueClientFactory queueClientFactory,
+  CachedStreamEvents(final TransactionSystemClient txClient, final QueueClientFactory queueClientFactory,
                      final ExecutorService callbackExecutorService,
                      long maxCachedSizeBytes, int maxCachedEvents,
                      final int maxCachedEventsPerStream) {
@@ -84,7 +81,7 @@ final class CachedStreamEvents {
             Queue2Producer producer = queueClientFactory.createProducer(key);
             return new ProducerStreamEntries(producer,
                                              new ArrayBlockingQueue<StreamEntry>(maxCachedEventsPerStream),
-                                             opex, callbackExecutorService, cachedBytes, cachedNumEntries);
+                                             txClient, callbackExecutorService, cachedBytes, cachedNumEntries);
           }
         });
   }
@@ -148,10 +145,10 @@ final class CachedStreamEvents {
     private final AtomicInteger cachedNumEntries;
 
     public ProducerStreamEntries(Queue2Producer producer, BlockingQueue<StreamEntry> streamEntries,
-                                 OperationExecutor opex, ExecutorService callbackExecutorService,
+                                 TransactionSystemClient txClient, ExecutorService callbackExecutorService,
                                  AtomicLong cachedBytes, AtomicInteger cachedNumEntries) {
       this.producer = producer;
-      this.txManager = new TxManager(opex, (TransactionAware) producer);
+      this.txManager = new TxManager(txClient, (TransactionAware) producer);
       this.streamEntries = streamEntries;
 
       this.callbackExecutorService = callbackExecutorService;
@@ -176,33 +173,43 @@ final class CachedStreamEvents {
 
     public synchronized void flush() {
       List<StreamEntry> entries = Lists.newArrayListWithExpectedSize(streamEntries.size());
-      SettableFuture<Void> future = SettableFuture.create();
-      StreamEntryToQueueEntryFunction transformer =
-        new StreamEntryToQueueEntryFunction(future, callbackExecutorService);
+      streamEntries.drainTo(entries);
+      if (entries.isEmpty()) {
+        return;
+      }
+
+      CallbackNotifier callbackNotifier =
+        new CallbackNotifier(callbackExecutorService,
+                             Iterables.transform(entries, STREAM_ENTRY_FUTURE_CALLBACK_FUNCTION));
+      StreamEntryToQueueEntryFunction transformer = new StreamEntryToQueueEntryFunction();
 
       try {
-        streamEntries.drainTo(entries);
-        if (entries.isEmpty()) {
-          return;
-        }
-
         txManager.start();
-        producer.enqueue(Iterables.transform(entries, transformer));
-
-        // Commit
-        txManager.commit();
-        future.set(null);
-
-      } catch (Throwable e) {
-        LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
 
         try {
-          txManager.abort();
-        } catch (OperationException e1) {
-          LOG.error("Exception while aborting txn", e1);
-        } finally {
-          future.setException(e);
+          producer.enqueue(Iterables.transform(entries, transformer));
+
+          // Commit
+          txManager.commit();
+
+          // Notify callbacks
+          callbackNotifier.notifySuccess();
+          LOG.debug("Flushed {} events with producer {}", entries.size(), producer);
+        } catch (Throwable e) {
+          LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
+
+          try {
+            txManager.abort();
+          } catch (OperationException e1) {
+            LOG.error("Exception while aborting txn", e1);
+          } finally {
+            // Notify callbacks
+            callbackNotifier.notifyFailure(e);
+          }
         }
+      } catch (OperationException e) {
+        LOG.error("Caught exception", e);
+        callbackNotifier.notifyFailure(e);
       } finally {
         int numEntries = entries.size();
         cachedNumEntries.addAndGet(-1 * numEntries);
@@ -212,8 +219,6 @@ final class CachedStreamEvents {
           numBytes = numBytesInList(entries);
         }
         cachedBytes.addAndGet(-1 * numBytes);
-
-        LOG.debug("Flushed {} events with producer {}", numEntries, producer);
       }
     }
 
@@ -245,18 +250,8 @@ final class CachedStreamEvents {
     private long numBytes = 0;
     private int numEntries = 0;
 
-    private final ListenableFuture<Void> future;
-    private final ExecutorService callbackExecutorService;
-
-    private StreamEntryToQueueEntryFunction(ListenableFuture<Void> future, ExecutorService callbackExecutorService) {
-      this.future = future;
-      this.callbackExecutorService = callbackExecutorService;
-    }
-
     @Override
-    public QueueEntry apply(com.continuuity.gateway.v2.handlers.stream.StreamEntry input) {
-      Futures.addCallback(future, input.getCallback(), callbackExecutorService);
-
+    public QueueEntry apply(StreamEntry input) {
       numBytes += input.getQueueEntry().getData().length;
       ++numEntries;
 
@@ -271,4 +266,12 @@ final class CachedStreamEvents {
       return numEntries;
     }
   }
+
+  private static final Function<StreamEntry, FutureCallback<Void>> STREAM_ENTRY_FUTURE_CALLBACK_FUNCTION =
+    new Function<StreamEntry, FutureCallback<Void>>() {
+      @Override
+      public FutureCallback<Void> apply(StreamEntry input) {
+        return input.getCallback();
+      }
+    };
 }

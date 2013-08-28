@@ -12,9 +12,9 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.GatewayMetrics;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
@@ -80,7 +80,7 @@ public class StreamHandler extends AbstractHttpHandler {
   private final LoadingCache<ConsumerKey, ConsumerHolder> queueConsumerCache;
 
   @Inject
-  public StreamHandler(final OperationExecutor opex, CConfiguration cConfig, StreamCache streamCache,
+  public StreamHandler(final TransactionSystemClient txClient, CConfiguration cConfig, StreamCache streamCache,
                        MetadataService metadataService, CMetrics cMetrics, GatewayMetrics gatewayMetrics,
                        final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator) {
     this.streamCache = streamCache;
@@ -89,7 +89,7 @@ public class StreamHandler extends AbstractHttpHandler {
     this.gatewayMetrics = gatewayMetrics;
     this.authenticator = authenticator;
 
-    this.streamEventCollector = new CachedStreamEventCollector(cConfig, opex, queueClientFactory);
+    this.streamEventCollector = new CachedStreamEventCollector(cConfig, txClient, queueClientFactory);
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -114,7 +114,7 @@ public class StreamHandler extends AbstractHttpHandler {
         new CacheLoader<ConsumerKey, ConsumerHolder>() {
           @Override
           public ConsumerHolder load(ConsumerKey key) throws Exception {
-            return new ConsumerHolder(key, opex, queueClientFactory);
+            return new ConsumerHolder(key, txClient, queueClientFactory);
           }
         });
   }

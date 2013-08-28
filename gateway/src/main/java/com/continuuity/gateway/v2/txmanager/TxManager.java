@@ -3,9 +3,9 @@ package com.continuuity.gateway.v2.txmanager;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
@@ -21,17 +21,17 @@ import java.util.Set;
 public class TxManager {
   private static final Logger LOG = LoggerFactory.getLogger(TxManager.class);
 
-  private final OperationExecutor opex;
+  private final TransactionSystemClient txClient;
   private final Collection<TransactionAware> txAwares;
   private Transaction transaction;
 
-  public TxManager(OperationExecutor opex, TransactionAware...txAware) {
-    this.opex = opex;
+  public TxManager(TransactionSystemClient txClient, TransactionAware...txAware) {
+    this.txClient = txClient;
     txAwares = ImmutableList.copyOf(txAware);
   }
 
   public void start() throws OperationException {
-    transaction = opex.start();
+    transaction = txClient.start();
     for (TransactionAware txAware : txAwares) {
       txAware.startTx(transaction);
     }
@@ -45,7 +45,7 @@ public class TxManager {
     }
 
     // Check for conflicts
-    if (!opex.canCommit(transaction, changeSet)) {
+    if (!txClient.canCommit(transaction, changeSet)) {
       throw new OperationException(StatusCode.TRANSACTION_CONFLICT, "Cannot commit tx: conflict detected");
     }
 
@@ -61,7 +61,7 @@ public class TxManager {
     }
 
     // Make visible
-    if (!opex.commit(transaction)) {
+    if (!txClient.commit(transaction)) {
       throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to make tx visible.");
     }
 
@@ -76,16 +76,26 @@ public class TxManager {
   }
 
   public void abort() throws OperationException {
+    boolean rollbacksSuccess = true;
     for (TransactionAware txAware : txAwares) {
       try {
         if (!txAware.rollbackTx()) {
+          rollbacksSuccess = false;
           LOG.error("Fail to rollback: {}", txAware);
         }
-      } catch (Exception e) {
+      } catch (Throwable e) {
+        rollbacksSuccess = false;
         LOG.error("Exception in rollback: {}", txAware, e);
       }
     }
-    opex.abort(transaction);
+
+    // Only abort txn if all rollbacks are successful
+    if (rollbacksSuccess) {
+      txClient.abort(transaction);
+    } else {
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                   "Not all TransactionAwares could be rolled back successfully");
+    }
   }
 
   @Override
