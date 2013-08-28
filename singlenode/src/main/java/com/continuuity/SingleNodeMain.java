@@ -289,6 +289,7 @@ public class SingleNodeMain {
       System.err.println("Reactor Environment : " + environment);
     }
 
+    configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
     configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, true);
 
     return ImmutableList.of(
