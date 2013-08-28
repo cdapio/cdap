@@ -1,0 +1,340 @@
+package com.continuuity.gateway.v2.handlers.stream;
+
+import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.store.StoreFactory;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.v2.Gateway;
+import com.continuuity.gateway.v2.GatewayConstants;
+import com.continuuity.gateway.v2.runtime.GatewayModules;
+import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.metadata.thrift.MetadataService;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.ning.http.client.AsyncCompletionHandler;
+import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
+import com.ning.http.client.Request;
+import com.ning.http.client.RequestBuilder;
+import com.ning.http.client.Response;
+import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
+import junit.framework.Assert;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.junit.After;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+
+/**
+ * Test stream handler.
+ */
+public class StreamHandlerTest {
+  private static final Logger LOG = LoggerFactory.getLogger(StreamHandlerTest.class);
+
+  private static Gateway gatewayV2;
+  private static final String hostname = "127.0.0.1";
+  private static int port;
+  private static CConfiguration configuration = CConfiguration.create();
+
+  private void startGateway() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.PORT, 0);
+    configuration.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
+
+    // Set up our Guice injections
+    Injector injector = Guice.createInjector(
+      new DataFabricModules().getInMemoryModules(),
+      new ConfigModule(configuration),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new GatewayModules(configuration).getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+          // AppFabricServiceModule
+          bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
+          bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
+          bind(StoreFactory.class).to(MDSStoreFactory.class);
+        }
+      }
+    );
+
+    gatewayV2 = injector.getInstance(Gateway.class);
+    gatewayV2.startAndWait();
+    port = gatewayV2.getBindAddress().getPort();
+    testPing();
+  }
+
+  @After
+  public void stopGateway() throws Exception {
+    gatewayV2.stopAndWait();
+    configuration.clear();
+  }
+
+  @Test
+  public void testStreamCreate() throws Exception {
+    startGateway();
+
+    // Try to get info on a non-existant stream
+    DefaultHttpClient httpclient = new DefaultHttpClient();
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/stream/test_stream1", hostname, port));
+    HttpResponse response = httpclient.execute(httpGet);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+
+    // Now, create the new stream.
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/stream/test_stream1", hostname, port));
+    response = httpclient.execute(httpPut);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+
+    // getInfo should now return 200
+    httpGet = new HttpGet(String.format("http://%s:%d/stream/test_stream1", hostname, port));
+    response = httpclient.execute(httpGet);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+
+    httpGet = new HttpGet(String.format("http://%s:%d/stream/test_stream1?q=info", hostname, port));
+    response = httpclient.execute(httpGet);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+  }
+
+  @Test
+  public void testSimpleStreamEnqueue() throws Exception {
+    startGateway();
+
+    DefaultHttpClient httpclient = new DefaultHttpClient();
+
+    // Create new stream.
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/stream/test_stream_enqueue", hostname, port));
+    HttpResponse response = httpclient.execute(httpPut);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+
+    // Enqueue 10 entries
+    for (int i = 0; i < 10; ++i) {
+      HttpPost httpPost = new HttpPost(String.format("http://%s:%d/stream/test_stream_enqueue", hostname, port));
+      httpPost.setEntity(new StringEntity(Integer.toString(i)));
+      httpPost.setHeader("test_stream_enqueue.header1", Integer.toString(i));
+      response = httpclient.execute(httpPost);
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+      EntityUtils.consume(response.getEntity());
+    }
+
+    // Get new consumer id
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/stream/test_stream_enqueue?q=newConsumer",
+                                                hostname, port));
+    response = httpclient.execute(httpGet);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(1, response.getHeaders(Constants.HEADER_STREAM_CONSUMER).length);
+    String groupId = response.getFirstHeader(Constants.HEADER_STREAM_CONSUMER).getValue();
+    EntityUtils.consume(response.getEntity());
+
+    // Dequeue 10 entries
+    for (int i = 0; i < 10; ++i) {
+      httpGet = new HttpGet(String.format("http://%s:%d/stream/test_stream_enqueue?q=dequeue", hostname, port));
+      httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
+      response = httpclient.execute(httpGet);
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+      int actual = Integer.parseInt(EntityUtils.toString(response.getEntity()));
+      Assert.assertEquals(i, actual);
+      Assert.assertEquals(1, response.getHeaders("test_stream_enqueue.header1").length);
+      Assert.assertEquals(Integer.toString(i), response.getFirstHeader("test_stream_enqueue.header1").getValue());
+    }
+
+    // Dequeue-ing again should give NO_CONTENT
+    httpGet = new HttpGet(String.format("http://%s:%d/stream/test_stream_enqueue?q=dequeue", hostname, port));
+    httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
+    response = httpclient.execute(httpGet);
+    Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+  }
+
+  @Test
+  @Ignore
+  public void testBatchStreamEnqueue1() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM, 5);
+    testBatchStreamEnqueue();
+  }
+
+  @Test
+  @Ignore
+  public void testBatchStreamEnqueue2() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES, 50);
+    testBatchStreamEnqueue();
+  }
+
+  @Test
+  @Ignore
+  public void testBatchStreamEnqueue3() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS, 1);
+    testBatchStreamEnqueue();
+  }
+
+  @Test
+  @Ignore
+  public void testBatchStreamEnqueue4() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM, 10);
+    testBatchStreamEnqueue();
+  }
+
+  private void testBatchStreamEnqueue() throws Exception {
+    startGateway();
+
+    final int concurrencyLevel = 6;
+    DefaultHttpClient httpclient = new DefaultHttpClient();
+
+    // Create new stream.
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/stream/test_batch_stream_enqueue", hostname, port));
+    HttpResponse response = httpclient.execute(httpPut);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+
+    // Get new consumer id
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/stream/test_batch_stream_enqueue?q=newConsumer",
+                                                hostname, port));
+    response = httpclient.execute(httpGet);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(1, response.getHeaders(Constants.HEADER_STREAM_CONSUMER).length);
+    String groupId = response.getFirstHeader(Constants.HEADER_STREAM_CONSUMER).getValue();
+    EntityUtils.consume(response.getEntity());
+
+    ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+    List<ListenableFuture<?>> futureList = Lists.newArrayList();
+
+    List<BatchEnqueue> batchEnqueues = Lists.newArrayList();
+    for (int i = 0; i < concurrencyLevel; ++i) {
+      BatchEnqueue batchEnqueue = new BatchEnqueue(i * 1000);
+      batchEnqueues.add(batchEnqueue);
+      futureList.add(executorService.submit(batchEnqueue));
+    }
+
+    Futures.allAsList(futureList).get();
+    executorService.shutdown();
+
+    List<Integer> actual = Lists.newArrayList();
+    // Dequeue all entries
+    for (int i = 0; i < concurrencyLevel * BatchEnqueue.NUM_ELEMENTS; ++i) {
+      httpGet = new HttpGet(String.format("http://%s:%d/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
+      httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
+      response = httpclient.execute(httpGet);
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+      int entry = Integer.parseInt(EntityUtils.toString(response.getEntity()));
+      actual.add(entry);
+    }
+
+    List<Integer> expected = Lists.newArrayList();
+    for (BatchEnqueue batchEnqueue : batchEnqueues) {
+      expected.addAll(batchEnqueue.expected);
+      batchEnqueue.verify(actual);
+    }
+
+    Collections.sort(expected);
+    Collections.sort(actual);
+    Assert.assertEquals(expected, actual);
+  }
+
+  private static class BatchEnqueue implements Runnable {
+    public static final int NUM_ELEMENTS = 5;
+    private final int startElement;
+
+    private final List<Integer> expected = Lists.newArrayList();
+
+    private BatchEnqueue(int startElement) {
+      this.startElement = startElement;
+    }
+
+    @Override
+    public void run() {
+      try {
+        AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+        configBuilder.setMaximumConnectionsPerHost(1000);
+
+        final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
+          new NettyAsyncHttpProvider(configBuilder.build()),
+          configBuilder.build());
+
+        final CountDownLatch latch = new CountDownLatch(NUM_ELEMENTS);
+        for (int i = startElement; i < startElement + NUM_ELEMENTS; ++i) {
+          final int elem = i;
+          final Request request = getPostRequest(Integer.toString(elem));
+          asyncHttpClient.executeRequest(request,
+                                         new AsyncCompletionHandler<Void>() {
+                                           @Override
+                                           public Void onCompleted(Response response) throws Exception {
+                                             expected.add(elem);
+                                             latch.countDown();
+                                             Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                                                                 response.getStatusCode());
+                                             return null;
+                                           }
+
+                                           @Override
+                                           public void onThrowable(Throwable t) {
+                                             LOG.error("Got exception while posting {}", request, t);
+                                             expected.add(-1);
+                                             latch.countDown();
+                                           }
+                                         });
+
+        }
+        latch.await();
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    private Request getPostRequest(String body) {
+      RequestBuilder requestBuilder = new RequestBuilder("POST");
+      return requestBuilder
+        .setUrl(String.format("http://%s:%d/stream/test_batch_stream_enqueue", hostname, port))
+        .setBody(body)
+        .build();
+
+    }
+
+    public void verify(List<Integer> out) {
+      List<Integer> actual = Lists.newArrayList();
+      for (Integer i : out) {
+        if (startElement <= i && i < startElement + NUM_ELEMENTS) {
+          actual.add(i);
+        }
+      }
+      Collections.sort(expected);
+      Collections.sort(actual);
+      Assert.assertEquals(expected, actual);
+    }
+  }
+
+  private static void testPing() throws Exception {
+    DefaultHttpClient httpclient = new DefaultHttpClient();
+    HttpGet httpget = new HttpGet(String.format("http://%s:%d/ping", hostname, port));
+    HttpResponse response = httpclient.execute(httpget);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals("OK.\n", EntityUtils.toString(response.getEntity()));
+  }
+}
