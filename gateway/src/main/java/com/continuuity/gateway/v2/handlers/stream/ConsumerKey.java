@@ -33,14 +33,13 @@ final class ConsumerKey {
 
     ConsumerKey that = (ConsumerKey) o;
 
-    return groupId == that.groupId &&
-      !(queueName != null ? !queueName.equals(that.queueName) : that.queueName != null);
+    return groupId == that.groupId && queueName.equals(that.queueName);
 
   }
 
   @Override
   public int hashCode() {
-    int result = queueName != null ? queueName.hashCode() : 0;
+    int result = queueName.hashCode();
     result = 31 * result + (int) (groupId ^ (groupId >>> 32));
     return result;
   }

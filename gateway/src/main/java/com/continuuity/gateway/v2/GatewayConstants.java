@@ -17,6 +17,7 @@ public final class GatewayConstants {
     public static final String MAX_CACHED_EVENTS_PER_STREAM_NUM = "gateway.max.cached.events.per.stream.num";
     public static final String MAX_CACHED_STREAM_EVENTS_BYTES = "gateway.max.cached.stream.events.bytes";
     public static final String STREAM_EVENTS_FLUSH_INTERVAL_MS = "gateway.stream.events.flush.interval.ms";
+    public static final String STREAM_EVENTS_CALLBACK_NUM_THREADS = "gateway.stream.callback.exec.num.threads";
   }
 
   public static final int DEFAULT_PORT = 10000;
@@ -26,6 +27,7 @@ public final class GatewayConstants {
   public static final int DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM = 5000;
   public static final long DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES = 50 * 1024 * 1024;
   public static final long DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS = 150;
+  public static final int DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS = 5;
 
   public static final String GATEWAY_V2_HTTP_HANDLERS = "gateway.http.handler";
 }

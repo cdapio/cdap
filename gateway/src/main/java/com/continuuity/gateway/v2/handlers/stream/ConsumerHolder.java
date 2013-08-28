@@ -33,23 +33,21 @@ final class ConsumerHolder implements Closeable {
     this.txManager = new TxManager(opex, (TransactionAware) consumer);
   }
 
-  public DequeueResult dequeue() throws Throwable {
-    synchronized (this) {
-      try {
-        txManager.start();
-        DequeueResult result = consumer.dequeue();
-        txManager.commit();
-        return result;
-      } catch (Throwable e) {
-        LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
-        txManager.abort();
-        throw e;
-      }
+  public synchronized DequeueResult dequeue() throws Throwable {
+    try {
+      txManager.start();
+      DequeueResult result = consumer.dequeue();
+      txManager.commit();
+      return result;
+    } catch (Throwable e) {
+      LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
+      txManager.abort();
+      throw e;
     }
   }
 
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
   if (consumer instanceof Closeable) {
       ((Closeable) consumer).close();
     }

@@ -174,53 +174,51 @@ final class CachedStreamEvents {
       throw new IllegalStateException(String.format("Cannot add stream entry using producer %s", producer));
     }
 
-    public void flush() {
+    public synchronized void flush() {
       List<StreamEntry> entries = Lists.newArrayListWithExpectedSize(streamEntries.size());
       SettableFuture<Void> future = SettableFuture.create();
       StreamEntryToQueueEntryFunction transformer =
         new StreamEntryToQueueEntryFunction(future, callbackExecutorService);
 
-      synchronized (txManager) {
-        try {
-          streamEntries.drainTo(entries);
-          if (entries.isEmpty()) {
-            return;
-          }
-
-          txManager.start();
-          producer.enqueue(Iterables.transform(entries, transformer));
-
-          // Commit
-          txManager.commit();
-          future.set(null);
-
-        } catch (Throwable e) {
-          LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
-
-          try {
-            txManager.abort();
-          } catch (OperationException e1) {
-            LOG.error("Exception while aborting txn", e1);
-          } finally {
-            future.setException(e);
-          }
-        } finally {
-          int numEntries = entries.size();
-          cachedNumEntries.addAndGet(-1 * numEntries);
-
-          long numBytes = transformer.getNumBytes();
-          if (numEntries != transformer.getNumEntries()) {
-            numBytes = numBytesInList(entries);
-          }
-          cachedBytes.addAndGet(-1 * numBytes);
-
-          LOG.debug("Flushed {} events with producer {}", numEntries, producer);
+      try {
+        streamEntries.drainTo(entries);
+        if (entries.isEmpty()) {
+          return;
         }
+
+        txManager.start();
+        producer.enqueue(Iterables.transform(entries, transformer));
+
+        // Commit
+        txManager.commit();
+        future.set(null);
+
+      } catch (Throwable e) {
+        LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
+
+        try {
+          txManager.abort();
+        } catch (OperationException e1) {
+          LOG.error("Exception while aborting txn", e1);
+        } finally {
+          future.setException(e);
+        }
+      } finally {
+        int numEntries = entries.size();
+        cachedNumEntries.addAndGet(-1 * numEntries);
+
+        long numBytes = transformer.getNumBytes();
+        if (numEntries != transformer.getNumEntries()) {
+          numBytes = numBytesInList(entries);
+        }
+        cachedBytes.addAndGet(-1 * numBytes);
+
+        LOG.debug("Flushed {} events with producer {}", numEntries, producer);
       }
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
       if (producer instanceof Closeable) {
         ((Closeable) producer).close();
       }
