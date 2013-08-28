@@ -8,7 +8,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.engine.hypersql.HyperSQLAndMemoryOVCTableHandle;
-import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
@@ -77,7 +76,7 @@ public class DataFabricLocalModule extends AbstractModule {
 
     // Load any necessary drivers
     loadHsqlDriver();
-
+    
     // Bind our implementations
 
     // There is only one timestamp oracle for the whole system
@@ -86,7 +85,7 @@ public class DataFabricLocalModule extends AbstractModule {
 
     // This is the primary mapping of the data fabric to underlying storage
     bind(OVCTableHandle.class).to(HyperSQLAndMemoryOVCTableHandle.class);
-
+    
     bind(OperationExecutor.class).
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
