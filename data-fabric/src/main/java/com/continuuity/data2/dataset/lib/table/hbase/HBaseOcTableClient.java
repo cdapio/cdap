@@ -1,8 +1,10 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.transaction.Transaction;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Get;
@@ -18,7 +20,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- *
+ * Dataset client for HBase tables.
  */
 // todo: do periodic flush when certain threshold is reached
 // todo: extract separate "no delete inside tx" table?
@@ -29,17 +31,32 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   private static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
   private final HTable hTable;
+  private final String hTableName;
 
   private Transaction tx;
 
-  public HBaseOcTableClient(String name, Configuration hConf)
+  public HBaseOcTableClient(String name, CConfiguration cConf, Configuration hConf)
     throws IOException {
     super(name);
-    HTable hTable = new HTable(hConf, name);
+    hTableName = HBaseTableUtil.getHBaseTableName(cConf, name);
+    HTable hTable = new HTable(hConf, hTableName);
     // todo: make configurable
     hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.hTable = hTable;
+  }
+
+  // for testing only
+  String getHBaseTableName() {
+    return this.hTableName;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+                  .add("hTable", hTable)
+                  .add("hTableName", hTableName)
+                  .toString();
   }
 
   @Override

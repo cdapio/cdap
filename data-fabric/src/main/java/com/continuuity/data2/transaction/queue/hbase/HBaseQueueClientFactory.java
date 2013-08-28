@@ -7,6 +7,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
@@ -62,7 +63,9 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   public HBaseQueueClientFactory(HBaseAdmin admin, CConfiguration cConf) throws IOException {
     this.admin = admin;
-    this.tableName = Bytes.toBytes(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME));
+    String table = cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME, QueueConstants.DEFAULT_QUEUE_TABLE_NAME);
+    table = HBaseTableUtil.getHBaseTableName(cConf, table);
+    this.tableName = Bytes.toBytes(table);
     this.evictionExecutor = createEvictionExecutor();
 
     String jarDir = cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
@@ -72,6 +75,11 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
                                            createCoProcessorJar(getFileSystem(cConf, admin.getConfiguration()),
                                                                 new Path(jarDir)),
                                            HBaseQueueEvictionEndpoint.class.getName());
+  }
+
+  // for testing only
+  String getHBaseTableName() {
+    return Bytes.toString(this.tableName);
   }
 
   @Override
