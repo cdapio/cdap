@@ -328,10 +328,60 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
   };
 
-  this.app.get('/rest/metrics/:type', function (req, res) {
+  this.app.get('/rest/metrics/system/:type', function (req, res) {
 
     var type = req.params.type;
     res.send(availableMetrics[type]);
+
+  });
+
+  /**
+   * User Metrics Discovery
+   */
+  this.app.get('/rest/metrics/user/*', function (req, res) {
+
+    var path = req.url.slice(18);
+
+    self.logger.trace('User Metrics', path);
+
+    var options = {
+      host: self.config['metrics.service.host'],
+      port: self.config['metrics.service.port'],
+      path: '/metrics/available' + path,
+      method: 'GET'
+    };
+
+    var request = http.request(options, function(response) {
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
+      });
+
+      response.on('end', function () {
+
+        try {
+          data = JSON.parse(data);
+          res.send({ result: data, error: null });
+        } catch (e) {
+          self.logger.error('Parsing Error', data);
+          res.send({ result: null, error: data });
+        }
+
+      });
+    });
+
+    request.on('error', function(e) {
+
+      res.send({
+        result: null,
+        error: {
+          fatal: 'UserMetricsService: ' + e.code
+        }
+      });
+
+    });
+
+    request.end();
 
   });
 
@@ -400,23 +450,33 @@ WebAppServer.prototype.bindRoutes = function(io) {
         count++;
         self.Api.metadata(accountID, pluralREST[name], [], function (error, response) {
 
-          var i = response.length, type = this.type;
-
-          // Determine the type of an element.
-          if (type !== 'mapreduce') {
-            type = type.slice(0, type.length - 1);
+          if (error) {
+            self.logger.error(error);
+            res.status(500);
+            res.send({
+              error: error
+            });
           } else {
-            type = 'batch';
-          }
-          type = type.charAt(0).toUpperCase() + type.slice(1);
 
-          while (i--) {
-            response[i].type = type;
-          }
+            var i = response.length, type = this.type;
 
-          all = all.concat(response);
-          if (!--count) {
-            res.send(all);
+            // Determine the type of an element.
+            if (type !== 'mapreduce') {
+              type = type.slice(0, type.length - 1);
+            } else {
+              type = 'batch';
+            }
+            type = type.charAt(0).toUpperCase() + type.slice(1);
+
+            while (i--) {
+              response[i].type = type;
+            }
+
+            all = all.concat(response);
+            if (!--count) {
+              res.send(all);
+            }
+
           }
         }.bind({type: name}));
       }

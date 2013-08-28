@@ -31,7 +31,7 @@ define(['core/application'], function(App) {
       // TODO: make test reliable.
       expect($('#warning').text()).toNotEqual(
         'New version available: 1 » 1 Click here to download.');
-      
+
       version = {'newest': 1, 'current': 1.5};
       controller.checkVersion(version);
       expect($('#warning').text()).toEqual(
@@ -47,7 +47,7 @@ define(['core/application'], function(App) {
     });
 
     it('should set time range', function() {
-      millis = 3600;
+      var millis = 3600;
       app.setTimeRange(millis);
       expect(app.get('__timeRange')).toEqual(millis);
       expect(app.get('__timeLabel')).toEqual('Last 1 Hour');

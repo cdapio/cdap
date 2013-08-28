@@ -21,9 +21,10 @@
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
-  <script src="/core/lib/highcharts.js"></script>
+  <script src="/core/lib/rickshaw.js"></script>
   <script src="/third_party/select2/select2.min.js"></script>
 
+  <link rel="stylesheet" href="/third_party/rickshaw/rickshaw.min.css">
   <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/third_party/select2/select2.css">
   <link rel="stylesheet" href="/assets/css/main.css">
@@ -39,7 +40,6 @@
       <li><a class="nav-link nav-flows" href="#/flows">Process</a></li>
       <li><a class="nav-link nav-datasets" href="#/datasets">Store</a></li>
       <li><a class="nav-link nav-queries" href="#/procedures">Query</a></li>
-      <li><a class="nav-link nav-analyze" href="#/analyze">Analyze</a></li>
     </ul>
   </div>
 
@@ -55,6 +55,7 @@
         <a href="http://support.continuuity.com/" target="_blank">Support</a>
         <a href="https://accounts.continuuity.com/" target="_blank" class="user-link">My Account</a>
       {{/if}}
+      <a href="#/analyze" class="metrics-link">Metrics</a>
       </div>
       {{view C.Embed.Breadcrumb}}
     </div>
@@ -73,7 +74,7 @@
     <a style="text-decoration:underline;" href="#" onclick="return C.Util.reset();">Reset</a>
     </div>
     <div id="drop-hover">
-      <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy an Application.</div></div>
+      <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy.</div></div>
     </div>
 
   </script>
@@ -107,7 +108,7 @@
       </div>
       <div class="quarter">
         <div class="panel" style="margin-right: 0;">
-          <div class="quarter-title">Querying</div>
+          <div class="quarter-title">Serving</div>
           <div class="quarter-value"><strong>{{value.query}}</strong> QPS</div>
           {{view C.Embed.DashChart kind="query"}}
         </div>
@@ -135,14 +136,12 @@
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
-              <button class="btn" style="width:64px;" {{action "promotePrompt"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Drain"><span class="btn-drain"></span><span>Push</span></button>
-          <ul class="dropdown-menu">
-            <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
-          </ul>
+            <button class="btn" style="width:64px;" {{action "promotePrompt"}}><span class="btn-drain"></span><span>Push</span></button>
+
+            <ul class="dropdown-menu">
+              <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
+            </ul>
         </div>
-      </div>
-      <div class="info-box" style="float: right;border: 0;padding-right: 0;">
-        {{view C.Embed.DropZone uploadType="Update"}}
       </div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/events/{id}" title="Processed"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/busyness/{id}" unit="percent" title="Busyness"}}</div>
@@ -160,11 +159,11 @@
       <div class="panel">
 
         <div class="panel-head">
-          {{#if children.Flow.content.length}}
+          {{#if elements.Flow.length}}
             <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
-              <button {{action startAllFlows on="click"}} class="btn">Start</button>
+              <button {{action startAll "Flow" on="click"}} class="btn">Start</button>
               <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
-              <button {{action stopAllFlows on="click"}} class="btn">Stop</button>
+              <button {{action stopAll "Flow" on="click"}} class="btn">Stop</button>
             </div>
           {{/if}}
           <div class="panel-title">Process</div>
@@ -178,11 +177,11 @@
       </div>
       <div class="panel">
         <div class="panel-head">
-          {{#if children.Query.content.length}}
+          {{#if elements.Procedure.length}}
             <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
-              <button {{action startAllQueries on="click"}} class="btn">Start</button>
+              <button {{action startAll "Procedure" on="click"}} class="btn">Start</button>
               <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
-              <button {{action stopAllQueries on="click"}} class="btn">Stop</button>
+              <button {{action stopAll "Procedure" on="click"}} class="btn">Stop</button>
             </div>
           {{/if}}
           <div class="panel-title">Query</div>
@@ -733,10 +732,11 @@
 
   <script type="text/x-handlebars" data-template-name="Analyze">
     <div id="title">
-      <h1>Analyze<span>Metrics</span></h1>
+      {{view C.Embed.TimeSelector}}
+      <h1>Metrics <span>Explorer</span></h1>
     </div>
     <div id="panels">
-      <div class="panel">
+      <div class="panel" id="analyze-selected">
         <div class="panel-body clearfix">
 
           <div class="analyze-selected">
@@ -759,32 +759,36 @@
             </ul>
 
             <div id="analyze-configurator">
-
               <input type="hidden" id="elementSelector" />
-
-              <div class="dropdown analyze-color-select">
-                <button href="#" role="button" class="btn dropdown-toggle" data-toggle="dropdown"><div class="analyze-color-selected" {{bindAttr style=configuring.colorStyle}}></div></button>
-                <ul class="dropdown-menu">
-                  {{#each color in colors}}
-                  <li><button class="btn" {{action selectColor color}}><div style="background-color:{{unbound color}}"></div></button></li>
-                  {{/each}}
-                </ul>
-              </div>
-
               <input type="hidden" id="metricSelector" disabled="disabled" />
-              <button class="analyze-gray-btn" {{action hideConfigure}}>Cancel</button>
               <button {{bindAttr disabled="configuring.noSelection"}} class="analyze-blue-btn" {{action addToChart}}>Add</button>
-
+              <button class="analyze-gray-btn" {{action hideConfigure}}>Cancel</button>
             </div>
 
         </div>
 
-        <div class="analyze-chart">
-          {{view C.Embed.Analyze}}
-        </div>
+      </div>
 
+    </div>
+
+    <div class="panel analyze-chart">
+      <div class="panel-body">
+        {{#if selected.length}}
+          <div id="y_axis"></div>
+          {{view C.Embed.Analyze}}
+        {{else}}
+          <div class="object-list-empty" style="height:500px;padding-top:220px;">
+            <div class="object-list-empty-content">
+              <div>No metrics selected.</div>
+              <span>Please add a metric on the right.</span>
+            </div>
+          </div>
+        {{/if}}
       </div>
     </div>
+
+    </div>
+
   </script>
 
 
@@ -854,7 +858,7 @@
           <th style="text-align: center;width:64px;">Process</th>
           <th style="text-align: center;width:64px;">Store</th>
           <th style="text-align: center;width:64px;">Query</th>
-        <th style="width: 364px;">Busyness</th>
+        <th style="width: 262px;">Busyness</th>
         </thead>
         <tbody>
         {{#each elements.App }}
@@ -902,7 +906,7 @@
         <th style="padding-left: 14px;">Streams</th>
         <th style="width: 100px;text-align: center;">Storage</th>
         <th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Unconsumed</th>
-        <th style="width: 444px;">Arrival Rate</th>
+        <th style="width: 262px;">Arrival Rate</th>
       </thead>
       <tbody>
         {{#each elements.Stream }}
@@ -984,7 +988,7 @@
         <thead>
         <th style="padding-left: 14px;">Datasets</th>
         <th style="width: 100px;text-align: center;">Storage</th>
-        <th style="width: 444px;">Write Rate</th>
+        <th style="width: 262px;">Write Rate</th>
         </thead>
         <tbody>
         {{#each elements.Dataset }}
@@ -1013,9 +1017,8 @@
       <table class="table">
       <thead>
         <th style="padding-left: 14px;">Procedures</th>
-        <th style="width: 100px;text-align: center;">Instances</th>
-        <th style="width: 212px;">Request Rate</th>
-        <th style="width: 212px;">Error Rate</th>
+        <th style="width: 262px;">Request Rate</th>
+        <th style="width: 262px;">Error Rate</th>
       </thead>
       <tbody>
         {{#each elements.Procedure}}
@@ -1023,7 +1026,6 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
             </td>
-            <td class="app-list-count">1</td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/requests/{parent}/procedures/{id}"}}</td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/failures/{parent}/procedures/{id}"}}</td>
           </tr>

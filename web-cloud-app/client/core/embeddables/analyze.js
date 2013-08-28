@@ -20,54 +20,53 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
       elementId: 'metrics-explorer-widget',
 
-      build: function () {
+      build: function (series) {
 
-        Highcharts.setOptions({
-            global: {
-                useUTC: false
-            }
+        var graph = new Rickshaw.Graph( {
+          element: this.get('element'),
+          width: this.$().width(),
+          height: 500,
+          renderer: 'line',
+          series: series,
+          interpolation: 'linear',
+          padding: {
+            top: 0.2
+          }
         });
 
-        var chart;
-        chart = $(this.get('element')).highcharts({
-            chart: {
-                type: 'spline',
-                animation: Highcharts.svg
-            },
-            title: {
-                text: null
-            },
-            xAxis: {
-                type: 'datetime',
-                tickPixelInterval: 100
-            },
-            yAxis: {
-                title: {
-                    text: null
-                },
-                plotLines: [{
-                    value: 0,
-                    width: 1,
-                    color: '#DDDDDD'
-                }]
-            },
-            tooltip: {
-              formatter: function() {
-                return '<b>'+ this.series.name +'</b>: <b>' +
-                Highcharts.numberFormat(this.y, 2) + '</b><br/>'+
-                Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x);
-              }
-            },
-            legend: { enabled: false },
-            exporting: { enabled: false },
-            series: []
-        }).highcharts();
+        var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+          graph: graph,
+          xFormatter: function (x) {
+            return new Date( x * 1000 ).toString();
+          }
+        } );
 
-        this.set('chart', chart);
+        var axes = new Rickshaw.Graph.Axis.Time( {
+          graph: graph,
+          timeFixture: new Rickshaw.Fixtures.Time.Local()
+        });
+        axes.render();
+
+        var y_ticks = new Rickshaw.Graph.Axis.Y( {
+          graph: graph,
+          orientation: 'left',
+          tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+          element: document.getElementById('y_axis')
+        } );
+
+        this.set('chart', graph);
 
       },
 
       update: function () {
+
+        if (!this.get('controller.series').length) {
+          return;
+        }
+
+        if (!this.get('chart')) {
+            this.build(this.get('controller.series'));
+        }
 
         function diff (current, more) {
 
@@ -96,18 +95,18 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
           j = current.length, found = false;
           while (j--) {
             if (current[j].name === more[i].name) {
-
-              var data = diff(current[j].data, more[i].data);
-
-              for (k = 0; k <= data.length - 1; k++) {
-                current[j].addPoint([data[k].x, data[k].y], false, true);
-              }
+              current[j].data = more[i].data;
               found = true;
             }
           }
+
           if (!found) {
             $.extend(more[i], seriesOptions);
-            this.get('chart').addSeries(more[i]);
+
+            this.get('chart').series.addObject(
+              more[i]
+            );
+
           }
 
         }
@@ -122,16 +121,28 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
             }
           }
           if (!found) {
-            current[i].remove();
+            this.get('chart').series.removeAt(i);
           }
         }
 
-        this.get('chart').redraw();
+        this.get('chart').render();
 
       }.observes('controller.series'),
 
       didInsertElement: function () {
-        this.build();
+
+        var self = this;
+
+        C.addResizeHandler('metrics-explorer', function () {
+
+          $('#y_axis').html('');
+          self.$().html('');
+
+          self.set('chart', null);
+          self.update();
+
+        });
+
       }
 
     });

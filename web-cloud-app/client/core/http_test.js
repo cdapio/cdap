@@ -22,7 +22,7 @@ define(['core/http'], function(HTTP) {
 
     it('should find query string based on arguments', function() {
       var qs = http.findQueryString(args1);
-      expect(qs).toEqual('type=type1&count=count1')
+      expect(qs).toEqual('type=type1&count=count1');
       qs = http.findQueryString(args2);
       expect(qs).toEqual('');
       qs = http.findQueryString(args3);

@@ -91,6 +91,11 @@ def build_edition(edition, base) {
   }
 
   copy {
+    from 'client/third_party'
+    into "$installDir/client/third_party"
+  }
+
+  copy {
     from 'client/assets'
     into "$installDir/client/assets"
   }

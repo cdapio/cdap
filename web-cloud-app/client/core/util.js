@@ -71,8 +71,7 @@ define([], function () {
 				function drop (e) {
 					ignoreDrag(e);
 
-					$('#drop-label').hide();
-					$('#drop-loading').show();
+					C.Util.interrupt();
 
 					if (!C.Util.Upload.processing) {
 						var dt = e.originalEvent.dataTransfer;
@@ -551,6 +550,32 @@ define([], function () {
 
 			return [value, 'B'];
 		},
+
+		interrupt: function () {
+
+			$('#drop-border').addClass('hidden');
+
+			$('#drop-label').hide();
+			$('#drop-loading').show();
+			$('#drop-hover').show();
+
+		},
+
+		proceed: function (done) {
+
+			$('#drop-hover').fadeOut(function () {
+
+				$('#drop-border').removeClass('hidden');
+
+				$('#drop-label').show();
+				$('#drop-loading').hide();
+				if (typeof done === 'function') {
+					done();
+				}
+			});
+
+		},
+
 		reset: function () {
 
 			C.Modal.show(
@@ -558,9 +583,7 @@ define([], function () {
 				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor. Are you sure you would like to do this?",
 				function () {
 
-					$('#drop-label').hide();
-					$('#drop-loading').show();
-					$('#drop-hover').show();
+					C.Util.interrupt();
 
 					C.get('far', {
 						method: 'reset',
@@ -569,9 +592,7 @@ define([], function () {
 
 						if (error) {
 
-							$('#drop-hover').fadeOut(function () {
-								$('#drop-label').show();
-								$('#drop-loading').hide();
+							C.Util.proceed(function () {
 								C.Modal.show("Reset Error", error.message);
 							});
 

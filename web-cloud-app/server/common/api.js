@@ -74,7 +74,11 @@ logger.setLevel(LOG_LEVEL);
 
 			if (params.length === 2) {
 				var entityType = params.shift();
-				params[0] = new metadataservice_types[entityType](params[0]);
+				try {
+					params[0] = new metadataservice_types[entityType](params[0]);
+				} catch (e) {
+					logger.error(method, params, e);
+				}
 			}
 
 			if (method.indexOf('ByApplication') !== -1 || method === 'getFlows' || method === 'getFlow' ||
@@ -106,6 +110,10 @@ logger.setLevel(LOG_LEVEL);
 
 		params = params || [];
 		params.unshift(accountID);
+
+		if (params[4] === 'PROCEDURE') {
+			params[4] = 'QUERY';
+		}
 
 		var auth_token = new appfabricservice_types.AuthToken({ token: null });
 

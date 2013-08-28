@@ -7,7 +7,6 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
   // Used for local storage, which is used to store our metrics selection.
   var STORED_APP_NAME = 'continuuity-analyze';
-  var DEFAULT_COLOR = 'orange';
 
   var Controller = Em.Controller.extend(Em.Evented, {
 
@@ -33,11 +32,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       },
       metric: {
         name: 'Metric Names'
-      },
-      color: DEFAULT_COLOR,
-      colorStyle: function () {
-        return 'background-color: ' + this.get('color');
-      }.property('color')
+      }
     }),
 
     init: function () {
@@ -80,7 +75,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
       }
 
-      // Move to Ember run loop
+      // Needs time to find elements. Move to run loop.
       setTimeout(function () {
 
         $("#elementSelector").select2({
@@ -94,7 +89,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
                 var children = [];
                 $.each(this.children, function () {
-                  if(query.term.length == 0 || this.text.toUpperCase().indexOf(query.term.toUpperCase()) >= 0 ){
+                  if(query.term.length === 0 || this.text.toUpperCase().indexOf(query.term.toUpperCase()) >= 0 ){
                       children.push({id: this.id, text: this.text });
                   }
                 });
@@ -105,7 +100,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
               });
               query.callback({results: data});
 
-            },
+            }
         });
         $("#elementSelector").on('change', function (e) {
 
@@ -121,12 +116,60 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
           var results = [];
           $.each(metrics, function () {
-            if(term.length == 0 || this.text.toUpperCase().indexOf(term.toUpperCase()) >= 0 ){
+            if(term.length === 0 || this.text.toUpperCase().indexOf(term.toUpperCase()) >= 0 ){
                 results.push({id: this.id, text: this.text });
             }
           });
           return results;
 
+        }
+
+        function getUserMetrics(model, term, done) {
+
+          var context = model.get('context');
+          var metrics = self.get('metricsList');
+
+          self.HTTP.rest('metrics/user' + model.get('context'), function (response, status) {
+
+            if (response.error) {
+
+              Em.debug(response.error);
+
+            } else {
+
+              if (response.result.length) {
+
+                var userMetrics = [], result = response.result, i = result.length;
+                while (i--) {
+
+                  var path = '/user' + context + '/' + result[i].metric;
+                  var j = metrics.length, found = false;
+
+                  while (j--) {
+                    if (metrics[j].id === path) {
+                      found = true;
+                    }
+                  }
+
+                  if (!found) {
+                    userMetrics.push({
+                      id: path,
+                      text: result[i].metric
+                    });
+                  }
+                }
+
+                metrics = metrics.concat(userMetrics);
+                self.set('metricsList', metrics);
+                done({results: filterMetrics(term, metrics)});
+
+              } else {
+
+                done({results: filterMetrics(term, metrics)});
+
+              }
+            }
+          });
         }
 
         $("#metricSelector").select2({
@@ -138,11 +181,18 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
               if (metrics) {
 
-                query.callback({results: filterMetrics(query.term, metrics)});
+                // The element supports user-defined metrics. (Runnable)
+                if (model.get('context')) {
+                  getUserMetrics(model, query.term, query.callback);
+
+                } else {
+                  query.callback({results: filterMetrics(query.term, metrics)});
+
+                }
 
               } else {
 
-                self.HTTP.rest('metrics', model.type, function (metrics, status) {
+                self.HTTP.rest('metrics', 'system', model.type, function (metrics, status) {
 
                   var i = metrics.length;
                   while (i--) {
@@ -155,7 +205,14 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
                   self.get('metricsCache').set(model.type, metrics);
                   self.set('metricsList', metrics);
 
-                  query.callback({results: filterMetrics(query.term, metrics)});
+                  // The element supports user-defined metrics. (Runnable)
+                  if (model.get('context')) {
+                    getUserMetrics(model, query.term, query.callback);
+
+                  } else {
+                    query.callback({results: filterMetrics(query.term, metrics)});
+
+                  }
 
                 });
 
@@ -188,12 +245,13 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
             }
         }
         keys.sort();
-        jQuery.each(keys, function(i, key){
+        $.each(keys, function(i, key){
             sorted_obj[key] = obj[key];
         });
 
         return sorted_obj;
-      };
+
+      }
 
       /*
        * Get all available Elements for selection.
@@ -218,7 +276,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
             byType[element.type].push({
               id: id,
               text: element.name
-            })
+            });
           } else {
             byType[element.type] = [{
               id: id,
@@ -246,6 +304,9 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       this.set('elementModels', []);
       this.set('elementsCache', []);
       this.set('metricsCache', Em.Object.create());
+
+      // This is set in the Analyze embeddable.
+      C.removeResizeHandler('metrics-explorer');
 
     },
 
@@ -283,21 +344,21 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         if (response.result) {
 
           var s = null, series = [], selected = self.get('selected.content'),
-            result = response.result;
+            result = response.result, metric, d;
 
           for (var i = 0; i < result.length; i ++) {
 
             if ((metric = findMetric(result[i].path))) {
 
               s = {
-                name: metric.element + ' (' + metric.type + ') ' + metric.metric + ')',
+                name: metric.metric + ' (' + metric.element + ', ' + metric.type + ')',
                 color: metric.color,
                 data: []
               }, d = response.result[i].result.data;
 
               for (var j = 0; j < d.length; j ++) {
                 s.data.push({
-                  x: d[j].time * 1000,
+                  x: d[j].time,
                   y: d[j].value
                 });
               }
@@ -321,8 +382,6 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
     showConfigure: function (metric) {
 
-      // TODO: Find metric to allow editing in place.
-      var top = $('.analyze-selected-metric-add').position().top;
       var index = Math.floor(Math.random() * this.colors.length);
 
       this.configuring.set('color', this.colors[index]);
@@ -331,8 +390,6 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
       $("#elementSelector").select2('val', null);
       $("#metricSelector").select2('val', null);
-
-      $('#analyze-configurator').css({ top: (top + 8) + 'px' });
       $('#analyze-configurator').fadeIn(100);
 
     },
@@ -394,7 +451,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
     },
 
     /**
-     * Saves existing application state to localstorage.
+     * Saves selection state to localstorage.
      */
     saveLocal: function() {
       localStorage.setItem(STORED_APP_NAME, JSON.stringify(this.get('selected')));
