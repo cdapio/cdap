@@ -158,6 +158,12 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
     return this.delegate.read(key);
   }
 
+  /**
+   * Delete the object specified with specified key and column.
+   * @param key key of the object to be deleted
+   * @param column col of the object to be deleted
+   * @throws OperationException in case of errors
+   */
   public void delete(byte[] key, byte[] column) throws OperationException{
     if (null == this.delegate){
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
@@ -165,6 +171,11 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
     this.delegate.delete(key, column);
   }
 
+  /**
+   * Delete the object in the default column for the specified key.
+   * @param key key of the object to be deleted in the default column
+   * @throws OperationException in case of errors
+   */
   public void delete(byte[] key) throws OperationException{
     if (null == this.delegate){
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
@@ -172,6 +183,11 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
     this.delegate.delete(key);
   }
 
+  /**
+   * Delete the objects across all the columns for the given key.
+   * @param key key of the object to be deleted
+   * @throws OperationException
+   */
   public void deleteAll(byte[] key) throws OperationException{
     if (null == this.delegate){
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
