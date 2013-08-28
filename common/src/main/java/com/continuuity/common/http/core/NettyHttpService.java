@@ -80,7 +80,7 @@ public final class NettyHttpService extends AbstractIdleService {
                           int connectionBacklog,
                           int execThreadPoolSize, long execThreadKeepAliveSecs,
                           RejectedExecutionHandler rejectedExecutionHandler,
-                          Iterable<HttpHandler> httpHandlers){
+                          Iterable<? extends HttpHandler> httpHandlers){
     this.bindAddress = bindAddress;
     this.bossThreadPoolSize = bossThreadPoolSize;
     this.workerThreadPoolSize = workerThreadPoolSize;
@@ -243,7 +243,7 @@ public final class NettyHttpService extends AbstractIdleService {
       port = 0;
     }
 
-    private Iterable<HttpHandler> handlers;
+    private Iterable<? extends HttpHandler> handlers;
     private int bossThreadPoolSize;
     private int workerThreadPoolSize;
     private int connectionBacklog;
@@ -258,7 +258,7 @@ public final class NettyHttpService extends AbstractIdleService {
      * @param handlers Iterable of HttpHandlers.
      * @return instance of {@code Builder}.
      */
-    public Builder addHttpHandlers(Iterable<HttpHandler> handlers) {
+    public Builder addHttpHandlers(Iterable<? extends HttpHandler> handlers) {
       this.handlers = handlers;
       return this;
     }

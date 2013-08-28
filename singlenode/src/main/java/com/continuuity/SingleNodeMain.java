@@ -3,7 +3,6 @@
  */
 package com.continuuity;
 
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
@@ -12,6 +11,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.StackTraceUtil;
@@ -271,7 +271,7 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
-      new GatewayModules().getInMemoryModules(),
+      new GatewayModules(configuration).getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -312,7 +312,7 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
-      new GatewayModules().getSingleNodeModules(),
+      new GatewayModules(configuration).getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
