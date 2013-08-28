@@ -45,11 +45,11 @@ public class TestPurchaseAnalytics extends AppFabricTestBase {
   public void TestDataSetUsage() throws IOException, TimeoutException, InterruptedException {
     ApplicationManager appManager = deployApplication(PurchaseAnalyticsApp.class);
 
-    FlowManager purchaseAnalyticsFlow = appManager.startFlow("PurchaseAnalyticsFlow");
-    //FlowManager generatedPurchaseAnalyticsFlow = appManager.startFlow("GeneratedPurchaseAnalyticsFlow");
+    //FlowManager purchaseAnalyticsFlow = appManager.startFlow("PurchaseAnalyticsFlow");
+    FlowManager generatedPurchaseAnalyticsFlow = appManager.startFlow("GeneratedPurchaseAnalyticsFlow");
 
-    StreamWriter s1 = appManager.getStreamWriter("transactionStream");
-    s1.send("1|{\"customer\":\"alex\",\"product\":\"FisherPrice\",\"quantity\":10,\"price\":\"100\",\"purchaseTime\":\"129308132\"}");
+    //StreamWriter s1 = appManager.getStreamWriter("transactionStream");
+    //s1.send("1|{\"customer\":\"alex\",\"product\":\"FisherPrice\",\"quantity\":10,\"price\":\"100\",\"purchaseTime\":\"129308132\"}");
 
 
   }
