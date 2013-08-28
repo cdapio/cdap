@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.metrics.MetricsScope;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -42,6 +43,7 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
     Assert.assertEquals("process.events.ins.queueId", request.getMetricPrefix());
     Assert.assertEquals(MetricsRequest.Type.AGGREGATE, request.getType());
+    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
   }
 
   @Test
@@ -58,6 +60,7 @@ public class MetricsRequestParserTest {
       URI.create("/process/completion/app1/mapreduce/jobId/mappers/mapperId?summary=true"));
     Assert.assertEquals("app1.b.jobId.m.mapperId", request.getContextPrefix());
     Assert.assertEquals(MetricsRequest.Type.SUMMARY, request.getType());
+    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
   }
 
   @Test
@@ -73,6 +76,7 @@ public class MetricsRequestParserTest {
     request = MetricsRequestParser.parse(URI.create("/process/events/app1/flows/flowId/flowletId/ins/q?summary=true"));
     Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
     Assert.assertEquals("process.events.ins.q", request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
   }
 
   @Test
@@ -95,6 +99,7 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
     Assert.assertEquals("store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
+    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
   }
 
   @Test
@@ -114,6 +119,7 @@ public class MetricsRequestParserTest {
     request = MetricsRequestParser.parse(URI.create("/store/bytes/datasets/dataset2?aggregate=true"));
     Assert.assertNull(request.getContextPrefix());
     Assert.assertEquals("dataset2", request.getTagPrefix());
+    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
   }
 
   @Test
@@ -129,5 +135,34 @@ public class MetricsRequestParserTest {
 
     request = MetricsRequestParser.parse(URI.create("/collect/events/streams/stream1/app1/flows/flow1?aggregate=true"));
     Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
+    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
+  }
+
+  @Test
+  public void testUser() {
+    MetricsRequest request = MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/metric?aggregate=true"));
+    Assert.assertEquals("app1.f", request.getContextPrefix());
+    Assert.assertEquals("metric", request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
+
+    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/metric?aggregate=true"));
+    Assert.assertEquals("app1", request.getContextPrefix());
+    Assert.assertEquals("metric", request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
+
+    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/flow1/flowlet1/metric?aggregate=true"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
+    Assert.assertEquals("metric", request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
+
+    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/procedures/procedure1/metric?aggregate=true"));
+    Assert.assertEquals("app1.p.procedure1", request.getContextPrefix());
+    Assert.assertEquals("metric", request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
+
+    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/mapreduce/mapred1/mappers/metric?aggregate=true"));
+    Assert.assertEquals("app1.b.mapred1.m", request.getContextPrefix());
+    Assert.assertEquals("metric", request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
   }
 }

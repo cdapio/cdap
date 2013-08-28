@@ -90,7 +90,7 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
 
           offset += entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
           metric = entityCodec.decode(MetricsEntityType.METRIC, rowKey, offset);
-          if (!metric.startsWith(metricPrefix)) {
+          if (metricPrefix != null && !metric.startsWith(metricPrefix)) {
             continue;
           }
 
