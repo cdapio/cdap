@@ -11,17 +11,70 @@ build_home=${REACTOR_HOME:-$bin/../../..}
 cuser=${BEAMER_USER:-$USER}
 jumpbox=${BEAMER_JUMPBOX:-lm101.sw.joyent.continuuity.com}
 
+function usage() {
+  echo ""
+  echo "Developer Beamer v$version"
+  echo ""
+  echo "$script <section> <command> <component> -c <cluster> [ -p <package>] [-r] [-t]"
+  echo ""
+  echo "Section"
+  echo "  software     All software related operations"
+  echo "  cluster      All cluster related operations"
+  echo "  config       All config operations"
+  echo ""
+  echo "Commands for section software"
+  echo ""
+  echo "  install      Install a components on the cluster from local build"
+  echo "  list         List all the snapshot builds available on the cluster (*) indicates currently active"
+  echo "  lock         Lock the component on the cluster."
+  echo "  unlock       Unlock the component on the cluster"
+  echo "  activate     Activate a older version of snapshot on the cluster"
+  echo "  start        Start of all the services in a component"
+  echo "  stop         Stop of all the services in a component"
+  echo "  restart      Restart of all the services in a component"
+  echo "  status       Status of all the services in a component"
+  echo ""
+  echo "  Options"
+  echo "    -c Specifies the cluster on which the command would operate on"
+  echo "    -p Specifies the package"
+  echo "    -r Specifies to use a release version (no SNAPSHOT)"
+  echo "    -t Specifies to run tests for the component locally before uploading"
+  echo ""
+  echo "Commands for section cluster"
+  echo ""
+  echo "  create         Create cluster"
+  echo "  destroy        Destroy cluster"
+  echo "  list           List clusters owned by you"
+  echo "  activity       List all the activity across all users and clusters"
+  echo "  show-mapping   Shows cluster component host mapping"
+  echo "  show-installed Shows installed components on the cluster"
+  echo "  truncate-tables Truncates cluster tables"
+  echo "  delete-tables  Delete cluster tables"
+  echo ""
+  echo "  Options"
+  echo "    -c Specifies the name of the cluster"
+  echo "    -t Specifies the type of the cluster"
+  echo ""
+  echo "Environment Variables"
+  echo ""
+  echo "  REACTOR_HOME   Specifies the path to where reactor git project exists (Current : $REACTOR_HOME)"
+  echo "  BEAMER_USER    Specifies the name of the user to be used for communicating with cluster (default: $USER)"
+  echo "  BEAMER_JUMPBOX Specifies the jumpbox to be used for cluster operations"
+  echo ""
+}
+
+
 if [ ! -f "$build_home/version.txt" ] ; then
-  echo "$build_home does not exists. Set REACTOR_HOME."
   usage
+  echo "$build_home does not exists. Set REACTOR_HOME."
   exit 1 
 fi
 
 if [ ! -f "$conf/project.map" ]; then
   conf=/etc/beamer
   if [ ! -f "$conf/project.map" ]; then
-    err "Beamer not installed correctly or running from wrong path"  
     usage
+    err "Beamer not installed correctly or running from wrong path"  
     exit 1
   fi
 fi
@@ -86,58 +139,6 @@ function hostname() {
   echo $host
 }
 
-function usage() {
-  echo ""
-  echo "Developer Beamer v$version"
-  echo ""
-  echo "$script <section> <command> <component> -c <cluster> [ -p <package>] [-r] [-t]"
-  echo ""
-  echo "Section"
-  echo "  software     All software related operations"
-  echo "  cluster      All cluster related operations"
-  echo "  config       All config operations"
-  echo ""
-  echo "Commands for section software"
-  echo ""
-  echo "  install      Install a components on the cluster from local build"
-  echo "  list         List all the snapshot builds available on the cluster (*) indicates currently active"
-  echo "  lock         Lock the component on the cluster."
-  echo "  unlock       Unlock the component on the cluster"
-  echo "  activate     Activate a older version of snapshot on the cluster"
-  echo "  start        Start of all the services in a component"
-  echo "  stop         Stop of all the services in a component"
-  echo "  restart      Restart of all the services in a component"
-  echo "  status       Status of all the services in a component"
-  echo ""
-  echo "  Options"
-  echo "    -c Specifies the cluster on which the command would operate on"
-  echo "    -p Specifies the package"
-  echo "    -r Specifies to use a release version (no SNAPSHOT)"
-  echo "    -t Specifies to run tests for the component locally before uploading"
-  echo ""
-  echo "Commands for section cluster"
-  echo ""
-  echo "  create         Create cluster"
-  echo "  destroy        Destroy cluster"
-  echo "  list           List clusters owned by you"
-  echo "  activity       List all the activity across all users and clusters"
-  echo "  show-mapping   Shows cluster component host mapping"
-  echo "  show-installed Shows installed components on the cluster"
-  echo "  truncate-tables Truncates cluster tables"
-  echo "  delete-tables  Delete cluster tables"
-  echo ""
-  echo "  Options"
-  echo "    -c Specifies the name of the cluster"
-  echo "    -t Specifies the type of the cluster"
-  echo ""
-  echo "Environment Variables"
-  echo ""
-  echo "  REACTOR_HOME   Specifies the path to where reactor git project exists (Current : $REACTOR_HOME)"
-  echo "  BEAMER_USER    Specifies the name of the user to be used for communicating with cluster (default: $USER)"
-  echo "  BEAMER_JUMPBOX Specifies the jumpbox to be used for cluster operations"
-  echo ""
-}
-
 function install() {
   local cluster=$1; shift
   local host=$1; shift
@@ -147,6 +148,9 @@ function install() {
   local tests=$1; shift
 
   echo "Installing component $xcomponent on cluster $cluster"
+  if [[ "x${component}" == "xweb-cloud-app" ]]; then
+    err "WARNING: web-cloud-app has continuuity-local.xml that will get overwritten with this install"
+  fi 
   build $component $xcomponent $release $tests 
   tar=`cat $build_home/$component/build/receipt`
   tar_name=`basename $tar`
@@ -312,14 +316,18 @@ function activity_log() {
   done
 }
 
-function reset_tables() {
+# Refactor reset and truncate into a single function.
+function truncate_tables() {
   local cluster=$1; shift
-  err "Reseting tables on cluster $cluster"
+  err "Truncating tables on cluster $cluster"
   host=$(hostname hbase $cluster)
   if [[ "x${host}" == "x" ]]; then
     err "Mapping doesn't specify where hbase is running"
     return 1
   fi
+  scp -q $bin/hbase-admin.rb $cuser@$host:/tmp/hbase-admin-$epoch.sh
+  ssh -oStrictHostKeyChecking=no -l $cuser $host hbase org.jruby.Main /tmp/hbase-admin-$epoch.sh truncate 2>/dev/null
+  # ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f /tmp/hbase-admin-$epoch.sh 
 }
 
 function delete_tables() {
@@ -330,6 +338,9 @@ function delete_tables() {
     err "Mapping doesn't specify where hbase is running"
     return 1
   fi
+  scp -q $bin/hbase-admin.rb $cuser@$host:/tmp/hbase-admin-$epoch.sh
+  ssh -oStrictHostKeyChecking=no -l $cuser $host hbase org.jruby.Main /tmp/hbase-admin-$epoch.sh delete 2>/dev/null
+  ssh -oStrictHostKeyChecking=no -l $cuser $host sudo rm -f /tmp/hbase-admin-$epoch.sh 
 }
 
 section=$1; shift
@@ -338,15 +349,15 @@ if [[ "x${section}" == "xsoftware" ]]; then
   cmd=$1; shift
 
   if [[ "x${cmd}" == "x" ]]; then
-    echo "Command not specified"
     usage 
+    err "Command not specified"
     exit -1
   fi
 
   xcomponent=$1; shift
   if [[ "x${xcomponent}" == "x" ]] || [[ ! -d $build_home/$xcomponent ]]; then
-    echo "Component is missing or doesn't exist"
     usage
+    err "Component is missing or doesn't exist"
     exit -1
   fi
 
@@ -368,16 +379,16 @@ if [[ "x${section}" == "xsoftware" ]]; then
   done
 
   if [[ "x${cluster}" == "x" ]]; then
-    echo "Cluster not specified. Please use -c option"
     usage
+    err "Cluster not specified. Please use -c option"
     exit -1
   fi
 
   host=$(hostname $xcomponent $cluster)
 
   if [[ "x${host}" == "x" ]]; then
-    echo "Component has no host assigned in the cluster $cluster"
     usage
+    err "Component has no host assigned in the cluster $cluster"
     exit -1
   fi
 
@@ -411,8 +422,8 @@ if [[ "x${section}" == "xcluster" ]]; then
   done
 
   if [[ "x${cluster}" == "x" ]] && [[ "x${cmd}" != "xlist" ]] && [[ "x${cmd}" != "xactivity" ]]; then
-    echo "Cluster not specified. Please use -c option"
     usage
+    err "Cluster not specified. Please use -c option"
     exit -1
   fi
 
@@ -432,7 +443,7 @@ if [[ "x${section}" == "xcluster" ]]; then
     destroy) destroy_cluster $cluster $type;;
     list) list_clusters $type;;
     activity) activity_log $type;;
-    delete-tables) reset_tables $cluster;;
+    delete-tables) delete_tables $cluster;;
     truncate-tables) truncate_tables $cluster;;
   esac
   exit 0
