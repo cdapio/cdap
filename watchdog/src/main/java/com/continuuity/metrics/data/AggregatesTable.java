@@ -120,8 +120,9 @@ public final class AggregatesTable {
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(contextPrefix, metricPrefix, runId));
     } else if (isFilterable && (aggregatesTable instanceof LevelDBFilterableOVCTable)) {
-      FuzzyRowFilter f = (FuzzyRowFilter) getFilter(contextPrefix, metricPrefix, runId);
-      scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow, MemoryReadPointer.DIRTY_READ, f);
+      scanner = ((FilterableOVCTable) aggregatesTable).scan(
+        startRow, endRow, MemoryReadPointer.DIRTY_READ,
+        new LevelDBFuzzyRowFilter(getFilter(contextPrefix, metricPrefix, runId)));
     } else {
       scanner = aggregatesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
     }
@@ -206,7 +207,7 @@ public final class AggregatesTable {
     );
   }
 
-  private Filter getFilter(String contextPrefix, String metricPrefix, String runId) {
+  private FuzzyRowFilter getFilter(String contextPrefix, String metricPrefix, String runId) {
     // Create fuzzy row filter
     ImmutablePair<byte[], byte[]> contextPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.CONTEXT,
                                                                               contextPrefix, 0);

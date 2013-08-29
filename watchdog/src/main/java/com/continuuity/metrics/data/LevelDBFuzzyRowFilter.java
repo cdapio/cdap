@@ -15,7 +15,6 @@ import java.util.List;
  */
 public class LevelDBFuzzyRowFilter implements Filter {
   private FuzzyRowFilter filter;
-  private MetricsEntityCodec codec;
 
   public LevelDBFuzzyRowFilter(FuzzyRowFilter f) {
     this.filter = f;
@@ -70,8 +69,6 @@ public class LevelDBFuzzyRowFilter implements Filter {
     // the actual key it uses with fewer bytes, which will mess with the seeking.
     KeyValue output = new KeyValue(next.getRow(), currentKV.getFamily(), currentKV.getQualifier(),
                                    currentKV.getTimestamp(), type, currentKV.getValue());
-    //System.out.println("----- propose skip to row -----");
-    //printRow(nextRow);
     return output;
   }
 
@@ -83,26 +80,5 @@ public class LevelDBFuzzyRowFilter implements Filter {
   @Override
   public void readFields(DataInput in) throws IOException {
     filter.readFields(in);
-  }
-
-  public void printRow(byte[] row) {
-    int offset = 0;
-    String context = codec.decode(MetricsEntityType.CONTEXT, row, offset);
-    System.out.println("-- context = " + context);
-    offset += codec.getEncodedSize(MetricsEntityType.CONTEXT);
-    String metric = codec.decode(MetricsEntityType.METRIC, row, offset);
-    System.out.println("-- metric = " + metric);
-    offset += codec.getEncodedSize(MetricsEntityType.METRIC);
-    String tag = codec.decode(MetricsEntityType.TAG, row, offset);
-    System.out.println("-- tag = " + tag);
-    offset += codec.getEncodedSize(MetricsEntityType.TAG);
-    int timeBase = Bytes.toInt(row, offset, 4);
-    System.out.println("-- timebase = " + timeBase);
-    offset += 4;
-    System.out.println();
-  }
-
-  public void setCodec(MetricsEntityCodec codec) {
-    this.codec = codec;
   }
 }
