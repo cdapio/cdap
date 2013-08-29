@@ -158,11 +158,10 @@ public final class TimeSeriesTable {
       scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(query, startTimeBase, endTimeBase));
-    } else if (timeSeriesTable instanceof LevelDBFilterableOVCTable) {
+    } else if (isFilterable && (timeSeriesTable instanceof LevelDBFilterableOVCTable)) {
       LevelDBFuzzyRowFilter f = new LevelDBFuzzyRowFilter(
         (FuzzyRowFilter) getFilter(query, startTimeBase, endTimeBase));
-      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
-                                                            MemoryReadPointer.DIRTY_READ, f);
+      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ, f);
     } else {
       scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ);
     }

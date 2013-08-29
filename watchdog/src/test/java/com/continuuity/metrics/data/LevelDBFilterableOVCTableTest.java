@@ -13,17 +13,15 @@ import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsAnnotation;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
-import com.continuuity.test.hbase.HBaseTestBase;
-import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -31,6 +29,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -43,69 +43,146 @@ public class LevelDBFilterableOVCTableTest {
   private static final int rollTime = 60;
 
   @Test
-  public void testFuzzyRowFilter() {
+  public void testAggregatesQuery() throws OperationException {
+    AggregatesTable table = tableFactory.createAggregates("test");
+    List<MetricsRecord> records = Lists.newLinkedList();
+    List<TagMetric> tags = Lists.newArrayList();
+    long ts = 1317470400;
+    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.reads", tags, ts, 10));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.writes", tags, ts, 10));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.attempts", tags, ts, 10));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.errors", tags, ts, 10));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "count.reads", tags, ts, 20));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "count.writes", tags, ts, 20));
+    records.add(new MetricsRecord("app1.p.procedure1", "0", "count", tags, ts, 50));
+    table.update(records);
 
+    int flowlet1_count = 0;
+    int flowlet2_count = 0;
+    AggregatesScanner scanner = table.scan("app1.f", "count");
+    while (scanner.hasNext()) {
+      AggregatesScanResult result = scanner.next();
+      Assert.assertTrue(result.getContext().startsWith("app1.f"));
+      if (result.getContext().equals("app1.f.flow1.flowlet1")) {
+        Assert.assertEquals(10, result.getValue());
+        flowlet1_count++;
+      } else if (result.getContext().equals("app1.f.flow1.flowlet2")) {
+        Assert.assertEquals(20, result.getValue());
+        flowlet2_count++;
+      }
+    }
+    Assert.assertEquals(4, flowlet1_count);
+    Assert.assertEquals(2, flowlet2_count);
+
+    scanner = table.scan("app1.f.flow1", "count.errors");
+    int rows = 0;
+    while (scanner.hasNext()) {
+      AggregatesScanResult result = scanner.next();
+      rows++;
+      Assert.assertEquals("count.errors", result.getMetric());
+      Assert.assertEquals("app1.f.flow1.flowlet1", result.getContext());
+    }
+    Assert.assertEquals(1, rows);
   }
 
   @Test
-  public void testSkip() throws OperationException {
+  public void testTimeseriesQuery() throws OperationException {
     TimeSeriesTable tsTable = tableFactory.createTimeSeries("test", 1);
 
-    long ts = 1317470400;
+    // one below the 1317470400 timebase
+    long ts = 1317470399;
+
     List<MetricsRecord> records = Lists.newLinkedList();
     List<TagMetric> tags = Lists.newArrayList();
+    Map<String, List<TimeValue>> expectedResults = Maps.newHashMap();
+
+    int seconds_to_query = 3;
+
     String context = "app1.f.flow1.flowlet1";
     MetricsRecord record;
-    // 5 seconds of metrics, for convenience, the metric value will be 0,1,...4
-    for (int i = 0; i < 5; i++) {
+    // insert time values that the query should not return
+    for (int i = -2; i < seconds_to_query + 2; i++) {
       records.add(new MetricsRecord(context, "0", "reads", tags, ts + i, i));
     }
-    tsTable.save(records);
+    List<TimeValue > expectedFlowlet1Timevalues = Lists.newArrayListWithExpectedSize(seconds_to_query);
+    for (int i = 0; i < seconds_to_query; i++) {
+      expectedFlowlet1Timevalues.add(new TimeValue(ts + i, i));
+    }
+    expectedResults.put("app1.f.flow1.flowlet1", expectedFlowlet1Timevalues);
 
-    // add some other metrics in other contexts
+    // add some other metrics in other contexts that should not get returned
     records.add(new MetricsRecord("app1.p.procedure1", "0", "reads", tags, ts, 5));
     records.add(new MetricsRecord("app1.f.flow2.flowlet1", "0", "reads", tags, ts, 10));
+
     // this one should get returned
     records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts, 15));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + seconds_to_query - 1, 20));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + seconds_to_query + 5, 100));
+    expectedResults.put("app1.f.flow1.flowlet2",
+                        Lists.newArrayList(new TimeValue(ts, 15), new TimeValue(ts + seconds_to_query - 1, 20)));
     tsTable.save(records);
 
-    List<String> expectedContexts = Lists.newArrayList("app1.f.flow1.flowlet2", "app1.f.flow1.flowlet1");
-    int seconds_to_query = 3;
     MetricsScanQuery query = new MetricsScanQueryBuilder()
       .setContext("app1.f.flow1")
       .setMetric("reads")
       .build(ts, ts + seconds_to_query - 1);
     MetricsScanner scanner = tsTable.scan(query);
 
-    int num_rows = 0;
+    Map<String, List<TimeValue >> actualResults = Maps.newHashMap();
     while (scanner.hasNext()) {
       MetricsScanResult result = scanner.next();
 
       // check the metric
-      Assert.assertEquals("reads", result.getMetric());
+      Assert.assertTrue(result.getMetric().startsWith("reads"));
 
-      // check the context
-      String resultContext = result.getContext();
-      Assert.assertTrue(expectedContexts.contains(resultContext));
-      expectedContexts.remove(resultContext);
-
-      // check the time values depending on the context
-      if (resultContext.equals("app1.f.flow1.flowlet2")) {
-        TimeValue tv = result.iterator().next();
-        Assert.assertEquals(tv.getTime(), ts);
-        Assert.assertEquals(tv.getValue(), 15);
-      } else if (resultContext.equals("app1.f.flow1.flowlet1")) {
-        int value_count = 0;
-        for (TimeValue tv : result) {
-          Assert.assertEquals(tv.getValue(), tv.getTime() - ts);
-          value_count++;
-        }
-        Assert.assertEquals(seconds_to_query, value_count);
+      List<TimeValue > metricTimeValues = actualResults.get(result.getContext());
+      if (metricTimeValues == null) {
+        metricTimeValues = Lists.newArrayList();
+        actualResults.put(result.getContext(), metricTimeValues);
       }
-      num_rows++;
+      for (TimeValue tv : result) {
+        metricTimeValues.add(tv);
+      }
     }
-    Assert.assertEquals(2, num_rows);
+    assertEqualResults(expectedResults, actualResults);
+
+
+    query = new MetricsScanQueryBuilder()
+      .setContext(null)
+      .setMetric("reads")
+      .build(ts + seconds_to_query + 5, ts + seconds_to_query + 5);
+    scanner = tsTable.scan(query);
+    while (scanner.hasNext()) {
+      MetricsScanResult result = scanner.next();
+
+      for (TimeValue tv : result) {
+
+      }
+    }
   }
+
+  private void assertEqualResults(Map<String, List<TimeValue>> expected, Map<String, List<TimeValue>> actual) {
+    Assert.assertEquals(expected.size(), actual.size());
+    for (String context : expected.keySet()) {
+      List<TimeValue > expectedValues = expected.get(context);
+      List<TimeValue > actualValues = actual.get(context);
+      Assert.assertEquals(expectedValues.size(), actualValues.size());
+
+      // check all the values seen are expected
+      for (TimeValue actualVal : actualValues) {
+        TimeValue toRemove = null;
+        for (TimeValue expectedVal : expectedValues) {
+          if ((expectedVal.getTime() == actualVal.getTime()) && (expectedVal.getValue() == actualVal.getValue())) {
+            toRemove = expectedVal;
+            break;
+          }
+        }
+        Assert.assertNotNull(toRemove);
+        expectedValues.remove(toRemove);
+      }
+    }
+  }
+
 
   @BeforeClass
   public static void init() {

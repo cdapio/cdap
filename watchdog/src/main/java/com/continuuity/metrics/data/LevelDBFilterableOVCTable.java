@@ -5,21 +5,14 @@ package com.continuuity.metrics.data;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.hbase.HBaseOVCTable;
 import com.continuuity.data.engine.leveldb.KeyValue;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTable;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.Scanner;
-import com.continuuity.metrics.query.BatchMetricsHandler;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.iq80.leveldb.DBIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
@@ -69,9 +60,25 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
     return scan(null, null, readPointer, filter);
   }
 
+  synchronized boolean openTable() throws OperationException {
+    try {
+      this.db = factory.open(new File(generateDBPath()), generateDBOptions(false, false));
+      return true;
+    } catch (IOException e) {
+      return false;
+    }
+  }
 
-  // these are gross... need to figure out the correct way to do filters
-  // TODO: refactor properly with filters
+  synchronized void initializeTable() throws OperationException {
+    try {
+      this.db = factory.open(new File(generateDBPath()), generateDBOptions(true, false));
+    } catch (IOException e) {
+      throw createOperationException(e, "create");
+    }
+  }
+
+  // this is gross...
+  // TODO: refactor properly with our own Filter/KeyValue abstraction
   public static org.apache.hadoop.hbase.KeyValue convert(KeyValue kv) {
     org.apache.hadoop.hbase.KeyValue.Type type = org.apache.hadoop.hbase.KeyValue.Type.codeToType(kv.getType());
     return new org.apache.hadoop.hbase.KeyValue(kv.getRow(), kv.getFamily(), kv.getQualifier(),
@@ -152,27 +159,28 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
           }
         }
 
-        org.apache.hadoop.hbase.KeyValue currKV = convert(keyValue);
-        Filter.ReturnCode rc = filter.filterKeyValue(currKV);
+        if (filter != null) {
+          org.apache.hadoop.hbase.KeyValue currKV = convert(keyValue);
+          Filter.ReturnCode rc = filter.filterKeyValue(currKV);
 
-        switch (rc) {
-          case SEEK_NEXT_USING_HINT:
-            KeyValue nextKV = convert(filter.getNextKeyHint(currKV));
-            System.out.println("seeking");
-            iterator.seek(nextKV.getKey());
-            lastRow = row;
-            continue;
-          case SKIP:
-          case NEXT_COL:
-          case NEXT_ROW:
-            // this should never get hit for now with only the fuzzy row filter
-            lastRow = row;
-            iterator.next();
-            continue;
-          case INCLUDE:
-          case INCLUDE_AND_NEXT_COL:
-          default:
-            break;
+          switch (rc) {
+            case SEEK_NEXT_USING_HINT:
+              KeyValue nextKV = convert(filter.getNextKeyHint(currKV));
+              iterator.seek(nextKV.getKey());
+              lastRow = row;
+              continue;
+            case SKIP:
+            case NEXT_COL:
+            case NEXT_ROW:
+              // TODO: handle next col and next row differently, seek to next row instead of iterating through cols
+              lastRow = row;
+              iterator.next();
+              continue;
+            case INCLUDE:
+            case INCLUDE_AND_NEXT_COL:
+            default:
+              break;
+          }
         }
 
         lastRow = row;

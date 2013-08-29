@@ -119,7 +119,7 @@ public final class AggregatesTable {
       scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(contextPrefix, metricPrefix, runId));
-    } else if (aggregatesTable instanceof LevelDBFilterableOVCTable) {
+    } else if (isFilterable && (aggregatesTable instanceof LevelDBFilterableOVCTable)) {
       FuzzyRowFilter f = (FuzzyRowFilter) getFilter(contextPrefix, metricPrefix, runId);
       scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow, MemoryReadPointer.DIRTY_READ, f);
     } else {

@@ -6,6 +6,7 @@ package com.continuuity.metrics.data;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTable;
+import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
@@ -20,20 +21,9 @@ import java.util.concurrent.ExecutionException;
 /**
  * This class implements the table handle for LevelDB.
  */
-public class LevelDBFilterableOVCTableHandle extends SimpleOVCTableHandle {
-  @Inject
-  @Named("LevelDBOVCTableHandleBasePath")
-  private String basePath;
+public class LevelDBFilterableOVCTableHandle extends LevelDBOVCTableHandle {
 
-  @Inject
-  @Named("LevelDBOVCTableHandleBlockSize")
-  private Integer blockSize;
-
-  @Inject
-  @Named("LevelDBOVCTableHandleCacheSize")
-  private Long cacheSize;
-
-  private final LoadingCache<String, LevelDBOVCTable> tableCache;
+  protected final LoadingCache<String, LevelDBFilterableOVCTable> ftableCache;
 
   /**
    * This class is a singleton.
@@ -42,9 +32,9 @@ public class LevelDBFilterableOVCTableHandle extends SimpleOVCTableHandle {
   private static final LevelDBFilterableOVCTableHandle INSTANCE = new LevelDBFilterableOVCTableHandle();
 
   private LevelDBFilterableOVCTableHandle() {
-    tableCache = CacheBuilder.newBuilder().build(new CacheLoader<String, LevelDBOVCTable>() {
+    ftableCache = CacheBuilder.newBuilder().build(new CacheLoader<String, LevelDBFilterableOVCTable>() {
       @Override
-      public LevelDBOVCTable load(String tableName) throws Exception {
+      public LevelDBFilterableOVCTable load(String tableName) throws Exception {
         return openOrCreateTable(tableName);
       }
     });
@@ -57,7 +47,7 @@ public class LevelDBFilterableOVCTableHandle extends SimpleOVCTableHandle {
   @Override
   protected OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
     try {
-      return tableCache.get(Bytes.toString(tableName));
+      return ftableCache.get(Bytes.toString(tableName));
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof OperationException) {
@@ -69,14 +59,14 @@ public class LevelDBFilterableOVCTableHandle extends SimpleOVCTableHandle {
 
   @Override
   protected OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
-    return tableCache.getIfPresent(Bytes.toString(tableName));
+    return ftableCache.getIfPresent(Bytes.toString(tableName));
   }
 
   /**
    * Opens the table if it already exists or creates a new one if it doesn't.
    * @param tableName The name of the table.
    * @return A LevelDBOVCTable.
-   * @throws com.continuuity.api.data.OperationException If there is any error when try to open or create the table.
+   * @throws OperationException If there is any error when try to open or create the table.
    */
   private LevelDBFilterableOVCTable openOrCreateTable(String tableName) throws OperationException {
     LevelDBFilterableOVCTable table = new LevelDBFilterableOVCTable(basePath, tableName, blockSize, cacheSize);
@@ -90,6 +80,6 @@ public class LevelDBFilterableOVCTableHandle extends SimpleOVCTableHandle {
 
   @Override
   public String getName() {
-    return "leveldb";
+    return "leveldb_filterable";
   }
 }

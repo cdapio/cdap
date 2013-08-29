@@ -77,12 +77,12 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
   }
 
-  private String generateDBPath() {
+  protected String generateDBPath() {
     return basePath + System.getProperty("file.separator") +
       dbFilePrefix + encodedTableName;
   }
 
-  private Options generateDBOptions(boolean createIfMissing, boolean errorIfExists) {
+  protected Options generateDBOptions(boolean createIfMissing, boolean errorIfExists) {
     Options options = new Options();
     options.createIfMissing(createIfMissing);
     options.errorIfExists(errorIfExists);
@@ -92,7 +92,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     return options;
   }
 
-  synchronized public boolean openTable() throws OperationException {
+  synchronized boolean openTable() throws OperationException {
     try {
       this.db = factory.open(new File(generateDBPath()), generateDBOptions(false, false));
       return true;
@@ -101,7 +101,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
   }
 
-  synchronized public void initializeTable() throws OperationException {
+  synchronized void initializeTable() throws OperationException {
     try {
       this.db = factory.open(new File(generateDBPath()), generateDBOptions(true, false));
     } catch (IOException e) {
@@ -882,7 +882,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
   }
 
-  private OperationException createOperationException(Exception e, String where) {
+  protected OperationException createOperationException(Exception e, String where) {
     String msg = "LevelDB exception on " + where + "(error code = " +
       e.getMessage() + ")";
     LOG.error(msg, e);

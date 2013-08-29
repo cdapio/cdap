@@ -49,7 +49,7 @@ public class LevelDBScanner {
     init();
     TimeSeriesTable tsTable = tableFactory.createTimeSeries(MetricsScope.REACTOR.name(), 1);
     //long end = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    long end = 1377300420;
+    long end = 1377733530;
     long begin = end - 60;
     MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
       .setContext(null)
@@ -69,12 +69,12 @@ public class LevelDBScanner {
       rows = 0;
       while (scanner.hasNext()) {
         MetricsScanResult res = scanner.next();
-        System.out.println("context = " + res.getContext() + " metric = " + res.getMetric() +
-                             " tag = " + res.getTag());
         for (TimeValue tv : res) {
+          System.out.println("context = " + res.getContext() + " metric = " + res.getMetric() +
+                               " tag = " + res.getTag());
           System.out.println("time = " + tv.getTime() + " val = " + tv.getValue());
+          rows++;
         }
-        rows++;
       }
       dur = System.currentTimeMillis() - start;
       System.out.println("scan #" + i + " took " + dur + " ms, scanned " + rows + " rows");
@@ -87,7 +87,7 @@ public class LevelDBScanner {
 
   public static void init() {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "60");
+    cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "3600");
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -111,6 +111,7 @@ public class LevelDBScanner {
             bind(OVCTableHandle.class)
               .annotatedWith(MetricsAnnotation.class)
               .toInstance(LevelDBFilterableOVCTableHandle.getInstance());
+              //.toInstance(LevelDBOVCTableHandle.getInstance());
 
             bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
             expose(MetricsTableFactory.class);
