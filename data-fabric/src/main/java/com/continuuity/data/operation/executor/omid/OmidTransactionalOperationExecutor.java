@@ -1464,10 +1464,10 @@ public class OmidTransactionalOperationExecutor
       public void run() {
         while (true) {
           int excludedListSize = txManager.getExcludedListSize();
+          if (txSystemMetrics != null) {
+            txSystemMetrics.gauge("tx.excluded", excludedListSize);
+          }
           if (excludedListSize > 0) {
-            if (txSystemMetrics != null) {
-              txSystemMetrics.gauge("tx.excluded", excludedListSize);
-            }
             // This hack is needed because current metrics system is not flexible when it comes to adding new metrics
             Log.info("tx.excluded=" + excludedListSize);
           }
