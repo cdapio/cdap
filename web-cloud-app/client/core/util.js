@@ -91,7 +91,7 @@ define([], function () {
 				}).bind('dragleave', function (e) {
 
 					var now = new Date().getTime();
-					if (now - entered > 50) {
+					if (now - entered > 5) {
 						$('#drop-hover').fadeOut();
 					}
 
