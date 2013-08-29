@@ -43,6 +43,19 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
   private static final int INT_SIZE = Integer.SIZE / Byte.SIZE;
 
   private final Filter stateColumnFilter = new ColumnPrefixFilter(QueueConstants.STATE_COLUMN_PREFIX);
+  private final boolean supportFastScan;
+
+  public HBaseQueueEvictionEndpoint() {
+    boolean supportFastScan;
+    try {
+      RegionScanner.class.getMethod("nextRaw", List.class, String.class);
+      supportFastScan = true;
+    } catch (NoSuchMethodException e) {
+      LOG.warn("RegionScanner.nextRaw is not supported in this HBase version.");
+      supportFastScan = false;
+    }
+    this.supportFastScan = supportFastScan;
+  }
 
   @Override
   public int evict(Scan scan, long readPointer, long[] excludes, int numGroups) throws IOException {
@@ -55,10 +68,7 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
     LOG.debug(String.format("Evict request received: readPointer=%d, exclude size=%d, numGroups=%d",
                            readPointer, excludes.length, numGroups));
 
-    // Scan this region and deletes rows that have numGroups of state columns and all have committed process state
-    List<KeyValue> keyValues = new ArrayList<KeyValue>();
-    boolean hasMore = true;
-    List<Pair<Mutation, Integer>> deletes = new ArrayList<Pair<Mutation, Integer>>(COLLECTION_SIZE);
+
 
     HRegion region = ((RegionCoprocessorEnvironment) env).getRegion();
 
@@ -74,32 +84,12 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
 
     // Scan and delete rows
     RegionScanner scanner = region.getScanner(scan);
-    MultiVersionConsistencyControl.setThreadReadPoint(scanner.getMvccReadPoint());
-    region.startRegionOperation();
-    try {
-      synchronized (scanner) {
-        while (hasMore) {
-          keyValues.clear();
-          hasMore = scanner.nextRaw(keyValues, null);
+    List<Pair<Mutation, Integer>> deletes = new ArrayList<Pair<Mutation, Integer>>(COLLECTION_SIZE);
 
-          // Count how many committed processed of a row
-          int committedProcess = 0;
-          KeyValue keyValue = null;
-          Iterator<KeyValue> iterator = keyValues.iterator();
-          while (iterator.hasNext()) {
-            keyValue = iterator.next();
-            if (isCommittedProcessed(keyValue, readPointer, excludes)) {
-              committedProcess++;
-            }
-          }
-          if (keyValue != null && committedProcess == numGroups) {
-            deletes.add(Pair.<Mutation, Integer>newPair(new Delete(keyValue.getRow()), null));
-          }
-        }
-      }
-    } finally {
-      scanner.close();
-      region.closeRegionOperation();
+    if (supportFastScan) {
+      fastScanForDeletes(region, scanner, readPointer, excludes, numGroups, deletes);
+    } else {
+      scanForDeletes(scanner, readPointer, excludes, numGroups, deletes);
     }
 
     if (deletes.isEmpty()) {
@@ -112,6 +102,60 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
     LOG.debug(String.format("Evicted %d entries from region %s", deletes.size(), region));
 
     return deletes.size();
+  }
+
+  private void scanForDeletes(RegionScanner scanner,
+                              long readPointer, long[] excludes, int numGroups,
+                              List<Pair<Mutation, Integer>> deletes) throws IOException {
+    List<KeyValue> keyValues = new ArrayList<KeyValue>();
+    boolean hasMore = true;
+    try {
+      while (hasMore) {
+        keyValues.clear();
+        hasMore = scanner.next(keyValues);
+        processKeyValues(keyValues, deletes, readPointer, excludes, numGroups);
+      }
+    } finally {
+      scanner.close();
+    }
+  }
+
+  private void fastScanForDeletes(HRegion region, RegionScanner scanner,
+                                  long readPointer, long[] excludes, int numGroups,
+                                  List<Pair<Mutation, Integer>> deletes) throws IOException {
+    List<KeyValue> keyValues = new ArrayList<KeyValue>();
+    boolean hasMore = true;
+    MultiVersionConsistencyControl.setThreadReadPoint(scanner.getMvccReadPoint());
+    region.startRegionOperation();
+    try {
+      synchronized (scanner) {
+        while (hasMore) {
+          keyValues.clear();
+          hasMore = scanner.nextRaw(keyValues, null);
+          processKeyValues(keyValues, deletes, readPointer, excludes, numGroups);
+        }
+      }
+    } finally {
+      scanner.close();
+      region.closeRegionOperation();
+    }
+  }
+
+  private void processKeyValues(List<KeyValue> keyValues, List<Pair<Mutation, Integer>> deletes,
+                                long readPointer, long[] excludes, int numGroups) {
+    // Count how many committed processed of a row
+    int committedProcess = 0;
+    KeyValue keyValue = null;
+    Iterator<KeyValue> iterator = keyValues.iterator();
+    while (iterator.hasNext()) {
+      keyValue = iterator.next();
+      if (isCommittedProcessed(keyValue, readPointer, excludes)) {
+        committedProcess++;
+      }
+    }
+    if (keyValue != null && committedProcess == numGroups) {
+      deletes.add(Pair.<Mutation, Integer>newPair(new Delete(keyValue.getRow()), null));
+    }
   }
 
   private boolean isCommittedProcessed(KeyValue stateColumn, long readPointer, long[] excludes) {
