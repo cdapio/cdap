@@ -94,7 +94,7 @@ public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
   }
 
   @Override
-  protected QueueScanner getScanner(byte[] startRow, byte[] stopRow) throws IOException {
+  protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
     final Scanner scanner = core.scan(startRow, stopRow, ALL_LATEST_TRANSACTION);
     return new QueueScanner() {
       @Override
