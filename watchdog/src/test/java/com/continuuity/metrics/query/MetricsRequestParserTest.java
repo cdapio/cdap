@@ -5,9 +5,13 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
 import junit.framework.Assert;
+import org.apache.commons.httpclient.util.URIUtil;
+import org.apache.http.client.utils.URIUtils;
 import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 
 /**
  *
@@ -163,6 +167,24 @@ public class MetricsRequestParserTest {
     request = MetricsRequestParser.parse(URI.create("/user/apps/app1/mapreduce/mapred1/mappers/metric?aggregate=true"));
     Assert.assertEquals("app1.b.mapred1.m", request.getContextPrefix());
     Assert.assertEquals("metric", request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
+  }
+
+  @Test
+  public void testUserMetricURIDecoding() throws UnsupportedEncodingException {
+    String weirdMetric = "/weird?me+tr ic#$name////";
+    // encoded version or weirdMetric
+    String encodedWeirdMetric = "%2Fweird%3Fme%2Btr%20ic%23%24name%2F%2F%2F%2F";
+    MetricsRequest request = MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/" +
+                                                                     encodedWeirdMetric + "?aggregate=true"));
+    Assert.assertEquals("app1.f", request.getContextPrefix());
+    Assert.assertEquals(weirdMetric, request.getMetricPrefix());
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
+
+    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/" +
+                                                      encodedWeirdMetric + "?aggregate=true"));
+    Assert.assertEquals("app1", request.getContextPrefix());
+    Assert.assertEquals(weirdMetric, request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());
   }
 }

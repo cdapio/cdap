@@ -110,7 +110,7 @@ final class MetricsRequestParser {
           parseProgram(metricName, pathParts, builder);
           break;
         case USER:
-          parseUser(requestURI.getPath(), builder);
+          parseUser(requestURI.getRawPath(), builder);
           break;
       }
     }
