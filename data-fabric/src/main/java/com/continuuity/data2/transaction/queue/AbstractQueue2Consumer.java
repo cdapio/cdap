@@ -44,7 +44,12 @@ import java.util.concurrent.TimeoutException;
 public abstract class AbstractQueue2Consumer implements Queue2Consumer, TransactionAware, Closeable {
 
   // TODO: Make these configurable.
-  protected static final int MAX_CACHE_ROWS = 100;
+  // Minimum number of rows to fetch per scan.
+  private static final int MIN_FETCH_ROWS = 100;
+  // Multiple of batches to fetch per scan.
+  // Number of rows to scan = max(MIN_FETCH_ROWS, dequeueBatchSize * groupSize * PREFETCH_BATCHES)
+  private static final int PREFETCH_BATCHES = 10;
+
   private static final long EVICTION_TIMEOUT_SECONDS = 10;
   // How many commits to trigger eviction.
   private static final int EVICTION_LIMIT = 1000;
@@ -76,7 +81,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     throws IOException;
   protected abstract void undoState(Set<byte[]> rowKeys, byte[] stateColumnName)
     throws IOException, InterruptedException;
-  protected abstract QueueScanner getScanner(byte[] startRow, byte[] stopRow) throws IOException;
+  protected abstract QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException;
 
   protected AbstractQueue2Consumer(ConsumerConfig consumerConfig, QueueName queueName, QueueEvictor queueEvictor) {
     this.consumerConfig = consumerConfig;
@@ -247,7 +252,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     // the second call to fetchFromCache from call to populateCache will return false, but
     // hasEntry = false || true => true, hence returning true.
     if (entries.size() < maxBatchSize) {
-      populateRowCache(entries.keySet());
+      populateRowCache(entries.keySet(), maxBatchSize);
       hasEntry = fetchFromCache(entries, maxBatchSize) || hasEntry;
     }
 
@@ -268,17 +273,19 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     return true;
   }
 
-  private void populateRowCache(Set<byte[]> excludeRows) throws IOException {
+  private void populateRowCache(Set<byte[]> excludeRows, int maxBatchSize) throws IOException {
 
     long readPointer = transaction.getReadPointer();
     long[] excludedList = transaction.getExcludedList();
 
     // Scan the table for queue entries.
-    QueueScanner scanner = getScanner(startRow, QueueUtils.getStopRowForTransaction(queueRowPrefix, transaction));
-
+    int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * consumerConfig.getGroupSize() * PREFETCH_BATCHES);
+    QueueScanner scanner = getScanner(startRow,
+                                      QueueUtils.getStopRowForTransaction(queueRowPrefix, transaction),
+                                      numRows);
     try {
-      // Try fill up the cache with at most MAX_CACHE_ROWS
-      while (entryCache.size() < MAX_CACHE_ROWS) {
+      // Try fill up the cache
+      while (entryCache.size() < numRows) {
         ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
         if (entry == null) {
           // No more result, breaking out.

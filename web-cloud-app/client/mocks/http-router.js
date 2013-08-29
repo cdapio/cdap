@@ -34,7 +34,16 @@ define(['mocks/results/metrics/timeseries', 'mocks/results/metrics/counters',
     '/version': '1.5.0',
     '/disk': { free: 1024 },
 
-    // REST
+    // REST Metrics
+
+    '/rest/metrics/App': Samples.appMetrics,
+    '/rest/metrics/Flow': Samples.flowMetrics,
+    '/rest/metrics/Stream': Samples.streamMetrics,
+
+    // REST Elements
+
+    '/rest/all': Samples.applicationsSample,
+
     '/rest/apps': Samples.applicationsSample,
     '/rest/streams': Samples.streamsSample,
     '/rest/flows': Samples.flowsSample,

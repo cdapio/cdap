@@ -514,6 +514,96 @@ fs.readFile(configPath, function (error, result) {
 			'datasets': 'ByDataset'
 		};
 
+		var availableMetrics = {
+			'App': [
+				{ name: 'Events Collected', path: '/collect/events/apps/{id}' },
+				{ name: 'Busyness', path: '/process/busyness/{id}' },
+				{ name: 'Bytes Stored', path: '/store/bytes/apps/{id}' },
+				{ name: 'Queries Served', path: '/query/requests/{id}' }
+			],
+			'Stream': [
+				{ name: 'Events Collected', path: '/collect/events/streams/{id}' },
+				{ name: 'Bytes Collected', path: '/collect/bytes/streams/{id}' },
+				{ name: 'Reads per Second', path: '/collect/reads/streams/{id}' }
+			],
+			'Flow': [
+				{ name: 'Busyness', path: '/process/busyness/{parent}/flows/{id}' },
+				{ name: 'Events Processed', path: '/process/events/{parent}/flows/{id}' },
+				{ name: 'Bytes Processed', path: '/process/bytes/{parent}/flows/{id}' },
+				{ name: 'Errors per Second', path: '/process/errors/{parent}/flows/{id}' }
+			],
+			'Batch': [
+				{ name: 'Completion', path: '/process/completion/{parent}/mapreduce/{id}' },
+				{ name: 'Entries Processed', path: '/process/entries/{parent}/mapreduce/{id}' }
+			],
+			'Dataset': [
+				{ name: 'Bytes per Second', path: '/store/bytes/datasets/{id}' },
+				{ name: 'Reads per Second', path: '/store/reads/datasets/{id}' }
+			],
+			'Procedure': [
+				{ name: 'Requests per Second', path: '/query/requests/{parent}/procedures/{id}' },
+				{ name: 'Failures per Second', path: '/query/failures/{parent}/procedures/{id}' }
+			]
+
+		};
+
+		app.get('/rest/metrics/system/:type', function (req, res) {
+
+			var type = req.params.type;
+			res.send(availableMetrics[type]);
+
+		});
+
+		/**
+		 * User Metrics Discovery
+		 */
+		app.get('/rest/metrics/user/*', function (req, res) {
+
+			var path = req.url.slice(18);
+
+			logger.trace('User Metrics', path);
+
+			var options = {
+				host: config['metrics.service.host'],
+				port: config['metrics.service.port'],
+				path: '/metrics/available' + path,
+				method: 'GET'
+			};
+
+			var request = http.request(options, function(response) {
+				var data = '';
+				response.on('data', function (chunk) {
+					data += chunk;
+				});
+
+				response.on('end', function () {
+
+					try {
+						data = JSON.parse(data);
+						res.send({ result: data, error: null });
+					} catch (e) {
+						logger.error('Parsing Error', data);
+						res.send({ result: null, error: data });
+					}
+
+				});
+			});
+
+			request.on('error', function(e) {
+
+				res.send({
+					result: null,
+					error: {
+						fatal: 'UserMetricsService: ' + e.code
+					}
+				});
+
+			});
+
+			request.end();
+
+		});
+
 		/*
 		 * REST handler
 		 */
@@ -564,6 +654,48 @@ fs.readFile(configPath, function (error, result) {
 
 			var accountID = req.session.account_id;
 
+			if (methods[0] === 'all') {
+
+				var count = 0, all = [];
+				for (var name in pluralREST) {
+					methods.push(pluralREST[name]);
+
+					count++;
+					Api.metadata(accountID, pluralREST[name], [], function (error, response) {
+
+						if (error) {
+							logger.error(error);
+							res.status(500);
+							res.send({
+								error: error
+							});
+						} else {
+
+							var i = response.length, type = this.type;
+
+							// Determine the type of an element.
+							if (type !== 'mapreduce') {
+								type = type.slice(0, type.length - 1);
+							} else {
+								type = 'batch';
+							}
+							type = type.charAt(0).toUpperCase() + type.slice(1);
+
+							while (i--) {
+								response[i].type = type;
+							}
+
+							all = all.concat(response);
+							if (!--count) {
+								res.send(all);
+							}
+
+						}
+					}.bind({type: name}));
+				}
+
+			} else {
+
 			if (method === 'getQuery' || method === 'getMapreduce') {
 				params[1].application = ids[0];
 			}
@@ -601,8 +733,7 @@ fs.readFile(configPath, function (error, result) {
 
 				});
 
-			}
-
+			}}
 
 		});
 

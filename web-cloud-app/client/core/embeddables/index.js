@@ -7,7 +7,7 @@ define([
   'core/embeddables/key-val', 'core/embeddables/create-dialogue', 'core/embeddables/textfield',
   'core/embeddables/dagnode', 'core/embeddables/dropzone', 'core/embeddables/injector',
   'core/embeddables/modal', 'core/embeddables/timeselector', 'core/embeddables/visualizer',
-  'core/embeddables/dash-chart'
+  'core/embeddables/dash-chart', 'core/embeddables/analyze'
   ], function () {
 
 		Em.debug('Loading core/embeddables');

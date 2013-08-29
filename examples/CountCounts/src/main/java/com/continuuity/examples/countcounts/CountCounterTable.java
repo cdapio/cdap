@@ -25,6 +25,8 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.metrics.Metrics;
+
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -35,6 +37,7 @@ import java.util.TreeMap;
 public class CountCounterTable extends DataSet {
 
   private Table table;
+  private Metrics metric;
 
   private static final byte[] KEY_ONLY_COLUMN = new byte[]{'c'};
 
@@ -63,13 +66,16 @@ public class CountCounterTable extends DataSet {
     increment(WORD_COUNT_KEY, count);
     // Increment the counts count
     increment(WORD_COUNT_COUNTS_KEY, Bytes.toBytes(count), 1L);
+    metric.count("increment.word.count", 1);
   }
 
   public long getTotalWordCount() throws OperationException {
+    metric.count("get.word.count", 1);
     return get(WORD_COUNT_KEY);
   }
 
   public Map<Long, Long> getWordCountCounts() throws OperationException {
+    metric.count("get.word.counts", 1);
     OperationResult<Map<byte[], byte[]>> result = this.table.read(new Read(WORD_COUNT_COUNTS_KEY, null, null));
     Map<Long, Long> counts = new TreeMap<Long, Long>();
 
@@ -87,6 +93,7 @@ public class CountCounterTable extends DataSet {
   private static final byte[] LINE_COUNT_KEY = Bytes.toBytes("line_count");
 
   public void incrementLineCount() throws OperationException {
+    metric.count("increment.count", 1);
     increment(LINE_COUNT_KEY, 1L);
   }
 
@@ -99,6 +106,7 @@ public class CountCounterTable extends DataSet {
   private static final byte[] LINE_LENGTH_KEY = Bytes.toBytes("line_length");
 
   public void incrementLineLength(long length) throws OperationException {
+    metric.count("increment.line.length", 1);
     increment(LINE_LENGTH_KEY, length);
   }
 

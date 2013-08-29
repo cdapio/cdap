@@ -20,7 +20,7 @@
 
 	<property>
 		<name>resource.manager.server.address</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>

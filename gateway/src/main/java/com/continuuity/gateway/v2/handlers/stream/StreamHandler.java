@@ -5,7 +5,6 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.verification.VerifyResult;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
@@ -20,6 +19,7 @@ import com.continuuity.gateway.GatewayMetrics;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
+import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
@@ -68,7 +68,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 @Path("/stream")
 public class StreamHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
-  private static final String NAME = "stream.rest";
+  private static final String NAME = GatewayConstants.STREAM_HANDLER_NAME;
 
   private final StreamCache streamCache;
   private final MetadataService metadataService;
@@ -80,16 +80,17 @@ public class StreamHandler extends AbstractHttpHandler {
   private final LoadingCache<ConsumerKey, ConsumerHolder> queueConsumerCache;
 
   @Inject
-  public StreamHandler(final TransactionSystemClient txClient, CConfiguration cConfig, StreamCache streamCache,
+  public StreamHandler(final TransactionSystemClient txClient, StreamCache streamCache,
                        MetadataService metadataService, CMetrics cMetrics, GatewayMetrics gatewayMetrics,
-                       final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator) {
+                       final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator,
+                       CachedStreamEventCollector cachedStreamEventCollector) {
     this.streamCache = streamCache;
     this.metadataService = metadataService;
     this.cMetrics = cMetrics;
     this.gatewayMetrics = gatewayMetrics;
     this.authenticator = authenticator;
 
-    this.streamEventCollector = new CachedStreamEventCollector(cConfig, txClient, queueClientFactory);
+    this.streamEventCollector = cachedStreamEventCollector;
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)

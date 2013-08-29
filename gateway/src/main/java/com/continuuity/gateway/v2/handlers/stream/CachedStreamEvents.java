@@ -1,12 +1,18 @@
 package com.continuuity.gateway.v2.handlers.stream;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.queue.QueueMetrics;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -39,6 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 final class CachedStreamEvents {
   private static final Logger LOG = LoggerFactory.getLogger(CachedStreamEvents.class);
+  private static final String METRICS_CONTEXT = Constants.GATEWAY_PREFIX + "." + GatewayConstants.STREAM_HANDLER_NAME;
 
   private final LoadingCache<QueueName, ProducerStreamEntries> eventCache;
 
@@ -48,6 +55,8 @@ final class CachedStreamEvents {
   private final AtomicInteger cachedNumEntries = new AtomicInteger(0);
 
   private final AtomicBoolean flushRunning = new AtomicBoolean(false);
+
+  private MetricsCollectionService metricsCollectionService;
 
   CachedStreamEvents(final TransactionSystemClient txClient, final QueueClientFactory queueClientFactory,
                      final ExecutorService callbackExecutorService,
@@ -77,13 +86,35 @@ final class CachedStreamEvents {
       .build(
         new CacheLoader<QueueName, ProducerStreamEntries>() {
           @Override
-          public ProducerStreamEntries load(QueueName key) throws Exception {
-            Queue2Producer producer = queueClientFactory.createProducer(key);
+          public ProducerStreamEntries load(final QueueName key) throws Exception {
+            Queue2Producer producer = metricsCollectionService == null ? queueClientFactory.createProducer(key) :
+              queueClientFactory.createProducer(
+                key,
+                new QueueMetrics() {
+                  MetricsCollector collector =
+                    metricsCollectionService.getCollector(MetricsScope.REACTOR, METRICS_CONTEXT, "0");
+
+                  @Override
+                  public void emitEnqueue(int count) {
+                    collector.gauge("collect.events", count, key.getSimpleName());
+                  }
+
+                  @Override
+                  public void emitEnqueueBytes(int bytes) {
+                    collector.gauge("collect.bytes", bytes, key.getSimpleName());
+                  }
+                });
+
             return new ProducerStreamEntries(producer,
                                              new ArrayBlockingQueue<StreamEntry>(maxCachedEventsPerStream),
                                              txClient, callbackExecutorService, cachedBytes, cachedNumEntries);
           }
         });
+  }
+
+  public void setMetricsCollectionService(MetricsCollectionService metricsCollectionService) {
+    LOG.info("Setting metricsCollectionService");
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   /**
@@ -118,7 +149,7 @@ final class CachedStreamEvents {
       return;
     }
 
-    LOG.debug("Running flush. Must flush={}", mustFlush);
+    LOG.trace("Running flush. Must flush={}", mustFlush);
     try {
       for (Map.Entry<QueueName, ProducerStreamEntries> entry : eventCache.asMap().entrySet()) {
         entry.getValue().flush();
@@ -126,7 +157,7 @@ final class CachedStreamEvents {
     } finally {
       flushRunning.set(false);
     }
-    LOG.debug("Done running flush");
+    LOG.trace("Done running flush");
   }
 
   /**

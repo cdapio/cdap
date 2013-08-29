@@ -27,6 +27,7 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
   private final BlockingQueue<QueueEntry> queue;
   private Transaction transaction;
   private int lastEnqueueCount;
+  private int lastEnqueueBytes;
 
   protected AbstractQueue2Producer(QueueMetrics queueMetrics) {
     this.queueMetrics = queueMetrics;
@@ -50,6 +51,7 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
     queue.clear();
     transaction = tx;
     lastEnqueueCount = 0;
+    lastEnqueueBytes = 0;
   }
 
   @Override
@@ -66,7 +68,7 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
     List<QueueEntry> entries = Lists.newArrayListWithCapacity(queue.size());
     queue.drainTo(entries);
     lastEnqueueCount = entries.size();
-    persist(entries, tx);
+    lastEnqueueBytes = persist(entries, tx);
     return true;
   }
 
@@ -74,6 +76,7 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
   public void postTxCommit() {
     if (lastEnqueueCount > 0) {
       queueMetrics.emitEnqueue(lastEnqueueCount);
+      queueMetrics.emitEnqueueBytes(lastEnqueueBytes);
     }
   }
 
@@ -85,7 +88,14 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
     return true;
   }
 
-  protected abstract void persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception;
+  /**
+   * Persists queue entries.
+   * @param entries queue entries to persist.
+   * @param transaction transaction to use.
+   * @return size in bytes of the entries persisted.
+   * @throws Exception
+   */
+  protected abstract int persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception;
 
   protected abstract void doRollback() throws Exception;
 }

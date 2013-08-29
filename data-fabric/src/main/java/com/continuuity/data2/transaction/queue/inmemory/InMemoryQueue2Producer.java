@@ -27,13 +27,17 @@ public class InMemoryQueue2Producer extends AbstractQueue2Producer {
   }
 
   @Override
-  protected void persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception {
+  protected int persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception {
     commitTransaction = transaction;
     int seqId = 0;
+    int bytes = 0;
+
     for (QueueEntry entry : entries) {
       queue.enqueue(transaction.getWritePointer(), seqId++, entry);
+      bytes += entry.getData().length;
     }
     lastEnqueueCount = seqId;
+    return bytes;
   }
 
   @Override

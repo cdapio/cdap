@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 
   <script type="text/javascript" src="/core/lib/jquery-1.9.1.js"></script>
-  <script type="text/javascript" src="/core/lib/bootstrap.js"></script>
+  <script type="text/javascript" src="/third_party/bootstrap/js/bootstrap.js"></script>
   <script type="text/javascript" src="/core/lib/handlebars.js"></script>
   <script type="text/javascript" src="/core/lib/ember-1.0.0-rc.5.js"></script>
   <script type="text/javascript" src="/socket.io/socket.io.js"></script>
@@ -21,7 +21,12 @@
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
-  <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+  <script src="/core/lib/rickshaw.js"></script>
+  <script src="/third_party/select2/select2.min.js"></script>
+
+  <link rel="stylesheet" href="/third_party/rickshaw/rickshaw.min.css">
+  <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/third_party/select2/select2.css">
   <link rel="stylesheet" href="/assets/css/main.css">
 
 </head>
@@ -50,6 +55,7 @@
         <a href="http://support.continuuity.com/" target="_blank">Support</a>
         <a href="https://accounts.continuuity.com/" target="_blank" class="user-link">My Account</a>
       {{/if}}
+      <a href="#/analyze" class="metrics-link">Metrics</a>
       </div>
       {{view C.Embed.Breadcrumb}}
     </div>
@@ -66,7 +72,10 @@
     <a href="http://support.continuuity.com/" target="blank">Support</a>
     <span>&nbsp;·&nbsp;</span>
     <a style="text-decoration:underline;" href="#" onclick="return C.Util.reset();">Reset</a>
-  </div>
+    </div>
+    <div id="drop-hover">
+      <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy.</div></div>
+    </div>
 
   </script>
 
@@ -99,7 +108,7 @@
       </div>
       <div class="quarter">
         <div class="panel" style="margin-right: 0;">
-          <div class="quarter-title">Querying</div>
+          <div class="quarter-title">Serving</div>
           <div class="quarter-value"><strong>{{value.query}}</strong> QPS</div>
           {{view C.Embed.DashChart kind="query"}}
         </div>
@@ -127,14 +136,12 @@
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
-              <button class="btn" style="width:64px;" {{action "promotePrompt"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Drain"><span class="btn-drain"></span><span>Push</span></button>
-          <ul class="dropdown-menu">
-            <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
-          </ul>
+            <button class="btn" style="width:64px;" {{action "promotePrompt"}}><span class="btn-drain"></span><span>Push</span></button>
+
+            <ul class="dropdown-menu">
+              <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
+            </ul>
         </div>
-      </div>
-      <div class="info-box" style="float: right;border: 0;padding-right: 0;">
-        {{view C.Embed.DropZone uploadType="Update"}}
       </div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/events/{id}" title="Processed"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/busyness/{id}" unit="percent" title="Busyness"}}</div>
@@ -152,11 +159,11 @@
       <div class="panel">
 
         <div class="panel-head">
-          {{#if children.Flow.content.length}}
+          {{#if elements.Flow.length}}
             <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
-              <button {{action startAllFlows on="click"}} class="btn">Start</button>
+              <button {{action startAll "Flow" on="click"}} class="btn">Start</button>
               <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
-              <button {{action stopAllFlows on="click"}} class="btn">Stop</button>
+              <button {{action stopAll "Flow" on="click"}} class="btn">Stop</button>
             </div>
           {{/if}}
           <div class="panel-title">Process</div>
@@ -170,11 +177,11 @@
       </div>
       <div class="panel">
         <div class="panel-head">
-          {{#if children.Query.content.length}}
+          {{#if elements.Procedure.length}}
             <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
-              <button {{action startAllQueries on="click"}} class="btn">Start</button>
+              <button {{action startAll "Procedure" on="click"}} class="btn">Start</button>
               <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
-              <button {{action stopAllQueries on="click"}} class="btn">Stop</button>
+              <button {{action stopAll "Procedure" on="click"}} class="btn">Stop</button>
             </div>
           {{/if}}
           <div class="panel-title">Query</div>
@@ -219,7 +226,7 @@
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
       </div>
       <div class="info-box" style="padding: 0;text-align: center;">
-        <div class="sparkline-box-title">Unconsumed</div>
+        <div class="sparkline-box-title">Events</div>
         <div class="sparkline-box-value" style="padding-top:19px;padding-left:0;width:100px;">{{model.eventsLabel}} {{model.eventsUnits}}<br /><span>Events</span></div>
       </div>
     </div>
@@ -539,7 +546,7 @@
             <tbody>
             <tr>
             <td class="app-list-count">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
-            <td class="app-list-count">{{model.unconsumed}}<br /><span>Events</span></td>
+            <td class="app-list-count">{{model.eventsLabel}}<br /><span>Events</span></td>
             <td>
             {{view C.Embed.Chart entityType="Stream" width="340" mode="singular" metrics="/collect/events/streams/{id}"}}
             </td>
@@ -719,6 +726,72 @@
 
   </script>
 
+  <script type="text/x-handlebars" data-template-name="ColorPicker">
+    <input type="text" class="color-picker" {{action setMetricRequestColor controller.metricsRequest.color}} {{ bindAttr value="controller.metricsRequest.color"}} />
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Analyze">
+    <div id="title">
+      {{view C.Embed.TimeSelector}}
+      <h1>Metrics <span>Explorer</span></h1>
+    </div>
+    <div id="panels">
+      <div class="panel" id="analyze-selected">
+        <div class="panel-body clearfix">
+
+          <div class="analyze-selected">
+            <ul>
+
+            {{#each metric in selected}}
+              <li class="analyze-selected-metric">
+                <div class="analyze-selected-metric-remove" {{action removeFromChart metric}}>&times;</div>
+                <div class="analyze-selected-metric-color" style="background: {{unbound metric.color}}"></div>
+                <div class="analyze-selected-metric-element"><a href="{{unbound metric.href}}">{{metric.element}}</a></div>
+                <div class="analyze-selected-metric-name">{{metric.metric}}</div>
+              </li>
+            {{/each}}
+
+              <li class="analyze-selected-metric-add" {{action showConfigure}}>
+                <div class="analyze-selected-metric-color">+</div>
+                <div class="analyze-selected-metric-element">Add</div>
+              </li>
+
+            </ul>
+
+            <div id="analyze-configurator">
+              <input type="hidden" id="elementSelector" />
+              <input type="hidden" id="metricSelector" disabled="disabled" />
+              <button {{bindAttr disabled="configuring.noSelection"}} class="analyze-blue-btn" {{action addToChart}}>Add</button>
+              <button class="analyze-gray-btn" {{action hideConfigure}}>Cancel</button>
+            </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="panel analyze-chart">
+      <div class="panel-body">
+        {{#if selected.length}}
+          <div id="y_axis"></div>
+          {{view C.Embed.Analyze}}
+        {{else}}
+          <div class="object-list-empty" style="height:500px;padding-top:220px;">
+            <div class="object-list-empty-content">
+              <div>No metrics selected.</div>
+              <span>Please add a metric on the right.</span>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+    </div>
+
+  </script>
+
+
   <script type="text/x-handlebars" data-template-name="PageNotFound">
 
     <div id="panels">
@@ -785,7 +858,7 @@
           <th style="text-align: center;width:64px;">Process</th>
           <th style="text-align: center;width:64px;">Store</th>
           <th style="text-align: center;width:64px;">Query</th>
-        <th style="width: 364px;">Busyness</th>
+        <th style="width: 262px;">Busyness</th>
         </thead>
         <tbody>
         {{#each elements.App }}
@@ -832,8 +905,8 @@
       <thead>
         <th style="padding-left: 14px;">Streams</th>
         <th style="width: 100px;text-align: center;">Storage</th>
-        <th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Unconsumed</th>
-        <th style="width: 444px;">Arrival Rate</th>
+        <th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Events</th>
+        <th style="width: 262px;">Arrival Rate</th>
       </thead>
       <tbody>
         {{#each elements.Stream }}
@@ -842,7 +915,7 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Consumers: {{types.StreamFlow.length}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
-            <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>
+            <td class="app-list-count">{{eventsLabel}}<br /><span>Events</span></td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/collect/events/streams/{id}"}}</td>
           </tr>
         {{/each}}
@@ -915,7 +988,7 @@
         <thead>
         <th style="padding-left: 14px;">Datasets</th>
         <th style="width: 100px;text-align: center;">Storage</th>
-        <th style="width: 444px;">Write Rate</th>
+        <th style="width: 262px;">Write Rate</th>
         </thead>
         <tbody>
         {{#each elements.Dataset }}
@@ -944,9 +1017,8 @@
       <table class="table">
       <thead>
         <th style="padding-left: 14px;">Procedures</th>
-        <th style="width: 100px;text-align: center;">Instances</th>
-        <th style="width: 212px;">Request Rate</th>
-        <th style="width: 212px;">Error Rate</th>
+        <th style="width: 262px;">Request Rate</th>
+        <th style="width: 262px;">Error Rate</th>
       </thead>
       <tbody>
         {{#each elements.Procedure}}
@@ -954,7 +1026,6 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
             </td>
-            <td class="app-list-count">1</td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/requests/{parent}/procedures/{id}"}}</td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/query/failures/{parent}/procedures/{id}"}}</td>
           </tr>

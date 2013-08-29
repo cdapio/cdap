@@ -422,6 +422,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 public void emitEnqueue(int count) {
                   flowletContext.getSystemMetrics().gauge(queueMetricsName, count);
                 }
+
+                @Override
+                public void emitEnqueueBytes(int bytes) {
+                  // no-op
+                }
               });
               return new DatumOutputEmitter<T>(producer,  schema, datumWriterFactory.create(type, schema));
             }

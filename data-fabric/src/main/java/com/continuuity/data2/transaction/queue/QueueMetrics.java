@@ -10,9 +10,16 @@ public interface QueueMetrics {
 
   void emitEnqueue(int count);
 
+  void emitEnqueueBytes(int bytes);
+
   static final QueueMetrics NOOP_QUEUE_METRICS = new QueueMetrics() {
     @Override
     public void emitEnqueue(int count) {
+      // no-op
+    }
+
+    @Override
+    public void emitEnqueueBytes(int bytes) {
       // no-op
     }
   };

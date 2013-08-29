@@ -17,11 +17,19 @@ define([], function () {
 			path = queryString ? path + '?' + queryString : path;
 
 			$.getJSON(path, callback).fail(function (req) {
+				var error = JSON.parse(req.responseText || "null");
 
-				var error = JSON.parse(req.responseText);
-				if (error.fatal) {
+				if (error && error.error) {
+					error = error.error;
+				}
+
+				if (error && error.fatal) {
 
 					$('#warning').html('<div>' + error.fatal + '</div>').show();
+
+				} else {
+
+					$('#warning').html('<div>The server returned an error.' + req.responseText + '</div>').show();
 
 				}
 

@@ -6,6 +6,16 @@
 define([], function() {
 
   return {
+    "appMetrics": [
+      {
+        'name': 'Events Processed',
+        'path': '/process/events/{id}'
+      },
+      {
+        'name': 'Busyness',
+        'path': '/process/busyness/{id}'
+      }
+    ],
     "flowsByStreamSample": [
       {
         "id": "WordCounter",
@@ -41,13 +51,15 @@ define([], function() {
         "id": "CountAndFilterWords",
         "name": "CountAndFilterWords",
         "description": "Example word filter and count application",
-        "exists": true
+        "exists": true,
+        "type": "App"
       },
       {
         "id": "WordCount",
         "name": "WordCount",
         "description": "Example Word Count Application",
-        "exists": true
+        "exists": true,
+        "type": "App"
       }
     ],
     "streamsSample": [

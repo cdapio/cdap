@@ -21,19 +21,14 @@ define([], function () {
 			 * The flow that has been loaded has the flowlet model we need.
 			 */
 			var flow = this.get('controllers').get('FlowStatus').get('model');
+
 			var model = this.get('model');
-
-			for (var i = 0; i < flow.flowlets.length; i ++) {
-
-				if (flow.flowlets[i].name === model.name) {
-					flow.flowlets[i].app = flow.get('app');
-					flow.flowlets[i].flow = flow.get('name');
-
-					this.set('model', C.Flowlet.create(flow.flowlets[i]));
-					break;
+			model = this.get('controllers.FlowStatus.elements.Flowlet').find(function (item) {
+				if (item.get('id') === model.get('id')) {
+					return true;
 				}
-
-			}
+			});
+			this.set('model', model);
 
 			/*
 			 * Setup connections based on the Flow.
