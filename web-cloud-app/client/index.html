@@ -226,7 +226,7 @@
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
       </div>
       <div class="info-box" style="padding: 0;text-align: center;">
-        <div class="sparkline-box-title">Unconsumed</div>
+        <div class="sparkline-box-title">Events</div>
         <div class="sparkline-box-value" style="padding-top:19px;padding-left:0;width:100px;">{{model.eventsLabel}} {{model.eventsUnits}}<br /><span>Events</span></div>
       </div>
     </div>
@@ -546,7 +546,7 @@
             <tbody>
             <tr>
             <td class="app-list-count">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
-            <td class="app-list-count">{{model.unconsumed}}<br /><span>Events</span></td>
+            <td class="app-list-count">{{model.eventsLabel}}<br /><span>Events</span></td>
             <td>
             {{view C.Embed.Chart entityType="Stream" width="340" mode="singular" metrics="/collect/events/streams/{id}"}}
             </td>
@@ -905,7 +905,7 @@
       <thead>
         <th style="padding-left: 14px;">Streams</th>
         <th style="width: 100px;text-align: center;">Storage</th>
-        <th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Unconsumed</th>
+        <th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Events</th>
         <th style="width: 262px;">Arrival Rate</th>
       </thead>
       <tbody>
@@ -915,7 +915,7 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Consumers: {{types.StreamFlow.length}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
-            <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>
+            <td class="app-list-count">{{eventsLabel}}<br /><span>Events</span></td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/collect/events/streams/{id}"}}</td>
           </tr>
         {{/each}}
