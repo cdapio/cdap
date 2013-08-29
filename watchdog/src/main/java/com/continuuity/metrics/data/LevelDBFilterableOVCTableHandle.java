@@ -19,11 +19,9 @@ import com.google.inject.name.Named;
 import java.util.concurrent.ExecutionException;
 
 /**
- * This class implements the table handle for LevelDB.
+ * This class implements the filterable table handle for LevelDB.
  */
 public class LevelDBFilterableOVCTableHandle extends LevelDBOVCTableHandle {
-
-  protected final LoadingCache<String, LevelDBFilterableOVCTable> ftableCache;
 
   /**
    * This class is a singleton.
@@ -31,35 +29,8 @@ public class LevelDBFilterableOVCTableHandle extends LevelDBOVCTableHandle {
    */
   private static final LevelDBFilterableOVCTableHandle INSTANCE = new LevelDBFilterableOVCTableHandle();
 
-  private LevelDBFilterableOVCTableHandle() {
-    ftableCache = CacheBuilder.newBuilder().build(new CacheLoader<String, LevelDBFilterableOVCTable>() {
-      @Override
-      public LevelDBFilterableOVCTable load(String tableName) throws Exception {
-        return openOrCreateTable(tableName);
-      }
-    });
-  }
-
   public static LevelDBFilterableOVCTableHandle getInstance() {
     return INSTANCE;
-  }
-
-  @Override
-  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
-    try {
-      return ftableCache.get(Bytes.toString(tableName));
-    } catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof OperationException) {
-        throw (OperationException) cause;
-      }
-      throw new OperationException(StatusCode.INTERNAL_ERROR, cause.getMessage(), cause);
-    }
-  }
-
-  @Override
-  protected OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
-    return ftableCache.getIfPresent(Bytes.toString(tableName));
   }
 
   /**
@@ -68,7 +39,8 @@ public class LevelDBFilterableOVCTableHandle extends LevelDBOVCTableHandle {
    * @return A LevelDBOVCTable.
    * @throws OperationException If there is any error when try to open or create the table.
    */
-  private LevelDBFilterableOVCTable openOrCreateTable(String tableName) throws OperationException {
+  @Override
+  protected LevelDBOVCTable openOrCreateTable(String tableName) throws OperationException {
     LevelDBFilterableOVCTable table = new LevelDBFilterableOVCTable(basePath, tableName, blockSize, cacheSize);
 
     if (table.openTable()) {

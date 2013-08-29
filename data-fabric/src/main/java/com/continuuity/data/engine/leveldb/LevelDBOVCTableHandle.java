@@ -77,7 +77,7 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
    * @return A LevelDBOVCTable.
    * @throws OperationException If there is any error when try to open or create the table.
    */
-  private LevelDBOVCTable openOrCreateTable(String tableName) throws OperationException {
+  protected LevelDBOVCTable openOrCreateTable(String tableName) throws OperationException {
     LevelDBOVCTable table = new LevelDBOVCTable(basePath, tableName, blockSize, cacheSize);
 
     if (table.openTable()) {
