@@ -88,10 +88,10 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   }
 
   @Override
-  protected QueueScanner getScanner(byte[] startRow, byte[] stopRow) throws IOException {
+  protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
     // Scan the table for queue entries.
     Scan scan = new Scan();
-    scan.setCaching(MAX_CACHE_ROWS);
+    scan.setCaching(numRows);
     scan.setStartRow(startRow);
     // ANDREAS it seems that startRow never gets updated. That means we will always rescan entries that we have
     // already read and decided to ignore.
@@ -103,7 +103,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     scan.setFilter(createFilter());
 
     ResultScanner scanner = hTable.getScanner(scan);
-    return new HBaseQueueScanner(scanner);
+    return new HBaseQueueScanner(scanner, numRows);
   }
 
   @Override
@@ -139,9 +139,11 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   private class HBaseQueueScanner implements QueueScanner {
     private final ResultScanner scanner;
     private final LinkedList<Result> cached = Lists.newLinkedList();
+    private final int numRows;
 
-    public HBaseQueueScanner(ResultScanner scanner) {
+    public HBaseQueueScanner(ResultScanner scanner, int numRows) {
       this.scanner = scanner;
+      this.numRows = numRows;
     }
 
     @Override
@@ -152,7 +154,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
           Map<byte[], byte[]> row = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
           return ImmutablePair.of(result.getRow(), row);
         }
-        Result[] results = scanner.next(MAX_CACHE_ROWS);
+        Result[] results = scanner.next(numRows);
         if (results.length == 0) {
           return null;
         }
