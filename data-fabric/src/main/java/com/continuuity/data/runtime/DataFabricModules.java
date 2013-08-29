@@ -20,7 +20,10 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
@@ -58,6 +61,7 @@ public class DataFabricModules extends RuntimeModule {
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
         bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
         bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
+        bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
 
         // We don't need caching for in-memory
         conf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);

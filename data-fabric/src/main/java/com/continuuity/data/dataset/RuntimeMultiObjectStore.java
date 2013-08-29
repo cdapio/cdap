@@ -7,13 +7,15 @@ import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.MultiObjectStore;
+import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
@@ -23,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This is the implementation of object store that is injected as the delegate at runtime. It has actual
@@ -101,12 +104,40 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
   }
 
   @Override
-  public List<T> readAll(byte[] key) throws OperationException {
-    ImmutableList.Builder<T> result = new ImmutableList.Builder<T>();
+  public T read(byte[] key, byte[] col) throws OperationException {
+    byte[] bytes = readRaw(key, col);
+    return decode(bytes);
+  }
+
+  @Override
+  public void delete(byte[] key, byte[] col) throws OperationException {
+    this.table.write(new Delete(key, col));
+  }
+
+  @Override
+  public void delete(byte[] key) throws OperationException {
+    this.table.write(new Delete(key, DEFAULT_COLUMN));
+  }
+
+  @Override
+  public void deleteAll(byte[] key) throws OperationException {
+    OperationResult<Map<byte[], byte[]>> result = this.table.read(new Read(key));
+    if (!result.isEmpty()){
+      List<Delete> deleteList = Lists.newArrayList();
+      Set<byte[]> columns = result.getValue().keySet();
+      if (columns.size() > 0){
+        this.table.write(new Delete(key, columns.toArray(new byte[columns.size()][])));
+      }
+    }
+  }
+
+  @Override
+  public Map<byte[], T> readAll(byte[] key) throws OperationException {
+    ImmutableMap.Builder<byte[], T>  result = new ImmutableMap.Builder<byte[], T>();
     Map<byte[], byte[]> entries = readRawAll(key);
     if (entries != null) {
       for (Map.Entry<byte[], byte[]> entry : entries.entrySet()){
-        result.add(decode(entry.getValue()));
+        result.put(entry.getKey(), decode(entry.getValue()));
       }
     }
     return result.build();
@@ -132,6 +163,17 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
       return null;
     } else {
       return result.getValue().get(DEFAULT_COLUMN);
+    }
+  }
+
+  private byte[] readRaw(byte[] key, byte[] col) throws OperationException {
+    // read from the underlying table
+    OperationResult<Map<byte[], byte[]>> result =
+      this.table.read(new Read(key, col));
+    if (result.isEmpty()) {
+      return null;
+    } else {
+      return result.getValue().get(col);
     }
   }
 

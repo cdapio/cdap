@@ -3,7 +3,6 @@
  */
 package com.continuuity;
 
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
@@ -12,6 +11,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.StackTraceUtil;
@@ -271,7 +271,7 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
-      new GatewayModules().getInMemoryModules(),
+      new GatewayModules(configuration).getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -283,26 +283,14 @@ public class SingleNodeMain {
   private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
-    boolean inVPC = false;
     String environment =
       configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
     if (environment.equals("vpc")) {
       System.err.println("Reactor Environment : " + environment);
-      inVPC = true;
     }
 
-    boolean levelDBCompatibleOS = DataFabricLevelDBModule.isOsLevelDBCompatible();
-    boolean levelDBEnabled =
-      configuration.getBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, Constants.DEFAULT_DATA_LEVELDB_ENABLED);
-
-    boolean useLevelDB = (inVPC || levelDBCompatibleOS) && levelDBEnabled;
-    if (useLevelDB) {
-      configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
-    } else {
-      configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.HSQLDB.name());
-    }
-
-    configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, levelDBEnabled);
+    configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+    configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, true);
 
     return ImmutableList.of(
       new ConfigModule(configuration, hConf),
@@ -312,8 +300,8 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
-      new GatewayModules().getSingleNodeModules(),
-      new DataFabricModules().getSingleNodeModules(),
+      new GatewayModules(configuration).getSingleNodeModules(),
+      new DataFabricLevelDBModule(configuration),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new MetricsQueryRuntimeModule().getSingleNodeModules(),

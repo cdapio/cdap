@@ -129,7 +129,7 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>data.rest,stream.flume,stream.rest,procedure.rest,monitor.rest,app.rest,systemstats.rest,meta.rest</value>
+        <value>data.rest,stream.flume,procedure.rest,monitor.rest,app.rest,systemstats.rest,meta.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 

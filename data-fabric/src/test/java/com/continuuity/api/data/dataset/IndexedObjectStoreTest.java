@@ -117,6 +117,34 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
+  public void testIndexNoSecondaryKeyChanges() throws Exception {
+    indexedFeed = instantiator.getDataSet("index");
+    List<String> categories = ImmutableList.of("C++", "C#");
+
+    Feed feed1 =  new Feed("MSFT", "http://microwsoft.com", categories);
+    byte[] key1 = Bytes.toBytes(feed1.getId());
+
+    indexedFeed.write(key1, feed1, getCategories(categories));
+
+    List<Feed> feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("C++"));
+    Assert.assertEquals(1, feedResult.size());
+
+    // re-write f1 with updated url but same id
+    Feed feed2 = new Feed("MSFT", "http://microsoft.com", categories);
+    indexedFeed.write(key1, feed2, getCategories(categories));
+
+    //Should be still be able to look up by secondary indices
+
+    feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("C++"));
+    Assert.assertEquals(1, feedResult.size());
+
+    feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("C#"));
+    Assert.assertEquals(1, feedResult.size());
+
+    Assert.assertEquals("http://microsoft.com", feedResult.get(0).getUrl());
+  }
+
+  @Test
   public void testIndexUpdates() throws Exception {
     indexedFeed = instantiator.getDataSet("index");
     TransactionAgent txAgent = newTransaction();

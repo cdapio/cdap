@@ -3,6 +3,8 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.metrics.MetricsScope;
+
 import java.net.URI;
 
 /**
@@ -36,4 +38,6 @@ interface MetricsRequest {
   Type getType();
 
   int getCount();
+
+  MetricsScope getScope();
 }

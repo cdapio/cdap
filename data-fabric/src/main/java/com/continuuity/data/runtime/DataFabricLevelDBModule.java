@@ -17,11 +17,12 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
-import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
@@ -99,10 +100,10 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
     // Bind TxDs2 stuff
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
-    bind(LevelDBOcTableService.class).in(Singleton.class);
     bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(conf);
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
-    bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
+    bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
+    bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);
 
     // Bind named fields
     

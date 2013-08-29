@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -11,13 +11,18 @@ import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +58,8 @@ public class HBaseQueueTest extends QueueTest {
     cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
               Integer.toString(Networks.getRandomPort()));
 
+    cConf.set(HBaseTableUtil.CFG_TABLE_PREFIX, "test");
+
     final Injector injector = Guice.createInjector(dataFabricModule);
 
     opexService = injector.getInstance(OperationExecutorService.class);
@@ -71,6 +78,7 @@ public class HBaseQueueTest extends QueueTest {
     // Get the remote opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+    queueAdmin = injector.getInstance(QueueAdmin.class);
   }
 
   @AfterClass
@@ -78,6 +86,11 @@ public class HBaseQueueTest extends QueueTest {
     opexService.stop(true);
     HBaseTestBase.stopHBase();
     zkServer.stopAndWait();
+  }
+
+  @Test
+  public void testPrefix() {
+    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName().startsWith("test_"));
   }
 
 }
