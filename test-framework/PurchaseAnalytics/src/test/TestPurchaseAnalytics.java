@@ -15,7 +15,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
@@ -32,7 +31,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Word Count main test.
+ * TestPurchaseAnalytics main test.
  */
 public class TestPurchaseAnalytics extends AppFabricTestBase {
 
@@ -61,5 +60,10 @@ public class TestPurchaseAnalytics extends AppFabricTestBase {
     // Customer
     // 3|{"customerId":"1","name":"alex","zip":90210,"rating":100}
     s1.send("3|{\"customerId\":\"1\",\"name\":\"alex\",\"zip\":90210,\"rating\":100}");
+
+    // Test MR jobs
+    appManager.startMapReduce("PurchaseHistoryBuilder");
+    appManager.startMapReduce("RegionBuilder");
+    appManager.startMapReduce("PurchaseStatsBuilder");
   }
 }

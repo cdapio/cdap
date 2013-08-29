@@ -3,7 +3,7 @@ Application used for black box regression testing.
 
 Transactions types
 -------------------
-There 3 types of transactions; adding a product, customer and adding a purchase. A purchase 
+There are types of transactions; adding a product, customer and purchase. A purchase 
 must respect referential integrity and refer to and existing product and customer. 
 Each transaction json is prefixed by a transaction type, as described below: 
 
@@ -52,7 +52,4 @@ Adds a product
 
 Method "add Purchase"
 {"customer":"alex","product":"FisherPrice","quantity":10,"price":"100","purchaseTime":"timestamp"}
-
-
-
 

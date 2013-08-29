@@ -16,22 +16,62 @@
  */
 
 /**
-
- * This package contains a simple purchase history application. It illustrates how to use the ObjectStore dataset.
- * <ul>
- *   <li>
- *     A stream named "purchaseStream". You can send sentences of the form "Tom bought 5 apples for $10" to the stream.
- *   </li><li>
- *     A dataset "history". It contains for every user the list of his purchases.
- *   </li><li>
- *     A flow that reads the "purchaseStream" stream and converts every input String to a Purchase object and stores
- *     it in a dataset called "purchases".
  *
- *     A map-reduce job then reads "purchases" dataset and creates a purchase history and stores it in a dataset called
- *     "history"
- *   </li><li>
- *     A procedure that allows to query the purchase history per user.
- *   </li>
- * </ul>
+ * This package contains a simple purchase analytics application. It illustrates how to use the ObjectStore dataset.
+ *
+ * Transactions types
+ * -------------------
+ * There are types of transactions; adding a product, customer and purchase. A purchase
+ * must respect referential integrity and refer to and existing product and customer.
+ * Each transaction json is prefixed by a transaction type, as described below:
+ *
+ * Purchase
+ * 1|{"customer":"alex","product":"FisherPrice","quantity":10,"price":"100","purchaseTime":"129308132"}
+ *
+ * Product
+ * 2|{"productId":"1","description":"FisherPrice"}
+ *
+ * Customer
+ * 3|{"customerId":"1","name":"alex","zip":90210,"rating":100}
+ *
+ * Flows
+ * -----
+ * PurchaseAnalyticsFlow: Collects and stores transactions.
+ * GeneratedPurchaseAnalyticsFlow: auto-generates and stores transactions.
+ *
+ * Batch Jobs
+ * ----------
+ * PurchaseHistoryBuilder: Aggregates all purchases made for each customer.
+ * RegionBuilder: Aggregates all customers by zip code.
+ * PurchaseStatsBuilder: Aggregates total and average spent for each customer.
+ *
+ * Procedure
+ * ---------
+ * PurchaseAnalyticsQuery
+ * Method "history"
+ * Returns purchase history for each customer
+ * {"customer"}:{"customer_name"}
+ *
+ * Method "customer"
+ * Returns information on a given customer
+ * {"id":}:{customer_id}
+ *
+ * Method "region"
+ * Returns number of customers per zip code.
+ * {"zip"}:{zip_code}
+ *
+ * Method "addCustomer"
+ * Adds a customer
+ * {"customerId":"1","name":"alex","zip":90210,"rating":100}
+ *
+ * Method "addProduct"
+ * Adds a product
+ * {"productId":"1","description":"FisherPrice"}
+ *
+ * Method "add Purchase"
+ * {"customer":"alex","product":"FisherPrice","quantity":10,"price":"100","purchaseTime":"timestamp"}
+ *
  */
+
+
 package com.continuuity.testsuite.purchaseanalytics;
