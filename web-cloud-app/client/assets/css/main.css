@@ -2364,7 +2364,6 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .analyze-chart {
 	padding: 16px;
 	margin-right: 300px;
-	overflow: hidden;
 	height: 532px;
 }
 
