@@ -25,6 +25,7 @@ public class HBaseOpexServiceTest extends OperationExecutorServiceTest {
   public static void startService() throws Exception {
     HBaseTestBase.startHBase();
     DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+    module.getConfiguration().setBoolean("tx.persist", false);
     injector = Guice.createInjector(module);
     OperationExecutorServiceTest.startService(
       module.getConfiguration(), injector.getInstance(Key.get(OperationExecutor.class,

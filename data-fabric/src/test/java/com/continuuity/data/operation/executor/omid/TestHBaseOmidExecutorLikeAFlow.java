@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -30,7 +29,9 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+      module.getConfiguration().setBoolean("tx.persist", false);
+      injector = Guice.createInjector(module);
       executor = (OmidTransactionalOperationExecutor) injector.getInstance(
           Key.get(OperationExecutor.class,
               Names.named("DataFabricOperationExecutor")));

@@ -17,13 +17,17 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.inmemory.StatePersistor;
+import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import com.google.inject.util.Providers;
 
 import java.io.File;
 import java.util.Properties;
@@ -68,6 +72,7 @@ public class DataFabricLocalModule extends AbstractModule {
   public DataFabricLocalModule(String hyperSqlJDBCString,
       @SuppressWarnings("unused") Properties hyperSqlProperties) {
     this.conf = CConfiguration.create();
+    this.conf.setBoolean("tx.persist", false);
     this.hyperSqlJDCBString = hyperSqlJDBCString;
   }
 
@@ -90,7 +95,13 @@ public class DataFabricLocalModule extends AbstractModule {
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
+    if (conf.getBoolean("tx.persist", true)) {
+      bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
+    } else {
+      bind(StatePersistor.class).toProvider(Providers.<StatePersistor>of(null));
+    }
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
+    bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);

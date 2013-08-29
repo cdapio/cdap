@@ -14,6 +14,9 @@ import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.StatePersistor;
+import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
@@ -21,6 +24,7 @@ import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import com.google.inject.util.Providers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
@@ -107,7 +111,14 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
 
     // Bind TxDs2 stuff
+    // Bind TxDs2 stuff
+    if (conf.getBoolean("tx.persist", true)) {
+      bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
+    } else {
+      bind(StatePersistor.class).toProvider(Providers.<StatePersistor>of(null));
+    }
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
+    bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);

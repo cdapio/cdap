@@ -26,7 +26,9 @@ public class  TestHBaseOmidTransactionalOperationExecutor  extends TestOmidTrans
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+      module.getConfiguration().setBoolean("tx.persist", false);
+      injector = Guice.createInjector(module);
       executor = (OmidTransactionalOperationExecutor) injector.getInstance(
         Key.get(OperationExecutor.class, Names.named("DataFabricOperationExecutor")));
     } catch (Exception e) {

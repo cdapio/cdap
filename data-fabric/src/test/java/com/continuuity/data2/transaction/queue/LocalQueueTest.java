@@ -27,13 +27,13 @@ public class LocalQueueTest extends QueueTest {
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
+    conf.setBoolean("tx.persist", false);
     Injector injector = Guice.createInjector(new DataFabricLocalModule(conf));
     // Get the in-memory opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
   }
-
 
   @Test
   public void testInjection() throws IOException {
