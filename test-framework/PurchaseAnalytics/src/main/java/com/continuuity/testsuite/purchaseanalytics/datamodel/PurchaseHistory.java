@@ -17,8 +17,6 @@
 
 package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
-import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
-
 import java.util.ArrayList;
 import java.util.List;
 

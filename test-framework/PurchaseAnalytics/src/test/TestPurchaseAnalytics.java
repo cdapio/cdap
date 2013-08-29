@@ -45,12 +45,21 @@ public class TestPurchaseAnalytics extends AppFabricTestBase {
   public void TestDataSetUsage() throws IOException, TimeoutException, InterruptedException {
     ApplicationManager appManager = deployApplication(PurchaseAnalyticsApp.class);
 
-    //FlowManager purchaseAnalyticsFlow = appManager.startFlow("PurchaseAnalyticsFlow");
-    FlowManager generatedPurchaseAnalyticsFlow = appManager.startFlow("GeneratedPurchaseAnalyticsFlow");
+    FlowManager purchaseAnalyticsFlow = appManager.startFlow("PurchaseAnalyticsFlow");
+    //FlowManager generatedPurchaseAnalyticsFlow = appManager.startFlow("GeneratedPurchaseAnalyticsFlow");
 
-    //StreamWriter s1 = appManager.getStreamWriter("transactionStream");
-    //s1.send("1|{\"customer\":\"alex\",\"product\":\"FisherPrice\",\"quantity\":10,\"price\":\"100\",\"purchaseTime\":\"129308132\"}");
+    StreamWriter s1 = appManager.getStreamWriter("transactionStream");
 
+    // Purchase
+    // 1|{"customer":"alex","product":"FisherPrice","quantity":10,"price":"100","purchaseTime":"129308132"}
+    s1.send("1|{\"customer\":\"alex\",\"product\":\"FisherPrice\",\"quantity\":10,\"price\":\"100\",\"purchaseTime\":\"129308132\"}");
 
+    // Product
+    // 2|{"productId":"1","description":"FisherPrice"}
+    s1.send("2|{\"productId\":\"1\",\"description\":\"FisherPrice\"}");
+
+    // Customer
+    // 3|{"customerId":"1","name":"alex","zip":90210,"rating":100}
+    s1.send("3|{\"customerId\":\"1\",\"name\":\"alex\",\"zip\":90210,\"rating\":100}");
   }
 }

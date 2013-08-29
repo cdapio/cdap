@@ -20,13 +20,16 @@ public class TransactionGeneratorFlowlet extends AbstractGeneratorFlowlet {
   private static final int productRate = 3;
   private static final int purchaseRate = 5;
   private static final int generationLatency = 10;
-  private static final int stopLimitProducts = 100;
-  private static final int stopLimitCustomers = stopLimitProducts * 10;
+  private static final long stopLimitProducts = 10000;
+  private static final long stopLimitCustomers = stopLimitProducts * 100;
   private static long customerId = 0;
   private static long productId = 0;
+
   private FlowletContext context;
+
   private ArrayList<Customer> customers;
   private ArrayList<Product> products;
+
   @Output("outPurchase")
   private OutputEmitter<Purchase> outPurchase;
   @Output("outProduct")
@@ -47,26 +50,24 @@ public class TransactionGeneratorFlowlet extends AbstractGeneratorFlowlet {
    * @throws Exception
    */
   public void generate() throws Exception {
-
     // Generate a customer
     if (customers.size() < stopLimitCustomers) {
       outCustomer.emit(this.generateCustomer());
-      Thread.sleep(generationLatency);
     }
 
     if (products.size() < stopLimitProducts) {
       // Generate products
       for (int i = 0; i <= productRate; i++) {
         outProduct.emit(this.generateProduct());
-        Thread.sleep(generationLatency);
-      }
-
-      // Generate purchases
-      for (int i = 0; i <= purchaseRate; i++) {
-        outPurchase.emit(this.generatedPurchase());
-        Thread.sleep(generationLatency);
       }
     }
+
+    // Generate purchases indefinitely.
+    for (int i = 0; i <= purchaseRate; i++) {
+      outPurchase.emit(this.generatedPurchase());
+    }
+
+    Thread.sleep(generationLatency);
   }
 
   /**
@@ -75,10 +76,10 @@ public class TransactionGeneratorFlowlet extends AbstractGeneratorFlowlet {
    * @return randomized customer
    */
   private Customer generateCustomer() {
-    Customer customer = new Customer(customerId++, /* Incremental unique Id */
+    Customer customer = new Customer(customerId++,                 /* Incremental unique Id */
                                      UUID.randomUUID().toString(), /* Unique random name */
-                                     this.randInt(10000, 99999), /* zipcode semi-valid */
-                                     this.randInt(1, 100)); /* Customer rating 1-100 */
+                                     this.randInt(10000, 99999),   /* zipcode semi-valid */
+                                     this.randInt(1, 100));        /* Customer rating 1-100 */
     customers.add(customer);
     return customer;
   }
@@ -98,7 +99,11 @@ public class TransactionGeneratorFlowlet extends AbstractGeneratorFlowlet {
     Customer customer = this.customers.get(this.randInt(0, this.customers.size() - 1));
     Product product = this.products.get(this.randInt(0, this.products.size() - 1));
 
-    Purchase purchase = new Purchase(customer.getName(), product.getDescription(), this.randInt(1, 100), this.randInt(1, 999999), System.currentTimeMillis());
+    Purchase purchase = new Purchase(customer.getName(),
+                                     product.getDescription(),
+                                     this.randInt(1, 100),
+                                     this.randInt(1, 999999),
+                                     System.currentTimeMillis());
     return purchase;
   }
 

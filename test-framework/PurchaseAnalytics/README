@@ -1,0 +1,8 @@
+Purchase
+1|{"customer":"alex","product":"FisherPrice","quantity":10,"price":"100","purchaseTime":"129308132"}
+
+Product
+2|{"productId":"1","description":"FisherPrice"}
+
+Customer
+3|{"customerId":"1","name":"alex","zip":90210,"rating":100}

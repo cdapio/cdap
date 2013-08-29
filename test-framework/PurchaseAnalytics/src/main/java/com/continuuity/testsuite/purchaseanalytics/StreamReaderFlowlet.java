@@ -39,6 +39,7 @@ public class StreamReaderFlowlet extends AbstractFlowlet {
 
     try {
       TransactionType transactionType = this.getTransactionType(body);
+      body = this.preProcessJSON(body);
 
       switch (transactionType) {
         case Purchase:

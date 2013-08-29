@@ -19,6 +19,7 @@ package com.continuuity.testsuite.purchaseanalytics;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.internal.io.UnsupportedTypeException;
@@ -27,6 +28,7 @@ import com.continuuity.testsuite.purchaseanalytics.datamodel.Inventory;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.PurchaseHistory;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.PurchaseStat;
 
 /**
  *
@@ -48,13 +50,16 @@ public class PurchaseAnalyticsApp implements Application {
           .add(new ObjectStore<Product>("products", Product.class))
           .add(new ObjectStore<Inventory>("inventory", Inventory.class))
           .add(new ObjectStore<Customer>("customers", Customer.class))
+          .add(new KeyValueTable("region"))
+          .add(new ObjectStore<PurchaseStat>("purchaseStats", PurchaseStat.class))
         .withFlows()
           .add(new PurchaseAnalyticsFlow())
           .add(new GeneratedPurchaseAnalyticsFlow())
         .withProcedures()
-          .add(new PurchaseQuery())
+          .add(new PurchaseAnalyticsQuery())
         .withBatch()
           .add(new PurchaseHistoryBuilder())
+          .add(new RegionBuilder())
         .build();
     } catch (UnsupportedTypeException e) {
       // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is
