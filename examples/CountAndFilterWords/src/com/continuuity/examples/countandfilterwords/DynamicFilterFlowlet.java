@@ -23,6 +23,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.metrics.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ public class DynamicFilterFlowlet extends AbstractFlowlet {
 
   private String filterName;
   private String filterRegex;
+  private Metrics metric;
 
   public DynamicFilterFlowlet(String filterName, String filterRegex) {
     super("FilterFlowlet-" + filterName);
@@ -74,10 +76,12 @@ public class DynamicFilterFlowlet extends AbstractFlowlet {
 
   @ProcessInput("tokens")
   public void process(String token) {
+    metric.count("tokens.processed", 1);
     LOG.debug("Processing token '" + token + "' against filter with name " +
                    filterName + " and regex " + filterRegex);
 
     if (Pattern.matches(filterRegex, token)) {
+      metric.count("tokens.matched", 1);
       LOG.debug("Matched token " + token + " against filter " + filterName);
       countOutput.emit(filterName);
     }

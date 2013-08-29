@@ -25,6 +25,7 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.metrics.Metrics;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,8 @@ public class CountCountsProcedure extends AbstractProcedure {
   @UseDataSet(CountCounts.TABLE_NAME)
   CountCounterTable counters;
 
+  private Metrics metric;
+
   @Handle("countCounts")
   public void countCounts(ProcedureRequest request,
                           ProcedureResponder responder) throws OperationException, IOException {
@@ -56,6 +59,7 @@ public class CountCountsProcedure extends AbstractProcedure {
     // Write the returnBytes out to the response
     ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
     try {
+      metric.count("bytes.returned", returnBytes.length);
       writer.write(returnBytes);
     } finally {
       writer.close();
