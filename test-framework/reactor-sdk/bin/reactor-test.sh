@@ -86,6 +86,8 @@ stream() {
     exit 1
   fi
 
+  echo $1
+
   for i in `seq $2`;
   do
     msg=`date`;
