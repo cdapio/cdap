@@ -6,9 +6,7 @@ package com.continuuity.metrics.query;
 import com.continuuity.common.metrics.MetricsScope;
 import com.google.common.base.Preconditions;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLDecoder;
 
 /**
  * An internal builder for creating MetricsRequest.
@@ -40,11 +38,7 @@ final class MetricsRequestBuilder {
   }
 
   MetricsRequestBuilder setMetricPrefix(String metricPrefix) {
-    try {
-      this.metricPrefix = URLDecoder.decode(metricPrefix, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      this.metricPrefix = metricPrefix;
-    }
+    this.metricPrefix = metricPrefix;
     return this;
   }
 

@@ -7,9 +7,12 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import org.apache.commons.lang.CharEncoding;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -159,6 +162,13 @@ final class MetricsRequestParser {
     // getting the metric from the end...
     int index = uriPath.lastIndexOf("/");
     String metricName = uriPath.substring(index + 1);
+
+    try {
+      metricName = URLDecoder.decode(metricName, CharEncoding.UTF_8);
+    } catch (UnsupportedEncodingException e) {
+      throw new IllegalArgumentException("metric name uses an unsupported encoding");
+    }
+
     String strippedPath = uriPath.substring(0, index);
     Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(strippedPath).iterator();
     pathParts.next();
