@@ -60,6 +60,8 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
 
   // sets tx to be used by txAware datasets
   protected void propagateToTxAwares(com.continuuity.data2.transaction.Transaction currentTx) {
+    // currentTx may not be set up before that (e.g. in detached tx agent case)
+    this.currentTx = currentTx;
     for (TransactionAware txnl : txAware) {
       txnl.startTx(currentTx);
     }
