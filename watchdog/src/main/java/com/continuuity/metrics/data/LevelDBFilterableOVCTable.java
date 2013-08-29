@@ -147,6 +147,7 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
           break;
         }
 
+        // we're at a new row
         if (!Bytes.equals(lastRow, row)) {
           lastDelete = -1;
           undeleted = -1;
@@ -159,7 +160,12 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
           }
         }
 
+        // check if we can skip this row and column
         if (filter != null) {
+          if (filter.filterAllRemaining()) {
+            break;
+          }
+
           org.apache.hadoop.hbase.KeyValue currKV = convert(keyValue);
           Filter.ReturnCode rc = filter.filterKeyValue(currKV);
 
@@ -185,10 +191,6 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
 
         lastRow = row;
         iterator.next();
-
-        if (filter.filterAllRemaining()) {
-          break;
-        }
 
         if (!isVisible(keyValue)) {
           continue;
@@ -231,6 +233,7 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
 
         if (type == KeyValue.Type.Put) {
           if (curVersion != lastDelete) {
+            // if we've gotten here, this is a valid column, add it to the results
             columnValues.put(keyValue.getQualifier(), keyValue.getValue());
             lastCol = keyValue.getQualifier();
           }

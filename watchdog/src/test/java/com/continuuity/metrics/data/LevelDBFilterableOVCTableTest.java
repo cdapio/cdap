@@ -57,6 +57,7 @@ public class LevelDBFilterableOVCTableTest {
     records.add(new MetricsRecord("app1.p.procedure1", "0", "count", tags, ts, 50));
     table.update(records);
 
+    // check that we get the right flow metrics for the app
     int flowlet1_count = 0;
     int flowlet2_count = 0;
     AggregatesScanner scanner = table.scan("app1.f", "count");
@@ -74,6 +75,7 @@ public class LevelDBFilterableOVCTableTest {
     Assert.assertEquals(4, flowlet1_count);
     Assert.assertEquals(2, flowlet2_count);
 
+    // should only get 1 row back for this metric
     scanner = table.scan("app1.f.flow1", "count.errors");
     int rows = 0;
     while (scanner.hasNext()) {
@@ -145,20 +147,6 @@ public class LevelDBFilterableOVCTableTest {
       }
     }
     assertEqualResults(expectedResults, actualResults);
-
-
-    query = new MetricsScanQueryBuilder()
-      .setContext(null)
-      .setMetric("reads")
-      .build(ts + seconds_to_query + 5, ts + seconds_to_query + 5);
-    scanner = tsTable.scan(query);
-    while (scanner.hasNext()) {
-      MetricsScanResult result = scanner.next();
-
-      for (TimeValue tv : result) {
-
-      }
-    }
   }
 
   private void assertEqualResults(Map<String, List<TimeValue>> expected, Map<String, List<TimeValue>> actual) {
