@@ -1,7 +1,7 @@
 package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
 /**
- *
+ * Represents purchase stats for a given customer.
  */
 public class PurchaseStat {
   private final long customerId;

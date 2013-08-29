@@ -1,7 +1,7 @@
 package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
 /**
- *
+ *  Represents total amount in inventory for a given object.
  */
 public class Inventory {
   private final int productId;

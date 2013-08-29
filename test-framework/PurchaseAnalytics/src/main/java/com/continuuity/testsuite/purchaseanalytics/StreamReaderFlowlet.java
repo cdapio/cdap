@@ -11,14 +11,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 
 /**
- * Reads and routes all transactions types.
+ * Reads and routes all transactions types to the corresponding object store flowlet.
  */
 public class StreamReaderFlowlet extends AbstractFlowlet {
 
   public enum TransactionType {
     Purchase,  /* 1 */
     Product,   /* 2 */
-    Customer,   /* 3 */
+    Customer,  /* 3 */
     Unknown
   }
 
@@ -65,7 +65,7 @@ public class StreamReaderFlowlet extends AbstractFlowlet {
   }
 
   /**
-   * Primitive transaction parser
+   * Primitive transaction parser. Identifies the type of transaction streamed.
    *
    * @param event
    * @return
@@ -84,7 +84,7 @@ public class StreamReaderFlowlet extends AbstractFlowlet {
   }
 
   /**
-   * Pre process transactions, remove type argument
+   * Pre processes transactions, removes the type argument.
    * "{1,2,3}|{json_object}" return {json_object}
    *
    * @param event

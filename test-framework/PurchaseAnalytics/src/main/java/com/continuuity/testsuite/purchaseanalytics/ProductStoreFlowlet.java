@@ -9,7 +9,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
 
 /**
-*
+*  Stores products to object store.
 */
 public class ProductStoreFlowlet extends AbstractFlowlet {
 

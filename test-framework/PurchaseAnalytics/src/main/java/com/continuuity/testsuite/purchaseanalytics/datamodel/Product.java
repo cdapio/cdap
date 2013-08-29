@@ -1,7 +1,7 @@
 package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
 /**
- *
+ * Models a product identified by unique Id.
  */
 public class Product {
 
@@ -17,7 +17,6 @@ public class Product {
   }
 
   public Product(long productId, String description) {
-    super();
     this.productId = productId;
     this.description = description;
   }

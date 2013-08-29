@@ -14,14 +14,14 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * Generates Purchases, Products, customers and inventory
+ * Generates Purchases, Products, customers and inventory. Used by GeneratedPurchaseAnalyticsFlowlet.
  */
 public class TransactionGeneratorFlowlet extends AbstractGeneratorFlowlet {
   private static final int productRate = 3;
   private static final int purchaseRate = 5;
   private static final int generationLatency = 10;
-  private static final long stopLimitProducts = 10000;
-  private static final long stopLimitCustomers = stopLimitProducts * 100;
+  private static final long stopLimitProducts = 100000;
+  private static final long stopLimitCustomers = stopLimitProducts * 1000;
   private static long customerId = 0;
   private static long productId = 0;
 
@@ -45,7 +45,7 @@ public class TransactionGeneratorFlowlet extends AbstractGeneratorFlowlet {
   }
 
   /**
-   * Generates customers, products and purchase in accordance with the randomly generated "inventory"
+   * Generates customers, products and purchase in accordance with the randomly generated "rules"
    *
    * @throws Exception
    */

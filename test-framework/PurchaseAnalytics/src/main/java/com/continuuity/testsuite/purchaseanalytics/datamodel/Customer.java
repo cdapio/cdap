@@ -3,7 +3,7 @@ package com.continuuity.testsuite.purchaseanalytics.datamodel;
 import java.util.UUID;
 
 /**
- * represents a customer
+ * Models a customer, identified by unique id.
  */
 public class Customer {
   private final long customerId;
@@ -28,7 +28,6 @@ public class Customer {
   }
 
   public Customer(long customerId, String name, int zip, int rating) {
-    //super();
     this.customerId = customerId;
     this.name = name;
     this.zip = zip;

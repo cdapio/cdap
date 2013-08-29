@@ -31,7 +31,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 /**
- * Map reduce job that reads Purchases from Object store and creates purchase history for every user.
+ * Map reduce job that aggregates customer count per zip code.
  */
 public class RegionBuilder extends AbstractMapReduce {
 
