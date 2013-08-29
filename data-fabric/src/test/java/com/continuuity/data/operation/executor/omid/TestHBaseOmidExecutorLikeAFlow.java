@@ -32,6 +32,7 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
     try {
       HBaseTestBase.startHBase();
       DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+      module.getConfiguration().setBoolean("tx.persist", false);
       injector = Guice.createInjector(module,
                                       new ConfigModule(module.getConfiguration(), HBaseTestBase.getConfiguration()),
                                       new LocationRuntimeModule().getInMemoryModules());

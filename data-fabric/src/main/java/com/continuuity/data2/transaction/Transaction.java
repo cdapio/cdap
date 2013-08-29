@@ -1,5 +1,7 @@
 package com.continuuity.data2.transaction;
 
+import com.google.common.base.Objects;
+
 import java.util.Arrays;
 
 /**
@@ -31,5 +33,14 @@ public class Transaction {
 
   public boolean isVisible(long version) {
     return version <= getReadPointer() && Arrays.binarySearch(getExcludedList(), version) < 0;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+                  .add("readPointer", readPointer)
+                  .add("writePointer", writePointer)
+                  .add("excludedList", Arrays.toString(excludedList))
+                  .toString();
   }
 }

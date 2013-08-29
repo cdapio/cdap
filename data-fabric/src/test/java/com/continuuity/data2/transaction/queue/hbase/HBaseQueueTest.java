@@ -69,6 +69,7 @@ public class HBaseQueueTest extends QueueTest {
               Integer.toString(Networks.getRandomPort()));
 
     cConf.set(HBaseTableUtil.CFG_TABLE_PREFIX, "test");
+    cConf.setBoolean("tx.persist", false);
 
     final Injector injector = Guice.createInjector(dataFabricModule, new AbstractModule() {
 
