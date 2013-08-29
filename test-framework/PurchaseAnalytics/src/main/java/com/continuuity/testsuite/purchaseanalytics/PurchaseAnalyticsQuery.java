@@ -113,9 +113,7 @@ public class PurchaseAnalyticsQuery extends AbstractProcedure {
     } else {
       // Insert in dataset (long customerId, String name, int zip, int rating)
       Customer customer = new Customer(Long.parseLong(customerId),
-                                       name,
-                                       Integer.parseInt(zip),
-                                       Integer.parseInt(rating));
+                                       name, Integer.parseInt(zip), Integer.parseInt(rating));
 
       customers.write(Bytes.toBytes(customerId), customer);
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), "Customer added to system.");

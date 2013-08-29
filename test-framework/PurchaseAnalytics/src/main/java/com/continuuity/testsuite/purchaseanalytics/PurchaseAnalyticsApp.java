@@ -60,6 +60,7 @@ public class PurchaseAnalyticsApp implements Application {
         .withBatch()
           .add(new PurchaseHistoryBuilder())
           .add(new RegionBuilder())
+          .add(new PurchaseStatsBuilder())
         .build();
     } catch (UnsupportedTypeException e) {
       // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is
