@@ -23,6 +23,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.metrics.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,9 +38,12 @@ public class Counter extends AbstractFlowlet {
   @UseDataSet(CountAndFilterWords.TABLE_NAME)
   KeyValueTable counters;
 
+  private Metrics metric;
+
   @ProcessInput("counts")
   public void process(String counter) throws OperationException {
     LOG.debug("Incrementing counter " + counter);
     this.counters.increment(Bytes.toBytes(counter), 1L);
+    metric.count("increments", 1);
   }
 }
