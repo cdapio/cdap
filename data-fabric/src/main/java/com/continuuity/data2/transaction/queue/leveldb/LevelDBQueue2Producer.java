@@ -40,10 +40,12 @@ public final class LevelDBQueue2Producer extends AbstractQueue2Producer {
   }
 
   @Override
-  protected void persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception {
+  protected int persist(Iterable<QueueEntry> entries, Transaction transaction) throws Exception {
     long writePointer = transaction.getWritePointer();
     byte[] rowKeyPrefix = Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer));
     int count = 0;
+    int bytes = 0;
+
     for (QueueEntry entry : entries) {
       // Row key = queue_name + writePointer + counter
       byte[] rowKey = Bytes.add(rowKeyPrefix, Bytes.toBytes(count++));
@@ -51,9 +53,12 @@ public final class LevelDBQueue2Producer extends AbstractQueue2Producer {
       row.put(QueueConstants.DATA_COLUMN, entry.getData());
       row.put(QueueConstants.META_COLUMN, QueueEntry.serializeHashKeys(entry.getHashKeys()));
       changes.put(rowKey, row);
+      bytes += entry.getData().length;
     }
     // TODO introduce a constant in the OcTableCore for the latest timestamp
     core.persist(changes, KeyValue.LATEST_TIMESTAMP);
+
+    return bytes;
   }
 
   @Override

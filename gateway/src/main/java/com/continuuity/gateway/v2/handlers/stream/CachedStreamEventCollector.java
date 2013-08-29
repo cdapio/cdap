@@ -2,6 +2,7 @@ package com.continuuity.gateway.v2.handlers.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.QueueClientFactory;
@@ -66,6 +67,12 @@ public class CachedStreamEventCollector extends AbstractIdleService {
                                                      maxCachedEventsPerStream);
   }
 
+  // Optional injection of MetricsCollectionService
+  @Inject(optional = true)
+  void setMetricsCollectionService(MetricsCollectionService metricsCollectionService) {
+    cachedStreamEvents.setMetricsCollectionService(metricsCollectionService);
+  }
+
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting up {}", this.getClass().getSimpleName());
@@ -73,9 +80,9 @@ public class CachedStreamEventCollector extends AbstractIdleService {
       new TimerTask() {
         @Override
         public void run() {
-          LOG.debug("Running flush from timer task.");
+          LOG.trace("Running flush from timer task.");
           cachedStreamEvents.flush(false);
-          LOG.debug("Done running flush from timer task.");
+          LOG.trace("Done running flush from timer task.");
         }
       },
       flushIntervalMs, flushIntervalMs
