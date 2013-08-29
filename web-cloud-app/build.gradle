@@ -36,7 +36,7 @@ task jshint << {
 
   print command.join(' ');
 
-/* Exluding command to fix build. 
+/* Exluding command to fix build.
   if(executeCommand(command) != 0) {
     throw new GradleScriptException("JSHint reported errors while building command app", null)
   }
@@ -79,6 +79,8 @@ def build_edition(edition, base) {
     "out=$installDir/client/main.js"
   ]
 
+  print rcmd.join(' ')
+
   if(executeCommand(rcmd) != 0) {
     throw new GradleScriptException("Failed while running r.js for edition '${edition}'", null)
   }
@@ -86,6 +88,11 @@ def build_edition(edition, base) {
   copy {
     from 'client/core/lib'
     into "$installDir/client/core/lib"
+  }
+
+  copy {
+    from 'client/third_party'
+    into "$installDir/client/third_party"
   }
 
   copy {

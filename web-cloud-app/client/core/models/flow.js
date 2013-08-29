@@ -28,6 +28,15 @@ define([], function () {
 
 		},
 
+		/*
+		 * Runnable context path, used by user-defined metrics.
+		 */
+		context: function () {
+
+			return this.interpolate('/apps/{parent}/flows/{id}');
+
+		}.property('app', 'name'),
+
 		interpolate: function (path) {
 
 			return path.replace(/\{parent\}/, this.get('app'))

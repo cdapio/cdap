@@ -1,3 +1,4 @@
 ./client/core/lib/
 ./server/node_modules/
 ./server/thrift_bindings/
+./**/*_test*

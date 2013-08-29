@@ -71,7 +71,7 @@ function(Components, Embeddables, HTTP, Socket, Util) {
 							version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
 							'Click here to download</a>.</div>').show();
 					}
-				}			
+				}
 			}
 		}),
 
@@ -229,6 +229,11 @@ function(Components, Embeddables, HTTP, Socket, Util) {
 	 * Assign Utility functions.
 	 */
 	assignments['Util'] = Util;
+
+	/*
+	 * Configure upload handler.
+	 */
+	Util.Upload.configure();
 
 	/*
 	 * Shortcut for modal dialogues.
