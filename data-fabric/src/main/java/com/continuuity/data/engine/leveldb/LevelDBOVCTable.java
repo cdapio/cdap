@@ -92,7 +92,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     return options;
   }
 
-  synchronized boolean openTable() throws OperationException {
+  synchronized public boolean openTable() throws OperationException {
     try {
       this.db = factory.open(new File(generateDBPath()), generateDBOptions(false, false));
       return true;
@@ -101,7 +101,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
   }
 
-  synchronized void initializeTable() throws OperationException {
+  synchronized public void initializeTable() throws OperationException {
     try {
       this.db = factory.open(new File(generateDBPath()), generateDBOptions(true, false));
     } catch (IOException e) {

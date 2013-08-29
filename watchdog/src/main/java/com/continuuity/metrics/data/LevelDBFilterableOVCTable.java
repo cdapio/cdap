@@ -60,23 +60,6 @@ public class LevelDBFilterableOVCTable extends LevelDBOVCTable implements Filter
     return scan(null, null, readPointer, filter);
   }
 
-  synchronized boolean openTable() throws OperationException {
-    try {
-      this.db = factory.open(new File(generateDBPath()), generateDBOptions(false, false));
-      return true;
-    } catch (IOException e) {
-      return false;
-    }
-  }
-
-  synchronized void initializeTable() throws OperationException {
-    try {
-      this.db = factory.open(new File(generateDBPath()), generateDBOptions(true, false));
-    } catch (IOException e) {
-      throw createOperationException(e, "create");
-    }
-  }
-
   // this is gross...
   // TODO: refactor properly with our own Filter/KeyValue abstraction
   public static org.apache.hadoop.hbase.KeyValue convert(KeyValue kv) {
