@@ -187,4 +187,11 @@ public class MetricsRequestParserTest {
     Assert.assertEquals(weirdMetric, request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());
   }
+
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUserMetricBadURIThrowsException() {
+    String badEncoding = "%2";
+    MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/" + badEncoding + "?aggregate=true"));
+  }
 }
