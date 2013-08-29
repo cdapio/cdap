@@ -398,11 +398,14 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private <T> ProcessMethodCallback processMethodCallback(final BlockingQueue<FlowletProcessEntry<?>> processQueue,
                                                           final FlowletProcessEntry<T> processEntry,
                                                           final InputDatum input) {
+    // If it is generator flowlet, processCount is 1.
+    final int processedCount = processEntry.getProcessSpec().getProcessMethod().needsInput() ? input.size() : 1;
+
     return new ProcessMethodCallback() {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getSystemMetrics().gauge("process.events.processed", input.size());
+          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.error("Exception on onSuccess call: {}", flowletContext, t);
@@ -446,7 +449,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getSystemMetrics().gauge("process.events.processed", input.size());
+            flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
             inputAcknowledger.ack();
           } catch (OperationException e) {
             LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);
