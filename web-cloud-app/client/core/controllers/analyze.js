@@ -142,7 +142,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
                 var userMetrics = [], result = response.result, i = result.length;
                 while (i--) {
 
-                  var path = '/user' + context + '/' + result[i].metric;
+                  var path = '/user' + context + '/' + window.encodeURIComponent(result[i].metric);
                   var j = metrics.length, found = false;
 
                   while (j--) {
