@@ -31,13 +31,25 @@ public class ZooKeeperPersistor implements StatePersistor {
   public static final String DEFAULT_ZK_PREFIX = "/continuuity";
   public static final String CFG_ZK_PREFIX = "data.zk.prefix";
 
+  private final CConfiguration conf;
   private final String zkBasePath;
 
   @Inject
-  public ZooKeeperPersistor(CConfiguration conf) {
-    String prefix = conf.get(CFG_ZK_PREFIX, DEFAULT_ZK_PREFIX);
+  public ZooKeeperPersistor(CConfiguration cconf) {
+    String prefix = cconf.get(CFG_ZK_PREFIX, DEFAULT_ZK_PREFIX);
     zkBasePath = prefix + "/tx";
+    conf = cconf;
+  }
 
+  @Override
+  public void close() {
+    if (this.zkClient != null) {
+      zkClient.stopAndWait();
+    }
+  }
+
+  @Override
+  public void start() {
     String zkQuorum = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     zkClient =
       ZKClientServices.delegate(

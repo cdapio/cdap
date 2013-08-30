@@ -60,6 +60,8 @@ public class InMemoryTransactionManager {
   private long readPointer;
   private long nextWritePointer;
 
+  private boolean initialized = false;
+
   // The watermark is the limit up to which we have claimed all write versions, exclusively.
   // Every time a transaction is created that exceeds (or equals) this limit, a new batch of
   // write versions must be claimed, and the new watermark is saved persistently.
@@ -75,13 +77,14 @@ public class InMemoryTransactionManager {
   public InMemoryTransactionManager() {
     persistor = null;
     reset();
+    initialized = true;
   }
 
   @Inject
   public InMemoryTransactionManager(CConfiguration conf, @Nullable StatePersistor persistor) {
     this.persistor = persistor;
     claimSize = conf.getInt(CFG_TX_CLAIM_SIZE, DEFAULT_TX_CLAIM_SIZE);
-    init();
+    reset();
   }
 
   private void reset() {
@@ -93,42 +96,50 @@ public class InMemoryTransactionManager {
     waterMark = 0; // this will trigger a claim at the first start transaction
   }
 
-  private void init() {
+  // TODO this class should implement Service and this should be start().
+  // TODO However, start() is alredy used to start a transaction, so this would be major refactoring now.
+  public void init() {
     // establish defaults in case there is no persistence
     reset();
 
     // try to recover persisted state
     if (persistor != null) {
       try {
-        // first attempt to restore the full state
+        // start up the persistor first
+        persistor.start();
+        // attempt to restore the full state
         byte[] state;
         state = persistor.readBack(ALL_STATE_TAG);
         if (state != null) {
           decodeState(state);
+          LOG.debug("Restored transaction state successfully.");
           persistor.delete(ALL_STATE_TAG);
           return;
         }
         // full state is not there, attempt to restore the watermark
         state = persistor.readBack(WATERMARK_TAG);
         if (state != null) {
-          long watermark = Bytes.toLong(state);
+          waterMark = Bytes.toLong(state);
           // must have crashed last time... need to claim the next batch of write versions
-          watermark += claimSize;
-          readPointer = watermark - 1;
-          nextWritePointer = watermark; //
+          waterMark += claimSize;
+          readPointer = waterMark - 1;
+          nextWritePointer = waterMark; //
+          LOG.debug("Recovered transaction watermark successfully, but transaction state may have been lost.");
         }
       } catch (IOException e) {
         LOG.error("Unable to read back transaction state:", e);
         throw Throwables.propagate(e);
       }
     }
+    initialized = true;
   }
 
   public synchronized void close() {
-    if (persistor != null) {
+    if (initialized && persistor != null) {
       byte[] state = encodeState();
       try {
         persistor.persist(ALL_STATE_TAG, state);
+        LOG.debug("Successfully persisted transaction state.");
       } catch (IOException e) {
         LOG.error("Unable to persist transaction state:", e);
         throw Throwables.propagate(e);
