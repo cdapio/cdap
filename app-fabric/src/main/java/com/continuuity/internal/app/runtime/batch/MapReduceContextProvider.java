@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -110,11 +111,11 @@ public final class MapReduceContextProvider {
     return new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_ARGS), BasicArguments.class);
   }
 
-  private String getProgramLocation() {
+  private URI getProgramLocation() {
     String programJarName = getProgramJarName();
     for (Path file : jobContext.getFileClassPaths()) {
       if (programJarName.equals(file.getName())) {
-        return file.toUri().getPath();
+        return file.toUri();
       }
     }
     throw new IllegalStateException("Program jar " + programJarName + " not found in classpath files.");

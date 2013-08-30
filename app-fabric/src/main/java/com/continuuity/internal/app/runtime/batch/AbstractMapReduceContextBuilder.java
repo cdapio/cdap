@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -64,7 +65,7 @@ public abstract class AbstractMapReduceContextBuilder {
                                      com.continuuity.data.operation.executor.Transaction tx,
                                      Transaction tx2,
                                      ClassLoader classLoader,
-                                     String programLocation,
+                                     URI programLocation,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName) {
@@ -132,7 +133,7 @@ public abstract class AbstractMapReduceContextBuilder {
     return context;
   }
 
-  protected abstract Program loadProgram(String programLocation, LocationFactory locationFactory) throws IOException;
+  protected abstract Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException;
 
   /**
    * @return instance of {@link Injector} with bindings for current runtime environment

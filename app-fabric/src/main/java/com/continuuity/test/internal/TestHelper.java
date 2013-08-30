@@ -135,7 +135,7 @@ public class TestHelper {
   public static void deployApplication(Class<? extends Application> applicationClz, String fileName) throws Exception {
     Location deployedJar =
       deployApplication(injector.getInstance(AppFabricService.Iface.class),
-                        injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class), DefaultId.ACCOUNT,
+                        injector.getInstance(LocationFactory.class), DefaultId.ACCOUNT,
                         DUMMY_AUTH_TOKEN, "", fileName, applicationClz);
     deployedJar.delete(true);
   }
@@ -147,7 +147,7 @@ public class TestHelper {
                                        Class<? extends Application> applicationClz, String fileName) throws Exception {
     Location deployedJar =
       deployApplication(injector.getInstance(AppFabricService.Iface.class),
-                        injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class), account, token,
+                        injector.getInstance(LocationFactory.class), account, token,
                         "", fileName, applicationClz);
     deployedJar.delete(true);
   }
@@ -174,7 +174,7 @@ public class TestHelper {
 
       Application application = applicationClz.newInstance();
       ApplicationSpecification appSpec = application.configure();
-      Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).getAbsolutePath());
+      Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
 
       ResourceIdentifier id = appFabricServer.init(
         token, new ResourceInfo(account, applicationId, fileName, 0, System.currentTimeMillis()));

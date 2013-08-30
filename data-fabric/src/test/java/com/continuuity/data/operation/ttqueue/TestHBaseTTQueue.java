@@ -2,6 +2,8 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -35,7 +37,11 @@ public class TestHBaseTTQueue extends TestHBaseAbstractTTQueue {
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+      injector = Guice.createInjector(module,
+                                      new ConfigModule(module.getConfiguration(), HBaseTestBase.getConfiguration()),
+                                      new LocationRuntimeModule().getInMemoryModules());
+
       handle = injector.getInstance(OVCTableHandle.class);
     } catch (Exception e) {
       throw new RuntimeException(e);
