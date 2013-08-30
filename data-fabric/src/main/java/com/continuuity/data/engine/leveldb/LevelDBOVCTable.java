@@ -54,7 +54,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   private final Integer blockSize;
   private final Long cacheSize;
 
-  private DB db;
+  protected DB db;
 
   // this will be used for row-level locking. Because the levelDB may grow very large,
   // and we want to keep the memory footprint small, we will always remove locks from
@@ -63,7 +63,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   // create a new lock. Therefore we always use validLock() to obtain a lock.
   private final RowLockTable locks = new RowLockTable();
 
-  LevelDBOVCTable(final String basePath, final String tableName, final Integer blockSize, final Long cacheSize) {
+  public LevelDBOVCTable(final String basePath, final String tableName, final Integer blockSize, final Long cacheSize) {
     this.basePath = basePath;
     this.blockSize = blockSize;
     this.cacheSize = cacheSize;
@@ -75,11 +75,12 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
   }
 
-  private String generateDBPath() {
-    return new File(basePath, encodedTableName).getAbsolutePath();
+  protected String generateDBPath() {
+    return basePath + System.getProperty("file.separator") +
+      dbFilePrefix + encodedTableName;
   }
 
-  private Options generateDBOptions(boolean createIfMissing, boolean errorIfExists) {
+  protected Options generateDBOptions(boolean createIfMissing, boolean errorIfExists) {
     Options options = new Options();
     options.createIfMissing(createIfMissing);
     options.errorIfExists(errorIfExists);
@@ -89,7 +90,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     return options;
   }
 
-  synchronized boolean openTable() throws OperationException {
+  public synchronized boolean openTable() throws OperationException {
     try {
       this.db = factory.open(new File(generateDBPath()), generateDBOptions(false, false));
       return true;
@@ -98,7 +99,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
   }
 
-  synchronized void initializeTable() throws OperationException {
+  public synchronized void initializeTable() throws OperationException {
     try {
       this.db = factory.open(new File(generateDBPath()), generateDBOptions(true, false));
     } catch (IOException e) {
@@ -135,23 +136,23 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
   // LevelDB specific helpers
 
-  private byte[] createStartKey(byte[] row) {
+  protected byte[] createStartKey(byte[] row) {
     return new KeyValue(row, FAMILY, null, KeyValue.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
-  private byte[] createStartKey(byte[] row, byte[] column) {
+  protected byte[] createStartKey(byte[] row, byte[] column) {
     return new KeyValue(row, FAMILY, column, KeyValue.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
-  private byte[] createEndKey(byte[] row) {
+  protected byte[] createEndKey(byte[] row) {
     return new KeyValue(row, null, null, KeyValue.LATEST_TIMESTAMP, Type.Minimum).getKey();
   }
 
-  private byte[] createEndKey(byte[] row, byte[] column) {
+  protected byte[] createEndKey(byte[] row, byte[] column) {
     return new KeyValue(row, FAMILY, column, 0L, Type.Minimum).getKey();
   }
 
-  private byte[] appendByte(final byte[] value, byte b) {
+  protected byte[] appendByte(final byte[] value, byte b) {
     byte[] newValue = new byte[value.length + 1];
     System.arraycopy(value, 0, newValue, 0, value.length);
     newValue[value.length] = b;
@@ -364,7 +365,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     return map;
   }
 
-  private KeyValue createKeyValue(byte[] key, byte[] value) {
+  protected KeyValue createKeyValue(byte[] key, byte[] value) {
     int len = key.length + value.length + (2 * Bytes.SIZEOF_INT);
     byte[] kvBytes = new byte[len];
     int pos = 0;
@@ -879,7 +880,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
   }
 
-  private OperationException createOperationException(Exception e, String where) {
+  protected OperationException createOperationException(Exception e, String where) {
     String msg = "LevelDB exception on " + where + "(error code = " +
       e.getMessage() + ")";
     LOG.error(msg, e);
