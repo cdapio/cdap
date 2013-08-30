@@ -15,6 +15,7 @@ import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -39,15 +40,16 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test stream handler.
@@ -175,30 +177,26 @@ public class StreamHandlerTest {
   }
 
   @Test
-  @Ignore
-  public void testBatchStreamEnqueue1() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM, 5);
+  public void testAsyncBatchStreamEnqueueLiimitEventsPerStream() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM, BatchEnqueue.NUM_ELEMENTS / 3);
     testBatchStreamEnqueue();
   }
 
   @Test
-  @Ignore
-  public void testBatchStreamEnqueue2() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES, 50);
+  public void testAsyncBatchStreamEnqueueLimitBytes() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES, 1000);
     testBatchStreamEnqueue();
   }
 
   @Test
-  @Ignore
-  public void testBatchStreamEnqueue3() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS, 1);
+  public void testAsyncBatchStreamEnqueueLimitFlushInterval() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS, 100);
     testBatchStreamEnqueue();
   }
 
   @Test
-  @Ignore
-  public void testBatchStreamEnqueue4() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM, 10);
+  public void testAsyncBatchStreamEnqueueLimitNumEvents() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM, BatchEnqueue.NUM_ELEMENTS / 3);
     testBatchStreamEnqueue();
   }
 
@@ -242,7 +240,8 @@ public class StreamHandlerTest {
       httpGet = new HttpGet(String.format("http://%s:%d/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
       httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
-      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+      Assert.assertEquals("Failed for entry number " + i,
+                          HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int entry = Integer.parseInt(EntityUtils.toString(response.getEntity()));
       actual.add(entry);
     }
@@ -259,10 +258,10 @@ public class StreamHandlerTest {
   }
 
   private static class BatchEnqueue implements Runnable {
-    public static final int NUM_ELEMENTS = 5;
+    public static final int NUM_ELEMENTS = 50;
     private final int startElement;
 
-    private final List<Integer> expected = Lists.newArrayList();
+    private final BlockingQueue<Integer> expected = Queues.newArrayBlockingQueue(NUM_ELEMENTS);
 
     private BatchEnqueue(int startElement) {
       this.startElement = startElement;
@@ -272,7 +271,6 @@ public class StreamHandlerTest {
     public void run() {
       try {
         AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
-        configBuilder.setMaximumConnectionsPerHost(1000);
 
         final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
           new NettyAsyncHttpProvider(configBuilder.build()),
@@ -295,14 +293,17 @@ public class StreamHandlerTest {
 
                                            @Override
                                            public void onThrowable(Throwable t) {
-                                             LOG.error("Got exception while posting {}", request, t);
+                                             LOG.error("Got exception while posting {}", elem, t);
                                              expected.add(-1);
                                              latch.countDown();
                                            }
                                          });
 
+          // Sleep so as not to overrun the server.
+          TimeUnit.MILLISECONDS.sleep(10);
         }
         latch.await();
+        asyncHttpClient.close();
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
@@ -324,9 +325,11 @@ public class StreamHandlerTest {
           actual.add(i);
         }
       }
-      Collections.sort(expected);
+      List<Integer> expecetedList = Lists.newArrayListWithCapacity(NUM_ELEMENTS);
+      expected.drainTo(expecetedList);
+      Collections.sort(expecetedList);
       Collections.sort(actual);
-      Assert.assertEquals(expected, actual);
+      Assert.assertEquals(expecetedList, actual);
     }
   }
 

@@ -209,6 +209,7 @@ public final class NettyHttpService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping service on address {}", bindAddress);
+    bootstrap.shutdown();
     try {
       if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT, TimeUnit.SECONDS)) {
         LOG.warn("Timeout when closing all channels.");
@@ -217,6 +218,7 @@ public final class NettyHttpService extends AbstractIdleService {
       resourceHandler.destroy(handlerContext);
       bootstrap.releaseExternalResources();
     }
+    LOG.info("Done stopping service on address {}", bindAddress);
   }
 
   /**
