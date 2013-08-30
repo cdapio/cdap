@@ -125,7 +125,9 @@ public class InMemoryTransactionManager {
           readPointer = waterMark - 1;
           nextWritePointer = waterMark; //
           LOG.debug("Recovered transaction watermark successfully, but transaction state may have been lost.");
+          return;
         }
+        LOG.debug("No persisted transaction state found. Initializing from scratch.");
       } catch (IOException e) {
         LOG.error("Unable to read back transaction state:", e);
         throw Throwables.propagate(e);

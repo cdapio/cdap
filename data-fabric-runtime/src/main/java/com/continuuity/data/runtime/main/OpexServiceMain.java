@@ -7,8 +7,10 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -20,6 +22,8 @@ import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +32,8 @@ import java.util.concurrent.TimeUnit;
  * Driver class to start and stop opex in distributed mode.
  */
 public class OpexServiceMain {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OpexServiceMain.class);
 
   private static final int NOOP = 0;
   private static final int START = 1;
@@ -96,6 +102,21 @@ public class OpexServiceMain {
       injector.getInstance(OperationExecutorService.class);
 
     if (START == command) {
+      final InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
+      txManager.init();
+
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          try {
+            txManager.close();
+          } catch (Throwable e) {
+            LOG.error(StackTraceUtil.toStringStackTrace(e));
+            System.err.println("Failed to shutdown transaction manager.");
+          }
+        }
+      });
+
       // Starts metrics collection
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
