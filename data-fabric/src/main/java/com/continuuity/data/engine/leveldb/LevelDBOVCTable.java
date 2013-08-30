@@ -76,8 +76,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   }
 
   protected String generateDBPath() {
-    return basePath + System.getProperty("file.separator") +
-      dbFilePrefix + encodedTableName;
+    return new File(basePath, encodedTableName).getAbsolutePath();
   }
 
   protected Options generateDBOptions(boolean createIfMissing, boolean errorIfExists) {
