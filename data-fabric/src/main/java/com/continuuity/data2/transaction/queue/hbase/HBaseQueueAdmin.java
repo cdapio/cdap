@@ -59,9 +59,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
     byte[] tableName = Bytes.toBytes(name);
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                                                        "/queue"));
+    int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
+                              QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
     HBaseQueueUtils.createTableIfNotExists(admin, tableName, QueueConstants.COLUMN_FAMILY,
                                            QueueConstants.MAX_CREATE_TABLE_WAIT,
-                                           createCoProcessorJar(jarDir),
+                                           createCoProcessorJar(jarDir), splits,
                                            HBaseQueueEvictionEndpoint.class.getName());
   }
 
