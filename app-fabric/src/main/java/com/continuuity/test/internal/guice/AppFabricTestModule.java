@@ -12,6 +12,8 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 
@@ -36,9 +38,9 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ConfigModule(cConf, hConf));
     install(new IOModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
-    install(new LocationRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new MetricsClientRuntimeModule().getNoopModules());
+    bind(LocationFactory.class).toInstance(new LocalLocationFactory());
   }
 }
