@@ -2,7 +2,7 @@ package com.continuuity.data.metadata;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
+import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
@@ -34,6 +34,6 @@ public abstract class LevelDBMetaDataStoreTest extends MetaDataStoreTest {
 
   @Override
   public void testInjection() {
-    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof LevelDBAndMemoryOVCTableHandle);
+    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof LevelDBOVCTableHandle);
   }
 }
