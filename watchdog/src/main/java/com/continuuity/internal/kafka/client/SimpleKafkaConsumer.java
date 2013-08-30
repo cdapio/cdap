@@ -316,7 +316,7 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
 
       while (running) {
         if (consumerEntry == null && (consumerEntry = getConsumerEntry()) == null) {
-          LOG.warn("No leader for topic partition {}.", topicPart);
+          LOG.debug("No leader for topic partition {}.", topicPart);
           try {
             TimeUnit.MILLISECONDS.sleep(CONSUMER_FAILURE_RETRY_INTERVAL);
           } catch (InterruptedException e) {

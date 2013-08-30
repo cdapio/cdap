@@ -65,10 +65,8 @@ public final class HBaseQueueEvictionEndpoint extends BaseEndpointCoprocessor im
       return 0;
     }
 
-    LOG.debug(String.format("Evict request received: readPointer=%d, exclude size=%d, numGroups=%d",
-                           readPointer, excludes.length, numGroups));
-
-
+    LOG.debug(String.format("Evict request received: start=%s, readPointer=%d, exclude size=%d, numGroups=%d",
+                           scan.getStartRow(), readPointer, excludes.length, numGroups));
 
     HRegion region = ((RegionCoprocessorEnvironment) env).getRegion();
 
