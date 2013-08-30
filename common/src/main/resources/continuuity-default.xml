@@ -45,6 +45,30 @@
         <description>Namespace prefix for weave zookeeper</description>
     </property>
 
+    <property>
+        <name>hdfs.namespace</name>
+        <value>/continuuity</value>
+        <description>Namespace for files written by reactor.</description>
+    </property>
+
+    <property>
+        <name>hdfs.user</name>
+        <value>yarn</value>
+        <description>User name for accessing HDFS.</description>
+    </property>
+
+    <property>
+        <name>yarn.user</name>
+        <value>yarn</value>
+        <description>User name for running applications in YARN.</description>
+    </property>
+
+    <property>
+        <name>local.data.dir</name>
+        <value>data</value>
+        <description>Data directory for local mode</description>
+    </property>
+
     <!--
         Resource manager configurations.
     -->
@@ -315,7 +339,7 @@
 
     <property>
         <name>data.local.leveldb</name>
-        <value>data</value>
+        <value>${local.data.dir}/ldb</value>
         <description>Specifies the database directory</description>
     </property>
 
@@ -520,7 +544,7 @@
 
     <property>
         <name>app.output.dir</name>
-        <value>/tmp</value>
+        <value>/programs</value>
         <description>Directory where all archives are stored.</description>
     </property>
 

@@ -41,8 +41,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     ArchiveBundler bundler = new ArchiveBundler(o.getArchive());
 
     // Make sure we have a directory to store the original artifact.
-    Location outputDir = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR,
-                                                                  System.getProperty("java.io.tmpdir")));
+    Location outputDir = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR));
     Location newOutputDir = outputDir.append(o.getApplicationId().getAccountId());
 
     // Check exists, create, check exists again to avoid failure due to race condition.

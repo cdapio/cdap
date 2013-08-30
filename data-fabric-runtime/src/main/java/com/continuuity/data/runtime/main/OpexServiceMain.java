@@ -5,10 +5,14 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -42,7 +46,7 @@ public class OpexServiceMain {
   }
 
 
-  public static void main(String args[]) {
+  public static void main(String args[]) throws Exception {
 
     if (args.length != 1) {
       usage(true);
@@ -89,6 +93,7 @@ public class OpexServiceMain {
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new IOModule(),
       new ConfigModule(),
+      new LocationRuntimeModule().getDistributedModules(),
       module);
 
     // start an opex service
@@ -102,6 +107,17 @@ public class OpexServiceMain {
 
       Copyright.print(System.out);
       System.out.println("Starting Operation Executor Service...");
+
+      // Creates HBase queue table
+      QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
+      String queueTableName = HBaseTableUtil.getHBaseTableName(
+        configuration, configuration.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME)
+      );
+
+      if (!queueAdmin.exists(queueTableName)) {
+        queueAdmin.create(queueTableName);
+      }
+
       // start it. start is blocking, hence main won't terminate
       try {
         opexService.start(new String[] { }, configuration);

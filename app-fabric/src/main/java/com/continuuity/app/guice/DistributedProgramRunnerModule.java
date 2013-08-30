@@ -6,6 +6,7 @@ package com.continuuity.app.guice;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
@@ -13,6 +14,8 @@ import com.continuuity.internal.app.runtime.distributed.DistributedProcedureProg
 import com.continuuity.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.WeaveRunnerService;
+import com.continuuity.weave.filesystem.LocationFactories;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
 import com.google.common.base.Preconditions;
 import com.google.inject.PrivateModule;
@@ -32,8 +35,8 @@ final class DistributedProgramRunnerModule extends PrivateModule {
   @Override
   protected void configure() {
     // Bind and expose WeaveRunner
-    bind(WeaveRunner.class).to(YarnWeaveRunnerService.class);
-    bind(WeaveRunnerService.class).to(YarnWeaveRunnerService.class);
+    bind(WeaveRunnerService.class).to(AppFabricWeaveRunnerService.class);
+    bind(WeaveRunner.class).to(WeaveRunnerService.class);
 
     expose(WeaveRunner.class);
     expose(WeaveRunnerService.class);
@@ -53,9 +56,12 @@ final class DistributedProgramRunnerModule extends PrivateModule {
   @Singleton
   @Provides
   private YarnWeaveRunnerService provideYarnWeaveRunnerService(CConfiguration configuration,
-                                                               YarnConfiguration yarnConfiguration) {
-    String namespace = configuration.get("weave.zookeeper.namespace", "/weave");
-    return new YarnWeaveRunnerService(yarnConfiguration, configuration.get("zookeeper.quorum") + namespace);
+                                                               YarnConfiguration yarnConfiguration,
+                                                               LocationFactory locationFactory) {
+    String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
+    return new YarnWeaveRunnerService(yarnConfiguration,
+                                      configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE) + zkNamespace,
+                                      LocationFactories.namespace(locationFactory, "weave"));
   }
 
   @Singleton

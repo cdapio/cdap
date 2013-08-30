@@ -30,7 +30,6 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 public class LevelDBOcTableService {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBOcTableService.class);
-  private static final String DB_FILE_PREFIX = "ldb_";
 
   private final int blockSize;
   private final long cacheSize;
@@ -137,7 +136,7 @@ public class LevelDBOcTableService {
       LOG.error("Error encoding table name '" + tableName + "'", e);
       throw new RuntimeException(e);
     }
-    return basePath + System.getProperty("file.separator") + DB_FILE_PREFIX + encodedTableName;
+    return new File(basePath, encodedTableName).getAbsolutePath();
   }
 
   /**
