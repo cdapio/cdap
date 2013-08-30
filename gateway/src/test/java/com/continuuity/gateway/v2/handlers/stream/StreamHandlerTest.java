@@ -274,7 +274,8 @@ public class StreamHandlerTest {
 
   @Test
   public void testAsyncBatchStreamEnqueueLiimitEventsPerStream() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM, BatchAsyncEnqueue.NUM_ELEMENTS / 3);
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
+                         BatchAsyncEnqueue.NUM_ELEMENTS / 3);
     testAsyncBatchStreamEnqueue();
   }
 
