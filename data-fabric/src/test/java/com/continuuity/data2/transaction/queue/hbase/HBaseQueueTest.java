@@ -106,7 +106,7 @@ public class HBaseQueueTest extends QueueTest {
     queueClientFactory.createProducer(QueueName.from(Bytes.toBytes("foo")));
     HTable hTable = ((HBaseQueueClientFactory) queueClientFactory).createHTable();
     Assert.assertEquals(QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
-                        hTable.getRegionsInRange(new byte[] {0, 0}, new byte[] {0xf, 0xf}).size());
+                        hTable.getRegionsInRange(new byte[] {0}, new byte[] {(byte) 0xff}).size());
   }
 
   @AfterClass
