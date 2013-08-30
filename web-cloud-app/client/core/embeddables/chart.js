@@ -84,15 +84,6 @@ define([], function () {
 			return;
 
 		}.observes('model.__loadingData'),
-		__titles: {
-			'processed.count': 'Processing Rate',
-			'tuples.read.count': 'Read Rate',
-			'emitted.count': 'Tuples Emitted',
-			'dataops.count': 'Data Operations',
-			'busyness': 'Busyness',
-			'flowlet.failure.count': 'Failures Rate',
-			'storage.trend': 'Storage'
-		},
 		__getTitle: function () {
 
 			if (this.get('title')) {
@@ -103,7 +94,7 @@ define([], function () {
 			var metrics = this.get('metrics');
 			var i = metrics.length;
 			while (i--) {
-				title.push(this.__titles[metrics[i]] || metrics[i]);
+				title.push(metrics[i]);
 				if (i > 0) {
 					title.push(' vs. ');
 				}
@@ -164,7 +155,7 @@ define([], function () {
 				$(this.get('element')).append('<div class="sparkline-flowlet-title">' + this.__getTitle() + '</div>');
 
 				container = $('<div class="sparkline-flowlet-container" />').appendTo(this.get('element'));
-				this.set('overlapX', 40);
+				this.set('overlapX', 48);
 
 			} else if (this.get('listMode') || entityType) {
 
@@ -173,7 +164,7 @@ define([], function () {
 				$(this.get('element')).addClass(color || 'blue');
 				label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
 				container = $('<div class="sparkline-list-container"><div class="sparkline-list-container-empty">&nbsp;</div></div>').appendTo(this.get('element'));
-				this.set('overlapX', 50);
+				this.set('overlapX', 69);
 				this.set('height', 38);
 
 			} else {
@@ -181,27 +172,12 @@ define([], function () {
 				label = $('<div class="sparkline-box-value" />').appendTo(this.get('element'));
 				container = $('<div class="sparkline-box-container" />');
 
-				if (this.get('mode') === "dash") {
-					container.addClass('sparkline-box-container-white');
-					$(this.get('element')).append('<div class="sparkline-box-title" style="padding-left:0;background-color:#fff;">' + this.__getTitle() + '</div>');
-					container.appendTo(this.get('element'));
-					this.set('overlapX', 36);
-					this.set('height', 70);
+				container.addClass('sparkline-box-container');
+				$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
+				container.appendTo(this.get('element'));
+				this.set('overlapX', 71);
+				this.set('height', 70);
 
-					var self = this;
-					C.addResizeHandler(this.get('entityId') + this.get('metrics').join(':'), function () {
-
-						self.fillContainer(true);
-
-					});
-
-				} else {
-					container.addClass('sparkline-box-container');
-					$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
-					container.appendTo(this.get('element'));
-					this.set('overlapX', 64);
-					this.set('height', 70);
-				}
 			}
 
 			if (entityType === 'Stream') {

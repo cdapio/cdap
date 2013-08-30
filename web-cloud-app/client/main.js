@@ -135,7 +135,9 @@ define (['core/application'], function (Application) {
 
 		});
 
-		this.route("PageNotFound", { path: "*:"});
+		this.route('Analyze', { path: '/analyze' });
+
+		this.route("PageNotFound", { path: "*:" });
 
 	});
 
@@ -305,6 +307,8 @@ define (['core/application'], function (Application) {
 				this.render('Runnable/Config');
 			}
 		}),
+
+		AnalyzeRoute: basicRouter.extend(),
 
 		PageNotFoundRoute: Ember.Route.extend()
 

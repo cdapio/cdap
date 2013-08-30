@@ -50,11 +50,12 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
   /**
    * Persist queue entries into HBase.
    */
-  protected void persist(Iterable<QueueEntry> entries, Transaction transaction) throws IOException {
+  protected int persist(Iterable<QueueEntry> entries, Transaction transaction) throws IOException {
     long writePointer = transaction.getWritePointer();
     byte[] rowKeyPrefix = Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer));
     int count = 0;
     List<Put> puts = Lists.newArrayList();
+    int bytes = 0;
 
     for (QueueEntry entry : entries) {
       // Row key = queue_name + writePointer + counter
@@ -70,9 +71,13 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
               QueueEntry.serializeHashKeys(entry.getHashKeys()));
 
       puts.add(put);
+
+      bytes += entry.getData().length;
     }
     hTable.put(puts);
     hTable.flushCommits();
+
+    return bytes;
   }
 
   @Override

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--                                                                         -->
+<!-- AppFabric Logging Configuration                                         -->
+<!--                                                                         -->
+<!-- We use the LogBack project for logging in AppFabric. The manual for     -->
+<!-- Logback can be found here: http://logback.qos.ch/manual                 -->
+<!--                                                                         -->
+
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.continuuity" level="DEBUG" />
+
+    <root level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>

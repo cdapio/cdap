@@ -114,10 +114,15 @@ public final class AggregatesTable {
     byte[] endRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
 
     Scanner scanner;
-    if (isFilterable && ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
+    if (isFilterable && (aggregatesTable instanceof HBaseFilterableOVCTable) &&
+      ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
       scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
                                                             MemoryReadPointer.DIRTY_READ,
                                                             getFilter(contextPrefix, metricPrefix, runId));
+    } else if (isFilterable && (aggregatesTable instanceof LevelDBFilterableOVCTable)) {
+      scanner = ((FilterableOVCTable) aggregatesTable).scan(
+        startRow, endRow, MemoryReadPointer.DIRTY_READ,
+        new LevelDBFuzzyRowFilter(getFilter(contextPrefix, metricPrefix, runId)));
     } else {
       scanner = aggregatesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
     }
@@ -150,7 +155,8 @@ public final class AggregatesTable {
     byte[] endRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
 
     Scanner scanner;
-    if (isFilterable && ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
+    if (isFilterable && (aggregatesTable instanceof HBaseFilterableOVCTable) &&
+      ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
       Filter rowFilter = getFilter(contextPrefix, metricPrefix, runId);
       // still gets the first key of the first column, but better than getting the whole row
       FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL,
@@ -158,6 +164,10 @@ public final class AggregatesTable {
       scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
                                                             MemoryReadPointer.DIRTY_READ,
                                                             filters);
+    } else if (isFilterable && (aggregatesTable instanceof LevelDBFilterableOVCTable)) {
+      scanner = ((FilterableOVCTable) aggregatesTable).scan(
+        startRow, endRow, MemoryReadPointer.DIRTY_READ,
+        new LevelDBFuzzyRowFilter(getFilter(contextPrefix, metricPrefix, runId)));
     } else {
       // TODO(albert) add a way to get a scanner for rows only for OVCTables
       scanner = aggregatesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
@@ -202,7 +212,7 @@ public final class AggregatesTable {
     );
   }
 
-  private Filter getFilter(String contextPrefix, String metricPrefix, String runId) {
+  private FuzzyRowFilter getFilter(String contextPrefix, String metricPrefix, String runId) {
     // Create fuzzy row filter
     ImmutablePair<byte[], byte[]> contextPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.CONTEXT,
                                                                               contextPrefix, 0);

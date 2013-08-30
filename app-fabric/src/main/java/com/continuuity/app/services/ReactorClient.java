@@ -113,7 +113,7 @@ public final class ReactorClient {
                   "[--host <hostname>]");
     out.println("  reactor-client scale     --application <id> --flow <id> --flowlet <id> --instances <number> " +
                   "[--host <hostname>]");
-    out.println("  reactor-client promote   --application <id> --remote <hostname> --apikey <key> [--host <hostname>]");
+    out.println("  reactor-client promote   --application <id> --remote <hostname> --apikey <key>");
     out.println("  reactor-client delete    --application <id> [--host <hostname>]");
     out.println("  reactor-client help");
 

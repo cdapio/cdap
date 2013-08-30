@@ -32,6 +32,15 @@ define([], function () {
 			'storage': 'bytes'
 		},
 
+		/*
+		 * Runnable context path, used by user-defined metrics.
+		 */
+		context: function () {
+
+			return this.interpolate('/apps/{id}');
+
+		}.property('id'),
+
 		interpolate: function (path) {
 
 			return path.replace(/\{id\}/, this.get('id'));

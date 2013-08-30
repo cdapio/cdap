@@ -153,22 +153,19 @@ public final class TimeSeriesTable {
                                  query.getMetricPrefix(), query.getTagPrefix(), endTimeBase + 1, 0xff);
 
     Scanner scanner;
-    if (isFilterable && ((FilterableOVCTable) timeSeriesTable).isFilterSupported(FuzzyRowFilter.class)) {
+    if (isFilterable && (timeSeriesTable instanceof HBaseFilterableOVCTable) &&
+      ((FilterableOVCTable) timeSeriesTable).isFilterSupported(FuzzyRowFilter.class)) {
       scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
-                                                        MemoryReadPointer.DIRTY_READ,
-                                                        getFilter(query, startTimeBase, endTimeBase));
+                                                            MemoryReadPointer.DIRTY_READ,
+                                                            getFilter(query, startTimeBase, endTimeBase));
+    } else if (isFilterable && (timeSeriesTable instanceof LevelDBFilterableOVCTable)) {
+      LevelDBFuzzyRowFilter f = new LevelDBFuzzyRowFilter(getFilter(query, startTimeBase, endTimeBase));
+      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ, f);
     } else {
       scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ);
     }
-    return new MetricsScanner(query, scanner, entityCodec, resolution);
-  }
 
-  private String toHex(byte[] bytes) {
-    StringBuilder builder = new StringBuilder();
-    for (byte b : bytes) {
-      builder.append(String.format("%02x", b)).append(" ");
-    }
-    return builder.toString();
+    return new MetricsScanner(query, scanner, entityCodec, resolution);
   }
 
   /**
@@ -283,7 +280,7 @@ public final class TimeSeriesTable {
       entityCodec.paddedEncode(MetricsEntityType.RUN, runId, padding));
   }
 
-  private Filter getFilter(MetricsScanQuery query, long startTimeBase, long endTimeBase) {
+  private FuzzyRowFilter getFilter(MetricsScanQuery query, long startTimeBase, long endTimeBase) {
     String tag = query.getTagPrefix();
 
     // Create fuzzy row filter

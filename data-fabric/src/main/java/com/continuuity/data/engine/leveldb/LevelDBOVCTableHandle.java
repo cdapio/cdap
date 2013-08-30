@@ -22,17 +22,17 @@ import java.util.concurrent.ExecutionException;
 public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
   @Inject
   @Named("LevelDBOVCTableHandleBasePath")
-  private String basePath;
+  protected String basePath;
 
   @Inject
   @Named("LevelDBOVCTableHandleBlockSize")
-  private Integer blockSize;
+  protected Integer blockSize;
 
   @Inject
   @Named("LevelDBOVCTableHandleCacheSize")
-  private Long cacheSize;
+  protected Long cacheSize;
 
-  private final LoadingCache<String, LevelDBOVCTable> tableCache;
+  protected final LoadingCache<String, LevelDBOVCTable> tableCache;
 
   /**
    * This class is a singleton.
@@ -40,7 +40,7 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
    */
   private static final LevelDBOVCTableHandle INSTANCE = new LevelDBOVCTableHandle();
 
-  private LevelDBOVCTableHandle() {
+  protected LevelDBOVCTableHandle() {
     tableCache = CacheBuilder.newBuilder().build(new CacheLoader<String, LevelDBOVCTable>() {
       @Override
       public LevelDBOVCTable load(String tableName) throws Exception {
@@ -77,7 +77,7 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
    * @return A LevelDBOVCTable.
    * @throws OperationException If there is any error when try to open or create the table.
    */
-  private LevelDBOVCTable openOrCreateTable(String tableName) throws OperationException {
+  protected LevelDBOVCTable openOrCreateTable(String tableName) throws OperationException {
     LevelDBOVCTable table = new LevelDBOVCTable(basePath, tableName, blockSize, cacheSize);
 
     if (table.openTable()) {

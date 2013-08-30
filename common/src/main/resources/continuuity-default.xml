@@ -129,7 +129,7 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>data.rest,stream.flume,stream.rest,procedure.rest,monitor.rest,app.rest,systemstats.rest,meta.rest</value>
+        <value>data.rest,stream.flume,procedure.rest,monitor.rest,app.rest,systemstats.rest,meta.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
@@ -247,24 +247,8 @@
 
     <!-- Stream handles -->
     <property>
-        <name>stream.rest.class</name>
-        <value>com.continuuity.gateway.collector.RestCollector</value>
-        <description>Specifies the class for the REST collector</description>
-    </property>
-
-    <property>
         <name>stream.rest.port</name>
         <value>10000</value>
-    </property>
-
-    <property>
-        <name>stream.rest.threads</name>
-        <value>20</value>
-    </property>
-
-    <property>
-        <name>stream.rest.middle</name>
-        <value>/stream/</value>
     </property>
 
     <property>

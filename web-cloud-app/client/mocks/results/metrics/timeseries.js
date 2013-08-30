@@ -6,243 +6,243 @@ define([], function () {
 
   var sample = [
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 100
     },
     {
-        "timestamp": 0,
+        "time": 0,
         "value": 50
     }
   ];
@@ -256,7 +256,7 @@ define([], function () {
     if (pathSamples[path]) {
 
       var item = pathSamples[path].shift();
-      item.timestamp = d.getTime();
+      item.time = d.getTime();
       pathSamples[path].push(item);
 
     } else {
@@ -266,7 +266,7 @@ define([], function () {
         var series = pathSamples[path];
         var i = series.length;
         while (i--) {
-            series[i].timestamp = d.getTime() - (i * 1000)
+            series[i].time = d.getTime() - (i * 1000)
         }
 
     }
@@ -286,6 +286,6 @@ define([], function () {
         error: null
     });
 
-  };
+    }
 
 });
