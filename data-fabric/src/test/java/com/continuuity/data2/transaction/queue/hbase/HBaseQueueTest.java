@@ -3,8 +3,10 @@
  */
 package com.continuuity.data2.transaction.queue.hbase;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.hbase.HBaseTestBase;
@@ -14,10 +16,12 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.hbase.client.HTable;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -79,6 +83,14 @@ public class HBaseQueueTest extends QueueTest {
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
+  }
+
+  @Test
+  public void testHTablePreSplitted() throws Exception {
+    queueClientFactory.createProducer(QueueName.from(Bytes.toBytes("foo")));
+    HTable hTable = ((HBaseQueueClientFactory) queueClientFactory).createHTable();
+    Assert.assertEquals(QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
+                        hTable.getRegionsInRange(new byte[] {0, 0}, new byte[] {0xf, 0xf}).size());
   }
 
   @AfterClass

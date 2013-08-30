@@ -52,13 +52,12 @@ public final class HBaseQueueUtils {
       htd.addFamily(hcd);
       hcd.setMaxVersions(1);
 
-      byte[][] splitKeys = getSplitKeys(splits);
-
       String tableNameString = Bytes.toString(tableName);
+      byte[][] splitKeys = getSplitKeys(splits);
 
       try {
         LOG.info("Creating queue table '{}'", tableNameString);
-        admin.createTable(htd);
+        admin.createTable(htd, splitKeys);
         return;
       } catch (TableExistsException e) {
         // table may exist because someone else is creating it at the same
