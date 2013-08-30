@@ -101,7 +101,7 @@ public class ZooKeeperPersistor extends AbstractIdleService implements StatePers
     try {
       Uninterruptibles.getUninterruptibly(
         ZKOperations.ignoreError(
-          zkClient.delete(path), KeeperException.NodeExistsException.class,  path));
+          zkClient.delete(path), KeeperException.NoNodeException.class,  path));
     } catch (Throwable e) {
       throw new IOException("Unable to delete state for tag '" + tag + "' at path '" + path + "':", e);
     }
@@ -113,7 +113,7 @@ public class ZooKeeperPersistor extends AbstractIdleService implements StatePers
     try {
       NodeData nodeData = Uninterruptibles.getUninterruptibly(
         ZKOperations.ignoreError(
-          zkClient.getData(path), KeeperException.NodeExistsException.class, null));
+          zkClient.getData(path), KeeperException.NoNodeException.class, null));
       return nodeData != null ? nodeData.getData() : null;
     } catch (Throwable t) {
       throw new IOException("Unable to read state for tag '" + tag + "' at path '" + path + "':", t);
