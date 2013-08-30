@@ -147,7 +147,7 @@ public class OmidTransactionalOperationExecutor
   private MetricsCollector dataSetMetrics;
   private MetricsCollector txSystemMetrics;
 
-  private InMemoryTransactionManager txManager = null;
+  private final InMemoryTransactionManager txManager;
 
   @Inject
   public OmidTransactionalOperationExecutor(TransactionOracle oracle, InMemoryTransactionManager txManager,
@@ -1464,12 +1464,13 @@ public class OmidTransactionalOperationExecutor
       public void run() {
         while (true) {
           int excludedListSize = txManager.getExcludedListSize();
-          if (txSystemMetrics != null) {
+          if (txSystemMetrics != null && excludedListSize > 0) {
             txSystemMetrics.gauge("tx.excluded", excludedListSize);
           }
           if (excludedListSize > 0) {
             // This hack is needed because current metrics system is not flexible when it comes to adding new metrics
-            Log.info("tx.excluded=" + excludedListSize);
+            Log.info("tx.excluded = " + excludedListSize + ", tx.writepointer = " + txManager.getNextWritePointer() +
+                       ", tx.watermark = " + txManager.getWatermark());
           }
           try {
             TimeUnit.SECONDS.sleep(10);

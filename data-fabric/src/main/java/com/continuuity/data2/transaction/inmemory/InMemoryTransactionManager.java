@@ -17,7 +17,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -75,13 +75,13 @@ public class InMemoryTransactionManager {
   private final StatePersistor persistor;
 
   public InMemoryTransactionManager() {
-    persistor = null;
+    persistor = new NoopPersistor();
     reset();
     initialized = true;
   }
 
   @Inject
-  public InMemoryTransactionManager(CConfiguration conf, @Nullable StatePersistor persistor) {
+  public InMemoryTransactionManager(CConfiguration conf, @Nonnull StatePersistor persistor) {
     this.persistor = persistor;
     claimSize = conf.getInt(CFG_TX_CLAIM_SIZE, DEFAULT_TX_CLAIM_SIZE);
     reset();
@@ -103,41 +103,39 @@ public class InMemoryTransactionManager {
     reset();
 
     // try to recover persisted state
-    if (persistor != null) {
-      try {
-        // start up the persistor first
-        persistor.start();
-        // attempt to restore the full state
-        byte[] state;
-        state = persistor.readBack(ALL_STATE_TAG);
-        if (state != null) {
-          decodeState(state);
-          LOG.debug("Restored transaction state successfully.");
-          persistor.delete(ALL_STATE_TAG);
-          return;
-        }
-        // full state is not there, attempt to restore the watermark
-        state = persistor.readBack(WATERMARK_TAG);
-        if (state != null) {
-          waterMark = Bytes.toLong(state);
-          // must have crashed last time... need to claim the next batch of write versions
-          waterMark += claimSize;
-          readPointer = waterMark - 1;
-          nextWritePointer = waterMark; //
-          LOG.debug("Recovered transaction watermark successfully, but transaction state may have been lost.");
-          return;
-        }
-        LOG.debug("No persisted transaction state found. Initializing from scratch.");
-      } catch (IOException e) {
-        LOG.error("Unable to read back transaction state:", e);
-        throw Throwables.propagate(e);
+    try {
+      // start up the persistor first
+      persistor.startAndWait();
+      // attempt to restore the full state
+      byte[] state;
+      state = persistor.readBack(ALL_STATE_TAG);
+      if (state != null) {
+        decodeState(state);
+        LOG.debug("Restored transaction state successfully.");
+        persistor.delete(ALL_STATE_TAG);
+        return;
       }
+      // full state is not there, attempt to restore the watermark
+      state = persistor.readBack(WATERMARK_TAG);
+      if (state != null) {
+        waterMark = Bytes.toLong(state);
+        // must have crashed last time... need to claim the next batch of write versions
+        waterMark += claimSize;
+        readPointer = waterMark - 1;
+        nextWritePointer = waterMark; //
+        LOG.debug("Recovered transaction watermark successfully, but transaction state may have been lost.");
+        return;
+      }
+      LOG.debug("No persisted transaction state found. Initializing from scratch.");
+    } catch (IOException e) {
+      LOG.error("Unable to read back transaction state:", e);
+      throw Throwables.propagate(e);
     }
     initialized = true;
   }
 
   public synchronized void close() {
-    if (initialized && persistor != null) {
+    if (initialized) {
       byte[] state = encodeState();
       try {
         persistor.persist(ALL_STATE_TAG, state);
@@ -146,22 +144,21 @@ public class InMemoryTransactionManager {
         LOG.error("Unable to persist transaction state:", e);
         throw Throwables.propagate(e);
       }
+      persistor.stopAndWait();
     }
   }
 
   // not synchronized because itis only called from start() which is synchronized
   private void saveWaterMarkIfNeeded() {
-    if (persistor != null) {
-      try {
-        if (nextWritePointer >= waterMark) {
-          waterMark += claimSize;
-          persistor.persist(WATERMARK_TAG, Bytes.toBytes(waterMark));
-          LOG.debug("Claimed {} write versions, new watermark is {}.", claimSize, waterMark);
-        }
-      } catch (Exception e) {
-        LOG.error("Unable to persist transaction watermark:", e);
-        throw Throwables.propagate(e);
+    try {
+      if (nextWritePointer >= waterMark) {
+        waterMark += claimSize;
+        persistor.persist(WATERMARK_TAG, Bytes.toBytes(waterMark));
+        LOG.debug("Claimed {} write versions, new watermark is {}.", claimSize, waterMark);
       }
+    } catch (Exception e) {
+      LOG.error("Unable to persist transaction watermark:", e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -228,6 +225,12 @@ public class InMemoryTransactionManager {
   // hack for exposing important metric
   public int getExcludedListSize() {
     return excludedList.size();
+  }
+  public long getNextWritePointer() {
+    return nextWritePointer;
+  }
+  public long getWatermark() {
+    return waterMark;
   }
 
 //  private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {

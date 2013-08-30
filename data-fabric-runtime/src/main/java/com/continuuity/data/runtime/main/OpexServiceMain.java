@@ -116,8 +116,10 @@ public class OpexServiceMain {
           try {
             txManager.close();
           } catch (Throwable e) {
-            LOG.error(StackTraceUtil.toStringStackTrace(e));
-            System.err.println("Failed to shutdown transaction manager.");
+            LOG.error("Failed to shutdown transaction manager.", e);
+            // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
+            System.err.println("Failed to shutdown transaction manager: " + e.getMessage()
+                                 + ". At " + StackTraceUtil.toStringStackTrace(e));
           }
         }
       });

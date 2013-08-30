@@ -21,6 +21,7 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.inmemory.NoopPersistor;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
@@ -29,7 +30,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
-import com.google.inject.util.Providers;
 
 /**
  * DataFabricModules defines all of the bindings for the different data
@@ -61,7 +61,7 @@ public class DataFabricModules extends RuntimeModule {
 
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
-        bind(StatePersistor.class).toProvider(Providers.<StatePersistor>of(null));
+        bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
         bind(InMemoryTransactionManager.class).in(Singleton.class);
         bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
         bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
