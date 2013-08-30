@@ -24,6 +24,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
+import com.google.gson.Gson;
 
 import java.util.UUID;
 
@@ -32,11 +33,14 @@ import java.util.UUID;
  */
 public class CustomerStoreFlowlet extends AbstractFlowlet {
 
+  private final Gson gson = new Gson();
+
   @UseDataSet("customers")
   private ObjectStore<Customer> store;
 
   @ProcessInput("outCustomer")
-  public void process(Customer customer) throws OperationException {
-    store.write(Bytes.toBytes(customer.getCustomerId()), customer);
+  public void process(String customer) throws OperationException {
+    Customer customerObj = this.gson.fromJson(customer, Customer.class);
+    store.write(Bytes.toBytes(customerObj.getCustomerId()), customerObj);
   }
 }

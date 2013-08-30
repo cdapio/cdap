@@ -20,34 +20,29 @@ package com.continuuity.testsuite.purchaseanalytics.datamodel;
 import java.util.UUID;
 
 /**
- * Models a customer, identified by unique id.
+ * Base class generating a uuid at creation. Unused for rev 1.0 because of serialization problem with UUIDs.
+ * Will replace object specific Ids later on.
  */
-public class Customer {
-  private final long customerId;
-  private final String name;
-  private final int zip;
-  private final int rating;
+public class SerializedObject {
+//  private final UUID uuid;
+//
+//  public UUID getUuid() {
+//    return uuid;
+//  }
+//
+//  public SerializedObject() {
+//    this.uuid = UUID.randomUUID();
+  int type;
 
-  public long getCustomerId() {
-    return customerId;
+  public int getType() {
+    return type;
   }
 
-  public String getName() {
-    return name;
+  public void setType(int type) {
+    this.type = type;
   }
 
-  public int getZip() {
-    return zip;
-  }
-
-  public int getRating() {
-    return rating;
-  }
-
-  public Customer(long customerId, String name, int zip, int rating) {
-    this.customerId = customerId;
-    this.name = name;
-    this.zip = zip;
-    this.rating = rating;
+  public SerializedObject(int type) {
+    this.type = type;
   }
 }
