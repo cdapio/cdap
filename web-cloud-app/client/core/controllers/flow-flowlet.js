@@ -15,7 +15,7 @@ define([], function () {
 		needs: ['FlowStatus'],
 
 		load: function () {
-
+			this.clearTriggers(true);
 			/*
 			 * The FlowStatus controller has already loaded the flow.
 			 * The flow that has been loaded has the flowlet model we need.
@@ -112,12 +112,22 @@ define([], function () {
 			clearTimeout(this.__timeout);
 		},
 
-		getStats: function (self) {
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted');
+		},
 
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+		},
+
+		getStats: function (self) {
+			if (!this.ajaxCompleted()) {
+				return;
+			}
 			var models = [this.get('model')];
 			models = models.concat(this.get('elements.Queue').content);
-
-			C.Util.updateTimeSeries(models, this.HTTP);
+			this.clearTriggers(false);
+			C.Util.updateTimeSeries(models, this.HTTP, this);
 
 			var self = this;
 			self.__timeout = setTimeout(function () {
