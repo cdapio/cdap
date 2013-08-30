@@ -41,8 +41,8 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
   }
 
   @Override
-  protected Program loadProgram(String programLocation, LocationFactory locationFactory) throws IOException {
-    return new Program(locationFactory.create(URI.create(programLocation)));
+  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
+    return new Program(locationFactory.create(programLocation));
   }
 
   protected Injector createInjector() {

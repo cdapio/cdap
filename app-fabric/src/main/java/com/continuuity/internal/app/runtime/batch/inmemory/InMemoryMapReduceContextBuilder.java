@@ -28,6 +28,7 @@ import com.google.inject.name.Names;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URI;
 
 /**
  * Builds an instance of {@link com.continuuity.internal.app.runtime.batch.BasicMapReduceContext} good for
@@ -41,7 +42,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
   }
 
   @Override
-  protected Program loadProgram(String programLocation, LocationFactory locationFactory) throws IOException {
+  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
     return new Program(locationFactory.create(programLocation));
   }
 
