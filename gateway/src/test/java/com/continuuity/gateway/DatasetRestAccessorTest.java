@@ -95,7 +95,7 @@ public class DatasetRestAccessorTest {
   public static void setup() {
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(new GatewayTestModule(new CConfiguration()));
+    Injector injector = Guice.createInjector(new GatewayTestModule(CConfiguration.create()));
     executor = injector.getInstance(OperationExecutor.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     dataSetAccessor = injector.getInstance(DataSetAccessor.class);
