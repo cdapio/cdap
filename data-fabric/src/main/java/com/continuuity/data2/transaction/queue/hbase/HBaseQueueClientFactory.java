@@ -99,6 +99,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
                                   new ThreadPoolExecutor.CallerRunsPolicy());
   }
 
+  // NOTE: this is non-private only to support unit-tests. Should never be used directly.
   HTable createHTable() throws IOException {
     HTable consumerTable = new HTable(hConf, tableName);
     // TODO: make configurable
