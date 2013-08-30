@@ -17,24 +17,38 @@
 
 package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
+import java.util.UUID;
+
 /**
- * Models a product identified by unique Id.
+ * Models a customer, identified by unique id.
  */
-public class Product {
+public class Customer extends SerializedObject {
+  private final long customerId;
+  private final String name;
+  private final int zip;
+  private final int rating;
 
-  private final long productId;
-  private final String description;
-
-  public long getProductId() {
-    return productId;
+  public long getCustomerId() {
+    return customerId;
   }
 
-  public  String getDescription() {
-    return description;
+  public String getName() {
+    return name;
   }
 
-  public Product(long productId, String description) {
-    this.productId = productId;
-    this.description = description;
+  public int getZip() {
+    return zip;
+  }
+
+  public int getRating() {
+    return rating;
+  }
+
+  public Customer(long customerId, String name, int zip, int rating) {
+    super(3);
+    this.customerId = customerId;
+    this.name = name;
+    this.zip = zip;
+    this.rating = rating;
   }
 }

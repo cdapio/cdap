@@ -15,44 +15,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.testsuite.purchaseanalytics.datamodel;
+package com.continuuity.testsuite.purchaseanalytics;
+
+import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
+import com.google.gson.Gson;
+
 
 /**
- * This represents a purchase made by a customer. It is a very simple class and only contains
- * the name of the customer, the name of the product, the quantity and the price paid.
+ * Store the incoming Purchase Objects in datastore.
  */
-public class Purchase {
+public class PurchaseStoreFlowlet extends AbstractFlowlet {
+  private final Gson gson = new Gson();
 
-  private final String customer, product;
-  private final int quantity, price;
-  private final long purchaseTime;
+  @UseDataSet("purchases")
+  private ObjectStore<Purchase> store;
 
-  public Purchase(String customer, String product, int quantity, int price, long purchaseTime) {
-    super();
-    this.customer = customer;
-    this.product = product;
-    this.quantity = quantity;
-    this.price = price;
-    this.purchaseTime = purchaseTime;
-  }
-
-  public String getCustomer() {
-    return customer;
-  }
-
-  public String getProduct() {
-    return product;
-  }
-
-  public long getPurchaseTime() {
-    return purchaseTime;
-  }
-
-  public int getQuantity() {
-    return quantity;
-  }
-
-  public int getPrice() {
-    return price;
+  @ProcessInput("outPurchase")
+  public void process(String purchase) throws OperationException {
+    Purchase purchaseObj = this.gson.fromJson(purchase, Purchase.class);
+    store.write(Bytes.toBytes(purchaseObj.getPurchaseTime()), purchaseObj);
   }
 }
+

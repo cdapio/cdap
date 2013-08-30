@@ -15,26 +15,27 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.testsuite.purchaseanalytics;
-
-import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
+package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
 /**
-*  Stores products to object store.
-*/
-public class ProductStoreFlowlet extends AbstractFlowlet {
+ * Models a product identified by unique Id.
+ */
+public class Product extends SerializedObject {
 
-  @UseDataSet("products")
-  private ObjectStore<Product> store;
+  private final long productId;
+  private final String description;
 
-  @ProcessInput("outProduct")
-  public void process(Product product) throws OperationException {
-    store.write(Bytes.toBytes(product.getProductId()), product);
+  public long getProductId() {
+    return productId;
+  }
+
+  public  String getDescription() {
+    return description;
+  }
+
+  public Product(long productId, String description) {
+    super(2);
+    this.productId = productId;
+    this.description = description;
   }
 }
