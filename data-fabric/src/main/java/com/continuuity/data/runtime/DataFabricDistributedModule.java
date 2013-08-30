@@ -15,6 +15,7 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.NoopPersistor;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -24,7 +25,6 @@ import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
-import com.google.inject.util.Providers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
@@ -114,7 +114,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
       bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
     } else {
-      bind(StatePersistor.class).toProvider(Providers.<StatePersistor>of(null));
+      bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
     }
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);

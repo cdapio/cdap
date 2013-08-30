@@ -7,7 +7,9 @@ import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import com.continuuity.weave.zookeeper.ZKOperations;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import org.apache.zookeeper.CreateMode;
@@ -22,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A transaction state persistor that uses ZooKeeper.
  */
-public class ZooKeeperPersistor implements StatePersistor {
+public class ZooKeeperPersistor extends AbstractIdleService implements StatePersistor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperPersistor.class);
 
@@ -42,14 +44,14 @@ public class ZooKeeperPersistor implements StatePersistor {
   }
 
   @Override
-  public void close() {
+  protected void shutDown() throws Exception {
     if (this.zkClient != null) {
       zkClient.stopAndWait();
     }
   }
 
   @Override
-  public void start() {
+  protected void startUp() throws Exception {
     String zkQuorum = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     zkClient =
       ZKClientServices.delegate(
@@ -61,15 +63,8 @@ public class ZooKeeperPersistor implements StatePersistor {
 
     // ensure the base path exists in ZK
     try {
-      if (zkClient.exists(zkBasePath).get() == null) {
-        try {
-          zkClient.create(zkBasePath, null, CreateMode.PERSISTENT, true).get();
-        } catch (ExecutionException e) {
-          throw e.getCause();
-        }
-      }
-    } catch (KeeperException.NodeExistsException e) {
-      // hmm it exists although exists() returned null? someone else must have created it just now. Ignore.
+      ZKOperations.ignoreError(zkClient.create(zkBasePath, null, CreateMode.PERSISTENT, true),
+                               KeeperException.NodeExistsException.class, zkBasePath).get();
     } catch (Throwable e) {
       LOG.error("Exception when initializing ZK base path '" + zkBasePath + "':", e);
       throw Throwables.propagate(e);
@@ -102,30 +97,26 @@ public class ZooKeeperPersistor implements StatePersistor {
 
   @Override
   public void delete(String tag) throws IOException {
+    String path = pathForTag(tag);
     try {
-      Uninterruptibles.getUninterruptibly(zkClient.delete(pathForTag(tag)));
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof KeeperException.NoNodeException) {
-        // node did not exist - ignore
-        return;
-      }
-      throw new IOException("Unable to delete state for tag '" + tag + "' at path '" + pathForTag(tag) + "':",
-                            e.getCause());
+      Uninterruptibles.getUninterruptibly(
+        ZKOperations.ignoreError(
+          zkClient.delete(path), KeeperException.NodeExistsException.class,  path));
+    } catch (Throwable e) {
+      throw new IOException("Unable to delete state for tag '" + tag + "' at path '" + path + "':", e);
     }
   }
 
   @Override
   public byte[] readBack(String tag) throws IOException {
+    String path = pathForTag(tag);
     try {
-      NodeData nodeData = Uninterruptibles.getUninterruptibly(zkClient.getData(pathForTag(tag)));
-      return nodeData.getData();
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof KeeperException.NoNodeException) {
-        // node did not exist
-        return null;
-      }
-      throw new IOException("Unable to read state for tag '" + tag + "' at path '" + pathForTag(tag) + "':",
-                            e.getCause());
+      NodeData nodeData = Uninterruptibles.getUninterruptibly(
+        ZKOperations.ignoreError(
+          zkClient.getData(path), KeeperException.NodeExistsException.class, null));
+      return nodeData != null ? nodeData.getData() : null;
+    } catch (Throwable t) {
+      throw new IOException("Unable to read state for tag '" + tag + "' at path '" + path + "':", t);
     }
   }
 }

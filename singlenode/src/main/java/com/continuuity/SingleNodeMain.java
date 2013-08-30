@@ -4,18 +4,17 @@
 package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
@@ -99,8 +98,10 @@ public class SingleNodeMain {
         try {
           transactionManager.close();
         } catch (Throwable e) {
-          LOG.error(StackTraceUtil.toStringStackTrace(e));
-          System.err.println("Failed to shutdown transaction manager.");
+          LOG.error("Failed to shutdown transaction manager.", e);
+          // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
+          System.err.println("Failed to shutdown transaction manager: " + e.getMessage()
+                               + ". At " + StackTraceUtil.toStringStackTrace(e));
         }
       }
     });
