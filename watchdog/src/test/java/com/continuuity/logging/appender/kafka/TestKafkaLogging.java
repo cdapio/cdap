@@ -100,6 +100,24 @@ public class TestKafkaLogging extends KafkaTestBase {
     Assert.assertEquals("Test log message 31 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 50 arg1 arg2", events.get(19).getLoggingEvent().getFormattedMessage());
 
+    LogCallback logCallback5 = new LogCallback();
+    distributedLogReader.getLogNext(loggingContext, 60, 20, Filter.EMPTY_FILTER,
+                                    logCallback5);
+    events = logCallback5.getEvents();
+    Assert.assertEquals(0, events.size());
+
+    LogCallback logCallback6 = new LogCallback();
+    distributedLogReader.getLogNext(loggingContext, 59, 20, Filter.EMPTY_FILTER,
+                                    logCallback6);
+    events = logCallback6.getEvents();
+    Assert.assertEquals(0, events.size());
+
+    LogCallback logCallback7 = new LogCallback();
+    distributedLogReader.getLogNext(loggingContext, 58, 20, Filter.EMPTY_FILTER,
+                                    logCallback7);
+    events = logCallback7.getEvents();
+    Assert.assertEquals(1, events.size());
+    Assert.assertEquals("Test log message 59 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     distributedLogReader.close();
   }
 
@@ -144,6 +162,40 @@ public class TestKafkaLogging extends KafkaTestBase {
     Assert.assertEquals(15, events.size());
     Assert.assertEquals("Test log message 15 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 29 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
+
+    LogCallback logCallback5 = new LogCallback();
+    distributedLogReader.getLogPrev(loggingContext, 0, 15, Filter.EMPTY_FILTER, logCallback5);
+    events = logCallback5.getEvents();
+    Assert.assertEquals(0, events.size());
+
+    LogCallback logCallback6 = new LogCallback();
+    distributedLogReader.getLogPrev(loggingContext, logCallback4.getFirstOffset(), 25, Filter.EMPTY_FILTER,
+                                    logCallback6);
+    events = logCallback6.getEvents();
+    Assert.assertEquals(15, events.size());
+    Assert.assertEquals("Test log message 0 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
+    Assert.assertEquals("Test log message 14 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
+
+    LogCallback logCallback7 = new LogCallback();
+    distributedLogReader.getLogPrev(loggingContext, logCallback4.getFirstOffset(), 15, Filter.EMPTY_FILTER,
+                                    logCallback7);
+    events = logCallback7.getEvents();
+    Assert.assertEquals(15, events.size());
+    Assert.assertEquals("Test log message 0 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
+    Assert.assertEquals("Test log message 14 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
+
+    LogCallback logCallback8 = new LogCallback();
+    distributedLogReader.getLogPrev(loggingContext, 70, 10, Filter.EMPTY_FILTER, logCallback8);
+    events = logCallback8.getEvents();
+    Assert.assertEquals(0, events.size());
+
+    LogCallback logCallback9 = new LogCallback();
+    distributedLogReader.getLogPrev(loggingContext, 60, 15, Filter.EMPTY_FILTER,
+                                    logCallback9);
+    events = logCallback9.getEvents();
+    Assert.assertEquals(15, events.size());
+    Assert.assertEquals("Test log message 45 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
+    Assert.assertEquals("Test log message 59 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
 
     distributedLogReader.close();
   }
