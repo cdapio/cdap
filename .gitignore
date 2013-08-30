@@ -29,3 +29,7 @@ logs/
 
 # Singlenode run files. 
 /data/
+
+# symbolic links to run singlenode out of build tree
+/web-app
+/web-cloud-app/developer

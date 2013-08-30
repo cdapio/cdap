@@ -10,4 +10,8 @@ public interface StatePersistor {
   public void persist(String tag, byte[] state) throws IOException;
   public void delete(String tag) throws IOException;
   public byte[] readBack(String tag) throws IOException;
+
+  void close();
+
+  void start();
 }

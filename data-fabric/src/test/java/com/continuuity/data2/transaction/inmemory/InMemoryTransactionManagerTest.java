@@ -47,6 +47,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   @Before
   public void before() {
     txManager = new InMemoryTransactionManager(conf, new ZooKeeperPersistor(conf));
+    txManager.init();
   }
 
   @Test

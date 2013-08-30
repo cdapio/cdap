@@ -80,6 +80,10 @@ public class DataFabricModules extends RuntimeModule {
     return new DataFabricLocalModule();
   }
 
+  public Module getSingleNodeModules(CConfiguration conf) {
+    return new DataFabricLocalModule(conf);
+  }
+
   @Override
   public Module getDistributedModules() {
     return new DataFabricDistributedModule();
