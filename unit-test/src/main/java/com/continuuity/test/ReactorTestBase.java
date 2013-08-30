@@ -3,7 +3,7 @@ package com.continuuity.test;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;

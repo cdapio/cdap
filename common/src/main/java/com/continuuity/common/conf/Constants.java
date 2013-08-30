@@ -43,7 +43,12 @@ public class Constants {
   public static final String CFG_COMMAND_PORT_ENABLED =
     "command.port.enabled";
 
+  public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
+
+  public static final String CFG_YARN_USER = "yarn.user";
   public static final String CFG_HDFS_USER = "hdfs.user";
+  public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
+  public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
 
   /**
    * Default constants for common.

@@ -74,6 +74,9 @@ dependencies {
     compile libraries.weave_discovery_api
     compile libraries.weave_discovery_core
     compile libraries.weave_zookeeper
+    compile (libraries.weave_yarn) {
+        exclude group: 'org.apache.hadoop'
+    }
     compile (libraries.commons_beanutils_core) {
         exclude group: 'commons-logging'
     }

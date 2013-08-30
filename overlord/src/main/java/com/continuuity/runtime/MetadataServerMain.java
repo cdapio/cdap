@@ -1,6 +1,8 @@
 package com.continuuity.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.google.inject.Guice;
@@ -26,7 +28,9 @@ public class MetadataServerMain {
       final Injector injector
         = Guice.createInjector(
               new MetadataModules().getDistributedModules(),
-              new DataFabricModules().getDistributedModules()
+              new DataFabricModules().getDistributedModules(),
+              new ConfigModule(),
+              new LocationRuntimeModule().getDistributedModules()
       );
 
       final MetadataServerInterface serverInterface

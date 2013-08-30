@@ -1,6 +1,6 @@
 package com.continuuity.gateway.runtime;
 
-import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.KafkaConstants;
@@ -17,7 +17,7 @@ import com.continuuity.gateway.Gateway;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
-import com.continuuity.logging.runtime.LoggingModules;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.common.Services;

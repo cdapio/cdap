@@ -2,20 +2,21 @@ package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Throwables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
+import com.google.common.io.OutputSupplier;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -36,12 +38,15 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
+  private final LocationFactory locationFactory;
 
   @Inject
   public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                         @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf) throws IOException {
+                         @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
+                         LocationFactory locationFactory) throws IOException {
     this.admin = new HBaseAdmin(hConf);
     this.cConf = cConf;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -52,14 +57,12 @@ public class HBaseQueueAdmin implements QueueAdmin {
   @Override
   public void create(String name) throws Exception {
     byte[] tableName = Bytes.toBytes(name);
-    String jarDir = cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
-                              System.getProperty("java.io.tmpdir") + "/queue");
+    Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
+                                                       "/queue"));
     HBaseQueueUtils.createTableIfNotExists(admin, tableName, QueueConstants.COLUMN_FAMILY,
                                            QueueConstants.MAX_CREATE_TABLE_WAIT,
-                                           createCoProcessorJar(getFileSystem(cConf, admin.getConfiguration()),
-                                                                new Path(jarDir)),
+                                           createCoProcessorJar(jarDir),
                                            HBaseQueueEvictionEndpoint.class.getName());
-
   }
 
   @Override
@@ -78,27 +81,13 @@ public class HBaseQueueAdmin implements QueueAdmin {
     admin.deleteTable(tableName);
   }
 
-  private FileSystem getFileSystem(CConfiguration cConfig, Configuration hConfig) throws IOException {
-    String hdfsUser = cConfig.get(Constants.CFG_HDFS_USER);
-    if (hdfsUser == null) {
-      return FileSystem.get(FileSystem.getDefaultUri(hConfig), hConfig);
-    } else {
-      try {
-        return FileSystem.get(FileSystem.getDefaultUri(hConfig), hConfig, hdfsUser);
-      } catch (InterruptedException e) {
-        throw new IOException(e);
-      }
-    }
-  }
-
   /**
    * Creates a jar files container coprocessors that are using by queue.
-   * @param fileSystem
    * @param jarDir
    * @return The Path of the jar file on the file system.
    * @throws IOException
    */
-  private Path createCoProcessorJar(FileSystem fileSystem, Path jarDir) throws IOException {
+  private Location createCoProcessorJar(Location jarDir) throws IOException {
     final Hasher hasher = Hashing.md5().newHasher();
     final byte[] buffer = new byte[COPY_BUFFER_SIZE];
     File jarFile = File.createTempFile("queue", ".jar");
@@ -140,18 +129,23 @@ public class HBaseQueueAdmin implements QueueAdmin {
       }
       // Copy jar file into HDFS
       // Target path is the jarDir + jarMD5.jar
-      Path targetPath = new Path(jarDir, "coprocessor" + hasher.hash().toString() + ".jar");
+      final Location targetPath = jarDir.append("coprocessor" + hasher.hash().toString() + ".jar");
 
       // If the file exists and having same since, assume the file doesn't changed
-      if (fileSystem.exists(targetPath) && fileSystem.getFileStatus(targetPath).getLen() == jarFile.length()) {
+      if (targetPath.exists() && targetPath.length() == jarFile.length()) {
         return targetPath;
       }
 
       // Copy jar file into filesystem
-      if (!fileSystem.mkdirs(jarDir)) {
-        System.out.println("Fail to create");
+      if (!jarDir.mkdirs()) {
+        throw new IOException("Fails to create directory: " + jarDir.toURI());
       }
-      fileSystem.copyFromLocalFile(false, true, new Path(jarFile.toURI()), targetPath);
+      Files.copy(jarFile, new OutputSupplier<OutputStream>() {
+        @Override
+        public OutputStream getOutput() throws IOException {
+          return targetPath.getOutputStream();
+        }
+      });
       return targetPath;
 
     } finally {
