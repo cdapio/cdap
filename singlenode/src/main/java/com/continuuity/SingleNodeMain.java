@@ -4,7 +4,7 @@
 package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -22,7 +22,7 @@ import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
-import com.continuuity.logging.runtime.LoggingModules;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
@@ -54,7 +54,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class SingleNodeMain {
   private static final Logger LOG = LoggerFactory.getLogger(SingleNodeMain.class);
-  private static final String ZOOKEEPER_DATA_DIR = "data/zookeeper";
 
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
@@ -113,7 +112,7 @@ public class SingleNodeMain {
   protected void startUp(String[] args) throws Exception {
     logAppenderInitializer.initialize();
 
-    File zkDir = new File(ZOOKEEPER_DATA_DIR);
+    File zkDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR) + "/zookeeper");
     zkDir.mkdir();
     zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
     zookeeper.startAndWait();

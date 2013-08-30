@@ -5,6 +5,7 @@
 package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -14,6 +15,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.weave.api.AbstractWeaveRunnable;
 import com.continuuity.weave.api.WeaveContext;
@@ -84,6 +86,13 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
+      String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+      if (baseDir != null) {
+        if (baseDir.startsWith("/")) {
+          baseDir = baseDir.substring(1);
+        }
+        cConf.set(LoggingConfiguration.LOG_BASE_DIR, cConf.get(Constants.CFG_HDFS_NAMESPACE) + "/" + baseDir);
+      }
 
       int instanceId = context.getInstanceId();
 

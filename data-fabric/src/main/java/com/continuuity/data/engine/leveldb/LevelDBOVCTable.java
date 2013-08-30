@@ -43,8 +43,6 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBOVCTable.class);
 
-  private static final String dbFilePrefix = "ldb_";
-
   private static final byte[] FAMILY = new byte[]{'f'};
 
   private static final byte[] NULL_VAL = new byte[0];
@@ -78,8 +76,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   }
 
   protected String generateDBPath() {
-    return basePath + System.getProperty("file.separator") +
-      dbFilePrefix + encodedTableName;
+    return new File(basePath, encodedTableName).getAbsolutePath();
   }
 
   protected Options generateDBOptions(boolean createIfMissing, boolean errorIfExists) {
@@ -895,10 +892,10 @@ public class LevelDBOVCTable extends AbstractOVCTable {
   public class LevelDBScanner implements Scanner {
 
     private final DBIterator iterator;
-    private final byte [] endRow;
+    private final byte[] endRow;
     private final ReadPointer readPointer;
 
-    public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow, ReadPointer readPointer) {
+    public LevelDBScanner(DBIterator iterator, byte[] startRow, byte[] endRow, ReadPointer readPointer) {
       this.iterator = iterator;
       if (startRow == null) {
         iterator.seekToFirst();
@@ -947,7 +944,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
           undeleted = -1;
           lastCol = new byte[0];
           curCol = new byte[0];
-          if (columnValues.size() > 0){
+          if (columnValues.size() > 0) {
             //If we have reached here. We have read all columns for a single row - since current row is not the same
             // as previous row and we have collected atleast one valid value in the columnValues collection. Break.
             break;

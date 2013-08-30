@@ -2,7 +2,7 @@ package com.continuuity.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.logging.runtime.LoggingModules;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

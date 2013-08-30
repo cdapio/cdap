@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Stopwatch;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -35,12 +36,12 @@ public final class HBaseQueueUtils {
    */
   public static void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
                                             byte[] columnFamily, long maxWaitMs,
-                                            Path coProcessorJar, String...coProcessors) throws IOException {
+                                            Location coProcessorJar, String...coProcessors) throws IOException {
     if (!admin.tableExists(tableName)) {
       HTableDescriptor htd = new HTableDescriptor(tableName);
       if (coProcessorJar != null) {
         for (String coProcessor : coProcessors) {
-          htd.addCoprocessor(coProcessor, coProcessorJar, Coprocessor.PRIORITY_USER, null);
+          htd.addCoprocessor(coProcessor, new Path(coProcessorJar.toURI()), Coprocessor.PRIORITY_USER, null);
         }
       }
 
