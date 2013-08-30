@@ -99,7 +99,8 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
                                   new ThreadPoolExecutor.CallerRunsPolicy());
   }
 
-  private HTable createHTable() throws IOException {
+  // NOTE: this is non-private only to support unit-tests. Should never be used directly.
+  HTable createHTable() throws IOException {
     HTable consumerTable = new HTable(hConf, tableName);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
