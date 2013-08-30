@@ -22,7 +22,7 @@ import java.io.InputStreamReader;
  */
 public class WebCloudAppService {
   private static final Logger logger = LoggerFactory.getLogger(WebCloudAppService.class);
-  private static final String NODE_JS_EXECUTABLE = "/usr/local/bin/node";
+  private static final String NODE_JS_EXECUTABLE = "node";
   private static final String WEB_APP = "web-app/developer/server/main.js";
 
   /**
