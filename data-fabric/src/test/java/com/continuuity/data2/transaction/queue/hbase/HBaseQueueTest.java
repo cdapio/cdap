@@ -18,7 +18,11 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
+import com.google.common.base.Throwables;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.client.HTable;
@@ -30,6 +34,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * HBase queue tests.
@@ -64,7 +70,17 @@ public class HBaseQueueTest extends QueueTest {
 
     cConf.set(HBaseTableUtil.CFG_TABLE_PREFIX, "test");
 
-    final Injector injector = Guice.createInjector(dataFabricModule);
+    final Injector injector = Guice.createInjector(dataFabricModule, new AbstractModule() {
+
+      @Override
+      protected void configure() {
+        try {
+          bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    });
 
     opexService = injector.getInstance(OperationExecutorService.class);
     Thread t = new Thread() {
