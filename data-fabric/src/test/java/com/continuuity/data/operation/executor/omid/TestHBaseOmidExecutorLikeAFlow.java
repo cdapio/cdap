@@ -5,6 +5,7 @@ import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -30,7 +31,7 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
     try {
       HBaseTestBase.startHBase();
       DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
-      module.getConfiguration().setBoolean("tx.persist", false);
+      module.getConfiguration().setBoolean(StatePersistor.CFG_DO_PERSIST, false);
       injector = Guice.createInjector(module);
       executor = (OmidTransactionalOperationExecutor) injector.getInstance(
           Key.get(OperationExecutor.class,

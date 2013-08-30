@@ -111,8 +111,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
 
     // Bind TxDs2 stuff
-    // Bind TxDs2 stuff
-    if (conf.getBoolean("tx.persist", true)) {
+    if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
       bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
     } else {
       bind(StatePersistor.class).toProvider(Providers.<StatePersistor>of(null));

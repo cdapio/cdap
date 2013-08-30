@@ -7,11 +7,12 @@ import java.io.IOException;
  * and to restore that state when needed.
  */
 public interface StatePersistor {
+
+  public static final String CFG_DO_PERSIST = "tx.persist";
+
+  void start();
   public void persist(String tag, byte[] state) throws IOException;
   public void delete(String tag) throws IOException;
   public byte[] readBack(String tag) throws IOException;
-
   void close();
-
-  void start();
 }

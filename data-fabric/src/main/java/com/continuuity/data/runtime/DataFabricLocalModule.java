@@ -57,7 +57,7 @@ public class DataFabricLocalModule extends AbstractModule {
     install(Modules.override(new DataFabricLevelDBModule(this.conf)).with(new AbstractModule() {
       @Override
       protected void configure() {
-        if (conf.getBoolean("tx.persist", true)) {
+        if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
           bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
         }
         bind(LevelDBOVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
