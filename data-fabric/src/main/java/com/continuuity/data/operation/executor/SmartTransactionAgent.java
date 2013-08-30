@@ -70,7 +70,9 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
     return executed.get();
   }
 
-  // helper enum
+  /**
+   * helper enum.
+   */
   protected enum State { New, Running, Aborted, Finished }
 
   // defaults for limits on deferred operations
