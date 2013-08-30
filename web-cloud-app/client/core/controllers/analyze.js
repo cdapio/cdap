@@ -338,7 +338,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
           }
         }
       }
-      if (urls.length) {
+      if (!Em.isEmpty(urls)) {
         this.HTTP.post('metrics', urls, function (response, status) {
 
           if (response.result) {

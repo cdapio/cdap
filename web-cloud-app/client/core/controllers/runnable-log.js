@@ -13,7 +13,7 @@ define([], function () {
 		load: function () {
 			var self = this;
 			this.set('fromOffset', -1);
-			this.set('maxSize', 10);
+			this.set('maxSize', 50);
 			this.set('initialOffset', null);
 			this.set('autoScroll', true);
 			var beforeHTML = $('#logView').html(),

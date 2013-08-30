@@ -60,9 +60,10 @@ define([], function () {
 
 			http.rpc('runnable', 'status', [app_id, flow_id, -1],
 				function (response) {
-
 					if (response.result) {
-						self.set('currentState', response.result.status);
+						if (self.get('name') === response.result.flowId) {
+							self.set('currentState', response.result.status);
+						}
 					}
 
 			});

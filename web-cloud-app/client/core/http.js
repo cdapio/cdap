@@ -6,7 +6,7 @@ define([], function () {
 
 	Em.debug('Loading HTTP Resource');
 
-	var AJAX_TIMEOUT = 5000;
+	var AJAX_TIMEOUT = 1000000;
 
 	var Resource = Em.Object.extend({
 
@@ -68,7 +68,6 @@ define([], function () {
 				}
 
 			}).fail(function (xhr, status, error) {
-				$('#warning').html('<div>Encountered a connection problem.</div>').show();
 				callback(error, status);
 			});
 

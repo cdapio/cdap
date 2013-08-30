@@ -72,7 +72,9 @@ define([], function () {
 				function (response) {
 
 					if (response.result) {
-						self.set('currentState', response.result.status);
+						if (self.get('name') === response.result.flowId) {
+							self.set('currentState', response.result.status);
+						}
 					}
 
 			});
