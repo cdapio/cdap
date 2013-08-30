@@ -5,6 +5,7 @@ package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.hbase.HBaseTestBase;
@@ -15,7 +16,11 @@ import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueTest;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactories;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -60,7 +65,13 @@ public class HBaseQueueTest extends QueueTest {
 
     cConf.set(HBaseTableUtil.CFG_TABLE_PREFIX, "test");
 
-    final Injector injector = Guice.createInjector(dataFabricModule);
+    final Injector injector = Guice.createInjector(dataFabricModule,
+                                                   new AbstractModule() {
+                                                     @Override
+                                                     protected void configure() {
+                                                       bind(LocationFactory.class).to(LocalLocationFactory.class);
+                                                     }
+                                                   });
 
     opexService = injector.getInstance(OperationExecutorService.class);
     Thread t = new Thread() {
