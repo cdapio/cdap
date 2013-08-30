@@ -83,7 +83,7 @@ devServer.start();
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  devServer.logger.error('Uncaught Exception', err);
+//  devServer.logger.info('Uncaught Exception', err);
 });
 
 /**
