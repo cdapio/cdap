@@ -6,6 +6,8 @@ define([], function () {
 
 	Em.debug('Loading HTTP Resource');
 
+	var AJAX_TIMEOUT = 5000;
+
 	var Resource = Em.Object.extend({
 
 		// Callable methods on HTTP resource.
@@ -29,7 +31,7 @@ define([], function () {
 
 				} else {
 
-					$('#warning').html('<div>The server returned an error.' + req.responseText + '</div>').show();
+					$('#warning').html('<div>The server returned an error.</div>').show();
 
 				}
 
@@ -55,6 +57,7 @@ define([], function () {
 				url: path,
 				data: JSON.stringify(object),
 				type: "POST",
+				timeout: AJAX_TIMEOUT,
 				contentType: "application/json"
 			}).done(function (response, status) {
 
@@ -64,10 +67,9 @@ define([], function () {
 					callback(response, status);
 				}
 
-			}).fail(function (xhr) {
-
+			}).fail(function (xhr, status, error) {
 				$('#warning').html('<div>Encountered a connection problem.</div>').show();
-
+				callback(error, status);
 			});
 
 		},

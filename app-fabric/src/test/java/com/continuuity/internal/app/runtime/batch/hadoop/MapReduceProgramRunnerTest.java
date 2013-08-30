@@ -27,9 +27,10 @@ import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
-import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -48,6 +49,9 @@ import java.util.concurrent.TimeUnit;
 public class MapReduceProgramRunnerTest {
   private static Injector injector = TestHelper.getInjector();
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   @Test
   public void testWordCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
@@ -60,9 +64,7 @@ public class MapReduceProgramRunnerTest {
                                                   app.getAppSpecLoc().getSpecification().getName());
 
     String inputPath = createInput();
-    File outputDir = new File(FileUtils.getTempDirectory().getPath() + "/out_" + System.currentTimeMillis());
-    outputDir.deleteOnExit();
-
+    File outputDir = new File(tmpFolder.newFolder(), "output");
 
     TransactionProxy proxy = new TransactionProxy();
     DataSetInstantiator dataSetInstantiator =
@@ -222,9 +224,7 @@ public class MapReduceProgramRunnerTest {
   }
 
   private String createInput() throws IOException {
-    File inputDir = new File(FileUtils.getTempDirectory().getPath() + "/in_" + System.currentTimeMillis());
-    inputDir.mkdirs();
-    inputDir.deleteOnExit();
+    File inputDir = tmpFolder.newFolder();
 
     File inputFile = new File(inputDir.getPath() + "/words.txt");
     inputFile.deleteOnExit();

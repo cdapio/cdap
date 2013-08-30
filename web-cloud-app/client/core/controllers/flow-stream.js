@@ -13,7 +13,7 @@ define([], function () {
 		needs: ['FlowStatus'],
 
 		load: function () {
-
+			this.clearTriggers(true);
 			var self = this;
 			/*
 			 * Give the chart Embeddables 100ms to configure
@@ -29,12 +29,23 @@ define([], function () {
 			clearTimeout(this.__timeout);
 		},
 
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted');
+		},
+
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+			this.set('aggregatesCompleted', value);
+		},
+
 		getStats: function () {
-
+			if (!this.ajaxCompleted()) {
+				return;
+			}
 			var models = [this.get('model')];
-
-			C.Util.updateAggregates(models, this.HTTP);
-			C.Util.updateTimeSeries(models, this.HTTP);
+			this.clearTriggers(false);
+			C.Util.updateAggregates(models, this.HTTP, this);
+			C.Util.updateTimeSeries(models, this.HTTP, this);
 
 			var self = this;
 			self.__timeout = setTimeout(function () {

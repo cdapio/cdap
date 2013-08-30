@@ -586,6 +586,16 @@ WebAppServer.prototype.bindRoutes = function(io) {
           if (error) {
             self.logger.error(error);
           }
+          if (method === 'getFlowHistory') {
+            for (var i = result.length - 1; i >= 0; i--) {
+              if ('startTime' in result[i]) {
+                result[i]['startTime'] = parseInt(result[i]['startTime'], 10);
+              }
+              if ('endTime' in result[i]) {
+                result[i]['endTime'] = parseInt(result[i]['endTime'], 10);
+              }
+            }
+          }
           res.send({ result: result, error: error });
         });
         break;
