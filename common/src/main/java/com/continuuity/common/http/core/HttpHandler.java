@@ -43,6 +43,7 @@ public interface HttpHandler {
 
   /**
    * destroy method will be called before shutdown. Any teardown task can be performed in this method.
+   * At this point the server will not accept any more new requests.
    *
    * @param context instance of HandlerContext.
   */

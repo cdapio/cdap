@@ -180,6 +180,61 @@
         <value>/data/</value>
     </property>
 
+    <property>
+        <name>gateway.connection.backlog</name>
+        <value>20000</value>
+        <description>Max connection backlog of gateway</description>
+    </property>
+
+    <property>
+        <name>gateway.max.cached.stream.events.num</name>
+        <value>10000</value>
+        <description>Max number of stream events cached before flushing</description>
+    </property>
+
+    <property>
+        <name>gateway.max.cached.events.per.stream.num</name>
+        <value>5000</value>
+        <description>Max number of stream events of a single stream cached before flushing</description>
+    </property>
+
+    <property>
+        <name>gateway.max.cached.stream.events.bytes</name>
+        <value>52428800</value>
+        <description>Max size of stream events cached before flushing</description>
+    </property>
+
+    <property>
+        <name>gateway.stream.events.flush.interval.ms</name>
+        <value>150</value>
+        <description>Specifies the interval at which cached stream events get flushed</description>
+    </property>
+
+    <property>
+        <name>gateway.stream.callback.exec.num.threads</name>
+        <value>5</value>
+        <description>Number of threads in stream events callback executor</description>
+    </property>
+
+    <property>
+        <name>gateway.exec.threads</name>
+        <value>20</value>
+        <description>Number of netty server executor threads</description>
+    </property>
+
+    <property>
+        <name>gateway.boss.threads</name>
+        <value>1</value>
+        <description>Number of netty server boss threads</description>
+    </property>
+
+    <property>
+        <name>gateway.worker.threads</name>
+        <value>10</value>
+        <description>Number of netty server worker threads</description>
+    </property>
+
+
     <!-- Metadata Connector -->
     <property>
         <name>meta.rest.class</name>
