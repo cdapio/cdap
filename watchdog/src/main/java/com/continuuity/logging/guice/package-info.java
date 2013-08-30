@@ -1,5 +1,5 @@
 /**
  * Contains injectable logging modules.
  */
-package com.continuuity.logging.runtime;
+package com.continuuity.logging.guice;
 

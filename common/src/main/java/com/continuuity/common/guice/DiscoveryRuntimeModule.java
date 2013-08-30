@@ -4,6 +4,7 @@
 package com.continuuity.common.guice;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
@@ -120,7 +121,7 @@ public final class DiscoveryRuntimeModule extends RuntimeModule {
                                             @Named("local.discovery.client") DiscoveryServiceClient delegate) {
       this.zkClient = zkClient;
       this.delegate = delegate;
-      this.weaveNamespace = configuration.get("weave.zookeeper.namespace", "/weave");
+      this.weaveNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
       this.clients = CacheBuilder.newBuilder().expireAfterAccess(CACHE_EXPIRES_MINUTES, TimeUnit.MINUTES)
                                               .build(createClientLoader());
     }

@@ -1,4 +1,4 @@
-package com.continuuity.logging.runtime;
+package com.continuuity.logging.guice;
 
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.logging.appender.LogAppender;

@@ -9,7 +9,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.store.StoreFactory;
