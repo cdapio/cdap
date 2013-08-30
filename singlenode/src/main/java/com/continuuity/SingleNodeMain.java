@@ -26,7 +26,6 @@ import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
 import com.continuuity.metrics.query.MetricsQueryService;
-import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
@@ -57,7 +56,6 @@ public class SingleNodeMain {
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
   private final Gateway gateway;
-  private final MetricsCollectionServerInterface overlordCollection;
   private final MetricsFrontendServerInterface overloadFrontend;
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
@@ -75,7 +73,6 @@ public class SingleNodeMain {
 
     Injector injector = Guice.createInjector(modules);
     gateway = injector.getInstance(Gateway.class);
-    overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -114,8 +111,6 @@ public class SingleNodeMain {
     metricsCollectionService.startAndWait();
     metricsQueryService.startAndWait();
 
-    overlordCollection.start(args, configuration);
-
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
       throw new Exception("Failed to start Application Fabric.");
@@ -142,7 +137,6 @@ public class SingleNodeMain {
       metaDataServer.stop(true);
       appFabricServer.stopAndWait();
       overloadFrontend.stop(true);
-      overlordCollection.stop(true);
       zookeeper.stopAndWait();
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
@@ -184,7 +178,7 @@ public class SingleNodeMain {
    */
   public static boolean nodeExists() {
     try {
-      Process proc = Runtime.getRuntime().exec("node -v");
+      Process proc = Runtime.getRuntime().exec("/usr/local/bin/node -v");
       TimeUnit.SECONDS.sleep(2);
       int exitValue = proc.exitValue();
       if (exitValue != 0) {

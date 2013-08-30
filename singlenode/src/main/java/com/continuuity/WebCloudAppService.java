@@ -22,7 +22,8 @@ import java.io.InputStreamReader;
  */
 public class WebCloudAppService {
   private static final Logger logger = LoggerFactory.getLogger(WebCloudAppService.class);
-  private static final String NODE_JS_EXECUTABLE = "node";
+  private static final String NODE_JS_EXECUTABLE = "/usr/local/bin/node";
+  private static final String WEB_APP = "web-app/developer/server/main.js";
 
   /**
    * This is the external process that will wrap the web app.
@@ -30,13 +31,7 @@ public class WebCloudAppService {
   Process webAppProcess;
 
   public void start(String[] args, CConfiguration conf) throws ServerException {
-
-    // Create a new ProcessBuilder
-    String webappMain = conf.get("webapp.main");
-    logger.debug("Web app main class is " + webappMain);
-    ProcessBuilder builder =
-      new ProcessBuilder(NODE_JS_EXECUTABLE, webappMain);
-
+    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, WEB_APP);
 
     // Re-direct all our stderr to stdout
     builder.redirectErrorStream(true);
