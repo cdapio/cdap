@@ -44,7 +44,8 @@ public class InMemoryTransactionManager {
 
   // How many write versions to claim at a time, by default one million
   public static final String CFG_TX_CLAIM_SIZE = "data.tx.claim.size";
-  public static final int DEFAULT_TX_CLAIM_SIZE = 1000 * 1000;
+  // public static final int DEFAULT_TX_CLAIM_SIZE = 1000 * 1000;
+  public static final int DEFAULT_TX_CLAIM_SIZE = 100;
 
   private static final String ALL_STATE_TAG = "all";
   private static final String WATERMARK_TAG = "mark";
@@ -75,8 +76,9 @@ public class InMemoryTransactionManager {
   private final StatePersistor persistor;
 
   public InMemoryTransactionManager() {
-    persistor = new NoopPersistor();
     reset();
+    persistor = new NoopPersistor();
+    persistor.startAndWait();
     initialized = true;
   }
 
@@ -99,13 +101,13 @@ public class InMemoryTransactionManager {
   // TODO this class should implement Service and this should be start().
   // TODO However, start() is alredy used to start a transaction, so this would be major refactoring now.
   public void init() {
+    // start up the persistor
+    persistor.startAndWait();
     // establish defaults in case there is no persistence
     reset();
 
     // try to recover persisted state
     try {
-      // start up the persistor first
-      persistor.startAndWait();
       // attempt to restore the full state
       byte[] state;
       state = persistor.readBack(ALL_STATE_TAG);
@@ -113,20 +115,20 @@ public class InMemoryTransactionManager {
         decodeState(state);
         LOG.debug("Restored transaction state successfully.");
         persistor.delete(ALL_STATE_TAG);
-        return;
+      } else {
+        // full state is not there, attempt to restore the watermark
+        state = persistor.readBack(WATERMARK_TAG);
+        if (state != null) {
+          waterMark = Bytes.toLong(state);
+          // must have crashed last time... need to claim the next batch of write versions
+          waterMark += claimSize;
+          readPointer = waterMark - 1;
+          nextWritePointer = waterMark; //
+          LOG.debug("Recovered transaction watermark successfully, but transaction state may have been lost.");
+        } else {
+          LOG.debug("No persisted transaction state found. Initializing from scratch.");
+        }
       }
-      // full state is not there, attempt to restore the watermark
-      state = persistor.readBack(WATERMARK_TAG);
-      if (state != null) {
-        waterMark = Bytes.toLong(state);
-        // must have crashed last time... need to claim the next batch of write versions
-        waterMark += claimSize;
-        readPointer = waterMark - 1;
-        nextWritePointer = waterMark; //
-        LOG.debug("Recovered transaction watermark successfully, but transaction state may have been lost.");
-        return;
-      }
-      LOG.debug("No persisted transaction state found. Initializing from scratch.");
     } catch (IOException e) {
       LOG.error("Unable to read back transaction state:", e);
       throw Throwables.propagate(e);
@@ -135,7 +137,9 @@ public class InMemoryTransactionManager {
   }
 
   public synchronized void close() {
+    // if initialized is false, then the service did not start up properly and the state is most likely corrupt.
     if (initialized) {
+      LOG.debug("Shutting down gracefully...");
       byte[] state = encodeState();
       try {
         persistor.persist(ALL_STATE_TAG, state);
@@ -144,11 +148,11 @@ public class InMemoryTransactionManager {
         LOG.error("Unable to persist transaction state:", e);
         throw Throwables.propagate(e);
       }
-      persistor.stopAndWait();
     }
+    persistor.stopAndWait();
   }
 
-  // not synchronized because itis only called from start() which is synchronized
+  // not synchronized because it is only called from start() which is synchronized
   private void saveWaterMarkIfNeeded() {
     try {
       if (nextWritePointer >= waterMark) {
@@ -162,7 +166,14 @@ public class InMemoryTransactionManager {
     }
   }
 
+  private void ensureInitialized() {
+    if (!initialized) {
+      throw new IllegalStateException("Transaction Manager was not initialized. ");
+    }
+  }
+
   public synchronized Transaction start() {
+    ensureInitialized();
     saveWaterMarkIfNeeded();
     Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray(excludedList));
     excludedList.add(nextWritePointer);
@@ -271,17 +282,6 @@ public class InMemoryTransactionManager {
       }
     }
     return false;
-  }
-
-  // todo: move to Tx?
-  private static boolean visible(Transaction tx, long pointer) {
-    if (pointer > tx.getReadPointer()) {
-      return false;
-    }
-
-    // todo: optimize heavily
-    // we rely on array of excludes to be sorted
-    return Arrays.binarySearch(tx.getExcludedList(), pointer) < 0;
   }
 
   private void makeVisible(Transaction tx) {
