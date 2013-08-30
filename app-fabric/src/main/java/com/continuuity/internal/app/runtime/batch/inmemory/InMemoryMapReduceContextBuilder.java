@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.batch.inmemory;
 
-import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.common.conf.CConfiguration;
@@ -12,7 +12,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
-import com.continuuity.logging.runtime.LoggingModules;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -28,6 +28,7 @@ import com.google.inject.name.Names;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URI;
 
 /**
  * Builds an instance of {@link com.continuuity.internal.app.runtime.batch.BasicMapReduceContext} good for
@@ -41,7 +42,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
   }
 
   @Override
-  protected Program loadProgram(String programLocation, LocationFactory locationFactory) throws IOException {
+  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
     return new Program(locationFactory.create(programLocation));
   }
 

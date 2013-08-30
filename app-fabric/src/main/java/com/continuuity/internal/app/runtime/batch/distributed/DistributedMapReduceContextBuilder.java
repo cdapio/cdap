@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.batch.distributed;
 
-import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
@@ -14,7 +14,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
-import com.continuuity.logging.runtime.LoggingModules;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.AbstractModule;
@@ -41,8 +41,8 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
   }
 
   @Override
-  protected Program loadProgram(String programLocation, LocationFactory locationFactory) throws IOException {
-    return new Program(locationFactory.create(URI.create(programLocation)));
+  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
+    return new Program(locationFactory.create(programLocation));
   }
 
   protected Injector createInjector() {

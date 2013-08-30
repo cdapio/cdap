@@ -41,6 +41,11 @@ log4js.configure({
 var logger = process.logger = log4js.getLogger('UI API');
 logger.setLevel(LOG_LEVEL);
 
+var LOG_DELAY = false;
+setInterval(function () {
+	LOG_DELAY = false;
+}, 5000);
+
 /**
  * Export API.
  */
@@ -49,8 +54,27 @@ logger.setLevel(LOG_LEVEL);
 	this.auth = null;
 	this.config = null;
 	this.configure = function (config, credential) {
+		var self = this;
 		this.config = config;
 		this.credential = credential;
+	};
+
+	this.resetConnection = function () {
+		var self = this;
+		this.appFabricConn = thrift.createConnection(
+			this.config['resource.manager.server.address'],
+			this.config['resource.manager.server.port'], {
+				transport: ttransport.TFramedTransport,
+				protocol: tprotocol.TBinaryProtocol
+		});
+		
+		this.appFabricConn.on('close', function (error) {
+			if (!LOG_DELAY) {
+				logger.error('Could not connect to AppFabric (Manager).');
+				LOG_DELAY = true;
+			}
+			self.appFabricConn = null;
+		});
 	};
 
 	this.metadata = function (accountID, method, params, done) {
@@ -64,7 +88,6 @@ logger.setLevel(LOG_LEVEL);
 			protocol: tprotocol.TBinaryProtocol
 		});
 		conn.on('error', function (error) {
-			logger.warn('Could not connect to MetadataService.');
 			done({'fatal': 'Could not connect to MetadataService.'});
 		});
 
@@ -74,11 +97,7 @@ logger.setLevel(LOG_LEVEL);
 
 			if (params.length === 2) {
 				var entityType = params.shift();
-				try {
-					params[0] = new metadataservice_types[entityType](params[0]);
-				} catch (e) {
-					logger.error(method, params, e);
-				}
+				params[0] = new metadataservice_types[entityType](params[0]);
 			}
 
 			if (method.indexOf('ByApplication') !== -1 || method === 'getFlows' || method === 'getFlow' ||
@@ -94,7 +113,6 @@ logger.setLevel(LOG_LEVEL);
 				try {
 					MetaData[method].apply(MetaData, params.concat(done));
 				} catch (e) {
-					logger.warn(e);
 					done(e);
 				}
 			} else {
@@ -104,101 +122,92 @@ logger.setLevel(LOG_LEVEL);
 			conn.end();
 		});
 
-	},
+	};
 
 	this.manager = function (accountID, method, params, done) {
+		var self = this;
 
+		if (!this.appFabricConn || !this.appFabricConn.connected) {
+			this.resetConnection();
+			if (!this.appFabricConn._events.connect) {
+				this.appFabricConn.on('connect', function (response) {
+					self.sendManagerResponse(accountID, method, params, done);
+				});
+			}
+		} else {
+			self.sendManagerResponse(accountID, method, params, done);
+		}
+
+	};
+
+	this.sendManagerResponse = function (accountID, method, params, done) {
 		params = params || [];
 		params.unshift(accountID);
-
 		if (params[4] === 'PROCEDURE') {
 			params[4] = 'QUERY';
 		}
-
 		var auth_token = new appfabricservice_types.AuthToken({ token: null });
-
-		var conn = thrift.createConnection(
-			this.config['resource.manager.server.address'],
-			this.config['resource.manager.server.port'], {
-			transport: ttransport.TFramedTransport,
-			protocol: tprotocol.TBinaryProtocol
+		var Manager = thrift.createClient(AppFabricService, this.appFabricConn);
+		var identifier = new appfabricservice_types.FlowIdentifier({
+			applicationId: params[1],
+			flowId: params[2],
+			version: params[3] ? parseInt(params[3], 10) : -1,
+			accountId: params[0],
+			type: appfabricservice_types.EntityType[params[4] || 'FLOW']
 		});
-
-		conn.on('error', function (error) {
-			logger.warn('Could not connect to AppFabric (Manager).');
-			done({'fatal': 'Could not connect to AppFabric (Manager).'});
-		});
-
-		conn.on('connect', function (response) {
-
-			var Manager = thrift.createClient(AppFabricService, conn);
-			var identifier = new appfabricservice_types.FlowIdentifier({
-				applicationId: params[1],
-				flowId: params[2],
-				version: params[3] ? parseInt(params[3], 10) : -1,
-				accountId: params[0],
-				type: appfabricservice_types.EntityType[params[4] || 'FLOW']
-			});
-
-			switch (method) {
-				case 'start':
-					identifier = new appfabricservice_types.FlowDescriptor({
-						"identifier": new appfabricservice_types.FlowIdentifier({
-							applicationId: params[1],
-							flowId: params[2],
-							version: parseInt(params[3], 10),
-							accountId: params[0],
-							type: appfabricservice_types.EntityType[params[4] || 'FLOW']
-						}),
-						"arguments": params[5] || []
-					});
-					Manager.start(auth_token, identifier, done);
-				break;
-				case 'stop':
-					Manager.stop(auth_token, identifier, done);
-				break;
-				case 'status':
-					Manager.status(auth_token, identifier, done);
-				break;
-				case 'getFlowDefinition':
-					Manager.getFlowDefinition(identifier, done);
-				break;
-				case 'getFlowHistory':
-					Manager.getFlowHistory(identifier, done);
-				break;
-				case 'setInstances':
-
-					var flowlet_id = params[4];
-					var instances = params[5];
-
-					identifier = new appfabricservice_types.FlowIdentifier({
-						accountId: params[0],
+		switch (method) {
+			case 'start':
+				identifier = new appfabricservice_types.FlowDescriptor({
+					"identifier": new appfabricservice_types.FlowIdentifier({
 						applicationId: params[1],
 						flowId: params[2],
-						version: params[3] || -1
-					});
+						version: parseInt(params[3], 10),
+						accountId: params[0],
+						type: appfabricservice_types.EntityType[params[4] || 'FLOW']
+					}),
+					"arguments": params[5] || []
+				});
+				Manager.start(auth_token, identifier, done);
+			break;
+			case 'stop':
+				Manager.stop(auth_token, identifier, done);
+			break;
+			case 'status':
+				Manager.status(auth_token, identifier, done);
+			break;
+			case 'getFlowDefinition':
+				Manager.getFlowDefinition(identifier, done);
+			break;
+			case 'getFlowHistory':
+				Manager.getFlowHistory(identifier, done);
+			break;
+			case 'setInstances':
 
-					Manager.setInstances(auth_token, identifier, flowlet_id, instances, done);
+				var flowlet_id = params[4];
+				var instances = params[5];
 
-				break;
+				identifier = new appfabricservice_types.FlowIdentifier({
+					accountId: params[0],
+					applicationId: params[1],
+					flowId: params[2],
+					version: params[3] || -1
+				});
 
-				default:
-					if (method in Manager) {
-						try {
-							Manager[method].apply(Manager, params.concat(done));
-						} catch (e) {
-							logger.warn(e);
-							done(e);
-						}
-					} else {
-						done('Unknown method for service Manager: ' + method, null);
+				Manager.setInstances(auth_token, identifier, flowlet_id, instances, done);
+
+			break;
+
+			default:
+				if (method in Manager) {
+					try {
+						Manager[method].apply(Manager, params.concat(done));
+					} catch (e) {
+						done(e);
 					}
-
-			}
-
-			conn.end();
-		});
-
+				} else {
+					done('Unknown method for service Manager: ' + method, null);
+				}
+		}
 	};
 
 	this.monitor = function (accountID, method, params, done) {
@@ -213,7 +222,6 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
-			logger.warn('Could not connect to MetricsService.');
 			done({'fatal': 'Could not connect to MetricsService.'});
 		});
 

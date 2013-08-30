@@ -34,6 +34,10 @@ public class Gateway extends AbstractIdleService {
                                               GatewayConstants.DEFAULT_BACKLOG));
     builder.setExecThreadPoolSize(cConf.getInt(GatewayConstants.ConfigKeys.EXEC_THREADS,
                                                GatewayConstants.DEFAULT_EXEC_THREADS));
+    builder.setBossThreadPoolSize(cConf.getInt(GatewayConstants.ConfigKeys.BOSS_THREADS,
+                                               GatewayConstants.DEFAULT_BOSS_THREADS));
+    builder.setWorkerThreadPoolSize(cConf.getInt(GatewayConstants.ConfigKeys.WORKER_THREADS,
+                                                 GatewayConstants.DEFAULT_WORKER_THREADS));
 
     httpService = builder.build();
   }

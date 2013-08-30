@@ -4,7 +4,7 @@
 package com.continuuity.app.runtime;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;

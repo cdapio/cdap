@@ -2,8 +2,9 @@ package com.continuuity.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.logging.runtime.LoggingModules;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -30,6 +31,7 @@ public class MetricsFrontendServerMain {
         = Guice.createInjector(new MetricsModules().getDistributedModules(),
                                new LoggingModules().getDistributedModules(),
                                new DataFabricModules().getDistributedModules(),
+                               new LocationRuntimeModule().getDistributedModules(),
                                new ConfigModule(configuration));
       final MetricsFrontendServerInterface server
         = injector.getInstance(MetricsFrontendServerInterface.class);
