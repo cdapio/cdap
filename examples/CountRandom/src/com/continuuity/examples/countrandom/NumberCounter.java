@@ -21,6 +21,7 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.metrics.Metrics;
 
 /**
  * Number Counter flowlet {@code NumberCounter}.
@@ -29,8 +30,11 @@ public class NumberCounter extends AbstractFlowlet {
 
   @UseDataSet(CountRandom.TABLE_NAME)
   KeyValueTable counters;
+  Metrics counter;
 
   public void process(Integer number) throws OperationException {
     counters.increment(number.toString().getBytes(), 1L);
+    counter.count("flowlet1", 1);
+    counter.count("flowlet1.metric", 1);
   }
 }
