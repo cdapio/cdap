@@ -1,6 +1,8 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.hbase.HBaseOVCTable;
 import com.continuuity.data.hbase.HBaseTestBase;
@@ -35,7 +37,10 @@ public class  TestHBaseOVCTable extends TestOVCTable {
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+      injector = Guice.createInjector(module,
+                                      new ConfigModule(module.getConfiguration(), HBaseTestBase.getConfiguration()),
+                                      new LocationRuntimeModule().getInMemoryModules());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
