@@ -1,5 +1,7 @@
 package com.continuuity.data.metadata;
 
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -25,7 +27,9 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
   public static void setupOpex() throws Exception {
     HBaseTestBase.startHBase();
     DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
-    injector = Guice.createInjector(module);
+    injector = Guice.createInjector(module,
+                                    new ConfigModule(module.getConfiguration(), HBaseTestBase.getConfiguration()),
+                                    new LocationRuntimeModule().getInMemoryModules());
     opex = injector.getInstance(Key.get(
         OperationExecutor.class, Names.named("DataFabricOperationExecutor")));
   }
