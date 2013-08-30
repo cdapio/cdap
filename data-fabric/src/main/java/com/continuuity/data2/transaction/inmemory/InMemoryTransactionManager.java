@@ -44,8 +44,7 @@ public class InMemoryTransactionManager {
 
   // How many write versions to claim at a time, by default one million
   public static final String CFG_TX_CLAIM_SIZE = "data.tx.claim.size";
-  // public static final int DEFAULT_TX_CLAIM_SIZE = 1000 * 1000;
-  public static final int DEFAULT_TX_CLAIM_SIZE = 100;
+  public static final int DEFAULT_TX_CLAIM_SIZE = 1000 * 1000;
 
   private static final String ALL_STATE_TAG = "all";
   private static final String WATERMARK_TAG = "mark";
