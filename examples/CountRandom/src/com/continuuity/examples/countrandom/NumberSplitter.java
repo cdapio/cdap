@@ -19,22 +19,18 @@ package com.continuuity.examples.countrandom;
 
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.metrics.Metrics;
 
 /**
  * Number splitter Flowlet {@code NumberSplitter}.
  */
 public class NumberSplitter extends AbstractFlowlet {
   private OutputEmitter<Integer> output;
-  Metrics m;
 
   public void process(Integer number)  {
     output.emit(new Integer(number % 10000));
     output.emit(new Integer(number % 1000));
     output.emit(new Integer(number % 100));
     output.emit(new Integer(number % 10));
-    m.count("splitter.metric1", 1);
-    m.count("splitter.metric2", 2);
   }
 }
 
