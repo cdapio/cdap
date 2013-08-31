@@ -140,7 +140,7 @@
         Gateway configuration
     -->
     <property>
-        <name>gateway.hostname</name>
+        <name>gateway.server.address</name>
         <value>localhost</value>
         <description>Specifies the hostname on which the Gateway will listen</description>
     </property>
