@@ -57,7 +57,7 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
   // the current transaction
   private Transaction xaction;
   // keep track of current state
-  private State state = State.New;
+  protected State state = State.New;
 
   // keep track of successful operations: we can't increase succeeded count every time we
   // execute a deferred batch, we will only know whether they succeed at commit().
@@ -70,8 +70,10 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
     return executed.get();
   }
 
-  // helper enum
-  private enum State { New, Running, Aborted, Finished }
+  /**
+   * helper enum.
+   */
+  protected enum State { New, Running, Aborted, Finished }
 
   // defaults for limits on deferred operations
   public static final int DEFAULT_SIZE_LIMIT = 16 * 1024 * 1024;

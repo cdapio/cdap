@@ -8,6 +8,7 @@ import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueue2Producer;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueue2Producer;
 import com.google.inject.Guice;
@@ -27,13 +28,13 @@ public class LocalQueueTest extends QueueTest {
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
+    conf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
     Injector injector = Guice.createInjector(new DataFabricLocalModule(conf));
     // Get the in-memory opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
   }
-
 
   @Test
   public void testInjection() throws IOException {

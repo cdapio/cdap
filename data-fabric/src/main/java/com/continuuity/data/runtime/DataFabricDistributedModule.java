@@ -14,6 +14,10 @@ import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.NoopPersistor;
+import com.continuuity.data2.transaction.inmemory.StatePersistor;
+import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
@@ -107,7 +111,13 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
 
     // Bind TxDs2 stuff
+    if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
+      bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
+    } else {
+      bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
+    }
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
+    bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);

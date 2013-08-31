@@ -15,6 +15,7 @@ import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
@@ -69,6 +70,7 @@ public class HBaseQueueTest extends QueueTest {
               Integer.toString(Networks.getRandomPort()));
 
     cConf.set(HBaseTableUtil.CFG_TABLE_PREFIX, "test");
+    cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
 
     final Injector injector = Guice.createInjector(dataFabricModule, new AbstractModule() {
 

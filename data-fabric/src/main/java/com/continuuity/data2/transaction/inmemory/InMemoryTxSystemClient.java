@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.google.inject.Inject;
 
 import java.util.Collection;
 
@@ -9,9 +10,17 @@ import java.util.Collection;
  *
  */
 public class InMemoryTxSystemClient implements TransactionSystemClient {
+
+  InMemoryTransactionManager txManager;
+
+  @Inject
+  public InMemoryTxSystemClient(InMemoryTransactionManager txmgr) {
+    txManager = txmgr;
+  }
+
   @Override
   public Transaction start() {
-    return InMemoryTransactionOracle.start();
+    return txManager.start();
   }
 
   @Override
@@ -19,17 +28,16 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
     if (changeIds.size() == 0) {
       return true;
     }
-
-    return InMemoryTransactionOracle.canCommit(tx, changeIds);
+    return txManager.canCommit(tx, changeIds);
   }
 
   @Override
   public boolean commit(Transaction tx) {
-    return InMemoryTransactionOracle.commit(tx);
+    return txManager.commit(tx);
   }
 
   @Override
   public boolean abort(Transaction tx) {
-    return InMemoryTransactionOracle.abort(tx);
+    return txManager.abort(tx);
   }
 }
