@@ -95,7 +95,7 @@ import java.util.concurrent.TimeUnit;
 public class OmidTransactionalOperationExecutor
   implements TransactionalOperationExecutor {
 
-  private static final Logger Log
+  private static final Logger LOG
     = LoggerFactory.getLogger(OmidTransactionalOperationExecutor.class);
 
   public String getName() {
@@ -287,7 +287,7 @@ public class OmidTransactionalOperationExecutor
                 .build(new CacheLoader<String, MetricsCollector>() {
       @Override
       public MetricsCollector load(String group) throws Exception {
-        Log.trace("Created new MetricsCollector for group '{}'.", group);
+        LOG.trace("Created new MetricsCollector for group '{}'.", group);
         if (metricsCollectionService != null) {
           return metricsCollectionService.getCollector(MetricsScope.REACTOR, group, "0");
         } else {
@@ -311,7 +311,7 @@ public class OmidTransactionalOperationExecutor
       queueMetricNames.putIfAbsent(queue, new ImmutablePair<String, String>
           ("q.enqueue." + name, "q.ack." + name));
       names = queueMetricNames.get(queue);
-      Log.trace("using metric name '{}' and '{}' for queue '{}'",
+      LOG.trace("using metric name '{}' and '{}' for queue '{}'",
                 names.getFirst(), names.getSecond(), new String(queue));
     }
     return names;
@@ -1467,11 +1467,7 @@ public class OmidTransactionalOperationExecutor
           if (txSystemMetrics != null && excludedListSize > 0) {
             txSystemMetrics.gauge("tx.excluded", excludedListSize);
           }
-          if (excludedListSize > 0) {
-            // This hack is needed because current metrics system is not flexible when it comes to adding new metrics
-            Log.info("tx.excluded = " + excludedListSize + ", tx.writepointer = " + txManager.getNextWritePointer() +
-                       ", tx.watermark = " + txManager.getWatermark());
-          }
+          txManager.logStatistics();
           try {
             TimeUnit.SECONDS.sleep(10);
           } catch (InterruptedException e) {

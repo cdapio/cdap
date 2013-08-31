@@ -58,7 +58,7 @@ public class ZooKeeperPersistor extends AbstractIdleService implements StatePers
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
             ZKClientService.Builder.of(zkQuorum).build(),
-            RetryStrategies.fixDelay(1, TimeUnit.SECONDS))));
+            RetryStrategies.limit(10, RetryStrategies.fixDelay(1, TimeUnit.SECONDS)))));
     zkClient.startAndWait();
 
     // ensure the base path exists in ZK

@@ -236,12 +236,6 @@ public class InMemoryTransactionManager {
   public int getExcludedListSize() {
     return excludedList.size();
   }
-  public long getNextWritePointer() {
-    return nextWritePointer;
-  }
-  public long getWatermark() {
-    return waterMark;
-  }
 
 //  private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
 //    if (changeIds.isEmpty()) {
@@ -422,5 +416,15 @@ public class InMemoryTransactionManager {
       size = decoder.readInt();
     }
     return ImmutableSortedSet.copyOf(Bytes.BYTES_COMPARATOR, changes);
+  }
+
+  /**
+   * Called from the opex service every 10 seconds.
+   * This hack is needed because current metrics system is not flexible when it comes to adding new metrics.
+   */
+  public void logStatistics() {
+    LOG.info("Transaction Statistics: excluded = " + excludedList.size() + ", write pointer = " + nextWritePointer +
+               ", watermark = " + waterMark + ", committing = " + committingChangeSets.size() + ", " +
+               "committed = " + committedChangeSets.size());
   }
 }
