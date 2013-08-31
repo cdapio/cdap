@@ -169,44 +169,11 @@ public class SingleNodeMain {
   }
 
   /**
-   * Checks if node is in path or no.
-   */
-  public static boolean nodeExists() {
-    try {
-      Process proc = Runtime.getRuntime().exec("node -v");
-      TimeUnit.SECONDS.sleep(2);
-      int exitValue = proc.exitValue();
-      if (exitValue != 0) {
-        return false;
-      }
-    } catch (IOException e) {
-      LOG.error(StackTraceUtil.toStringStackTrace(e));
-      throw new RuntimeException("Nodejs not in path. Please add it to PATH in the shell you are starting devsuite");
-    } catch (InterruptedException e) {
-      LOG.error(StackTraceUtil.toStringStackTrace(e));
-      Thread.currentThread().interrupt();
-    }
-    return true;
-  }
-
-  /**
    * The root of all goodness!
    *
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
-    Copyright.print(System.out);
-
-    // Checks if node exists.
-    try {
-      if (!nodeExists()) {
-        System.err.println("Unable to find nodejs in path. Please add it to PATH.");
-      }
-    } catch (Exception e) {
-      System.err.println(e.getMessage());
-      System.exit(-1);
-    }
-
     CConfiguration configuration = CConfiguration.create();
 
     // Single node use persistent data fabric by default
