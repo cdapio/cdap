@@ -9,7 +9,7 @@ public final class GatewayConstants {
    * Key names of Gateway Configuration.
    */
   public static final class ConfigKeys {
-    public static final String ADDRESS = "gateway.hostname";
+    public static final String ADDRESS = "gateway.server.address";
     public static final String PORT = "stream.rest.port";
     public static final String BACKLOG = "gateway.connection.backlog";
     public static final String EXEC_THREADS = "gateway.exec.threads";

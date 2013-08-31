@@ -83,7 +83,8 @@ define([], function () {
 			this.HTTP.rpc('gateway', 'inject', {
 				name: flow,
 				stream: stream,
-				payload: payload
+				payload: payload,
+                                version: C.API_VERSION
 			}, function (response, status) {
 
 				if (response && response.error) {

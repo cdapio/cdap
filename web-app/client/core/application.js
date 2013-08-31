@@ -7,6 +7,11 @@ define(['core/components', 'core/embeddables/index', 'core/http', 'core/socket',
 function(Components, Embeddables, HTTP, Socket, Util) {
 
 	var Application = Ember.Application.extend({
+                /*
+                 * Global API Version
+                 */
+                API_VERSION: 'v2',
+
 		/*
 		 * Logs router transitions to the Developer Console
 		 */

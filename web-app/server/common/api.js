@@ -390,7 +390,7 @@ logger.setLevel(LOG_LEVEL);
 
 				// Adding 1000 to be picked up by nginx.
 				post_options.port = parseInt(this.config['stream.rest.port'], 10) + (secure ? 1000 : 0);
-				post_options.path = '/stream/' + params.stream;
+				post_options.path = '/' + params.version + '/stream/' + params.stream;
 
 			break;
 			case 'query':
