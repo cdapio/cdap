@@ -15,7 +15,6 @@ import com.continuuity.logging.read.SingleNodeLogReader;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +44,7 @@ public class TestFileLogging {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, LOG_BASE_DIR);
     cConf.set(LoggingConfiguration.LOG_FILE_ROTATION_INTERVAL_MINS, "0.015");
     cConf.setInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 100);
-    FileLogAppender appender = new FileLogAppender(cConf, new Configuration());
+    FileLogAppender appender = new FileLogAppender(cConf, new LocalLocationFactory());
     new LogAppenderInitializer(appender).initialize("test_logger");
 
     Logger logger = LoggerFactory.getLogger("test_logger");

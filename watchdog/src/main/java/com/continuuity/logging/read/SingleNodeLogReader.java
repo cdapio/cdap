@@ -48,16 +48,15 @@ public class SingleNodeLogReader implements LogReader {
 
   private static final int MAX_THREAD_POOL_SIZE = 20;
 
-  private final LocationFactory locationFactory;
-  private final String logBaseDir;
+  private final Location logBaseDir;
   private final Schema schema;
   private final ExecutorService executor;
 
   @Inject
   public SingleNodeLogReader(CConfiguration cConf, LocationFactory locationFactory) {
-    this.locationFactory = locationFactory;
-    this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-    Preconditions.checkNotNull(this.logBaseDir, "Log base dir cannot be null");
+    String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
+    this.logBaseDir = locationFactory.create(baseDir);
 
     try {
       this.schema = new LogSchema().getAvroSchema();
@@ -264,7 +263,7 @@ public class SingleNodeLogReader implements LogReader {
 
   private SortedMap<Long, Location> getFiles(Comparator<Long> comparator) {
     TreeMap<Long, Location> sortedFiles = Maps.newTreeMap(comparator);
-    File baseDir = new File(logBaseDir);
+    File baseDir = new File(logBaseDir.toURI());
     File [] files = baseDir.listFiles();
     if (files == null || files.length == 0) {
       return sortedFiles;
@@ -273,9 +272,11 @@ public class SingleNodeLogReader implements LogReader {
     for (File file : files){
       try {
         long interval = extractInterval(file.getName());
-        sortedFiles.put(interval, new SeekableLocalLocation(locationFactory.create(file.getPath())));
+        sortedFiles.put(interval, new SeekableLocalLocation(logBaseDir.append(file.getName())));
       } catch (NumberFormatException e) {
         LOG.warn(String.format("Not able to parse interval from log file name %s", file.getPath()));
+      } catch (IOException e) {
+        LOG.warn("Got exception", e);
       }
     }
     return sortedFiles;
