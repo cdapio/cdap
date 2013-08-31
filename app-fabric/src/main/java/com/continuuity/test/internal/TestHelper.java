@@ -6,14 +6,6 @@ package com.continuuity.test.internal;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.Flowlet;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
-import com.continuuity.api.procedure.AbstractProcedure;
-import com.continuuity.api.procedure.Procedure;
-import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -28,8 +20,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.test.internal.bytecode.FlowletRewriter;
-import com.continuuity.test.internal.bytecode.ProcedureRewriter;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
@@ -37,28 +27,20 @@ import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
-import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -280,36 +262,6 @@ public class TestHelper {
     Queue<File> queue = Lists.newLinkedList();
     Collections.addAll(queue, dir.listFiles());
 
-    // Find all flowlet classes (flowlet class => flowId)
-    // Note: Limitation now is that the same flowlet class can be used in one flow only (can have multiple names)
-    Map<String, String> flowletClassNames = Maps.newHashMap();
-    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-      for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
-        String className = flowletDef.getFlowletSpec().getClassName();
-        // Walk up class hierachy and put all the parent classes that are Flowlet type into the map
-        for (TypeToken<?> type : TypeToken.of(Class.forName(className)).getTypes().classes()) {
-          if (Flowlet.class.isAssignableFrom(type.getRawType()) && !type.getRawType().equals(AbstractFlowlet.class)) {
-            flowletClassNames.put(type.getRawType().getName(), flowSpec.getName());
-          }
-        }
-      }
-    }
-
-    // Find all procedure classes
-    Set<String> procedureClassNames = Sets.newHashSet();
-    for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
-      String className = procedureSpec.getClassName();
-      for (TypeToken<?> type : TypeToken.of(Class.forName(className)).getTypes().classes()) {
-        if (Procedure.class.isAssignableFrom(type.getRawType()) && !type.getRawType().equals(AbstractProcedure.class)) {
-          procedureClassNames.add(type.getRawType().getName());
-        }
-      }
-    }
-
-    FlowletRewriter flowletRewriter = new FlowletRewriter(appSpec.getName(), false);
-    FlowletRewriter generatorRewriter = new FlowletRewriter(appSpec.getName(), true);
-    ProcedureRewriter procedureRewriter = new ProcedureRewriter(appSpec.getName());
-
     URI basePath = relativeBase.toURI();
     while (!queue.isEmpty()) {
       File file = queue.remove();
@@ -317,24 +269,7 @@ public class TestHelper {
       jarOut.putNextEntry(new JarEntry(entryName));
 
       if (file.isFile()) {
-        InputStream is = new FileInputStream(file);
-        try {
-          byte[] bytes = ByteStreams.toByteArray(is);
-          String className = pathToClassName(entryName);
-          if (flowletClassNames.containsKey(className)) {
-            if (GeneratorFlowlet.class.isAssignableFrom(Class.forName(className))) {
-              jarOut.write(generatorRewriter.generate(bytes, flowletClassNames.get(className)));
-            } else {
-              jarOut.write(flowletRewriter.generate(bytes, flowletClassNames.get(className)));
-            }
-          } else if (procedureClassNames.contains(className)) {
-            jarOut.write(procedureRewriter.generate(bytes));
-          } else {
-            jarOut.write(bytes);
-          }
-        } finally {
-          is.close();
-        }
+        Files.copy(file, jarOut);
       } else {
         Collections.addAll(queue, file.listFiles());
       }

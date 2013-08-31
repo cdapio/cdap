@@ -25,18 +25,27 @@ public final class RuntimeStats {
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    return getMetrics(String.format("%s.flowlet.%s.%s", applicationId, flowId, flowletId));
+    String prefix = String.format("%s.f.%s.%s", applicationId, flowId, flowletId);
+    String inputName = String.format("%s.process.tuples.read", prefix);
+    String processedName = String.format("%s.process.events.processed", prefix);
+    String exceptionName = String.format("%s.process.errors", prefix);
+
+    return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    return getMetrics(String.format("%s.procedure.%s", applicationId, procedureId));
+    String prefix = String.format("%s.p.%s", applicationId, procedureId);
+    String inputName = String.format("%s.query.requests", prefix);
+    String processedName = String.format("%s.query.processed", prefix);
+    String exceptionName = String.format("%s.query.failures", prefix);
+
+    return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
-  private static RuntimeMetrics getMetrics(final String prefix) {
-    final String inputName = String.format("%s.input", prefix);
-    final String processedName = String.format("%s.processed", prefix);
-    final String exceptionName = String.format("%s.exception", prefix);
-
+  private static RuntimeMetrics getMetrics(final String prefix,
+                                           final String inputName,
+                                           final String processedName,
+                                           final String exceptionName) {
     return new RuntimeMetrics() {
       @Override
       public long getInput() {

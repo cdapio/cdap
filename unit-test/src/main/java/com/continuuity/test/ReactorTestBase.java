@@ -3,15 +3,18 @@ package com.continuuity.test;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.ApplicationManagerFactory;
@@ -22,30 +25,38 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.TestMetricsCollectionService;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
  */
 public class ReactorTestBase {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static File testAppDir;
   private static AppFabricService.Iface appFabricServer;
   private static LocationFactory locationFactory;
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
+  private static MetricsCollectionService metricsCollectionService;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -85,8 +96,8 @@ public class ReactorTestBase {
   }
 
   @BeforeClass
-  public static final void init() {
-    testAppDir = Files.createTempDir();
+  public static final void init() throws IOException {
+    testAppDir = tmpFolder.newFolder();
 
     File outputDir = new File(testAppDir, "app");
     File tmpDir = new File(testAppDir, "tmp");
@@ -97,6 +108,8 @@ public class ReactorTestBase {
     CConfiguration configuration = CConfiguration.create();
     configuration.set("app.output.dir", outputDir.getAbsolutePath());
     configuration.set("app.tmp.dir", tmpDir.getAbsolutePath());
+    configuration.set(Constants.CFG_APP_FABRIC_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+    configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                     new ConfigModule(configuration),
@@ -105,7 +118,7 @@ public class ReactorTestBase {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
-                                    new MetricsClientRuntimeModule().getNoopModules(),
+                                    new TestMetricsClientModule(),
                                     new MetricsQueryRuntimeModule().getInMemoryModules(),
 
                                     new AbstractModule() {
@@ -126,11 +139,14 @@ public class ReactorTestBase {
     appFabricServer = injector.getInstance(AppFabricService.Iface.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    metricsQueryService.start();
+    metricsQueryService.startAndWait();
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.startAndWait();
   }
 
   @AfterClass
   public static final void finish() {
+    metricsQueryService.stopAndWait();
     cleanDir(testAppDir);
   }
 
@@ -145,6 +161,14 @@ public class ReactorTestBase {
       } else {
         cleanDir(file);
       }
+    }
+  }
+
+  private static final class TestMetricsClientModule extends AbstractModule {
+
+    @Override
+    protected void configure() {
+      bind(MetricsCollectionService.class).to(TestMetricsCollectionService.class).in(Scopes.SINGLETON);
     }
   }
 }

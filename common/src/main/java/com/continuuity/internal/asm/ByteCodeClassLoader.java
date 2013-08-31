@@ -29,4 +29,9 @@ public class ByteCodeClassLoader extends MultiClassLoader {
   protected final synchronized byte[] loadClassBytes(String className) {
     return bytecodes.get(className);
   }
+
+  @Override
+  protected boolean isExcluded(String className) {
+    return !bytecodes.containsKey(className) && super.isExcluded(className);
+  }
 }

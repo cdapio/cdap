@@ -106,7 +106,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
       // check the metrics
       RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
-      procedureMetrics.waitForProcessed(1, 1, TimeUnit.SECONDS);
+      procedureMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, procedureMetrics.getException());
 
       // Run mapreduce job
