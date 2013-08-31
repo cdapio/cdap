@@ -102,6 +102,11 @@ check_before_start() {
       echo "$0 running as process `cat $pid`. Stop it first."
       exit 0
     fi
+  else
+    nodejs_pid=`ps | grep web-app/ | grep -v grep | awk ' { print $1 } '`
+    if [[ "x{nodejs_pid}" != "x" ]]; then
+      kill -9 $nodejs_pid 2>/dev/null >/dev/null
+    fi
   fi
 }
 
@@ -177,8 +182,9 @@ rotate_log () {
 
 # Copyright message
 print_copyright() {
+    year=`date '+%Y'`
     echo "======================================================================================"
-    echo "Continuuity Reactor (tm) - Copyright 2012-2013 Continuuity,Inc. All Rights Reserved."
+    echo "Continuuity Reactor (tm) - Copyright 2012-${year} Continuuity,Inc. All Rights Reserved."
     echo "======================================================================================"
 }
 
@@ -192,28 +198,30 @@ start() {
     nohup "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@" >> $APP_HOME/logs/reactor.log 2>&1 < /dev/null &
     echo $! > $pid
 
-    print_copyright
     check_for_updates
     echo -n "Starting Continuuity Reactor (tm)"
-    while kill -0 $! ; do
+    background_process=$!
+    while kill -0 $background_process >/dev/null 2>/dev/null ; do
       if grep 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
-        echo ""
-        grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
+        echo; grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
         break
       else
         echo -n "."
         sleep 1;
       fi
     done 
+    echo 
+    if ! kill -s 0 $background_process 2>/dev/null >/dev/null; then
+      echo "Failed to start, please check logs for more information."
+    fi
 }
 
 stop() {
+    echo -n "Stopping Continuuity Reactor (tm)"
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
       if kill -0 $pidToKill > /dev/null 2>&1; then
-        print_copyright
-        echo -n "Stopping Continuuity Reactor (tm)"
         kill $pidToKill > /dev/null 2>&1
         while kill -0 $pidToKill > /dev/null 2>&1;
         do
@@ -221,15 +229,12 @@ stop() {
           sleep 1;
         done
         rm $pid
-        echo
       else
         retval=$?
-        echo nothing to stop because kill -0 of pid $pidToKill failed with status $retval
       fi
       rm -f $pid
-    else
-      echo nothing to stop because no pid file $pid
     fi
+    echo
 }
 
 restart() {
@@ -254,6 +259,8 @@ status() {
     fi
 }
     
+
+print_copyright
 
 case "$1" in
   start)

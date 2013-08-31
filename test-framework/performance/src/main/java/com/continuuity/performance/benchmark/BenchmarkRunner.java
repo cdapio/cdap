@@ -159,13 +159,6 @@ public class BenchmarkRunner {
       collectorFutureList.add(collectorCompletionPool.submit(fileReporter, null));
     }
 
-    if (StringUtils.isNotEmpty(config.get("mensa"))) {
-      LOG.debug("Starting mensa reporter thread");
-      MensaMetricsCollector mensaCollector = new MensaMetricsCollector(benchName, groups, groupMetrics, config, "");
-      collectorList.add(mensaCollector);
-      collectorFutureList.add(collectorCompletionPool.submit(mensaCollector, null));
-    }
-
     // 5. wait for first benchmark thread to finish
     LOG.debug("Waiting for first benchmark thread to finish...");
     agentCompletionPool.take();

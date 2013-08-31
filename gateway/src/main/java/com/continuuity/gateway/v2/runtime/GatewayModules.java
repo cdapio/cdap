@@ -6,7 +6,6 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
@@ -66,17 +65,22 @@ public class GatewayModules extends RuntimeModule {
         handlerBinder.addBinding().to(PingHandler.class).in(Scopes.SINGLETON);
 
         boolean requireAuthentication = cConf.getBoolean(
-          Constants.CONFIG_AUTHENTICATION_REQUIRED, Constants.CONFIG_AUTHENTICATION_REQUIRED_DEFAULT);
+          GatewayConstants.ConfigKeys.CONFIG_AUTHENTICATION_REQUIRED,
+          GatewayConstants.CONFIG_AUTHENTICATION_REQUIRED_DEFAULT
+        );
+
         GatewayAuthenticator authenticator;
         if (requireAuthentication) {
           PassportClient passportClient = PassportClient.create(
               cConf.get(PassportConstants.CFG_PASSPORT_SERVER_URI)
             );
-          String clusterName = cConf.get(Constants.CONFIG_CLUSTER_NAME, Constants.CONFIG_CLUSTER_NAME_DEFAULT);
+          String clusterName = cConf.get(GatewayConstants.ConfigKeys.CLUSTER_NAME,
+                                         GatewayConstants.CLUSTER_NAME_DEFAULT);
           authenticator = new PassportVPCAuthenticator(clusterName, passportClient);
         } else {
           authenticator = new NoAuthenticator();
         }
+
         bind(GatewayAuthenticator.class).toInstance(authenticator);
       }
 

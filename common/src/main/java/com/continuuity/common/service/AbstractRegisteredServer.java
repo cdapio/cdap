@@ -39,13 +39,6 @@ public abstract class AbstractRegisteredServer {
    * Name of the server.
    */
   private String server = "NA";
-
-  /**
-   * Command port cmdPortServer associated with the service.
-   */
-  private CommandPortServer cmdPortServer;
-
-
   private Cancellable discoveryServiceCancellable;
 
   /**
@@ -84,21 +77,6 @@ public abstract class AbstractRegisteredServer {
   }
 
   /**
-   * Adds a command listener to the command port cmdPortServer.
-   * <p>
-   *   NOTE: If the same command is registered twice the latest one wins.
-   * </p>
-   * @param command to be registered.
-   * @param description of the command that is being registered.
-   * @param listener to be associated with command, that is invoked when
-   *                 command port sees that.
-   */
-  public void addCommandListener(String command, String description,
-                                 CommandPortServer.CommandListener listener) {
-    cmdPortServer.addListener(command, description, listener);
-  }
-
-  /**
    * Iterate through all the configured loggers and changes the level
    * to the level specified by <code>level</code>.
    *
@@ -126,66 +104,6 @@ public abstract class AbstractRegisteredServer {
     Preconditions.checkNotNull(zkEnsemble);
 
     try {
-      cmdPortServer = new CommandPortServer(server);
-
-      // Add some commands to the cmd server
-      addCommandListener("stop", "Stops the service", new CommandPortServer.CommandListener() {
-        @Override
-        public String act() {
-          stop(true);
-          return "Done";
-        }
-      });
-
-      addCommandListener("log-trace",
-                         "Change service level log to trace",
-                         new CommandPortServer.CommandListener() {
-        @Override
-        public String act() {
-          setLoggingLevel(Level.TRACE);
-          return "WARNING: Please note that this might fill out the disk " +
-            "space on host. Set log level to debug";
-        }
-      });
-
-      addCommandListener("log-debug", "Change service level log to debug",
-                         new CommandPortServer.CommandListener(){
-        @Override
-        public String act() {
-          setLoggingLevel(Level.DEBUG);
-          return "Set log level to debug";
-        }
-      });
-
-      addCommandListener("log-error", "Change service level log to error.",
-                         new CommandPortServer.CommandListener() {
-        @Override
-        public String act() {
-          setLoggingLevel(Level.ERROR);
-          return "Set log level to error";
-        }
-      });
-
-      addCommandListener("log-warn", "Change service level log to warn.",
-                         new CommandPortServer.CommandListener() {
-        @Override
-        public String act() {
-          setLoggingLevel(Level.WARN);
-          return "Set log level to warn";
-        }
-      });
-
-      addCommandListener("ruok", "Checks if service is up",
-                         new CommandPortServer.CommandListener() {
-        @Override
-        public String act() {
-          if (ruok()) {
-            return "imok";
-          }
-          return "i am in trouble";
-        }
-      });
-
       final RegisteredServerInfo serverArgs = configure(args, conf); // Declaring final to access in inner class
       if (serverArgs == null) {
         throw new ServerException("configuration of service failed.");
@@ -244,22 +162,6 @@ public abstract class AbstractRegisteredServer {
         throw new ServerException("Service not started even after waiting for "
                                     + START_WAIT_TIME + "ms.");
       }
-
-      // If command port has been enabled, then we block else we destroy
-      // the command port object.
-      if (conf.getBoolean(Constants.CFG_COMMAND_PORT_ENABLED,
-                         Constants.DEFAULT_COMMAND_PORT_ENABLED)) {
-        cmdPortServer.serve();
-      } else {
-        cmdPortServer = null;
-      }
-
-    } catch (CommandPortServer.CommandPortException e) {
-      Log.warn("Error starting the command port service. Service not " +
-                 "started. Reason : {}", e.getMessage());
-      stop(true);
-      throw new ServerException("Could not start command port service. " +
-                                  "Reason : " + e.getMessage());
     } catch (IOException e) {
       Log.error("Error starting the command port service. Reason : {}",
                 e.getMessage());
@@ -281,11 +183,6 @@ public abstract class AbstractRegisteredServer {
     if (discoveryServiceCancellable != null){
       discoveryServiceCancellable.cancel();
     }
-
-    if (cmdPortServer != null) {
-      cmdPortServer.stop();
-    }
-
   }
 
   /**

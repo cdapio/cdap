@@ -26,7 +26,6 @@ import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
 import com.continuuity.metrics.query.MetricsQueryService;
-import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
@@ -57,7 +56,6 @@ public class SingleNodeMain {
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
   private final Gateway gateway;
-  private final MetricsCollectionServerInterface overlordCollection;
   private final MetricsFrontendServerInterface overloadFrontend;
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
@@ -75,7 +73,6 @@ public class SingleNodeMain {
 
     Injector injector = Guice.createInjector(modules);
     gateway = injector.getInstance(Gateway.class);
-    overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -87,12 +84,7 @@ public class SingleNodeMain {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        try {
-          webCloudAppService.stop(true);
-        } catch (ServerException e) {
-          LOG.error(StackTraceUtil.toStringStackTrace(e));
-          System.err.println("Failed to shutdown node web cloud app");
-        }
+        webCloudAppService.stopAndWait();
       }
     });
   }
@@ -114,8 +106,6 @@ public class SingleNodeMain {
     metricsCollectionService.startAndWait();
     metricsQueryService.startAndWait();
 
-    overlordCollection.start(args, configuration);
-
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
       throw new Exception("Failed to start Application Fabric.");
@@ -124,7 +114,7 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
-    webCloudAppService.start(args, configuration);
+    webCloudAppService.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor (tm) started successfully");
@@ -136,13 +126,12 @@ public class SingleNodeMain {
    */
   public void shutDown() {
     try {
-      webCloudAppService.stop(true);
+      webCloudAppService.stopAndWait();
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
       appFabricServer.stopAndWait();
       overloadFrontend.stop(true);
-      overlordCollection.stop(true);
       zookeeper.stopAndWait();
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
