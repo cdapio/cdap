@@ -13,6 +13,8 @@ import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.common.Threads;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -20,14 +22,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileContext;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,17 +48,15 @@ public class SingleNodeLogReader implements LogReader {
 
   private static final int MAX_THREAD_POOL_SIZE = 20;
 
-  private final Configuration hConf;
-  private final Path logBaseDir;
+  private final Location logBaseDir;
   private final Schema schema;
   private final ExecutorService executor;
 
   @Inject
-  public SingleNodeLogReader(CConfiguration cConf, Configuration hConf) {
-    this.hConf = hConf;
+  public SingleNodeLogReader(CConfiguration cConf, LocationFactory locationFactory) {
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-    this.logBaseDir = new Path(baseDir);
+    this.logBaseDir = locationFactory.create(baseDir);
 
     try {
       this.schema = new LogSchema().getAvroSchema();
@@ -93,39 +89,45 @@ public class SingleNodeLogReader implements LogReader {
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
-          long fromTimeMs = fromOffset + 1;
-          SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
-          if (sortedFiles.isEmpty()) {
-            return;
-          }
+          callback.init();
 
-          long prevInterval = -1;
-          Path prevPath = null;
-          List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-          for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-            if (entry.getKey() >= fromTimeMs && prevPath != null) {
+          try {
+            Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
+            long fromTimeMs = fromOffset + 1;
+
+            SortedMap<Long, Location> sortedFiles = getFiles(null);
+            if (sortedFiles.isEmpty()) {
+              return;
+            }
+
+            long prevInterval = -1;
+            Location prevPath = null;
+            List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+            for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
+              if (entry.getKey() >= fromTimeMs && prevPath != null) {
+                tailFiles.add(prevPath);
+              }
+              prevInterval = entry.getKey();
+              prevPath = entry.getValue();
+            }
+
+            if (prevInterval != -1) {
               tailFiles.add(prevPath);
             }
-            prevInterval = entry.getKey();
-            prevPath = entry.getValue().getPath();
-          }
 
-          if (prevInterval != -1) {
-            tailFiles.add(prevPath);
-          }
-
-          callback.init();
-          AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
-          CountingCallback countingCallback = new CountingCallback(callback);
-          for (Path file : tailFiles) {
-            logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - countingCallback.getCount(),
-                              countingCallback);
-            if (countingCallback.getCount() >= maxEvents) {
-              break;
+            AvroFileLogReader logReader = new AvroFileLogReader(schema);
+            CountingCallback countingCallback = new CountingCallback(callback);
+            for (Location file : tailFiles) {
+              logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - countingCallback.getCount(),
+                                countingCallback);
+              if (countingCallback.getCount() >= maxEvents) {
+                break;
+              }
             }
+          } finally {
+            callback.close();
           }
-          callback.close();
         }
       }
     );
@@ -167,38 +169,43 @@ public class SingleNodeLogReader implements LogReader {
     executor.submit(new Runnable() {
       @Override
       public void run() {
-        Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
-        SortedMap<Long, FileStatus> sortedFiles = getFiles(Collections.<Long>reverseOrder());
-        if (sortedFiles.isEmpty()) {
-          return;
-        }
-
-        long fromTimeMs = fromOffset >= 0 ? fromOffset - 1 : System.currentTimeMillis();
-
-        List<Path> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-        for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-          if (entry.getKey() <= fromTimeMs) {
-            tailFiles.add(entry.getValue().getPath());
-          }
-        }
-
-        List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
-        AvroFileLogReader logReader = new AvroFileLogReader(hConf, schema);
-        for (Path file : tailFiles) {
-          Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
-                                                                   maxEvents - loggingEvents.size());
-          loggingEvents.addAll(0, events);
-          if (events.size() >= maxEvents) {
-            break;
-          }
-        }
-
         callback.init();
-        // TODO: better algorithm to read previous events
-        for (ILoggingEvent event : loggingEvents) {
-          callback.handle(new LogEvent(event, event.getTimeStamp()));
+        try {
+          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                            filter));
+
+          SortedMap<Long, Location> sortedFiles = getFiles(Collections.<Long>reverseOrder());
+          if (sortedFiles.isEmpty()) {
+            return;
+          }
+
+          long fromTimeMs = fromOffset >= 0 ? fromOffset - 1 : System.currentTimeMillis();
+
+          List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+          for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
+            if (entry.getKey() <= fromTimeMs) {
+              tailFiles.add(entry.getValue());
+            }
+          }
+
+          List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+          AvroFileLogReader logReader = new AvroFileLogReader(schema);
+          for (Location file : tailFiles) {
+            Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
+                                                                     maxEvents - loggingEvents.size());
+            loggingEvents.addAll(0, events);
+            if (events.size() >= maxEvents) {
+              break;
+            }
+          }
+
+          // TODO: better algorithm to read previous events
+          for (ILoggingEvent event : loggingEvents) {
+            callback.handle(new LogEvent(event, event.getTimeStamp()));
+          }
+        } finally {
+          callback.close();
         }
-        callback.close();
       }
     });
   }
@@ -210,33 +217,38 @@ public class SingleNodeLogReader implements LogReader {
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
-          SortedMap<Long, FileStatus> sortedFiles = getFiles(null);
-          if (sortedFiles.isEmpty()) {
-            return;
-          }
+          callback.init();
+          try {
+            Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
 
-          long prevInterval = -1;
-          Path prevPath = null;
-          List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-          for (Map.Entry<Long, FileStatus> entry : sortedFiles.entrySet()){
-            if (entry.getKey() >= fromTimeMs && prevInterval != -1 && prevInterval < toTimeMs) {
+            SortedMap<Long, Location> sortedFiles = getFiles(null);
+            if (sortedFiles.isEmpty()) {
+              return;
+            }
+
+            long prevInterval = -1;
+            Location prevPath = null;
+            List<Location> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+            for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
+              if (entry.getKey() >= fromTimeMs && prevInterval != -1 && prevInterval < toTimeMs) {
+                files.add(prevPath);
+              }
+              prevInterval = entry.getKey();
+              prevPath = entry.getValue();
+            }
+
+            if (prevInterval != -1 && prevInterval < toTimeMs) {
               files.add(prevPath);
             }
-            prevInterval = entry.getKey();
-            prevPath = entry.getValue().getPath();
-          }
 
-          if (prevInterval != -1 && prevInterval < toTimeMs) {
-            files.add(prevPath);
+            AvroFileLogReader avroFileLogReader = new AvroFileLogReader(schema);
+            for (Location file : files) {
+              avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+            }
+          } finally {
+            callback.close();
           }
-
-          callback.init();
-          AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConf, schema);
-          for (Path file : files) {
-            avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
-          }
-          callback.close();
         }
       }
     );
@@ -249,24 +261,23 @@ public class SingleNodeLogReader implements LogReader {
     }
   }
 
-  private SortedMap<Long, FileStatus> getFiles(Comparator<Long> comparator) {
-    TreeMap<Long, FileStatus> sortedFiles = Maps.newTreeMap(comparator);
-    try {
-      FileContext fileContext = FileContext.getFileContext(hConf);
-      RemoteIterator<FileStatus> filesIt = fileContext.listStatus(logBaseDir);
+  private SortedMap<Long, Location> getFiles(Comparator<Long> comparator) {
+    TreeMap<Long, Location> sortedFiles = Maps.newTreeMap(comparator);
+    File baseDir = new File(logBaseDir.toURI());
+    File [] files = baseDir.listFiles();
+    if (files == null || files.length == 0) {
+      return sortedFiles;
+    }
 
-      while (filesIt.hasNext()) {
-        FileStatus status = filesIt.next();
-        Path path = status.getPath();
-        try {
-          long interval = extractInterval(path.getName());
-          sortedFiles.put(interval, status);
-        } catch (NumberFormatException e) {
-          LOG.warn(String.format("Not able to parse interval from log file name %s", path.toUri()));
-        }
+    for (File file : files){
+      try {
+        long interval = extractInterval(file.getName());
+        sortedFiles.put(interval, new SeekableLocalLocation(logBaseDir.append(file.getName())));
+      } catch (NumberFormatException e) {
+        LOG.warn(String.format("Not able to parse interval from log file name %s", file.getPath()));
+      } catch (IOException e) {
+        LOG.warn("Got exception", e);
       }
-    } catch (IOException e) {
-      LOG.warn(String.format("Caught exception while listing files in log dir %s", logBaseDir), e);
     }
     return sortedFiles;
   }

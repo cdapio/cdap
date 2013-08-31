@@ -20,13 +20,13 @@ import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.save.FileMetaDataManager;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.common.Threads;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MD5Hash;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public final class DistributedLogReader implements LogReader {
   private final int numPartitions;
   private final LoggingEventSerializer serializer;
   private final FileMetaDataManager fileMetaDataManager;
-  private final Configuration hConfig;
+  private final LocationFactory locationFactory;
   private final Schema schema;
   private final ExecutorService executor;
 
@@ -67,7 +67,7 @@ public final class DistributedLogReader implements LogReader {
    * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public DistributedLogReader(OperationExecutor opex, CConfiguration cConfig, Configuration hConfig) {
+  public DistributedLogReader(OperationExecutor opex, CConfiguration cConfig, LocationFactory locationFactory) {
     try {
       this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(
         cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
@@ -87,7 +87,7 @@ public final class DistributedLogReader implements LogReader {
       this.fileMetaDataManager = new FileMetaDataManager(opex, new OperationContext(account),
                                                          LoggingConfiguration.LOG_META_DATA_TABLE);
 
-      this.hConfig = hConfig;
+      this.locationFactory = locationFactory;
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -112,19 +112,27 @@ public final class DistributedLogReader implements LogReader {
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
           int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
 
-          KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
+          callback.init();
 
+          KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
           try {
+            Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
+
             long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
             long startOffset = fromOffset + 1;
-            if (fromOffset < 0 || startOffset >= latestOffset) {
+
+            if (fromOffset < 0) {
               startOffset = latestOffset - maxEvents;
             }
 
-            callback.init();
+            if (startOffset >= latestOffset) {
+              // At end of events, nothing to return
+              return;
+            }
+
             fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
           } finally {
             try {
@@ -150,20 +158,34 @@ public final class DistributedLogReader implements LogReader {
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
           int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
 
-          KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
+          callback.init();
 
+          KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaTailFetchTimeoutMs);
           try {
+            Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
+
             long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
             long startOffset = fromOffset - maxEvents;
-            if (fromOffset < 0 || startOffset >= latestOffset)  {
+            int adjMaxEvents = maxEvents;
+
+            if (fromOffset < 0)  {
               startOffset = latestOffset - maxEvents;
             }
 
-            callback.init();
-            fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+            if (startOffset < 0) {
+              startOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
+              adjMaxEvents = (int) (fromOffset - startOffset);
+            }
+
+            if (startOffset == fromOffset || startOffset >= latestOffset) {
+              // At end of kafka events, nothing to return
+              return;
+            }
+
+            fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, adjMaxEvents, callback);
           } finally {
             try {
               try {
@@ -189,9 +211,12 @@ public final class DistributedLogReader implements LogReader {
       new Runnable() {
         @Override
         public void run() {
-          Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext), filter));
 
+          callback.init();
           try {
+            Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
+
             SortedMap<Long, Path> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
             long prevInterval = -1;
             Path prevFile = null;
@@ -208,10 +233,10 @@ public final class DistributedLogReader implements LogReader {
               files.add(prevFile);
             }
 
-            callback.init();
-            AvroFileLogReader avroFileLogReader = new AvroFileLogReader(hConfig, schema);
+            AvroFileLogReader avroFileLogReader = new AvroFileLogReader(schema);
             for (Path file : files) {
-              avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+              avroFileLogReader.readLog(locationFactory.create(file.toUri()), logFilter, fromTimeMs, toTimeMs,
+                                        Integer.MAX_VALUE, callback);
             }
           } catch (OperationException e) {
             throw  Throwables.propagate(e);
