@@ -209,8 +209,8 @@ public final class KafkaConsumer implements Closeable {
         TopicMetadataRequest req = new TopicMetadataRequest(topics);
         TopicMetadataResponse resp = consumer.send(req);
 
-        List<TopicMetadata> metaData = resp.topicsMetadata();
-        for (TopicMetadata item : metaData) {
+        List<TopicMetadata> topicMetadataList = resp.topicsMetadata();
+        for (TopicMetadata item : topicMetadataList) {
           for (PartitionMetadata part : item.partitionsMetadata()) {
             if (part.partitionId() == partition) {
               metadata = part;
