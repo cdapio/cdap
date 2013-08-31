@@ -18,6 +18,8 @@ public final class GatewayConstants {
     public static final String MAX_CACHED_STREAM_EVENTS_BYTES = "gateway.max.cached.stream.events.bytes";
     public static final String STREAM_EVENTS_FLUSH_INTERVAL_MS = "gateway.stream.events.flush.interval.ms";
     public static final String STREAM_EVENTS_CALLBACK_NUM_THREADS = "gateway.stream.callback.exec.num.threads";
+    public static final String CONFIG_AUTHENTICATION_REQUIRED = "authentication.required";
+    public static final String CLUSTER_NAME = "cluster.name";
   }
 
   public static final int DEFAULT_PORT = 10000;
@@ -28,6 +30,9 @@ public final class GatewayConstants {
   public static final long DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES = 50 * 1024 * 1024;
   public static final long DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS = 150;
   public static final int DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS = 5;
+  public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
+  public static final String CLUSTER_NAME_DEFAULT = "localhost";
+
 
   public static final String GATEWAY_V2_HTTP_HANDLERS = "gateway.http.handler";
 

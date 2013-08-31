@@ -26,7 +26,7 @@
 
     <property>
         <name>zookeeper.quorum</name>
-        <value>localhost:2181</value>
+        <value>127.0.0.1:2181${reactor.namespace}</value>
         <description>Specifies the zookeeper host:port</description>
     </property>
 
@@ -42,7 +42,7 @@
 
     <property>
         <name>weave.zookeeper.namespace</name>
-        <value>${reactor.namespace}</value>
+        <value>weave</value>
         <description>Namespace prefix for weave zookeeper</description>
     </property>
 
@@ -75,7 +75,7 @@
     -->
     <property>
         <name>gateway.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
         <description>Specifies the hostname on which the Gateway will listen</description>
     </property>
 
@@ -268,20 +268,6 @@
     </property>
 
     <property>
-        <name>hbase.zookeeper.quorum</name>
-        <value>localhost</value>
-        <description>Specifies the zookeeper ensemble for hbase,
-            as a comma-separated list of host:port,...</description>
-    </property>
-
-    <property>
-        <name>hbase.zookeeper.property.clientPort</name>
-        <value>62982</value>
-        <description>Specifies the zookeeper ensemble for hbase,
-            as a comma-separated list of host:port,...</description>
-    </property>
-
-    <property>
         <name>data.opex.server.port</name>
         <value>15165</value>
         <description>The port number for the operation executor
@@ -290,7 +276,7 @@
 
     <property>
         <name>data.opex.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
         <description>The inet address for the operation executor
             service</description>
     </property>
@@ -328,7 +314,7 @@
     -->
     <property>
         <name>metadata.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
         <description>Specifies the server address of metadata
             server</description>
     </property>
@@ -346,7 +332,7 @@
     -->
     <property>
         <name>log.query.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
         <description>Specifies the server address of metrics frontend
             server</description>
     </property>
@@ -360,7 +346,7 @@
 
     <property>
         <name>log.collection.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
         <description>Specifies the hostname where the collection service runs</description>
     </property>
 
@@ -381,7 +367,7 @@
     -->
     <property>
         <name>account.server.host</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
         <description>Specifies the host for account server</description>
     </property>
 
@@ -400,7 +386,7 @@
 
     <property>
         <name>app.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
         <description>Host address on which the app fabric server is started.</description>
     </property>
 
@@ -428,7 +414,7 @@
     <!-- New Metrics system settings -->
     <property>
         <name>metrics.query.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
         <description>Host address where the metrics query server is started.</description>
     </property>
 
@@ -449,7 +435,7 @@
     -->
     <property>
         <name>kafka.seed.brokers</name>
-        <value>localhost:9092</value>
+        <value>127.0.0.1:9092</value>
         <description>List of Kafka brokers (comma separated)</description>
     </property>
 

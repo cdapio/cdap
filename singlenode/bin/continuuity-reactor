@@ -102,6 +102,11 @@ check_before_start() {
       echo "$0 running as process `cat $pid`. Stop it first."
       exit 0
     fi
+  else
+    nodejs_pid=`ps | grep web-app/ | grep -v grep | awk ' { print $1 } '`
+    if [[ "x{nodejs_pid}" != "x" ]]; then
+      kill -9 $nodejs_pid 2>/dev/null >/dev/null
+    fi
   fi
 }
 
@@ -198,7 +203,7 @@ start() {
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
       if grep 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
-        grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
+        echo; grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
         break
       else
         echo -n "."

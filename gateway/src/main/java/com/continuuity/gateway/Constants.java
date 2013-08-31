@@ -4,6 +4,7 @@ package com.continuuity.gateway;
  * Constants is a utility class that contains a set of universal constants
  * that are used throughout the Gateway project.
  */
+@Deprecated
 public class Constants {
   /**
    * The prefix for all continuity classes.

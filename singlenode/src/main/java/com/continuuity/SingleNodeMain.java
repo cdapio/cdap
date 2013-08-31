@@ -84,12 +84,7 @@ public class SingleNodeMain {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        try {
-          webCloudAppService.stop(true);
-        } catch (ServerException e) {
-          LOG.error(StackTraceUtil.toStringStackTrace(e));
-          System.err.println("Failed to shutdown node web cloud app");
-        }
+        webCloudAppService.stopAndWait();
       }
     });
   }
@@ -119,7 +114,7 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
-    webCloudAppService.start(args, configuration);
+    webCloudAppService.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor (tm) started successfully");
@@ -131,7 +126,7 @@ public class SingleNodeMain {
    */
   public void shutDown() {
     try {
-      webCloudAppService.stop(true);
+      webCloudAppService.stopAndWait();
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
