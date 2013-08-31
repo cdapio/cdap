@@ -40,6 +40,8 @@ task ('prepackager', dependsOn : ['build']) {
       from configurations.archives.allArtifacts.files
       from jar.outputs.files
       exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
+      // Important: excluding all hadoop libraries in favor of continuuity-hadoop-libs-* packages
+      exclude '**/hadoop-*.jar'
       into "${installDir}/lib"
     }
     copy {
@@ -128,7 +130,8 @@ def getPomVersion = {
 packaging {
   baseDir = "$project.buildDir/stage-packaging"
   dependencies = [
-                   'continuuity'
+                   'continuuity',
+                   'continuuity-hadoop-libs'
                  ]
   extraOptions = [
                    '--name': "continuuity-$componentName",
@@ -154,7 +157,8 @@ packaging {
 rpm {
   baseDir = "$project.buildDir/stage-packaging"
   dependencies = [
-                   'continuuity'
+                   'continuuity',
+                   'continuuity-hadoop-libs'
                  ]
 
 }

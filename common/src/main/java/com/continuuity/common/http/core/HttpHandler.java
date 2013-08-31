@@ -10,7 +10,8 @@ package com.continuuity.common.http.core;
  *  The handlers should be annotated with Jax-RS annotations to handle appropriate path and HTTP Methods.
  *  Note: Only the annotations in the given handler object will be inspected and be available for routing. The
  *  annotations from the base class (if extended) will not be applied to the given handler object.
- *  Note:  The framework that calls the handler assumes that the implementation is threadsafe.
+ *  Note: The framework that calls the handler assumes that the implementation is threadsafe.
+ *  Note: If the HttpHandler implementation is extended, the annotations are not inherited from the base class.
  *
  *  Example:
  *  public class ApiHandler implements HttpHandler{
