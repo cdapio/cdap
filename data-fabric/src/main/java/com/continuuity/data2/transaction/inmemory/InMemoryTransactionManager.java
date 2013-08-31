@@ -112,7 +112,7 @@ public class InMemoryTransactionManager {
       state = persistor.readBack(ALL_STATE_TAG);
       if (state != null) {
         decodeState(state);
-        LOG.debug("Restored transaction state successfully.");
+        LOG.info("Restored transaction state successfully ({} bytes).", state.length);
         persistor.delete(ALL_STATE_TAG);
       } else {
         // full state is not there, attempt to restore the watermark
@@ -123,9 +123,9 @@ public class InMemoryTransactionManager {
           waterMark += claimSize;
           readPointer = waterMark - 1;
           nextWritePointer = waterMark; //
-          LOG.debug("Recovered transaction watermark successfully, but transaction state may have been lost.");
+          LOG.warn("Recovered transaction watermark successfully, but transaction state may have been lost.");
         } else {
-          LOG.debug("No persisted transaction state found. Initializing from scratch.");
+          LOG.info("No persisted transaction state found. Initializing from scratch.");
         }
       }
     } catch (IOException e) {
@@ -138,13 +138,13 @@ public class InMemoryTransactionManager {
   public synchronized void close() {
     // if initialized is false, then the service did not start up properly and the state is most likely corrupt.
     if (initialized) {
-      LOG.debug("Shutting down gracefully...");
+      LOG.info("Shutting down gracefully...");
       byte[] state = encodeState();
       try {
         persistor.persist(ALL_STATE_TAG, state);
-        LOG.debug("Successfully persisted transaction state.");
+        LOG.info("Successfully persisted transaction state ({} bytes).", state.length);
       } catch (IOException e) {
-        LOG.error("Unable to persist transaction state:", e);
+        LOG.error("Unable to persist transaction state (" + state.length + " bytes):", e);
         throw Throwables.propagate(e);
       }
     }
