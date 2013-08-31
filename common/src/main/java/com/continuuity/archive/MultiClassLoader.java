@@ -19,7 +19,7 @@ public abstract class MultiClassLoader extends ClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
 
   // Sets of class prefix that would not be loaded by the class loader
-  private static final String[] CLASS_PREFIX_EXEMPTIONS = new String[] {
+  private static final String[] CLASS_PREFER_EXEMPTIONS = new String[] {
     // Java standard library:
     "com.sun.",
     "launcher.",
@@ -36,8 +36,8 @@ public abstract class MultiClassLoader extends ClassLoader {
     // Hadoop/HBase/ZK:
     "org.apache.hadoop",
     "org.apache.zookeeper",
-    // Continuuity API
-    "com.continuuity.api",
+    // Continuuity
+    "com.continuuity",
     // Guava
     "com.google.common",
   };
@@ -72,7 +72,8 @@ public abstract class MultiClassLoader extends ClassLoader {
 
     //Try to load it from preferred source
     // Note loadClassBytes() is an abstract method
-    byte[] classBytes = isExcluded(className) ? null : loadClassBytes(className);
+    boolean preferred = isPreferred(className);
+    byte[] classBytes = preferred ? loadClassBytes(className) : null;
     if (classBytes == null) {
       //Check with the parent classloader
       try {
@@ -86,10 +87,17 @@ public abstract class MultiClassLoader extends ClassLoader {
         }
         return ClassLoader.getSystemClassLoader().loadClass(className);
       } catch (ClassNotFoundException e) {
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+        if (!preferred) {
+          // Tries to load it from this classloader
+          classBytes = loadClassBytes(className);
+          if (classBytes == null) {
+            LOG.warn("Fail to load class {}", className);
+            throw e;
+          }
+        } else {
+          LOG.warn("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+          throw e;
         }
-        throw e;
       }
     }
 
@@ -130,14 +138,13 @@ public abstract class MultiClassLoader extends ClassLoader {
     }
   }
 
-  protected boolean isExcluded(String className) {
-    for (String prefix : CLASS_PREFIX_EXEMPTIONS) {
+  private boolean isPreferred(String className) {
+    for (String prefix : CLASS_PREFER_EXEMPTIONS) {
       if (className.startsWith(prefix)) {
-        LOG.debug("Class excempted {} - Use parent ClassLoader", className);
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
 }
