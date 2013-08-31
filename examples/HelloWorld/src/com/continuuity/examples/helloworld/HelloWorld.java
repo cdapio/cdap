@@ -29,6 +29,7 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
@@ -84,6 +85,7 @@ public class HelloWorld implements Application {
 
     @UseDataSet("whom")
     KeyValueTable whom;
+    Metrics flowletMetrics;
 
 
     public void processInput(StreamEvent event) throws OperationException {
@@ -91,6 +93,10 @@ public class HelloWorld implements Application {
       if (name != null && name.length > 0) {
         whom.write(NAME, name);
       }
+      if (name.length > 10) {
+        flowletMetrics.count("names.longnames", 1);
+      }
+      flowletMetrics.count("names.bytes", name.length);
     }
   }
 
@@ -101,11 +107,15 @@ public class HelloWorld implements Application {
 
     @UseDataSet("whom")
     KeyValueTable whom;
+    Metrics procedureMetrics;
 
     @Handle("greet")
     public void greet(ProcedureRequest request, ProcedureResponder responder) throws Exception {
       byte[] name = whom.read(NameSaver.NAME);
       String toGreet = name != null ? new String(name) : "World";
+      if (toGreet.equals("Jane Doe")) {
+        procedureMetrics.count("greetings.count.jane_doe", 1);
+      }
       responder.sendJson(new ProcedureResponse(SUCCESS), "Hello " + toGreet + "!");
     }
   }

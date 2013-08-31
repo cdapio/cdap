@@ -1,7 +1,7 @@
 // Adds subprojects included in the master repository.
 
 include 'app-fabric', 'data-fabric', 'data-fabric-runtime', 'common', 'singlenode'
-include 'examples', 'gateway', 'web-cloud-app', 'distributions'
+include 'examples', 'gateway', 'web-app', 'distributions'
 include 'unit-test', 'overlord', 'passport', 'watchdog'
 include 'kafka'
 project(':singlenode').buildFileName = 'package.gradle'

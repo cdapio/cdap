@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MetadataServerMain {
   private static final Logger Log =
-    LoggerFactory.getLogger(MetricsCollectionServerMain.class);
+    LoggerFactory.getLogger(MetadataServerMain.class);
 
   /**
    * Metrics collection server object main.
