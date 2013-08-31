@@ -36,8 +36,8 @@ public abstract class MultiClassLoader extends ClassLoader {
     // Hadoop/HBase/ZK:
     "org.apache.hadoop",
     "org.apache.zookeeper",
-    // Continuuity
-    "com.continuuity",
+    // Continuuity API
+    "com.continuuity.api",
     // Guava
     "com.google.common",
   };
