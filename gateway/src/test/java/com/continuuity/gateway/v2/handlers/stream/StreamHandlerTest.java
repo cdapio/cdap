@@ -239,7 +239,8 @@ public class StreamHandlerTest {
     List<Integer> actual = Lists.newArrayList();
     // Dequeue all entries
     for (int i = 0; i < concurrencyLevel * BatchEnqueue.NUM_ELEMENTS; ++i) {
-      httpGet = new HttpGet(String.format("http://%s:%d/v2/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
+      httpGet
+        = new HttpGet(String.format("http://%s:%d/v2/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
       httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
