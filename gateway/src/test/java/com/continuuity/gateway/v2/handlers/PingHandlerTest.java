@@ -42,7 +42,7 @@ public class PingHandlerTest {
   @Test
   public void testPing() throws Exception {
     DefaultHttpClient httpclient = new DefaultHttpClient();
-    HttpGet httpget = new HttpGet(String.format("http://%s:%d/ping", hostName, port));
+    HttpGet httpget = new HttpGet(String.format("http://%s:%d/v2/ping", hostName, port));
     HttpResponse response = httpclient.execute(httpget);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("OK.\n", EntityUtils.toString(response.getEntity()));
