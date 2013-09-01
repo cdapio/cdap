@@ -51,7 +51,6 @@ import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -59,12 +58,10 @@ import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
@@ -941,6 +938,14 @@ public class OperationExecutorClient extends ConverterUtils {
   public com.continuuity.data2.transaction.Transaction start() throws OperationException, TException {
     try {
       return unwrap(client.startTx());
+    } catch (TOperationException te) {
+      throw unwrap(te);
+    }
+  }
+
+  public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException, TException {
+    try {
+      return unwrap(client.startTxTimeout(timeout == null ? -1 : timeout));
     } catch (TOperationException te) {
       throw unwrap(te);
     }

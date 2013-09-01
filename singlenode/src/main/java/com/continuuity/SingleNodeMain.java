@@ -12,7 +12,6 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -39,11 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Singlenode Main.

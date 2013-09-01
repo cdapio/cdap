@@ -33,3 +33,6 @@ logs/
 # symbolic links to run singlenode out of build tree
 /web-app
 /web-cloud-app/developer
+
+# gateway test leftover
+/gateway/data/

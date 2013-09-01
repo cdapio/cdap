@@ -233,23 +233,28 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public com.continuuity.data2.transaction.Transaction start() throws OperationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
+  }
+
+  @Override
+  public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException {
+    return null;
   }
 
   @Override
   public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
     throws OperationException {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
   public boolean commit(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
   public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override

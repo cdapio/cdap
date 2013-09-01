@@ -375,6 +375,7 @@ public interface OperationExecutor
 
   // temporary TxDs2 stuff
   public com.continuuity.data2.transaction.Transaction start() throws OperationException;
+  public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException;
 
   public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
     throws OperationException;

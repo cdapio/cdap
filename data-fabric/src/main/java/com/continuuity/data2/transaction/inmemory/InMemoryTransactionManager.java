@@ -14,14 +14,15 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongListIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -29,33 +30,42 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
-// todo: synchronize all
 // todo: optimize heavily
 public class InMemoryTransactionManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionManager.class);
 
-  // Minimum size of the excludedList for compaction. This is to avoid compacting on every commit.
-  private static final int MIN_EXCLUDE_LIST_SIZE = 1000;
-
   // How many write versions to claim at a time, by default one million
   public static final String CFG_TX_CLAIM_SIZE = "data.tx.claim.size";
   public static final int DEFAULT_TX_CLAIM_SIZE = 1000 * 1000;
+  // how often to clean up timed out transactions, in seconds, or 0 for no cleanup
+  public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
+  public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60; // how often to clean up timed out transactions, in seconds
+  // the timeout for a transaction, in seconds. If the transaction is not finished in that time, it is marked invalid
+  public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
+  public static final int DEFAULT_TX_TIMEOUT = 300;
 
+  private static final int STATE_PERSIST_VERSION = 1;
   private static final String ALL_STATE_TAG = "all";
   private static final String WATERMARK_TAG = "mark";
 
-  private LongArrayList excludedList;
-
+  // the set of transactions that are in progress, with their expiration time stamp,
+  // or with the negative start time to specify no expiration. We remember the start
+  // time to allow diagnostics and possible manual cleanup/invalidation (not implemented yet).
+  private final NavigableMap<Long, Long> inProgress = Maps.newTreeMap();
+  // the list of transactions that are invalid (not properly committed/aborted, or timed out)
+  private final LongArrayList invalid = new LongArrayList();
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
+  // todo: should this be consolidated with inProgress?
   // commit time nextWritePointer -> changes made by this tx
-  private NavigableMap<Long, Set<byte[]>> committedChangeSets;
+  private final NavigableMap<Long, Set<byte[]>> committedChangeSets = Maps.newTreeMap();
   // not committed yet
-  private Map<Long, Set<byte[]>> committingChangeSets;
+  private final Map<Long, Set<byte[]>> committingChangeSets = Maps.newHashMap();
 
   private long readPointer;
   private long nextWritePointer;
@@ -74,9 +84,16 @@ public class InMemoryTransactionManager {
 
   private final StatePersistor persistor;
 
+  private final int cleanupInterval;
+  private final int defaultTimeout;
+  private Thread cleanupThread = null;
+
+  /**
+   * This constructor should only be used for testing. It uses default configuration and a no-op persistor.
+   * If this constructor is used, there is no need to call init().
+   */
   public InMemoryTransactionManager() {
-    reset();
-    persistor = new NoopPersistor();
+    this(CConfiguration.create(), new NoopPersistor());
     persistor.startAndWait();
     initialized = true;
   }
@@ -85,31 +102,85 @@ public class InMemoryTransactionManager {
   public InMemoryTransactionManager(CConfiguration conf, @Nonnull StatePersistor persistor) {
     this.persistor = persistor;
     claimSize = conf.getInt(CFG_TX_CLAIM_SIZE, DEFAULT_TX_CLAIM_SIZE);
-    reset();
+    cleanupInterval = conf.getInt(CFG_TX_CLEANUP_INTERVAL, DEFAULT_TX_CLEANUP_INTERVAL);
+    defaultTimeout = conf.getInt(CFG_TX_TIMEOUT, DEFAULT_TX_TIMEOUT);
+    clear();
   }
 
-  private void reset() {
-    excludedList = new LongArrayList();
-    committedChangeSets = Maps.newTreeMap();
-    committingChangeSets = Maps.newHashMap();
+  private void clear() {
+    invalid.clear();
+    inProgress.clear();
+    committedChangeSets.clear();
+    committingChangeSets.clear();
     readPointer = 0;
     nextWritePointer = 1;
     waterMark = 0; // this will trigger a claim at the first start transaction
   }
 
   // TODO this class should implement Service and this should be start().
-  // TODO However, start() is alredy used to start a transaction, so this would be major refactoring now.
-  public void init() {
+  // TODO However, start() is already used to start a transaction, so this would be major refactoring now.
+  public synchronized void init() {
     // start up the persistor
     persistor.startAndWait();
     // establish defaults in case there is no persistence
-    reset();
+    clear();
+    // attempt to recover state from last run
+    recoverState();
+    // start the periodic cleanup thread
+    startCleanupThread();
+    initialized = true;
+  }
 
+  private void startCleanupThread() {
+    if (cleanupInterval <= 0 && defaultTimeout <= 0) {
+      return;
+    }
+    LOG.info("Starting periodic timed-out transaction cleanup every " + cleanupInterval +
+               " seconds with default timeout of " + defaultTimeout + " seconds.");
+    this.cleanupThread = new Thread("tx-clean-timeout") {
+      @Override
+      public void run() {
+        while (!isInterrupted()) {
+          cleanupTimedOutTransactions();
+          try {
+            TimeUnit.SECONDS.sleep(cleanupInterval);
+          } catch (InterruptedException e) {
+            break;
+          }
+        }
+      }
+    };
+    cleanupThread.setDaemon(true);
+    cleanupThread.start();
+  }
+
+  private synchronized void cleanupTimedOutTransactions() {
+    long currentTime = System.currentTimeMillis();
+    List<Long> timedOut = Lists.newArrayList();
+    for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
+      long expiration = tx.getValue();
+      if (expiration >= 0L && currentTime > expiration) {
+        // timed out, remember tx id (can't remove while iterating over entries)
+        timedOut.add(tx.getKey());
+      }
+    }
+    if (!timedOut.isEmpty()) {
+      invalid.addAll(timedOut);
+      for (long tx : timedOut) {
+        committingChangeSets.remove(tx);
+        inProgress.remove(tx);
+      }
+      // todo: find a more efficient way to keep this sorted. Could it just be an array?
+      Collections.sort(invalid);
+      LOG.info("Invalidated {} transactions due to timeout.", timedOut.size());
+    }
+  }
+
+  public void recoverState() {
     // try to recover persisted state
     try {
       // attempt to restore the full state
-      byte[] state;
-      state = persistor.readBack(ALL_STATE_TAG);
+      byte[] state = persistor.readBack(ALL_STATE_TAG);
       if (state != null) {
         decodeState(state);
         LOG.info("Restored transaction state successfully ({} bytes).", state.length);
@@ -132,13 +203,16 @@ public class InMemoryTransactionManager {
       LOG.error("Unable to read back transaction state:", e);
       throw Throwables.propagate(e);
     }
-    initialized = true;
   }
 
   public synchronized void close() {
     // if initialized is false, then the service did not start up properly and the state is most likely corrupt.
     if (initialized) {
       LOG.info("Shutting down gracefully...");
+      // signal the cleanup thread to stop
+      if (cleanupThread != null) {
+        cleanupThread.interrupt();
+      }
       byte[] state = encodeState();
       try {
         persistor.persist(ALL_STATE_TAG, state);
@@ -171,20 +245,37 @@ public class InMemoryTransactionManager {
     }
   }
 
-  public synchronized Transaction start() {
+  /**
+   * Start a transaction with the default timeout.
+   */
+  public Transaction start() {
+    return start(defaultTimeout);
+  }
+
+  /**
+   * Start a transaction with a given timeout. The contract is that transactions that have no timeout are considered
+   * long-running transactions and do not participate in conflict detection. Also, aborting a long-running transaction
+   * moves it to the invalid list because we assume that its writes cannot be rolled back.
+   * @param timeoutInSeconds the time out period in seconds. Null means no timeout.
+   */
+  public synchronized Transaction start(@Nullable Integer timeoutInSeconds) {
     ensureInitialized();
     saveWaterMarkIfNeeded();
-    Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray(excludedList));
-    excludedList.add(nextWritePointer);
-    // it is important to keep it sorted, as client logic may depend on that
-    // Using Collections.sort is somewhat inefficient as it convert the elements into Object[] and put it back.
-    // todo: optimize the data structure.
-    Collections.sort(excludedList);
+    Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray());
+    long currentTime =  System.currentTimeMillis();
+    long expiration = timeoutInSeconds == null ? -currentTime : currentTime + 1000L * timeoutInSeconds;
+    inProgress.put(nextWritePointer, expiration);
     nextWritePointer++;
     return tx;
   }
 
   public synchronized boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
+    if (inProgress.get(tx.getWritePointer()) == null) {
+      // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
+      inProgress.remove(tx.getWritePointer());
+      return false;
+    }
+
     if (hasConflicts(tx, changeIds)) {
       return false;
     }
@@ -197,10 +288,16 @@ public class InMemoryTransactionManager {
   }
 
   public synchronized boolean commit(Transaction tx) {
+
     // todo: these should be atomic
     // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot be attempted to
     //       commit twice
     Set<byte[]> changeSet = committingChangeSets.remove(tx.getWritePointer());
+
+    if (inProgress.get(tx.getWritePointer()) == null) {
+      // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
+      return false;
+    }
 
     if (changeSet != null) {
       // double-checking if there are conflicts: someone may have committed since canCommit check
@@ -210,6 +307,7 @@ public class InMemoryTransactionManager {
 
       // Record the committed change set with the nextWritePointer as the commit time.
       if (committedChangeSets.containsKey(nextWritePointer)) {
+        // todo: can this ever happen?
         committedChangeSets.get(nextWritePointer).addAll(changeSet);
       } else {
         TreeSet<byte[]> committedChangeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
@@ -219,22 +317,56 @@ public class InMemoryTransactionManager {
     }
     makeVisible(tx);
 
-    // Cleanup commitedChangeSets.
-    // All committed change sets that are smaller than the earliest started transaction could be removed.
-    committedChangeSets.headMap(excludedList.isEmpty() ? Long.MAX_VALUE : excludedList.get(0)).clear();
+    // All committed change sets that are smaller than the earliest started transaction can be removed.
+    // here we ignore transactions that have no timeout, they are long-running and don't participate in
+    // conflict detection.
+    committedChangeSets.headMap(firstInProgressWithTimeout()).clear();
     return true;
+  }
+
+  // find the first non long-running in-progress tx, or Long.MAX if none such exists
+  private long firstInProgressWithTimeout() {
+    for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
+      if (tx.getValue() >= 0) {
+        return tx.getKey();
+      }
+    }
+    return Long.MAX_VALUE;
   }
 
   public synchronized boolean abort(Transaction tx) {
     committingChangeSets.remove(tx.getWritePointer());
     // makes tx visible (assumes that all operations were rolled back)
-    makeVisible(tx);
+    // remove from in-progress set, so that it does not get excluded in the future
+    Long previous = inProgress.remove(tx.getWritePointer());
+    if (previous != null && previous < 0) {
+      // tx was long-running: it must be moved to invalid because its operations cannot be rolled back
+      invalid.add(tx.getWritePointer());
+      // todo: find a more efficient way to keep this sorted. Could it just be an array?
+      Collections.sort(invalid);
+    } else if (previous == null) {
+        // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
+        if (invalid.rem(tx.getWritePointer())) {
+          // removed a tx from excludes: must move read pointer
+          moveReadPointerIfNeeded(tx.getWritePointer());
+        }
+    } else {
+      // removed a tx from excludes: must move read pointer
+      moveReadPointerIfNeeded(tx.getWritePointer());
+    }
     return true;
   }
 
   // hack for exposing important metric
   public int getExcludedListSize() {
-    return excludedList.size();
+    return invalid.size() + inProgress.size();
+  }
+  // package visible hack for exposing internals to unit tests
+  int getInvalidSize() {
+    return this.invalid.size();
+  }
+  int getCommittedSize() {
+    return this.committedChangeSets.size();
   }
 
 //  private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
@@ -278,12 +410,11 @@ public class InMemoryTransactionManager {
   }
 
   private void makeVisible(Transaction tx) {
-    int idx = Arrays.binarySearch(excludedList.elements(), 0, excludedList.size(), tx.getWritePointer());
-    if (idx >= 0) {
-      excludedList.removeLong(idx);
-      // trim is needed as remove of LongArrayList would not shrink the backing array.
-      // trim will do nothing if the size of excludedList is smaller than the MIN_EXCLUDE_LIST_SIZE.
-      excludedList.trim(MIN_EXCLUDE_LIST_SIZE);
+    // remove from in-progress set, so that it does not get excluded in the future
+    Long previous = inProgress.remove(tx.getWritePointer());
+    if (previous == null) {
+      // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
+      invalid.rem(tx.getWritePointer());
     }
     // moving read pointer
     moveReadPointerIfNeeded(tx.getWritePointer());
@@ -295,10 +426,43 @@ public class InMemoryTransactionManager {
     }
   }
 
-  private static long[] getExcludedListAsArray(LongArrayList excludedList) {
+  private long[] getExcludedListAsArray() {
     // todo: optimize (cache, etc. etc.)
-    long[] elements = excludedList.elements();
-    return Arrays.copyOf(elements, excludedList.size());
+    long[] elements = new long[invalid.size() + inProgress.size()];
+    // merge invalid and in progress
+    LongListIterator invalidIter;
+    Long currentInvalid;
+    int currentIndex = 0;
+    if (invalid.isEmpty()) {
+      invalidIter = null;
+      currentInvalid = null;
+    } else {
+      invalidIter = invalid.iterator();
+      currentInvalid = invalidIter.next();
+    }
+    for (Long tx : inProgress.keySet()) {
+      // consumer all invalid transactions <= this in-progress transaction
+      if (currentInvalid != null) {
+        while (tx >= currentInvalid) {
+          elements[currentIndex++] = currentInvalid;
+          if (invalidIter.hasNext()) {
+            currentInvalid = invalidIter.next();
+          } else {
+            currentInvalid = null;
+            break;
+          }
+        }
+      }
+      // consume this transaction
+      elements[currentIndex++] = tx;
+    }
+    if (currentInvalid != null) {
+      elements[currentIndex++] = currentInvalid;
+      while (invalidIter.hasNext()) {
+        elements[currentIndex++] = invalidIter.next();
+      }
+    }
+    return elements;
   }
 
   //--------- helpers to encode or decode the transaction state --------------
@@ -309,17 +473,13 @@ public class InMemoryTransactionManager {
     Encoder encoder = new BinaryEncoder(bos);
 
     try {
-      // encode read pointer
+      encoder.writeInt(STATE_PERSIST_VERSION);
       encoder.writeLong(readPointer);
-      // encode next write pointer
       encoder.writeLong(nextWritePointer);
-      // encode watermark
       encoder.writeLong(waterMark);
-      // encode excluded list
-      encodeExcluded(encoder);
-      // encode committed change sets
+      encodeInvalid(encoder);
+      encodeInProgress(encoder);
       encodeChangeSets(encoder, committedChangeSets);
-      // encode committing change set
       encodeChangeSets(encoder, committingChangeSets);
 
     } catch (IOException e) {
@@ -334,17 +494,17 @@ public class InMemoryTransactionManager {
     Decoder decoder = new BinaryDecoder(bis);
 
     try {
-      // decode read pointer
+      int persistedVersion = decoder.readInt();
+      if (persistedVersion != STATE_PERSIST_VERSION) {
+        throw new RuntimeException("Can't decode state persisted with version " + persistedVersion + ". Current " +
+                                     "version is " + STATE_PERSIST_VERSION);
+      }
       readPointer = decoder.readLong();
-      // decode next write pointer
       nextWritePointer = decoder.readLong();
-      // decode watermark
       waterMark = decoder.readLong();
-      // decode excluded list
-      decodeExcluded(decoder);
-      // decode committed change sets
+      decodeInvalid(decoder);
+      decodeInProgress(decoder);
       decodeChangeSets(decoder, committedChangeSets);
-      // decode committing change set
       decodeChangeSets(decoder, committingChangeSets);
 
     } catch (IOException e) {
@@ -353,22 +513,44 @@ public class InMemoryTransactionManager {
     }
   }
 
-  private void encodeExcluded(Encoder encoder) throws IOException {
-    if (!excludedList.isEmpty()) {
-      encoder.writeInt(excludedList.size());
-      for (long exclude : excludedList) {
-        encoder.writeLong(exclude);
+  private void encodeInvalid(Encoder encoder) throws IOException {
+    if (!invalid.isEmpty()) {
+      encoder.writeInt(invalid.size());
+      for (long invalidTx : invalid) {
+        encoder.writeLong(invalidTx);
       }
     }
     encoder.writeInt(0); // zero denotes end of list as per AVRO spec
   }
 
-  private void decodeExcluded(Decoder decoder) throws IOException {
-    excludedList.clear();
+  private void decodeInvalid(Decoder decoder) throws IOException {
+    invalid.clear();
     int size = decoder.readInt();
     while (size != 0) { // zero denotes end of list as per AVRO spec
       for (int remaining = size; remaining > 0; --remaining) {
-        excludedList.add(decoder.readLong());
+        invalid.add(decoder.readLong());
+      }
+      size = decoder.readInt();
+    }
+  }
+
+  private void encodeInProgress(Encoder encoder) throws IOException {
+    if (!inProgress.isEmpty()) {
+      encoder.writeInt(inProgress.size());
+      for (Map.Entry<Long, Long> entry : inProgress.entrySet()) {
+        encoder.writeLong(entry.getKey()); // tx id
+        encoder.writeLong(entry.getValue()); // time stamp;
+      }
+    }
+    encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+  }
+
+  private void decodeInProgress(Decoder decoder) throws IOException {
+    inProgress.clear();
+    int size = decoder.readInt();
+    while (size != 0) { // zero denotes end of list as per AVRO spec
+      for (int remaining = size; remaining > 0; --remaining) {
+        inProgress.put(decoder.readLong(), decoder.readLong());
       }
       size = decoder.readInt();
     }
@@ -423,8 +605,11 @@ public class InMemoryTransactionManager {
    * This hack is needed because current metrics system is not flexible when it comes to adding new metrics.
    */
   public void logStatistics() {
-    LOG.info("Transaction Statistics: excluded = " + excludedList.size() + ", write pointer = " + nextWritePointer +
-               ", watermark = " + waterMark + ", committing = " + committingChangeSets.size() + ", " +
-               "committed = " + committedChangeSets.size());
+    LOG.info("Transaction Statistics: write pointer = " + nextWritePointer +
+               ", watermark = " + waterMark +
+               ", invalid = " + invalid.size() +
+               ", in progress = " + inProgress.size() +
+               ", committing = " + committingChangeSets.size() +
+               ", committed = " + committedChangeSets.size());
   }
 }

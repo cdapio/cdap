@@ -25,6 +25,7 @@ import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
@@ -96,6 +97,7 @@ public class DatasetRestAccessorTest {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(new GatewayTestModule(CConfiguration.create()));
+    injector.getInstance(InMemoryTransactionManager.class).init();
     executor = injector.getInstance(OperationExecutor.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     dataSetAccessor = injector.getInstance(DataSetAccessor.class);

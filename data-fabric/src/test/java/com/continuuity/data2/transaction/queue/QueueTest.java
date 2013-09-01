@@ -14,12 +14,14 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -50,6 +52,15 @@ public abstract class QueueTest {
   protected static OperationExecutor opex;
   protected static QueueClientFactory queueClientFactory;
   protected static QueueAdmin queueAdmin;
+  protected static InMemoryTransactionManager transactionManager;
+
+  @AfterClass
+  public static void shutdownTx() {
+    if (transactionManager != null) {
+      transactionManager.close();
+    }
+  }
+
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
