@@ -7,6 +7,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.GatewayConstants;
@@ -87,6 +88,7 @@ public class StreamHandlerTest {
     );
 
     gatewayV2 = injector.getInstance(Gateway.class);
+    injector.getInstance(InMemoryTransactionManager.class).init();
     gatewayV2.startAndWait();
     port = gatewayV2.getBindAddress().getPort();
     testPing();
