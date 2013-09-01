@@ -50,6 +50,7 @@ public class InMemoryTransactionManager {
   public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
   public static final int DEFAULT_TX_TIMEOUT = 300;
 
+  private static final int STATE_PERSIST_VERSION = 1;
   private static final String ALL_STATE_TAG = "all";
   private static final String WATERMARK_TAG = "mark";
 
@@ -474,6 +475,7 @@ public class InMemoryTransactionManager {
     Encoder encoder = new BinaryEncoder(bos);
 
     try {
+      encoder.writeInt(STATE_PERSIST_VERSION);
       encoder.writeLong(readPointer);
       encoder.writeLong(nextWritePointer);
       encoder.writeLong(waterMark);
@@ -494,6 +496,11 @@ public class InMemoryTransactionManager {
     Decoder decoder = new BinaryDecoder(bis);
 
     try {
+      int persistedVersion = decoder.readInt();
+      if (persistedVersion != STATE_PERSIST_VERSION) {
+        throw new RuntimeException("Can't decode state persisted with version " + persistedVersion + ". Current " +
+                                     "version is " + STATE_PERSIST_VERSION);
+      }
       readPointer = decoder.readLong();
       nextWritePointer = decoder.readLong();
       waterMark = decoder.readLong();
