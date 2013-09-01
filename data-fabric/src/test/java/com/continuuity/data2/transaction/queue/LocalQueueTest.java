@@ -8,6 +8,7 @@ import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueue2Producer;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueue2Producer;
@@ -30,7 +31,9 @@ public class LocalQueueTest extends QueueTest {
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     conf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
     Injector injector = Guice.createInjector(new DataFabricLocalModule(conf));
-    // Get the in-memory opex
+    // transaction manager is a "service" and must be started
+    injector.getInstance(InMemoryTransactionManager.class).init();
+    // Get the local opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
@@ -45,6 +48,5 @@ public class LocalQueueTest extends QueueTest {
     producer = factory.createProducer(QueueName.fromFlowlet("my", "flowlet", "output"));
     Assert.assertTrue(producer instanceof InMemoryQueue2Producer);
   }
-
 
 }
