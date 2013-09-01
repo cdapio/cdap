@@ -32,7 +32,8 @@ public class LocalQueueTest extends QueueTest {
     conf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
     Injector injector = Guice.createInjector(new DataFabricLocalModule(conf));
     // transaction manager is a "service" and must be started
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    transactionManager.init();
     // Get the local opex
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);

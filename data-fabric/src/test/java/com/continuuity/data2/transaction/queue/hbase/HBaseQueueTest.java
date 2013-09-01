@@ -22,7 +22,6 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -48,16 +47,10 @@ public class HBaseQueueTest extends QueueTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
-  private static InMemoryZKServer zkServer;
   private static OperationExecutorService opexService;
 
   @BeforeClass
   public static void init() throws Exception {
-    // Start ZooKeeper
-    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
-    zkServer.startAndWait();
-
     // Start hbase
     HBaseTestBase.startHBase();
 
@@ -66,7 +59,7 @@ public class HBaseQueueTest extends QueueTest {
 
     // Customize test configuration
     final CConfiguration cConf = dataFabricModule.getConfiguration();
-    cConf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkServer.getConnectionStr());
+    cConf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, HBaseTestBase.getZkConnectionString());
     cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
               Integer.toString(Networks.getRandomPort()));
 
@@ -86,7 +79,9 @@ public class HBaseQueueTest extends QueueTest {
     });
 
     // transaction manager is a "service" and must be started
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    transactionManager.init();
+
     opexService = injector.getInstance(OperationExecutorService.class);
     Thread t = new Thread() {
       @Override
@@ -118,7 +113,6 @@ public class HBaseQueueTest extends QueueTest {
   public static void finish() throws Exception {
     opexService.stop(true);
     HBaseTestBase.stopHBase();
-    zkServer.stopAndWait();
   }
 
   @Test
