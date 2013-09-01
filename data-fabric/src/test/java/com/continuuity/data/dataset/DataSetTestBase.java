@@ -13,6 +13,7 @@ import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.util.OperationUtil;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
@@ -64,6 +65,7 @@ public class DataSetTestBase {
                                bind(LocationFactory.class).to(LocalLocationFactory.class);
                              }
                            });
+    injector.getInstance(InMemoryTransactionManager.class).init();
     opex = injector.getInstance(OperationExecutor.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
