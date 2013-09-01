@@ -11,7 +11,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.thrift.TException;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -45,7 +44,8 @@ public final class DistributedTransactionClient implements TransactionSystemClie
 
   @Override
   public Transaction start(Integer timeout) {
-    throw new NotImplementedException();
+    // todo implement this when we replace opex with a tx manager service.
+    throw new UnsupportedOperationException();
   }
 
   @Override
