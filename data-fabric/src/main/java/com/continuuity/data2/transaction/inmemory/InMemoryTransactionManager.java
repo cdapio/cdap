@@ -63,9 +63,9 @@ public class InMemoryTransactionManager {
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
   // todo: should this be consolidated with inProgress?
   // commit time nextWritePointer -> changes made by this tx
-  private NavigableMap<Long, Set<byte[]>> committedChangeSets = Maps.newTreeMap();
+  private final NavigableMap<Long, Set<byte[]>> committedChangeSets = Maps.newTreeMap();
   // not committed yet
-  private Map<Long, Set<byte[]>> committingChangeSets = Maps.newHashMap();
+  private final Map<Long, Set<byte[]>> committingChangeSets = Maps.newHashMap();
 
   private long readPointer;
   private long nextWritePointer;
@@ -140,12 +140,11 @@ public class InMemoryTransactionManager {
     this.cleanupThread = new Thread("tx-clean-timeout") {
       @Override
       public void run() {
-        while (true) {
+        while (!isInterrupted()) {
           cleanupTimedOutTransactions();
           try {
             TimeUnit.SECONDS.sleep(cleanupInterval);
           } catch (InterruptedException e) {
-            this.interrupt();
             break;
           }
         }
@@ -295,7 +294,6 @@ public class InMemoryTransactionManager {
     //       commit twice
     Set<byte[]> changeSet = committingChangeSets.remove(tx.getWritePointer());
 
-    // update the timestamp of the transaction as it has been touched
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
       return false;
