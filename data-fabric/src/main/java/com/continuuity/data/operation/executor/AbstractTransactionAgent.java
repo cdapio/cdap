@@ -58,6 +58,14 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
     propagateToTxAwares(currentTx);
   }
 
+  @Override
+  public void start(Integer timeout) throws OperationException {
+    succeeded.set(0);
+    failed.set(0);
+    currentTx = txSystemClient.start(timeout);
+    propagateToTxAwares(currentTx);
+  }
+
   // sets tx to be used by txAware datasets
   protected void propagateToTxAwares(com.continuuity.data2.transaction.Transaction currentTx) {
     // currentTx may not be set up before that (e.g. in detached tx agent case)

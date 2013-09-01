@@ -134,7 +134,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                           dataSetContext.getTransactionAware(),
                                           txSystemClient,
                                           tx);
-      txAgent.start();
+      txAgent.start(null); // no timeout
     } catch (OperationException e) {
       LOG.error("Failed to start transaction for mapreduce job: " + program.getProgramName());
       throw Throwables.propagate(e);
