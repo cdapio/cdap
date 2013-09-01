@@ -17,6 +17,7 @@ import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -56,6 +57,8 @@ public class MapReduceProgramRunnerTest {
   public void testWordCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
+    // transaction manager is a "service" and must be started
+    injector.getInstance(InMemoryTransactionManager.class).init();
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
@@ -110,6 +113,7 @@ public class MapReduceProgramRunnerTest {
   public void testTimeSeriesRecordsCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
+    injector.getInstance(InMemoryTransactionManager.class).init();
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
