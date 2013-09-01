@@ -11,6 +11,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
 import com.continuuity.metrics.query.MetricsQueryService;
@@ -123,6 +124,7 @@ public class ReactorTestBase {
                                       }
                                     }
                                     );
+    injector.getInstance(InMemoryTransactionManager.class).init();
     appFabricServer = injector.getInstance(AppFabricService.Iface.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);

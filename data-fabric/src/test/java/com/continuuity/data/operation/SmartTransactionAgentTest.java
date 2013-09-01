@@ -9,6 +9,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.util.OperationUtil;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -37,6 +38,7 @@ public class SmartTransactionAgentTest {
     // use Guice to inject an in-memory opex
     final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules());
+    injector.getInstance(InMemoryTransactionManager.class).init();
     opex = injector.getInstance(OperationExecutor.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
   }

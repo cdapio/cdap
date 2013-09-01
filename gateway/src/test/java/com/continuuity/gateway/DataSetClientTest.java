@@ -6,6 +6,7 @@ import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.tools.DataClient;
 import com.continuuity.gateway.tools.DataSetClient;
@@ -36,6 +37,7 @@ public class DataSetClientTest {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
+    injector.getInstance(InMemoryTransactionManager.class).init();
     executor = injector.getInstance(OperationExecutor.class);
 
     final String name = "access.rest";

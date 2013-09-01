@@ -4,19 +4,19 @@
 package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -66,6 +66,7 @@ public class SingleNodeMain {
   private final MetricsQueryService metricsQueryService;
 
   private final LogAppenderInitializer logAppenderInitializer;
+  private final InMemoryTransactionManager transactionManager;
 
   private InMemoryZKServer zookeeper;
 
@@ -74,6 +75,7 @@ public class SingleNodeMain {
     this.webCloudAppService = new WebCloudAppService();
 
     Injector injector = Guice.createInjector(modules);
+    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     gateway = injector.getInstance(Gateway.class);
     overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
@@ -93,6 +95,14 @@ public class SingleNodeMain {
           LOG.error(StackTraceUtil.toStringStackTrace(e));
           System.err.println("Failed to shutdown node web cloud app");
         }
+        try {
+          transactionManager.close();
+        } catch (Throwable e) {
+          LOG.error("Failed to shutdown transaction manager.", e);
+          // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
+          System.err.println("Failed to shutdown transaction manager: " + e.getMessage()
+                               + ". At " + StackTraceUtil.toStringStackTrace(e));
+        }
       }
     });
   }
@@ -111,6 +121,7 @@ public class SingleNodeMain {
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionStr());
 
     // Start all the services.
+    transactionManager.init();
     metricsCollectionService.startAndWait();
     metricsQueryService.startAndWait();
 
@@ -143,6 +154,7 @@ public class SingleNodeMain {
       appFabricServer.stopAndWait();
       overloadFrontend.stop(true);
       overlordCollection.stop(true);
+      transactionManager.close();
       zookeeper.stopAndWait();
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
@@ -300,7 +312,7 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules(configuration).getSingleNodeModules(),
-      new DataFabricLevelDBModule(configuration),
+      new DataFabricModules().getSingleNodeModules(configuration),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new MetricsQueryRuntimeModule().getSingleNodeModules(),

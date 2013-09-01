@@ -28,6 +28,8 @@ public class DetachedSmartTransactionAgent extends SmartTransactionAgent {
                                        com.continuuity.data2.transaction.Transaction tx2) {
     super(opex, context, txAware, txSystemClient, tx);
     propagateToTxAwares(tx2);
+    // tx is already running when we have tx instance
+    this.state = State.Running;
   }
 
   @Override

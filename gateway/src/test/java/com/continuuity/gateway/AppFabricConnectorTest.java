@@ -2,6 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.connector.AppFabricRestConnector;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -53,6 +54,7 @@ public class AppFabricConnectorTest {
     configuration.set("app.output.dir", "/tmp/app");
     configuration.set("app.tmp.dir", "/tmp/temp");
     Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
+    injector.getInstance(InMemoryTransactionManager.class).init();
 
     // Start the discovery service. Used to find where FAR is running.
     TimeUnit.SECONDS.sleep(2);

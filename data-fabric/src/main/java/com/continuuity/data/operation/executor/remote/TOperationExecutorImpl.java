@@ -880,6 +880,15 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
   }
 
   @Override
+  public TTransaction2 startTxTimeout(int timeout) throws TOperationException, TException {
+    try {
+      return wrap(this.opex.start(timeout == -1 ? null : timeout));
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
+
+  @Override
   public boolean canCommitTx(TTransaction2 tx, Set<ByteBuffer> changes) throws TOperationException, TException {
     Set<byte[]> changeIds = Sets.newHashSet();
     for (ByteBuffer bb : changes) {

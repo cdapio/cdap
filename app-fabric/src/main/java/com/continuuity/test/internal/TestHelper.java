@@ -25,6 +25,7 @@ import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -77,14 +78,18 @@ public class TestHelper {
   public static CConfiguration configuration;
   private static Injector injector;
 
-  static {
-    configuration = CConfiguration.create();
-    configuration.set("app.output.dir", TEMP_FOLDER.newFolder("app").getAbsolutePath());
-    configuration.set("app.tmp.dir", TEMP_FOLDER.newFolder("temp").getAbsolutePath());
-    injector = Guice.createInjector(new AppFabricTestModule(configuration));
+  public static Injector getInjector() {
+    return getInjector(CConfiguration.create());
   }
 
-  public static Injector getInjector() {
+  public static synchronized Injector getInjector(CConfiguration conf) {
+    if (injector == null) {
+      configuration = conf;
+      configuration.set("app.output.dir", TEMP_FOLDER.newFolder("app").getAbsolutePath());
+      configuration.set("app.tmp.dir", TEMP_FOLDER.newFolder("temp").getAbsolutePath());
+      injector = Guice.createInjector(new AppFabricTestModule(configuration));
+      injector.getInstance(InMemoryTransactionManager.class).init();
+    }
     return injector;
   }
 
@@ -105,7 +110,7 @@ public class TestHelper {
    * @return Returns an instance of {@link LocalManager}
    */
   public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
-    ManagerFactory factory = injector.getInstance(ManagerFactory.class);
+    ManagerFactory factory = getInjector().getInstance(ManagerFactory.class);
     return factory.create();
   }
 
@@ -134,8 +139,8 @@ public class TestHelper {
    */
   public static void deployApplication(Class<? extends Application> applicationClz, String fileName) throws Exception {
     Location deployedJar =
-      deployApplication(injector.getInstance(AppFabricService.Iface.class),
-                        injector.getInstance(LocationFactory.class), DefaultId.ACCOUNT,
+      deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
+                        getInjector().getInstance(LocationFactory.class), DefaultId.ACCOUNT,
                         DUMMY_AUTH_TOKEN, "", fileName, applicationClz);
     deployedJar.delete(true);
   }
@@ -146,8 +151,8 @@ public class TestHelper {
   public static void deployApplication(final Id.Account account, final AuthToken token,
                                        Class<? extends Application> applicationClz, String fileName) throws Exception {
     Location deployedJar =
-      deployApplication(injector.getInstance(AppFabricService.Iface.class),
-                        injector.getInstance(LocationFactory.class), account, token,
+      deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
+                        getInjector().getInstance(LocationFactory.class), account, token,
                         "", fileName, applicationClz);
     deployedJar.delete(true);
   }

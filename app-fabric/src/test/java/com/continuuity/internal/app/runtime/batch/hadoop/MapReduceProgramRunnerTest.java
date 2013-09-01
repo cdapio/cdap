@@ -8,6 +8,7 @@ import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -17,6 +18,7 @@ import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -47,7 +49,15 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MapReduceProgramRunnerTest {
-  private static Injector injector = TestHelper.getInjector();
+  private static Injector injector;
+  static {
+    // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
+    // that will test that the long-running transactions actually bypass that timeout.
+    CConfiguration conf = CConfiguration.create();
+    conf.setInt(InMemoryTransactionManager.CFG_TX_TIMEOUT, 1);
+    conf.setInt(InMemoryTransactionManager.CFG_TX_CLEANUP_INTERVAL, 2);
+    injector = TestHelper.getInjector(conf);
+  }
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -56,6 +66,8 @@ public class MapReduceProgramRunnerTest {
   public void testWordCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
+    // transaction manager is a "service" and must be started
+    injector.getInstance(InMemoryTransactionManager.class).init();
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
@@ -110,6 +122,7 @@ public class MapReduceProgramRunnerTest {
   public void testTimeSeriesRecordsCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
+    injector.getInstance(InMemoryTransactionManager.class).init();
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);

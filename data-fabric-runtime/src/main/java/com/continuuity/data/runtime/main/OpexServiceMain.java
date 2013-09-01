@@ -8,9 +8,11 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
@@ -24,6 +26,8 @@ import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +36,8 @@ import java.util.concurrent.TimeUnit;
  * Driver class to start and stop opex in distributed mode.
  */
 public class OpexServiceMain {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OpexServiceMain.class);
 
   private static final int NOOP = 0;
   private static final int START = 1;
@@ -101,6 +107,23 @@ public class OpexServiceMain {
       injector.getInstance(OperationExecutorService.class);
 
     if (START == command) {
+      final InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
+      txManager.init();
+
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          try {
+            txManager.close();
+          } catch (Throwable e) {
+            LOG.error("Failed to shutdown transaction manager.", e);
+            // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
+            System.err.println("Failed to shutdown transaction manager: " + e.getMessage()
+                                 + ". At " + StackTraceUtil.toStringStackTrace(e));
+          }
+        }
+      });
+
       // Starts metrics collection
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
