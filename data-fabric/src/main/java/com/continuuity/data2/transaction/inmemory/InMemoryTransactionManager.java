@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -45,18 +46,21 @@ public class InMemoryTransactionManager {
   // how often to clean up timed out transactions, in seconds, or 0 for no cleanup
   public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
   public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60; // how often to clean up timed out transactions, in seconds
-  // the timeout for a transaction, in seconds. If the transaction is not touched that long, it is marked invalid
+  // the timeout for a transaction, in seconds. If the transaction is not finished in that time, it is marked invalid
   public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
   public static final int DEFAULT_TX_TIMEOUT = 300;
 
   private static final String ALL_STATE_TAG = "all";
   private static final String WATERMARK_TAG = "mark";
 
-  // the set of transactions that are in progress, with their start time stamp
+  // the set of transactions that are in progress, with their expiration time stamp,
+  // or with the negative start time to specify no expiration. We remember the start
+  // time to allow diagnostics and possible manual cleanup/invalidation (not implemented yet).
   private final NavigableMap<Long, Long> inProgress = Maps.newTreeMap();
   // the list of transactions that are invalid (not properly committed/aborted, or timed out)
   private final LongArrayList invalid = new LongArrayList();
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
+  // todo: should this be consolidated with inProgress?
   // commit time nextWritePointer -> changes made by this tx
   private NavigableMap<Long, Set<byte[]>> committedChangeSets = Maps.newTreeMap();
   // not committed yet
@@ -80,7 +84,7 @@ public class InMemoryTransactionManager {
   private final StatePersistor persistor;
 
   private final int cleanupInterval;
-  private final int transactionTimeout; // in milli secs
+  private final int defaultTimeout;
   private Thread cleanupThread = null;
 
   /**
@@ -98,7 +102,7 @@ public class InMemoryTransactionManager {
     this.persistor = persistor;
     claimSize = conf.getInt(CFG_TX_CLAIM_SIZE, DEFAULT_TX_CLAIM_SIZE);
     cleanupInterval = conf.getInt(CFG_TX_CLEANUP_INTERVAL, DEFAULT_TX_CLEANUP_INTERVAL);
-    transactionTimeout = 1000 * conf.getInt(CFG_TX_TIMEOUT, DEFAULT_TX_TIMEOUT);
+    defaultTimeout = conf.getInt(CFG_TX_TIMEOUT, DEFAULT_TX_TIMEOUT);
     clear();
   }
 
@@ -127,11 +131,11 @@ public class InMemoryTransactionManager {
   }
 
   private void startCleanupThread() {
-    if (cleanupInterval <= 0 && transactionTimeout <= 0) {
+    if (cleanupInterval <= 0 && defaultTimeout <= 0) {
       return;
     }
     LOG.info("Starting periodic timed-out transaction cleanup every " + cleanupInterval +
-               " seconds with timeout of " + transactionTimeout / 1000 + " seconds.");
+               " seconds with default timeout of " + defaultTimeout + " seconds.");
     this.cleanupThread = new Thread("tx-clean-timeout") {
       @Override
       public void run() {
@@ -154,7 +158,8 @@ public class InMemoryTransactionManager {
     long currentTime = System.currentTimeMillis();
     List<Long> timedOut = Lists.newArrayList();
     for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
-      if (currentTime - tx.getValue() > transactionTimeout) {
+      long expiration = tx.getValue();
+      if (expiration >= 0L && currentTime > expiration) {
         // timed out, remember tx id (can't remove while iterating over entries)
         timedOut.add(tx.getKey());
       }
@@ -162,6 +167,7 @@ public class InMemoryTransactionManager {
     if (!timedOut.isEmpty()) {
       invalid.addAll(timedOut);
       for (long tx : timedOut) {
+        committingChangeSets.remove(tx);
         inProgress.remove(tx);
       }
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
@@ -239,19 +245,32 @@ public class InMemoryTransactionManager {
     }
   }
 
-  public synchronized Transaction start() {
+  /**
+   * Start a transaction with the default timeout.
+   */
+  public Transaction start() {
+    return start(defaultTimeout);
+  }
+
+  /**
+   * Start a transaction with a given timeout. The contract is that transactions that have no timeout are considered
+   * long-running transactions and do not participate in conflict detection. Also, aborting a long-running transaction
+   * moves it to the invalid list because we assume that its writes cannot be rolled back.
+   * @param timeoutInSeconds the time out period in seconds. Null means no timeout.
+   */
+  public synchronized Transaction start(@Nullable Integer timeoutInSeconds) {
     ensureInitialized();
     saveWaterMarkIfNeeded();
     Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray());
-    inProgress.put(nextWritePointer, System.currentTimeMillis());
+    long currentTime =  System.currentTimeMillis();
+    long expiration = timeoutInSeconds == null ? -currentTime : currentTime + 1000L * timeoutInSeconds;
+    inProgress.put(nextWritePointer, expiration);
     nextWritePointer++;
     return tx;
   }
 
   public synchronized boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
-    // update the timestamp of the transaction as it has been touched
-    Long previous = inProgress.put(tx.getWritePointer(), System.currentTimeMillis());
-    if (previous == null) {
+    if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
       inProgress.remove(tx.getWritePointer());
       return false;
@@ -276,10 +295,8 @@ public class InMemoryTransactionManager {
     Set<byte[]> changeSet = committingChangeSets.remove(tx.getWritePointer());
 
     // update the timestamp of the transaction as it has been touched
-    Long previous = inProgress.put(tx.getWritePointer(), System.currentTimeMillis());
-    if (previous == null) {
+    if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-      inProgress.remove(tx.getWritePointer());
       return false;
     }
 
@@ -302,14 +319,42 @@ public class InMemoryTransactionManager {
     makeVisible(tx);
 
     // All committed change sets that are smaller than the earliest started transaction can be removed.
-    committedChangeSets.headMap(inProgress.isEmpty() ? Long.MAX_VALUE : inProgress.firstKey()).clear();
+    // here we ignore transactions that have no timeout, they are long-running and don't participate in
+    // conflict detection.
+    committedChangeSets.headMap(firstInProgressWithTimeout()).clear();
     return true;
+  }
+
+  // find the first non long-running in-progress tx, or Long.MAX if none such exists
+  private long firstInProgressWithTimeout() {
+    for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
+      if (tx.getValue() >= 0) {
+        return tx.getKey();
+      }
+    }
+    return Long.MAX_VALUE;
   }
 
   public synchronized boolean abort(Transaction tx) {
     committingChangeSets.remove(tx.getWritePointer());
     // makes tx visible (assumes that all operations were rolled back)
-    makeVisible(tx);
+    // remove from in-progress set, so that it does not get excluded in the future
+    Long previous = inProgress.remove(tx.getWritePointer());
+    if (previous != null && previous < 0) {
+      // tx was long-running: it must be moved to invalid because its operations cannot be rolled back
+      invalid.add(tx.getWritePointer());
+      // todo: find a more efficient way to keep this sorted. Could it just be an array?
+      Collections.sort(invalid);
+    } else if (previous == null) {
+        // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
+        if (invalid.rem(tx.getWritePointer())) {
+          // removed a tx from excludes: must move read pointer
+          moveReadPointerIfNeeded(tx.getWritePointer());
+        }
+    } else {
+      // removed a tx from excludes: must move read pointer
+      moveReadPointerIfNeeded(tx.getWritePointer());
+    }
     return true;
   }
 

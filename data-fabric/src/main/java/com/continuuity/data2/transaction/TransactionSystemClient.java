@@ -14,6 +14,13 @@ public interface TransactionSystemClient {
    */
   Transaction start();
 
+  /**
+   * Starts new transaction.
+   * @param timeout the timeout for the transaction, or null for no timeout
+   * @return instance of {@link Transaction}
+   */
+  Transaction start(Integer timeout);
+
   // this pre-commit detects conflicts with other transactions committed so far
   // NOTE: the changes set should not change after this operation, this may help us do some extra optimizations
   // NOTE: there should be time constraint on how long does it take to commit changes by the client after this operation

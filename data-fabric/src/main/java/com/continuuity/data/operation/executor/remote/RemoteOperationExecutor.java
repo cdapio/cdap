@@ -602,6 +602,18 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  public com.continuuity.data2.transaction.Transaction start(final Integer timeout) throws OperationException {
+    return this.execute(
+      new Operation<com.continuuity.data2.transaction.Transaction>("startTx") {
+        @Override
+        public com.continuuity.data2.transaction.Transaction execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          return client.start(timeout);
+        }
+      });
+  }
+
+  @Override
   public boolean canCommit(final com.continuuity.data2.transaction.Transaction tx, final Collection<byte[]> changeIds)
     throws OperationException {
     return this.execute(

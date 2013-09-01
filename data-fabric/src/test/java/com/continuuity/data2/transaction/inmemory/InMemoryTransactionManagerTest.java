@@ -70,6 +70,9 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       Assert.assertEquals(0, txm.getCommittedSize());
       // start a transaction and leave it open
       Transaction tx1 = txm.start();
+      // start a long running transaction and leave it open
+      Transaction tx2 = txm.start(null);
+      Transaction tx3 = txm.start(null);
       // start and commit a bunch of transactions
       for (int i = 0; i < 10; i++) {
         Transaction tx = txm.start();
@@ -85,11 +88,14 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       // transaction should now be invalid
       Assert.assertEquals(1, txm.getInvalidSize());
       // run another transaction
-      Transaction tx = txm.start();
+      Transaction txx = txm.start();
       // verify the exclude
-      Assert.assertEquals(tx1.getWritePointer(), tx.getExcludedList()[0]);
-      if (!(txm.canCommit(tx, Collections.singleton(new byte[] { 0x0a })) && txm.commit(tx))) {
-        txm.abort(tx);
+      Assert.assertEquals(tx1.getWritePointer(), txx.getExcludedList()[0]);
+      Assert.assertEquals(tx2.getWritePointer(), txx.getExcludedList()[1]);
+      Assert.assertEquals(tx3.getWritePointer(), txx.getExcludedList()[2]);
+      // try to commit the last transaction that was started
+      if (!(txm.canCommit(txx, Collections.singleton(new byte[] { 0x0a })) && txm.commit(txx))) {
+        txm.abort(txx);
       }
       // now the committed change sets should be empty again
       Assert.assertEquals(0, txm.getCommittedSize());
@@ -98,6 +104,22 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       txm.abort(tx1);
       // abort should have removed from invalid
       Assert.assertEquals(0, txm.getInvalidSize());
+      // run another bunch of transactions
+      for (int i = 0; i < 10; i++) {
+        Transaction tx = txm.start();
+        if (!(txm.canCommit(tx, Collections.singleton(new byte[] { (byte) i })) && txm.commit(tx))) {
+          txm.abort(tx);
+        }
+      }
+      // none of these should still be in the committed set (tx2 is long-running).
+      Assert.assertEquals(0, txm.getInvalidSize());
+      Assert.assertEquals(0, txm.getCommittedSize());
+      // commit tx2, abort tx3
+      Assert.assertTrue(txm.commit(tx2));
+      Assert.assertTrue(txm.abort(tx3));
+      // none of these should still be in the committed set (tx2 is long-running).
+      Assert.assertEquals(1, txm.getInvalidSize());
+      Assert.assertEquals(1, txm.getExcludedListSize());
     } finally {
       txm.close();
     }

@@ -8,6 +8,7 @@ import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -48,7 +49,15 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MapReduceProgramRunnerTest {
-  private static Injector injector = TestHelper.getInjector();
+  private static Injector injector;
+  static {
+    // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
+    // that will test that the long-running transactions actually bypass that timeout.
+    CConfiguration conf = CConfiguration.create();
+    conf.setInt(InMemoryTransactionManager.CFG_TX_TIMEOUT, 1);
+    conf.setInt(InMemoryTransactionManager.CFG_TX_CLEANUP_INTERVAL, 2);
+    injector = TestHelper.getInjector(conf);
+  }
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();

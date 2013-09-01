@@ -77,14 +77,17 @@ public class TestHelper {
   public static CConfiguration configuration;
   private static Injector injector;
 
-  static {
-    configuration = CConfiguration.create();
-    configuration.set("app.output.dir", TEMP_FOLDER.newFolder("app").getAbsolutePath());
-    configuration.set("app.tmp.dir", TEMP_FOLDER.newFolder("temp").getAbsolutePath());
-    injector = Guice.createInjector(new AppFabricTestModule(configuration));
+  public static Injector getInjector() {
+    return getInjector(CConfiguration.create());
   }
 
-  public static Injector getInjector() {
+  public static synchronized Injector getInjector(CConfiguration conf) {
+    if (injector == null) {
+      configuration = conf;
+      configuration.set("app.output.dir", TEMP_FOLDER.newFolder("app").getAbsolutePath());
+      configuration.set("app.tmp.dir", TEMP_FOLDER.newFolder("temp").getAbsolutePath());
+      injector = Guice.createInjector(new AppFabricTestModule(configuration));
+    }
     return injector;
   }
 
