@@ -66,12 +66,9 @@ public class HttpResponder {
   public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
   public static final String HTTP_DATE_GMT_TIMEZONE = "GMT";
   public static final int HTTP_CACHE_SECONDS = 60;
-  public final MimetypesFileTypeMap mimeTypesMap;
+  public static final MimetypesFileTypeMap mimeTypesMap;
 
-
-  public HttpResponder(Channel channel, boolean keepalive) {
-    this.channel = channel;
-    this.keepalive = keepalive;
+  static {
     mimeTypesMap = new MimetypesFileTypeMap();
     mimeTypesMap.addMimeTypes("image/png png PNG");
     mimeTypesMap.addMimeTypes("image/gif gif GIF");
@@ -80,7 +77,12 @@ public class HttpResponder {
     mimeTypesMap.addMimeTypes("application/javascript js JS");
     mimeTypesMap.addMimeTypes("text/css css CSS");
     mimeTypesMap.addMimeTypes("application/x-font-woff woff WOFF");
+  }
 
+
+  public HttpResponder(Channel channel, boolean keepalive) {
+    this.channel = channel;
+    this.keepalive = keepalive;
   }
 
   /**
@@ -175,7 +177,7 @@ public class HttpResponder {
     }
   }
 
-  public void sendNotModified() {
+  public void sendNotModifiedHeader() {
     HttpResponse response = new DefaultHttpResponse(HTTP_1_1, NOT_MODIFIED);
     SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
     dateFormatter.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_GMT_TIMEZONE));
