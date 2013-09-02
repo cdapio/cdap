@@ -57,8 +57,8 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
- * HttpResponder responds back to the client that initiated the request. Caller can use sendJson method to respond
- * back to the client in json format.
+ * HttpResponder responds back to the client that initiated the request.
+ * Caller can use send* methods to respond back to the client.
  */
 public class HttpResponder {
   private final Channel channel;
@@ -77,6 +77,12 @@ public class HttpResponder {
     mimeTypesMap.addMimeTypes("application/javascript js JS");
     mimeTypesMap.addMimeTypes("text/css css CSS");
     mimeTypesMap.addMimeTypes("application/x-font-woff woff WOFF");
+    mimeTypesMap.addMimeTypes("image/ico ico");
+    mimeTypesMap.addMimeTypes("application/json json");
+    mimeTypesMap.addMimeTypes("application/x-shockwave-flash swf");
+    mimeTypesMap.addMimeTypes("image/svg+xml svg");
+    mimeTypesMap.addMimeTypes("application/x-font-ttf ttf");
+    mimeTypesMap.addMimeTypes("application/xhtml+xml xml xhtml");
   }
 
 
@@ -264,6 +270,8 @@ public class HttpResponder {
    *            file to extract content type
    */
   private static void setContentTypeHeader(HttpResponse response, File file) {
-    response.setHeader(CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
+    String contentType = mimeTypesMap.getContentType(file.getPath());
+    System.out.println("Request for path : " + file.getAbsolutePath() + " " + contentType);
+    response.setHeader(CONTENT_TYPE, contentType);
   }
 }

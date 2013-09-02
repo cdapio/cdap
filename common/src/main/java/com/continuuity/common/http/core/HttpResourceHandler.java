@@ -163,7 +163,6 @@ public final class HttpResourceHandler implements HttpHandler {
 
     Map<String, String> groupValues = Maps.newHashMap();
     String path = URI.create(request.getUri()).getPath();
-
     List<HttpResourceModel> resourceModels = patternRouter.getDestinations(path, groupValues);
 
     HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
@@ -221,7 +220,7 @@ public final class HttpResourceHandler implements HttpHandler {
       long ifModifiedSinceDateSeconds = ifModifiedSinceDate.getTime() / 1000;
       long fileLastModifiedSeconds = file.lastModified() / 1000;
       if (ifModifiedSinceDateSeconds == fileLastModifiedSeconds) {
-        responder.sendNotModified();
+        responder.sendNotModifiedHeader();
         return;
       }
     }
