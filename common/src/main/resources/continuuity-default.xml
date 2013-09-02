@@ -42,7 +42,7 @@
 
     <property>
         <name>weave.zookeeper.namespace</name>
-        <value>weave</value>
+        <value>/weave</value>
         <description>Namespace prefix for weave zookeeper</description>
     </property>
 
