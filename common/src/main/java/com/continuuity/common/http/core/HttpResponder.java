@@ -183,6 +183,9 @@ public class HttpResponder {
     }
   }
 
+  /**
+   * Sends 'Not-Modified' headers.
+   */
   public void sendNotModifiedHeader() {
     HttpResponse response = new DefaultHttpResponse(HTTP_1_1, NOT_MODIFIED);
     SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
@@ -193,7 +196,14 @@ public class HttpResponder {
     channel.write(response).addListener(ChannelFutureListener.CLOSE);
   }
 
-  public void sendFile(final String path, final File file) throws IOException, ParseException {
+  /**
+   * Sends
+   * @param path
+   * @param file
+   * @throws IOException
+   * @throws ParseException
+   */
+  public void sendMIMEFile(final String path, final File file) throws IOException, ParseException {
     RandomAccessFile raf;
     try {
       raf = new RandomAccessFile(file, "r");
