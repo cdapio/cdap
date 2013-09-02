@@ -10,7 +10,7 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionOracle;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Preconditions;
 import org.junit.After;
@@ -61,9 +61,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   @Before
   public void before() {
-    // todo: avoid this hack
-    InMemoryTransactionOracle.reset();
-    txClient = new InMemoryTxSystemClient();
+    txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
   }
 
   @After

@@ -40,6 +40,13 @@ public interface TransactionAgent {
   public void start() throws OperationException;
 
   /**
+   * Start the interaction with this agent.
+   * @param timeout the timeout for the transaction, or null for no timeout
+   * @throws OperationException if something goes wrong in data fabric
+   */
+  public void start(Integer timeout) throws OperationException;
+
+  /**
    * Ends the interaction with this agent, indicating failure. This can mean, for
    * instance, a rollback of all operations issued so far, but this is dependent on
    * the implementation.

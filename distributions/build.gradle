@@ -88,9 +88,7 @@ task reactor_sdk_dist (type: Zip, dependsOn: ':web-cloud-app:build') {
   from combinedApiJar.outputs
   from combinedApiSourceJar.outputs
   from combinedApiJavadocJar.outputs
-  from project(':singlenode').files('src/dist') {
-    filter(ReplaceTokens, tokens: [VERSION: project.version])
-  }
+  from project(':singlenode').files('src/dist')
   from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
 
 

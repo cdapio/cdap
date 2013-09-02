@@ -31,6 +31,15 @@ public class TalkingToOpexTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
+  public Transaction start(Integer timeout) {
+    try {
+      return opex.start(timeout);
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
     if (changeIds.size() == 0) {
       return true;

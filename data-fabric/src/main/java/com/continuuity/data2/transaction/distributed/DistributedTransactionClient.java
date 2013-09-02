@@ -43,6 +43,12 @@ public final class DistributedTransactionClient implements TransactionSystemClie
   }
 
   @Override
+  public Transaction start(Integer timeout) {
+    // todo implement this when we replace opex with a tx manager service.
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
     try {
       return rpcClient.canCommit(Converters.convert(tx), ImmutableList.copyOf(

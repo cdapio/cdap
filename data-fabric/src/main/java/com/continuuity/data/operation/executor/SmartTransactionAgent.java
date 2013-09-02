@@ -57,7 +57,7 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
   // the current transaction
   private Transaction xaction;
   // keep track of current state
-  private State state = State.New;
+  protected State state = State.New;
 
   // keep track of successful operations: we can't increase succeeded count every time we
   // execute a deferred batch, we will only know whether they succeed at commit().
@@ -70,8 +70,10 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
     return executed.get();
   }
 
-  // helper enum
-  private enum State { New, Running, Aborted, Finished }
+  /**
+   * helper enum.
+   */
+  protected enum State { New, Running, Aborted, Finished }
 
   // defaults for limits on deferred operations
   public static final int DEFAULT_SIZE_LIMIT = 16 * 1024 * 1024;
@@ -150,6 +152,18 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
       throw new IllegalStateException("Transaction has already started.");
     }
     super.start();
+    this.state = State.Running;
+  }
+
+  @Override
+  public void start(Integer timeout) throws OperationException {
+    // Transaction agent can be started only once
+    if (this.state != State.New) {
+      // in this case we want to throw a runtime exception. The transaction has started
+      // and we must abort or commit it, otherwise data fabric may be inconsistent.
+      throw new IllegalStateException("Transaction has already started.");
+    }
+    super.start(timeout);
     this.state = State.Running;
   }
 

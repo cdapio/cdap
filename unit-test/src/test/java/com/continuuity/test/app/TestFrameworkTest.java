@@ -66,7 +66,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  @Test(timeout = 240000)
+  @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException, OperationException {
     ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
 
@@ -111,7 +111,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
       // Run mapreduce job
       MapReduceManager mrManager = applicationManager.startMapReduce("countTotal");
-      mrManager.waitForFinish(60L, TimeUnit.SECONDS);
+      mrManager.waitForFinish(120L, TimeUnit.SECONDS);
 
       long totalCount = Long.valueOf(procedureClient.query("total", Collections.<String, String>emptyMap()));
       // every event has 5 tokens

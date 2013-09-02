@@ -39,7 +39,7 @@ public abstract class HBaseTestBase {
 
   protected static Configuration conf;
 
-  protected static MiniZooKeeperCluster zkCluster;
+  public static MiniZooKeeperCluster zkCluster;
 
   protected static MiniDFSCluster dfsCluster;
 
@@ -69,6 +69,10 @@ public abstract class HBaseTestBase {
     File dir = Files.createTempDir();
     tmpDirList.add(dir);
     return dir;
+  }
+
+  public static String getZkConnectionString() {
+    return "localhost:" + zkCluster.getClientPort();
   }
 
   // Test startup / teardown

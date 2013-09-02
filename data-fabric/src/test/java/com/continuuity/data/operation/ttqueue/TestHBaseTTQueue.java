@@ -13,6 +13,7 @@ import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 
 import java.util.Random;
 
@@ -21,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * test the queues with HBase.
  */
+@Ignore
 public class TestHBaseTTQueue extends TestHBaseAbstractTTQueue {
 
   protected static Injector injector;
