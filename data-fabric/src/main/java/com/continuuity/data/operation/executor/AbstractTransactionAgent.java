@@ -58,8 +58,18 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
     propagateToTxAwares(currentTx);
   }
 
+  @Override
+  public void start(Integer timeout) throws OperationException {
+    succeeded.set(0);
+    failed.set(0);
+    currentTx = txSystemClient.start(timeout);
+    propagateToTxAwares(currentTx);
+  }
+
   // sets tx to be used by txAware datasets
   protected void propagateToTxAwares(com.continuuity.data2.transaction.Transaction currentTx) {
+    // currentTx may not be set up before that (e.g. in detached tx agent case)
+    this.currentTx = currentTx;
     for (TransactionAware txnl : txAware) {
       txnl.startTx(currentTx);
     }
@@ -79,7 +89,7 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
 
   @Override
   public void flush() throws OperationException {
-    commitTxAwareDataSets();
+    flushTxAwareDataSets();
   }
 
   @Override
@@ -145,6 +155,8 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
   }
 
   private void commitTxAwareDataSets() throws OperationException {
+
+    // 1. figure out whether the transaction can commit
     List<byte[]> changes = Lists.newArrayList();
     for (TransactionAware txnl : txAware) {
       changes.addAll(txnl.getTxChanges());
@@ -156,30 +168,28 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
       }
     }
 
-    for (TransactionAware txAware : this.txAware) {
-      try {
-        if (!txAware.commitTx()) {
-          // the app-fabric runtime will call abort() after that, so no need to do extra steps here
-          throw new OperationException(StatusCode.INVALID_TRANSACTION,
-                                       String.format("failed to commit tx for %s", txAware.getClass()));
-        }
-      } catch (Exception e) {
-        // the app-fabric runtime will call abort() after that, so no need to do extra steps here
-        throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx", e);
-      }
-    }
+    // 2. flush all data sets in the tx
+    flushTxAwareDataSets();
 
-    // ANDREAS: isn't there a race condition here? canCommit() returns true, then we commit all datasets,
-    // then we attempt to commit() which detects a conflict. Now the dataset changes will not be rolled back.
-    // chances for this are high: until we call canCommit(), all changes happen in memory and are fast. The
-    // committing/flushing of all datasets is the slow part... so conflicts most likely happen now.
-
-    // TERENCE: The commit call will check for conflicts again in the TX oracle, hence the call to commit
-    // could fail if there are new conflicts introduced between canCommit and commit call, causing exception
-    // to be thrown, hence triggering rollback from the app-fabric.
+    // 3. commit the transaction (this can still fail)
     if (!txSystemClient.commit(currentTx)) {
-      // the app-fabric runtime will call abort() after that, so no need to do extra steps here
+      // the app-fabric runtime will call abort() after that, so no need to do extra steps to undo the flush
       throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to commit tx (2nd phase)");
+    }
+  }
+
+  private void flushTxAwareDataSets() throws OperationException {
+    for (TransactionAware txAware : this.txAware) {
+      boolean success;
+      try {
+        success = txAware.commitTx();
+      } catch (Exception e) {
+        throw new OperationException(StatusCode.INVALID_TRANSACTION, "failed to flush tx", e);
+      }
+      if (!success) {
+        throw new OperationException(StatusCode.INVALID_TRANSACTION,
+                                     String.format("failed to flush tx for %s", txAware.getClass()));
+      }
     }
   }
 

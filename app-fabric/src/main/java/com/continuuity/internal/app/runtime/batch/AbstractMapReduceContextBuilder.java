@@ -105,13 +105,6 @@ public abstract class AbstractMapReduceContextBuilder {
                                                                  dataSetContext.getTransactionAware(),
                                                                  txSystemClient,
                                                                  tx, tx2);
-    try {
-      txAgent.start();
-    } catch (OperationException e) {
-      LOG.error("Failed to start transaction agent for job (trying to attach to existing tx): " +
-                  program.getProgramName());
-      throw Throwables.propagate(e);
-    }
     transactionProxy.setTransactionAgent(txAgent);
 
     // Creating mapreduce job context

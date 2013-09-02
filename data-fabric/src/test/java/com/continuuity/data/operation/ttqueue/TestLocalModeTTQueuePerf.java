@@ -18,37 +18,13 @@ import org.junit.Test;
  */
 public class TestLocalModeTTQueuePerf {
 
-  //  private static final Properties hsqlProperties = new Properties();
-
-  //  private static final String hsql = "jdbc:hsqldb:file:/db/benchdb";
-  //  private static final String hsql = "jdbc:hsqldb:mem:membenchdb";
-
   private static final DataFabricLocalModule module =
-      new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null);
-  //  new DataFabricLocalModule();
+      new DataFabricLocalModule();
 
   private static final Injector injector = Guice.createInjector(module);
 
   private static final OVCTableHandle handle =
       injector.getInstance(OVCTableHandle.class);
-
-  //  // Configuration for hypersql
-  //  static {
-  //    // Assume 1K rows and 512MB cache size
-  //    hsqlProperties.setProperty("hsqldb.cache_rows", "" + 512000);
-  //    hsqlProperties.setProperty("hsqldb.cache_size", "" + 512000);
-  //    // Disable logging
-  //    hsqlProperties.setProperty("hsqldb.log_data", "false");
-  //  }
-
-  //  // Configuration for hypersql bench
-  //  private static final BenchConfig config = new BenchConfig();
-  //  static {
-  //    config.numJustEnqueues = 1000;
-  //    config.queueEntrySize = 10;
-  //    config.numEnqueuesThenSyncDequeueAckFinalize = 1000;
-  //  }
-
 
   @Test
   public void test100EnqueuesThenSyncDequeues() throws Exception {

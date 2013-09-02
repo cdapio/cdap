@@ -66,7 +66,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  @Test(timeout = 240000)
+  @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException, OperationException {
     ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
 

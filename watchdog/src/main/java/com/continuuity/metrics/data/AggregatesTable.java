@@ -158,12 +158,13 @@ public final class AggregatesTable {
     if (isFilterable && (aggregatesTable instanceof HBaseFilterableOVCTable) &&
       ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
       Filter rowFilter = getFilter(contextPrefix, metricPrefix, runId);
-      // still gets the first key of the first column, but better than getting the whole row
-      FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL,
-                                          rowFilter, new KeyOnlyFilter(), new FirstKeyOnlyFilter());
+      // Putting the FuzzyRowFilter into the filter list results in hbase throwing a RetriesExhaustedException
+      // when we try and get the scanner... so just using the filter by itself until we figure out how to fix it
+      //FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL,
+      //                                    rowFilter, new KeyOnlyFilter(), new FirstKeyOnlyFilter());
       scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
                                                             MemoryReadPointer.DIRTY_READ,
-                                                            filters);
+                                                            rowFilter);
     } else if (isFilterable && (aggregatesTable instanceof LevelDBFilterableOVCTable)) {
       scanner = ((FilterableOVCTable) aggregatesTable).scan(
         startRow, endRow, MemoryReadPointer.DIRTY_READ,

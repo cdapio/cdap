@@ -6,6 +6,7 @@ import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOrac
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Throwables;
 
 import java.lang.reflect.Field;
@@ -18,7 +19,8 @@ public class Util {
     try {
       MemoryOracle memoryOracle = new MemoryOracle();
       injectField(memoryOracle.getClass(), memoryOracle, "timeOracle", new MemoryStrictlyMonotonicTimeOracle());
-      return new OmidTransactionalOperationExecutor(memoryOracle, MemoryOVCTableHandle.getInstance(),
+      InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+      return new OmidTransactionalOperationExecutor(memoryOracle, txManager, MemoryOVCTableHandle.getInstance(),
                                              new CConfiguration());
     } catch (Exception e) {
       throw Throwables.propagate(e);

@@ -7,9 +7,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
-import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
-import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
@@ -19,7 +17,10 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.inmemory.NoopPersistor;
+import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
@@ -90,15 +91,12 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
 
     // This is the primary mapping of the data fabric to underlying storage
-//    bind(OVCTableHandle.class).to(LevelDBAndMemoryOVCTableHandle.class);
-    bind(LevelDBOVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
-    bind(MemoryOVCTableHandle.class).toInstance(MemoryOVCTableHandle.getInstance());
-    bind(OVCTableHandle.class).to(LevelDBAndMemoryOVCTableHandle.class);
-
-    bind(OperationExecutor.class).
-        to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
+    bind(OVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
+    bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
+    bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
+    bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
     bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(conf);
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);

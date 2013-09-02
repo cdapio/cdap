@@ -29,10 +29,6 @@ public class MetricsFrontendServerTest {
     // Configure the server to start on that port.
     configuration.setInt(Constants.CFG_METRICS_FRONTEND_SERVER_PORT, port);
 
-    // Add the SQL connection url.
-    configuration.set(Constants.CFG_METRICS_CONNECTION_URL,
-                      "jdbc:hsqldb:mem:testmetricsdb?user=sa");
-
     // Create an injector which will inject the metric frontend server.
     Injector injector = Guice.createInjector(
       new MetricsModules().getDistributedModules()

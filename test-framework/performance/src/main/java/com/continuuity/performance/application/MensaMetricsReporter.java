@@ -6,7 +6,6 @@ package com.continuuity.performance.application;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.performance.runner.Metric;
-import com.continuuity.performance.util.MensaMetricsDispatcher;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,6 @@ public final class MensaMetricsReporter  {
   private final int tsdbPort;
   private final RuntimeMetricsCollector collector;
   private final LinkedBlockingDeque<String> dispatchQueue;
-  private final MensaMetricsDispatcher dispatcher;
   private final ExecutorService executorService = Executors.newCachedThreadPool();
   private Future futureCollector;
   private Future futureDispatcher;
@@ -51,7 +49,6 @@ public final class MensaMetricsReporter  {
     }
     dispatchQueue = new LinkedBlockingDeque<String>(50000);
     collector = new RuntimeMetricsCollector(dispatchQueue, interval, getMetricsInstances(metricNames), tags);
-    dispatcher = new MensaMetricsDispatcher(tsdbHostName, tsdbPort, dispatchQueue);
     init();
   }
 
@@ -68,15 +65,12 @@ public final class MensaMetricsReporter  {
     this.tsdbPort = tsdbPort;
     dispatchQueue = new LinkedBlockingDeque<String>(50000);
     collector = new RuntimeMetricsCollector(dispatchQueue, interval, getMetricsInstances(metricNames), tags);
-    dispatcher = new MensaMetricsDispatcher(tsdbHostName, tsdbPort, dispatchQueue);
     init();
   }
 
   private void init() {
     // Start the metrics collector thread.
     futureCollector = executorService.submit(collector);
-    // Start the metrics dispatcher thread.
-    futureDispatcher = executorService.submit(dispatcher);
   }
 
   public void reportNow(String metricName, double value) {
@@ -92,10 +86,6 @@ public final class MensaMetricsReporter  {
     LOG.debug("Stopping metrics collector thread.");
     collector.stop();
     futureCollector.cancel(true);
-
-    LOG.debug("Stopping metrics dispatcher thread.");
-    dispatcher.stop();
-    futureDispatcher.cancel(true);
 
     LOG.debug("Shutting down executor service of metrics collector and dispatcher.");
     executorService.shutdown();

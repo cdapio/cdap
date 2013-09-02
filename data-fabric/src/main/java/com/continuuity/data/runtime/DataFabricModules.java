@@ -19,11 +19,13 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.inmemory.NoopPersistor;
+import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
-import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
@@ -59,6 +61,8 @@ public class DataFabricModules extends RuntimeModule {
 
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
+        bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
+        bind(InMemoryTransactionManager.class).in(Singleton.class);
         bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
         bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
@@ -74,6 +78,10 @@ public class DataFabricModules extends RuntimeModule {
   @Override
   public Module getSingleNodeModules() {
     return new DataFabricLocalModule();
+  }
+
+  public Module getSingleNodeModules(CConfiguration conf) {
+    return new DataFabricLocalModule(conf);
   }
 
   @Override

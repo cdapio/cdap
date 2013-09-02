@@ -13,7 +13,7 @@ import javax.ws.rs.Path;
  */
 public class PingHandler extends AbstractHttpHandler {
 
-  @Path("/ping")
+  @Path("/v2/ping")
   @GET
   public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
     responder.sendString(HttpResponseStatus.OK, "OK.\n");

@@ -65,7 +65,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * POST requests to send an event to a stream, and GET requests to inspect
  * or retrieve events from the stream.
  */
-@Path("/stream")
+@Path("/v2/stream")
 public class StreamHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private static final String NAME = GatewayConstants.STREAM_HANDLER_NAME;

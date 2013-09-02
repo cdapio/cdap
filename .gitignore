@@ -29,3 +29,6 @@ logs/
 
 # Singlenode run files. 
 /data/
+
+# gateway test leftover
+/gateway/data/
