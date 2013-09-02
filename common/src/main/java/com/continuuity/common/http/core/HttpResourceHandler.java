@@ -20,6 +20,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
@@ -38,6 +39,7 @@ public final class HttpResourceHandler implements HttpHandler {
   private PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
     new PatternPathRouterWithGroups<HttpResourceModel>();
   private List<HttpHandler> handlers;
+  private File documentRoot = new File(System.getProperty("user.dir"));
 
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
@@ -81,6 +83,10 @@ public final class HttpResourceHandler implements HttpHandler {
         }
       }
     }
+  }
+
+  public void setDocumentRoot(final File documentRoot) {
+    this.documentRoot = documentRoot;
   }
 
   /**
