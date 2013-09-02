@@ -13,6 +13,7 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
+  compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
   // Test framework dependencies
   compile libraries.junit

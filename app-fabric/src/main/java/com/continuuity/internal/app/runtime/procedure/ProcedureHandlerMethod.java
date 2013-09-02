@@ -99,6 +99,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
     try {
       handlerMethod.handle(request, responder);
+      context.getSystemMetrics().gauge("query.processed", 1);
     } catch (Throwable t) {
       context.getSystemMetrics().gauge("query.failures", 1);
       throw Throwables.propagate(t);

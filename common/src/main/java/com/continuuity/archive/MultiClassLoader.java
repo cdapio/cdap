@@ -17,6 +17,31 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class MultiClassLoader extends ClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
+
+  // Sets of class prefix that would not be loaded by the class loader
+  private static final String[] CLASS_PREFER_EXEMPTIONS = new String[] {
+    // Java standard library:
+    "com.sun.",
+    "launcher.",
+    "java.",
+    "javax.",
+    "org.ietf",
+    "org.omg",
+    "org.w3c",
+    "org.xml",
+    "sunw.",
+    // logging
+    "org.slf4j",
+    "com.hadoop",
+    // Hadoop/HBase/ZK:
+    "org.apache.hadoop",
+    "org.apache.zookeeper",
+    // Continuuity
+    "com.continuuity",
+    // Guava
+    "com.google.common",
+  };
+
   private char classNameReplacementChar;
 
   /**
@@ -47,7 +72,8 @@ public abstract class MultiClassLoader extends ClassLoader {
 
     //Try to load it from preferred source
     // Note loadClassBytes() is an abstract method
-    byte[] classBytes = loadClassBytes(className);
+    boolean preferred = isPreferred(className);
+    byte[] classBytes = preferred ? loadClassBytes(className) : null;
     if (classBytes == null) {
       //Check with the parent classloader
       try {
@@ -61,10 +87,17 @@ public abstract class MultiClassLoader extends ClassLoader {
         }
         return ClassLoader.getSystemClassLoader().loadClass(className);
       } catch (ClassNotFoundException e) {
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+        if (!preferred) {
+          // Tries to load it from this classloader
+          classBytes = loadClassBytes(className);
+          if (classBytes == null) {
+            LOG.warn("Fail to load class {}", className);
+            throw e;
+          }
+        } else {
+          LOG.warn("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+          throw e;
         }
-        throw e;
       }
     }
 
@@ -101,11 +134,17 @@ public abstract class MultiClassLoader extends ClassLoader {
       return className.replace('.', '/') + ".class";
     } else {
       // Replace '.' with custom char, such as '_'
-      return className.replace(
-                                '.',
-                                classNameReplacementChar
-      ) + ".class";
+      return className.replace('.', classNameReplacementChar) + ".class";
     }
+  }
+
+  private boolean isPreferred(String className) {
+    for (String prefix : CLASS_PREFER_EXEMPTIONS) {
+      if (className.startsWith(prefix)) {
+        return false;
+      }
+    }
+    return true;
   }
 
 }
