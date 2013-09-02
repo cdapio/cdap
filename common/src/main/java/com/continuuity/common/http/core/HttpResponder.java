@@ -16,16 +16,45 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelFutureProgressListener;
+import org.jboss.netty.channel.DefaultFileRegion;
+import org.jboss.netty.channel.FileRegion;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.handler.stream.ChunkedFile;
 
+import javax.activation.MimetypesFileTypeMap;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
+
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CACHE_CONTROL;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.DATE;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.EXPIRES;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.IF_MODIFIED_SINCE;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.LAST_MODIFIED;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.setContentLength;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * HttpResponder responds back to the client that initiated the request. Caller can use sendJson method to respond
@@ -34,10 +63,24 @@ import java.util.Map;
 public class HttpResponder {
   private final Channel channel;
   private final boolean keepalive;
+  public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
+  public static final String HTTP_DATE_GMT_TIMEZONE = "GMT";
+  public static final int HTTP_CACHE_SECONDS = 60;
+  public final MimetypesFileTypeMap mimeTypesMap;
+
 
   public HttpResponder(Channel channel, boolean keepalive) {
     this.channel = channel;
     this.keepalive = keepalive;
+    mimeTypesMap = new MimetypesFileTypeMap();
+    mimeTypesMap.addMimeTypes("image/png png PNG");
+    mimeTypesMap.addMimeTypes("image/gif gif GIF");
+    mimeTypesMap.addMimeTypes("image/jpeg jpeg jpg JPEG JPG");
+    mimeTypesMap.addMimeTypes("text  txt text rtf TXT");
+    mimeTypesMap.addMimeTypes("application/javascript js JS");
+    mimeTypesMap.addMimeTypes("text/css css CSS");
+    mimeTypesMap.addMimeTypes("application/x-font-woff woff WOFF");
+
   }
 
   /**
@@ -130,5 +173,95 @@ public class HttpResponder {
     if (!keepalive) {
       future.addListener(ChannelFutureListener.CLOSE);
     }
+  }
+
+  public void sendNotModified() {
+    HttpResponse response = new DefaultHttpResponse(HTTP_1_1, NOT_MODIFIED);
+    SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
+    dateFormatter.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_GMT_TIMEZONE));
+
+    Calendar time = new GregorianCalendar();
+    response.setHeader(DATE, dateFormatter.format(time.getTime()));
+    channel.write(response).addListener(ChannelFutureListener.CLOSE);
+  }
+
+  public void sendFile(final String path, final File file) throws IOException, ParseException {
+    RandomAccessFile raf;
+    try {
+      raf = new RandomAccessFile(file, "r");
+    } catch (FileNotFoundException fnfe) {
+      sendStatus(NOT_FOUND);
+      return;
+    }
+    long fileLength = raf.length();
+
+    HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+    setContentLength(response, fileLength);
+    setContentTypeHeader(response, file);
+    setDateAndCacheHeaders(response, file);
+
+    // Write the initial line and the header.
+    channel.write(response);
+
+    // Write the content.
+    ChannelFuture writeFuture;
+    if (channel.getPipeline().get(SslHandler.class) != null) {
+      // Cannot use zero-copy with HTTPS.
+      writeFuture = channel.write(new ChunkedFile(raf, 0, fileLength, 8192));
+    } else {
+      // No encryption - use zero-copy.
+      final FileRegion region =
+        new DefaultFileRegion(raf.getChannel(), 0, fileLength);
+      writeFuture = channel.write(region);
+      writeFuture.addListener(new ChannelFutureProgressListener() {
+        public void operationComplete(ChannelFuture future) {
+          region.releaseExternalResources();
+        }
+
+        public void operationProgressed(
+          ChannelFuture future, long amount, long current, long total) {
+          System.out.printf("%s: %d / %d (+%d)%n", path, current, total, amount);
+        }
+      });
+    }
+
+    // Close the connection when the whole content is written out.
+    writeFuture.addListener(ChannelFutureListener.CLOSE);
+  }
+
+  /**
+   * Sets the Date and Cache headers for the HTTP Response
+   *
+   * @param response
+   *            HTTP response
+   * @param fileToCache
+   *            file to extract content type
+   */
+  private static void setDateAndCacheHeaders(HttpResponse response, File fileToCache) {
+    SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
+    dateFormatter.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_GMT_TIMEZONE));
+
+    // Date header
+    Calendar time = new GregorianCalendar();
+    response.setHeader(DATE, dateFormatter.format(time.getTime()));
+
+    // Add cache headers
+    time.add(Calendar.SECOND, HTTP_CACHE_SECONDS);
+    response.setHeader(EXPIRES, dateFormatter.format(time.getTime()));
+    response.setHeader(CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS);
+    response.setHeader(
+      LAST_MODIFIED, dateFormatter.format(new Date(fileToCache.lastModified())));
+  }
+
+  /**
+   * Sets the content type header for the HTTP Response
+   *
+   * @param response
+   *            HTTP response
+   * @param file
+   *            file to extract content type
+   */
+  private static void setContentTypeHeader(HttpResponse response, File file) {
+    response.setHeader(CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
   }
 }

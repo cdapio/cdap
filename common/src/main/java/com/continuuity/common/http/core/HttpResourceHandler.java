@@ -8,25 +8,60 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelFutureProgressListener;
+import org.jboss.netty.channel.DefaultFileRegion;
+import org.jboss.netty.channel.FileRegion;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.handler.stream.ChunkedFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
+
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CACHE_CONTROL;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.DATE;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.EXPIRES;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.IF_MODIFIED_SINCE;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.LAST_MODIFIED;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.setContentLength;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.METHOD_NOT_ALLOWED;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 // TODO: Check path collision
 /**
@@ -39,15 +74,11 @@ public final class HttpResourceHandler implements HttpHandler {
   private PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
     new PatternPathRouterWithGroups<HttpResourceModel>();
   private List<HttpHandler> handlers;
-  private File documentRoot = new File(System.getProperty("user.dir"));
+  private final File documentRoot;
 
-  /**
-   * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
-   * patternPathRouter which is routable by path to {@code HttpResourceModel} as destination of the route.
-   *
-   * @param handlers Iterable of HttpHandler.
-   */
-  public HttpResourceHandler(Iterable<HttpHandler> handlers){
+
+  public HttpResourceHandler(Iterable<HttpHandler> handlers, File documentRoot) {
+    this.documentRoot = documentRoot;
     //Store the handlers to call init and destroy on all handlers.
     this.handlers = ImmutableList.copyOf(handlers);
     for (HttpHandler handler : handlers){
@@ -85,8 +116,14 @@ public final class HttpResourceHandler implements HttpHandler {
     }
   }
 
-  public void setDocumentRoot(final File documentRoot) {
-    this.documentRoot = documentRoot;
+  /**
+   * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
+   * patternPathRouter which is routable by path to {@code HttpResourceModel} as destination of the route.
+   *
+   * @param handlers Iterable of HttpHandler.
+   */
+  public HttpResourceHandler(Iterable <HttpHandler> handlers){
+    this(handlers, new File(System.getProperty("user.dir")));
   }
 
   /**
@@ -132,21 +169,90 @@ public final class HttpResourceHandler implements HttpHandler {
     HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
     try {
       if (httpResourceModel != null){
-        //Found a httpresource route to it.
+        // Found a httpresource route to it.
         httpResourceModel.handle(request, responder, groupValues);
       } else if (resourceModels.size() > 0)  {
-        //Found a matching resource but could not find the right HttpMethod so return 405
+        // Found a matching resource but could not find the right HttpMethod so return 405
         responder.sendError(HttpResponseStatus.METHOD_NOT_ALLOWED,
                             String.format("Problem accessing: %s. Reason: Method Not Allowed", request.getUri()));
       } else {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, String.format("Problem accessing: %s. Reason: Not Found",
-                                                                        request.getUri()));
+        // if there are no matches, we will try to find it there is static content to be served.
+        // if it's not GET request, we are here because we didn't find a route.
+        if (request.getMethod() != HttpMethod.GET) {
+          responder.sendStatus(NOT_FOUND);
+          return;
+        }
+        serveStaticContent(request, responder);
       }
     } catch (Throwable t){
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                           String.format("Caught exception processing request. Reason: %s",
                                          t.getMessage()));
     }
+  }
+
+  private void serveStaticContent(HttpRequest request, HttpResponder responder) throws Exception {
+
+    final String path = sanitizeUri(request.getUri());
+    if (path == null) {
+      responder.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    File file = new File(path);
+    if (file.isHidden() || !file.exists()) {
+      responder.sendStatus(NOT_FOUND);
+      return;
+    }
+
+    if (!file.isFile()) {
+      responder.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    // Cache Validation
+    String ifModifiedSince = request.getHeader(IF_MODIFIED_SINCE);
+    if (ifModifiedSince != null && ifModifiedSince.length() != 0) {
+      SimpleDateFormat dateFormatter = new SimpleDateFormat(HttpResponder.HTTP_DATE_FORMAT, Locale.US);
+      Date ifModifiedSinceDate = dateFormatter.parse(ifModifiedSince);
+
+      // Only compare up to the second because the datetime format we send to the client does
+      // not have milliseconds
+      long ifModifiedSinceDateSeconds = ifModifiedSinceDate.getTime() / 1000;
+      long fileLastModifiedSeconds = file.lastModified() / 1000;
+      if (ifModifiedSinceDateSeconds == fileLastModifiedSeconds) {
+        responder.sendNotModified();
+        return;
+      }
+    }
+    responder.sendFile(path, file);
+  }
+
+  private String sanitizeUri(String uri) {
+    // Decode the path.
+    try {
+      uri = URLDecoder.decode(uri, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      try {
+        uri = URLDecoder.decode(uri, "ISO-8859-1");
+      } catch (UnsupportedEncodingException e1) {
+        throw new Error();
+      }
+    }
+
+    // Convert file separators.
+    uri = uri.replace('/', File.separatorChar);
+
+    // Simplistic dumb security check.
+    // You will have to do something serious in the production environment.
+    if (uri.contains(File.separator + '.') ||
+      uri.contains('.' + File.separator) ||
+      uri.startsWith(".") || uri.endsWith(".")) {
+      return null;
+    }
+
+    // Convert to absolute path.
+    return new File(documentRoot.getAbsolutePath(), uri).getAbsolutePath();
   }
 
   /**

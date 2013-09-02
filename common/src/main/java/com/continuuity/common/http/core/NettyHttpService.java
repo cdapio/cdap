@@ -27,6 +27,7 @@ import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -58,6 +59,7 @@ public final class NettyHttpService extends AbstractIdleService {
   private final Set<HttpHandler> httpHandlers;
   private final HandlerContext handlerContext;
   private final ChannelGroup channelGroup;
+  private final File documentRoot;
 
   private static final int CLOSE_CHANNEL_TIMEOUT = 5;
 
@@ -80,7 +82,7 @@ public final class NettyHttpService extends AbstractIdleService {
                           int connectionBacklog,
                           int execThreadPoolSize, long execThreadKeepAliveSecs,
                           RejectedExecutionHandler rejectedExecutionHandler,
-                          Iterable<? extends HttpHandler> httpHandlers){
+                          Iterable<? extends HttpHandler> httpHandlers, File documentRoot){
     this.bindAddress = bindAddress;
     this.bossThreadPoolSize = bossThreadPoolSize;
     this.workerThreadPoolSize = workerThreadPoolSize;
@@ -91,6 +93,7 @@ public final class NettyHttpService extends AbstractIdleService {
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
     this.handlerContext = new DummyHandlerContext();
     this.channelGroup = new DefaultChannelGroup();
+    this.documentRoot = documentRoot;
   }
 
   /**
@@ -154,7 +157,7 @@ public final class NettyHttpService extends AbstractIdleService {
                                                                       workerExecutor, workerThreadPoolSize));
     bootstrap.setOption("backlog", connectionBacklog);
 
-    resourceHandler = new HttpResourceHandler(httpHandlers);
+    resourceHandler = new HttpResourceHandler(httpHandlers, documentRoot);
     resourceHandler.init(handlerContext);
 
     final ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
@@ -240,6 +243,7 @@ public final class NettyHttpService extends AbstractIdleService {
       execThreadPoolSize = DEFAULT_EXEC_HANDLER_THREAD_POOL_SIZE;
       execThreadKeepAliveSecs = DEFAULT_EXEC_HANDLER_THREAD_KEEP_ALIVE_TIME_SECS;
       rejectedExecutionHandler = DEFAULT_REJECTED_EXECUTION_HANDLER;
+      documentRoot = new File("/__INVALID_DIR__");
       port = 0;
     }
 
@@ -252,6 +256,7 @@ public final class NettyHttpService extends AbstractIdleService {
     private int port;
     private long execThreadKeepAliveSecs;
     private RejectedExecutionHandler rejectedExecutionHandler;
+    private File documentRoot;
 
     /**
      * Add HttpHandlers that service the request.
@@ -293,6 +298,11 @@ public final class NettyHttpService extends AbstractIdleService {
       return this;
     }
 
+    public Builder setDocumentRoot(File documentRoot) {
+      this.documentRoot = documentRoot;
+      return this;
+    }
+
     /**
      * Set the port on which the service should listen to.
      * By default the service will run on a random port.
@@ -318,7 +328,8 @@ public final class NettyHttpService extends AbstractIdleService {
       }
 
       return new NettyHttpService(bindAddress, bossThreadPoolSize, workerThreadPoolSize, connectionBacklog,
-                                  execThreadPoolSize, execThreadKeepAliveSecs, rejectedExecutionHandler, handlers);
+                                  execThreadPoolSize, execThreadKeepAliveSecs, rejectedExecutionHandler,
+                                  handlers, documentRoot);
     }
   }
 }
