@@ -28,6 +28,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,9 @@ public class HttpServerTest {
     handlers.add(new Handler());
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
-    builder.addHttpHandlers(handlers);
+    builder.addHttpHandlers(handlers).setDocumentRoot(
+      new File(System.getProperty("user.dir") + File.separator + "web-app/client")
+    );
 
     service = builder.build();
     service.startAndWait();
@@ -67,7 +70,7 @@ public class HttpServerTest {
 
   @Test
   public void testValidEndPoints() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/resource?num=10", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/resource?num=10", port);
     HttpGet get = new HttpGet(endPoint);
     HttpResponse response = request(get);
     assertEquals(200, response.getStatusLine().getStatusCode());
@@ -78,7 +81,7 @@ public class HttpServerTest {
     assertEquals(1, map.size());
     assertEquals("Handled get in resource end-point", map.get("status"));
 
-    endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
+    endPoint = String.format("http://localhost:%d/v1/test/tweets/1", port);
     get = new HttpGet(endPoint);
     response = request(get);
 
@@ -91,7 +94,7 @@ public class HttpServerTest {
 
   @Test
   public void testPathWithMultipleMethods() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/tweets/1", port);
     HttpPut put = new HttpPut(endPoint);
     put.setEntity(new StringEntity("data"));
     HttpResponse response = request(put);
@@ -100,7 +103,7 @@ public class HttpServerTest {
 
   @Test
   public void testPathWithPost() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/tweets/1", port);
     HttpPut put = new HttpPut(endPoint);
     put.setEntity(new StringEntity("data"));
     HttpResponse response = request(put);
@@ -109,7 +112,7 @@ public class HttpServerTest {
 
   @Test
   public void testNonExistingEndPoints() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/users", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/users", port);
     HttpPost post = new HttpPost(endPoint);
     post.setEntity(new StringEntity("data"));
     HttpResponse response = request(post);
@@ -118,7 +121,7 @@ public class HttpServerTest {
 
   @Test
   public void testPutWithData() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/facebook/1/message", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/facebook/1/message", port);
     HttpPut put = new HttpPut(endPoint);
     put.setEntity(new StringEntity("Hello, World"));
     HttpResponse response = request(put);
@@ -132,7 +135,7 @@ public class HttpServerTest {
 
   @Test
   public void testPostWithData() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/facebook/1/message", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/facebook/1/message", port);
     HttpPost post = new HttpPost(endPoint);
     post.setEntity(new StringEntity("Hello, World"));
     HttpResponse response = request(post);
@@ -146,7 +149,7 @@ public class HttpServerTest {
 
   @Test
   public void testNonExistingMethods() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/facebook/1/message", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/facebook/1/message", port);
     HttpGet get = new HttpGet(endPoint);
     HttpResponse response = request(get);
     assertEquals(405, response.getStatusLine().getStatusCode());
@@ -154,7 +157,7 @@ public class HttpServerTest {
 
   @Test
   public void testKeepAlive() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/tweets/1", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/tweets/1", port);
     HttpPut put = new HttpPut(endPoint);
     put.setEntity(new StringEntity("data"));
     HttpResponse response = request(put, true);
@@ -164,7 +167,7 @@ public class HttpServerTest {
 
   @Test
   public void testMultiplePathParameters() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/user/sree/message/12", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/user/sree/message/12", port);
     HttpGet get = new HttpGet(endPoint);
     HttpResponse response = request(get);
     assertEquals(200, response.getStatusLine().getStatusCode());
@@ -179,7 +182,7 @@ public class HttpServerTest {
   //Test the end point where the parameter in path and order of declaration in method signature are different
   @Test
   public void testMultiplePathParametersWithParamterInDifferentOrder() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/message/21/user/sree", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/message/21/user/sree", port);
     HttpGet get = new HttpGet(endPoint);
     HttpResponse response = request(get);
     assertEquals(200, response.getStatusLine().getStatusCode());
@@ -192,7 +195,7 @@ public class HttpServerTest {
 
   @Test
   public void testNotRoutablePathParamMismatch() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/NotRoutable/sree", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/NotRoutable/sree", port);
     HttpGet get = new HttpGet(endPoint);
     HttpResponse response = request(get);
     assertEquals(500, response.getStatusLine().getStatusCode());
@@ -200,16 +203,25 @@ public class HttpServerTest {
 
   @Test
   public void testNotRoutableMissingPathParam() throws IOException {
-    String endPoint = String.format("http://localhost:%d/test/v1/NotRoutable/sree/message/12", port);
+    String endPoint = String.format("http://localhost:%d/v1/test/NotRoutable/sree/message/12", port);
     HttpGet get = new HttpGet(endPoint);
     HttpResponse response = request(get);
     assertEquals(500, response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testStaticContentServing() throws Exception {
+    // In here we try to serve the index.html from web-app.
+    String endPoint = String.format("http://localhost:%d/index.html", port);
+    HttpGet get = new HttpGet(endPoint);
+    HttpResponse response = request(get);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
   /**
    * Test handler.
    */
-  @Path("/test/v1")
+  @Path("/v1/test")
   public static class Handler implements HttpHandler {
     @Path("resource")
     @GET
