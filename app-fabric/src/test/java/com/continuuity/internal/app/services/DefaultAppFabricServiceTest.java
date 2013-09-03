@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.app.services;
 
+import com.continuuity.BenchApp;
 import com.continuuity.DumbProgrammerApp;
 import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
@@ -155,6 +156,30 @@ public class DefaultAppFabricServiceTest {
       }
     }
     Assert.assertArrayEquals(new int[]{1, 1, 1}, connectionFound);
+  }
+
+  @Test
+  public void testBenchFlowDefinition() throws Exception {
+    Store store = sFactory.create();
+    ApplicationSpecification spec = new BenchApp().configure();
+    Id.Application appId = new Id.Application(new Id.Account("account1"), "BenchApp");
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
+
+    FlowIdentifier flowId = new FlowIdentifier("account1", "BenchApp", "BenchFlow", 0);
+    String flowDefJson = server.getFlowDefinition(flowId);
+    FlowDefinitionImpl flowDef = new Gson().fromJson(flowDefJson, FlowDefinitionImpl.class);
+
+    Assert.assertEquals(7, flowDef.getFlowlets().size());
+    Assert.assertEquals(6, flowDef.getConnections().size());
+
+    Assert.assertEquals(1, flowDef.getFlowletStreams("Source").size());
+    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer1").size());
+    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer2").size());
+    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer3").size());
+    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer4").size());
+    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer5").size());
+    Assert.assertEquals(1, flowDef.getFlowletStreams("Destination").size());
+    Assert.assertNotNull(flowDefJson);
   }
 
   @Test
