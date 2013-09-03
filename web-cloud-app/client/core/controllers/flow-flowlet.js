@@ -40,18 +40,21 @@ define([], function () {
 				if (direction === 'from') {
 					opp = 'to';
 				}
+				console.log('safd is', cx, direction, flowlet, input)
 				for (var i = 0; i < cx.length; i ++) {
 					if (cx[i][direction]['flowlet'] === flowlet &&
-						cx[i][direction]['stream'] === input) {
+						cx[i][direction]['stream'] === input.replace('_IN', '').replace('_OUT', '')) {
 						res.push({name: cx[i][opp]['flowlet'] || cx[i][opp]['stream']});
 					}
 				}
 				return res;
 			}
 
-			var streams = flow.flowletStreams[model.name],
-				inputs = [], outputs = [];
-
+			var streams = flow.flowletStreams.filter(function (stream) {
+				return stream.name === model.name;
+			})[0];
+			var inputs = [], outputs = [];
+			console.log(streams)
 			/*
 			 * Find inputs and outputs.
 			 */
@@ -74,6 +77,7 @@ define([], function () {
 					});
 				}
 			}
+			console.log(inputs, outputs)
 			this.get('model').set('inputs', inputs);
 			this.get('model').set('outputs', outputs);
 
@@ -84,11 +88,11 @@ define([], function () {
 			this.set('elements.Queue', Em.ArrayProxy.create({content: []}));
 
 			for (var id in streams) {
-				streams[i].id = id;
-				streams[i].flowlet = model.get('id');
-				streams[i].app = flow.get('app');
-				streams[i].flow = flow.get('name');
-				queues.push(C.Queue.create(streams[i]));
+				streams[id].id = id;
+				streams[id].flowlet = model.get('id');
+				streams[id].app = flow.get('app');
+				streams[id].flow = flow.get('name');
+				queues.push(C.Queue.create(streams[id]));
 			}
 			this.get('elements.Queue').pushObjects(queues);
 
@@ -174,9 +178,14 @@ define([], function () {
 			this.transitionToRoute('FlowStatus', model);
 
 		},
-		navigate: function (event) {
+		navigate: function (flowletName) {
 
-			// TODO
+			var model = this.get('controllers.FlowStatus').get_flowlet(flowletName);
+			if (model.level === 'stream') {
+				this.transitionToRoute('FlowStatus.Stream', model);
+			} else {
+				this.transitionToRoute('FlowStatus.Flowlet', model);	
+			}
 
 		},
 		addOneInstance: function () {

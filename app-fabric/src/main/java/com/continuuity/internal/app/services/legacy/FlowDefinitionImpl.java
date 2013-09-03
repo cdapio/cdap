@@ -150,10 +150,10 @@ public class FlowDefinitionImpl implements FlowDefinitionModifier, FlowDefinitio
   @Override
   public void setStreamURI(String flowlet, String stream, URI uri, StreamType type) {
     if (flowletStreams.containsKey(flowlet)) {
-      flowletStreams.get(flowlet).put(stream + "." + type, new ImmutablePair<URI, StreamType>(uri, type));
+      flowletStreams.get(flowlet).put(stream + "_" + type, new ImmutablePair<URI, StreamType>(uri, type));
     } else {
       Map<String, ImmutablePair<URI, StreamType>> maps = Maps.newHashMap();
-      maps.put(stream + "." + type, new ImmutablePair<URI, StreamType>(uri, type));
+      maps.put(stream + "_" + type, new ImmutablePair<URI, StreamType>(uri, type));
       flowletStreams.put(flowlet, maps);
     }
   }

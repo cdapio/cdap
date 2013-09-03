@@ -1717,6 +1717,7 @@ a strong {
 	color: #fff;
 	border-color: #222;
 	min-height: 300px;
+	overflow-y: scroll;
 }
 .query-response {
 	height: 540px;

@@ -29,12 +29,14 @@ define([], function () {
 
 			var streams = model.flowStreams;
 			objects = [];
-			for (var i = 0; i < streams.length; i ++) {
 
+			for (var i = 0; i < streams.length; i ++) {
+				streams[i]['level'] = 'stream';
 				objects.push(C.Stream.create(streams[i]));
 				objects[i].trackMetric('/collect/events/streams/{id}', 'aggregates', 'events');
 
 			}
+
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
 
 			this.interval = setInterval(function () {

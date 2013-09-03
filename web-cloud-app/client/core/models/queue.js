@@ -12,6 +12,7 @@ define([], function () {
     init: function() {
       this._super();
 
+      console.log(this.get('id'))
       this.set('timeseries', Em.Object.create());
       this.set('aggregates', Em.Object.create());
 
@@ -22,7 +23,7 @@ define([], function () {
       return path.replace(/\{app\}/, this.get('app'))
         .replace(/\{flow\}/, this.get('flow'))
         .replace(/\{flowlet\}/, this.get('flowlet'))
-        .replace(/\{id\}/, this.get('id'));
+        .replace(/\{id\}/, this.get('id').replace('_IN', '').replace('_OUT', ''));
 
     },
 

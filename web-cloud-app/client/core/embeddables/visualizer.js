@@ -34,19 +34,22 @@ define([], function () {
 	function ___fixStreams () {
 
 		var flowlets = this.get('controller').elements.Flowlet;
-		var i, k, j, fs = this.get('controller').get('model').flowletStreams;
-		for (i in fs) {
+		var fs = this.get('controller').get('model').flowletStreams;
 
-			var flowlet = this.get('controller').get_flowlet(i), streams = [];
+		for (var i in fs) {
+			if (Object.prototype.toString.call(fs[i]) === '[object Object]') {
 
-			for (j in fs[i]) {
-				streams.push(C.Stream.create({
-					id: j,
-					type: fs[i][j].second,
-					url: fs[i][j].first
-				}));
+				var flowlet = this.get('controller').get_flowlet(fs[i].name), streams = [];
+
+				for (var j in fs[i]) {
+					streams.push(C.Stream.create({
+						id: j,
+						type: fs[i][j].second,
+						url: fs[i][j].first
+					}));
+				}
+				flowlet.streams = streams;
 			}
-			flowlet.streams = streams;
 		}
 	}
 	//** End Hax
