@@ -4,6 +4,7 @@ include 'app-fabric', 'data-fabric', 'data-fabric-runtime', 'common', 'singlenod
 include 'examples', 'gateway', 'web-app', 'distributions'
 include 'unit-test', 'overlord', 'passport', 'watchdog'
 include 'kafka'
+include "web-app:weave-web-app"
 project(':singlenode').buildFileName = 'package.gradle'
 
 // Test framework
