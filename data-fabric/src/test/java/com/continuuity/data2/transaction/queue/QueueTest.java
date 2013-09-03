@@ -492,7 +492,8 @@ public abstract class QueueTest {
     }
   }
 
-  private void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws IOException, OperationException {
+  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws IOException,
+    OperationException {
     // the queue has been consumed by n consumers. Use a consumerId greater than n to make sure it can dequeue.
     Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(numActualConsumers + 1, 0, 1, DequeueStrategy.FIFO, null), -1);
