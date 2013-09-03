@@ -32,7 +32,7 @@
         Gateway configuration
     -->
     <property>
-        <name>gateway.hostname</name>
+        <name>gateway.server.address</name>
         <value>127.0.0.1</value>
         <description>Specifies the hostname on which the Gateway will listen</description>
     </property>
