@@ -63,7 +63,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
     HBaseQueueUtils.createTableIfNotExists(admin, tableName, QueueConstants.COLUMN_FAMILY,
                                            QueueConstants.MAX_CREATE_TABLE_WAIT,
-                                           createCoProcessorJar(jarDir), splits,
+                                           //  For demo purposes in 1.7 we do not do eviction with CPs
+                                           //  TODO: this should not go into production
+                                           //  createCoProcessorJar(jarDir),
+                                           null,
+                                           splits,
                                            HBaseQueueEvictionEndpoint.class.getName());
   }
 
