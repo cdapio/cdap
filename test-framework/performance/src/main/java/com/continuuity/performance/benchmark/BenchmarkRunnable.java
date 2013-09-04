@@ -55,9 +55,9 @@ public class BenchmarkRunnable implements Runnable {
       try {
         delta = agent.runOnce(runs + 1);
       } catch (BenchmarkException e) {
+        LOG.error("runOnce failed for run " + (runs + 1) + " of " + agentGroup.getName() + " " + agentId, e);
         throw new RuntimeException("Execution of runOnce failed", e);
       }
-
 
       globalMetrics.increment("runs", delta);
 
