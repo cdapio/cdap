@@ -167,7 +167,7 @@ define([], function () {
 					}
 					model['flowletStreams'] = flowletStreamArr;
 				}
-				console.log(model);
+
 				model.applicationId = app_id;
 				model = C.Flow.create(model);
 

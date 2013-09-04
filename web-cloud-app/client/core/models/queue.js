@@ -12,7 +12,6 @@ define([], function () {
     init: function() {
       this._super();
 
-      console.log(this.get('id'))
       this.set('timeseries', Em.Object.create());
       this.set('aggregates', Em.Object.create());
 

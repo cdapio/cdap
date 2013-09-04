@@ -29,6 +29,7 @@ define([], function () {
 				conns[flowlets[j].name] = [];
 			}
 		}
+
 		return conns;
 	}
 	function ___fixStreams () {
@@ -48,6 +49,7 @@ define([], function () {
 						url: fs[i][j].first
 					}));
 				}
+
 				flowlet.streams = streams;
 			}
 		}
@@ -60,7 +62,6 @@ define([], function () {
 		elementId: 'flowviz',
 
 		init: function () {
-
 			this._super();
 
 			this.sourcespec = {
@@ -89,11 +90,11 @@ define([], function () {
 			this.set('__location', {});
 			this.set('__inserted', {});
 			this.set('__numColumns', 0);
+			this.set('__positioningWatch', []);
 
 		},
 
 		didInsertElement: function () {
-
 			var flowSources = [];
 
 			// Insert input stream node
@@ -176,6 +177,7 @@ define([], function () {
 
 			if (!id) { // Append the first node
 				this.get('controller').elements.Flowlet.content.forEach(function (item, index) {
+
 					if (!this.__cxn[item.id] || this.__cxn[item.id].length === 0) {
 						this.__append(this.get('controller').get_flowlet(item.id), 0);
 						this.__insert(item.id);

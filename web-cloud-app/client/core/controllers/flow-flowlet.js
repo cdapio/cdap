@@ -40,7 +40,7 @@ define([], function () {
 				if (direction === 'from') {
 					opp = 'to';
 				}
-				console.log('safd is', cx, direction, flowlet, input)
+				
 				for (var i = 0; i < cx.length; i ++) {
 					if (cx[i][direction]['flowlet'] === flowlet &&
 						cx[i][direction]['stream'] === input.replace('_IN', '').replace('_OUT', '')) {
@@ -54,7 +54,7 @@ define([], function () {
 				return stream.name === model.name;
 			})[0];
 			var inputs = [], outputs = [];
-			console.log(streams)
+
 			/*
 			 * Find inputs and outputs.
 			 */
@@ -77,7 +77,7 @@ define([], function () {
 					});
 				}
 			}
-			console.log(inputs, outputs)
+			
 			this.get('model').set('inputs', inputs);
 			this.get('model').set('outputs', outputs);
 

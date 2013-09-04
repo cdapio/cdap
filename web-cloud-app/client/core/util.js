@@ -285,7 +285,7 @@ define([], function () {
 
 							if (result[i].error) {
 
-								console.error('TimeSeries', result[i].error);
+								//pass
 
 							} else {
 
@@ -360,7 +360,7 @@ define([], function () {
 							path = result[i].path.split('?')[0];
 
 							if (result[i].error) {
-								console.error('Rates', result[i].error);
+								// pass
 							} else {
 								data = result[i].result.data, k = data.length;
 
