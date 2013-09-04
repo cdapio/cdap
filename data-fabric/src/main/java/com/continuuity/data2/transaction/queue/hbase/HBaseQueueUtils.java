@@ -51,6 +51,9 @@ public final class HBaseQueueUtils {
       HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
       htd.addFamily(hcd);
       hcd.setMaxVersions(1);
+      //  For demo purposes in 1.7 we do TTL instead of real eviction with CPs
+      //  TODO: this should not go into production
+      hcd.setTimeToLive(2 * 60 * 1000);
 
       String tableNameString = Bytes.toString(tableName);
       byte[][] splitKeys = getSplitKeys(splits);

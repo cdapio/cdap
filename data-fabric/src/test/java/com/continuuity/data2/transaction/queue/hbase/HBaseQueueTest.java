@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
@@ -120,4 +121,10 @@ public class HBaseQueueTest extends QueueTest {
     Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName().startsWith("test_"));
   }
 
+  @Override
+  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers)
+    throws IOException, OperationException {
+    // skip this because HBase eviction is currently disabled.
+    // todo reenable this when HBase eviction is part of memstore flush
+  }
 }
