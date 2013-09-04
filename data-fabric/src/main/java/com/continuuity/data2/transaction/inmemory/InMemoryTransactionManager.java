@@ -8,7 +8,6 @@ import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -25,11 +24,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
 
@@ -64,9 +63,10 @@ public class InMemoryTransactionManager {
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
   // todo: should this be consolidated with inProgress?
   // commit time nextWritePointer -> changes made by this tx
-  private final NavigableMap<Long, Set<byte[]>> committedChangeSets = new ConcurrentSkipListMap<Long, Set<byte[]>>();
+  private final NavigableMap<Long, Set<ChangeId>> committedChangeSets =
+    new ConcurrentSkipListMap<Long, Set<ChangeId>>();
   // not committed yet
-  private final Map<Long, Set<byte[]>> committingChangeSets = Maps.newConcurrentMap();
+  private final Map<Long, Set<ChangeId>> committingChangeSets = Maps.newConcurrentMap();
 
   private long readPointer;
   private long nextWritePointer;
@@ -276,14 +276,16 @@ public class InMemoryTransactionManager {
       return false;
     }
 
-    if (hasConflicts(tx, changeIds)) {
-      return false;
+    // todo: is there an immutable hash set?
+    HashSet<ChangeId> set = Sets.newHashSetWithExpectedSize(changeIds.size());
+    for (byte[] change : changeIds) {
+      set.add(new ChangeId(change));
     }
 
-    // The change set will never get modified. Using a immutable has smaller footprint and could perform better.
-    Set<byte[]> set = ImmutableSortedSet.copyOf(Bytes.BYTES_COMPARATOR, changeIds);
+    if (hasConflicts(tx, set)) {
+      return false;
+    }
     committingChangeSets.put(tx.getWritePointer(), set);
-
     return true;
   }
 
@@ -292,7 +294,7 @@ public class InMemoryTransactionManager {
     // todo: these should be atomic
     // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot be attempted to
     //       commit twice
-    Set<byte[]> changeSet = committingChangeSets.remove(tx.getWritePointer());
+    Set<ChangeId> changeSet = committingChangeSets.remove(tx.getWritePointer());
 
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
@@ -306,14 +308,7 @@ public class InMemoryTransactionManager {
       }
 
       // Record the committed change set with the nextWritePointer as the commit time.
-      if (committedChangeSets.containsKey(nextWritePointer)) {
-        // todo: can this ever happen?
-        committedChangeSets.get(nextWritePointer).addAll(changeSet);
-      } else {
-        TreeSet<byte[]> committedChangeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-        committedChangeSet.addAll(changeSet);
-        committedChangeSets.put(nextWritePointer, committedChangeSet);
-      }
+      committedChangeSets.put(nextWritePointer, changeSet);
     }
     makeVisible(tx);
 
@@ -383,16 +378,16 @@ public class InMemoryTransactionManager {
 //    //       can go a bit crazy optimizing stuff around it...
 //  }
 
-  private boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
+  private boolean hasConflicts(Transaction tx, Set<ChangeId> changeIds) {
     if (changeIds.isEmpty()) {
       return false;
     }
 
-    for (Map.Entry<Long, Set<byte[]>> changeSet : committedChangeSets.entrySet()) {
+    for (Map.Entry<Long, Set<ChangeId>> changeSet : committedChangeSets.entrySet()) {
       // If commit time is greater than tx read-pointer,
       // basically not visible but committed means "tx committed after given tx was started"
       if (changeSet.getKey() > tx.getWritePointer()) {
-        if (containsAny(changeSet.getValue(), changeIds)) {
+        if (overlap(changeSet.getValue(), changeIds)) {
           return true;
         }
       }
@@ -400,10 +395,19 @@ public class InMemoryTransactionManager {
     return false;
   }
 
-  private static boolean containsAny(Set<byte[]> set, Collection<byte[]> toSearch) {
-    for (byte[] item : toSearch) {
-      if (set.contains(item)) {
-        return true;
+  private boolean overlap(Set<ChangeId> a, Set<ChangeId> b) {
+    // iterate over the smaller set, and check for every element in the other set
+    if (a.size() > b.size()) {
+      for (ChangeId change : b) {
+        if (a.contains(change)) {
+          return true;
+        }
+      }
+    } else {
+      for (ChangeId change : a) {
+        if (b.contains(change)) {
+          return true;
+        }
       }
     }
     return false;
@@ -556,10 +560,10 @@ public class InMemoryTransactionManager {
     }
   }
 
-  private void encodeChangeSets(Encoder encoder, Map<Long, Set<byte[]>> changes) throws IOException {
+  private void encodeChangeSets(Encoder encoder, Map<Long, Set<ChangeId>> changes) throws IOException {
     if (!changes.isEmpty()) {
       encoder.writeInt(changes.size());
-      for (Map.Entry<Long, Set<byte[]>> entry : changes.entrySet()) {
+      for (Map.Entry<Long, Set<ChangeId>> entry : changes.entrySet()) {
         encoder.writeLong(entry.getKey());
         encodeChanges(encoder, entry.getValue());
       }
@@ -567,7 +571,7 @@ public class InMemoryTransactionManager {
     encoder.writeInt(0); // zero denotes end of list as per AVRO spec
   }
 
-  private void decodeChangeSets(Decoder decoder, Map<Long, Set<byte[]>> changeSets) throws IOException {
+  private void decodeChangeSets(Decoder decoder, Map<Long, Set<ChangeId>> changeSets) throws IOException {
     changeSets.clear();
     int size = decoder.readInt();
     while (size != 0) { // zero denotes end of list as per AVRO spec
@@ -578,26 +582,27 @@ public class InMemoryTransactionManager {
     }
   }
 
-  private void encodeChanges(Encoder encoder, Set<byte[]> changes) throws IOException {
+  private void encodeChanges(Encoder encoder, Set<ChangeId> changes) throws IOException {
     if (!changes.isEmpty()) {
       encoder.writeInt(changes.size());
-      for (byte[] change : changes) {
-        encoder.writeBytes(change);
+      for (ChangeId change : changes) {
+        encoder.writeBytes(change.getKey());
       }
     }
     encoder.writeInt(0); // zero denotes end of list as per AVRO spec
   }
 
-  private Set<byte[]> decodeChanges(Decoder decoder) throws IOException {
-    List<byte[]> changes = Lists.newArrayList();
+  private Set<ChangeId> decodeChanges(Decoder decoder) throws IOException {
     int size = decoder.readInt();
+    HashSet<ChangeId> changes = Sets.newHashSetWithExpectedSize(size);
     while (size != 0) { // zero denotes end of list as per AVRO spec
       for (int remaining = size; remaining > 0; --remaining) {
-        changes.add(Bytes.toBytes(decoder.readBytes()));
+        changes.add(new ChangeId(Bytes.toBytes(decoder.readBytes())));
       }
       size = decoder.readInt();
     }
-    return ImmutableSortedSet.copyOf(Bytes.BYTES_COMPARATOR, changes);
+    // todo is there an immutable hash set?
+    return changes;
   }
 
   /**
@@ -612,4 +617,36 @@ public class InMemoryTransactionManager {
                ", committing = " + committingChangeSets.size() +
                ", committed = " + committedChangeSets.size());
   }
+
+  static final class ChangeId {
+    private final byte[] key;
+    private final int hash;
+
+    ChangeId(byte[] bytes) {
+      key = bytes;
+      hash = Bytes.hashCode(key);
+    }
+
+    byte[] getKey() {
+      return key;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      }
+      if (o == null || o.getClass() != ChangeId.class) {
+        return false;
+      }
+      ChangeId other = (ChangeId) o;
+      return hash == other.hash && Bytes.equals(key, other.key);
+    }
+
+    @Override
+    public int hashCode() {
+      return hash;
+    }
+  }
+
 }
