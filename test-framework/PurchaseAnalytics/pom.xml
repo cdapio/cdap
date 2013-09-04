@@ -11,7 +11,7 @@
 
     <properties>
         <main>com.continuuity.testsuite.purchaseanalytics.PurchaseAnalyticsApp</main>
-        <continuuityVersion>1.7.0-SNAPSHOT</continuuityVersion>
+        <continuuityVersion>1.7.1-SNAPSHOT</continuuityVersion>
     </properties>
     <repositories>
         <repository>

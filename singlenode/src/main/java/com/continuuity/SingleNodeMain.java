@@ -139,10 +139,6 @@ public class SingleNodeMain {
       metaDataServer.stop(true);
       appFabricServer.stopAndWait();
       overloadFrontend.stop(true);
-<<<<<<< HEAD
-=======
-      overlordCollection.stop(true);
->>>>>>> release/1.7.0
       transactionManager.close();
       zookeeper.stopAndWait();
     } catch (Exception e) {

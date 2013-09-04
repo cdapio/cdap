@@ -21,15 +21,14 @@ import com.continuuity.testsuite.purchaseanalytics.TransactionGeneratorHelper;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
-import com.continuuity.testsuite.purchaseanalytics.datamodel.SerializedObject;
 import com.google.gson.Gson;
-import org.mortbay.log.Log;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Map;
 
 /**
  * Test driver for black box testing. can be run externally on any cluster.
@@ -65,9 +64,17 @@ public class PurchaseAnalyticsAppDriver {
     PurchaseAnalyticsAppDriver appDriver = new PurchaseAnalyticsAppDriver(hostname, transactions);
 
     try {
+      // Start flow
       appDriver.startComponent("PurchaseAnalyticsFlow", "flow");
-      appDriver.generateTransactions();
 
+      // check that flow started properly
+      if (appDriver.checkComponentStatus("PurchaseAnalyticsFlow", "flow") != "RUNNING") {
+        LOG.error(String.format("Unable to start PurchaseAnalytics flow."));
+        return;
+      }
+
+      // Randomly generates n number of transactions.
+      appDriver.generateTransactions();
 
       Customer returnedCustomer = null;
       // Verify that all customers streamed have been inserted
@@ -82,21 +89,39 @@ public class PurchaseAnalyticsAppDriver {
         if (!appDriver.productExists(product)) {
           LOG.error("Customer not found: " + gson.toJson(product));
         }
-
       }
 
-      // Run map reduce jobs.
-      appDriver.startComponent("PurchaseHistoryBuilder", "mapreduce");
-      appDriver.startComponent("PurchaseStatsBuilder", "mapreduce");
-      appDriver.startComponent("RegionBuilder", "mapreduce");
+      try {
 
-      // TODO: Wait for status on MR jobs, correlate result from MR job
+        // Run map reduce jobs.
+        appDriver.startComponent("PurchaseHistoryBuilder", "mapreduce");
+
+        // pool for for completion
+        while (appDriver.checkComponentStatus("PurchaseHistoryBuilder", "mapreduce") == "RUNNING") {
+          Thread.sleep(500);
+        }
+
+        appDriver.startComponent("PurchaseStatsBuilder", "mapreduce");
+
+        // pool for for completion
+        while (appDriver.checkComponentStatus("PurchaseStatsBuilder", "mapreduce") == "RUNNING") {
+          Thread.sleep(500);
+        }
+
+        appDriver.startComponent("RegionBuilder", "mapreduce");
+
+        // pool for for completion
+        while (appDriver.checkComponentStatus("PurchaseStatsBuilder", "mapreduce") == "RUNNING") {
+          Thread.sleep(500);
+        }
+      } catch (InterruptedException ex) {
+        LOG.error(ex.getLocalizedMessage());
+      }
 
 
     } catch (IOException ex) {
-
+      LOG.error(ex.getLocalizedMessage());
     }
-
 
     // Verify results.
 
@@ -140,7 +165,7 @@ public class PurchaseAnalyticsAppDriver {
    * @throws IOException
    */
   private void streamTransaction(String json, String streamName) throws IOException {
-    String url = "http://" + this.hostname + ":10000/stream/" + streamName;
+    String url = "http://" + this.hostname + ":10000/v2/streams/" + streamName;
 
     ProcessBuilder pb = new ProcessBuilder("curl", "-q", "-d", json, url);
     Process p = pb.start();
@@ -163,7 +188,8 @@ public class PurchaseAnalyticsAppDriver {
    * @throws IOException
    */
   private void startComponent(String name, String type) throws IOException {
-    String url = "http://" + this.hostname + ":10007/" + type + "/PurchaseAnalytics/" + name;
+
+    String url = String.format("http://%s:10007/app/PurchaseAnalytics/%s/%s?op=start", hostname, type, name);
 
     ProcessBuilder pb = new ProcessBuilder("curl", "-s", "-X", "POST", url);
     Process p = pb.start();
@@ -179,16 +205,49 @@ public class PurchaseAnalyticsAppDriver {
   }
 
   /**
+   *
+   * @param name
+   * @param type
+   * @return "RUNNING" or "STOPPED"
+   * @throws IOException
+   */
+  private String checkComponentStatus(String name, String type) throws IOException {
+    String url = String.format("http://%s:10007/app/PurchaseAnalytics/%s/%s?op=status", hostname, type, name);
+
+    ProcessBuilder pb = new ProcessBuilder("curl", "-s", "-X", "POST", url);
+    Process p = pb.start();
+
+    InputStream is = p.getErrorStream();
+    InputStreamReader isr = new InputStreamReader(is);
+    BufferedReader br = new BufferedReader(isr);
+    String line;
+    while ((line = br.readLine()) != null) {
+      LOG.debug(line);
+    }
+    p.destroy();
+
+    // parse JSON
+    Map jsonResponse = new Gson().fromJson(line, Map.class);
+
+    if (jsonResponse == null) {
+      return "STOPPED";
+    }
+    else {
+      return (String) jsonResponse.get("status");
+    }
+  }
+
+  /**
    * Gets a customer by Id
    *
    * @param customer
    * @return
    */
   private boolean customerExists(Customer customer) throws IOException {
-    String url = "http://" + this.hostname + ":10010/procedure/PurchaseAnalytics/PurchaseAnalyticsQuery/customer";
+    String url = "http://" + this.hostname + ":10010/v2/procedure/PurchaseAnalytics/PurchaseAnalyticsQuery/customer";
     String json = "{\"id\":" + customer.getCustomerId() + "}";
 
-    ProcessBuilder pb = new ProcessBuilder("curl", "-s", "-X", "POST", url, "--data", json);
+    ProcessBuilder pb = new ProcessBuilder("curl", "-s", "-X", "GET", url, "--data", json);
     Process p = pb.start();
     InputStream is = p.getErrorStream();
     InputStreamReader isr = new InputStreamReader(is);
@@ -203,7 +262,7 @@ public class PurchaseAnalyticsAppDriver {
   }
 
   private boolean productExists(Product product) throws IOException {
-    String url = "http://" + this.hostname + ":10010/procedure/PurchaseAnalytics/PurchaseAnalyticsQuery/product";
+    String url = "http://" + this.hostname + ":10010/v2/procedure/PurchaseAnalytics/PurchaseAnalyticsQuery/product";
     String json = "{\"id\":" + product.getProductId() + "}";
 
     ProcessBuilder pb = new ProcessBuilder("curl", "-s", "-X", "POST", url, "--data", json);
