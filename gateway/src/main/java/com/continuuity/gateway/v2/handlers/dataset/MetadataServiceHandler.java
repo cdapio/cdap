@@ -1,4 +1,4 @@
-package com.continuuity.gateway.dataset;
+package com.continuuity.gateway.v2.handlers.dataset;
 
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -173,24 +173,24 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns a list of queries associated with account.
+   * Returns a list of procedure associated with account.
    */
   @GET
-  @Path("/queries")
-  public void getQueries(HttpRequest request, HttpResponder responder) {
+  @Path("/procedures")
+  public void getProcedures(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Query> queries = service.getQueries(new Account(accountId));
-      if (queries.size() < 1) {
+      List<Query> procedures = service.getQueries(new Account(accountId));
+      if (procedures.size() < 1) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
       JsonArray s = new JsonArray();
-      for (Query query : queries) {
+      for (Query procedure : procedures) {
         JsonObject object = new JsonObject();
-        object.addProperty("id", query.getId());
-        object.addProperty("name", query.getName());
-        object.addProperty("description", query.getDescription());
+        object.addProperty("id", procedure.getId());
+        object.addProperty("name", procedure.getName());
+        object.addProperty("description", procedure.getDescription());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
@@ -204,11 +204,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns a list of queries associated with account & application.
+   * Returns a list of procedure associated with account & application.
    */
   @GET
-  @Path("/apps/{appId}/queries")
-  public void getQueriesByApp(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{appId}/procedures")
+  public void getProceduresByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("appId") final String appId) {
     if (appId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
@@ -217,17 +217,17 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Query> queries = service.getQueriesByApplication(accountId, appId);
-      if (queries.size() < 1) {
+      List<Query> procedures = service.getQueriesByApplication(accountId, appId);
+      if (procedures.size() < 1) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
       JsonArray s = new JsonArray();
-      for (Query query : queries) {
+      for (Query procedure : procedures) {
         JsonObject object = new JsonObject();
-        object.addProperty("id", query.getId());
-        object.addProperty("name", query.getName());
-        object.addProperty("description", query.getDescription());
+        object.addProperty("id", procedure.getId());
+        object.addProperty("name", procedure.getName());
+        object.addProperty("description", procedure.getDescription());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);

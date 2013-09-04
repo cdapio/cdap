@@ -98,7 +98,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetQueries() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/rest/v2/queries");
+    HttpResponse response = GatewayFastTestsSuite.GET("/rest/v2/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     Assert.assertNotNull(s);
@@ -106,7 +106,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetQueriesByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/rest/v2/apps/app1/queries");
+    HttpResponse response = GatewayFastTestsSuite.GET("/rest/v2/apps/app1/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     Assert.assertNotNull(s);

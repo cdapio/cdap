@@ -11,7 +11,7 @@ import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
 import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.handlers.PingHandler;
-import com.continuuity.gateway.dataset.MetadataServiceHandler;
+import com.continuuity.gateway.v2.handlers.dataset.MetadataServiceHandler;
 import com.continuuity.gateway.v2.handlers.stream.StreamHandler;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
