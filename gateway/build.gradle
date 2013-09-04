@@ -59,7 +59,7 @@ configurations {
  */
 task testFastTests(type: Test) {
     include '**/*FastTests*.class'
-    testReportDir = file("${reportsDir}/FastTests")
-    testResultsDir = file("${buildDir}/test-results/FastTests")
+    testReportDir = file("${reporting.baseDir}/FastTests")
+    testResultsDir = file("${reporting.baseDir}/test-results/FastTests")
 }
 

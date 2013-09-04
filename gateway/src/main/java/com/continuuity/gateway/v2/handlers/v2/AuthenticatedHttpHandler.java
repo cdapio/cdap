@@ -28,7 +28,7 @@ public abstract class AuthenticatedHttpHandler extends AbstractHttpHandler {
     }
 
     String accountId = authenticator.getAccountId(request);
-    if(accountId == null || accountId.isEmpty()) {
+    if (accountId == null || accountId.isEmpty()) {
       LOG.trace("No valid account information found");
       throw new IllegalArgumentException("Not a valid account id found.");
     }
