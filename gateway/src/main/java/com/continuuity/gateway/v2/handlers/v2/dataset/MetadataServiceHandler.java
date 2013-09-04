@@ -547,7 +547,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
 
   @GET
   @Path("/datasets/{datasetId}/flows")
-  public void setGetFlowsByDataset(HttpRequest request, HttpResponder responder,
+  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                    @PathParam("datasetId") final String datasetId) {
     if (datasetId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
