@@ -41,6 +41,12 @@ log4js.configure({
 var logger = process.logger = log4js.getLogger('UI API');
 logger.setLevel(LOG_LEVEL);
 
+var LOG_DELAY = false;
+setInterval(function () {
+	LOG_DELAY = false;
+}, 5000);
+
+
 /**
  * Export API.
  */
@@ -125,8 +131,11 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
-			logger.warn('Could not connect to AppFabric (Manager).');
-			done({'fatal': 'Could not connect to AppFabric (Manager).'});
+			if (!LOG_DELAY) {
+				logger.warn('Could not connect to AppFabric (Manager).');
+				done({'fatal': 'Could not connect to AppFabric (Manager).'});
+				LOG_DELAY = true;
+			}
 		});
 
 		conn.on('connect', function (response) {

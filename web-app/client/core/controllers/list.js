@@ -29,7 +29,7 @@ define([], function () {
 			return this.__titles[this.get('entityType')];
 		}.property('entityType'),
 		load: function (type) {
-
+			this.clearTriggers(true);
 			var self = this;
 			this.set('entityType', type);
 
@@ -61,8 +61,19 @@ define([], function () {
 
 		},
 
-		updateStats: function () {
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted');
+		},
 
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+			this.set('aggregatesCompleted', value);
+		},
+
+		updateStats: function () {
+			if (!this.ajaxCompleted()) {
+				return;
+			}
 			var content, self = this, models = [];
 			for (var j=0; j<this.entityTypes.length; j++) {
 				var objects = this.get('elements.' + this.entityTypes[j]);
@@ -83,12 +94,12 @@ define([], function () {
 			/*
 			 * End hax
 			 */
-
+			this.clearTriggers(false);
 			// Scans models for timeseries metrics and updates them.
-			C.Util.updateTimeSeries(models, this.HTTP);
+			C.Util.updateTimeSeries(models, this.HTTP, this);
 
 			// Scans models for aggregate metrics and udpates them.
-			C.Util.updateAggregates(models, this.HTTP);
+			C.Util.updateAggregates(models, this.HTTP, this);
 
 		},
 

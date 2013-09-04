@@ -20,7 +20,7 @@ package com.continuuity.testsuite.purchaseanalytics.datamodel;
 /**
  * Models a product identified by unique Id.
  */
-public class Product {
+public class Product extends SerializedObject {
 
   private final long productId;
   private final String description;
@@ -34,6 +34,7 @@ public class Product {
   }
 
   public Product(long productId, String description) {
+    super(2);
     this.productId = productId;
     this.description = description;
   }

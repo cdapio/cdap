@@ -19,7 +19,9 @@
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
   <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
+  <script type="text/javascript" src="/core/lib/biginteger.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
+
 
   <script src="/core/lib/rickshaw.js"></script>
   <script src="/third_party/select2/select2.min.js"></script>
@@ -434,7 +436,7 @@
                       <tr>
                         <td>
                           {{#each contrib}}
-                            <div {{action navigate on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
+                            <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
                           {{/each}}
                         </td>
                         <td class="flowlet-popup-input">
@@ -497,7 +499,7 @@
                       </td>
                       <td>
                       {{#each contrib}}
-                      <div {{action navigate on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
+                      <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
                       {{/each}}
                       </td>
                       </tr>
@@ -586,8 +588,8 @@
             <tbody>
             {{#each runs}}
               <tr class="run-list" {{action "loadRun" runId}}>
-                <td>{{started}}</td>
-                <td>{{ended}}</td>
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>
               </tr>
             {{/each}}

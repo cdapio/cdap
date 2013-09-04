@@ -9,7 +9,7 @@ define([], function () {
 		elements: Em.Object.create(),
 
 		load: function () {
-
+			this.clearTriggers(true);
 			var model = this.get('model');
 			var self = this;
 
@@ -29,12 +29,14 @@ define([], function () {
 
 			var streams = model.flowStreams;
 			objects = [];
-			for (var i = 0; i < streams.length; i ++) {
 
+			for (var i = 0; i < streams.length; i ++) {
+				streams[i]['level'] = 'stream';
 				objects.push(C.Stream.create(streams[i]));
 				objects[i].trackMetric('/collect/events/streams/{id}', 'aggregates', 'events');
 
 			}
+
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
 
 			this.interval = setInterval(function () {
@@ -82,18 +84,32 @@ define([], function () {
 				}
 			}
 		},
+		
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted') &&
+				this.get('ratesCompleted');
+		},
+
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+			this.set('aggregatesCompleted', value);
+			this.set('ratesCompleted', value);
+		},
 
 		updateStats: function () {
-
+			if (!this.ajaxCompleted()) {
+				return;
+			}
+			this.clearTriggers(false);
 			this.get('model').updateState(this.HTTP);
-			C.Util.updateTimeSeries([this.get('model')], this.HTTP);
+			C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
 
 			var models = this.get('elements.Flowlet.content').concat(
 				this.get('elements.Stream.content'));
 
-			C.Util.updateAggregates(models, this.HTTP);
+			C.Util.updateAggregates(models, this.HTTP, this);
 
-			C.Util.updateRates(models, this.HTTP);
+			C.Util.updateRates(models, this.HTTP, this);
 
 		},
 

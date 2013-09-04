@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.batch.inmemory;
 
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.common.conf.CConfiguration;
@@ -8,8 +7,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.logging.guice.LoggingModules;
@@ -54,7 +53,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
     if (Constants.InMemoryPersistenceType.MEMORY == persistenceType) {
       return createInMemoryModules();
     } else {
-      return createPersistentModules(persistenceType);
+      return createPersistentModules();
     }
   }
 
@@ -77,7 +76,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
     return Guice.createInjector(inMemoryModules);
   }
 
-  private Injector createPersistentModules(Constants.InMemoryPersistenceType persistenceType) {
+  private Injector createPersistentModules() {
     ImmutableList<Module> singleNodeModules = ImmutableList.of(
       new ConfigModule(cConf),
       new LocalConfigModule(),
@@ -85,8 +84,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
-      Constants.InMemoryPersistenceType.LEVELDB == persistenceType ?
-        new DataFabricLevelDBModule(cConf) : new DataFabricModules().getSingleNodeModules(),
+      new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
       new LoggingModules().getSingleNodeModules(),

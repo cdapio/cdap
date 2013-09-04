@@ -49,11 +49,6 @@ public final class HttpResourceHandler implements HttpHandler {
     //Store the handlers to call init and destroy on all handlers.
     this.handlers = ImmutableList.copyOf(handlers);
     for (HttpHandler handler : handlers){
-      if (!handler.getClass().getSuperclass().equals(Object.class)){
-        LOG.warn("{} is inherited. The annotations from base case will not be inherited",
-                 handler.getClass().getName());
-      }
-
       String basePath = "";
       if (handler.getClass().isAnnotationPresent(Path.class)){
         basePath =  handler.getClass().getAnnotation(Path.class).value();
@@ -75,9 +70,6 @@ public final class HttpResourceHandler implements HttpHandler {
                                       String.format("No HttpMethod found for method: %s", method.getName()));
           patternRouter.add(absolutePath, new HttpResourceModel(httpMethods, method, handler));
 
-        } else {
-          LOG.warn("Not adding method {}({}) to path routing like. HTTP calls will not be routed to this method",
-                   method.getName(), method.getParameterTypes());
         }
       }
     }

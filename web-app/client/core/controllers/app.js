@@ -22,6 +22,7 @@ define([], function () {
 			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
+			this.clearTriggers(true);
 
 			var self = this;
 			var model = this.get('model');
@@ -130,9 +131,17 @@ define([], function () {
 
 		},
 
-		updateStats: function () {
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted');
+		},
 
-			if (C.currentPath !== 'App') {
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+			this.set('aggregatesCompleted', value);
+		},
+
+		updateStats: function () {
+			if (!this.ajaxCompleted() || C.currentPath !== 'App') {
 				return;
 			}
 
@@ -157,12 +166,12 @@ define([], function () {
 				/*
 				 * End hax
 				 */
-
+				this.clearTriggers(false);
 				// Scans models for timeseries metrics and updates them.
-				C.Util.updateTimeSeries(models, this.HTTP);
+				C.Util.updateTimeSeries(models, this.HTTP, this);
 
 				// Scans models for aggregate metrics and udpates them.
-				C.Util.updateAggregates(models, this.HTTP);
+				C.Util.updateAggregates(models, this.HTTP, this);
 
 			}
 

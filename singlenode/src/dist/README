@@ -1,4 +1,4 @@
-Continuuity (tm) Reactor Development Kit - @VERSION@
+Continuuity (tm) Reactor Development Kit - 1.7.0
 
 Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 ================================================================================
@@ -20,12 +20,12 @@ Once you have installed the prerequisites, you should unzip the Developer Suite
 distribution to a suitable directory. E.g.
 
   %> cd ~/Projects
-  %> unzip /tmp/continuuity-reactor-development-kit-@VERSION@.zip
+  %> unzip /tmp/continuuity-reactor-development-kit-1.7.0.zip
 
 You are now ready to start Reactor. Do so by running the
 'continuuity-reactor' script in the $CONTINUUITY/bin folder. E.g.
 
-  %> cd ~/Projects/continuuity-reactor-development-kit-@VERSION@
+  %> cd ~/Projects/continuuity-reactor-development-kit-1.7.0
   %> bin/continuuity-reactor start
 
 
@@ -33,15 +33,15 @@ Directory Structure
 ===================
 The directory structure for the Reactor Development Kit is shown below.
 
-continuuity-reactor-development-kit-@VERSION@
+continuuity-reactor-development-kit-1.7.0
  |-- README                                                         (this file)
  |-- LICENSE                                      (the Developer Suite license)
- |-- continuuity-api-@VERSION@.jar                        (the API jar for Reactor)
- |-- continuuity-api-@VERSION@-javadoc.jar    (the JavaDoc jar for the Reactor API)
- |-- continuuity-api-@VERSION@-source.jar      (the source jar for the Reactor API)
- |-- continuuity-eclipse-plugin-@VERSION@.jar          (the Reactor Eclipse Plugin)
+ |-- continuuity-api-1.7.0.jar                        (the API jar for Reactor)
+ |-- continuuity-api-1.7.0-javadoc.jar    (the JavaDoc jar for the Reactor API)
+ |-- continuuity-api-1.7.0-source.jar      (the source jar for the Reactor API)
+ |-- continuuity-eclipse-plugin-1.7.0.jar          (the Reactor Eclipse Plugin)
  |-- lib                                            (Reactor runtime libraries)
- | |-- continuuity-test-@VERSION@.jar              (the Reactor Test Framework jar)
+ | |-- continuuity-test-1.7.0.jar              (the Reactor Test Framework jar)
  |-- bin                                              (Execution/Tools Scripts)
  | |-- continuuity-reactor                               (Local Reactor Daemon)
  | |-- data-format                                   (Reactor Data Format Tool)
@@ -70,4 +70,4 @@ continuuity-reactor-development-kit-@VERSION@
 Further Information
 ===================
 Further information covering the core concepts for developing applications for
-the Reactor platform can be found in Continuuity-Reactor-Developer-Guide-@VERSION@.pdf
+the Reactor platform can be found in Continuuity-Reactor-Developer-Guide-1.7.0.pdf

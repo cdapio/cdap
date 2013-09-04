@@ -211,7 +211,6 @@ public class StreamHandler extends AbstractHttpHandler {
       // and create a stream event
       StreamEvent event = new DefaultStreamEvent(headers, body);
 
-      LOG.trace("Sending event to streamEventCollector: {}", event);
       // let the streamEventCollector process the event.
       // in case of exception, respond with internal error
       streamEventCollector.collect(event, accountId,

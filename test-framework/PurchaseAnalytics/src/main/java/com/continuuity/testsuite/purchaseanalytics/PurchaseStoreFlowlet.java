@@ -24,19 +24,22 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
+import com.google.gson.Gson;
 
 
 /**
  * Store the incoming Purchase Objects in datastore.
  */
 public class PurchaseStoreFlowlet extends AbstractFlowlet {
+  private final Gson gson = new Gson();
 
   @UseDataSet("purchases")
   private ObjectStore<Purchase> store;
 
   @ProcessInput("outPurchase")
-  public void process(Purchase purchase) throws OperationException {
-    store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
+  public void process(String purchase) throws OperationException {
+    Purchase purchaseObj = this.gson.fromJson(purchase, Purchase.class);
+    store.write(Bytes.toBytes(purchaseObj.getPurchaseTime()), purchaseObj);
   }
 }
 

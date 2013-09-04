@@ -16,6 +16,7 @@ import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -40,15 +41,18 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test stream handler.
@@ -177,34 +181,125 @@ public class StreamHandlerTest {
   }
 
   @Test
-  @Ignore
-  public void testBatchStreamEnqueue1() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM, 5);
-    testBatchStreamEnqueue();
+  public void testBatchStreamEnqueue() throws Exception {
+    startGateway();
+
+    DefaultHttpClient httpclient = new DefaultHttpClient();
+
+    // Create new stream.
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/stream/test_batch_stream_enqueue", hostname, port));
+    HttpResponse response = httpclient.execute(httpPut);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+
+    // Get new consumer id
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/stream/test_batch_stream_enqueue?q=newConsumer",
+                                                hostname, port));
+    response = httpclient.execute(httpGet);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(1, response.getHeaders(Constants.HEADER_STREAM_CONSUMER).length);
+    String groupId = response.getFirstHeader(Constants.HEADER_STREAM_CONSUMER).getValue();
+    EntityUtils.consume(response.getEntity());
+
+    ExecutorService executorService = Executors.newFixedThreadPool(5);
+    BatchEnqueue batchEnqueue1 = new BatchEnqueue(true);
+    BatchEnqueue batchEnqueue2 = new BatchEnqueue(false);
+    Future<?> future1 = executorService.submit(batchEnqueue1);
+    Future<?> future2 = executorService.submit(batchEnqueue2);
+    future1.get();
+    future2.get();
+    executorService.shutdown();
+
+    List<Integer> actual = Lists.newArrayList();
+    // Dequeue all entries
+    for (int i = 0; i < BatchEnqueue.NUM_ELEMENTS; ++i) {
+      httpGet = new HttpGet(String.format("http://%s:%d/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
+      httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
+      response = httpclient.execute(httpGet);
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+      int entry = Integer.parseInt(EntityUtils.toString(response.getEntity()));
+      actual.add(entry);
+    }
+
+    batchEnqueue1.verify(actual);
+    batchEnqueue2.verify(actual);
+
+    Collections.sort(actual);
+    for (int i = 0; i < BatchEnqueue.NUM_ELEMENTS; ++i) {
+      Assert.assertEquals((Integer) i, actual.get(i));
+    }
+  }
+
+  private static class BatchEnqueue implements Runnable {
+    public static final int NUM_ELEMENTS = 50; // Should be an even number
+    private final boolean evenGenerator;
+
+    private final List<Integer> expected = Lists.newArrayList();
+
+    private BatchEnqueue(boolean evenGenerator) {
+      this.evenGenerator = evenGenerator;
+    }
+
+    @Override
+    public void run() {
+      try {
+        DefaultHttpClient httpclient = new DefaultHttpClient();
+
+        for (int i = evenGenerator ? 0 : 1; i < NUM_ELEMENTS; i += 2) {
+          HttpPost httpPost = new HttpPost(String.format("http://%s:%d/stream/test_batch_stream_enqueue",
+                                                         hostname, port));
+          httpPost.setEntity(new StringEntity(Integer.toString(i)));
+          httpPost.setHeader("test_batch_stream_enqueue1", Integer.toString(i));
+          HttpResponse response = httpclient.execute(httpPost);
+          Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+          EntityUtils.consume(response.getEntity());
+          expected.add(i);
+        }
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    public void verify(List<Integer> out) {
+      Assert.assertEquals(0, NUM_ELEMENTS % 2);
+      Assert.assertEquals(NUM_ELEMENTS, out.size());
+
+      List<Integer> actual = Lists.newArrayList();
+      for (Integer i : out) {
+        if ((i % 2 == 0) == evenGenerator) {
+          actual.add(i);
+        }
+      }
+      Assert.assertEquals(expected, actual);
+    }
   }
 
   @Test
-  @Ignore
-  public void testBatchStreamEnqueue2() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES, 50);
-    testBatchStreamEnqueue();
+  public void testAsyncBatchStreamEnqueueLiimitEventsPerStream() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
+                         BatchAsyncEnqueue.NUM_ELEMENTS / 3);
+    testAsyncBatchStreamEnqueue();
   }
 
   @Test
-  @Ignore
-  public void testBatchStreamEnqueue3() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS, 1);
-    testBatchStreamEnqueue();
+  public void testAsyncBatchStreamEnqueueLimitBytes() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES, 1000);
+    testAsyncBatchStreamEnqueue();
   }
 
   @Test
-  @Ignore
-  public void testBatchStreamEnqueue4() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM, 10);
-    testBatchStreamEnqueue();
+  public void testAsyncBatchStreamEnqueueLimitFlushInterval() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS, 100);
+    testAsyncBatchStreamEnqueue();
   }
 
-  private void testBatchStreamEnqueue() throws Exception {
+  @Test
+  public void testAsyncBatchStreamEnqueueLimitNumEvents() throws Exception {
+    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM, BatchAsyncEnqueue.NUM_ELEMENTS / 3);
+    testAsyncBatchStreamEnqueue();
+  }
+
+  private void testAsyncBatchStreamEnqueue() throws Exception {
     startGateway();
 
     final int concurrencyLevel = 6;
@@ -228,11 +323,11 @@ public class StreamHandlerTest {
     ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
     List<ListenableFuture<?>> futureList = Lists.newArrayList();
 
-    List<BatchEnqueue> batchEnqueues = Lists.newArrayList();
+    List<BatchAsyncEnqueue> batchAsyncEnqueues = Lists.newArrayList();
     for (int i = 0; i < concurrencyLevel; ++i) {
-      BatchEnqueue batchEnqueue = new BatchEnqueue(i * 1000);
-      batchEnqueues.add(batchEnqueue);
-      futureList.add(executorService.submit(batchEnqueue));
+      BatchAsyncEnqueue batchAsyncEnqueue = new BatchAsyncEnqueue(i * 1000);
+      batchAsyncEnqueues.add(batchAsyncEnqueue);
+      futureList.add(executorService.submit(batchAsyncEnqueue));
     }
 
     Futures.allAsList(futureList).get();
@@ -245,15 +340,16 @@ public class StreamHandlerTest {
         = new HttpGet(String.format("http://%s:%d/v2/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
       httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
-      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+      Assert.assertEquals("Failed for entry number " + i,
+                          HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int entry = Integer.parseInt(EntityUtils.toString(response.getEntity()));
       actual.add(entry);
     }
 
     List<Integer> expected = Lists.newArrayList();
-    for (BatchEnqueue batchEnqueue : batchEnqueues) {
-      expected.addAll(batchEnqueue.expected);
-      batchEnqueue.verify(actual);
+    for (BatchAsyncEnqueue batchAsyncEnqueue : batchAsyncEnqueues) {
+      expected.addAll(batchAsyncEnqueue.expected);
+      batchAsyncEnqueue.verify(actual);
     }
 
     Collections.sort(expected);
@@ -261,13 +357,13 @@ public class StreamHandlerTest {
     Assert.assertEquals(expected, actual);
   }
 
-  private static class BatchEnqueue implements Runnable {
-    public static final int NUM_ELEMENTS = 5;
+  private static class BatchAsyncEnqueue implements Runnable {
+    public static final int NUM_ELEMENTS = 50;
     private final int startElement;
 
-    private final List<Integer> expected = Lists.newArrayList();
+    private final BlockingQueue<Integer> expected = Queues.newArrayBlockingQueue(NUM_ELEMENTS);
 
-    private BatchEnqueue(int startElement) {
+    private BatchAsyncEnqueue(int startElement) {
       this.startElement = startElement;
     }
 
@@ -275,7 +371,6 @@ public class StreamHandlerTest {
     public void run() {
       try {
         AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
-        configBuilder.setMaximumConnectionsPerHost(1000);
 
         final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
           new NettyAsyncHttpProvider(configBuilder.build()),
@@ -298,14 +393,17 @@ public class StreamHandlerTest {
 
                                            @Override
                                            public void onThrowable(Throwable t) {
-                                             LOG.error("Got exception while posting {}", request, t);
+                                             LOG.error("Got exception while posting {}", elem, t);
                                              expected.add(-1);
                                              latch.countDown();
                                            }
                                          });
 
+          // Sleep so as not to overrun the server.
+          TimeUnit.MILLISECONDS.sleep(10);
         }
         latch.await();
+        asyncHttpClient.close();
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
@@ -327,9 +425,11 @@ public class StreamHandlerTest {
           actual.add(i);
         }
       }
-      Collections.sort(expected);
+      List<Integer> expecetedList = Lists.newArrayListWithCapacity(NUM_ELEMENTS);
+      expected.drainTo(expecetedList);
+      Collections.sort(expecetedList);
       Collections.sort(actual);
-      Assert.assertEquals(expected, actual);
+      Assert.assertEquals(expecetedList, actual);
     }
   }
 

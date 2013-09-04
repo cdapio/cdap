@@ -9,13 +9,11 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppender;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocalFileSystem;
-import org.apache.hadoop.fs.Path;
 import org.slf4j.MDC;
 
 import java.io.IOException;
@@ -28,24 +26,20 @@ public class FileLogAppender extends LogAppender {
   public static final String APPENDER_NAME = "FileLogAppender";
   public static final String IGNORE_LOG = ".IGNORE_LOG_FILE_APPENDER";
 
-  private final Configuration hConfig;
-  private final Path logBaseDir;
+  private final Location logBaseDir;
   private final long logFileRotationIntervalMs;
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
 
   private LogFileWriter logFileWriter;
-  private FileSystem fileSystem;
 
   @Inject
-  public FileLogAppender(CConfiguration cConfig, Configuration hConfig) {
+  public FileLogAppender(CConfiguration cConfig, LocationFactory locationFactory) {
     setName(APPENDER_NAME);
-
-    this.hConfig = hConfig;
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-    this.logBaseDir = new Path(baseDir);
+    this.logBaseDir = locationFactory.create(baseDir);
 
     float rotationMins = cConfig.getFloat(LoggingConfiguration.LOG_FILE_ROTATION_INTERVAL_MINS,
                                       TimeUnit.MINUTES.convert(1, TimeUnit.DAYS));
@@ -66,13 +60,7 @@ public class FileLogAppender extends LogAppender {
   public void start() {
     super.start();
     try {
-      fileSystem = FileSystem.get(hConfig);
-      // local file system's hflush() does not work. Using the raw local file system fixes it.
-      // https://issues.apache.org/jira/browse/HADOOP-7844
-      if (fileSystem instanceof LocalFileSystem) {
-        fileSystem = ((LocalFileSystem) fileSystem).getRawFileSystem();
-      }
-      logFileWriter = new LogFileWriter(fileSystem, logBaseDir, new LogSchema().getAvroSchema(),
+      logFileWriter = new LogFileWriter(logBaseDir, new LogSchema().getAvroSchema(),
                                         syncIntervalBytes, logFileRotationIntervalMs, retentionDurationMs);
     } catch (IOException e) {
       close();
@@ -99,14 +87,8 @@ public class FileLogAppender extends LogAppender {
 
   private void close() {
     try {
-      try {
-        if (logFileWriter != null) {
-          logFileWriter.close();
-        }
-      } finally {
-        if (fileSystem != null) {
-          fileSystem.close();
-        }
+      if (logFileWriter != null) {
+        logFileWriter.close();
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);

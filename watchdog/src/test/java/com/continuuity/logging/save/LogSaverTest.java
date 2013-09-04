@@ -11,19 +11,21 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.Util;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.kafka.KafkaLogAppender;
-import com.continuuity.logging.appender.kafka.TestKafkaLogging;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.read.AvroFileLogReader;
 import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogEvent;
+import com.continuuity.logging.read.SeekableLocalLocation;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Maps;
 import junit.framework.Assert;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -34,13 +36,14 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
-import static com.continuuity.logging.appender.file.TestFileLogging.LogCallback;
+import static com.continuuity.logging.appender.LoggingTester.LogCallback;
 
 /**
  * Test LogSaver and Distributed Log Reader.
@@ -67,6 +70,7 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, "5120");
     cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS, "300");
     cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS, "600");
+    cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
     LogSaver logSaver = new LogSaver(OPEX, 0, new Configuration(), cConf);
     logSaver.startAndWait();
@@ -81,7 +85,8 @@ public class LogSaverTest extends KafkaTestBase {
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "developer");
-    DistributedLogReader distributedLogReader = new DistributedLogReader(OPEX, conf, new Configuration());
+    DistributedLogReader distributedLogReader = new DistributedLogReader(OPEX, conf,
+                                                                         new SeekableLocalLocationFactory());
 
     LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
 
@@ -183,9 +188,13 @@ public class LogSaverTest extends KafkaTestBase {
     conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "async");
     conf.set(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100");
     KafkaLogAppender appender = new KafkaLogAppender(conf);
-    new LogAppenderInitializer(appender).initialize();
+    new LogAppenderInitializer(appender).initialize("test_logger");
 
-    Logger logger = LoggerFactory.getLogger(TestKafkaLogging.class);
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    StatusPrinter.setPrintStream(new PrintStream(bos));
+    StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
+
+    Logger logger = LoggerFactory.getLogger("test_logger");
     Exception e1 = new Exception("Test Exception1");
     Exception e2 = new Exception("Test Exception2", e1);
 
@@ -196,9 +205,6 @@ public class LogSaverTest extends KafkaTestBase {
       TimeUnit.MILLISECONDS.sleep(1200);
     }
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    StatusPrinter.setPrintStream(new PrintStream(bos));
-    StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
     System.out.println(bos.toString());
 
     appender.stop();
@@ -207,13 +213,16 @@ public class LogSaverTest extends KafkaTestBase {
   private static void waitTillLogSaverDone(String logBaseDir) throws Exception {
     long start = System.currentTimeMillis();
 
+    LocationFactory locationFactory = new LocalLocationFactory();
+
     while (true) {
       String latestFile = getLatestFile(logBaseDir);
       if (latestFile != null) {
-        AvroFileLogReader logReader = new AvroFileLogReader(new Configuration(), new LogSchema().getAvroSchema());
+        AvroFileLogReader logReader = new AvroFileLogReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
-        logReader.readLog(new Path(latestFile), Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
+        logReader.readLog(new SeekableLocalLocation(locationFactory.create(latestFile)), Filter.EMPTY_FILTER, 0,
+                          Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
         logCallback.close();
         List<LogEvent> events = logCallback.getEvents();
         if (events.size() > 0) {
@@ -246,5 +255,24 @@ public class LogSaverTest extends KafkaTestBase {
       map.put(Long.parseLong(filename), file.getAbsolutePath());
     }
     return map.get(map.lastKey());
+  }
+
+  private static final class SeekableLocalLocationFactory implements LocationFactory {
+    private final LocationFactory locationFactory = new LocalLocationFactory();
+
+    @Override
+    public Location create(String path) {
+      return new SeekableLocalLocation(locationFactory.create(path));
+    }
+
+    @Override
+    public Location create(URI uri) {
+      return new SeekableLocalLocation(locationFactory.create(uri));
+    }
+
+    @Override
+    public Location getHomeLocation() {
+      return locationFactory.getHomeLocation();
+    }
   }
 }

@@ -24,13 +24,25 @@ import java.util.UUID;
  * Will replace object specific Ids later on.
  */
 public class SerializedObject {
-  private final UUID uuid;
+//  private final UUID uuid;
+//
+//  public UUID getUuid() {
+//    return uuid;
+//  }
+//
+//  public SerializedObject() {
+//    this.uuid = UUID.randomUUID();
+  int type;
 
-  public UUID getUuid() {
-    return uuid;
+  public int getType() {
+    return type;
   }
 
-  public SerializedObject() {
-    this.uuid = UUID.randomUUID();
+  public void setType(int type) {
+    this.type = type;
+  }
+
+  public SerializedObject(int type) {
+    this.type = type;
   }
 }

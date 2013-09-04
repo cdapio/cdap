@@ -13,7 +13,6 @@ define([], function () {
 
 		init: function() {
 			this._super();
-
 			this.set('timeseries', Em.Object.create());
 			this.set('aggregates', Em.Object.create());
 
