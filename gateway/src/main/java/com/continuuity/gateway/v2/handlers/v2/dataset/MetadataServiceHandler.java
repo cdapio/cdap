@@ -1,8 +1,8 @@
-package com.continuuity.gateway.v2.handlers.dataset;
+package com.continuuity.gateway.v2.handlers.v2.dataset;
 
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.v2.handlers.AuthenticatedHttpHandler;
+import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
@@ -25,7 +25,7 @@ import java.util.List;
 /**
  *  {@link MetadataServiceHandler} is REST interface to MDS store.
  */
-@Path("/rest/v2")
+@Path("/v2")
 public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   private final MetadataService service;
 

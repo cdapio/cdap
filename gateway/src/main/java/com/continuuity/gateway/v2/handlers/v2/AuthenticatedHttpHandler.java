@@ -1,15 +1,11 @@
-package com.continuuity.gateway.v2.handlers;
+package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
 
 /**
  *

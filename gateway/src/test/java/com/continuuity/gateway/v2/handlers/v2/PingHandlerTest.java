@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2.handlers;
+package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import junit.framework.Assert;

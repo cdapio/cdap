@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2.handlers;
+package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
