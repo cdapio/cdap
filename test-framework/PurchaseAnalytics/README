@@ -8,13 +8,13 @@ must respect referential integrity and refer to and existing product and custome
 Each transaction json is prefixed by a transaction type, as described below: 
 
 Purchase
-{"customer":"alex","product":"FisherPrice","quantity":10,"price":"100","purchaseTime":"129308132", "type":1}
+{"customer":"alex","product":"FisherPrice","quantity":10,"price":"100","purchaseTime":"129308132","type":1}
 
 Product
-{"productId":"1","description":"FisherPrice": "type":2}
+{"productId":"1","description":"FisherPrice","type":2}
 
 Customer
-{"customerId":"1","name":"alex","zip":90210,"rating":100, "type":3}
+{"customerId":"1","name":"alex","zip":90210,"rating":100,"type":3}
 
 Flows
 -----
