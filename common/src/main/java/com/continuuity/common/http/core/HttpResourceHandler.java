@@ -69,7 +69,9 @@ public final class HttpResourceHandler implements HttpHandler {
           Preconditions.checkArgument(httpMethods.size() >= 1,
                                       String.format("No HttpMethod found for method: %s", method.getName()));
           patternRouter.add(absolutePath, new HttpResourceModel(httpMethods, method, handler));
-
+        } else {
+          LOG.trace("Not adding method {}({}) to path routing like. HTTP calls will not be routed to this method",
+                   method.getName(), method.getParameterTypes());
         }
       }
     }

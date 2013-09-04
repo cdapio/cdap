@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2.handlers.stream;
+package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.store.StoreFactory;
@@ -106,24 +106,24 @@ public class StreamHandlerTest {
 
     // Try to get info on a non-existant stream
     DefaultHttpClient httpclient = new DefaultHttpClient();
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/stream/test_stream1", hostname, port));
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream1", hostname, port));
     HttpResponse response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
 
     // Now, create the new stream.
-    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/stream/test_stream1", hostname, port));
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_stream1", hostname, port));
     response = httpclient.execute(httpPut);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
 
     // getInfo should now return 200
-    httpGet = new HttpGet(String.format("http://%s:%d/v2/stream/test_stream1", hostname, port));
+    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream1", hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
 
-    httpGet = new HttpGet(String.format("http://%s:%d/v2/stream/test_stream1?q=info", hostname, port));
+    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream1?q=info", hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
@@ -136,14 +136,15 @@ public class StreamHandlerTest {
     DefaultHttpClient httpclient = new DefaultHttpClient();
 
     // Create new stream.
-    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/stream/test_stream_enqueue", hostname, port));
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_stream_enqueue", hostname, port));
     HttpResponse response = httpclient.execute(httpPut);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
 
     // Enqueue 10 entries
     for (int i = 0; i < 10; ++i) {
-      HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/stream/test_stream_enqueue", hostname, port));
+      HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_enqueue", hostname,
+                                                     port));
       httpPost.setEntity(new StringEntity(Integer.toString(i)));
       httpPost.setHeader("test_stream_enqueue.header1", Integer.toString(i));
       response = httpclient.execute(httpPost);
@@ -152,7 +153,7 @@ public class StreamHandlerTest {
     }
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/stream/test_stream_enqueue?q=newConsumer",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue?q=newConsumer",
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -162,7 +163,7 @@ public class StreamHandlerTest {
 
     // Dequeue 10 entries
     for (int i = 0; i < 10; ++i) {
-      httpGet = new HttpGet(String.format("http://%s:%d/v2/stream/test_stream_enqueue?q=dequeue", hostname, port));
+      httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue?q=dequeue", hostname, port));
       httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -173,7 +174,7 @@ public class StreamHandlerTest {
     }
 
     // Dequeue-ing again should give NO_CONTENT
-    httpGet = new HttpGet(String.format("http://%s:%d/v2/stream/test_stream_enqueue?q=dequeue", hostname, port));
+    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue?q=dequeue", hostname, port));
     httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
@@ -337,7 +338,7 @@ public class StreamHandlerTest {
     // Dequeue all entries
     for (int i = 0; i < concurrencyLevel * BatchEnqueue.NUM_ELEMENTS; ++i) {
       httpGet
-        = new HttpGet(String.format("http://%s:%d/v2/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
+        = new HttpGet(String.format("http://%s:%d/rest/v2/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
       httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals("Failed for entry number " + i,
@@ -412,7 +413,7 @@ public class StreamHandlerTest {
     private Request getPostRequest(String body) {
       RequestBuilder requestBuilder = new RequestBuilder("POST");
       return requestBuilder
-        .setUrl(String.format("http://%s:%d/v2/stream/test_batch_stream_enqueue", hostname, port))
+        .setUrl(String.format("http://%s:%d/rest/v2/stream/test_batch_stream_enqueue", hostname, port))
         .setBody(body)
         .build();
 

@@ -5,5 +5,5 @@
 /**
  * Various handlers for Gateway.
  */
-package com.continuuity.gateway.v2.handlers;
+package com.continuuity.gateway.v2.handlers.v2;
 
