@@ -139,7 +139,8 @@ public class StreamHandlerTest {
 
     // Enqueue 10 entries
     for (int i = 0; i < 10; ++i) {
-      HttpPost httpPost = new HttpPost(String.format("http://%s:%d/rest/v2/stream/test_stream_enqueue", hostname, port));
+      HttpPost httpPost = new HttpPost(String.format("http://%s:%d/rest/v2/stream/test_stream_enqueue", hostname,
+                                                     port));
       httpPost.setEntity(new StringEntity(Integer.toString(i)));
       httpPost.setHeader("test_stream_enqueue.header1", Integer.toString(i));
       response = httpclient.execute(httpPost);
