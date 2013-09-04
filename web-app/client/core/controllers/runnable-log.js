@@ -13,7 +13,7 @@ define([], function () {
 		load: function () {
 			var self = this;
 			this.set('fromOffset', -1);
-			this.set('maxSize', 100);
+			this.set('maxSize', 50);
 			this.set('initialOffset', null);
 			this.set('autoScroll', true);
 			var beforeHTML = $('#logView').html(),
@@ -109,7 +109,7 @@ define([], function () {
 
 			setTimeout(function () {
 				logInterval();
-				$('#logView').bind('scroll', self.setAutoScroll.bind(self));
+				$('#logView').on('DOMMouseScroll mousewheel', self.setAutoScroll.bind(self));
 			}, C.EMBEDDABLE_DELAY);
 
 			this.interval = setInterval(logInterval, C.POLLING_INTERVAL);
@@ -128,6 +128,15 @@ define([], function () {
 		 * transitioning.
 		 */
 		logUp: function () {
+
+			// If logs are currently being fetched, don't do anything.
+			if (this.get('logUpPending')) {
+				return;
+			}
+
+			$('#warning').html('<div>Fetching logs...</div>').show();
+			this.set('logUpPending', true);
+
 			// Marker for first line.
 			var firstLine = $('#logView code:first');
 
@@ -176,21 +185,46 @@ define([], function () {
 						// Add response to beginning of log view and leave space for readability.
 						$('#logView').prepend(response);
 						$('#logView').scrollTop(firstLine.offset().top - READ_BUFFER_HEIGHT);
+						$('#warning').html('').hide();
+						self.set('logUpPending', false);
 					}
 				);
 		},
 
 		/**
+		 * Checks where a div is overflowing (if content is greater than div height).
+		 * @param  {DOM Element} el Element to check.
+		 * @return {Boolean} Whether div is overflowing.
+		 */
+		isOverflowing: function (el) {
+			return el.clientHeight < el.scrollHeight;
+		},
+
+		/**
 		 * Determines whether user has scrolled to the bottom of the div and enables/disables auto
-		 * scrolling of logs.
+		 * scrolling of logs. If user has scrolled up in a small div or scrolled to top, it fetches logs
+		 * from the past.
 		 * @param {Object} event passed through event handler.
 		 */
 		setAutoScroll: function (event) {
 			var elem = $(event.currentTarget);
+
+			// Log box is larger than logs inside of it, no scroll bars appears, mouse wheel up causes 
+			// logs to be fetched.
+			if (!this.isOverflowing(elem[0]) && event.originalEvent.wheelDelta >= 0) {
+				this.logUp();
+				this.set('autoScroll', false);
+				return;
+			}
+
+			// Log box is overflowing, check if scroll bar position is at the top, if so get logs.
 			var position = elem.scrollTop();
-			if (position < 1) {
+			if (position < 1 && event.originalEvent.wheelDelta >= 0) {
 				this.logUp();
 			}
+
+			// If scroll bar is at the bottom, set auto scrolling to true. This is by default false if the
+			// log div is not overflowing.
 			if (elem[0].scrollHeight - position - elem.outerHeight() < SCROLL_BUFFER) {
 				this.set('autoScroll', true);
 			} else {
