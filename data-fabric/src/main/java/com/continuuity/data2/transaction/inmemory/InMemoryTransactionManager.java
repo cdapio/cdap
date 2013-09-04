@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,15 +58,15 @@ public class InMemoryTransactionManager {
   // the set of transactions that are in progress, with their expiration time stamp,
   // or with the negative start time to specify no expiration. We remember the start
   // time to allow diagnostics and possible manual cleanup/invalidation (not implemented yet).
-  private final NavigableMap<Long, Long> inProgress = Maps.newTreeMap();
+  private final NavigableMap<Long, Long> inProgress = new ConcurrentSkipListMap<Long, Long>();
   // the list of transactions that are invalid (not properly committed/aborted, or timed out)
   private final LongArrayList invalid = new LongArrayList();
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
   // todo: should this be consolidated with inProgress?
   // commit time nextWritePointer -> changes made by this tx
-  private final NavigableMap<Long, Set<byte[]>> committedChangeSets = Maps.newTreeMap();
+  private final NavigableMap<Long, Set<byte[]>> committedChangeSets = new ConcurrentSkipListMap<Long, Set<byte[]>>();
   // not committed yet
-  private final Map<Long, Set<byte[]>> committingChangeSets = Maps.newHashMap();
+  private final Map<Long, Set<byte[]>> committingChangeSets = Maps.newConcurrentMap();
 
   private long readPointer;
   private long nextWritePointer;
@@ -269,10 +270,9 @@ public class InMemoryTransactionManager {
     return tx;
   }
 
-  public synchronized boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-      inProgress.remove(tx.getWritePointer());
       return false;
     }
 
