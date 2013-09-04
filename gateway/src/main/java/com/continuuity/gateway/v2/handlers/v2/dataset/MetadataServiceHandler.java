@@ -110,10 +110,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Dataset> datasets = service.getDatasets(new Account(accountId));
       JsonArray s = new JsonArray();
-      if (datasets.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       for (Dataset dataset : datasets) {
         JsonObject object = new JsonObject();
         object.addProperty("id", dataset.getId());
@@ -180,10 +176,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Query> procedures = service.getQueries(new Account(accountId));
-      if (procedures.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Query procedure : procedures) {
         JsonObject object = new JsonObject();
@@ -268,10 +260,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Mapreduce> mapreduces = service.getMapreduces(new Account(accountId));
-      if (mapreduces.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Mapreduce mapreduce : mapreduces) {
         JsonObject object = new JsonObject();
@@ -358,10 +346,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
 
       List<Application> apps = service.getApplications(new Account(accountId));
-      if (apps.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Application app : apps) {
         JsonObject object = new JsonObject();
@@ -426,10 +410,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
 
       List<Flow> flows = service.getFlows(accountId);
-      if (flows.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Flow flow : flows) {
         JsonObject object = new JsonObject();
