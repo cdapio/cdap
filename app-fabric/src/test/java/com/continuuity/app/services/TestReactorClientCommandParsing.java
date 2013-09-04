@@ -43,7 +43,7 @@ public class TestReactorClientCommandParsing {
 
   public void testValidInvalidStartArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
-    String command = client.parseArguments(new String[]{"SomeRandomCommand", "--application", "args"},
+    String command = client.parseArguments(new String[]{"SomeRandomCommand", "--app", "args"},
                                            CConfiguration.create());
     assertEquals("help", command);
   }
@@ -51,20 +51,20 @@ public class TestReactorClientCommandParsing {
   @Test(expected = UsageException.class)
   public void testValidInvalidStopArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
-    client.parseArguments(new String[]{"stop", "--application", "args"}, CConfiguration.create());
+    client.parseArguments(new String[]{"stop", "--app", "args"}, CConfiguration.create());
 
   }
 
   @Test(expected = UsageException.class)
   public void testValidInvalidStatusArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
-    client.parseArguments(new String[]{"status", "--application", "args"}, CConfiguration.create());
+    client.parseArguments(new String[]{"status", "--app", "args"}, CConfiguration.create());
   }
 
   @Test(expected = UsageException.class)
   public void testValidInvalidPromoteArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
-    client.parseArguments(new String[]{"promote", "--remote", "host", "--application", "application"},
+    client.parseArguments(new String[]{"promote", "--remote", "host", "--app", "application"},
                           CConfiguration.create());
   }
 
@@ -73,56 +73,56 @@ public class TestReactorClientCommandParsing {
     ReactorClient client = new ReactorClient();
     assertTrue("help".equals(client.parseArguments(new String[]{"help"}, CConfiguration.create())));
 
-    assertTrue("delete".equals(client.parseArguments(new String[]{"delete", "--application", "appId"},
+    assertTrue("delete".equals(client.parseArguments(new String[]{"delete", "--app", "appId"},
                                                      CConfiguration.create())));
 
     assertTrue("deploy".equals(client.parseArguments(new String[]{"deploy", "--archive", "jar"},
                                                      CConfiguration.create())));
 
     assertTrue("start".equals(client.parseArguments(
-      new String[]{"start", "--application", "appId", "--procedure", "processor"}, CConfiguration.create())));
+      new String[]{"start", "--app", "appId", "--procedure", "processor"}, CConfiguration.create())));
 
     assertTrue("start".equals(client.parseArguments(
-      new String[]{"start", "--application", "appId", "--flow", "processor"}, CConfiguration.create())));
+      new String[]{"start", "--app", "appId", "--flow", "processor"}, CConfiguration.create())));
 
     assertTrue("start".equals(client.parseArguments(
-      new String[]{"start", "--application", "appId", "--flow", "processor", "--host", "localhost"},
+      new String[]{"start", "--app", "appId", "--flow", "processor", "--host", "localhost"},
       CConfiguration.create())));
 
     assertTrue("start".equals(client.parseArguments(
-      new String[]{"start", "--application", "appId", "--flow", "processor", "--host", "localhost", "-RV=1", "-RU=2"},
+      new String[]{"start", "--app", "appId", "--flow", "processor", "--host", "localhost", "-RV=1", "-RU=2"},
       CConfiguration.create())));
 
 
     assertTrue("stop".equals(client.parseArguments(
-      new String[]{"stop", "--application", "appId", "--procedure", "processor"}, CConfiguration.create())));
+      new String[]{"stop", "--app", "appId", "--procedure", "processor"}, CConfiguration.create())));
 
     assertTrue("stop".equals(client.parseArguments(
-      new String[]{"stop", "--application", "appId", "--flow", "processor"}, CConfiguration.create())));
+      new String[]{"stop", "--app", "appId", "--flow", "processor"}, CConfiguration.create())));
 
     assertTrue("stop".equals(client.parseArguments(
-      new String[]{"stop", "--application", "appId", "--flow", "processor", "--host", "localhost"},
+      new String[]{"stop", "--app", "appId", "--flow", "processor", "--host", "localhost"},
       CConfiguration.create())));
 
     assertTrue("status".equals(client.parseArguments(
-      new String[]{"status", "--application", "appId", "--procedure", "processor"}, CConfiguration.create())));
+      new String[]{"status", "--app", "appId", "--procedure", "processor"}, CConfiguration.create())));
 
     assertTrue("status".equals(client.parseArguments(
-      new String[]{"status", "--application", "appId", "--flow", "processor"}, CConfiguration.create())));
+      new String[]{"status", "--app", "appId", "--flow", "processor"}, CConfiguration.create())));
 
     assertTrue("promote".equals(client.parseArguments(
-      new String[]{"promote", "--remote", "vpc_name", "--apikey", "Auth token", "--application", "application"},
+      new String[]{"promote", "--remote", "vpc_name", "--apikey", "Auth token", "--app", "application"},
       CConfiguration.create())));
 
     assertTrue("scale".equals(client.parseArguments(
-      new String[]{"scale", "--application", "appId", "--flow", "processor", "--flowlet", "count", "--instances", "3"},
+      new String[]{"scale", "--app", "appId", "--flow", "processor", "--flowlet", "count", "--instances", "3"},
       CConfiguration.create())));
   }
 
   @Test(expected = UsageException.class)
   public void testInvalidFlowletInstancesArgs() throws ParseException {
     ReactorClient client = new ReactorClient();
-    client.parseArguments(new String[]{"scale", "--application", "appId", "--flow", "processor", "--flowlet",
+    client.parseArguments(new String[]{"scale", "--app", "appId", "--flow", "processor", "--flowlet",
       "count", "--instances", "0"}, CConfiguration.create());
   }
 }

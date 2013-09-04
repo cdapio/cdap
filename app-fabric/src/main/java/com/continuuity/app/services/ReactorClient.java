@@ -61,7 +61,7 @@ public final class ReactorClient {
   private static final Set<String> AVAILABLE_COMMANDS = Sets.newHashSet("deploy", "stop", "start", "help", "promote",
                                                                         "status", "scale", "delete");
   private static final String ARCHIVE_LONG_OPT_ARG = "archive";
-  private static final String APPLICATION_LONG_OPT_ARG = "application";
+  private static final String APPLICATION_LONG_OPT_ARG = "app";
   private static final String PROCEDURE_LONG_OPT_ARG = "procedure";
   private static final String FLOW_LONG_OPT_ARG = "flow";
   private static final String FLOWLET_LONG_OPT_ARG = "flowlet";
@@ -105,27 +105,28 @@ public final class ReactorClient {
     Copyright.print(out);
     out.println("Usage:");
     out.println("  reactor-client deploy    --archive <filename> [--host <hostname>]");
-    out.println("  reactor-client start     --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)  " +
+    out.println("  reactor-client start     --app <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)  " +
                   "[--host <hostname>] [-R<property>=<value>]");
-    out.println("  reactor-client stop      --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>) " +
+    out.println("  reactor-client stop      --app <id> ( --flow <id> | --procedure <id> | --mapreduce <id>) " +
                   "[--host <hostname>]");
-    out.println("  reactor-client status    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>) " +
+    out.println("  reactor-client status    --app <id> ( --flow <id> | --procedure <id> | --mapreduce <id>) " +
                   "[--host <hostname>]");
-    out.println("  reactor-client scale     --application <id> --flow <id> --flowlet <id> --instances <number> " +
+    out.println("  reactor-client scale     --app <id> --flow <id> --flowlet <id> --instances <number> " +
                   "[--host <hostname>]");
-    out.println("  reactor-client promote   --application <id> --remote <hostname> --apikey <key>");
-    out.println("  reactor-client delete    --application <id> [--host <hostname>]");
+    out.println("  reactor-client promote   --app <id> --remote <hostname> --apikey <key>");
+    out.println("  reactor-client delete    --app <id> [--host <hostname>]");
     out.println("  reactor-client help");
 
     out.println("Options:");
-    out.println("  --archive <filename> \t Archive containing the application.");
-    out.println("  --application <id> \t Application Id.");
-    out.println("  --flow <id> \t\t Flow id of the application.");
-    out.println("  --procedure <id> \t Procedure of in the application.");
-    out.println("  --mapreduce <id> \t MapReduce job of in the application.");
-    out.println("  --host <hostname> \t Specifies reactor host [Default: localhost]");
-    out.println("  --remote <hostname> \t Specifies remote reactor host");
-    out.println("  --apikey <key> \t Apikey of the account.");
+    out.printf("  %-12s <filename>  Archive containing the application.\n", "--archive");
+    out.printf("  %-12s <id>        Application identifier.\n", "--app");
+    out.printf("  %-12s <id>        Flow identifier.\n", "--flow");
+    out.printf("  %-12s <id>        Procedure identifier.\n", "--procedure");
+    out.printf("  %-12s <id>        MapReduce identifier.\n", "--mapreduce");
+    out.printf("  %-12s <hostname>  Name of host to which the action is applied to. (Default: localhost)\n",
+               "--host");
+    out.printf("  %-12s <hostname>  Remote Reactor to which the application is to be promoted to.\n", "--remote");
+    out.printf("  %-12s <key>       API key for the account.", "--apikey");
     out.flush();
     if (error) {
       throw new UsageException();
@@ -254,7 +255,9 @@ public final class ReactorClient {
         }
         FlowStatus flowStatus = client.status(dummyAuthToken, identifier);
         Preconditions.checkNotNull(flowStatus, "Problem getting the status the application");
-        System.out.println(String.format("%s", flowStatus.getStatus()));
+        String status =  flowStatus.getStatus();
+        status = status.charAt(0) + status.substring(1).toLowerCase();
+        System.out.println(String.format("%s", status));
       }
     } catch (TTransportException e) {
       System.err.println("Unable to connect to host '" + hostname + "'");
@@ -282,7 +285,7 @@ public final class ReactorClient {
 
     if (!AVAILABLE_COMMANDS.contains(command)) {
       usage(false);
-      System.err.println(String.format("Unsupported command: %s", command));
+      System.err.println(String.format("\nUnsupported command: %s", command));
       return "help";
     }
 
@@ -402,10 +405,13 @@ public final class ReactorClient {
 
     } catch (ParseException e) {
       usage(e.getMessage());
+      return "help";
     } catch (IllegalArgumentException e) {
       usage(e.getMessage());
+      return "help";
     } catch (Exception e) {
       usage(e.getMessage());
+      return "help";
     }
     return command;
   }
@@ -424,6 +430,9 @@ public final class ReactorClient {
     String command;
     try {
       command = parseArguments(args, config);
+      if(command == null || "help".equals(command)) {
+        return command;
+      }
     } catch (UsageException e) {
       if (debug) { // this is mainly for debugging the unit test
         System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
