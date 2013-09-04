@@ -54,3 +54,12 @@ configurations {
     all*.exclude group: 'asm', module: 'asm'
 }
 
+/**
+ * Specifies test suites for fast test
+ */
+task testFastTests(type: Test) {
+    include '**/*FastTests*.class'
+    testReportDir = file("${reporting.baseDir}/FastTests")
+    testResultsDir = file("${reporting.baseDir}/test-results/FastTests")
+}
+

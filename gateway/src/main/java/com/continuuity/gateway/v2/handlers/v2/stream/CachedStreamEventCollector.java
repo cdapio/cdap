@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2.handlers.stream;
+package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
