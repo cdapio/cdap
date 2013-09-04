@@ -32,7 +32,7 @@ import org.junit.runners.Suite.SuiteClasses;
  *
  */
 @RunWith(value = Suite.class)
-@SuiteClasses(value= {PingHandlerTest.class, MetadataServiceHandlerTest.class})
+@SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
