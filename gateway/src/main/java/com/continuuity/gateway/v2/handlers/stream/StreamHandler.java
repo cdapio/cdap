@@ -65,7 +65,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * POST requests to send an event to a stream, and GET requests to inspect
  * or retrieve events from the stream.
  */
-@Path("/v2/stream")
+@Path("/rest/v2")
 public class StreamHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private static final String NAME = GatewayConstants.STREAM_HANDLER_NAME;
@@ -131,7 +131,7 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @PUT
-  @Path("/{streamId}")
+  @Path("/stream/{streamId}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("streamId") String destination) {
     GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
       new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME), gatewayMetrics);
@@ -171,7 +171,7 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/{streamId}")
+  @Path("/stream/{streamId}")
   public void enqueue(HttpRequest request, final HttpResponder responder,
                       @PathParam("streamId") final String destination) {
     final GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
@@ -249,7 +249,7 @@ public class StreamHandler extends AbstractHttpHandler {
   // 1. obtain a consumerId with GET stream?q=newConsumer
   // 2. dequeue an event with GET stream?q=dequeue with the consumerId as an HTTP header
   @GET
-  @Path("/{streamId}")
+  @Path("/stream/{streamId}")
   public void dispatchGet(HttpRequest request, HttpResponder responder,
                           @PathParam("streamId") String destination) {
     GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(

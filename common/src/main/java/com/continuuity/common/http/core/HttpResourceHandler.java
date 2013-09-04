@@ -76,7 +76,7 @@ public final class HttpResourceHandler implements HttpHandler {
           patternRouter.add(absolutePath, new HttpResourceModel(httpMethods, method, handler));
 
         } else {
-          LOG.warn("Not adding method {}({}) to path routing like. HTTP calls will not be routed to this method",
+          LOG.trace("Not adding method {}({}) to path routing like. HTTP calls will not be routed to this method",
                    method.getName(), method.getParameterTypes());
         }
       }
