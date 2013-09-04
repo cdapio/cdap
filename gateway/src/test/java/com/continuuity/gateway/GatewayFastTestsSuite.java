@@ -29,7 +29,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 /**
- *
+ * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
 @SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class})

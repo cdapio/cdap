@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Abstract handler that support Passport authetication method.
  */
 public abstract class AuthenticatedHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticatedHttpHandler.class);
