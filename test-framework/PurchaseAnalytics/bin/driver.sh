@@ -5,5 +5,5 @@ if [ "$#" -ne 2 ] ; then
 fi
 
 
-java -cp purchaseanalytics-1.0-jar-with-dependencies.jar com.continuuity.testsuite.purchaseanalytics.appdriver.PurchaseAnalyticsAppDriver $1 $2
+java -cp ../target/purchaseanalytics-1.0-jar-with-dependencies.jar com.continuuity.testsuite.purchaseanalytics.appdriver.PurchaseAnalyticsAppDriver $1 $2
 
