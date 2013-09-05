@@ -189,11 +189,14 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         // next call should be startTx which will clear the consumingEntries.
         lastKey = consumingEntries.lastKey();
       } else {
-        lastKey = consumingEntries.headMap(getNextRow(excludedList[0], 0)).firstKey();
+        SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getNextRow(excludedList[0], 0));
+        // If nothing smallest than the smallest of excluded list, then it can't advance.
+        lastKey = headMap.isEmpty() ? startRow : headMap.firstKey();
       }
 
-      Bytes.putLong(lastKey, queueRowPrefix.length, Bytes.toLong(lastKey, queueRowPrefix.length) + 1);
-      Bytes.putInt(lastKey, queueRowPrefix.length + Longs.BYTES, 0);
+      // Update startRow to next of lastKey (same transaction, counter + 1)
+      int counterOff = queueRowPrefix.length + Longs.BYTES;
+      Bytes.putInt(lastKey, counterOff, Bytes.toInt(lastKey, counterOff) + 1);
       startRow = lastKey;
 
       if (commitCount >= EVICTION_LIMIT) {
