@@ -61,6 +61,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
   @Override
   public void destroy(HandlerContext context) {
+    LOG.info("Stopping async http client...");
     asyncHttpClient.close();
   }
 
