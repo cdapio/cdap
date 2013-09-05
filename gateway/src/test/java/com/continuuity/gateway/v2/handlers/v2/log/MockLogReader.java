@@ -117,7 +117,7 @@ public class MockLogReader implements LogReader {
   @Override
   public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
                      Callback callback) {
-    getLogNext(loggingContext, fromTimeMs/1000, (int) (toTimeMs - fromTimeMs) / 1000, filter, callback);
+    getLogNext(loggingContext, fromTimeMs / 1000, (int) (toTimeMs - fromTimeMs) / 1000, filter, callback);
   }
 
   @Override
