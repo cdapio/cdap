@@ -1,9 +1,9 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue.hbase;
+package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
-import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,10 +16,13 @@ import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.Store;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 
 /**
@@ -54,12 +57,15 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
     private final RegionCoprocessorEnvironment env;
     private final InternalScanner scanner;
+    // This is just for object reused to reduce objects creation.
+    private final ConsumerInstance consumerInstance;
     private byte[] currentQueue;
-    private byte[] smallestRowKey;
+    private QueueConsumerConfig consumerConfig;
 
     private EvictionInternalScanner(RegionCoprocessorEnvironment env, InternalScanner scanner) {
       this.env = env;
       this.scanner = scanner;
+      this.consumerInstance = new ConsumerInstance(0, 0);
     }
 
     @Override
@@ -115,17 +121,40 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           // Entry key is always (2 MD5 bytes + queueName + longWritePointer + intCounter)
           int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - LONG_BYTES - INT_BYTES;
           currentQueue = Arrays.copyOfRange(keyValue.getBuffer(), keyValue.getRowOffset() + 2, queueNameEnd);
-          smallestRowKey = getSmallestRowKey(currentQueue);
+          consumerConfig = getConsumerConfig(currentQueue);
         }
 
-        // If it is smaller than the smallest row, then skip this row and keep scanning.
-        // Since there is already comparison above to test the queue prefix, we can skip the queue name comparison here.
-        if (Bytes.compareTo(smallestRowKey,
-                            currentQueue.length + 2,
-                            smallestRowKey.length - currentQueue.length - 2,
-                            keyValue.getBuffer(),
-                            keyValue.getRowOffset() + currentQueue.length + 2,
-                            keyValue.getRowLength() - currentQueue.length - 2) >= 0) {
+        boolean evict;
+        if (consumerConfig.getNumGroups() == 0) {
+          // If no consumer group, this queue is dead, should be ok to evict.
+          evict = true;
+        } else if (consumerConfig.getNumGroups() < 0) {
+          // If unknown consumer config (due to error), keep the queue.
+          evict = false;
+        } else {
+          // Need to determine if this row can be evicted iff all consumer groups must have committed process this row.
+          int consumedGroups = 0;
+          // Inspect each state column
+          for (KeyValue kv : result) {
+            if (!isStateColumn(kv)) {
+              continue;
+            }
+            // If any consumer has a state != PROCESSED, it should not be evicted
+            if (!isProcessed(kv, consumerInstance)) {
+              break;
+            }
+            // If it is PROCESSED, check if this row is smaller than the consumer instance startRow.
+            // Essentially a loose check of committed PROCESSED.
+            byte[] startRow = consumerConfig.getStartRow(consumerInstance);
+            if (startRow != null && Bytes.compareTo(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(),
+                                                    startRow, 0, startRow.length) < 0) {
+              consumedGroups++;
+            }
+          }
+          evict = consumedGroups == consumerConfig.getNumGroups();
+        }
+
+        if (evict) {
           result.clear();
           hasNext = scanner.next(result, limit, metric);
         } else {
@@ -141,7 +170,10 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       scanner.close();
     }
 
-    private byte[] getSmallestRowKey(byte[] queueName) {
+    /**
+     * Gets consumers configuration for the given queue.
+     */
+    private QueueConsumerConfig getConsumerConfig(byte[] queueName) {
       try {
         // Fetch the queue consumers information
         HTableInterface hTable = env.getTable(env.getRegion().getTableDesc().getName());
@@ -150,31 +182,44 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           get.addFamily(QueueConstants.COLUMN_FAMILY);
 
           Result result = hTable.get(get);
+          Map<ConsumerInstance, byte[]> consumerInstances = new HashMap<ConsumerInstance, byte[]>();
 
           if (result == null || result.isEmpty()) {
-            return Bytes.EMPTY_BYTE_ARRAY;
+            // If there is no consumer config, meaning no one is using the queue, numGroup == 0 will trigger eviction.
+            return new QueueConsumerConfig(consumerInstances, 0);
           }
 
           NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
           if (familyMap == null) {
-            return Bytes.EMPTY_BYTE_ARRAY;
+            // If there is no consumer config, meaning no one is using the queue, numGroup == 0 will trigger eviction.
+            return new QueueConsumerConfig(consumerInstances, 0);
           }
 
-          byte[] smallest = null;
-          for (byte[] value : familyMap.values()) {
-            if (smallest == null || Bytes.BYTES_COMPARATOR.compare(value, smallest) < 0) {
-              smallest = value;
+          // Gather the startRow of all instances across all consumer groups.
+          int numGroups = 0;
+          Long groupId = null;
+          for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
+            long gid = Bytes.toLong(entry.getKey());
+            int instanceId = Bytes.toInt(entry.getKey(), LONG_BYTES);
+            consumerInstances.put(new ConsumerInstance(gid, instanceId), entry.getValue());
+
+            // Columns are sorted by groupId, hence if it change, then numGroups would get +1
+            if (groupId == null || groupId.longValue() != gid) {
+              numGroups++;
+              groupId = gid;
             }
           }
 
-          return smallest;
+          return new QueueConsumerConfig(consumerInstances, numGroups);
+
         } finally {
           hTable.close();
         }
       } catch (IOException e) {
-        // If there is exception when fetching consumers information, return EMPTY_BYTE_ARRAY, meaning keep the row.
+        // If there is exception when fetching consumers information,
+        // uses empty map and -ve int as the consumer config to avoid eviction.
         LOG.error("Exception when looking up smallest row key for " + Bytes.toStringBinary(queueName), e);
-        return Bytes.EMPTY_BYTE_ARRAY;
+        return new QueueConsumerConfig(new HashMap<ConsumerInstance, byte[]>(), -1);
       }
     }
 
@@ -191,6 +236,38 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         }
       }
       return true;
+    }
+
+    /**
+     * Returns {@code true} if the given {@link KeyValue} is a state column in queue entry row.
+     */
+    private boolean isStateColumn(KeyValue keyValue) {
+      byte[] buffer = keyValue.getBuffer();
+
+      int fCmp = Bytes.compareTo(QueueConstants.COLUMN_FAMILY, 0, QueueConstants.COLUMN_FAMILY.length,
+                                   buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
+      return fCmp == 0 && isPrefix(buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength(),
+                                   QueueConstants.STATE_COLUMN_PREFIX);
+    }
+
+    /**
+     * Returns {@code true} if the given {@link KeyValue} has a {@link ConsumerEntryState#PROCESSED} state and
+     * also put the consumer information into the given {@link ConsumerInstance}.
+     * Otherwise, returns {@code false} and the {@link ConsumerInstance} is left untouched.
+     */
+    private boolean isProcessed(KeyValue keyValue, ConsumerInstance consumerInstance) {
+      byte[] buffer = keyValue.getBuffer();
+      int stateIdx = keyValue.getValueOffset() + keyValue.getValueLength() - 1;
+      boolean processed = buffer[stateIdx] == ConsumerEntryState.PROCESSED.getState();
+
+      if (processed) {
+        // Column is "s<groupId>"
+        long groupId = Bytes.toLong(buffer, keyValue.getQualifierOffset() + 1);
+        // Value is "<writePointer><instanceId><state>"
+        int instanceId = Bytes.toInt(buffer, keyValue.getValueOffset() + LONG_BYTES);
+        consumerInstance.setGroupInstance(groupId, instanceId);
+      }
+      return processed;
     }
   }
 }

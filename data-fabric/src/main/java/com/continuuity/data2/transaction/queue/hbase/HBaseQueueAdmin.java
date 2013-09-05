@@ -6,7 +6,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
-import com.continuuity.data2.transaction.queue.QueueUtils;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.utils.Dependencies;

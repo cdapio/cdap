@@ -20,7 +20,6 @@ import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
-import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
@@ -32,8 +31,6 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -44,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.NavigableMap;
 
 /**
@@ -203,29 +199,6 @@ public class HBaseQueueTest extends QueueTest {
     String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
     HBaseTestBase.getHBaseAdmin().flush(tableName);
 
-//    super.verifyQueueIsEmpty(queueName, numActualConsumers);
-
-    // Verify
-    HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
-    Scan scan = new Scan();
-//    scan.setStartRow(Bytes.add(QueueUtils.getQueueRowPrefix(queueName), Bytes.toBytes(0L), Bytes.toBytes(0)));
-//    scan.setStopRow(Bytes.add(QueueUtils.getQueueRowPrefix(queueName),
-//                              Bytes.toBytes(Long.MAX_VALUE), Bytes.toBytes(Integer.MAX_VALUE)));
-
-    ResultScanner scanner = hTable.getScanner(scan);
-
-    Result result = scanner.next();
-    int count = 0;
-    while (result != null) {
-      count++;
-      System.out.println(Bytes.toStringBinary(result.getRow()));
-      NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
-      for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
-        System.out.println(Bytes.toStringBinary(entry.getKey()) + " => " + Bytes.toStringBinary(entry.getValue()));
-      }
-      result = scanner.next();
-    }
-//
-//    Assert.assertEquals(0, count);
+    super.verifyQueueIsEmpty(queueName, numActualConsumers);
   }
 }
