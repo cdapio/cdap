@@ -278,8 +278,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduce/{id}/reducers" title="Mapping" unit="percent"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduce/{id}/reducers" title="Reducing" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduces/{id}/reducers" title="Mapping" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduces/{id}/reducers" title="Reducing" unit="percent"}}</div>
 
     </div>
     <div id="panels">
@@ -975,8 +975,8 @@
               <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
               </td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduce/{id}/mappers" unit="percent"}}</td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduce/{id}/reducers" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduces/{id}/mappers" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduces/{id}/reducers" unit="percent"}}</td>
             </tr>
           {{/each}}
           </tbody>

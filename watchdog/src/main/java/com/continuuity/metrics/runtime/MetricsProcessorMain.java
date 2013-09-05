@@ -117,11 +117,13 @@ public final class MetricsProcessorMain extends DaemonMain {
 
   @Override
   public void start() {
+    LOG.info("Starting Metrics Processor ...");
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, processingService));
   }
 
   @Override
   public void stop() {
+    LOG.info("Stopping Metrics Processor ...");
     Futures.getUnchecked(Services.chainStop(processingService, kafkaClientService, zkClientService));
   }
 

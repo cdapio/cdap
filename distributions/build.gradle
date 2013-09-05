@@ -164,15 +164,15 @@ task reactor_sdk_dist (type: Zip, dependsOn: ':web-app:build') {
   }
 
   //webapp
-  into ("web-app/developer/client"){
+  into ("web-app/local/client"){
     from project(':web-app').file('build/local/client')
   }
 
-  into("web-app/developer/server"){
+  into("web-app/local/server"){
     from project(':web-app').file('build/local/server')
   }
 
-  into("web-app/developer/common"){
+  into("web-app/local/common"){
     from project(':web-app').file('build/local/common')
   }
 

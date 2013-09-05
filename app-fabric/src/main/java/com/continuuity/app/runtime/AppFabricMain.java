@@ -31,6 +31,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  * or started using apache commons daemon (jsvc)
  */
 public final class AppFabricMain extends DaemonMain {
-
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricMain.class);
   private ZKClientService zkClientService;
   private AppFabricServer appFabricServer;
   private Injector injector;
@@ -90,6 +92,7 @@ public final class AppFabricMain extends DaemonMain {
 
   @Override
   public void start() {
+    LOG.info("Starting App Fabric ...");
     injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     Futures.getUnchecked(Services.chainStart(zkClientService, appFabricServer));
@@ -100,6 +103,7 @@ public final class AppFabricMain extends DaemonMain {
    */
   @Override
   public void stop() {
+    LOG.info("Stopping App Fabric ...");
     Futures.getUnchecked(Services.chainStop(appFabricServer, zkClientService));
   }
 
