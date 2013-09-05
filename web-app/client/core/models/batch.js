@@ -295,7 +295,7 @@ define(['core/lib/date'], function (Datejs) {
       var app_id = model_id[0];
       var mapreduce_id = model_id[1];
 
-      http.rest('apps', app_id, 'mapreduces', mapreduce_id, function (model, error) {
+      http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
 
         model = C.Batch.create(model);
         http.rpc('runnable', 'status', [app_id, mapreduce_id, -1],
