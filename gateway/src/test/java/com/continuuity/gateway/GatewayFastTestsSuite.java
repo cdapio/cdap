@@ -24,6 +24,7 @@ import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -114,9 +115,17 @@ public class GatewayFastTestsSuite {
   }
 
   public static HttpResponse POST(String resource, String body) throws Exception {
+    return POST(resource, body, null);
+  }
+
+  public static HttpResponse POST(String resource, String body, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
     post.setEntity(new StringEntity(body));
+
+    if (headers != null) {
+      post.setHeaders(headers);
+    }
     return client.execute(post);
   }
 

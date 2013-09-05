@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
@@ -71,7 +72,6 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                             @PathParam("appId") String appId, @PathParam("procedureName") String procedureName,
                             @PathParam("methodName") String methodName) {
 
-    Request postRequest;
     try {
       String accountId = getAuthenticatedAccountId(request);
 
@@ -87,20 +87,24 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       // make HTTP call to provider
       Collections.shuffle(endpoints);
       InetSocketAddress endpoint = endpoints.get(0).getSocketAddress();
-      String relayUri = Joiner.on('/').appendTo(
+      final String relayUri = Joiner.on('/').appendTo(
         new StringBuilder("http://").append(endpoint.getHostName()).append(":").append(endpoint.getPort()).append("/"),
         "apps", appId, "procedures", procedureName, methodName).toString();
 
       LOG.trace("Relaying request to " + relayUri);
 
+      // Construct request
       RequestBuilder requestBuilder = new RequestBuilder("POST");
-      postRequest = requestBuilder
+      requestBuilder
         .setUrl(relayUri)
-        .setBody(request.getContent().array())
-        .build();
+        .setBody(request.getContent().array());
 
+      // Add headers
+      for (Map.Entry<String, String> entry : request.getHeaders()) {
+        requestBuilder.addHeader(entry.getKey(), entry.getValue());
+      }
 
-      final Request relayRequest = postRequest;
+      Request postRequest = requestBuilder.build();
       asyncHttpClient.executeRequest(postRequest,
                                      new AsyncCompletionHandler<Void>() {
                                        @Override
@@ -122,10 +126,17 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                                            InputStream input = response.getResponseBodyAsStream();
                                            ByteStreams.copy(input, new ChannelBufferOutputStream(content));
 
+                                           // Copy headers
+                                           ImmutableListMultimap.Builder<String, String> headerBuilder =
+                                             ImmutableListMultimap.builder();
+                                           for (Map.Entry<String, List<String>> entry : response.getHeaders()) {
+                                             headerBuilder.putAll(entry.getKey(), entry.getValue());
+                                           }
+
                                            responder.sendContent(OK,
                                                                  content,
                                                                  contentType,
-                                                                 ImmutableListMultimap.<String, String>of());
+                                                                 headerBuilder.build());
                                          } else {
                                            responder.sendStatus(HttpResponseStatus.valueOf(response.getStatusCode()));
                                          }
@@ -134,7 +145,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
                                        @Override
                                        public void onThrowable(Throwable t) {
-                                         LOG.trace("Got exception while posting {}", relayRequest, t);
+                                         LOG.trace("Got exception while posting {}", relayUri, t);
                                          responder.sendStatus(INTERNAL_SERVER_ERROR);
                                        }
                                      });

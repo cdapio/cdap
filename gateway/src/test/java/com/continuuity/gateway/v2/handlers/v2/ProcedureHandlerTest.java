@@ -11,9 +11,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import junit.framework.Assert;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -95,11 +97,13 @@ public class ProcedureHandlerTest  {
     Assert.assertFalse(contentStr.isEmpty());
 
     HttpResponse response = 
-      POST("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", contentStr);
+      POST("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", contentStr,
+           new Header[]{new BasicHeader("X-Test", "1234")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals(content, gson.fromJson(responseStr, type));
+    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
@@ -153,10 +157,20 @@ public class ProcedureHandlerTest  {
       // /apps/testApp1/procedures/testProc1/testMethod1
       if ("testApp1".equals(appId) && "testProc1".equals(procedureName) && "testMethod1".equals(methodName)) {
         byte [] content = request.getContent().array();
-        responder.sendByteArray(HttpResponseStatus.OK, content,
-                                ImmutableMultimap.of(CONTENT_TYPE, "text/plain",
-                                                     CONTENT_LENGTH,
-                                                     Integer.toString(content.length)));
+
+        ImmutableMultimap.Builder<String, String> headerBuilder = ImmutableMultimap.builder();
+        for (Map.Entry<String, String> entry : request.getHeaders()) {
+          headerBuilder.put(entry.getKey(), entry.getValue());
+        }
+
+        if (request.getHeader(CONTENT_TYPE) == null) {
+          headerBuilder.put(CONTENT_TYPE, "text/plain");
+        }
+        if (request.getHeader(CONTENT_LENGTH) == null || Integer.parseInt(request.getHeader(CONTENT_LENGTH)) == 0) {
+          headerBuilder.put(CONTENT_LENGTH, Integer.toString(content.length));
+        }
+
+        responder.sendByteArray(HttpResponseStatus.OK, content, headerBuilder.build());
 
       } else if ("testApp2".equals(appId) && "testProc2".equals(procedureName) &&
         "testChunkedMethod".equals(methodName)) {
