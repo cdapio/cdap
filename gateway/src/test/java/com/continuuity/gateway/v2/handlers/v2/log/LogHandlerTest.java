@@ -239,7 +239,6 @@ public class LogHandlerTest {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<String> logLines = Lists.newArrayList(Splitter.on("\n").split(out));
-    System.out.println(logLines);
     logLines.remove(logLines.size() - 1);  // Remove last element that is empty
     Assert.assertEquals(15, logLines.size());
     int expected = 20;
@@ -257,7 +256,6 @@ public class LogHandlerTest {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<String> logLines = Lists.newArrayList(Splitter.on("\n").split(out));
-    System.out.println(logLines);
     logLines.remove(logLines.size() - 1);  // Remove last element that is empty
     Assert.assertEquals(8, logLines.size());
     int expected = 20;
