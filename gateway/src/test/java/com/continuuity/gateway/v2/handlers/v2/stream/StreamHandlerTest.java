@@ -16,6 +16,8 @@ import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
@@ -86,6 +88,7 @@ public class StreamHandlerTest {
           bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
           bind(StoreFactory.class).to(MDSStoreFactory.class);
           bind(LogReader.class).to(MockLogReader.class);
+          bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
         }
       }
     );
