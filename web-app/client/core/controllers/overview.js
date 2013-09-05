@@ -19,6 +19,7 @@ define([], function () {
 		load: function () {
 
 			this.set('elements.App', Em.ArrayProxy.create({content: []}));
+			this.clearTriggers(true);
 
 			this.set('model', Em.Object.create({
 				addMetricName: function (metric) {
@@ -106,9 +107,20 @@ define([], function () {
 
 		},
 
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted')
+				&& this.get('miscCompleted');
+		},
+
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+			this.set('aggregatesCompleted', value);
+			this.set('miscCompleted', value);
+		},
+
 		updateStats: function () {
 
-			if (C.currentPath !== 'Overview.Apps') {
+			if (!this.ajaxCompleted() || C.currentPath !== 'Overview.Apps') {
 				return;
 			}
 
@@ -120,11 +132,13 @@ define([], function () {
 			var start = now - ((C.__timeRange + 2) * 1000);
 			start = Math.floor(start / 1000);
 
+			this.clearTriggers(false);
+
 			// Scans models for timeseries metrics and updates them.
-			C.Util.updateTimeSeries(models, this.HTTP);
+			C.Util.updateTimeSeries(models, this.HTTP, this);
 
 			// Scans models for aggregate metrics and udpates them.
-			C.Util.updateAggregates(models, this.HTTP);
+			C.Util.updateAggregates(models, this.HTTP, this);
 
 			// Hax. Count is timerange because server treats end = start + count (no downsample yet)
 			var queries = [
@@ -139,7 +153,7 @@ define([], function () {
 			}
 
 			this.HTTP.post('metrics', queries, function (response) {
-
+				self.set('miscCompleted', true);
 				if (response.result) {
 
 					var result = response.result;

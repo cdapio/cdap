@@ -22,7 +22,7 @@ define([], function () {
       return path.replace(/\{app\}/, this.get('app'))
         .replace(/\{flow\}/, this.get('flow'))
         .replace(/\{flowlet\}/, this.get('flowlet'))
-        .replace(/\{id\}/, this.get('id'));
+        .replace(/\{id\}/, this.get('id').replace('_IN', '').replace('_OUT', ''));
 
     },
 

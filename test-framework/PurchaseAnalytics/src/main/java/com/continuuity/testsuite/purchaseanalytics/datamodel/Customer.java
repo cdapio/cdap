@@ -22,7 +22,7 @@ import java.util.UUID;
 /**
  * Models a customer, identified by unique id.
  */
-public class Customer {
+public class Customer extends SerializedObject {
   private final long customerId;
   private final String name;
   private final int zip;
@@ -45,6 +45,7 @@ public class Customer {
   }
 
   public Customer(long customerId, String name, int zip, int rating) {
+    super(3);
     this.customerId = customerId;
     this.name = name;
     this.zip = zip;

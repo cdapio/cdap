@@ -25,40 +25,36 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
-import java.util.Random;
-import java.util.UUID;
 
 /**
  * Generates Purchases, Products, customers and inventory. Used by GeneratedPurchaseAnalyticsFlowlet.
  */
 public class TransactionGeneratorFlowlet extends AbstractGeneratorFlowlet {
-  private static final int productRate = 3;
-  private static final int purchaseRate = 5;
-  private static final int generationLatency = 10;
-  private static final long stopLimitProducts = 100000;
-  private static final long stopLimitCustomers = stopLimitProducts * 1000;
-  private static long customerId = 0;
-  private static long productId = 0;
-
   private FlowletContext context;
 
-  private ArrayList<Customer> customers;
-  private ArrayList<Product> products;
+  private static final int MAX_CUSTOMER = 1000;
+  private static final int MAX_PRODUCT =  10000;
+  private static final int MAX_PURCHASE = 100000;
+
+  Gson gson = new Gson();
+
+  TransactionGeneratorHelper helper;
+
 
   @Output("outPurchase")
-  private OutputEmitter<Purchase> outPurchase;
+  private OutputEmitter<String> outPurchase;
   @Output("outProduct")
-  private OutputEmitter<Product> outProduct;
+  private OutputEmitter<String> outProduct;
   @Output("outCustomer")
-  private OutputEmitter<Customer> outCustomer;
+  private OutputEmitter<String> outCustomer;
 
   @Override
   public void initialize(FlowletContext context) throws FlowletException {
     this.context = context;
-    customers = new ArrayList<Customer>();
-    products = new ArrayList<Product>();
+    helper = new TransactionGeneratorHelper();
   }
 
   /**
@@ -68,65 +64,19 @@ public class TransactionGeneratorFlowlet extends AbstractGeneratorFlowlet {
    */
   public void generate() throws Exception {
     // Generate a customer
-    if (customers.size() < stopLimitCustomers) {
-      outCustomer.emit(this.generateCustomer());
+    if (helper.getCustomers().size() < MAX_CUSTOMER) {
+      outCustomer.emit(gson.toJson(helper.generateCustomer()));
     }
 
-    if (products.size() < stopLimitProducts) {
-      // Generate products
-      for (int i = 0; i <= productRate; i++) {
-        outProduct.emit(this.generateProduct());
-      }
+    // Generate a product
+    if (helper.getProducts().size() < MAX_PRODUCT) {
+      outProduct.emit(gson.toJson(helper.generateProduct()));
     }
 
-    // Generate purchases indefinitely.
-    for (int i = 0; i <= purchaseRate; i++) {
-      outPurchase.emit(this.generatedPurchase());
+    // Generate a purchase.
+    if (helper.getPurchases().size() < MAX_PURCHASE) {
+      outPurchase.emit(gson.toJson(helper.generatedPurchase()));
     }
-
-    Thread.sleep(generationLatency);
-  }
-
-  /**
-   * Generates a random customer and stores in customer list for correlation.
-   *
-   * @return randomized customer
-   */
-  private Customer generateCustomer() {
-    Customer customer = new Customer(customerId++,                 /* Incremental unique Id */
-                                     UUID.randomUUID().toString(), /* Unique random name */
-                                     this.randInt(10000, 99999),   /* zipcode semi-valid */
-                                     this.randInt(1, 100));        /* Customer rating 1-100 */
-    customers.add(customer);
-    return customer;
-  }
-
-  private Product generateProduct() {
-    Product product = new Product(productId++, UUID.randomUUID().toString());
-    products.add(product);
-    return product;
-  }
-
-  /**
-   * Randomly selects a customer and a product to create a purchase.
-   *
-   * @return
-   */
-  private Purchase generatedPurchase() {
-    Customer customer = this.customers.get(this.randInt(0, this.customers.size() - 1));
-    Product product = this.products.get(this.randInt(0, this.products.size() - 1));
-
-    Purchase purchase = new Purchase(customer.getName(),
-                                     product.getDescription(),
-                                     this.randInt(1, 100),
-                                     this.randInt(1, 999999),
-                                     System.currentTimeMillis());
-    return purchase;
-  }
-
-  private int randInt(int min, int max) {
-    Random rand = new Random();
-    return rand.nextInt((max - min) + 1) + min;
   }
 }
 

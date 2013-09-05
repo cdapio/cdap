@@ -19,7 +19,9 @@
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
   <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
+  <script type="text/javascript" src="/core/lib/biginteger.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
+
 
   <script src="/core/lib/rickshaw.js"></script>
   <script src="/third_party/select2/select2.min.js"></script>
@@ -143,28 +145,28 @@
         <div class="panel">
           <div class="quarter-title">CPU</div>
           <div class="quarter-value"><strong>{{value.collect}}</strong>%</div>
-          {{view C.Embed.DashChart kind="collect"}}
+          {{view C.Embed.SystemChart kind="cpu"}}
         </div>
       </div>
       <div class="quarter half">
         <div class="panel">
           <div class="quarter-title">Memory</div>
           <div class="quarter-value"><strong>{{value.process}}</strong>B</div>
-          {{view C.Embed.DashChart kind="process"}}
+          {{view C.Embed.SystemChart kind="memory"}}
         </div>
       </div>
       <div class="quarter half">
         <div class="panel">
           <div class="quarter-title">Disk</div>
           <div class="quarter-value"><strong>{{value.collect}}</strong>B</div>
-          {{view C.Embed.DashChart kind="collect"}}
+          {{view C.Embed.SystemChart kind="disk"}}
         </div>
       </div>
       <div class="quarter half">
         <div class="panel">
           <div class="quarter-title">Network</div>
           <div class="quarter-value"><strong>{{value.process}}</strong>B/s</div>
-          {{view C.Embed.DashChart kind="process"}}
+          {{view C.Embed.SystemChart kind="network"}}
         </div>
       </div>
 
@@ -481,7 +483,7 @@
                       <tr>
                         <td>
                           {{#each contrib}}
-                            <div {{action navigate on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
+                            <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
                           {{/each}}
                         </td>
                         <td class="flowlet-popup-input">
@@ -544,7 +546,7 @@
                       </td>
                       <td>
                       {{#each contrib}}
-                      <div {{action navigate on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
+                      <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
                       {{/each}}
                       </td>
                       </tr>
@@ -633,8 +635,8 @@
             <tbody>
             {{#each runs}}
               <tr class="run-list" {{action "loadRun" runId}}>
-                <td>{{started}}</td>
-                <td>{{ended}}</td>
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>
               </tr>
             {{/each}}

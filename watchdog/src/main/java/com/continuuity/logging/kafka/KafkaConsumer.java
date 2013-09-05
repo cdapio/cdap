@@ -135,6 +135,11 @@ public final class KafkaConsumer implements Closeable {
     return offsets[0];
   }
 
+  public boolean isLeaderPresent() {
+    PartitionMetadata metadata = fetchPartitonMetadata();
+    return !(metadata == null || metadata.errorCode() != ErrorMapping.NoError());
+  }
+
   private void closeConsumer() {
     if (consumer != null) {
       consumer.close();
@@ -193,10 +198,9 @@ public final class KafkaConsumer implements Closeable {
     }
   }
 
-  private void findLeader() {
-    closeConsumer();
-
+  private PartitionMetadata fetchPartitonMetadata() {
     PartitionMetadata metadata = null;
+
     for (KafkaHost broker : replicaBrokers) {
       SimpleConsumer consumer = new SimpleConsumer(broker.getHostname(), broker.getPort(), TIMEOUT_MS,
                                                    BUFFER_SIZE_BYTES, clientName);
@@ -205,8 +209,8 @@ public final class KafkaConsumer implements Closeable {
         TopicMetadataRequest req = new TopicMetadataRequest(topics);
         TopicMetadataResponse resp = consumer.send(req);
 
-        List<TopicMetadata> metaData = resp.topicsMetadata();
-        for (TopicMetadata item : metaData) {
+        List<TopicMetadata> topicMetadataList = resp.topicsMetadata();
+        for (TopicMetadata item : topicMetadataList) {
           for (PartitionMetadata part : item.partitionsMetadata()) {
             if (part.partitionId() == partition) {
               metadata = part;
@@ -214,26 +218,27 @@ public final class KafkaConsumer implements Closeable {
             }
           }
         }
-      } catch (Exception e) {
-        LOG.error(
-          String.format("Error commnicating with broker %s:%d to find leader for topic %s, partition %d",
-                        broker.getHostname(), broker.getPort(), topic, partition), e);
       } finally {
-        if (consumer != null) {
-          consumer.close();
-        }
+        consumer.close();
       }
     }
+    return metadata;
+  }
+
+  private void findLeader() {
+    closeConsumer();
+
+    PartitionMetadata metadata = fetchPartitonMetadata();
     if (metadata == null) {
       throw new RuntimeException(String.format("Could not find leader for topic %s, partition %d",
                                                topic, partition));
     }
 
-    if (metadata.leader() == null) {
+    if (metadata.errorCode() != ErrorMapping.NoError() || metadata.leader() == null) {
       String message = String.format("Can't find leader for topic %s and partition %d with brokers %s.",
                                      topic, partition, replicaBrokers.toString());
       LOG.warn(message);
-      throw new RuntimeException(message);
+      throw new RuntimeException(ErrorMapping.exceptionFor(metadata.errorCode()));
     }
     consumer = new SimpleConsumer(metadata.leader().host(), metadata.leader().port(), TIMEOUT_MS, BUFFER_SIZE_BYTES,
                                   clientName);

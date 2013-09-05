@@ -6,40 +6,36 @@ package com.continuuity.logging.appender.file;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.logging.serialize.LoggingEvent;
+import com.continuuity.weave.filesystem.Location;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Writes a logging event to file with rotation. File name will be the current timestamp. This class is not
  * thread-safe.
  */
 public class LogFileWriter implements Closeable {
-  private final FileSystem fileSystem;
-  private final Path logBaseDir;
+  private final Location logBaseDir;
   private final Schema schema;
   private final int syncIntervalBytes;
   private final long fileRotateIntervalMs;
   private final long retentionDurationMs;
 
-  private FSDataOutputStream outputStream;
+  private OutputStream outputStream;
   private DataFileWriter<GenericRecord> dataFileWriter;
   private long currentFileTs = -1;
 
   private static final String FILE_SUFFIX = "avro";
 
-  public LogFileWriter(FileSystem fileSystem, Path logBaseDir, Schema schema, int syncIntervalBytes,
+  public LogFileWriter(Location logBaseDir, Schema schema, int syncIntervalBytes,
                        long fileRotateIntervalMs, long retentionDurationMs) {
-    this.fileSystem = fileSystem;
     this.logBaseDir = logBaseDir;
     this.schema = schema;
     this.syncIntervalBytes = syncIntervalBytes;
@@ -52,7 +48,7 @@ public class LogFileWriter implements Closeable {
     GenericRecord datum = LoggingEvent.encode(schema, event);
     dataFileWriter.append(datum);
     dataFileWriter.flush();
-    outputStream.hflush();
+    outputStream.flush();
   }
 
   @Override
@@ -86,8 +82,8 @@ public class LogFileWriter implements Closeable {
   }
 
   private void create(long timeInterval) throws IOException {
-    Path file = new Path(logBaseDir, String.format("%d.%s", timeInterval, FILE_SUFFIX));
-    this.outputStream = fileSystem.create(file, false);
+    Location file = logBaseDir.append(String.format("%d.%s", timeInterval, FILE_SUFFIX));
+    this.outputStream = file.getOutputStream();
     this.dataFileWriter = new DataFileWriter<GenericRecord>(new GenericDatumWriter<GenericRecord>(schema));
     this.dataFileWriter.create(schema, this.outputStream);
     this.dataFileWriter.setSyncInterval(syncIntervalBytes);
@@ -95,14 +91,19 @@ public class LogFileWriter implements Closeable {
 
   private void cleanUp() throws IOException {
     long retentionTs = System.currentTimeMillis() - retentionDurationMs;
-    RemoteIterator<LocatedFileStatus> filesIt = fileSystem.listFiles(logBaseDir, false);
-    while (filesIt.hasNext()) {
-      LocatedFileStatus status = filesIt.next();
-      String fileName = status.getPath().getName();
+    File baseDir = new File(logBaseDir.toURI());
+    File [] files = baseDir.listFiles();
+    if (files == null || files.length == 0) {
+      return;
+    }
+
+    for (File f : files) {
+      String fileName = f.getName();
       String currentFilePrefix = String.valueOf(currentFileTs);
-      if (status.getModificationTime() < retentionTs && fileName.endsWith(FILE_SUFFIX)
+      if (f.lastModified() < retentionTs && fileName.endsWith(FILE_SUFFIX)
         && !fileName.startsWith(currentFilePrefix)) {
-        fileSystem.delete(status.getPath(), false);
+        //noinspection ResultOfMethodCallIgnored
+        f.delete();
       }
     }
   }

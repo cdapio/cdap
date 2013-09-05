@@ -15,14 +15,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.continuuity.test.AppFabricTestBase;
+package com.continuuity.testsuite.purchaseanalytics;
+
+
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
+import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.StreamWriter;
-import com.continuuity.testsuite.purchaseanalytics.GeneratedPurchaseAnalyticsFlow;
-import com.continuuity.testsuite.purchaseanalytics.PurchaseAnalyticsApp;
 import com.google.common.reflect.TypeToken;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,9 +31,9 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
- * TestPurchaseAnalytics main test.
+ * UnitTestPurchaseAnalytics unit test. Verifies the correctness of the app using internal unit test.
  */
-public class TestPurchaseAnalytics extends AppFabricTestBase {
+public class UnitTestPurchaseAnalytics extends ReactorTestBase {
 
   static Type stringMapType = new TypeToken<Map<String, String>>() {
   }.getType();
@@ -51,19 +51,19 @@ public class TestPurchaseAnalytics extends AppFabricTestBase {
 
     // Purchase
     // 1|{"customer":"alex","product":"FisherPrice","quantity":10,"price":"100","purchaseTime":"129308132"}
-    s1.send("1|{\"customer\":\"alex\",\"product\":\"FisherPrice\",\"quantity\":10,\"price\":\"100\",\"purchaseTime\":\"129308132\"}");
+    s1.send("{\"customer\":\"alex\",\"product\":\"FisherPrice\",\"quantity\":10,\"price\":\"100\",\"purchaseTime\":\"129308132\", \"type\":1}");
 
     // Product
     // 2|{"productId":"1","description":"FisherPrice"}
-    s1.send("2|{\"productId\":\"1\",\"description\":\"FisherPrice\"}");
+    s1.send("{\"productId\":\"1\",\"description\":\"FisherPrice\": \"type\":2}");
 
     // Customer
     // 3|{"customerId":"1","name":"alex","zip":90210,"rating":100}
-    s1.send("3|{\"customerId\":\"1\",\"name\":\"alex\",\"zip\":90210,\"rating\":100}");
+    s1.send("{\"customerId\":\"1\",\"name\":\"alex\",\"zip\":90210,\"rating\":100, \"type\":3}");
 
     // Test MR jobs
-    appManager.startMapReduce("PurchaseHistoryBuilder");
-    appManager.startMapReduce("RegionBuilder");
-    appManager.startMapReduce("PurchaseStatsBuilder");
+//    appManager.startMapReduce("PurchaseHistoryBuilder");
+//    appManager.startMapReduce("RegionBuilder");
+//    appManager.startMapReduce("PurchaseStatsBuilder");
   }
 }

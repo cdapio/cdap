@@ -80,6 +80,30 @@ public class PurchaseAnalyticsQuery extends AbstractProcedure {
     }
   }
 
+  @Handle("product")
+  public void product(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    String id = request.getArgument("id");
+    Product product = products.read(Bytes.toBytes(Long.parseLong(id)));
+
+    if (product == null) {
+      responder.error(ProcedureResponse.Code.NOT_FOUND, "No customer for id " + id);
+    } else {
+      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), product);
+    }
+  }
+
+  @Handle("purchase")
+  public void purchase(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    String id = request.getArgument("time");
+    Purchase purchase = purchases.read(Bytes.toBytes(Long.parseLong(id)));
+
+    if (purchase == null) {
+      responder.error(ProcedureResponse.Code.NOT_FOUND, "No customer for id " + id);
+    } else {
+      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), purchase);
+    }
+  }
+
   @Handle("region")
   public void region(ProcedureRequest request, ProcedureResponder responder) throws Exception {
     String zip = request.getArgument("zip");

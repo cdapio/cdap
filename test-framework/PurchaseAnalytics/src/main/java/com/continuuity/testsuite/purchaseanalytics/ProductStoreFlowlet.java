@@ -24,17 +24,21 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
+import com.google.gson.Gson;
 
 /**
 *  Stores products to object store.
 */
 public class ProductStoreFlowlet extends AbstractFlowlet {
 
+  private final Gson gson = new Gson();
+
   @UseDataSet("products")
   private ObjectStore<Product> store;
 
   @ProcessInput("outProduct")
-  public void process(Product product) throws OperationException {
-    store.write(Bytes.toBytes(product.getProductId()), product);
+  public void process(String product) throws OperationException {
+    Product productObj = this.gson.fromJson(product, Product.class);
+    store.write(Bytes.toBytes(productObj.getProductId()), productObj);
   }
 }

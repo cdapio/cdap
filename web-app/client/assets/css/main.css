@@ -1721,6 +1721,7 @@ a strong {
 	color: #fff;
 	border-color: #222;
 	min-height: 300px;
+	overflow-y: scroll;
 }
 .query-response {
 	height: 540px;
@@ -2441,4 +2442,12 @@ div.tooltip {
   box-shadow: 0px 0px 5px #ccc;
   background: white;
   pointer-events: none;
+}
+
+.flow-run-date {
+	font-family: "HelveticaNeueW01-57Cn";
+	font-size: 12px;
+	color: #77878B;
+	text-transform: uppercase;
+	margin-top: 3px;
 }

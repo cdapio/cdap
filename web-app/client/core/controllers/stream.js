@@ -9,7 +9,7 @@ define([], function () {
 		elements: Em.Object.create(),
 
 		load: function (id) {
-
+			this.clearTriggers(true);
 			var self = this;
 
 			this.interval = setInterval(function () {
@@ -36,12 +36,23 @@ define([], function () {
 
 		},
 
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted');
+		},
+
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+			this.set('aggregatesCompleted', value);
+		},
+
 		updateStats: function () {
-
+			if (!this.ajaxCompleted()) {
+				return;
+			}
 			var models = [this.get('model')].concat(this.get('elements.Flow.content'));
-
-      C.Util.updateTimeSeries(models, this.HTTP);
-      C.Util.updateAggregates(models, this.HTTP);
+			this.clearTriggers(false);
+      C.Util.updateTimeSeries(models, this.HTTP, this);
+      C.Util.updateAggregates(models, this.HTTP, this);
 
 		},
 

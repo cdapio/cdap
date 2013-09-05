@@ -15,6 +15,7 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -25,6 +26,7 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
@@ -95,6 +97,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
+    bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());
     bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);

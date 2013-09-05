@@ -188,7 +188,7 @@ define([], function () {
 			}
 		}),
 
-		updateAggregates: function (models, http) {
+		updateAggregates: function (models, http, controller) {
 
 			var j, k, metrics, map = {};
 			var queries = [];
@@ -209,7 +209,7 @@ define([], function () {
 			}
 			if (queries.length) {
 				http.post('metrics', queries, function (response) {
-
+					controller.set('aggregatesCompleted', true);
 					if (response.result) {
 
 						var result = response.result;
@@ -224,11 +224,13 @@ define([], function () {
 						}
 					}
 				});
+			} else {
+				controller.set('aggregatesCompleted', true);
 			}
 
 		},
 
-		updateTimeSeries: function (models, http) {
+		updateTimeSeries: function (models, http, controller) {
 
 			var j, k, metrics, count, map = {};
 			var queries = [];
@@ -271,7 +273,7 @@ define([], function () {
 			if (queries.length) {
 
 				http.post('metrics', queries, function (response) {
-
+					controller.set('timeseriesCompleted', true);
 					if (response.result) {
 
 						var result = response.result;
@@ -283,7 +285,7 @@ define([], function () {
 
 							if (result[i].error) {
 
-								console.error('TimeSeries', result[i].error);
+								//pass
 
 							} else {
 
@@ -313,11 +315,13 @@ define([], function () {
 					}
 
 				});
+			} else {
+				controller.set('timeseriesCompleted', true);
 			}
 
 		},
 
-		updateRates: function (models, http) {
+		updateRates: function (models, http, controller) {
 
 			var j, k, metrics, count, map = {};
 			var queries = [];
@@ -345,7 +349,7 @@ define([], function () {
 			if (queries.length) {
 
 				http.post('metrics', queries, function (response) {
-
+					controller.set('ratesCompleted', true);
 					if (response.result) {
 
 						var result = response.result;
@@ -356,7 +360,7 @@ define([], function () {
 							path = result[i].path.split('?')[0];
 
 							if (result[i].error) {
-								console.error('Rates', result[i].error);
+								// pass
 							} else {
 								data = result[i].result.data, k = data.length;
 
@@ -375,6 +379,8 @@ define([], function () {
 					}
 
 				});
+			} else {
+				controller.set('ratesCompleted', true);
 			}
 
 		},

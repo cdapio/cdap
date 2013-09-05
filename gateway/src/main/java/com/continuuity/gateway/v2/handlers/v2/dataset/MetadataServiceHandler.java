@@ -50,8 +50,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         object.addProperty("id", stream.getId());
         object.addProperty("name", stream.getName());
         object.addProperty("description", stream.getDescription());
-        object.addProperty("expiry", stream.getExpiryInSeconds());
-        object.addProperty("capacity", stream.getCapacityInBytes());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
@@ -112,16 +110,13 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Dataset> datasets = service.getDatasets(new Account(accountId));
       JsonArray s = new JsonArray();
-      if (datasets.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       for (Dataset dataset : datasets) {
         JsonObject object = new JsonObject();
         object.addProperty("id", dataset.getId());
         object.addProperty("name", dataset.getName());
         object.addProperty("description", dataset.getDescription());
-        object.addProperty("type", dataset.getType());
+        object.addProperty("classname", dataset.getType());
+
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
@@ -159,7 +154,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         object.addProperty("id", dataset.getId());
         object.addProperty("name", dataset.getName());
         object.addProperty("description", dataset.getDescription());
-        object.addProperty("type", dataset.getType());
+        object.addProperty("classname", dataset.getType());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
@@ -181,19 +176,34 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Query> procedures = service.getQueries(new Account(accountId));
-      if (procedures.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Query procedure : procedures) {
         JsonObject object = new JsonObject();
         object.addProperty("id", procedure.getId());
         object.addProperty("name", procedure.getName());
         object.addProperty("description", procedure.getDescription());
+        object.addProperty("app", procedure.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns a procedure specification.
+   */
+  @GET
+  @Path("/procedures/{procedureId}")
+  public void getProcedureSpecification(HttpRequest request, HttpResponder responder,
+                                        @PathParam("procedureId") final String procedureId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (IllegalArgumentException e) {
@@ -228,6 +238,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         object.addProperty("id", procedure.getId());
         object.addProperty("name", procedure.getName());
         object.addProperty("description", procedure.getDescription());
+        object.addProperty("app", procedure.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
@@ -249,19 +260,34 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Mapreduce> mapreduces = service.getMapreduces(new Account(accountId));
-      if (mapreduces.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Mapreduce mapreduce : mapreduces) {
         JsonObject object = new JsonObject();
         object.addProperty("id", mapreduce.getId());
         object.addProperty("name", mapreduce.getName());
         object.addProperty("description", mapreduce.getDescription());
+        object.addProperty("app", mapreduce.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns a mapreduce specification.
+   */
+  @GET
+  @Path("/mapreduces/{mapreduceId}")
+  public void getMapReduceSpecification(HttpRequest request, HttpResponder responder,
+                                        @PathParam("mapreduceId") final String mapreduceId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (IllegalArgumentException e) {
@@ -320,10 +346,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
 
       List<Application> apps = service.getApplications(new Account(accountId));
-      if (apps.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Application app : apps) {
         JsonObject object = new JsonObject();
@@ -343,6 +365,42 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Returns a list of applications associated with account.
+   */
+  @GET
+  @Path("/apps/{appId}")
+  public void getApps(HttpRequest request, HttpResponder responder,
+                      @PathParam("appId") final String appId) {
+
+    if (appId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      Application app = service.getApplication(new Account(accountId), new Application(appId));
+      if (app == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      JsonObject object = new JsonObject();
+      object.addProperty("id", app.getId());
+      object.addProperty("name", app.getName());
+      object.addProperty("description", app.getDescription());
+      responder.sendJson(HttpResponseStatus.OK, object);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
    * Returns a list of flows associated with account.
    */
   @GET
@@ -352,18 +410,33 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
 
       List<Flow> flows = service.getFlows(accountId);
-      if (flows.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Flow flow : flows) {
         JsonObject object = new JsonObject();
         object.addProperty("id", flow.getId());
         object.addProperty("name", flow.getName());
+        object.addProperty("app", flow.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns a flow specification.
+   */
+  @GET
+  @Path("/flows/{flowId}")
+  public void getFlowSpecification(HttpRequest request, HttpResponder responder,
+                                   @PathParam("flowId") final String flowId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (IllegalArgumentException e) {
@@ -398,6 +471,82 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         JsonObject object = new JsonObject();
         object.addProperty("id", flow.getId());
         object.addProperty("name", flow.getName());
+        object.addProperty("app", flow.getApplication());
+        s.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns all flows associated with a stream.
+   */
+  @GET
+  @Path("/streams/{streamId}/flows")
+  public void getFlowsByStream(HttpRequest request, HttpResponder responder,
+                               @PathParam("streamId") final String streamId) {
+    if (streamId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      List<Flow> flows = service.getFlowsByStream(accountId, streamId);
+      if (flows.size() < 1) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+      JsonArray s = new JsonArray();
+      for (Flow flow : flows) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", flow.getId());
+        object.addProperty("name", flow.getName());
+        object.addProperty("app", flow.getApplication());
+        s.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns all dataset associated with a stream.
+   */
+
+  @GET
+  @Path("/datasets/{datasetId}/flows")
+  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
+                                   @PathParam("datasetId") final String datasetId) {
+    if (datasetId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      List<Flow> flows = service.getFlowsByStream(accountId, datasetId);
+      if (flows.size() < 1) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+      JsonArray s = new JsonArray();
+      for (Flow flow : flows) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", flow.getId());
+        object.addProperty("name", flow.getName());
+        object.addProperty("app", flow.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
@@ -410,3 +559,4 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 }
+

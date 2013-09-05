@@ -45,7 +45,7 @@ public class Constants {
    * Hostname of the gateway service.
    */
   public static final String CONFIG_HOSTNAME
-    = GATEWAY_PREFIX + "hostname";
+    = GATEWAY_PREFIX + "server.address";
 
   /**
    * Whether gateway should provide ZK service discovery to the connectors.

@@ -82,6 +82,7 @@ public class SingleNodeMain {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
+        webCloudAppService.stopAndWait();
         try {
           transactionManager.close();
         } catch (Throwable e) {
@@ -90,7 +91,6 @@ public class SingleNodeMain {
           System.err.println("Failed to shutdown transaction manager: " + e.getMessage()
                                + ". At " + StackTraceUtil.toStringStackTrace(e));
         }
-        webCloudAppService.stopAndWait();
       }
     });
   }

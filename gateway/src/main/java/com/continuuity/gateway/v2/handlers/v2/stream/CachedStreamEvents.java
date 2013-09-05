@@ -36,9 +36,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Caches StreamEvents and flushes them periodically.
@@ -53,8 +53,6 @@ final class CachedStreamEvents {
   private final long maxCachedEvents;
   private final AtomicLong cachedBytes = new AtomicLong(0);
   private final AtomicInteger cachedNumEntries = new AtomicInteger(0);
-
-  private final AtomicBoolean flushRunning = new AtomicBoolean(false);
 
   private MetricsCollectionService metricsCollectionService;
 
@@ -73,7 +71,7 @@ final class CachedStreamEvents {
           public void onRemoval(RemovalNotification<QueueName, ProducerStreamEntries> notification) {
             ProducerStreamEntries producerStreamEntries = notification.getValue();
             if (producerStreamEntries != null) {
-              producerStreamEntries.flush();
+              producerStreamEntries.flush(true);
               try {
                 producerStreamEntries.close();
               } catch (IOException e) {
@@ -129,12 +127,13 @@ final class CachedStreamEvents {
     throws ExecutionException, InterruptedException {
 
     eventCache.get(queueName).enqueue(new StreamEntry(queueEntry, callback));
-    long cachedSize = cachedBytes.addAndGet(queueEntry.getData().length);
-    int cachedEntries = cachedNumEntries.incrementAndGet();
+
+    long cachedSize = cachedBytes.get();
+    int cachedEntries = cachedNumEntries.get();
 
     // If reached limit, then flush
     if (cachedEntries >= maxCachedEvents || cachedSize >= maxCachedSizeBytes) {
-      LOG.debug("Exceeded limit - cachedEntries={}, cachedSize={}", cachedEntries, cachedSize);
+      LOG.trace("Exceeded limit - cachedEntries={}, cachedSize={}", cachedEntries, cachedSize);
       flush(false);
     }
   }
@@ -145,19 +144,14 @@ final class CachedStreamEvents {
    *                  if true will run a flush even if another one is running.
    */
   public void flush(boolean mustFlush) {
-    if (!mustFlush && flushRunning.compareAndSet(false, true)) {
-      return;
+    LOG.trace("Running flush. Must flush={}, cachedEntries={}, cachedSize={}",
+              mustFlush, cachedNumEntries.get(), cachedBytes.get());
+
+    for (Map.Entry<QueueName, ProducerStreamEntries> entry : eventCache.asMap().entrySet()) {
+      entry.getValue().flush(mustFlush);
     }
 
-    LOG.trace("Running flush. Must flush={}", mustFlush);
-    try {
-      for (Map.Entry<QueueName, ProducerStreamEntries> entry : eventCache.asMap().entrySet()) {
-        entry.getValue().flush();
-      }
-    } finally {
-      flushRunning.set(false);
-    }
-    LOG.trace("Done running flush");
+    LOG.trace("Done running flush. cachedEntries={}, cachedSize={}", cachedNumEntries.get(), cachedBytes.get());
   }
 
   /**
@@ -175,6 +169,8 @@ final class CachedStreamEvents {
     private final AtomicLong cachedBytes;
     private final AtomicInteger cachedNumEntries;
 
+    private final ReentrantLock flushLock = new ReentrantLock();
+
     public ProducerStreamEntries(Queue2Producer producer, BlockingQueue<StreamEntry> streamEntries,
                                  TransactionSystemClient txClient, ExecutorService callbackExecutorService,
                                  AtomicLong cachedBytes, AtomicInteger cachedNumEntries) {
@@ -189,74 +185,106 @@ final class CachedStreamEvents {
     }
 
     public void enqueue(StreamEntry streamEntry) {
+      long timeoutNanos = 1;
+
       for (int i = 0; i < 10; ++i) {
-        if (streamEntries.offer(streamEntry)) {
-          cachedBytes.addAndGet(streamEntry.getQueueEntry().getData().length);
-          cachedNumEntries.incrementAndGet();
-          return;
-        } else {
-          flush();
+        try {
+          if (streamEntries.offer(streamEntry, timeoutNanos, TimeUnit.NANOSECONDS)) {
+            cachedBytes.addAndGet(streamEntry.getQueueEntry().getData().length);
+            cachedNumEntries.incrementAndGet();
+            return;
+          } else {
+            LOG.trace("Not able to add to producer queue, flushing");
+            if (!flush(false)) {
+              timeoutNanos = TimeUnit.MILLISECONDS.toNanos(200);
+            }
+          }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
         }
       }
 
       throw new IllegalStateException(String.format("Cannot add stream entry using producer %s", producer));
     }
 
-    public synchronized void flush() {
-      List<StreamEntry> entries = Lists.newArrayListWithExpectedSize(streamEntries.size());
-      streamEntries.drainTo(entries);
-      if (entries.isEmpty()) {
-        return;
+    public boolean flush(boolean mustFlush) {
+      if (mustFlush) {
+        flushLock.lock();
+      } else {
+        if (!flushLock.tryLock()) {
+          // Some other thread is running flush
+          LOG.trace("Some other thread is running flush, returning");
+          return false;
+        }
       }
 
-      CallbackNotifier callbackNotifier =
-        new CallbackNotifier(callbackExecutorService,
-                             Iterables.transform(entries, STREAM_ENTRY_FUTURE_CALLBACK_FUNCTION));
-      StreamEntryToQueueEntryFunction transformer = new StreamEntryToQueueEntryFunction();
+      LOG.trace("Got flush lock, running flush");
 
       try {
-        txManager.start();
+        List<StreamEntry> entries = Lists.newArrayListWithExpectedSize(streamEntries.size());
+        streamEntries.drainTo(entries);
+        if (entries.isEmpty()) {
+          LOG.trace("Nothing to flush for producer {}", producer);
+          return true;
+        }
+
+        CallbackNotifier callbackNotifier =
+          new CallbackNotifier(callbackExecutorService,
+                               Iterables.transform(entries, STREAM_ENTRY_FUTURE_CALLBACK_FUNCTION));
+        StreamEntryToQueueEntryFunction transformer = new StreamEntryToQueueEntryFunction();
 
         try {
-          producer.enqueue(Iterables.transform(entries, transformer));
-
-          // Commit
-          txManager.commit();
-
-          // Notify callbacks
-          callbackNotifier.notifySuccess();
-          LOG.debug("Flushed {} events with producer {}", entries.size(), producer);
-        } catch (Throwable e) {
-          LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
+          txManager.start();
 
           try {
-            txManager.abort();
-          } catch (OperationException e1) {
-            LOG.error("Exception while aborting txn", e1);
-          } finally {
-            // Notify callbacks
-            callbackNotifier.notifyFailure(e);
-          }
-        }
-      } catch (OperationException e) {
-        LOG.error("Caught exception", e);
-        callbackNotifier.notifyFailure(e);
-      } finally {
-        int numEntries = entries.size();
-        cachedNumEntries.addAndGet(-1 * numEntries);
+            producer.enqueue(Iterables.transform(entries, transformer));
 
-        long numBytes = transformer.getNumBytes();
-        if (numEntries != transformer.getNumEntries()) {
-          numBytes = numBytesInList(entries);
+            // Commit
+            txManager.commit();
+
+            // Notify callbacks
+            callbackNotifier.notifySuccess();
+            LOG.debug("Flushed {} events with producer {}", entries.size(), producer);
+          } catch (Throwable e) {
+            LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
+
+            try {
+              txManager.abort();
+            } catch (OperationException e1) {
+              LOG.error("Exception while aborting txn", e1);
+            } finally {
+              // Notify callbacks
+              callbackNotifier.notifyFailure(e);
+            }
+          }
+        } catch (OperationException e) {
+          LOG.error("Caught exception", e);
+          callbackNotifier.notifyFailure(e);
+        } finally {
+          int numEntries = entries.size();
+          cachedNumEntries.addAndGet(-1 * numEntries);
+
+          long numBytes = transformer.getNumBytes();
+          if (numEntries != transformer.getNumEntries()) {
+            numBytes = numBytesInList(entries);
+          }
+          cachedBytes.addAndGet(-1 * numBytes);
         }
-        cachedBytes.addAndGet(-1 * numBytes);
+      } finally {
+        flushLock.unlock();
       }
+      return true;
     }
 
     @Override
-    public synchronized void close() throws IOException {
-      if (producer instanceof Closeable) {
-        ((Closeable) producer).close();
+    public void close() throws IOException {
+      flushLock.lock();
+      try {
+        if (producer instanceof Closeable) {
+          ((Closeable) producer).close();
+        }
+      } finally {
+        flushLock.unlock();
       }
     }
 
