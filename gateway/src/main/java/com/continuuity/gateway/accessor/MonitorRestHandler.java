@@ -8,6 +8,7 @@ import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowStatus;
+import com.continuuity.common.conf.Services;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.logging.LoggingContext;
@@ -128,9 +129,9 @@ public class MonitorRestHandler extends NettyRestHandler {
         accessor.getHttpConfig().getPathPrefix() +
             accessor.getHttpConfig().getPathMiddle();
     flowEndpoints = new RandomEndpointStrategy(accessor.getDiscoveryServiceClient()
-                                                 .discover(Constants.FLOW_SERVICE_NAME));
+                                                 .discover(Services.APP_FABRIC));
     metricsEndpoints = new RandomEndpointStrategy(accessor.getDiscoveryServiceClient()
-                                                    .discover(Constants.METRICS_SERVICE_NAME));
+                                                    .discover(Services.METRICS_FRONTEND));
   }
 
   // a metrics thrift client for every thread
@@ -194,7 +195,7 @@ public class MonitorRestHandler extends NettyRestHandler {
    */
   private AppFabricService.Client getFlowClient() throws ServerException {
     if (flowClients.get() == null || !flowClients.get().getInputProtocol().getTransport().isOpen()) {
-      TProtocol protocol = getThriftProtocol(Constants.FLOW_SERVICE_NAME, flowEndpoints);
+      TProtocol protocol = getThriftProtocol(Services.APP_FABRIC, flowEndpoints);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       flowClients.set(client);
     }

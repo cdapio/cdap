@@ -15,6 +15,10 @@ import com.continuuity.gateway.v2.handlers.v2.dataset.MetadataServiceHandler;
 import com.continuuity.gateway.v2.handlers.v2.stream.StreamHandler;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
+import com.continuuity.weave.discovery.DiscoveryService;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.InMemoryDiscoveryService;
+import com.continuuity.weave.discovery.ZKDiscoveryService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
@@ -22,6 +26,7 @@ import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

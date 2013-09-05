@@ -3,7 +3,7 @@ package com.continuuity.common.conf;
 /**
  * Constants used by different systems are all defined here.
  */
-public class Constants {
+public final class Constants {
   /**
    * Service names.
    */

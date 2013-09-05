@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
 import com.continuuity.metadata.MetadataService;
