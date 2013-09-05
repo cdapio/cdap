@@ -12,8 +12,11 @@ import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.handlers.v2.PingHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.MetadataServiceHandlerTest;
+import com.continuuity.gateway.v2.handlers.v2.log.LogHandlerTest;
+import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -32,7 +35,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class})
+@SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
@@ -61,6 +64,7 @@ public class GatewayFastTestsSuite {
             bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
             bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
             bind(StoreFactory.class).to(MDSStoreFactory.class);
+            bind(LogReader.class).to(MockLogReader.class);
           }
         }
       );

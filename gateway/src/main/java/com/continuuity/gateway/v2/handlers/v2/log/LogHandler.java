@@ -117,7 +117,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/apps/{appId}/{entityType}/{entityId}/logs/next")
+  @Path("/apps/{appId}/{entityType}/{entityId}/logs/prev")
   public void prev(HttpRequest request, HttpResponder responder,
                    @PathParam("appId") String appId, @PathParam("entityType") String entityType,
                    @PathParam("entityId") String entityId) {

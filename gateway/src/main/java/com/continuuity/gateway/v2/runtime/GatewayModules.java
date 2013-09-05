@@ -12,6 +12,7 @@ import com.continuuity.gateway.auth.PassportVPCAuthenticator;
 import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.handlers.v2.PingHandler;
 import com.continuuity.gateway.v2.handlers.v2.dataset.MetadataServiceHandler;
+import com.continuuity.gateway.v2.handlers.v2.log.LogHandler;
 import com.continuuity.gateway.v2.handlers.v2.stream.StreamHandler;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
@@ -65,6 +66,7 @@ public class GatewayModules extends RuntimeModule {
         handlerBinder.addBinding().to(StreamHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(PingHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(MetadataServiceHandler.class).in(Scopes.SINGLETON);
+        handlerBinder.addBinding().to(LogHandler.class).in(Scopes.SINGLETON);
 
         boolean requireAuthentication = cConf.getBoolean(
           GatewayConstants.ConfigKeys.CONFIG_AUTHENTICATION_REQUIRED,
