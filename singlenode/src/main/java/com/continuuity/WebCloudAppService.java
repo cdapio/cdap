@@ -27,7 +27,7 @@ import java.util.concurrent.Executor;
 public class WebCloudAppService extends AbstractExecutionThreadService {
   private static final Logger logger = LoggerFactory.getLogger(WebCloudAppService.class);
   private static final String NODE_JS_EXECUTABLE = "node";
-  private static final String WEB_APP = "web-app/developer/server/main.js";
+  private static final String WEB_APP = "web-app/server/local/main.js";
   private Process process;
   private BufferedReader bufferedReader;
 
