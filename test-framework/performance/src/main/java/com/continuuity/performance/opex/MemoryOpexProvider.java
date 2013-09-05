@@ -1,6 +1,7 @@
 package com.continuuity.performance.opex;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.inject.Guice;
@@ -11,12 +12,25 @@ import com.google.inject.Injector;
  */
 public class MemoryOpexProvider extends OpexProvider {
 
+  private Injector injector;
+  private OperationExecutor opex;
+
   @Override
   OperationExecutor create() {
-    Injector injector = Guice.createInjector (
+    injector = Guice.createInjector (
         new DataFabricModules().getInMemoryModules());
     injector.getInstance(InMemoryTransactionManager.class).init();
-    return injector.getInstance(OperationExecutor.class);
+    opex = injector.getInstance(OperationExecutor.class);
+    return opex;
   }
 
+  @Override
+  void shutdown(OperationExecutor opex) {
+    if (injector != null) {
+      injector.getInstance(InMemoryTransactionManager.class).close();
+    }
+    if (opex != null && opex instanceof OmidTransactionalOperationExecutor) {
+      ((OmidTransactionalOperationExecutor) opex).shutdown();
+    }
+  }
 }

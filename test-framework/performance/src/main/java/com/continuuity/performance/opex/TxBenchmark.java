@@ -6,9 +6,11 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
 import com.continuuity.performance.benchmark.BenchmarkException;
+import com.continuuity.performance.benchmark.BenchmarkResult;
 import com.continuuity.performance.benchmark.BenchmarkRunner;
 import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.google.common.collect.Lists;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,9 +108,42 @@ public class TxBenchmark extends OpexBenchmark {
   }
 
   public static void main(String[] args) throws Exception {
-    String[] args1 = Arrays.copyOf(args, args.length + 2);
-    args1[args.length] = "--bench";
-    args1[args.length + 1] = TxBenchmark.class.getName();
-    BenchmarkRunner.main(args1);
+    args = Arrays.copyOf(args, args.length + 2);
+    args[args.length - 2] = "--bench";
+    args[args.length - 1] = TxBenchmark.class.getName();
+    final int[] threadsVariation = { 1, 5, 10, 100, 500 };
+    final int[] sizeVariation = { 0, 1, 2, 10, 100 };
+    double[][] throughputs = new double[threadsVariation.length][sizeVariation.length];
+    for (int i = 0; i < threadsVariation.length; i++) {
+      int threads = threadsVariation[i];
+      String args1[];
+      if (threads == 1) {
+        args1 = Arrays.copyOf(args, args.length + 4);
+        args1[args.length] = "--sleep";
+        args1[args.length + 1] = "-1";
+      } else {
+        args1 = Arrays.copyOf(args, args.length + 2);
+      }
+      args1[args1.length - 2] = "--threads";
+      args1[args1.length - 1] = Integer.toString(threads);
+      for (int j = 0; j < sizeVariation.length; j++) {
+        int size = sizeVariation[j];
+        String[] args2 = Arrays.copyOf(args1, args1.length + 2);
+        args2[args1.length] = "--txsize";
+        args2[args1.length + 1] = Integer.toString(size);
+        BenchmarkResult result = new BenchmarkRunner().doRun(args2);
+        double runsPerSecond = result.getGroupResults().iterator().next().getMetrics().get("runs")
+          * 1000.0 / result.getRuntimeMillis();
+        throughputs[i][j] = runsPerSecond;
+      }
+    }
+    System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(throughputs));
+    for (int i = 0; i < threadsVariation.length; i++) {
+      for (int j = 0; j < sizeVariation.length; j++) {
+        System.out.println(String.format("%d threads with tx size %d: %1.1f/sec",
+                                         threadsVariation[i], sizeVariation[j], throughputs[i][j]));
+      }
+    }
+    LOG.info("Benchmark executed successfully.");
   }
 }
