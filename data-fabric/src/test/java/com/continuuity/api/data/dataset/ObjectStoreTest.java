@@ -19,6 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.SortedSet;
@@ -37,11 +38,14 @@ public class ObjectStoreTest extends DataSetTestBase {
     DataSet pairStore = new ObjectStore<ImmutablePair<Integer, String>>(
       "pairs", new TypeToken<ImmutablePair<Integer, String>>(){}.getType());
     DataSet customStore = new ObjectStore<Custom>("customs", Custom.class);
+    DataSet customListStore = new ObjectStore<List<Custom>>("customlist",
+                              new TypeToken<List<Custom>>(){}.getType());
     DataSet innerStore = new ObjectStore<CustomWithInner.Inner<Integer>>(
       "inners", new TypeToken<CustomWithInner.Inner<Integer>>(){}.getType());
     DataSet batchStore = new ObjectStore<String>("batch", String.class);
     DataSet intStore = new IntegerStore("ints");
-    setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore, batchStore, intStore));
+    setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore,
+                                         customListStore, innerStore, batchStore, intStore));
     // this test runs all operations synchronously
     TransactionAgent txAgent = newTransaction();
   }
@@ -155,6 +159,52 @@ public class ObjectStoreTest extends DataSetTestBase {
     inst.getDataSet("customs");
     // verify the class name was recorded (the dummy class loader was used).
     Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
+  }
+
+  @Test
+  public void testBatchCustomList() throws OperationException, InterruptedException {
+    ObjectStore<List<Custom>> customStore = instantiator.getDataSet("customlist");
+
+    TransactionAgent txAgent = newTransaction();
+
+    SortedSet<Long> keysWritten = Sets.newTreeSet();
+
+    List<Custom> customList1 = Arrays.asList(new Custom(1, Lists.newArrayList("one", "ONE")),
+                                            new Custom(2, Lists.newArrayList("two", "TWO")));
+    Random rand = new Random(100);
+    long key1 = rand.nextLong();
+    keysWritten.add(key1);
+
+    customStore.write(Bytes.toBytes(key1), customList1);
+
+    List<Custom> customList2 = Arrays.asList(new Custom(3, Lists.newArrayList("three", "THREE")),
+                                             new Custom(4, Lists.newArrayList("four", "FOUR")));
+    long key2 = rand.nextLong();
+    keysWritten.add(key2);
+
+    customStore.write(Bytes.toBytes(key2), customList2);
+
+    // commit transaction
+    commitTransaction(txAgent);
+    // start a sync transaction
+    txAgent = newTransaction();
+
+    // get the splits for the table
+    List<Split> splits = customStore.getSplits();
+
+    for (Split split : splits) {
+      SplitReader<byte[], List<Custom>> reader = customStore.createSplitReader(split);
+      reader.initialize(split);
+      while (reader.nextKeyValue()) {
+        byte[] key = reader.getCurrentKey();
+        Assert.assertTrue(keysWritten.remove(Bytes.toLong(key)));
+      }
+    }
+    // verify all keys have been read
+    if (!keysWritten.isEmpty()) {
+      System.out.println("Remaining [" + keysWritten.size() + "]: " + keysWritten);
+    }
+    Assert.assertTrue(keysWritten.isEmpty());
   }
 
   @Test
