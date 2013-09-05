@@ -71,10 +71,10 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   protected final byte[] stateColumnName;
   private final byte[] queueRowPrefix;
   private final QueueEvictor queueEvictor;
-  private byte[] startRow;
+  protected byte[] startRow;
   protected Transaction transaction;
   private boolean committed;
-  private int commitCount;
+  protected int commitCount;
 
   protected abstract boolean claimEntry(byte[] rowKey, byte[] stateContent) throws IOException;
   protected abstract void updateState(Set<byte[]> rowKeys, byte[] stateColumnName, byte[] stateContent)
@@ -89,7 +89,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
-    this.startRow = queueRowPrefix;
+    this.startRow = Bytes.concat(queueRowPrefix, Bytes.toBytes(0L), Bytes.toBytes(0));
     this.stateColumnName = Bytes.add(QueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
     this.queueEvictor = queueEvictor;
@@ -133,13 +133,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         while (iterator.hasNext()) {
           SimpleQueueEntry entry = iterator.next().getValue();
 
-          // If the state is already in CLAIMED state, no need to claim it again
-          // It happens for rolled-backed entries or restart from failure
-          // The pickup logic in populateCache and shouldInclude() make sure that's the case
-          // ANDREAS: but how do we know that it was claimed by THIS consumer. If there are multiple consumers,
-          // then they all will pick it up, right?
-          // TERENCE: The populateCache has logic to make sure only THIS consumer will pick it up again, except for
-          // the case that group size reduced and the claimed consumer is no longer available.
           if (entry.getState() == null || getStateInstanceId(entry.getState()) >= consumerConfig.getGroupSize()) {
             // If not able to claim it, remove it, and move to next one.
             if (!claimEntry(entry.getRowKey(), claimedStateValue)) {

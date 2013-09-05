@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -492,8 +491,7 @@ public abstract class QueueTest {
     }
   }
 
-  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws IOException,
-    OperationException {
+  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
     // the queue has been consumed by n consumers. Use a consumerId greater than n to make sure it can dequeue.
     Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(numActualConsumers + 1, 0, 1, DequeueStrategy.FIFO, null), -1);

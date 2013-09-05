@@ -27,6 +27,8 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -40,13 +42,27 @@ import java.util.Set;
  */
 final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
 
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueue2Consumer.class);
+
+  // Persist latest start row every n entries consumed.
+  private static final int PERSIST_START_ROW_LIMIT = 10000;
+
   private final HTable hTable;
   private final Filter processedStateFilter;
+  private final HBaseConsumerStateStore stateStore;
+  private boolean closed;
 
-  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName, QueueEvictor queueEvictor) {
-    super(consumerConfig, queueName, queueEvictor);
+  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+                      byte[] startRow, HBaseConsumerStateStore stateStore) {
+    // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
+    super(consumerConfig, queueName, QueueEvictor.NOOP);
     this.hTable = hTable;
     this.processedStateFilter = createStateFilter();
+    this.stateStore = stateStore;
+
+    if (startRow != null && startRow.length > 0) {
+      this.startRow = startRow;
+    }
   }
 
   @Override
@@ -93,9 +109,6 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     Scan scan = new Scan();
     scan.setCaching(numRows);
     scan.setStartRow(startRow);
-    // ANDREAS it seems that startRow never gets updated. That means we will always rescan entries that we have
-    // already read and decided to ignore.
-    // TERENCE: The update is done in the shouldInclude() method.
     scan.setStopRow(stopRow);
     scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.DATA_COLUMN);
     scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.META_COLUMN);
@@ -108,10 +121,26 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
 
   @Override
   public void close() throws IOException {
+    if (closed) {
+      return;
+    }
+    closed = true;
     try {
-      super.close();
+      stateStore.saveStartRow(startRow);
     } finally {
       hTable.close();
+    }
+  }
+
+  @Override
+  public void postTxCommit() {
+    if (commitCount >= PERSIST_START_ROW_LIMIT) {
+      try {
+        stateStore.saveStartRow(startRow);
+        commitCount = 0;
+      } catch (IOException e) {
+        LOG.error("Fail to persist start row to HBase.", e);
+      }
     }
   }
 
