@@ -148,7 +148,14 @@ public class HttpResponder {
     }
   }
 
-  private void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
+  /**
+   * Send response back to client.
+   * @param status Status of the response.
+   * @param content Content to be sent back.
+   * @param contentType Type of content.
+   * @param headers Headers to be sent back.
+   */
+  public void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
                            Multimap<String, String> headers){
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
 
