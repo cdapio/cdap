@@ -134,6 +134,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
 
   @Override
   public void postTxCommit() {
+    super.postTxCommit();
     if (commitCount >= PERSIST_START_ROW_LIMIT) {
       try {
         stateStore.saveStartRow(startRow);

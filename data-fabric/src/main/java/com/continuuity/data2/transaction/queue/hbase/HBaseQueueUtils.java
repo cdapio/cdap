@@ -115,16 +115,16 @@ public final class HBaseQueueUtils {
   }
 
   /**
-   * Returns the column qualifier for the consumer state column.
+   * Returns the column qualifier for the consumer state column. The qualifier is formed by
+   * {@code <groupId><instanceId>}.
    * @param groupId Group ID of the consumer
    * @param instanceId Instance ID of the consumer
    * @return A new byte[] which is the column qualifier.
    */
   public static byte[] getConsumerStateColumn(long groupId, int instanceId) {
-    byte[] column = new byte[Longs.BYTES + 1 + Ints.BYTES];
+    byte[] column = new byte[Longs.BYTES + Ints.BYTES];
     Bytes.putLong(column, 0, groupId);
-    Bytes.putByte(column, Longs.BYTES, (byte) ':');
-    Bytes.putInt(column, Longs.BYTES + 1, instanceId);
+    Bytes.putInt(column, Longs.BYTES, instanceId);
     return column;
   }
 }

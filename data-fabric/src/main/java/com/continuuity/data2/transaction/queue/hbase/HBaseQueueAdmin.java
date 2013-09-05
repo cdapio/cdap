@@ -198,14 +198,10 @@ public class HBaseQueueAdmin implements QueueAdmin {
       byte[] rowKey = queueName.toBytes();
 
       // Get all latest entry rowkey of all existing instances
-      // Consumer state column is named as "groupId:instanceId"
-      byte[] columnPrefix = new byte[Longs.BYTES + 1];
-      Bytes.putLong(columnPrefix, 0, groupId);
-      Bytes.putByte(columnPrefix, Longs.BYTES, (byte) ':');
-
+      // Consumer state column is named as "<groupId><instanceId>"
       Get get = new Get(rowKey);
       get.addFamily(QueueConstants.COLUMN_FAMILY);
-      get.setFilter(new ColumnPrefixFilter(columnPrefix));
+      get.setFilter(new ColumnPrefixFilter(Bytes.toBytes(groupId)));
       Result result = hTable.get(get);
 
       NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
@@ -250,11 +246,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
       byte[] smallest = null;
 
       for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
-        // Consumer state column is named as "groupId:instanceId"
+        // Consumer state column is named as "<groupId><instanceId>"
         long groupId = Bytes.toLong(entry.getKey());
 
         // Map key is sorted by groupId then instanceId, hence keep putting the instance + 1 will gives the group size.
-        oldGroupInfo.put(groupId, Bytes.toInt(entry.getKey(), Longs.BYTES + 1) + 1);
+        oldGroupInfo.put(groupId, Bytes.toInt(entry.getKey(), Longs.BYTES) + 1);
 
         // Update smallest if the group still exists from the new groups.
         if (groupInfo.containsKey(groupId)
@@ -340,7 +336,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       Delete delete = new Delete(rowKey);
       for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
         // Consumer state column is named as "groupId:instanceId"
-        int instanceId = Bytes.toInt(entry.getKey(), Longs.BYTES + 1);
+        int instanceId = Bytes.toInt(entry.getKey(), Longs.BYTES);
         if (instanceId < instances) {
           if (Bytes.BYTES_COMPARATOR.compare(smallest, entry.getValue()) < 0) {
             // Updates

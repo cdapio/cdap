@@ -254,8 +254,12 @@ public abstract class QueueTest {
     Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
     txManager.abort();
 
+    System.out.println("Before drop");
+
     // Reset queues
     queueAdmin.dropAll();
+
+    System.out.println("After drop");
 
     // we gonna need another one to check again to avoid caching side-affects
     Queue2Consumer consumer2 = queueClientFactory.createConsumer(
@@ -359,7 +363,10 @@ public abstract class QueueTest {
 
     Assert.assertEquals(expectedSum, valueSum.get());
 
-    verifyQueueIsEmpty(queueName, 1);
+    // Only check eviction for queue.
+    if (!queueName.isStream()) {
+      verifyQueueIsEmpty(queueName, 1);
+    }
     executor.shutdownNow();
   }
 

@@ -179,10 +179,28 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
   @Override
   public void postTxCommit() {
-    if (commitCount >= EVICTION_LIMIT) {
-      commitCount = 0;
-      // Fire and forget
-      queueEvictor.evict(transaction);
+    if (!consumingEntries.isEmpty()) {
+      // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
+      // that is smaller than smallest of exclude list
+      long[] excludedList = transaction.getExcludedList();
+      byte[] lastKey;
+      if (excludedList.length == 0) {
+        // No need to copy, as after postTxCommit, no one will use the consumingEntries except
+        // next call should be startTx which will clear the consumingEntries.
+        lastKey = consumingEntries.lastKey();
+      } else {
+        lastKey = consumingEntries.headMap(getNextRow(excludedList[0], 0)).firstKey();
+      }
+
+      Bytes.putLong(lastKey, queueRowPrefix.length, Bytes.toLong(lastKey, queueRowPrefix.length) + 1);
+      Bytes.putInt(lastKey, queueRowPrefix.length + Longs.BYTES, 0);
+      startRow = lastKey;
+
+      if (commitCount >= EVICTION_LIMIT) {
+        commitCount = 0;
+        // Fire and forget
+        queueEvictor.evict(transaction);
+      }
     }
   }
 
@@ -401,7 +419,11 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   }
 
   private byte[] getNextRow(long writePointer, int count) {
-    return Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
+    byte[] row = new byte[queueRowPrefix.length + Longs.BYTES + Ints.BYTES];
+    Bytes.putBytes(row, 0, queueRowPrefix, 0, queueRowPrefix.length);
+    Bytes.putLong(row, queueRowPrefix.length, writePointer);
+    Bytes.putInt(row, queueRowPrefix.length + Longs.BYTES, count + 1);
+    return row;
   }
 
   /**
