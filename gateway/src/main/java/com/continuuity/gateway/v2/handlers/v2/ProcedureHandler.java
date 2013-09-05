@@ -108,7 +108,8 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                                          if (response.getStatusCode() == OK.getCode()) {
                                            String contentType = response.getContentType();
                                            ChannelBuffer content;
-                                           int contentLength = Integer.parseInt(response.getHeader(CONTENT_LENGTH));
+
+                                           int contentLength = getContentLength(response);
                                            if (contentLength > 0) {
                                              content = ChannelBuffers.dynamicBuffer(contentLength);
                                            } else {
@@ -120,9 +121,9 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                                            // Should not close the inputstream as per Response javadoc
                                            InputStream input = response.getResponseBodyAsStream();
                                            ByteStreams.copy(input, new ChannelBufferOutputStream(content));
+
                                            responder.sendContent(OK,
-                                                                 ChannelBuffers.wrappedBuffer(
-                                                                   response.getResponseBodyAsByteBuffer()),
+                                                                 content,
                                                                  contentType,
                                                                  ImmutableListMultimap.<String, String>of());
                                          } else {
@@ -143,6 +144,14 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(BAD_REQUEST);
     }  catch (Throwable e) {
       responder.sendStatus(INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private int getContentLength(Response response) {
+    try {
+      return Integer.parseInt(response.getHeader(CONTENT_LENGTH));
+    } catch (NumberFormatException e) {
+      return 0;
     }
   }
 }

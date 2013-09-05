@@ -13,7 +13,6 @@ import com.google.gson.Gson;
 import junit.framework.Assert;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -30,6 +29,7 @@ import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
+import static com.continuuity.gateway.GatewayFastTestsSuite.POST;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 
@@ -95,18 +95,20 @@ public class ProcedureHandlerTest  {
     Assert.assertFalse(contentStr.isEmpty());
 
     HttpResponse response = 
-      sendPost("/apps/testApp1/procedures/testProc1/testMethod1", contentStr);
+      POST("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", contentStr);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(content, gson.fromJson(EntityUtils.toString(response.getEntity()), type));
+
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals(content, gson.fromJson(responseStr, type));
   }
 
   @Test
   public void testNoProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
     HttpResponse response =
-      sendPost("/apps/testApp1/procedures/testProc2/testMethod1",
-               new Gson().toJson(content, new TypeToken<Map<String, String>>() {
-               }.getType()));
+      POST("/v2/apps/testApp1/procedures/testProc2/methods/testMethod1",
+           new Gson().toJson(content, new TypeToken<Map<String, String>>() {
+           }.getType()));
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
   }
 
@@ -120,20 +122,21 @@ public class ProcedureHandlerTest  {
     Assert.assertFalse(contentStr.isEmpty());
 
     HttpResponse response =
-      sendPost("/apps/testApp2/procedures/testProc2/testChunkedMethod", contentStr);
+      POST("/v2/apps/testApp2/procedures/testProc2/methods/testChunkedMethod", contentStr);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     String expected = contentStr + contentStr;
-    Assert.assertEquals(expected, EntityUtils.toString(response.getEntity()));
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals(expected, responseStr);
   }
 
   @Test
   public void testErrorProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
     HttpResponse response =
-      sendPost("/apps/testApp2/procedures/testProc2/testExceptionMethod",
-               new Gson().toJson(content, new TypeToken<Map<String, String>>() {
-               }.getType()));
+      POST("/v2/apps/testApp2/procedures/testProc2/methods/testExceptionMethod",
+           new Gson().toJson(content, new TypeToken<Map<String, String>>() {
+           }.getType()));
     Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
   }
 
@@ -149,10 +152,11 @@ public class ProcedureHandlerTest  {
 
       // /apps/testApp1/procedures/testProc1/testMethod1
       if ("testApp1".equals(appId) && "testProc1".equals(procedureName) && "testMethod1".equals(methodName)) {
-        responder.sendByteArray(HttpResponseStatus.OK, request.getContent().array(),
+        byte [] content = request.getContent().array();
+        responder.sendByteArray(HttpResponseStatus.OK, content,
                                 ImmutableMultimap.of(CONTENT_TYPE, "text/plain",
                                                      CONTENT_LENGTH,
-                                                     Integer.toString(request.getContent().array().length)));
+                                                     Integer.toString(content.length)));
 
       } else if ("testApp2".equals(appId) && "testProc2".equals(procedureName) &&
         "testChunkedMethod".equals(methodName)) {
@@ -170,13 +174,6 @@ public class ProcedureHandlerTest  {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       }
     }
-  }
-
-  private HttpResponse sendPost(String resource, String body) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
-    post.setEntity(new StringEntity(body));
-    return client.execute(post);
   }
 
   private static void testTestServer() throws Exception {

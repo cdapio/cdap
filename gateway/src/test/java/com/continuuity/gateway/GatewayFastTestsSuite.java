@@ -26,7 +26,9 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -109,6 +111,13 @@ public class GatewayFastTestsSuite {
   public static HttpResponse PUT(HttpPut put) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     return client.execute(put);
+  }
+
+  public static HttpResponse POST(String resource, String body) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+    post.setEntity(new StringEntity(body));
+    return client.execute(post);
   }
 
   public static MetadataService.Iface getMds() {
