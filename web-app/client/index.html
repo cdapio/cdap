@@ -79,11 +79,22 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="index">
+  <script type="text/x-handlebars" data-template-name="Overview">
     <div id="title">
       {{view C.Embed.TimeSelector}}
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo Overview.Apps }}Apps{{/linkTo}}</li>
+        <li>{{#linkTo Overview.System }}System{{/linkTo}}</li>
+      </ul>
       <h1>Overview</h1>
     </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Overview/Apps">
+
     <div id="panels">
       <div class="quarter">
         <div class="panel">
@@ -108,7 +119,7 @@
       </div>
       <div class="quarter">
         <div class="panel" style="margin-right: 0;">
-          <div class="quarter-title">Serving</div>
+          <div class="quarter-title">Queries</div>
           <div class="quarter-value"><strong>{{value.query}}</strong> QPS</div>
           {{view C.Embed.DashChart kind="query"}}
         </div>
@@ -117,10 +128,46 @@
       <div class="panel" style="clear: both;">
         <div class="panel-head">
           {{view C.Embed.CreateButton entityType="Application"}}
-          <div class="panel-title">Applications</div>
+          <div class="panel-title">Apps</div>
         </div>
         {{partial "apps-list"}}
       </div>
+    </div>
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Overview/System">
+
+    <div id="panels">
+      <div class="quarter half">
+        <div class="panel">
+          <div class="quarter-title">CPU</div>
+          <div class="quarter-value"><strong>{{value.collect}}</strong>%</div>
+          {{view C.Embed.DashChart kind="collect"}}
+        </div>
+      </div>
+      <div class="quarter half">
+        <div class="panel">
+          <div class="quarter-title">Memory</div>
+          <div class="quarter-value"><strong>{{value.process}}</strong>B</div>
+          {{view C.Embed.DashChart kind="process"}}
+        </div>
+      </div>
+      <div class="quarter half">
+        <div class="panel">
+          <div class="quarter-title">Disk</div>
+          <div class="quarter-value"><strong>{{value.collect}}</strong>B</div>
+          {{view C.Embed.DashChart kind="collect"}}
+        </div>
+      </div>
+      <div class="quarter half">
+        <div class="panel">
+          <div class="quarter-title">Network</div>
+          <div class="quarter-value"><strong>{{value.process}}</strong>B/s</div>
+          {{view C.Embed.DashChart kind="process"}}
+        </div>
+      </div>
+
     </div>
   </script>
 

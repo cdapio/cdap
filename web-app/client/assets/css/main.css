@@ -464,6 +464,10 @@ h1 span {
 	padding: 3px 10px 0px;
 }
 
+.half {
+	width: 50% !important;
+}
+
 .quarter {
 	width: 25%;
 	float: left;

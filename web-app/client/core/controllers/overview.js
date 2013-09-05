@@ -1,5 +1,5 @@
 /*
- * Dashboard Controller
+ * Overview Controller
  */
 
 define([], function () {
@@ -34,7 +34,7 @@ define([], function () {
 			 * Load Apps
 			 * Also load all Elements for each App to calculate per-App totals
 			 */
-			this.HTTP.get('rest', 'apps', function (objects) {
+			this.HTTP.rest('apps', function (objects) {
 				var i = objects.length;
 
 				while (i--) {
@@ -108,7 +108,7 @@ define([], function () {
 
 		updateStats: function () {
 
-			if (C.currentPath !== 'index') {
+			if (C.currentPath !== 'Overview.Apps') {
 				return;
 			}
 
@@ -169,7 +169,7 @@ define([], function () {
 	});
 
 	Controller.reopenClass({
-		type: 'Index',
+		type: 'OverviewApps',
 		kind: 'Controller'
 	});
 

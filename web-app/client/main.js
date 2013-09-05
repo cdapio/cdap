@@ -88,6 +88,11 @@ define (['core/application'], function (Application) {
 	 */
 	C.Router.map(function() {
 
+		this.resource('Overview', { path: '/overview' }, function () {
+				this.route('Apps', { path: '/apps' });
+				this.route('System', { path: '/system' });
+		});
+
 		this.resource('App', { path: '/apps/:app_id' } );
 
 		this.resource('Streams', { path: '/streams' });
@@ -183,13 +188,20 @@ define (['core/application'], function (Application) {
 
 	/*
 	 * The following define the actual route handlers.
-	 * Dashboard controller is the "Index" route handler, as specified in its source.
 	 */
 	$.extend(C, {
 
 		ApplicationRoute: basicRouter.extend(),
 
-		IndexRoute: basicRouter.extend(),
+		IndexRoute: Ember.Route.extend({
+			redirect: function() {
+				this.transitionTo('Overview.Apps');
+			}
+		}),
+
+		OverviewAppsRoute: basicRouter.extend(),
+
+		OverviewSystemRoute: basicRouter.extend(),
 
 		AppRoute: basicRouter.extend(),
 
