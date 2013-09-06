@@ -57,6 +57,10 @@ final class FlowletProgramController extends AbstractProgramController {
   protected void doStop() throws Exception {
     LOG.info("Stopping flowlet: " + flowletContext);
     driver.stopAndWait();
+    // Close all consumers
+    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
+      queueConsumerSupplier.close();
+    }
     LOG.info("Flowlet stopped: " + flowletContext);
   }
 

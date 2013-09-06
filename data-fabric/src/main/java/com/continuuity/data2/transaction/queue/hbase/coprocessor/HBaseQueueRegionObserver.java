@@ -51,6 +51,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       return scanner;
     }
 
+    LOG.info("preFlush, creates EvictionInternalScanner");
     return new EvictionInternalScanner(e.getEnvironment(), scanner);
   }
 
@@ -61,6 +62,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       return scanner;
     }
 
+    LOG.info("preCompact, creates EvictionInternalScanner");
     return new EvictionInternalScanner(e.getEnvironment(), scanner);
   }
 
@@ -75,6 +77,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private final ConsumerInstance consumerInstance;
     private byte[] currentQueue;
     private QueueConsumerConfig consumerConfig;
+    private long rowsEvicted = 0;
 
     private EvictionInternalScanner(RegionCoprocessorEnvironment env, InternalScanner scanner) {
       this.env = env;
@@ -125,6 +128,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         }
 
         if (canEvict(consumerConfig, result)) {
+          rowsEvicted++;
           result.clear();
           hasNext = scanner.next(result, limit, metric);
         } else {
@@ -137,6 +141,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
     @Override
     public void close() throws IOException {
+      LOG.info("Rows evicted: " + rowsEvicted);
       scanner.close();
     }
 
