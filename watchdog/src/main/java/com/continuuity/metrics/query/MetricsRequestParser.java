@@ -41,7 +41,7 @@ final class MetricsRequestParser {
 
   private enum ProgramType {
     FLOWS("f"),
-    MAPREDUCE("b"),
+    MAPREDUCES("b"),
     PROCEDURES("p");
 
     private final String id;
@@ -200,7 +200,7 @@ final class MetricsRequestParser {
     }
 
     // 6. Subtype ("mappers/reducers") for Map Reduce job or flowlet Id.
-    if (programType == ProgramType.MAPREDUCE) {
+    if (programType == ProgramType.MAPREDUCES) {
       contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
     } else {
       // flowlet Id
@@ -213,7 +213,7 @@ final class MetricsRequestParser {
     }
 
     // 7. Subtype ID for map reduce job or flowlet metric suffix
-    if (programType == ProgramType.MAPREDUCE) {
+    if (programType == ProgramType.MAPREDUCES) {
       contextPrefix += "." + pathParts.next();
     }
 
@@ -250,7 +250,7 @@ final class MetricsRequestParser {
     }
 
     // 6. Subtype ("mappers/reducers") for Map Reduce job or flowlet Id.
-    if (programType == ProgramType.MAPREDUCE) {
+    if (programType == ProgramType.MAPREDUCES) {
       contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
     } else {
       // flowlet Id
@@ -266,7 +266,7 @@ final class MetricsRequestParser {
     }
 
     // 7. Subtype ID for map reduce job or flowlet metric suffix
-    if (programType == ProgramType.MAPREDUCE) {
+    if (programType == ProgramType.MAPREDUCES) {
       contextPrefix += "." + pathParts.next();
     } else {
       // It gives the suffix of the metric

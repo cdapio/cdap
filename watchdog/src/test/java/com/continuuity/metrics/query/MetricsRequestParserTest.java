@@ -53,15 +53,15 @@ public class MetricsRequestParserTest {
   @Test
   public void testMapReduce() {
     MetricsRequest request = MetricsRequestParser.parse(
-                                URI.create("/process/completion/app1/mapreduce/jobId?summary=true"));
+                                URI.create("/process/completion/app1/mapreduces/jobId?summary=true"));
     Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
 
     request = MetricsRequestParser.parse(
-      URI.create("/process/completion/app1/mapreduce/jobId/mappers?summary=true"));
+      URI.create("/process/completion/app1/mapreduces/jobId/mappers?summary=true"));
     Assert.assertEquals("app1.b.jobId.m", request.getContextPrefix());
 
     request = MetricsRequestParser.parse(
-      URI.create("/process/completion/app1/mapreduce/jobId/mappers/mapperId?summary=true"));
+      URI.create("/process/completion/app1/mapreduces/jobId/mappers/mapperId?summary=true"));
     Assert.assertEquals("app1.b.jobId.m.mapperId", request.getContextPrefix());
     Assert.assertEquals(MetricsRequest.Type.SUMMARY, request.getType());
     Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
@@ -99,7 +99,7 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("dataset1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
-                        URI.create("/store/reads/apps/app1/mapreduce/jobId/datasets/dataset1?aggregate=true"));
+                        URI.create("/store/reads/apps/app1/mapreduces/jobId/datasets/dataset1?aggregate=true"));
     Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
     Assert.assertEquals("store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
@@ -115,7 +115,7 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("dataset1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
-                                    URI.create("/store/reads/datasets/dataset2/app1/mapreduce/jobId?aggregate=true"));
+                                    URI.create("/store/reads/datasets/dataset2/app1/mapreduces/jobId?aggregate=true"));
     Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
     Assert.assertEquals("store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset2", request.getTagPrefix());
@@ -164,7 +164,8 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("metric", request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());
 
-    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/mapreduce/mapred1/mappers/metric?aggregate=true"));
+    request
+      = MetricsRequestParser.parse(URI.create("/user/apps/app1/mapreduces/mapred1/mappers/metric?aggregate=true"));
     Assert.assertEquals("app1.b.mapred1.m", request.getContextPrefix());
     Assert.assertEquals("metric", request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());

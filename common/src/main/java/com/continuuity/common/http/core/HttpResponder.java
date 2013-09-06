@@ -16,6 +16,8 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.handler.codec.http.DefaultHttpChunk;
+import org.jboss.netty.handler.codec.http.DefaultHttpChunkTrailer;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponse;
@@ -105,7 +107,55 @@ public class HttpResponder {
     sendContent(status, errorContent, "text/plain; charset=utf-8", ImmutableMultimap.<String, String>of());
   }
 
-  private void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
+  /**
+   * Respond to the client saying the response will be in chunks. Add chunks to response using @{link sendChunk}
+   * and @{link sendChunkEnd}.
+   * @param status  the status code to respond with. Defaults to 200-OK if null.
+   * @param headers additional headers to send with the response. May be null.
+   */
+  public void sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
+    HttpResponse response = new DefaultHttpResponse(
+      HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
+
+    if (headers != null) {
+      for (Map.Entry<String, Collection<String>> entry : headers.asMap().entrySet()) {
+        response.setHeader(entry.getKey(), entry.getValue());
+      }
+    }
+
+    response.setChunked(true);
+    response.setHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
+    channel.write(response);
+  }
+
+  /**
+   * Add a chunk of data to the response. @{link sendChunkStart} should be called before calling this method.
+   * @{link sendChunkEnd} should be called after all chunks are done.
+   * @param content the chunk of content to send
+   */
+  public void sendChunk(ChannelBuffer content) {
+    channel.write(new DefaultHttpChunk(content));
+  }
+
+  /**
+   * Called after all chunks are done. This keeps the connection alive
+   * unless specified otherwise in the original request.
+   */
+  public void sendChunkEnd() {
+    ChannelFuture future = channel.write(new DefaultHttpChunkTrailer());
+    if (!keepalive) {
+      future.addListener(ChannelFutureListener.CLOSE);
+    }
+  }
+
+  /**
+   * Send response back to client.
+   * @param status Status of the response.
+   * @param content Content to be sent back.
+   * @param contentType Type of content.
+   * @param headers Headers to be sent back.
+   */
+  public void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
                            Multimap<String, String> headers){
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
 
@@ -122,8 +172,10 @@ public class HttpResponder {
     }
 
     // Add headers, note will override all headers set by the framework
-    for (Map.Entry<String, Collection<String>> entry : headers.asMap().entrySet()) {
-      response.setHeader(entry.getKey(), entry.getValue());
+    if (headers != null) {
+      for (Map.Entry<String, Collection<String>> entry : headers.asMap().entrySet()) {
+        response.setHeader(entry.getKey(), entry.getValue());
+      }
     }
 
     ChannelFuture future = channel.write(response);

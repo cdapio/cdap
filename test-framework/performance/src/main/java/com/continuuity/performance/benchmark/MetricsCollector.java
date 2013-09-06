@@ -34,12 +34,18 @@ abstract class MetricsCollector implements Runnable {
    *
    */
   private final Stopwatch stopwatch = new Stopwatch();
+  private long elapsedMillis = 0L;
+  private final ArrayList<Map<String, Long>> previousMetrics;
 
   protected abstract int getInterval();
 
   protected MetricsCollector(AgentGroup[] groups, BenchmarkMetric[] metrics) {
     this.groupMetrics = metrics;
     this.groups = groups;
+    this.previousMetrics = new ArrayList<Map<String, Long>>(groups.length);
+    for (int i = 0; i < groups.length; i++) {
+      previousMetrics.add(i, null);
+    }
   }
 
   protected final void stop() {
@@ -58,10 +64,6 @@ abstract class MetricsCollector implements Runnable {
       init();
       stopwatch.start();
 
-      ArrayList<Map<String, Long>> previousMetrics = new ArrayList<Map<String, Long>>(groups.length);
-      for (int i = 0; i < groups.length; i++) {
-        previousMetrics.add(i, null);
-      }
       long[] previousElapsedMillis = new long[groups.length];
       // wake up every interval (i.e. every minute) to report the metrics
       int interval = getInterval();
@@ -69,7 +71,7 @@ abstract class MetricsCollector implements Runnable {
       LOG.debug("Starting to collect metrics every {} seconds.", interval);
       for (int seconds = interval; !interrupt; seconds += interval) {
         long nextWakeupMillis = seconds * 1000L;
-        long elapsedMillis = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
+        elapsedMillis = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
         try {
           if (nextWakeupMillis > elapsedMillis) {
             Thread.sleep(nextWakeupMillis - elapsedMillis);
@@ -143,5 +145,13 @@ abstract class MetricsCollector implements Runnable {
 
   private static long getCurrentUnixTime() {
     return System.currentTimeMillis() / 1000L;
+  }
+
+  public void getResults(final BenchmarkResult result) {
+    result.setRuntimeMillis(stopwatch.elapsedMillis());
+    for (int i = 0; i < groups.length; i++) {
+      result.add(new BenchmarkResult.
+        GroupResult(groups[i].getName(), groups[i].getNumAgents(), groupMetrics[i].list()));
+    }
   }
 }

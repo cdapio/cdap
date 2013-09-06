@@ -90,9 +90,9 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       // run another transaction
       Transaction txx = txm.start();
       // verify the exclude
-      Assert.assertEquals(tx1.getWritePointer(), txx.getExcludedList()[0]);
-      Assert.assertEquals(tx2.getWritePointer(), txx.getExcludedList()[1]);
-      Assert.assertEquals(tx3.getWritePointer(), txx.getExcludedList()[2]);
+      Assert.assertFalse(txx.isVisible(tx1.getWritePointer()));
+      Assert.assertFalse(txx.isVisible(tx2.getWritePointer()));
+      Assert.assertFalse(txx.isVisible(tx3.getWritePointer()));
       // try to commit the last transaction that was started
       if (!(txm.canCommit(txx, Collections.singleton(new byte[] { 0x0a })) && txm.commit(txx))) {
         txm.abort(txx);
@@ -164,7 +164,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     txManager.abort(tx5);
     // start new tx and verify its exclude list is empty
     Transaction tx6 = txManager.start();
-    Assert.assertEquals(0, tx6.getExcludedList().length);
+    Assert.assertFalse(tx6.hasExcludes());
     txManager.abort(tx6);
 
     // now start 5 x claim size transactions

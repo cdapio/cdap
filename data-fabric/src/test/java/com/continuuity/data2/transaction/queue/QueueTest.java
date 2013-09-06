@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -255,8 +254,12 @@ public abstract class QueueTest {
     Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
     txManager.abort();
 
+    System.out.println("Before drop");
+
     // Reset queues
     queueAdmin.dropAll();
+
+    System.out.println("After drop");
 
     // we gonna need another one to check again to avoid caching side-affects
     Queue2Consumer consumer2 = queueClientFactory.createConsumer(
@@ -360,7 +363,10 @@ public abstract class QueueTest {
 
     Assert.assertEquals(expectedSum, valueSum.get());
 
-    verifyQueueIsEmpty(queueName, 1);
+    // Only check eviction for queue.
+    if (!queueName.isStream()) {
+      verifyQueueIsEmpty(queueName, 1);
+    }
     executor.shutdownNow();
   }
 
@@ -492,8 +498,7 @@ public abstract class QueueTest {
     }
   }
 
-  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws IOException,
-    OperationException {
+  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
     // the queue has been consumed by n consumers. Use a consumerId greater than n to make sure it can dequeue.
     Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(numActualConsumers + 1, 0, 1, DequeueStrategy.FIFO, null), -1);

@@ -21,9 +21,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.Uninterruptibles;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,9 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Common queue consumer for persisting engines such as HBase and LevelDB.
@@ -49,12 +43,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   // Multiple of batches to fetch per scan.
   // Number of rows to scan = max(MIN_FETCH_ROWS, dequeueBatchSize * groupSize * PREFETCH_BATCHES)
   private static final int PREFETCH_BATCHES = 10;
-
-  private static final long EVICTION_TIMEOUT_SECONDS = 10;
-  // How many commits to trigger eviction.
-  private static final int EVICTION_LIMIT = 1000;
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractQueue2Consumer.class);
 
   private static final Function<SimpleQueueEntry, byte[]> ENTRY_TO_BYTE_ARRAY =
     new Function<SimpleQueueEntry, byte[]>() {
@@ -70,11 +58,10 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   private final SortedMap<byte[], SimpleQueueEntry> consumingEntries;
   protected final byte[] stateColumnName;
   private final byte[] queueRowPrefix;
-  private final QueueEvictor queueEvictor;
-  private byte[] startRow;
+  protected byte[] startRow;
   protected Transaction transaction;
   private boolean committed;
-  private int commitCount;
+  protected int commitCount;
 
   protected abstract boolean claimEntry(byte[] rowKey, byte[] stateContent) throws IOException;
   protected abstract void updateState(Set<byte[]> rowKeys, byte[] stateColumnName, byte[] stateContent)
@@ -83,16 +70,15 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     throws IOException, InterruptedException;
   protected abstract QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException;
 
-  protected AbstractQueue2Consumer(ConsumerConfig consumerConfig, QueueName queueName, QueueEvictor queueEvictor) {
+  protected AbstractQueue2Consumer(ConsumerConfig consumerConfig, QueueName queueName) {
     this.consumerConfig = consumerConfig;
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
-    this.startRow = queueRowPrefix;
+    this.startRow = getRowKey(0L, 0);
     this.stateColumnName = Bytes.add(QueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
-    this.queueEvictor = queueEvictor;
   }
 
   @Override
@@ -133,13 +119,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         while (iterator.hasNext()) {
           SimpleQueueEntry entry = iterator.next().getValue();
 
-          // If the state is already in CLAIMED state, no need to claim it again
-          // It happens for rolled-backed entries or restart from failure
-          // The pickup logic in populateCache and shouldInclude() make sure that's the case
-          // ANDREAS: but how do we know that it was claimed by THIS consumer. If there are multiple consumers,
-          // then they all will pick it up, right?
-          // TERENCE: The populateCache has logic to make sure only THIS consumer will pick it up again, except for
-          // the case that group size reduced and the claimed consumer is no longer available.
           if (entry.getState() == null || getStateInstanceId(entry.getState()) >= consumerConfig.getGroupSize()) {
             // If not able to claim it, remove it, and move to next one.
             if (!claimEntry(entry.getRowKey(), claimedStateValue)) {
@@ -176,7 +155,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     if (consumingEntries.isEmpty()) {
       return true;
     }
-    // TODO pre-compute this in constructor
+
     byte[] stateContent = encodeStateColumn(ConsumerEntryState.PROCESSED);
     updateState(consumingEntries.keySet(), stateColumnName, stateContent);
     commitCount += consumingEntries.size();
@@ -186,10 +165,21 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
   @Override
   public void postTxCommit() {
-    if (commitCount >= EVICTION_LIMIT) {
-      commitCount = 0;
-      // Fire and forget
-      queueEvictor.evict(transaction);
+    if (!consumingEntries.isEmpty()) {
+      // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
+      // that is smaller than smallest of in progress list
+      long[] inProgress = transaction.getInProgress();
+      if (inProgress.length == 0) {
+        // No need to copy, as after postTxCommit, no one will use the consumingEntries except
+        // next call should be startTx which will clear the consumingEntries.
+        startRow = getNextRow(consumingEntries.lastKey());
+      } else {
+        SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getRowKey(inProgress[0], 0));
+        // If nothing smaller than the smallest of excluded list, then it can't advance.
+        if (!headMap.isEmpty()) {
+          startRow = getNextRow(headMap.firstKey());
+        }
+      }
     }
   }
 
@@ -217,22 +207,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
       undoState(consumingEntries.keySet(), stateColumnName);
     }
     return true;
-  }
-
-  @Override
-  public void close() throws IOException {
-    try {
-      if (transaction != null) {
-        // Use whatever last transaction for eviction.
-        // Has to block until eviction is completed
-        Uninterruptibles.getUninterruptibly(queueEvictor.evict(transaction),
-                                            EVICTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      }
-    } catch (ExecutionException e) {
-      LOG.warn("Failed to perform queue eviction.", e.getCause());
-    } catch (TimeoutException e) {
-      LOG.warn("Timeout when performing queue eviction.", e);
-    }
   }
 
   /**
@@ -276,7 +250,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   private void populateRowCache(Set<byte[]> excludeRows, int maxBatchSize) throws IOException {
 
     long readPointer = transaction.getReadPointer();
-    long[] excludedList = transaction.getExcludedList();
 
     // Scan the table for queue entries.
     int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * consumerConfig.getGroupSize() * PREFETCH_BATCHES);
@@ -306,7 +279,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
           break;
         }
         // If the write is in the excluded list, ignore it.
-        if (Arrays.binarySearch(excludedList, writePointer) >= 0) {
+        if (transaction.isExcluded(writePointer)) {
           continue;
         }
 
@@ -368,16 +341,15 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         return false;
       }
 
-      // If state is PROCESSED and committed, ignore it
-      long[] excludedList = transaction.getExcludedList();
+      // If state is PROCESSED and committed, ignore it:
       ConsumerEntryState state = getState(stateValue);
-      if (state == ConsumerEntryState.PROCESSED
-          && stateWritePointer <= transaction.getReadPointer()
-          && Arrays.binarySearch(excludedList, stateWritePointer) < 0) {
+      if (state == ConsumerEntryState.PROCESSED && transaction.isVisible(stateWritePointer)) {
 
-        // If the PROCESSED entry write pointer is smaller than smallest in excluded list, then it must be processed.
-        if (excludedList.length == 0 || excludedList[0] > enqueueWritePointer) {
-          startRow = getNextRow(enqueueWritePointer, counter);
+        // If the entry's enqueue write pointer is smaller than smallest in progress tx, then everything before it
+        // must be processed, too (it is not possible that an enqueue before this is still in progress). So it is
+        // safe to move the start row after this entry.
+        if (enqueueWritePointer < transaction.getFirstInProgress()) {
+          startRow = getNextRow(startRow, enqueueWritePointer, counter);
         }
         return false;
       }
@@ -407,8 +379,33 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     }
   }
 
-  private byte[] getNextRow(long writePointer, int count) {
-    return Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer), Bytes.toBytes(count + 1));
+  /**
+   * Creates a new byte[] that gives the entry row key for the given enqueue transaction and counter.
+   */
+  private byte[] getRowKey(long writePointer, int count) {
+    byte[] row = Arrays.copyOf(queueRowPrefix, queueRowPrefix.length + Longs.BYTES + Ints.BYTES);
+    Bytes.putLong(row, queueRowPrefix.length, writePointer);
+    Bytes.putInt(row, queueRowPrefix.length + Longs.BYTES, count);
+    return row;
+  }
+
+  /**
+   * Get the next row based on the given write pointer and counter. It modifies the given row byte[] in place
+   * and returns it.
+   */
+  private byte[] getNextRow(byte[] row, long writePointer, int count) {
+    Bytes.putLong(row, queueRowPrefix.length, writePointer);
+    Bytes.putInt(row, queueRowPrefix.length + Longs.BYTES, count + 1);
+    return row;
+  }
+
+  /**
+   * Get the next row based on the given row. It modifies the given row byte[] in place and return sit.
+   */
+  private byte[] getNextRow(byte[] row) {
+    int counterOff = queueRowPrefix.length + Longs.BYTES;
+    Bytes.putInt(row, counterOff, Bytes.toInt(row, counterOff) + 1);
+    return row;
   }
 
   /**
