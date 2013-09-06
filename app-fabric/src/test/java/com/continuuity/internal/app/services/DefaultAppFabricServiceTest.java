@@ -22,6 +22,7 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
@@ -63,6 +64,7 @@ public class DefaultAppFabricServiceTest {
     lf = injector.getInstance(LocationFactory.class);
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);
+    configuration = injector.getInstance(CConfiguration.class);
   }
 
   @Test
@@ -202,12 +204,12 @@ public class DefaultAppFabricServiceTest {
   }
 
   @Test
-  public void testDeployAApp() throws Exception {
+  public void testDeployApp() throws Exception {
     // Deploy and application.
     TestHelper.deployApplication(ToyApp.class, "ToyApp.jar");
 
     // Start a simple Jetty Server to simulate remote http server.
-    Server jServer = new Server(10007);
+    Server jServer = new Server(configuration.getInt(Constants.CFG_APP_FABRIC_REST_PORT, 10007));
     try {
       jServer.setHandler(new AbstractHandler() {
         @Override

@@ -14,14 +14,10 @@ import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -150,11 +146,7 @@ public class DeployRunStopTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/temp");
-
-    final Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
+    final Injector injector = TestHelper.getInjector();
 
     server = injector.getInstance(AppFabricService.Iface.class);
 

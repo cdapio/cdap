@@ -878,7 +878,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         schema = "http";
       }
 
-      int port = configuration.getInt("app.rest.port", 10007);
+      int port = configuration.getInt(Constants.CFG_APP_FABRIC_REST_PORT, 10007);
       String url = String.format("%s://%s:%d/app", schema, hostname, port);
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
