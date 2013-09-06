@@ -33,7 +33,7 @@ public class MetadataServiceHandlerTest {
     Application app1 = new Application("app1");
     Stream s1 = new Stream("s1");
     Dataset d1 = new Dataset("d1");
-    Flow f1 = new Flow("flow", "app1");
+    Flow f1 = new Flow("f1", "app1");
     f1.setDatasets(ImmutableList.of("d1"));
     f1.setStreams(ImmutableList.of("s1"));
     Query q1 = new Query("q1", "app1");
@@ -43,12 +43,19 @@ public class MetadataServiceHandlerTest {
 
     app1.setName("app1-name");
     s1.setName("s1-name");
+    s1.setDescription("s1-desc");
     d1.setName("d1-name");
+    d1.setDescription("d1-desc");
     d1.setType("d1-type");
     q1.setName("q1-name");
+    q1.setDescription("q1-desc");
+    q1.setApplication("app1");
     q1.setServiceName("q1-servicename");
     f1.setName("f1-name");
+    f1.setApplication("app1");
     mr1.setName("mr1-name");
+    mr1.setDescription("mr1-desc");
+    mr1.setApplication("app1");
 
     GatewayFastTestsSuite.getMds().createApplication(new Account(account), app1);
     GatewayFastTestsSuite.getMds().createStream(new Account(account), s1);
@@ -69,7 +76,9 @@ public class MetadataServiceHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertNotNull(s);
+    Assert.assertEquals("s1", o.get(0).get("id"));
+    Assert.assertEquals("s1-name", o.get(0).get("name"));
+    Assert.assertEquals("s1-desc", o.get(0).get("description"));
   }
 
   @Test
@@ -77,7 +86,10 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/streams");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("s1", o.get(0).get("id"));
+    Assert.assertEquals("s1-name", o.get(0).get("name"));
+    Assert.assertEquals("s1-desc", o.get(0).get("description"));
   }
 
   @Test
@@ -91,7 +103,10 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/datasets");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("d1", o.get(0).get("id"));
+    Assert.assertEquals("d1-name", o.get(0).get("name"));
+    Assert.assertEquals("d1-desc", o.get(0).get("description"));
   }
 
   @Test
@@ -99,7 +114,10 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/datasets");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("d1", o.get(0).get("id"));
+    Assert.assertEquals("d1-name", o.get(0).get("name"));
+    Assert.assertEquals("d1-desc", o.get(0).get("description"));
   }
 
   @Test
@@ -107,7 +125,11 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("q1", o.get(0).get("id"));
+    Assert.assertEquals("q1-name", o.get(0).get("name"));
+    Assert.assertEquals("q1-desc", o.get(0).get("description"));
+    Assert.assertEquals("app1", o.get(0).get("app"));
   }
 
   @Test
@@ -115,7 +137,11 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("q1", o.get(0).get("id"));
+    Assert.assertEquals("q1-name", o.get(0).get("name"));
+    Assert.assertEquals("q1-desc", o.get(0).get("description"));
+    Assert.assertEquals("app1", o.get(0).get("app"));
   }
 
   @Test
@@ -123,7 +149,11 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/mapreduces");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("mr1", o.get(0).get("id"));
+    Assert.assertEquals("mr1-name", o.get(0).get("name"));
+    Assert.assertEquals("mr1-desc", o.get(0).get("description"));
+    Assert.assertEquals("app1", o.get(0).get("app"));
   }
 
   @Test
@@ -131,7 +161,11 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/mapreduces");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("mr1", o.get(0).get("id"));
+    Assert.assertEquals("mr1-name", o.get(0).get("name"));
+    Assert.assertEquals("mr1-desc", o.get(0).get("description"));
+    Assert.assertEquals("app1", o.get(0).get("app"));
   }
 
   @Test
@@ -139,7 +173,9 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("app1", o.get(0).get("id"));
+    Assert.assertEquals("app1-name", o.get(0).get("name"));
   }
 
   @Test
@@ -147,7 +183,10 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("f1", o.get(0).get("id"));
+    Assert.assertEquals("f1-name", o.get(0).get("name"));
+    Assert.assertEquals("app1", o.get(0).get("app"));
   }
 
   @Test
@@ -155,6 +194,9 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("f1", o.get(0).get("id"));
+    Assert.assertEquals("f1-name", o.get(0).get("name"));
+    Assert.assertEquals("app1", o.get(0).get("app"));
   }
 }

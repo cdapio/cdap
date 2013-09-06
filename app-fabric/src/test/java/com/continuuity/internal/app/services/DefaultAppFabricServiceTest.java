@@ -132,54 +132,11 @@ public class DefaultAppFabricServiceTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     FlowIdentifier flowId = new FlowIdentifier("account1", "application1", "WordCountFlow", 0);
-    String flowDefJson = server.getFlowDefinition(flowId);
-    FlowDefinitionImpl flowDef = new Gson().fromJson(flowDefJson, FlowDefinitionImpl.class);
-
-    Assert.assertEquals(3, flowDef.getFlowlets().size());
-    Assert.assertEquals(1, flowDef.getFlowStreams().size());
-
-    // checking connections (most important stuff)
-    Assert.assertEquals(3, flowDef.getConnections().size());
-    int[] connectionFound = new int[3];
-    for (ConnectionDefinition conn : flowDef.getConnections()) {
-      if (conn.getFrom().isFlowStream()) {
-        connectionFound[0]++;
-        Assert.assertEquals("text", conn.getFrom().getStream());
-      } else {
-        if ("Tokenizer".equals(conn.getFrom().getFlowlet())) {
-          connectionFound[1]++;
-          Assert.assertEquals("CountByField", conn.getTo().getFlowlet());
-        } else if ("StreamSource".equals(conn.getFrom().getFlowlet())) {
-          connectionFound[2]++;
-          Assert.assertEquals("Tokenizer", conn.getTo().getFlowlet());
-        }
-      }
-    }
-    Assert.assertArrayEquals(new int[]{1, 1, 1}, connectionFound);
-  }
-
-  @Test
-  public void testBenchFlowDefinition() throws Exception {
-    Store store = sFactory.create();
-    ApplicationSpecification spec = new BenchApp().configure();
-    Id.Application appId = new Id.Application(new Id.Account("account1"), "BenchApp");
-    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
-
-    FlowIdentifier flowId = new FlowIdentifier("account1", "BenchApp", "BenchFlow", 0);
-    String flowDefJson = server.getFlowDefinition(flowId);
-    FlowDefinitionImpl flowDef = new Gson().fromJson(flowDefJson, FlowDefinitionImpl.class);
-
-    Assert.assertEquals(7, flowDef.getFlowlets().size());
-    Assert.assertEquals(6, flowDef.getConnections().size());
-
-    Assert.assertEquals(1, flowDef.getFlowletStreams("Source").size());
-    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer1").size());
-    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer2").size());
-    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer3").size());
-    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer4").size());
-    Assert.assertEquals(2, flowDef.getFlowletStreams("Transfer5").size());
-    Assert.assertEquals(1, flowDef.getFlowletStreams("Destination").size());
+    String flowDefJson = server.getSpecification(flowId);
     Assert.assertNotNull(flowDefJson);
+
+    // NOTE: After we migarted to specification - there is no point in testing as it's already
+    // tested. But, will keep the minimal test for now.
   }
 
   @Test
@@ -193,7 +150,7 @@ public class DefaultAppFabricServiceTest {
 
     FlowIdentifier flowId = new FlowIdentifier("accountFlowHistoryTest1", "applicationFlowHistoryTest1",
                                                "flowFlowHistoryTest1", 0);
-    List<FlowRunRecord> history = server.getFlowHistory(flowId);
+    List<FlowRunRecord> history = server.getHistory(flowId);
     Assert.assertEquals(1, history.size());
     FlowRunRecord record = history.get(0);
     Assert.assertEquals(20, record.getStartTime());

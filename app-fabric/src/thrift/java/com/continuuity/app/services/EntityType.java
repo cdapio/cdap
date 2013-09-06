@@ -7,16 +7,12 @@
 package com.continuuity.app.services;
 
 
-import java.util.Map;
-import java.util.HashMap;
-import org.apache.thrift.TEnum;
-
 /**
  * Specifies the type of resource being uploaded.
  */
 public enum EntityType implements org.apache.thrift.TEnum {
   FLOW(0),
-  QUERY(1),
+  PROCEDURE(1),
   MAPREDUCE(2);
 
   private final int value;
@@ -41,7 +37,7 @@ public enum EntityType implements org.apache.thrift.TEnum {
       case 0:
         return FLOW;
       case 1:
-        return QUERY;
+        return PROCEDURE;
       case 2:
         return MAPREDUCE;
       default:

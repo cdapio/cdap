@@ -313,7 +313,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Mapreduce> mapreduces = service.getMapreduces(new Account(accountId));
+      List<Mapreduce> mapreduces = service.getMapreducesByApplication(accountId, appId);
       if (mapreduces.size() < 1) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;

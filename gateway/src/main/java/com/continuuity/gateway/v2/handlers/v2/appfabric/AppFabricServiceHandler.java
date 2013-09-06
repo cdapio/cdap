@@ -2,8 +2,10 @@ package com.continuuity.gateway.v2.handlers.v2.appfabric;
 
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowRunRecord;
+import com.continuuity.app.services.FlowStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.conf.Services;
@@ -106,10 +108,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-    } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
   }
 
@@ -139,10 +139,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-    } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
   }
 
@@ -171,64 +169,127 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-    } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
   }
 
   @GET
-  @Path("/apps/{app-id}/flows/{flow-id}/history")
-  public void getFlowHistory(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
+  @Path("/apps/{app-id}/runnables/{id}/history")
+  public void runnableHistory(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId, @PathParam("id") final String id) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      JsonArray result = getRunnableHistory(accountId, appId, flowId);
+      JsonArray result = getRunnableHistory(accountId, appId, id);
       responder.sendJson(HttpResponseStatus.OK, result);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-    } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
   }
 
   @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}/history")
-  public void getProcedureHistory(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("procedure-id") final String procedureId) {
+  @Path("/apps/{app-id}/runnables/{id}/status")
+  public void runnableStatus(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") final String appId, @PathParam("id") final String id) {
+
     try {
       String accountId = getAuthenticatedAccountId(request);
-      JsonArray result = getRunnableHistory(accountId, appId, procedureId);
-      responder.sendJson(HttpResponseStatus.OK, result);
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        FlowStatus status = client.status(token, new FlowIdentifier(accountId, appId, "", 1));
+        JsonObject o = new JsonObject();
+        o.addProperty("status", status.getStatus());
+        responder.sendJson(HttpResponseStatus.OK, o);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-    } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
   }
 
   @GET
-  @Path("/apps/{app-id}/mapreduces/{mapreduce-id}/history")
-  public void getMapReduceHistory(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId,
-                                  @PathParam("mapreduce-id") final String mapreduceId) {
+  @Path("/apps/{app-id}/runnables/{id}")
+  public void runnableSpecification(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId, @PathParam("id") final String id) {
+
     try {
       String accountId = getAuthenticatedAccountId(request);
-      JsonArray result = getRunnableHistory(accountId, appId, mapreduceId);
-      responder.sendJson(HttpResponseStatus.OK, result);
+      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        String specification = client.getSpecification(new FlowIdentifier(accountId, appId, "", 1));
+        responder.sendJson(HttpResponseStatus.OK, specification);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-    } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  @POST
+  @Path("/apps/{app-id}/runnables/{id}/start")
+  public void runnableStart(HttpRequest request, HttpResponder responder,
+                            @PathParam("app-id") final String appId, @PathParam("id") final String id) {
+    runnableStartStop(request, responder, appId, id, "start");
+  }
+
+  @POST
+  @Path("/apps/{app-id}/runnables/{id}/stop")
+  public void runnableStop(HttpRequest request, HttpResponder responder,
+                            @PathParam("app-id") final String appId, @PathParam("id") final String id) {
+    runnableStartStop(request, responder, appId, id, "stop");
+  }
+
+
+  private void runnableStartStop(HttpRequest request, HttpResponder responder,
+                                 String appId, String id, String action) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        if ("start".equals(action)) {
+          client.start(token, new FlowDescriptor(new FlowIdentifier(accountId, appId, "", 1), null));
+        } else if ("stop".equals(action)) {
+          client.stop(token, new FlowIdentifier(accountId, appId, "", 1));
+        }
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
   }
 
@@ -257,7 +318,4 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
     }
   }
-
-
-
 }

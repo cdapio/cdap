@@ -9,7 +9,6 @@ import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.cli.CommandLine;
@@ -186,7 +185,7 @@ public final class ReactorClient {
           System.out.print(String.format("Starting mapreduce job %s for application %s...", mapReduce, application));
         } else {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, procedure, 1);
-          identifier.setType(EntityType.QUERY);
+          identifier.setType(EntityType.PROCEDURE);
           System.out.print(String.format("Starting procedure %s for application %s...", procedure, application));
         }
 
@@ -212,7 +211,7 @@ public final class ReactorClient {
           System.out.print(String.format("Killing mapreduce job %s for application %s...", mapReduce, application));
         } else {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, procedure, 1);
-          identifier.setType(EntityType.QUERY);
+          identifier.setType(EntityType.PROCEDURE);
           System.out.print(String.format("Stopping procedure %s for application %s...", procedure, application));
         }
         client.stop(dummyAuthToken, identifier);
@@ -250,7 +249,7 @@ public final class ReactorClient {
           System.out.print(String.format("Getting status for flow %s in application %s...", flow, application));
         } else {
           identifier = new FlowIdentifier(DEVELOPER_ACCOUNT_ID, application, procedure, 1);
-          identifier.setType(EntityType.QUERY);
+          identifier.setType(EntityType.PROCEDURE);
           System.out.print(String.format("Getting status for procedure %s in application %s...", flow, application));
         }
         FlowStatus flowStatus = client.status(dummyAuthToken, identifier);

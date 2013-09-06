@@ -15,6 +15,8 @@ import com.continuuity.gateway.v2.handlers.v2.dataset.MetadataServiceHandlerTest
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -61,6 +63,7 @@ public class GatewayFastTestsSuite {
             bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
             bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
             bind(StoreFactory.class).to(MDSStoreFactory.class);
+            bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
           }
         }
       );

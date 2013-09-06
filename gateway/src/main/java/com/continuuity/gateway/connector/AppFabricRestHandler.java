@@ -418,7 +418,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
     throws TException, AppFabricServiceException {
 
     if (request.getMethod() == HttpMethod.GET) { // retrieve number of flowlet instances
-      String flowDefJson = client.getFlowDefinition(flowIdent);
+      String flowDefJson = client.getSpecification(flowIdent);
       if (flowDefJson == null) {
         LOG.error("Failed to get number of flowlet instances for flowlet {}.", flowletId);
         respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -534,7 +534,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
     if ("flow".equals(entityType)) {
       return EntityType.FLOW;
     } else if ("procedure".equals(entityType)) {
-      return EntityType.QUERY;
+      return EntityType.PROCEDURE;
     } else if ("mapreduce".equals(entityType)) {
       return EntityType.MAPREDUCE;
     } else {

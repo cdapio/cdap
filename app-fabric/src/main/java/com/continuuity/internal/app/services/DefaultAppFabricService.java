@@ -238,7 +238,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     switch (identifier.getType()) {
       case FLOW:
         return Type.FLOW;
-      case QUERY:
+      case PROCEDURE:
         return Type.PROCEDURE;
       case MAPREDUCE:
         return Type.MAPREDUCE;
@@ -252,7 +252,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       case FLOW:
         return EntityType.FLOW;
       case PROCEDURE:
-        return EntityType.QUERY;
+        return EntityType.PROCEDURE;
       case MAPREDUCE:
         return EntityType.MAPREDUCE;
     }
@@ -444,7 +444,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       case FLOW:
         runtimeInfos = runtimeService.list(Type.FLOW).values();
         break;
-      case QUERY:
+      case PROCEDURE:
         runtimeInfos = runtimeService.list(Type.PROCEDURE).values();
         break;
       case MAPREDUCE:
@@ -474,18 +474,38 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public String getSpecification(FlowIdentifier id)
     throws AppFabricServiceException, TException {
+
+    ApplicationSpecification appSpec = null;
     try {
+      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
+                                                        id.getApplicationId()));
+
+      String runnableId = id.getFlowId();
       if (id.getType() == EntityType.FLOW) {
-        FlowDefinitionImpl flowDef = getFlowDef(id);
-        return new Gson().toJson(flowDef);
-      } else if (id.getType() == EntityType.QUERY) {
-        QueryDefinitionImpl queryDef = getQueryDefn(id);
-        return new Gson().toJson(queryDef);
+        if (appSpec.getFlows().containsKey(runnableId)) {
+          FlowSpecification specification = appSpec.getFlows().get(id.getFlowId());
+          return new Gson().toJson(specification);
+        }
+      } else if (id.getType() == EntityType.PROCEDURE) {
+        if (appSpec.getProcedures().containsKey(runnableId)) {
+          ProcedureSpecification specification = appSpec.getProcedures().get(id.getFlowId());
+          return new Gson().toJson(specification);
+        }
+      } else if (id.getType() == EntityType.MAPREDUCE) {
+        if (appSpec.getMapReduces().containsKey(runnableId)) {
+          MapReduceSpecification specification = appSpec.getMapReduces().get(id.getFlowId());
+          return new Gson().toJson(specification);
+        }
       }
+    } catch (OperationException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw  new AppFabricServiceException("Could not retrieve application spec for " +
+                                             id.toString() + ", reason: " + e.getMessage());
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
       throw new AppFabricServiceException(throwable.getMessage());
     }
+
     return null;
   }
 

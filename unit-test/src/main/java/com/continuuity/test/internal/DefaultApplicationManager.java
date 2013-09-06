@@ -210,7 +210,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
     try {
       final FlowIdentifier procedureId = new FlowIdentifier(accountId, applicationId, procedureName, 0);
-      procedureId.setType(EntityType.QUERY);
+      procedureId.setType(EntityType.PROCEDURE);
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
