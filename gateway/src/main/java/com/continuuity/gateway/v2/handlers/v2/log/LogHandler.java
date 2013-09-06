@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.log;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -43,6 +44,16 @@ public class LogHandler extends AuthenticatedHttpHandler {
     super(authenticator);
     this.logReader = logReader;
     this.logPattern = cConfig.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
+  }
+
+  @Override
+  public void init(HandlerContext context) {
+    LOG.info("Starting LogHandler.");
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    LOG.info("Stopping LogHandler.");
   }
 
   @GET
