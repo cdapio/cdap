@@ -55,11 +55,8 @@ configurations {
 }
 
 /**
- * Specifies test suites for fast test
+ * Excludes Tests that are part of tests. 
  */
-task testFastTests(type: Test) {
-    include '**/*FastTests*.class'
-    testReportDir = file("${reporting.baseDir}/FastTests")
-    testResultsDir = file("${reporting.baseDir}/test-results/FastTests")
+test {
+  exclude '**/v2/handlers/v2/**'
 }
-
