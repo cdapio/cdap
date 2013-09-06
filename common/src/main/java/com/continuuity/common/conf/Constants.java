@@ -4,7 +4,6 @@ package com.continuuity.common.conf;
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
-
   /**
    * Global Service names.
    */
@@ -14,6 +13,22 @@ public final class Constants {
     public static final String METADATA = "metadata";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
+  }
+
+  /**
+   * Zookeeper Configuration.
+   */
+  public static final class Zookeeper {
+    public static final String CFG_ZOOKEEPER_ENSEMBLE = "zookeeper.quorum";
+    public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
+  }
+
+  /**
+   * Thrift configuration.
+   */
+  public static final class Thrift {
+    public static final String CFG_MAX_READ_BUFFER = "thrift.max.read.buffer";
+    public static final int DEFAULT_MAX_READ_BUFFER = 16 * 1024 * 1024;
   }
 
   /**

@@ -14,6 +14,7 @@ import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.Services;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -155,7 +156,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    */
   @DELETE
   @Path("/apps")
-  public void deleteApp(HttpRequest request, HttpResponder responder) {
+  public void deleteAllApps(HttpRequest request, HttpResponder responder) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -195,6 +196,81 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
   }
+
+  @GET
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
+  public void getFlowletInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
+                                  @PathParam("flowlet-id") final String flowletId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        int count = client.getInstances(token, new ProgramId(accountId, appId, flowId), flowletId);
+        JsonObject o = new JsonObject();
+        o.addProperty("instances", count);
+        responder.sendJson(HttpResponseStatus.OK, o);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  @PUT
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances/{instance-count}")
+  public void setFlowletInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
+                                  @PathParam("flowlet-id") final String flowletId,
+                                  @PathParam("instance-count") final String instanceCount) {
+    short instances = 0;
+    try {
+      Short count = Short.parseShort(instanceCount);
+      instances = count.shortValue();
+      if (instances < 1) {
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+    } catch (NumberFormatException e) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        client.setInstances(token, new ProgramId(accountId, appId, flowId), flowletId, instances);
+        responder.sendStatus(HttpResponseStatus.OK);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
 
   @GET
   @Path("/apps/{app-id}/runnables/{id}/status")

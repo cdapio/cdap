@@ -153,6 +153,13 @@ service AppFabricService {
     throws (1: AppFabricServiceException e),
 
   /**
+   * Get number of instance of a flowlet.
+   */
+   i32 getInstances(1: AuthToken token, 2: ProgramId identifier, 
+                    3: string flowletId)
+     throws (1: AppFabricServiceException e),
+
+  /**
    * Returns the state of flows within a given account id.
    */
   list<ActiveProgram> getPrograms(1: string accountId)

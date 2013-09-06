@@ -329,6 +329,22 @@ public class MDSBasedStore implements Store {
               id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
   }
 
+  /**
+   * Gets number of instances of specific flowlet.
+   *
+   * @param id        flow id
+   * @param flowletId flowlet id
+   * @throws com.continuuity.api.data.OperationException
+   *
+   */
+  @Override
+  public int getFlowletInstances(Id.Program id, String flowletId) throws OperationException {
+    ApplicationSpecification appSpec = getAppSpecSafely(id);
+    FlowSpecification flowSpec = getFlowSpecSafely(id, appSpec);
+    FlowletDefinition flowletDef = getFlowletDefinitionSafely(flowSpec, flowletId, id);
+    return flowletDef.getInstances();
+  }
+
   private ApplicationSpecification setFlowletInstancesInAppSpecInMDS(Id.Program id, String flowletId, int count)
     throws OperationException {
     ApplicationSpecification appSpec = getAppSpecSafely(id);

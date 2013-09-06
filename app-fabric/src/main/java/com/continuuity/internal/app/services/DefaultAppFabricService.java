@@ -407,6 +407,29 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
+   * Get number of instance of a flowlet.
+   *
+   * @param token
+   * @param identifier
+   * @param flowletId
+   */
+  @Override
+  public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
+    throws AppFabricServiceException, TException {
+    try {
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                                 identifier.getApplicationId(), identifier.getFlowId());
+      return store.getFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
+                                       identifier.getFlowId()), flowletId);
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), flowletId, throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  /**
    * Returns the state of flows within a given account id.
    *
    * @param accountId
