@@ -28,11 +28,6 @@ public class AppFabricServiceHandlerTest {
   @Test
   public void testDeploy() throws Exception {
     File archive = FileUtils.toFile(getClass().getResource("/WordCount.jar"));
-
-    Map<String, String> headers = Maps.newHashMap();
-    headers.put(GatewayAuthenticator.CONTINUUITY_API_KEY, "api-key-example");
-    headers.put("X-Archive-Name", "WordCount.jar");
-
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
       ByteStreams.copy(new FileInputStream(archive), bos);

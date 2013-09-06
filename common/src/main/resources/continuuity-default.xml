@@ -87,7 +87,7 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>data.rest,stream.flume,procedure.rest,monitor.rest,app.rest,systemstats.rest,meta.rest</value>
+        <value>data.rest,stream.flume,procedure.rest,meta.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
@@ -189,28 +189,6 @@
         <value>/metadata/</value>
     </property>
 
-    <!-- AppFabric Connector -->
-    <property>
-        <name>app.rest.class</name>
-        <value>com.continuuity.gateway.connector.AppFabricRestConnector</value>
-        <description>Specifies the class for the REST accessor</description>
-    </property>
-
-    <property>
-        <name>app.rest.port</name>
-        <value>10007</value>
-    </property>
-
-    <property>
-        <name>app.rest.threads</name>
-        <value>5</value>
-    </property>
-
-    <property>
-        <name>app.rest.middle</name>
-        <value>/app</value>
-    </property>
-
     <!-- Procedure Handler -->
     <property>
         <name>procedure.rest.class</name>
@@ -233,29 +211,6 @@
         <value>/procedure/</value>
     </property>
 
-    <!-- Metrics handler -->
-    <property>
-        <name>monitor.rest.class</name>
-        <value>com.continuuity.gateway.accessor.MonitorRestAccessor</value>
-        <description>Specifies the class for the REST metrics
-            connector</description>
-    </property>
-
-    <property>
-        <name>monitor.rest.port</name>
-        <value>10005</value>
-    </property>
-
-    <property>
-        <name>monitor.rest.threads</name>
-        <value>5</value>
-    </property>
-
-    <property>
-        <name>monitor.rest.middle</name>
-        <value>/monitor/</value>
-    </property>
-
     <!-- Stream handles -->
     <property>
         <name>stream.rest.port</name>
@@ -276,29 +231,6 @@
     <property>
         <name>stream.flume.threads</name>
         <value>20</value>
-    </property>
-
-    <!-- System stats handler -->
-    <property>
-        <name>systemstats.rest.class</name>
-        <value>com.continuuity.gateway.accessor.SystemStatsRestAccessor</value>
-        <description>Specifies the class for the REST system stats
-            connector</description>
-    </property>
-
-    <property>
-        <name>systemstats.rest.port</name>
-        <value>10006</value>
-    </property>
-
-    <property>
-        <name>systemstats.rest.threads</name>
-        <value>1</value>
-    </property>
-
-    <property>
-        <name>systemstats.rest.middle</name>
-        <value>/systemstats/</value>
     </property>
 
     <!--
