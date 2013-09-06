@@ -13,7 +13,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongListIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,12 +53,15 @@ public class InMemoryTransactionManager {
   private static final String ALL_STATE_TAG = "all";
   private static final String WATERMARK_TAG = "mark";
 
+  private static final long[] NO_INVALID_TX = { };
+
   // the set of transactions that are in progress, with their expiration time stamp,
   // or with the negative start time to specify no expiration. We remember the start
   // time to allow diagnostics and possible manual cleanup/invalidation (not implemented yet).
   private final NavigableMap<Long, Long> inProgress = new ConcurrentSkipListMap<Long, Long>();
   // the list of transactions that are invalid (not properly committed/aborted, or timed out)
   private final LongArrayList invalid = new LongArrayList();
+  private long[] invalidArray = NO_INVALID_TX;
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
   // todo: should this be consolidated with inProgress?
   // commit time nextWritePointer -> changes made by this tx
@@ -110,6 +112,7 @@ public class InMemoryTransactionManager {
 
   private void clear() {
     invalid.clear();
+    invalidArray = NO_INVALID_TX;
     inProgress.clear();
     committedChangeSets.clear();
     committingChangeSets.clear();
@@ -173,6 +176,7 @@ public class InMemoryTransactionManager {
       }
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
       Collections.sort(invalid);
+      invalidArray = invalid.toLongArray();
       LOG.info("Invalidated {} transactions due to timeout.", timedOut.size());
     }
   }
@@ -262,7 +266,7 @@ public class InMemoryTransactionManager {
   public synchronized Transaction start(@Nullable Integer timeoutInSeconds) {
     ensureInitialized();
     saveWaterMarkIfNeeded();
-    Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray());
+    Transaction tx = new Transaction(readPointer, nextWritePointer, invalidArray, getInProgressAsArray());
     long currentTime =  System.currentTimeMillis();
     long expiration = timeoutInSeconds == null ? -currentTime : currentTime + 1000L * timeoutInSeconds;
     inProgress.put(nextWritePointer, expiration);
@@ -339,9 +343,11 @@ public class InMemoryTransactionManager {
       invalid.add(tx.getWritePointer());
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
       Collections.sort(invalid);
+      invalidArray = invalid.toLongArray();
     } else if (previous == null) {
         // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
         if (invalid.rem(tx.getWritePointer())) {
+          invalidArray = invalid.toLongArray();
           // removed a tx from excludes: must move read pointer
           moveReadPointerIfNeeded(tx.getWritePointer());
         }
@@ -363,20 +369,6 @@ public class InMemoryTransactionManager {
   int getCommittedSize() {
     return this.committedChangeSets.size();
   }
-
-//  private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
-//    if (changeIds.isEmpty()) {
-//      return false;
-//    }
-//
-//    // Go thru all tx committed after given tx was started and check if any of them has change
-//    // conflicting with the given
-//    return hasConflicts(tx, changeIds);
-//
-//    // NOTE: we could try to optimize for some use-cases and also check those being committed for conflicts to
-//    //       avoid later the cost of rollback. This is very complex, but the cost of rollback is so high that we
-//    //       can go a bit crazy optimizing stuff around it...
-//  }
 
   private boolean hasConflicts(Transaction tx, Set<ChangeId> changeIds) {
     if (changeIds.isEmpty()) {
@@ -418,7 +410,9 @@ public class InMemoryTransactionManager {
     Long previous = inProgress.remove(tx.getWritePointer());
     if (previous == null) {
       // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
-      invalid.rem(tx.getWritePointer());
+      if (invalid.rem(tx.getWritePointer())) {
+        invalidArray = invalid.toLongArray();
+      }
     }
     // moving read pointer
     moveReadPointerIfNeeded(tx.getWritePointer());
@@ -430,6 +424,16 @@ public class InMemoryTransactionManager {
     }
   }
 
+  private long[] getInProgressAsArray() {
+    long[] array = new long[inProgress.size()];
+    int i = 0;
+    for (long txid : inProgress.keySet()) {
+      array[i++] = txid;
+    }
+    return array;
+  }
+
+/*
   private long[] getExcludedListAsArray() {
     // todo: optimize (cache, etc. etc.)
     long[] elements = new long[invalid.size() + inProgress.size()];
@@ -468,6 +472,7 @@ public class InMemoryTransactionManager {
     }
     return elements;
   }
+*/
 
   //--------- helpers to encode or decode the transaction state --------------
   //--------- all these must be called from synchronized context -------------

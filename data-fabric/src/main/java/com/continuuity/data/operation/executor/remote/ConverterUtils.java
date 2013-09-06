@@ -77,7 +77,6 @@ import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
@@ -88,7 +87,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Utility methods to convert to thrift and back.
@@ -1326,21 +1324,30 @@ public class ConverterUtils {
   // temporary TxDs2 stuff
 
   TTransaction2 wrap(com.continuuity.data2.transaction.Transaction tx) {
-    List<Long> excludes = Lists.newArrayList();
-    for (long excluded : tx.getExcludedList()) {
-      excludes.add(excluded);
+    List<Long> invalids = Lists.newArrayList();
+    for (long txid : tx.getInvalids()) {
+      invalids.add(txid);
+    }
+    List<Long> inProgress = Lists.newArrayList();
+    for (long txid : tx.getInProgress()) {
+      inProgress.add(txid);
     }
     return new TTransaction2(tx.getWritePointer(),
                              tx.getReadPointer(),
-                             excludes);
+                             invalids, inProgress);
   }
 
   com.continuuity.data2.transaction.Transaction unwrap(TTransaction2 tx) {
-    long[] excludes = new long[tx.excludes.size()];
+    long[] invalids = new long[tx.invalids.size()];
     int i = 0;
-    for (Long excluded : tx.excludes) {
-      excludes[i++] = excluded;
+    for (Long txid : tx.invalids) {
+      invalids[i++] = txid;
     }
-    return new com.continuuity.data2.transaction.Transaction(tx.readPointer, tx.writePointer, excludes);
+    long[] inProgress = new long[tx.inProgress.size()];
+    i = 0;
+    for (Long txid : tx.inProgress) {
+      inProgress[i++] = txid;
+    }
+    return new com.continuuity.data2.transaction.Transaction(tx.readPointer, tx.writePointer, invalids, inProgress);
   }
 }

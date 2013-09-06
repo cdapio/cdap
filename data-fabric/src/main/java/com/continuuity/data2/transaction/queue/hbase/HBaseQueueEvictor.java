@@ -53,7 +53,7 @@ public final class HBaseQueueEvictor implements QueueEvictor {
               scan.setStartRow(rowPrefix);
               scan.setStopRow(endRow);
 
-              return protocol.evict(scan, transaction.getReadPointer(), transaction.getExcludedList(), numGroups);
+              return protocol.evict(scan, transaction.getReadPointer(), transaction.getInProgress(), numGroups);
             }
           }, new Batch.Callback<Integer>() {
             @Override

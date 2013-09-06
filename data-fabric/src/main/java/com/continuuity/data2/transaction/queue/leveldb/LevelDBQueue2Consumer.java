@@ -28,9 +28,6 @@ public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
 
   // used for undoing state. The value does not matter, but the OcTable interface was written to expect some value...
   private static final byte[] DUMMY_STATE_CONTENT = { };
-  private static final long[] NO_EXCLUDES = { };
-  private static final Transaction ALL_LATEST_TRANSACTION =
-    new Transaction(KeyValue.LATEST_TIMESTAMP, KeyValue.LATEST_TIMESTAMP, NO_EXCLUDES);
 
   private final LevelDBOcTableCore core;
   private final Object lock;
@@ -51,7 +48,7 @@ public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
   protected boolean claimEntry(byte[] rowKey, byte[] stateContent) throws IOException {
     synchronized (this.lock) {
       Map<byte[], byte[]> row =
-        core.getRow(rowKey, new byte[][] { stateColumnName }, null, null, -1, ALL_LATEST_TRANSACTION);
+        core.getRow(rowKey, new byte[][] { stateColumnName }, null, null, -1, Transaction.ALL_VISIBLE_LATEST);
       if (row.get(stateColumnName) != null) {
         return false;
       }
@@ -95,7 +92,7 @@ public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
 
   @Override
   protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
-    final Scanner scanner = core.scan(startRow, stopRow, ALL_LATEST_TRANSACTION);
+    final Scanner scanner = core.scan(startRow, stopRow, Transaction.ALL_VISIBLE_LATEST);
     return new QueueScanner() {
       @Override
       public ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException {

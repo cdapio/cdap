@@ -54,7 +54,8 @@ public final class MapReduceContextProvider {
 
   private static final String HCONF_ATTR_NEW_TX_WRITE_POINTER = "hconf.program.newtx.write_pointer";
   private static final String HCONF_ATTR_NEW_TX_READ_POINTER = "hconf.program.newtx.read_pointer";
-  private static final String HCONF_ATTR_NEW_TX_EXCLUDES = "hconf.program.newtx.excludes";
+  private static final String HCONF_ATTR_NEW_TX_INVALIDS = "hconf.program.newtx.invalids";
+  private static final String HCONF_ATTR_NEW_TX_IN_PROGRESS = "hconf.program.newtx.inprogress";
 
   private final JobContext jobContext;
   private AbstractMapReduceContextBuilder contextBuilder;
@@ -263,14 +264,16 @@ public final class MapReduceContextProvider {
   private void setTx2(Transaction tx) {
     jobContext.getConfiguration().setLong(HCONF_ATTR_NEW_TX_WRITE_POINTER, tx.getWritePointer());
     jobContext.getConfiguration().setLong(HCONF_ATTR_NEW_TX_READ_POINTER, tx.getReadPointer());
-    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX_EXCLUDES, new Gson().toJson(tx.getExcludedList()));
+    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX_INVALIDS, new Gson().toJson(tx.getInvalids()));
+    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX_IN_PROGRESS, new Gson().toJson(tx.getInProgress()));
   }
 
   private Transaction getTx2() {
     long writePointer = Long.valueOf(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_WRITE_POINTER));
     long readPointer = Long.valueOf(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_READ_POINTER));
-    long[] excludes = new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_EXCLUDES), long[].class);
-    return new Transaction(readPointer, writePointer, excludes);
+    long[] invalids = new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_INVALIDS), long[].class),
+      inProgress = new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_IN_PROGRESS), long[].class);
+    return new Transaction(readPointer, writePointer, invalids, inProgress);
   }
 
   private synchronized AbstractMapReduceContextBuilder getBuilder(CConfiguration conf) {
