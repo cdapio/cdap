@@ -77,18 +77,18 @@ public class AppFabricService {
     public List<ActiveFlow> getFlows(String accountId) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Returns definition of a flow.
+     * Returns Runnable specification.
      * 
      * @param id
      */
-    public String getFlowDefinition(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException;
+    public String getSpecification(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns run information for a given flow id.
      * 
      * @param id
      */
-    public List<FlowRunRecord> getFlowHistory(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException;
+    public List<FlowRunRecord> getHistory(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns run information for a given flow id.
@@ -188,9 +188,9 @@ public class AppFabricService {
 
     public void getFlows(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlows_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getFlowDefinition(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowDefinition_call> resultHandler) throws org.apache.thrift.TException;
+    public void getSpecification(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecification_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getFlowHistory(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowHistory_call> resultHandler) throws org.apache.thrift.TException;
+    public void getHistory(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getHistory_call> resultHandler) throws org.apache.thrift.TException;
 
     public void stopAll(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.stopAll_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -367,56 +367,56 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlows failed: unknown result");
     }
 
-    public String getFlowDefinition(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException
+    public String getSpecification(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_getFlowDefinition(id);
-      return recv_getFlowDefinition();
+      send_getSpecification(id);
+      return recv_getSpecification();
     }
 
-    public void send_getFlowDefinition(FlowIdentifier id) throws org.apache.thrift.TException
+    public void send_getSpecification(FlowIdentifier id) throws org.apache.thrift.TException
     {
-      getFlowDefinition_args args = new getFlowDefinition_args();
+      getSpecification_args args = new getSpecification_args();
       args.setId(id);
-      sendBase("getFlowDefinition", args);
+      sendBase("getSpecification", args);
     }
 
-    public String recv_getFlowDefinition() throws AppFabricServiceException, org.apache.thrift.TException
+    public String recv_getSpecification() throws AppFabricServiceException, org.apache.thrift.TException
     {
-      getFlowDefinition_result result = new getFlowDefinition_result();
-      receiveBase(result, "getFlowDefinition");
+      getSpecification_result result = new getSpecification_result();
+      receiveBase(result, "getSpecification");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowDefinition failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getSpecification failed: unknown result");
     }
 
-    public List<FlowRunRecord> getFlowHistory(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException
+    public List<FlowRunRecord> getHistory(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_getFlowHistory(id);
-      return recv_getFlowHistory();
+      send_getHistory(id);
+      return recv_getHistory();
     }
 
-    public void send_getFlowHistory(FlowIdentifier id) throws org.apache.thrift.TException
+    public void send_getHistory(FlowIdentifier id) throws org.apache.thrift.TException
     {
-      getFlowHistory_args args = new getFlowHistory_args();
+      getHistory_args args = new getHistory_args();
       args.setId(id);
-      sendBase("getFlowHistory", args);
+      sendBase("getHistory", args);
     }
 
-    public List<FlowRunRecord> recv_getFlowHistory() throws AppFabricServiceException, org.apache.thrift.TException
+    public List<FlowRunRecord> recv_getHistory() throws AppFabricServiceException, org.apache.thrift.TException
     {
-      getFlowHistory_result result = new getFlowHistory_result();
-      receiveBase(result, "getFlowHistory");
+      getHistory_result result = new getHistory_result();
+      receiveBase(result, "getHistory");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowHistory failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getHistory failed: unknown result");
     }
 
     public void stopAll(String accountId) throws AppFabricServiceException, org.apache.thrift.TException
@@ -865,23 +865,23 @@ public class AppFabricService {
       }
     }
 
-    public void getFlowDefinition(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getFlowDefinition_call> resultHandler) throws org.apache.thrift.TException {
+    public void getSpecification(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getSpecification_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getFlowDefinition_call method_call = new getFlowDefinition_call(id, resultHandler, this, ___protocolFactory, ___transport);
+      getSpecification_call method_call = new getSpecification_call(id, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class getFlowDefinition_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class getSpecification_call extends org.apache.thrift.async.TAsyncMethodCall {
       private FlowIdentifier id;
-      public getFlowDefinition_call(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getFlowDefinition_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public getSpecification_call(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getSpecification_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.id = id;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlowDefinition", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getFlowDefinition_args args = new getFlowDefinition_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getSpecification", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getSpecification_args args = new getSpecification_args();
         args.setId(id);
         args.write(prot);
         prot.writeMessageEnd();
@@ -893,27 +893,27 @@ public class AppFabricService {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getFlowDefinition();
+        return (new Client(prot)).recv_getSpecification();
       }
     }
 
-    public void getFlowHistory(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getFlowHistory_call> resultHandler) throws org.apache.thrift.TException {
+    public void getHistory(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getFlowHistory_call method_call = new getFlowHistory_call(id, resultHandler, this, ___protocolFactory, ___transport);
+      getHistory_call method_call = new getHistory_call(id, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class getFlowHistory_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class getHistory_call extends org.apache.thrift.async.TAsyncMethodCall {
       private FlowIdentifier id;
-      public getFlowHistory_call(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getFlowHistory_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public getHistory_call(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.id = id;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlowHistory", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getFlowHistory_args args = new getFlowHistory_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getHistory", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getHistory_args args = new getHistory_args();
         args.setId(id);
         args.write(prot);
         prot.writeMessageEnd();
@@ -925,7 +925,7 @@ public class AppFabricService {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getFlowHistory();
+        return (new Client(prot)).recv_getHistory();
       }
     }
 
@@ -1300,8 +1300,8 @@ public class AppFabricService {
       processMap.put("stop", new stop());
       processMap.put("setInstances", new setInstances());
       processMap.put("getFlows", new getFlows());
-      processMap.put("getFlowDefinition", new getFlowDefinition());
-      processMap.put("getFlowHistory", new getFlowHistory());
+      processMap.put("getSpecification", new getSpecification());
+      processMap.put("getHistory", new getHistory());
       processMap.put("stopAll", new stopAll());
       processMap.put("init", new init());
       processMap.put("chunk", new chunk());
@@ -1415,19 +1415,19 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlowDefinition<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlowDefinition_args> {
-      public getFlowDefinition() {
-        super("getFlowDefinition");
+    private static class getSpecification<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getSpecification_args> {
+      public getSpecification() {
+        super("getSpecification");
       }
 
-      protected getFlowDefinition_args getEmptyArgsInstance() {
-        return new getFlowDefinition_args();
+      protected getSpecification_args getEmptyArgsInstance() {
+        return new getSpecification_args();
       }
 
-      protected getFlowDefinition_result getResult(I iface, getFlowDefinition_args args) throws org.apache.thrift.TException {
-        getFlowDefinition_result result = new getFlowDefinition_result();
+      protected getSpecification_result getResult(I iface, getSpecification_args args) throws org.apache.thrift.TException {
+        getSpecification_result result = new getSpecification_result();
         try {
-          result.success = iface.getFlowDefinition(args.id);
+          result.success = iface.getSpecification(args.id);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -1435,19 +1435,19 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlowHistory<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlowHistory_args> {
-      public getFlowHistory() {
-        super("getFlowHistory");
+    private static class getHistory<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getHistory_args> {
+      public getHistory() {
+        super("getHistory");
       }
 
-      protected getFlowHistory_args getEmptyArgsInstance() {
-        return new getFlowHistory_args();
+      protected getHistory_args getEmptyArgsInstance() {
+        return new getHistory_args();
       }
 
-      protected getFlowHistory_result getResult(I iface, getFlowHistory_args args) throws org.apache.thrift.TException {
-        getFlowHistory_result result = new getFlowHistory_result();
+      protected getHistory_result getResult(I iface, getHistory_args args) throws org.apache.thrift.TException {
+        getHistory_result result = new getHistory_result();
         try {
-          result.success = iface.getFlowHistory(args.id);
+          result.success = iface.getHistory(args.id);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -6353,15 +6353,15 @@ public class AppFabricService {
 
   }
 
-  public static class getFlowDefinition_args implements org.apache.thrift.TBase<getFlowDefinition_args, getFlowDefinition_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowDefinition_args");
+  public static class getSpecification_args implements org.apache.thrift.TBase<getSpecification_args, getSpecification_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSpecification_args");
 
     private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getFlowDefinition_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getFlowDefinition_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getSpecification_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getSpecification_argsTupleSchemeFactory());
     }
 
     private FlowIdentifier id; // required
@@ -6431,13 +6431,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowDefinition_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSpecification_args.class, metaDataMap);
     }
 
-    public getFlowDefinition_args() {
+    public getSpecification_args() {
     }
 
-    public getFlowDefinition_args(
+    public getSpecification_args(
       FlowIdentifier id)
     {
       this();
@@ -6447,14 +6447,14 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getFlowDefinition_args(getFlowDefinition_args other) {
+    public getSpecification_args(getSpecification_args other) {
       if (other.isSetId()) {
         this.id = new FlowIdentifier(other.id);
       }
     }
 
-    public getFlowDefinition_args deepCopy() {
-      return new getFlowDefinition_args(this);
+    public getSpecification_args deepCopy() {
+      return new getSpecification_args(this);
     }
 
     @Override
@@ -6524,12 +6524,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getFlowDefinition_args)
-        return this.equals((getFlowDefinition_args)that);
+      if (that instanceof getSpecification_args)
+        return this.equals((getSpecification_args)that);
       return false;
     }
 
-    public boolean equals(getFlowDefinition_args that) {
+    public boolean equals(getSpecification_args that) {
       if (that == null)
         return false;
 
@@ -6557,13 +6557,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getFlowDefinition_args other) {
+    public int compareTo(getSpecification_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getFlowDefinition_args typedOther = (getFlowDefinition_args)other;
+      getSpecification_args typedOther = (getSpecification_args)other;
 
       lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
       if (lastComparison != 0) {
@@ -6592,7 +6592,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getFlowDefinition_args(");
+      StringBuilder sb = new StringBuilder("getSpecification_args(");
       boolean first = true;
 
       sb.append("id:");
@@ -6626,15 +6626,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlowDefinition_argsStandardSchemeFactory implements SchemeFactory {
-      public getFlowDefinition_argsStandardScheme getScheme() {
-        return new getFlowDefinition_argsStandardScheme();
+    private static class getSpecification_argsStandardSchemeFactory implements SchemeFactory {
+      public getSpecification_argsStandardScheme getScheme() {
+        return new getSpecification_argsStandardScheme();
       }
     }
 
-    private static class getFlowDefinition_argsStandardScheme extends StandardScheme<getFlowDefinition_args> {
+    private static class getSpecification_argsStandardScheme extends StandardScheme<getSpecification_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowDefinition_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getSpecification_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6662,7 +6662,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowDefinition_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getSpecification_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -6677,16 +6677,16 @@ public class AppFabricService {
 
     }
 
-    private static class getFlowDefinition_argsTupleSchemeFactory implements SchemeFactory {
-      public getFlowDefinition_argsTupleScheme getScheme() {
-        return new getFlowDefinition_argsTupleScheme();
+    private static class getSpecification_argsTupleSchemeFactory implements SchemeFactory {
+      public getSpecification_argsTupleScheme getScheme() {
+        return new getSpecification_argsTupleScheme();
       }
     }
 
-    private static class getFlowDefinition_argsTupleScheme extends TupleScheme<getFlowDefinition_args> {
+    private static class getSpecification_argsTupleScheme extends TupleScheme<getSpecification_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowDefinition_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getSpecification_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetId()) {
@@ -6699,7 +6699,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowDefinition_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getSpecification_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
@@ -6712,16 +6712,16 @@ public class AppFabricService {
 
   }
 
-  public static class getFlowDefinition_result implements org.apache.thrift.TBase<getFlowDefinition_result, getFlowDefinition_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowDefinition_result");
+  public static class getSpecification_result implements org.apache.thrift.TBase<getSpecification_result, getSpecification_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSpecification_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getFlowDefinition_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getFlowDefinition_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getSpecification_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getSpecification_resultTupleSchemeFactory());
     }
 
     private String success; // required
@@ -6797,13 +6797,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowDefinition_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSpecification_result.class, metaDataMap);
     }
 
-    public getFlowDefinition_result() {
+    public getSpecification_result() {
     }
 
-    public getFlowDefinition_result(
+    public getSpecification_result(
       String success,
       AppFabricServiceException e)
     {
@@ -6815,7 +6815,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getFlowDefinition_result(getFlowDefinition_result other) {
+    public getSpecification_result(getSpecification_result other) {
       if (other.isSetSuccess()) {
         this.success = other.success;
       }
@@ -6824,8 +6824,8 @@ public class AppFabricService {
       }
     }
 
-    public getFlowDefinition_result deepCopy() {
-      return new getFlowDefinition_result(this);
+    public getSpecification_result deepCopy() {
+      return new getSpecification_result(this);
     }
 
     @Override
@@ -6932,12 +6932,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getFlowDefinition_result)
-        return this.equals((getFlowDefinition_result)that);
+      if (that instanceof getSpecification_result)
+        return this.equals((getSpecification_result)that);
       return false;
     }
 
-    public boolean equals(getFlowDefinition_result that) {
+    public boolean equals(getSpecification_result that) {
       if (that == null)
         return false;
 
@@ -6979,13 +6979,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getFlowDefinition_result other) {
+    public int compareTo(getSpecification_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getFlowDefinition_result typedOther = (getFlowDefinition_result)other;
+      getSpecification_result typedOther = (getSpecification_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -7024,7 +7024,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getFlowDefinition_result(");
+      StringBuilder sb = new StringBuilder("getSpecification_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -7066,15 +7066,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlowDefinition_resultStandardSchemeFactory implements SchemeFactory {
-      public getFlowDefinition_resultStandardScheme getScheme() {
-        return new getFlowDefinition_resultStandardScheme();
+    private static class getSpecification_resultStandardSchemeFactory implements SchemeFactory {
+      public getSpecification_resultStandardScheme getScheme() {
+        return new getSpecification_resultStandardScheme();
       }
     }
 
-    private static class getFlowDefinition_resultStandardScheme extends StandardScheme<getFlowDefinition_result> {
+    private static class getSpecification_resultStandardScheme extends StandardScheme<getSpecification_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowDefinition_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getSpecification_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -7110,7 +7110,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowDefinition_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getSpecification_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -7130,16 +7130,16 @@ public class AppFabricService {
 
     }
 
-    private static class getFlowDefinition_resultTupleSchemeFactory implements SchemeFactory {
-      public getFlowDefinition_resultTupleScheme getScheme() {
-        return new getFlowDefinition_resultTupleScheme();
+    private static class getSpecification_resultTupleSchemeFactory implements SchemeFactory {
+      public getSpecification_resultTupleScheme getScheme() {
+        return new getSpecification_resultTupleScheme();
       }
     }
 
-    private static class getFlowDefinition_resultTupleScheme extends TupleScheme<getFlowDefinition_result> {
+    private static class getSpecification_resultTupleScheme extends TupleScheme<getSpecification_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowDefinition_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getSpecification_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -7158,7 +7158,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowDefinition_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getSpecification_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
@@ -7175,15 +7175,15 @@ public class AppFabricService {
 
   }
 
-  public static class getFlowHistory_args implements org.apache.thrift.TBase<getFlowHistory_args, getFlowHistory_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowHistory_args");
+  public static class getHistory_args implements org.apache.thrift.TBase<getHistory_args, getHistory_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getHistory_args");
 
     private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getFlowHistory_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getFlowHistory_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getHistory_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getHistory_argsTupleSchemeFactory());
     }
 
     private FlowIdentifier id; // required
@@ -7253,13 +7253,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowHistory_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getHistory_args.class, metaDataMap);
     }
 
-    public getFlowHistory_args() {
+    public getHistory_args() {
     }
 
-    public getFlowHistory_args(
+    public getHistory_args(
       FlowIdentifier id)
     {
       this();
@@ -7269,14 +7269,14 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getFlowHistory_args(getFlowHistory_args other) {
+    public getHistory_args(getHistory_args other) {
       if (other.isSetId()) {
         this.id = new FlowIdentifier(other.id);
       }
     }
 
-    public getFlowHistory_args deepCopy() {
-      return new getFlowHistory_args(this);
+    public getHistory_args deepCopy() {
+      return new getHistory_args(this);
     }
 
     @Override
@@ -7346,12 +7346,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getFlowHistory_args)
-        return this.equals((getFlowHistory_args)that);
+      if (that instanceof getHistory_args)
+        return this.equals((getHistory_args)that);
       return false;
     }
 
-    public boolean equals(getFlowHistory_args that) {
+    public boolean equals(getHistory_args that) {
       if (that == null)
         return false;
 
@@ -7379,13 +7379,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getFlowHistory_args other) {
+    public int compareTo(getHistory_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getFlowHistory_args typedOther = (getFlowHistory_args)other;
+      getHistory_args typedOther = (getHistory_args)other;
 
       lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
       if (lastComparison != 0) {
@@ -7414,7 +7414,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getFlowHistory_args(");
+      StringBuilder sb = new StringBuilder("getHistory_args(");
       boolean first = true;
 
       sb.append("id:");
@@ -7448,15 +7448,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlowHistory_argsStandardSchemeFactory implements SchemeFactory {
-      public getFlowHistory_argsStandardScheme getScheme() {
-        return new getFlowHistory_argsStandardScheme();
+    private static class getHistory_argsStandardSchemeFactory implements SchemeFactory {
+      public getHistory_argsStandardScheme getScheme() {
+        return new getHistory_argsStandardScheme();
       }
     }
 
-    private static class getFlowHistory_argsStandardScheme extends StandardScheme<getFlowHistory_args> {
+    private static class getHistory_argsStandardScheme extends StandardScheme<getHistory_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowHistory_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getHistory_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -7484,7 +7484,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowHistory_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getHistory_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -7499,16 +7499,16 @@ public class AppFabricService {
 
     }
 
-    private static class getFlowHistory_argsTupleSchemeFactory implements SchemeFactory {
-      public getFlowHistory_argsTupleScheme getScheme() {
-        return new getFlowHistory_argsTupleScheme();
+    private static class getHistory_argsTupleSchemeFactory implements SchemeFactory {
+      public getHistory_argsTupleScheme getScheme() {
+        return new getHistory_argsTupleScheme();
       }
     }
 
-    private static class getFlowHistory_argsTupleScheme extends TupleScheme<getFlowHistory_args> {
+    private static class getHistory_argsTupleScheme extends TupleScheme<getHistory_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowHistory_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getHistory_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetId()) {
@@ -7521,7 +7521,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowHistory_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getHistory_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
@@ -7534,16 +7534,16 @@ public class AppFabricService {
 
   }
 
-  public static class getFlowHistory_result implements org.apache.thrift.TBase<getFlowHistory_result, getFlowHistory_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowHistory_result");
+  public static class getHistory_result implements org.apache.thrift.TBase<getHistory_result, getHistory_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getHistory_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getFlowHistory_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getFlowHistory_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getHistory_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getHistory_resultTupleSchemeFactory());
     }
 
     private List<FlowRunRecord> success; // required
@@ -7620,13 +7620,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowHistory_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getHistory_result.class, metaDataMap);
     }
 
-    public getFlowHistory_result() {
+    public getHistory_result() {
     }
 
-    public getFlowHistory_result(
+    public getHistory_result(
       List<FlowRunRecord> success,
       AppFabricServiceException e)
     {
@@ -7638,7 +7638,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getFlowHistory_result(getFlowHistory_result other) {
+    public getHistory_result(getHistory_result other) {
       if (other.isSetSuccess()) {
         List<FlowRunRecord> __this__success = new ArrayList<FlowRunRecord>();
         for (FlowRunRecord other_element : other.success) {
@@ -7651,8 +7651,8 @@ public class AppFabricService {
       }
     }
 
-    public getFlowHistory_result deepCopy() {
-      return new getFlowHistory_result(this);
+    public getHistory_result deepCopy() {
+      return new getHistory_result(this);
     }
 
     @Override
@@ -7774,12 +7774,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getFlowHistory_result)
-        return this.equals((getFlowHistory_result)that);
+      if (that instanceof getHistory_result)
+        return this.equals((getHistory_result)that);
       return false;
     }
 
-    public boolean equals(getFlowHistory_result that) {
+    public boolean equals(getHistory_result that) {
       if (that == null)
         return false;
 
@@ -7821,13 +7821,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getFlowHistory_result other) {
+    public int compareTo(getHistory_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getFlowHistory_result typedOther = (getFlowHistory_result)other;
+      getHistory_result typedOther = (getHistory_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -7866,7 +7866,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getFlowHistory_result(");
+      StringBuilder sb = new StringBuilder("getHistory_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -7908,15 +7908,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlowHistory_resultStandardSchemeFactory implements SchemeFactory {
-      public getFlowHistory_resultStandardScheme getScheme() {
-        return new getFlowHistory_resultStandardScheme();
+    private static class getHistory_resultStandardSchemeFactory implements SchemeFactory {
+      public getHistory_resultStandardScheme getScheme() {
+        return new getHistory_resultStandardScheme();
       }
     }
 
-    private static class getFlowHistory_resultStandardScheme extends StandardScheme<getFlowHistory_result> {
+    private static class getHistory_resultStandardScheme extends StandardScheme<getHistory_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowHistory_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getHistory_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -7963,7 +7963,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowHistory_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getHistory_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -7990,16 +7990,16 @@ public class AppFabricService {
 
     }
 
-    private static class getFlowHistory_resultTupleSchemeFactory implements SchemeFactory {
-      public getFlowHistory_resultTupleScheme getScheme() {
-        return new getFlowHistory_resultTupleScheme();
+    private static class getHistory_resultTupleSchemeFactory implements SchemeFactory {
+      public getHistory_resultTupleScheme getScheme() {
+        return new getHistory_resultTupleScheme();
       }
     }
 
-    private static class getFlowHistory_resultTupleScheme extends TupleScheme<getFlowHistory_result> {
+    private static class getHistory_resultTupleScheme extends TupleScheme<getHistory_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowHistory_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getHistory_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -8024,7 +8024,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowHistory_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getHistory_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {

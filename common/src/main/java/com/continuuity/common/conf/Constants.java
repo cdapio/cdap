@@ -4,14 +4,17 @@ package com.continuuity.common.conf;
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
   /**
-   * Service names.
+   * Global Service names.
    */
-  public static final String SERVICE_METRICS_COLLECTION_SERVER = "metricscollection";
-  public static final String SERVICE_METRICS_FRONTEND_SERVER = "metricsfrontend";
-  public static final String SERVICE_METADATA_SERVER = "metadata";
-  public static final String SERVICE_TRANSACTION_SERVER = "tx-service";
-  public static final String SERVICE_METRICS = "metricsservice";
+  public static final class Service {
+    public static final String APP_FABRIC = "app.fabric";
+    public static final String METRICS_FRONTEND = "metrics.frontend";
+    public static final String METADATA = "metadata";
+    public static final String TRANSACTION = "transaction";
+    public static final String METRICS = "metrics";
+  }
 
   /**
    * Common across components.

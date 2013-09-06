@@ -138,7 +138,7 @@ public class MetadataServer extends AbstractRegisteredServer
       server = new THsHaServer(serverArgs);
 
       // Set the server name.
-      setServerName(Constants.SERVICE_METADATA_SERVER);
+      setServerName(Constants.Service.METADATA);
 
       // Provide the registration info of service.
       RegisteredServerInfo info

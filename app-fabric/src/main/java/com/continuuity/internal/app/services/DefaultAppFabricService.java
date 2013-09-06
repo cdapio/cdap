@@ -472,7 +472,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param id
    */
   @Override
-  public String getFlowDefinition(FlowIdentifier id)
+  public String getSpecification(FlowIdentifier id)
     throws AppFabricServiceException, TException {
     try {
       if (id.getType() == EntityType.FLOW) {
@@ -629,12 +629,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Returns run information for a given flow id.
+   * Returns run information for a given Runnable id.
    *
    * @param id of the program.
    */
   @Override
-  public List<FlowRunRecord> getFlowHistory(FlowIdentifier id) throws AppFabricServiceException, TException {
+  public List<FlowRunRecord> getHistory(FlowIdentifier id) throws AppFabricServiceException, TException {
     List<RunRecord> log;
     try {
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
@@ -1088,7 +1088,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private void deleteMetrics(String accountId) throws IOException, TException, MetadataServiceException {
 
     List<Application> applications = this.mds.getApplications(new Account(accountId));
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS);
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
 
@@ -1123,7 +1123,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
 
   private void deleteMetrics(String account, String application) throws IOException {
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.SERVICE_METRICS);
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
 

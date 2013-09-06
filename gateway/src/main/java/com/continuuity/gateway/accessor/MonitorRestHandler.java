@@ -15,7 +15,7 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.gateway.Constants;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.logging.LoggingConfiguration;
@@ -178,7 +178,7 @@ public class MonitorRestHandler extends NettyRestHandler {
   private MetricsFrontendService.Client getMetricsClient()
       throws ServerException {
     if (metricsClients.get() == null || !metricsClients.get().getInputProtocol().getTransport().isOpen()) {
-      TProtocol protocol = getThriftProtocol(Constants.METRICS_SERVICE_NAME, metricsEndpoints);
+      TProtocol protocol = getThriftProtocol(Constants.Service.METRICS, metricsEndpoints);
       MetricsFrontendService.Client client = new MetricsFrontendService.Client(protocol);
       metricsClients.set(client);
     }
@@ -195,7 +195,7 @@ public class MonitorRestHandler extends NettyRestHandler {
    */
   private AppFabricService.Client getFlowClient() throws ServerException {
     if (flowClients.get() == null || !flowClients.get().getInputProtocol().getTransport().isOpen()) {
-      TProtocol protocol = getThriftProtocol(Services.APP_FABRIC, flowEndpoints);
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, flowEndpoints);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       flowClients.set(client);
     }

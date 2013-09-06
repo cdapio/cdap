@@ -165,15 +165,15 @@ service AppFabricService {
      throws(1: AppFabricServiceException e),
 
   /**
-   * Returns definition of a flow.
+   * Returns Runnable specification.
    */
-  string getFlowDefinition(1: FlowIdentifier id)
+  string getSpecification(1: FlowIdentifier id)
     throws (1: AppFabricServiceException e),
 
   /**
    * Returns run information for a given flow id.
    */
-  list<FlowRunRecord> getFlowHistory(1: FlowIdentifier id)
+  list<FlowRunRecord> getHistory(1: FlowIdentifier id)
       throws (1: AppFabricServiceException e),
 
   /**
