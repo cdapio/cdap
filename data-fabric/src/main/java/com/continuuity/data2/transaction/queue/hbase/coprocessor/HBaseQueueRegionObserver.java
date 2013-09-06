@@ -16,12 +16,12 @@ import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.Store;
-import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -55,8 +55,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   }
 
   @Override
-  public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-                                    InternalScanner scanner, CompactionRequest request) throws IOException {
+  public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e,
+                                    Store store, InternalScanner scanner) throws IOException {
     if (!e.getEnvironment().getRegion().isAvailable()) {
       return scanner;
     }
@@ -248,10 +248,34 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         return false;
       }
 
+      // TODO (terence): Right now we can only evict if we see all the data columns.
+      // It's because it's possible that in some previous flush, only the data columns are flush,
+      // then consumer writes the state columns. In the next flush, it'll only see the state columns and those
+      // should not be evicted otherwise the entry might get reprocessed, depending on the consumer start row state.
+      // This logic is not perfect as if flush happens after enqueue and before dequeue, that entry may never get
+      // evicted (depends on when the next compaction happens, whether the queue configuration has been change or not).
+
+      // There are two data columns, "d" and "m".
+      // If the size == 2, it should not be evicted as well,
+      // as state columns (dequeue) always happen after data columns (enqueue).
+      if (result.size() <= 2) {
+        return false;
+      }
+
+      // "d" and "m" columns always comes before the state columns, prefixed with "s".
+      Iterator<KeyValue> iterator = result.iterator();
+      if (!isColumn(iterator.next(), QueueConstants.DATA_COLUMN)) {
+        return false;
+      }
+      if (!isColumn(iterator.next(), QueueConstants.META_COLUMN)) {
+        return false;
+      }
+
       // Need to determine if this row can be evicted iff all consumer groups have committed process this row.
       int consumedGroups = 0;
       // Inspect each state column
-      for (KeyValue kv : result) {
+      while (iterator.hasNext()) {
+        KeyValue kv = iterator.next();
         if (!isStateColumn(kv)) {
           continue;
         }
@@ -262,12 +286,18 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         // If it is PROCESSED, check if this row is smaller than the consumer instance startRow.
         // Essentially a loose check of committed PROCESSED.
         byte[] startRow = consumerConfig.getStartRow(consumerInstance);
-        if (startRow != null && Bytes.compareTo(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(),
-                                                startRow, 0, startRow.length) < 0) {
+        if (startRow != null && compareRowKey(kv, startRow) < 0) {
           consumedGroups++;
         }
       }
-      return consumedGroups == consumerConfig.getNumGroups();
+
+      // It can be evicted if from the state columns, it's been processed by all consumer groups
+      // Otherwise, this row has to be less than smallest among all current consumers.
+      // The second condition is for handling consumer being removed after it consumed some entries.
+      // However, the second condition alone is not good enough as it's possible that in hash partitioning,
+      // only one consumer is keep consuming when the other consumer never proceed.
+      return consumedGroups == consumerConfig.getNumGroups()
+          || compareRowKey(result.get(0), consumerConfig.getSmallestStartRow()) < 0;
     }
 
     /**
@@ -280,6 +310,19 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
                                    buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
       return fCmp == 0 && isPrefix(buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength(),
                                    QueueConstants.STATE_COLUMN_PREFIX);
+    }
+
+    private boolean isColumn(KeyValue keyValue, byte[] qualifier) {
+      byte[] buffer = keyValue.getBuffer();
+
+      int fCmp = Bytes.compareTo(QueueConstants.COLUMN_FAMILY, 0, QueueConstants.COLUMN_FAMILY.length,
+                                 buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
+      return fCmp == 0 && (Bytes.compareTo(qualifier, 0, qualifier.length,
+                                           buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength()) == 0);
+    }
+
+    private int compareRowKey(KeyValue kv, byte[] row) {
+      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(), row, 0, row.length);
     }
 
     /**
