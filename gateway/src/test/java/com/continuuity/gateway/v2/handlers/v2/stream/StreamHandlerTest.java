@@ -1,9 +1,9 @@
 package com.continuuity.gateway.v2.handlers.v2.stream;
 
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -11,9 +11,13 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.GatewayConstants;
+import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
@@ -83,6 +87,8 @@ public class StreamHandlerTest {
           bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
           bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
           bind(StoreFactory.class).to(MDSStoreFactory.class);
+          bind(LogReader.class).to(MockLogReader.class);
+          bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
         }
       }
     );
@@ -188,13 +194,13 @@ public class StreamHandlerTest {
     DefaultHttpClient httpclient = new DefaultHttpClient();
 
     // Create new stream.
-    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/stream/test_batch_stream_enqueue", hostname, port));
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue", hostname, port));
     HttpResponse response = httpclient.execute(httpPut);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/stream/test_batch_stream_enqueue?q=newConsumer",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=newConsumer",
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -214,7 +220,8 @@ public class StreamHandlerTest {
     List<Integer> actual = Lists.newArrayList();
     // Dequeue all entries
     for (int i = 0; i < BatchEnqueue.NUM_ELEMENTS; ++i) {
-      httpGet = new HttpGet(String.format("http://%s:%d/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
+      httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=dequeue", hostname,
+                                          port));
       httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -247,7 +254,7 @@ public class StreamHandlerTest {
         DefaultHttpClient httpclient = new DefaultHttpClient();
 
         for (int i = evenGenerator ? 0 : 1; i < NUM_ELEMENTS; i += 2) {
-          HttpPost httpPost = new HttpPost(String.format("http://%s:%d/stream/test_batch_stream_enqueue",
+          HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue",
                                                          hostname, port));
           httpPost.setEntity(new StringEntity(Integer.toString(i)));
           httpPost.setHeader("test_batch_stream_enqueue1", Integer.toString(i));
@@ -307,13 +314,13 @@ public class StreamHandlerTest {
     DefaultHttpClient httpclient = new DefaultHttpClient();
 
     // Create new stream.
-    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/stream/test_batch_stream_enqueue", hostname, port));
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue", hostname, port));
     HttpResponse response = httpclient.execute(httpPut);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/stream/test_batch_stream_enqueue?q=newConsumer",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=newConsumer",
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -338,7 +345,8 @@ public class StreamHandlerTest {
     // Dequeue all entries
     for (int i = 0; i < concurrencyLevel * BatchEnqueue.NUM_ELEMENTS; ++i) {
       httpGet
-        = new HttpGet(String.format("http://%s:%d/rest/v2/stream/test_batch_stream_enqueue?q=dequeue", hostname, port));
+        = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=dequeue", hostname,
+                                    port));
       httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals("Failed for entry number " + i,
@@ -413,7 +421,7 @@ public class StreamHandlerTest {
     private Request getPostRequest(String body) {
       RequestBuilder requestBuilder = new RequestBuilder("POST");
       return requestBuilder
-        .setUrl(String.format("http://%s:%d/rest/v2/stream/test_batch_stream_enqueue", hostname, port))
+        .setUrl(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue", hostname, port))
         .setBody(body)
         .build();
 
