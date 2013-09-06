@@ -18,6 +18,8 @@ import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 
+import java.io.File;
+
 /**
  *
  */

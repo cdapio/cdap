@@ -1,7 +1,8 @@
 package com.continuuity.gateway;
 
+import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.*;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.metadata.MetaDataStore;
@@ -12,16 +13,23 @@ import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.handlers.v2.PingHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.ProcedureHandlerTest;
+import com.continuuity.gateway.v2.handlers.v2.appfabric.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.MetadataServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.log.LogHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
+import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
+import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -34,37 +42,43 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
+
+import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
 @SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
-  ProcedureHandlerTest.class})
+  ProcedureHandlerTest.class, AppFabricServiceHandlerTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
-
-  private static final InMemoryDiscoveryService IN_MEMORY_DISCOVERY_SERVICE = new InMemoryDiscoveryService();
+  private static DiscoveryService discoveryService;
   private static MetadataService.Iface mds;
+  private static AppFabricServer appFabricServer;
+
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
     @Override
     protected void before() throws Throwable {
+
+
       conf.setInt(GatewayConstants.ConfigKeys.PORT, 0);
       conf.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
+      conf.set("app.output.dir", "/tmp");
+      conf.set("app.tmp.dir", "/tmp");
 
       // Set up our Guice injections
       Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules(),
-        new ConfigModule(conf),
-        new LocationRuntimeModule().getInMemoryModules(),
         new GatewayModules(conf).getInMemoryModules(),
         new AppFabricTestModule(conf),
         new AbstractModule() {
@@ -76,14 +90,16 @@ public class GatewayFastTestsSuite {
             bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
             bind(StoreFactory.class).to(MDSStoreFactory.class);
             bind(LogReader.class).to(MockLogReader.class);
-            bind(DiscoveryServiceClient.class).toInstance(IN_MEMORY_DISCOVERY_SERVICE);
           }
         }
       );
 
+      discoveryService = injector.getInstance(DiscoveryService.class);
       gateway = injector.getInstance(Gateway.class);
       mds = injector.getInstance(MetadataService.Iface.class);
       injector.getInstance(InMemoryTransactionManager.class).init();
+      appFabricServer = injector.getInstance(AppFabricServer.class);
+      appFabricServer.startAndWait();
       gateway.startAndWait();
       port = gateway.getBindAddress().getPort();
     }
@@ -91,12 +107,13 @@ public class GatewayFastTestsSuite {
     @Override
     protected void after() {
       gateway.stopAndWait();
+      appFabricServer.stopAndWait();
       conf.clear();
     }
   };
 
-  public static InMemoryDiscoveryService getInMemoryDiscoveryService() {
-    return IN_MEMORY_DISCOVERY_SERVICE;
+  public static DiscoveryService getInMemoryDiscoveryService() {
+    return discoveryService;
   }
 
   public static HttpResponse GET(String resource) throws Exception {
@@ -122,6 +139,10 @@ public class GatewayFastTestsSuite {
   public static HttpResponse PUT(HttpPut put) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     return client.execute(put);
+  }
+
+  public static HttpPut getPUT(String resource) {
+    return new HttpPut("http://" + hostname + ":" + port + resource);
   }
 
   public static HttpResponse POST(String resource, String body) throws Exception {

@@ -26,6 +26,8 @@ import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -37,6 +39,7 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -49,6 +52,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 
@@ -314,7 +318,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         String specification = client.getSpecification(new ProgramId(accountId, appId, ""));
-        responder.sendJson(HttpResponseStatus.OK, specification);
+        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();
