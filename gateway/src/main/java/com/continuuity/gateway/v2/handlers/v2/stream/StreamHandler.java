@@ -122,11 +122,13 @@ public class StreamHandler extends AbstractHttpHandler {
 
   @Override
   public void init(HandlerContext context) {
+    LOG.info("Starting StreamHandler.");
     streamEventCollector.startAndWait();
   }
 
   @Override
   public void destroy(HandlerContext context) {
+    LOG.info("Stopping StreamHandler.");
     streamEventCollector.stopAndWait();
   }
 
