@@ -17,6 +17,8 @@ import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
@@ -67,8 +69,10 @@ public class TestHelper {
   public static synchronized Injector getInjector(CConfiguration conf) {
     if (injector == null) {
       configuration = conf;
-      configuration.set("app.output.dir", TEMP_FOLDER.newFolder("app").getAbsolutePath());
-      configuration.set("app.tmp.dir", TEMP_FOLDER.newFolder("temp").getAbsolutePath());
+      configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, TEMP_FOLDER.newFolder("app").getAbsolutePath());
+      configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, TEMP_FOLDER.newFolder("temp").getAbsolutePath());
+      configuration.set(Constants.CFG_APP_FABRIC_REST_PORT, Integer.toString(Networks.getRandomPort()));
+      configuration.set(Constants.CFG_APP_FABRIC_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(InMemoryTransactionManager.class).init();
     }
