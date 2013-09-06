@@ -52,7 +52,8 @@ public final class DistributedTransactionServiceHandler implements TTransactionS
     return new TTransaction(transaction.getReadPointer(),
                             transaction.getWritePointer(),
                             Converters.encodeLongs(transaction.getInvalids()),
-                            Converters.encodeLongs(transaction.getInProgress()));
+                            Converters.encodeLongs(transaction.getInProgress()),
+                            transaction.getFirstShortInProgress());
   }
 
 
@@ -62,7 +63,8 @@ public final class DistributedTransactionServiceHandler implements TTransactionS
     return new TTransaction(transaction.getReadPointer(),
                             transaction.getWritePointer(),
                             Converters.encodeLongs(transaction.getInvalids()),
-                            Converters.encodeLongs(transaction.getInProgress()));
+                            Converters.encodeLongs(transaction.getInProgress()),
+                            transaction.getFirstShortInProgress());
   }
 
   @Override
@@ -71,7 +73,8 @@ public final class DistributedTransactionServiceHandler implements TTransactionS
     return new TTransaction(transaction.getReadPointer(),
                             transaction.getWritePointer(),
                             Converters.encodeLongs(transaction.getInvalids()),
-                            Converters.encodeLongs(transaction.getInProgress()));
+                            Converters.encodeLongs(transaction.getInProgress()),
+                            transaction.getFirstShortInProgress());
   }
 
   @Override

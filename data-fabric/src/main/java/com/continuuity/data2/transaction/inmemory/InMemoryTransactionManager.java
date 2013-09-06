@@ -306,7 +306,8 @@ public class InMemoryTransactionManager {
   public synchronized Transaction startShort(int timeoutInSeconds) {
     saveWaterMarkIfNeeded();
     inProgress.put(nextWritePointer, System.currentTimeMillis() + 1000L * timeoutInSeconds);
-    return new Transaction(readPointer, nextWritePointer++, invalidArray, getInProgressAsArray());
+    return new Transaction(readPointer, nextWritePointer++, invalidArray, getInProgressAsArray(),
+                           firstShortInProgress());
   }
 
   /**
@@ -316,7 +317,8 @@ public class InMemoryTransactionManager {
   public synchronized Transaction startLong() {
     saveWaterMarkIfNeeded();
     inProgress.put(nextWritePointer, -System.currentTimeMillis());
-    return new Transaction(readPointer, nextWritePointer++, invalidArray, getInProgressAsArray());
+    return new Transaction(readPointer, nextWritePointer++, invalidArray, getInProgressAsArray(),
+                           firstShortInProgress());
 
   }
 
@@ -365,18 +367,18 @@ public class InMemoryTransactionManager {
     // All committed change sets that are smaller than the earliest started transaction can be removed.
     // here we ignore transactions that have no timeout, they are long-running and don't participate in
     // conflict detection.
-    committedChangeSets.headMap(firstInProgressWithTimeout()).clear();
+    committedChangeSets.headMap(firstShortInProgress()).clear();
     return true;
   }
 
   // find the first non long-running in-progress tx, or Long.MAX if none such exists
-  private long firstInProgressWithTimeout() {
+  private long firstShortInProgress() {
     for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
       if (tx.getValue() >= 0) {
         return tx.getKey();
       }
     }
-    return Long.MAX_VALUE;
+    return Transaction.NO_TX_IN_PROGRESS;
   }
 
   public synchronized boolean abort(Transaction tx) {

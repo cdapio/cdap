@@ -1332,9 +1332,8 @@ public class ConverterUtils {
     for (long txid : tx.getInProgress()) {
       inProgress.add(txid);
     }
-    return new TTransaction2(tx.getWritePointer(),
-                             tx.getReadPointer(),
-                             invalids, inProgress);
+    return new TTransaction2(tx.getWritePointer(), tx.getReadPointer(),
+                             invalids, inProgress, tx.getFirstShortInProgress());
   }
 
   com.continuuity.data2.transaction.Transaction unwrap(TTransaction2 tx) {
@@ -1348,6 +1347,7 @@ public class ConverterUtils {
     for (Long txid : tx.inProgress) {
       inProgress[i++] = txid;
     }
-    return new com.continuuity.data2.transaction.Transaction(tx.readPointer, tx.writePointer, invalids, inProgress);
+    return new com.continuuity.data2.transaction.Transaction(tx.readPointer, tx.writePointer,
+                                                             invalids, inProgress, tx.getFirstShort());
   }
 }

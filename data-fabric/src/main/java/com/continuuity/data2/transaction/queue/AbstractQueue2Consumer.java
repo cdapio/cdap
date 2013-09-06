@@ -348,7 +348,8 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         // If the entry's enqueue write pointer is smaller than smallest in progress tx, then everything before it
         // must be processed, too (it is not possible that an enqueue before this is still in progress). So it is
         // safe to move the start row after this entry.
-        if (enqueueWritePointer < transaction.getFirstInProgress()) {
+        // Note: here we ignore the long-running transactions, because we know they don't interact with queues.
+        if (enqueueWritePointer < transaction.getFirstShortInProgress()) {
           startRow = getNextRow(startRow, enqueueWritePointer, counter);
         }
         return false;

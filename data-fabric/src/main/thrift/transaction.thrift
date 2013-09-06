@@ -5,6 +5,7 @@ struct TTransaction {
   2: i64 writePointer,
   3: binary invalids,
   4: binary inProgress,
+  5: i64 firstShort,
 }
 
 service TTransactionService {

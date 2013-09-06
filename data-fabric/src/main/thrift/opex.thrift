@@ -273,6 +273,7 @@ struct TTransaction2 {
   2: i64 readPointer,
   3: list<i64> invalids,
   4: list<i64> inProgress,
+  5: i64 firstShort,
 }
 
 struct TKeyRange {
