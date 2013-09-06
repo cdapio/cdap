@@ -92,6 +92,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       procedureCall(request, responder, appId, procedureName, methodName, request.getContent().array());
 
     }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
     }
   }
@@ -117,6 +118,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       procedureCall(request, responder, appId, procedureName, methodName, body);
 
     }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
     }
   }
@@ -209,6 +211,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
     } catch (IllegalArgumentException e) {
       responder.sendStatus(BAD_REQUEST);
     }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
     }
   }

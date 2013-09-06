@@ -31,6 +31,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
@@ -174,7 +175,7 @@ public class ProcedureHandlerTest  {
 
   @Test
   public void testGetProcedureCall() throws Exception {
-    Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
+    Map<String, String> content = ImmutableMap.of("key1&", "val1=", "key3", "\"val3\"");
     Type type = new TypeToken<Map<String, String>>() {}.getType();
     Gson gson = new Gson();
 
@@ -289,10 +290,11 @@ public class ProcedureHandlerTest  {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
   }
 
-  private String getQueryParams(Map<String, String> params) {
+  private String getQueryParams(Map<String, String> params) throws Exception {
     List<String> plist = Lists.newArrayList();
     for (Map.Entry<String, String> entry : params.entrySet()) {
-      plist.add(String.format("%s=%s", entry.getKey(), entry.getValue()));
+      plist.add(String.format("%s=%s", URLEncoder.encode(entry.getKey(), "utf-8"),
+                              URLEncoder.encode(entry.getValue(), "utf-8")));
     }
     return Joiner.on("&").join(plist);
   }
