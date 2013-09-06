@@ -1,11 +1,17 @@
 package com.continuuity.gateway.v2.handlers.v2.appfabric;
 
 import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.ArchiveId;
+import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowRunRecord;
 import com.continuuity.app.services.FlowStatus;
+import com.continuuity.app.services.ProgramDescriptor;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.app.services.ProgramRunRecord;
+import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.conf.Services;
@@ -88,8 +94,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       try {
-        ResourceInfo rInfo = new ResourceInfo(accountId, "gateway", archiveName, 1, System.currentTimeMillis() / 1000);
-        ResourceIdentifier rIdentifier = client.init(token, rInfo);
+        ArchiveInfo rInfo = new ArchiveInfo(accountId, "gateway", archiveName);
+        ArchiveId rIdentifier = client.init(token, rInfo);
 
         while (content.readableBytes() > 0) {
           int bytesToRead = Math.min(1024 * 1024, content.readableBytes());
@@ -127,7 +133,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
-        client.removeApplication(token, new FlowIdentifier(accountId, appId, "", 1));
+        client.removeApplication(token, new ProgramId(accountId, appId, ""));
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();
@@ -201,7 +207,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
-        FlowStatus status = client.status(token, new FlowIdentifier(accountId, appId, "", 1));
+        ProgramStatus status = client.status(token, new ProgramId(accountId, appId, ""));
         JsonObject o = new JsonObject();
         o.addProperty("status", status.getStatus());
         responder.sendJson(HttpResponseStatus.OK, o);
@@ -231,7 +237,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
-        String specification = client.getSpecification(new FlowIdentifier(accountId, appId, "", 1));
+        String specification = client.getSpecification(new ProgramId(accountId, appId, ""));
         responder.sendJson(HttpResponseStatus.OK, specification);
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
@@ -273,9 +279,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         if ("start".equals(action)) {
-          client.start(token, new FlowDescriptor(new FlowIdentifier(accountId, appId, "", 1), null));
+          client.start(token, new ProgramDescriptor(new ProgramId(accountId, appId, ""), null));
         } else if ("stop".equals(action)) {
-          client.stop(token, new FlowIdentifier(accountId, appId, "", 1));
+          client.stop(token, new ProgramId(accountId, appId, ""));
         }
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
@@ -298,9 +304,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
     AppFabricService.Client client = new AppFabricService.Client(protocol);
     try {
-      List<FlowRunRecord> records = client.getHistory(new FlowIdentifier(accountId, appId, runnableid, 1));
+      List<ProgramRunRecord> records = client.getHistory(new ProgramId(accountId, appId, runnableid));
       JsonArray history = new JsonArray();
-      for (FlowRunRecord record : records) {
+      for (ProgramRunRecord record : records) {
         JsonObject object = new JsonObject();
         object.addProperty("runid", record.getRunId());
         object.addProperty("start", record.getStartTime());

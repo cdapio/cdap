@@ -12,10 +12,14 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
+import com.continuuity.app.services.ArchiveId;
+import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowRunRecord;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.app.store.Store;
@@ -81,8 +85,7 @@ public class DefaultAppFabricServiceTest {
     try {
       // Call init to get a session identifier - yes, the name needs to be changed.
       AuthToken token = new AuthToken("12345");
-      ResourceIdentifier id = server.init(token, new ResourceInfo(DefaultId.ACCOUNT.getId(), "", deployedJar.getName(),
-                                                                  123455, 45343));
+      ArchiveId id = server.init(token, new ArchiveInfo(DefaultId.ACCOUNT.getId(), "", deployedJar.getName()));
 
       // Upload the jar file to remote location.
       BufferFileInputStream is =
@@ -131,7 +134,7 @@ public class DefaultAppFabricServiceTest {
     Id.Application appId = new Id.Application(new Id.Account("account1"), "application1");
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
-    FlowIdentifier flowId = new FlowIdentifier("account1", "application1", "WordCountFlow", 0);
+    ProgramId flowId = new ProgramId("account1", "application1", "WordCountFlow");
     String flowDefJson = server.getSpecification(flowId);
     Assert.assertNotNull(flowDefJson);
 
@@ -148,11 +151,11 @@ public class DefaultAppFabricServiceTest {
     store.setStart(programId, "run1", 20);
     store.setStop(programId, "run1", 29, "FAILED");
 
-    FlowIdentifier flowId = new FlowIdentifier("accountFlowHistoryTest1", "applicationFlowHistoryTest1",
-                                               "flowFlowHistoryTest1", 0);
-    List<FlowRunRecord> history = server.getHistory(flowId);
+    ProgramId flowId = new ProgramId("accountFlowHistoryTest1", "applicationFlowHistoryTest1",
+                                               "flowFlowHistoryTest1");
+    List<ProgramRunRecord> history = server.getHistory(flowId);
     Assert.assertEquals(1, history.size());
-    FlowRunRecord record = history.get(0);
+    ProgramRunRecord record = history.get(0);
     Assert.assertEquals(20, record.getStartTime());
     Assert.assertEquals(29, record.getEndTime());
     Assert.assertEquals("FAILED", record.getEndStatus());
@@ -193,7 +196,7 @@ public class DefaultAppFabricServiceTest {
       });
       jServer.start();
 
-      ResourceIdentifier id = new ResourceIdentifier(DefaultId.ACCOUNT.getId(), "ToyApp", "whatever", 1);
+      ArchiveId id = new ArchiveId(DefaultId.ACCOUNT.getId(), "ToyApp", "whatever");
       // Now send in deploy request.
       try {
         server.promote(new AuthToken(TestHelper.DUMMY_AUTH_TOKEN), id, "localhost");

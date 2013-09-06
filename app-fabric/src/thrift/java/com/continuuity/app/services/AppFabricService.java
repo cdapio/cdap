@@ -31,33 +31,33 @@ import org.slf4j.LoggerFactory;
 public class AppFabricService {
 
   /**
-   * Flow Service for managing flows.
+   * Program Service for managing flows.
    */
   public interface Iface {
 
     /**
-     * Starts a Flow
+     * Starts a program
      * 
      * @param token
      * @param descriptor
      */
-    public RunIdentifier start(AuthToken token, FlowDescriptor descriptor) throws AppFabricServiceException, org.apache.thrift.TException;
+    public RunIdentifier start(AuthToken token, ProgramDescriptor descriptor) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Checks the status of a Flow
+     * Checks the status of a program
      * 
      * @param token
      * @param identifier
      */
-    public FlowStatus status(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException, org.apache.thrift.TException;
+    public ProgramStatus status(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Stops a Flow
+     * Stops a program
      * 
      * @param token
      * @param identifier
      */
-    public RunIdentifier stop(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException, org.apache.thrift.TException;
+    public RunIdentifier stop(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Set number of instance of a flowlet.
@@ -67,28 +67,28 @@ public class AppFabricService {
      * @param flowletId
      * @param instances
      */
-    public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances) throws AppFabricServiceException, org.apache.thrift.TException;
+    public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns the state of flows within a given account id.
      * 
      * @param accountId
      */
-    public List<ActiveFlow> getFlows(String accountId) throws AppFabricServiceException, org.apache.thrift.TException;
+    public List<ActiveProgram> getPrograms(String accountId) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns Runnable specification.
      * 
      * @param id
      */
-    public String getSpecification(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException;
+    public String getSpecification(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns run information for a given flow id.
      * 
      * @param id
      */
-    public List<FlowRunRecord> getHistory(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException;
+    public List<ProgramRunRecord> getHistory(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns run information for a given flow id.
@@ -103,7 +103,7 @@ public class AppFabricService {
      * @param token
      * @param info
      */
-    public ResourceIdentifier init(AuthToken token, ResourceInfo info) throws AppFabricServiceException, org.apache.thrift.TException;
+    public ArchiveId init(AuthToken token, ArchiveInfo info) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Chunk of FAR is uploaded
@@ -112,7 +112,7 @@ public class AppFabricService {
      * @param resource
      * @param chunk
      */
-    public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws AppFabricServiceException, org.apache.thrift.TException;
+    public void chunk(AuthToken token, ArchiveId resource, ByteBuffer chunk) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Finalizes uploading of FAR
@@ -120,7 +120,7 @@ public class AppFabricService {
      * @param token
      * @param resource
      */
-    public void deploy(AuthToken token, ResourceIdentifier resource) throws AppFabricServiceException, org.apache.thrift.TException;
+    public void deploy(AuthToken token, ArchiveId resource) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Status of upload
@@ -128,7 +128,7 @@ public class AppFabricService {
      * @param token
      * @param resource
      */
-    public DeploymentStatus dstatus(AuthToken token, ResourceIdentifier resource) throws AppFabricServiceException, org.apache.thrift.TException;
+    public DeploymentStatus dstatus(AuthToken token, ArchiveId resource) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Promote an application an it's resource to cloud.
@@ -139,27 +139,27 @@ public class AppFabricService {
      * @param identifier
      * @param hostname
      */
-    public boolean promote(AuthToken token, ResourceIdentifier identifier, String hostname) throws AppFabricServiceException, org.apache.thrift.TException;
+    public boolean promote(AuthToken token, ArchiveId identifier, String hostname) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Disables a Flow or Procedure
+     * Disables a Program
      * 
      * @param token
      * @param identifier
      */
-    public void remove(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException, org.apache.thrift.TException;
+    public void remove(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Deletes all Flows and Procedures of the given application.
-     * It current takes a FlowIdentifier, but this method only interest in account id and application id.
+     * Deletes all Programs for a application
+     * It current takes a ProgramId, but this method only interest in account id and application id.
      * 
      * @param token
      * @param id
      */
-    public void removeApplication(AuthToken token, FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException;
+    public void removeApplication(AuthToken token, ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Disables all Flows and Queries of the account
+     * Disables all Programs for the account.
      * 
      * @param token
      * @param accountId
@@ -178,35 +178,35 @@ public class AppFabricService {
 
   public interface AsyncIface {
 
-    public void start(AuthToken token, FlowDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.start_call> resultHandler) throws org.apache.thrift.TException;
+    public void start(AuthToken token, ProgramDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.start_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void status(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.status_call> resultHandler) throws org.apache.thrift.TException;
+    public void status(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.status_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void stop(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.stop_call> resultHandler) throws org.apache.thrift.TException;
+    public void stop(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.stop_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.setInstances_call> resultHandler) throws org.apache.thrift.TException;
+    public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.setInstances_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getFlows(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlows_call> resultHandler) throws org.apache.thrift.TException;
+    public void getPrograms(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getPrograms_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getSpecification(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecification_call> resultHandler) throws org.apache.thrift.TException;
+    public void getSpecification(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecification_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getHistory(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getHistory_call> resultHandler) throws org.apache.thrift.TException;
+    public void getHistory(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getHistory_call> resultHandler) throws org.apache.thrift.TException;
 
     public void stopAll(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.stopAll_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void init(AuthToken token, ResourceInfo info, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.init_call> resultHandler) throws org.apache.thrift.TException;
+    public void init(AuthToken token, ArchiveInfo info, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.init_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.chunk_call> resultHandler) throws org.apache.thrift.TException;
+    public void chunk(AuthToken token, ArchiveId resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.chunk_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void deploy(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.deploy_call> resultHandler) throws org.apache.thrift.TException;
+    public void deploy(AuthToken token, ArchiveId resource, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.deploy_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void dstatus(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.dstatus_call> resultHandler) throws org.apache.thrift.TException;
+    public void dstatus(AuthToken token, ArchiveId resource, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.dstatus_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void promote(AuthToken token, ResourceIdentifier identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.promote_call> resultHandler) throws org.apache.thrift.TException;
+    public void promote(AuthToken token, ArchiveId identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.promote_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void remove(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.remove_call> resultHandler) throws org.apache.thrift.TException;
+    public void remove(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.remove_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void removeApplication(AuthToken token, FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.removeApplication_call> resultHandler) throws org.apache.thrift.TException;
+    public void removeApplication(AuthToken token, ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.removeApplication_call> resultHandler) throws org.apache.thrift.TException;
 
     public void removeAll(AuthToken token, String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.removeAll_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -234,13 +234,13 @@ public class AppFabricService {
       super(iprot, oprot);
     }
 
-    public RunIdentifier start(AuthToken token, FlowDescriptor descriptor) throws AppFabricServiceException, org.apache.thrift.TException
+    public RunIdentifier start(AuthToken token, ProgramDescriptor descriptor) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_start(token, descriptor);
       return recv_start();
     }
 
-    public void send_start(AuthToken token, FlowDescriptor descriptor) throws org.apache.thrift.TException
+    public void send_start(AuthToken token, ProgramDescriptor descriptor) throws org.apache.thrift.TException
     {
       start_args args = new start_args();
       args.setToken(token);
@@ -261,13 +261,13 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "start failed: unknown result");
     }
 
-    public FlowStatus status(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException, org.apache.thrift.TException
+    public ProgramStatus status(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_status(token, identifier);
       return recv_status();
     }
 
-    public void send_status(AuthToken token, FlowIdentifier identifier) throws org.apache.thrift.TException
+    public void send_status(AuthToken token, ProgramId identifier) throws org.apache.thrift.TException
     {
       status_args args = new status_args();
       args.setToken(token);
@@ -275,7 +275,7 @@ public class AppFabricService {
       sendBase("status", args);
     }
 
-    public FlowStatus recv_status() throws AppFabricServiceException, org.apache.thrift.TException
+    public ProgramStatus recv_status() throws AppFabricServiceException, org.apache.thrift.TException
     {
       status_result result = new status_result();
       receiveBase(result, "status");
@@ -288,13 +288,13 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "status failed: unknown result");
     }
 
-    public RunIdentifier stop(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException, org.apache.thrift.TException
+    public RunIdentifier stop(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_stop(token, identifier);
       return recv_stop();
     }
 
-    public void send_stop(AuthToken token, FlowIdentifier identifier) throws org.apache.thrift.TException
+    public void send_stop(AuthToken token, ProgramId identifier) throws org.apache.thrift.TException
     {
       stop_args args = new stop_args();
       args.setToken(token);
@@ -315,13 +315,13 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "stop failed: unknown result");
     }
 
-    public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances) throws AppFabricServiceException, org.apache.thrift.TException
+    public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_setInstances(token, identifier, flowletId, instances);
       recv_setInstances();
     }
 
-    public void send_setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances) throws org.apache.thrift.TException
+    public void send_setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws org.apache.thrift.TException
     {
       setInstances_args args = new setInstances_args();
       args.setToken(token);
@@ -341,39 +341,39 @@ public class AppFabricService {
       return;
     }
 
-    public List<ActiveFlow> getFlows(String accountId) throws AppFabricServiceException, org.apache.thrift.TException
+    public List<ActiveProgram> getPrograms(String accountId) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_getFlows(accountId);
-      return recv_getFlows();
+      send_getPrograms(accountId);
+      return recv_getPrograms();
     }
 
-    public void send_getFlows(String accountId) throws org.apache.thrift.TException
+    public void send_getPrograms(String accountId) throws org.apache.thrift.TException
     {
-      getFlows_args args = new getFlows_args();
+      getPrograms_args args = new getPrograms_args();
       args.setAccountId(accountId);
-      sendBase("getFlows", args);
+      sendBase("getPrograms", args);
     }
 
-    public List<ActiveFlow> recv_getFlows() throws AppFabricServiceException, org.apache.thrift.TException
+    public List<ActiveProgram> recv_getPrograms() throws AppFabricServiceException, org.apache.thrift.TException
     {
-      getFlows_result result = new getFlows_result();
-      receiveBase(result, "getFlows");
+      getPrograms_result result = new getPrograms_result();
+      receiveBase(result, "getPrograms");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlows failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getPrograms failed: unknown result");
     }
 
-    public String getSpecification(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException
+    public String getSpecification(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_getSpecification(id);
       return recv_getSpecification();
     }
 
-    public void send_getSpecification(FlowIdentifier id) throws org.apache.thrift.TException
+    public void send_getSpecification(ProgramId id) throws org.apache.thrift.TException
     {
       getSpecification_args args = new getSpecification_args();
       args.setId(id);
@@ -393,20 +393,20 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getSpecification failed: unknown result");
     }
 
-    public List<FlowRunRecord> getHistory(FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException
+    public List<ProgramRunRecord> getHistory(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_getHistory(id);
       return recv_getHistory();
     }
 
-    public void send_getHistory(FlowIdentifier id) throws org.apache.thrift.TException
+    public void send_getHistory(ProgramId id) throws org.apache.thrift.TException
     {
       getHistory_args args = new getHistory_args();
       args.setId(id);
       sendBase("getHistory", args);
     }
 
-    public List<FlowRunRecord> recv_getHistory() throws AppFabricServiceException, org.apache.thrift.TException
+    public List<ProgramRunRecord> recv_getHistory() throws AppFabricServiceException, org.apache.thrift.TException
     {
       getHistory_result result = new getHistory_result();
       receiveBase(result, "getHistory");
@@ -442,13 +442,13 @@ public class AppFabricService {
       return;
     }
 
-    public ResourceIdentifier init(AuthToken token, ResourceInfo info) throws AppFabricServiceException, org.apache.thrift.TException
+    public ArchiveId init(AuthToken token, ArchiveInfo info) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_init(token, info);
       return recv_init();
     }
 
-    public void send_init(AuthToken token, ResourceInfo info) throws org.apache.thrift.TException
+    public void send_init(AuthToken token, ArchiveInfo info) throws org.apache.thrift.TException
     {
       init_args args = new init_args();
       args.setToken(token);
@@ -456,7 +456,7 @@ public class AppFabricService {
       sendBase("init", args);
     }
 
-    public ResourceIdentifier recv_init() throws AppFabricServiceException, org.apache.thrift.TException
+    public ArchiveId recv_init() throws AppFabricServiceException, org.apache.thrift.TException
     {
       init_result result = new init_result();
       receiveBase(result, "init");
@@ -469,13 +469,13 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "init failed: unknown result");
     }
 
-    public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws AppFabricServiceException, org.apache.thrift.TException
+    public void chunk(AuthToken token, ArchiveId resource, ByteBuffer chunk) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_chunk(token, resource, chunk);
       recv_chunk();
     }
 
-    public void send_chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws org.apache.thrift.TException
+    public void send_chunk(AuthToken token, ArchiveId resource, ByteBuffer chunk) throws org.apache.thrift.TException
     {
       chunk_args args = new chunk_args();
       args.setToken(token);
@@ -494,13 +494,13 @@ public class AppFabricService {
       return;
     }
 
-    public void deploy(AuthToken token, ResourceIdentifier resource) throws AppFabricServiceException, org.apache.thrift.TException
+    public void deploy(AuthToken token, ArchiveId resource) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_deploy(token, resource);
       recv_deploy();
     }
 
-    public void send_deploy(AuthToken token, ResourceIdentifier resource) throws org.apache.thrift.TException
+    public void send_deploy(AuthToken token, ArchiveId resource) throws org.apache.thrift.TException
     {
       deploy_args args = new deploy_args();
       args.setToken(token);
@@ -518,13 +518,13 @@ public class AppFabricService {
       return;
     }
 
-    public DeploymentStatus dstatus(AuthToken token, ResourceIdentifier resource) throws AppFabricServiceException, org.apache.thrift.TException
+    public DeploymentStatus dstatus(AuthToken token, ArchiveId resource) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_dstatus(token, resource);
       return recv_dstatus();
     }
 
-    public void send_dstatus(AuthToken token, ResourceIdentifier resource) throws org.apache.thrift.TException
+    public void send_dstatus(AuthToken token, ArchiveId resource) throws org.apache.thrift.TException
     {
       dstatus_args args = new dstatus_args();
       args.setToken(token);
@@ -545,13 +545,13 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "dstatus failed: unknown result");
     }
 
-    public boolean promote(AuthToken token, ResourceIdentifier identifier, String hostname) throws AppFabricServiceException, org.apache.thrift.TException
+    public boolean promote(AuthToken token, ArchiveId identifier, String hostname) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_promote(token, identifier, hostname);
       return recv_promote();
     }
 
-    public void send_promote(AuthToken token, ResourceIdentifier identifier, String hostname) throws org.apache.thrift.TException
+    public void send_promote(AuthToken token, ArchiveId identifier, String hostname) throws org.apache.thrift.TException
     {
       promote_args args = new promote_args();
       args.setToken(token);
@@ -573,13 +573,13 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "promote failed: unknown result");
     }
 
-    public void remove(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException, org.apache.thrift.TException
+    public void remove(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_remove(token, identifier);
       recv_remove();
     }
 
-    public void send_remove(AuthToken token, FlowIdentifier identifier) throws org.apache.thrift.TException
+    public void send_remove(AuthToken token, ProgramId identifier) throws org.apache.thrift.TException
     {
       remove_args args = new remove_args();
       args.setToken(token);
@@ -597,13 +597,13 @@ public class AppFabricService {
       return;
     }
 
-    public void removeApplication(AuthToken token, FlowIdentifier id) throws AppFabricServiceException, org.apache.thrift.TException
+    public void removeApplication(AuthToken token, ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_removeApplication(token, id);
       recv_removeApplication();
     }
 
-    public void send_removeApplication(AuthToken token, FlowIdentifier id) throws org.apache.thrift.TException
+    public void send_removeApplication(AuthToken token, ProgramId id) throws org.apache.thrift.TException
     {
       removeApplication_args args = new removeApplication_args();
       args.setToken(token);
@@ -687,7 +687,7 @@ public class AppFabricService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void start(AuthToken token, FlowDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler) throws org.apache.thrift.TException {
+    public void start(AuthToken token, ProgramDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       start_call method_call = new start_call(token, descriptor, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -696,8 +696,8 @@ public class AppFabricService {
 
     public static class start_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private FlowDescriptor descriptor;
-      public start_call(AuthToken token, FlowDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ProgramDescriptor descriptor;
+      public start_call(AuthToken token, ProgramDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.descriptor = descriptor;
@@ -722,7 +722,7 @@ public class AppFabricService {
       }
     }
 
-    public void status(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<status_call> resultHandler) throws org.apache.thrift.TException {
+    public void status(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<status_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       status_call method_call = new status_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -731,8 +731,8 @@ public class AppFabricService {
 
     public static class status_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private FlowIdentifier identifier;
-      public status_call(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<status_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ProgramId identifier;
+      public status_call(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<status_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
@@ -747,7 +747,7 @@ public class AppFabricService {
         prot.writeMessageEnd();
       }
 
-      public FlowStatus getResult() throws AppFabricServiceException, org.apache.thrift.TException {
+      public ProgramStatus getResult() throws AppFabricServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -757,7 +757,7 @@ public class AppFabricService {
       }
     }
 
-    public void stop(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<stop_call> resultHandler) throws org.apache.thrift.TException {
+    public void stop(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<stop_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       stop_call method_call = new stop_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -766,8 +766,8 @@ public class AppFabricService {
 
     public static class stop_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private FlowIdentifier identifier;
-      public stop_call(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<stop_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ProgramId identifier;
+      public stop_call(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<stop_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
@@ -792,7 +792,7 @@ public class AppFabricService {
       }
     }
 
-    public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setInstances_call> resultHandler) throws org.apache.thrift.TException {
+    public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setInstances_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       setInstances_call method_call = new setInstances_call(token, identifier, flowletId, instances, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -801,10 +801,10 @@ public class AppFabricService {
 
     public static class setInstances_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private FlowIdentifier identifier;
+      private ProgramId identifier;
       private String flowletId;
       private short instances;
-      public setInstances_call(AuthToken token, FlowIdentifier identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setInstances_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public setInstances_call(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setInstances_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
@@ -833,39 +833,39 @@ public class AppFabricService {
       }
     }
 
-    public void getFlows(String accountId, org.apache.thrift.async.AsyncMethodCallback<getFlows_call> resultHandler) throws org.apache.thrift.TException {
+    public void getPrograms(String accountId, org.apache.thrift.async.AsyncMethodCallback<getPrograms_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getFlows_call method_call = new getFlows_call(accountId, resultHandler, this, ___protocolFactory, ___transport);
+      getPrograms_call method_call = new getPrograms_call(accountId, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class getFlows_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class getPrograms_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String accountId;
-      public getFlows_call(String accountId, org.apache.thrift.async.AsyncMethodCallback<getFlows_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public getPrograms_call(String accountId, org.apache.thrift.async.AsyncMethodCallback<getPrograms_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.accountId = accountId;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlows", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getFlows_args args = new getFlows_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getPrograms", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getPrograms_args args = new getPrograms_args();
         args.setAccountId(accountId);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public List<ActiveFlow> getResult() throws AppFabricServiceException, org.apache.thrift.TException {
+      public List<ActiveProgram> getResult() throws AppFabricServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getFlows();
+        return (new Client(prot)).recv_getPrograms();
       }
     }
 
-    public void getSpecification(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getSpecification_call> resultHandler) throws org.apache.thrift.TException {
+    public void getSpecification(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<getSpecification_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getSpecification_call method_call = new getSpecification_call(id, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -873,8 +873,8 @@ public class AppFabricService {
     }
 
     public static class getSpecification_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private FlowIdentifier id;
-      public getSpecification_call(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getSpecification_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ProgramId id;
+      public getSpecification_call(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<getSpecification_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.id = id;
       }
@@ -897,7 +897,7 @@ public class AppFabricService {
       }
     }
 
-    public void getHistory(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler) throws org.apache.thrift.TException {
+    public void getHistory(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getHistory_call method_call = new getHistory_call(id, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -905,8 +905,8 @@ public class AppFabricService {
     }
 
     public static class getHistory_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private FlowIdentifier id;
-      public getHistory_call(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ProgramId id;
+      public getHistory_call(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.id = id;
       }
@@ -919,7 +919,7 @@ public class AppFabricService {
         prot.writeMessageEnd();
       }
 
-      public List<FlowRunRecord> getResult() throws AppFabricServiceException, org.apache.thrift.TException {
+      public List<ProgramRunRecord> getResult() throws AppFabricServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -961,7 +961,7 @@ public class AppFabricService {
       }
     }
 
-    public void init(AuthToken token, ResourceInfo info, org.apache.thrift.async.AsyncMethodCallback<init_call> resultHandler) throws org.apache.thrift.TException {
+    public void init(AuthToken token, ArchiveInfo info, org.apache.thrift.async.AsyncMethodCallback<init_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       init_call method_call = new init_call(token, info, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -970,8 +970,8 @@ public class AppFabricService {
 
     public static class init_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private ResourceInfo info;
-      public init_call(AuthToken token, ResourceInfo info, org.apache.thrift.async.AsyncMethodCallback<init_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ArchiveInfo info;
+      public init_call(AuthToken token, ArchiveInfo info, org.apache.thrift.async.AsyncMethodCallback<init_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.info = info;
@@ -986,7 +986,7 @@ public class AppFabricService {
         prot.writeMessageEnd();
       }
 
-      public ResourceIdentifier getResult() throws AppFabricServiceException, org.apache.thrift.TException {
+      public ArchiveId getResult() throws AppFabricServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -996,7 +996,7 @@ public class AppFabricService {
       }
     }
 
-    public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<chunk_call> resultHandler) throws org.apache.thrift.TException {
+    public void chunk(AuthToken token, ArchiveId resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<chunk_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       chunk_call method_call = new chunk_call(token, resource, chunk, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -1005,9 +1005,9 @@ public class AppFabricService {
 
     public static class chunk_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private ResourceIdentifier resource;
+      private ArchiveId resource;
       private ByteBuffer chunk;
-      public chunk_call(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<chunk_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public chunk_call(AuthToken token, ArchiveId resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<chunk_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.resource = resource;
@@ -1034,7 +1034,7 @@ public class AppFabricService {
       }
     }
 
-    public void deploy(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<deploy_call> resultHandler) throws org.apache.thrift.TException {
+    public void deploy(AuthToken token, ArchiveId resource, org.apache.thrift.async.AsyncMethodCallback<deploy_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       deploy_call method_call = new deploy_call(token, resource, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -1043,8 +1043,8 @@ public class AppFabricService {
 
     public static class deploy_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private ResourceIdentifier resource;
-      public deploy_call(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<deploy_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ArchiveId resource;
+      public deploy_call(AuthToken token, ArchiveId resource, org.apache.thrift.async.AsyncMethodCallback<deploy_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.resource = resource;
@@ -1069,7 +1069,7 @@ public class AppFabricService {
       }
     }
 
-    public void dstatus(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<dstatus_call> resultHandler) throws org.apache.thrift.TException {
+    public void dstatus(AuthToken token, ArchiveId resource, org.apache.thrift.async.AsyncMethodCallback<dstatus_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       dstatus_call method_call = new dstatus_call(token, resource, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -1078,8 +1078,8 @@ public class AppFabricService {
 
     public static class dstatus_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private ResourceIdentifier resource;
-      public dstatus_call(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<dstatus_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ArchiveId resource;
+      public dstatus_call(AuthToken token, ArchiveId resource, org.apache.thrift.async.AsyncMethodCallback<dstatus_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.resource = resource;
@@ -1104,7 +1104,7 @@ public class AppFabricService {
       }
     }
 
-    public void promote(AuthToken token, ResourceIdentifier identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler) throws org.apache.thrift.TException {
+    public void promote(AuthToken token, ArchiveId identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       promote_call method_call = new promote_call(token, identifier, hostname, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -1113,9 +1113,9 @@ public class AppFabricService {
 
     public static class promote_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private ResourceIdentifier identifier;
+      private ArchiveId identifier;
       private String hostname;
-      public promote_call(AuthToken token, ResourceIdentifier identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public promote_call(AuthToken token, ArchiveId identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
@@ -1142,7 +1142,7 @@ public class AppFabricService {
       }
     }
 
-    public void remove(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<remove_call> resultHandler) throws org.apache.thrift.TException {
+    public void remove(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<remove_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       remove_call method_call = new remove_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -1151,8 +1151,8 @@ public class AppFabricService {
 
     public static class remove_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private FlowIdentifier identifier;
-      public remove_call(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<remove_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ProgramId identifier;
+      public remove_call(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<remove_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
@@ -1177,7 +1177,7 @@ public class AppFabricService {
       }
     }
 
-    public void removeApplication(AuthToken token, FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<removeApplication_call> resultHandler) throws org.apache.thrift.TException {
+    public void removeApplication(AuthToken token, ProgramId id, org.apache.thrift.async.AsyncMethodCallback<removeApplication_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       removeApplication_call method_call = new removeApplication_call(token, id, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -1186,8 +1186,8 @@ public class AppFabricService {
 
     public static class removeApplication_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private FlowIdentifier id;
-      public removeApplication_call(AuthToken token, FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<removeApplication_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ProgramId id;
+      public removeApplication_call(AuthToken token, ProgramId id, org.apache.thrift.async.AsyncMethodCallback<removeApplication_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.id = id;
@@ -1299,7 +1299,7 @@ public class AppFabricService {
       processMap.put("status", new status());
       processMap.put("stop", new stop());
       processMap.put("setInstances", new setInstances());
-      processMap.put("getFlows", new getFlows());
+      processMap.put("getPrograms", new getPrograms());
       processMap.put("getSpecification", new getSpecification());
       processMap.put("getHistory", new getHistory());
       processMap.put("stopAll", new stopAll());
@@ -1395,19 +1395,19 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlows<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlows_args> {
-      public getFlows() {
-        super("getFlows");
+    private static class getPrograms<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getPrograms_args> {
+      public getPrograms() {
+        super("getPrograms");
       }
 
-      protected getFlows_args getEmptyArgsInstance() {
-        return new getFlows_args();
+      protected getPrograms_args getEmptyArgsInstance() {
+        return new getPrograms_args();
       }
 
-      protected getFlows_result getResult(I iface, getFlows_args args) throws org.apache.thrift.TException {
-        getFlows_result result = new getFlows_result();
+      protected getPrograms_result getResult(I iface, getPrograms_args args) throws org.apache.thrift.TException {
+        getPrograms_result result = new getPrograms_result();
         try {
-          result.success = iface.getFlows(args.accountId);
+          result.success = iface.getPrograms(args.accountId);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -1671,7 +1671,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private FlowDescriptor descriptor; // required
+    private ProgramDescriptor descriptor; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -1741,7 +1741,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.DESCRIPTOR, new org.apache.thrift.meta_data.FieldMetaData("descriptor", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowDescriptor.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramDescriptor.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(start_args.class, metaDataMap);
     }
@@ -1751,7 +1751,7 @@ public class AppFabricService {
 
     public start_args(
       AuthToken token,
-      FlowDescriptor descriptor)
+      ProgramDescriptor descriptor)
     {
       this();
       this.token = token;
@@ -1766,7 +1766,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetDescriptor()) {
-        this.descriptor = new FlowDescriptor(other.descriptor);
+        this.descriptor = new ProgramDescriptor(other.descriptor);
       }
     }
 
@@ -1803,11 +1803,11 @@ public class AppFabricService {
       }
     }
 
-    public FlowDescriptor getDescriptor() {
+    public ProgramDescriptor getDescriptor() {
       return this.descriptor;
     }
 
-    public void setDescriptor(FlowDescriptor descriptor) {
+    public void setDescriptor(ProgramDescriptor descriptor) {
       this.descriptor = descriptor;
     }
 
@@ -1840,7 +1840,7 @@ public class AppFabricService {
         if (value == null) {
           unsetDescriptor();
         } else {
-          setDescriptor((FlowDescriptor)value);
+          setDescriptor((ProgramDescriptor)value);
         }
         break;
 
@@ -2041,7 +2041,7 @@ public class AppFabricService {
               break;
             case 2: // DESCRIPTOR
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.descriptor = new FlowDescriptor();
+                struct.descriptor = new ProgramDescriptor();
                 struct.descriptor.read(iprot);
                 struct.setDescriptorIsSet(true);
               } else { 
@@ -2114,7 +2114,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.descriptor = new FlowDescriptor();
+          struct.descriptor = new ProgramDescriptor();
           struct.descriptor.read(iprot);
           struct.setDescriptorIsSet(true);
         }
@@ -2601,7 +2601,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private FlowIdentifier identifier; // required
+    private ProgramId identifier; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -2671,7 +2671,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(status_args.class, metaDataMap);
     }
@@ -2681,7 +2681,7 @@ public class AppFabricService {
 
     public status_args(
       AuthToken token,
-      FlowIdentifier identifier)
+      ProgramId identifier)
     {
       this();
       this.token = token;
@@ -2696,7 +2696,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetIdentifier()) {
-        this.identifier = new FlowIdentifier(other.identifier);
+        this.identifier = new ProgramId(other.identifier);
       }
     }
 
@@ -2733,11 +2733,11 @@ public class AppFabricService {
       }
     }
 
-    public FlowIdentifier getIdentifier() {
+    public ProgramId getIdentifier() {
       return this.identifier;
     }
 
-    public void setIdentifier(FlowIdentifier identifier) {
+    public void setIdentifier(ProgramId identifier) {
       this.identifier = identifier;
     }
 
@@ -2770,7 +2770,7 @@ public class AppFabricService {
         if (value == null) {
           unsetIdentifier();
         } else {
-          setIdentifier((FlowIdentifier)value);
+          setIdentifier((ProgramId)value);
         }
         break;
 
@@ -2971,7 +2971,7 @@ public class AppFabricService {
               break;
             case 2: // IDENTIFIER
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.identifier = new FlowIdentifier();
+                struct.identifier = new ProgramId();
                 struct.identifier.read(iprot);
                 struct.setIdentifierIsSet(true);
               } else { 
@@ -3044,7 +3044,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.identifier = new FlowIdentifier();
+          struct.identifier = new ProgramId();
           struct.identifier.read(iprot);
           struct.setIdentifierIsSet(true);
         }
@@ -3065,7 +3065,7 @@ public class AppFabricService {
       schemes.put(TupleScheme.class, new status_resultTupleSchemeFactory());
     }
 
-    private FlowStatus success; // required
+    private ProgramStatus success; // required
     private AppFabricServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -3134,7 +3134,7 @@ public class AppFabricService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowStatus.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramStatus.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -3145,7 +3145,7 @@ public class AppFabricService {
     }
 
     public status_result(
-      FlowStatus success,
+      ProgramStatus success,
       AppFabricServiceException e)
     {
       this();
@@ -3158,7 +3158,7 @@ public class AppFabricService {
      */
     public status_result(status_result other) {
       if (other.isSetSuccess()) {
-        this.success = new FlowStatus(other.success);
+        this.success = new ProgramStatus(other.success);
       }
       if (other.isSetE()) {
         this.e = new AppFabricServiceException(other.e);
@@ -3175,11 +3175,11 @@ public class AppFabricService {
       this.e = null;
     }
 
-    public FlowStatus getSuccess() {
+    public ProgramStatus getSuccess() {
       return this.success;
     }
 
-    public void setSuccess(FlowStatus success) {
+    public void setSuccess(ProgramStatus success) {
       this.success = success;
     }
 
@@ -3227,7 +3227,7 @@ public class AppFabricService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((FlowStatus)value);
+          setSuccess((ProgramStatus)value);
         }
         break;
 
@@ -3427,7 +3427,7 @@ public class AppFabricService {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new FlowStatus();
+                struct.success = new ProgramStatus();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -3504,7 +3504,7 @@ public class AppFabricService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new FlowStatus();
+          struct.success = new ProgramStatus();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
@@ -3531,7 +3531,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private FlowIdentifier identifier; // required
+    private ProgramId identifier; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -3601,7 +3601,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(stop_args.class, metaDataMap);
     }
@@ -3611,7 +3611,7 @@ public class AppFabricService {
 
     public stop_args(
       AuthToken token,
-      FlowIdentifier identifier)
+      ProgramId identifier)
     {
       this();
       this.token = token;
@@ -3626,7 +3626,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetIdentifier()) {
-        this.identifier = new FlowIdentifier(other.identifier);
+        this.identifier = new ProgramId(other.identifier);
       }
     }
 
@@ -3663,11 +3663,11 @@ public class AppFabricService {
       }
     }
 
-    public FlowIdentifier getIdentifier() {
+    public ProgramId getIdentifier() {
       return this.identifier;
     }
 
-    public void setIdentifier(FlowIdentifier identifier) {
+    public void setIdentifier(ProgramId identifier) {
       this.identifier = identifier;
     }
 
@@ -3700,7 +3700,7 @@ public class AppFabricService {
         if (value == null) {
           unsetIdentifier();
         } else {
-          setIdentifier((FlowIdentifier)value);
+          setIdentifier((ProgramId)value);
         }
         break;
 
@@ -3901,7 +3901,7 @@ public class AppFabricService {
               break;
             case 2: // IDENTIFIER
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.identifier = new FlowIdentifier();
+                struct.identifier = new ProgramId();
                 struct.identifier.read(iprot);
                 struct.setIdentifierIsSet(true);
               } else { 
@@ -3974,7 +3974,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.identifier = new FlowIdentifier();
+          struct.identifier = new ProgramId();
           struct.identifier.read(iprot);
           struct.setIdentifierIsSet(true);
         }
@@ -4463,7 +4463,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private FlowIdentifier identifier; // required
+    private ProgramId identifier; // required
     private String flowletId; // required
     private short instances; // required
 
@@ -4543,7 +4543,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
       tmpMap.put(_Fields.FLOWLET_ID, new org.apache.thrift.meta_data.FieldMetaData("flowletId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.INSTANCES, new org.apache.thrift.meta_data.FieldMetaData("instances", org.apache.thrift.TFieldRequirementType.DEFAULT, 
@@ -4557,7 +4557,7 @@ public class AppFabricService {
 
     public setInstances_args(
       AuthToken token,
-      FlowIdentifier identifier,
+      ProgramId identifier,
       String flowletId,
       short instances)
     {
@@ -4579,7 +4579,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetIdentifier()) {
-        this.identifier = new FlowIdentifier(other.identifier);
+        this.identifier = new ProgramId(other.identifier);
       }
       if (other.isSetFlowletId()) {
         this.flowletId = other.flowletId;
@@ -4623,11 +4623,11 @@ public class AppFabricService {
       }
     }
 
-    public FlowIdentifier getIdentifier() {
+    public ProgramId getIdentifier() {
       return this.identifier;
     }
 
-    public void setIdentifier(FlowIdentifier identifier) {
+    public void setIdentifier(ProgramId identifier) {
       this.identifier = identifier;
     }
 
@@ -4705,7 +4705,7 @@ public class AppFabricService {
         if (value == null) {
           unsetIdentifier();
         } else {
-          setIdentifier((FlowIdentifier)value);
+          setIdentifier((ProgramId)value);
         }
         break;
 
@@ -4994,7 +4994,7 @@ public class AppFabricService {
               break;
             case 2: // IDENTIFIER
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.identifier = new FlowIdentifier();
+                struct.identifier = new ProgramId();
                 struct.identifier.read(iprot);
                 struct.setIdentifierIsSet(true);
               } else { 
@@ -5103,7 +5103,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.identifier = new FlowIdentifier();
+          struct.identifier = new ProgramId();
           struct.identifier.read(iprot);
           struct.setIdentifierIsSet(true);
         }
@@ -5479,15 +5479,15 @@ public class AppFabricService {
 
   }
 
-  public static class getFlows_args implements org.apache.thrift.TBase<getFlows_args, getFlows_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlows_args");
+  public static class getPrograms_args implements org.apache.thrift.TBase<getPrograms_args, getPrograms_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getPrograms_args");
 
     private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getFlows_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getFlows_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getPrograms_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getPrograms_argsTupleSchemeFactory());
     }
 
     private String accountId; // required
@@ -5557,13 +5557,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlows_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getPrograms_args.class, metaDataMap);
     }
 
-    public getFlows_args() {
+    public getPrograms_args() {
     }
 
-    public getFlows_args(
+    public getPrograms_args(
       String accountId)
     {
       this();
@@ -5573,14 +5573,14 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getFlows_args(getFlows_args other) {
+    public getPrograms_args(getPrograms_args other) {
       if (other.isSetAccountId()) {
         this.accountId = other.accountId;
       }
     }
 
-    public getFlows_args deepCopy() {
-      return new getFlows_args(this);
+    public getPrograms_args deepCopy() {
+      return new getPrograms_args(this);
     }
 
     @Override
@@ -5650,12 +5650,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getFlows_args)
-        return this.equals((getFlows_args)that);
+      if (that instanceof getPrograms_args)
+        return this.equals((getPrograms_args)that);
       return false;
     }
 
-    public boolean equals(getFlows_args that) {
+    public boolean equals(getPrograms_args that) {
       if (that == null)
         return false;
 
@@ -5683,13 +5683,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getFlows_args other) {
+    public int compareTo(getPrograms_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getFlows_args typedOther = (getFlows_args)other;
+      getPrograms_args typedOther = (getPrograms_args)other;
 
       lastComparison = Boolean.valueOf(isSetAccountId()).compareTo(typedOther.isSetAccountId());
       if (lastComparison != 0) {
@@ -5718,7 +5718,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getFlows_args(");
+      StringBuilder sb = new StringBuilder("getPrograms_args(");
       boolean first = true;
 
       sb.append("accountId:");
@@ -5752,15 +5752,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlows_argsStandardSchemeFactory implements SchemeFactory {
-      public getFlows_argsStandardScheme getScheme() {
-        return new getFlows_argsStandardScheme();
+    private static class getPrograms_argsStandardSchemeFactory implements SchemeFactory {
+      public getPrograms_argsStandardScheme getScheme() {
+        return new getPrograms_argsStandardScheme();
       }
     }
 
-    private static class getFlows_argsStandardScheme extends StandardScheme<getFlows_args> {
+    private static class getPrograms_argsStandardScheme extends StandardScheme<getPrograms_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlows_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getPrograms_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -5787,7 +5787,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlows_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getPrograms_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -5802,16 +5802,16 @@ public class AppFabricService {
 
     }
 
-    private static class getFlows_argsTupleSchemeFactory implements SchemeFactory {
-      public getFlows_argsTupleScheme getScheme() {
-        return new getFlows_argsTupleScheme();
+    private static class getPrograms_argsTupleSchemeFactory implements SchemeFactory {
+      public getPrograms_argsTupleScheme getScheme() {
+        return new getPrograms_argsTupleScheme();
       }
     }
 
-    private static class getFlows_argsTupleScheme extends TupleScheme<getFlows_args> {
+    private static class getPrograms_argsTupleScheme extends TupleScheme<getPrograms_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getFlows_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getPrograms_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetAccountId()) {
@@ -5824,7 +5824,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getFlows_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getPrograms_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
@@ -5836,19 +5836,19 @@ public class AppFabricService {
 
   }
 
-  public static class getFlows_result implements org.apache.thrift.TBase<getFlows_result, getFlows_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlows_result");
+  public static class getPrograms_result implements org.apache.thrift.TBase<getPrograms_result, getPrograms_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getPrograms_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getFlows_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getFlows_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getPrograms_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getPrograms_resultTupleSchemeFactory());
     }
 
-    private List<ActiveFlow> success; // required
+    private List<ActiveProgram> success; // required
     private AppFabricServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -5918,18 +5918,18 @@ public class AppFabricService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ActiveFlow.class))));
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ActiveProgram.class))));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlows_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getPrograms_result.class, metaDataMap);
     }
 
-    public getFlows_result() {
+    public getPrograms_result() {
     }
 
-    public getFlows_result(
-      List<ActiveFlow> success,
+    public getPrograms_result(
+      List<ActiveProgram> success,
       AppFabricServiceException e)
     {
       this();
@@ -5940,11 +5940,11 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getFlows_result(getFlows_result other) {
+    public getPrograms_result(getPrograms_result other) {
       if (other.isSetSuccess()) {
-        List<ActiveFlow> __this__success = new ArrayList<ActiveFlow>();
-        for (ActiveFlow other_element : other.success) {
-          __this__success.add(new ActiveFlow(other_element));
+        List<ActiveProgram> __this__success = new ArrayList<ActiveProgram>();
+        for (ActiveProgram other_element : other.success) {
+          __this__success.add(new ActiveProgram(other_element));
         }
         this.success = __this__success;
       }
@@ -5953,8 +5953,8 @@ public class AppFabricService {
       }
     }
 
-    public getFlows_result deepCopy() {
-      return new getFlows_result(this);
+    public getPrograms_result deepCopy() {
+      return new getPrograms_result(this);
     }
 
     @Override
@@ -5967,22 +5967,22 @@ public class AppFabricService {
       return (this.success == null) ? 0 : this.success.size();
     }
 
-    public java.util.Iterator<ActiveFlow> getSuccessIterator() {
+    public java.util.Iterator<ActiveProgram> getSuccessIterator() {
       return (this.success == null) ? null : this.success.iterator();
     }
 
-    public void addToSuccess(ActiveFlow elem) {
+    public void addToSuccess(ActiveProgram elem) {
       if (this.success == null) {
-        this.success = new ArrayList<ActiveFlow>();
+        this.success = new ArrayList<ActiveProgram>();
       }
       this.success.add(elem);
     }
 
-    public List<ActiveFlow> getSuccess() {
+    public List<ActiveProgram> getSuccess() {
       return this.success;
     }
 
-    public void setSuccess(List<ActiveFlow> success) {
+    public void setSuccess(List<ActiveProgram> success) {
       this.success = success;
     }
 
@@ -6030,7 +6030,7 @@ public class AppFabricService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((List<ActiveFlow>)value);
+          setSuccess((List<ActiveProgram>)value);
         }
         break;
 
@@ -6076,12 +6076,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getFlows_result)
-        return this.equals((getFlows_result)that);
+      if (that instanceof getPrograms_result)
+        return this.equals((getPrograms_result)that);
       return false;
     }
 
-    public boolean equals(getFlows_result that) {
+    public boolean equals(getPrograms_result that) {
       if (that == null)
         return false;
 
@@ -6123,13 +6123,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getFlows_result other) {
+    public int compareTo(getPrograms_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getFlows_result typedOther = (getFlows_result)other;
+      getPrograms_result typedOther = (getPrograms_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -6168,7 +6168,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getFlows_result(");
+      StringBuilder sb = new StringBuilder("getPrograms_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -6210,15 +6210,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getFlows_resultStandardSchemeFactory implements SchemeFactory {
-      public getFlows_resultStandardScheme getScheme() {
-        return new getFlows_resultStandardScheme();
+    private static class getPrograms_resultStandardSchemeFactory implements SchemeFactory {
+      public getPrograms_resultStandardScheme getScheme() {
+        return new getPrograms_resultStandardScheme();
       }
     }
 
-    private static class getFlows_resultStandardScheme extends StandardScheme<getFlows_result> {
+    private static class getPrograms_resultStandardScheme extends StandardScheme<getPrograms_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlows_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getPrograms_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6231,14 +6231,14 @@ public class AppFabricService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list18 = iprot.readListBegin();
-                  struct.success = new ArrayList<ActiveFlow>(_list18.size);
-                  for (int _i19 = 0; _i19 < _list18.size; ++_i19)
+                  org.apache.thrift.protocol.TList _list10 = iprot.readListBegin();
+                  struct.success = new ArrayList<ActiveProgram>(_list10.size);
+                  for (int _i11 = 0; _i11 < _list10.size; ++_i11)
                   {
-                    ActiveFlow _elem20; // required
-                    _elem20 = new ActiveFlow();
-                    _elem20.read(iprot);
-                    struct.success.add(_elem20);
+                    ActiveProgram _elem12; // required
+                    _elem12 = new ActiveProgram();
+                    _elem12.read(iprot);
+                    struct.success.add(_elem12);
                   }
                   iprot.readListEnd();
                 }
@@ -6265,7 +6265,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlows_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getPrograms_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -6273,9 +6273,9 @@ public class AppFabricService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (ActiveFlow _iter21 : struct.success)
+            for (ActiveProgram _iter13 : struct.success)
             {
-              _iter21.write(oprot);
+              _iter13.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -6292,16 +6292,16 @@ public class AppFabricService {
 
     }
 
-    private static class getFlows_resultTupleSchemeFactory implements SchemeFactory {
-      public getFlows_resultTupleScheme getScheme() {
-        return new getFlows_resultTupleScheme();
+    private static class getPrograms_resultTupleSchemeFactory implements SchemeFactory {
+      public getPrograms_resultTupleScheme getScheme() {
+        return new getPrograms_resultTupleScheme();
       }
     }
 
-    private static class getFlows_resultTupleScheme extends TupleScheme<getFlows_result> {
+    private static class getPrograms_resultTupleScheme extends TupleScheme<getPrograms_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getFlows_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getPrograms_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -6314,9 +6314,9 @@ public class AppFabricService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (ActiveFlow _iter22 : struct.success)
+            for (ActiveProgram _iter14 : struct.success)
             {
-              _iter22.write(oprot);
+              _iter14.write(oprot);
             }
           }
         }
@@ -6326,19 +6326,19 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getFlows_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getPrograms_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list23 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<ActiveFlow>(_list23.size);
-            for (int _i24 = 0; _i24 < _list23.size; ++_i24)
+            org.apache.thrift.protocol.TList _list15 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<ActiveProgram>(_list15.size);
+            for (int _i16 = 0; _i16 < _list15.size; ++_i16)
             {
-              ActiveFlow _elem25; // required
-              _elem25 = new ActiveFlow();
-              _elem25.read(iprot);
-              struct.success.add(_elem25);
+              ActiveProgram _elem17; // required
+              _elem17 = new ActiveProgram();
+              _elem17.read(iprot);
+              struct.success.add(_elem17);
             }
           }
           struct.setSuccessIsSet(true);
@@ -6364,7 +6364,7 @@ public class AppFabricService {
       schemes.put(TupleScheme.class, new getSpecification_argsTupleSchemeFactory());
     }
 
-    private FlowIdentifier id; // required
+    private ProgramId id; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -6429,7 +6429,7 @@ public class AppFabricService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSpecification_args.class, metaDataMap);
     }
@@ -6438,7 +6438,7 @@ public class AppFabricService {
     }
 
     public getSpecification_args(
-      FlowIdentifier id)
+      ProgramId id)
     {
       this();
       this.id = id;
@@ -6449,7 +6449,7 @@ public class AppFabricService {
      */
     public getSpecification_args(getSpecification_args other) {
       if (other.isSetId()) {
-        this.id = new FlowIdentifier(other.id);
+        this.id = new ProgramId(other.id);
       }
     }
 
@@ -6462,11 +6462,11 @@ public class AppFabricService {
       this.id = null;
     }
 
-    public FlowIdentifier getId() {
+    public ProgramId getId() {
       return this.id;
     }
 
-    public void setId(FlowIdentifier id) {
+    public void setId(ProgramId id) {
       this.id = id;
     }
 
@@ -6491,7 +6491,7 @@ public class AppFabricService {
         if (value == null) {
           unsetId();
         } else {
-          setId((FlowIdentifier)value);
+          setId((ProgramId)value);
         }
         break;
 
@@ -6646,7 +6646,7 @@ public class AppFabricService {
           switch (schemeField.id) {
             case 1: // ID
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.id = new FlowIdentifier();
+                struct.id = new ProgramId();
                 struct.id.read(iprot);
                 struct.setIdIsSet(true);
               } else { 
@@ -6703,7 +6703,7 @@ public class AppFabricService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.id = new FlowIdentifier();
+          struct.id = new ProgramId();
           struct.id.read(iprot);
           struct.setIdIsSet(true);
         }
@@ -7186,7 +7186,7 @@ public class AppFabricService {
       schemes.put(TupleScheme.class, new getHistory_argsTupleSchemeFactory());
     }
 
-    private FlowIdentifier id; // required
+    private ProgramId id; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -7251,7 +7251,7 @@ public class AppFabricService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getHistory_args.class, metaDataMap);
     }
@@ -7260,7 +7260,7 @@ public class AppFabricService {
     }
 
     public getHistory_args(
-      FlowIdentifier id)
+      ProgramId id)
     {
       this();
       this.id = id;
@@ -7271,7 +7271,7 @@ public class AppFabricService {
      */
     public getHistory_args(getHistory_args other) {
       if (other.isSetId()) {
-        this.id = new FlowIdentifier(other.id);
+        this.id = new ProgramId(other.id);
       }
     }
 
@@ -7284,11 +7284,11 @@ public class AppFabricService {
       this.id = null;
     }
 
-    public FlowIdentifier getId() {
+    public ProgramId getId() {
       return this.id;
     }
 
-    public void setId(FlowIdentifier id) {
+    public void setId(ProgramId id) {
       this.id = id;
     }
 
@@ -7313,7 +7313,7 @@ public class AppFabricService {
         if (value == null) {
           unsetId();
         } else {
-          setId((FlowIdentifier)value);
+          setId((ProgramId)value);
         }
         break;
 
@@ -7468,7 +7468,7 @@ public class AppFabricService {
           switch (schemeField.id) {
             case 1: // ID
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.id = new FlowIdentifier();
+                struct.id = new ProgramId();
                 struct.id.read(iprot);
                 struct.setIdIsSet(true);
               } else { 
@@ -7525,7 +7525,7 @@ public class AppFabricService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.id = new FlowIdentifier();
+          struct.id = new ProgramId();
           struct.id.read(iprot);
           struct.setIdIsSet(true);
         }
@@ -7546,7 +7546,7 @@ public class AppFabricService {
       schemes.put(TupleScheme.class, new getHistory_resultTupleSchemeFactory());
     }
 
-    private List<FlowRunRecord> success; // required
+    private List<ProgramRunRecord> success; // required
     private AppFabricServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -7616,7 +7616,7 @@ public class AppFabricService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowRunRecord.class))));
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramRunRecord.class))));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -7627,7 +7627,7 @@ public class AppFabricService {
     }
 
     public getHistory_result(
-      List<FlowRunRecord> success,
+      List<ProgramRunRecord> success,
       AppFabricServiceException e)
     {
       this();
@@ -7640,9 +7640,9 @@ public class AppFabricService {
      */
     public getHistory_result(getHistory_result other) {
       if (other.isSetSuccess()) {
-        List<FlowRunRecord> __this__success = new ArrayList<FlowRunRecord>();
-        for (FlowRunRecord other_element : other.success) {
-          __this__success.add(new FlowRunRecord(other_element));
+        List<ProgramRunRecord> __this__success = new ArrayList<ProgramRunRecord>();
+        for (ProgramRunRecord other_element : other.success) {
+          __this__success.add(new ProgramRunRecord(other_element));
         }
         this.success = __this__success;
       }
@@ -7665,22 +7665,22 @@ public class AppFabricService {
       return (this.success == null) ? 0 : this.success.size();
     }
 
-    public java.util.Iterator<FlowRunRecord> getSuccessIterator() {
+    public java.util.Iterator<ProgramRunRecord> getSuccessIterator() {
       return (this.success == null) ? null : this.success.iterator();
     }
 
-    public void addToSuccess(FlowRunRecord elem) {
+    public void addToSuccess(ProgramRunRecord elem) {
       if (this.success == null) {
-        this.success = new ArrayList<FlowRunRecord>();
+        this.success = new ArrayList<ProgramRunRecord>();
       }
       this.success.add(elem);
     }
 
-    public List<FlowRunRecord> getSuccess() {
+    public List<ProgramRunRecord> getSuccess() {
       return this.success;
     }
 
-    public void setSuccess(List<FlowRunRecord> success) {
+    public void setSuccess(List<ProgramRunRecord> success) {
       this.success = success;
     }
 
@@ -7728,7 +7728,7 @@ public class AppFabricService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((List<FlowRunRecord>)value);
+          setSuccess((List<ProgramRunRecord>)value);
         }
         break;
 
@@ -7929,14 +7929,14 @@ public class AppFabricService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list26 = iprot.readListBegin();
-                  struct.success = new ArrayList<FlowRunRecord>(_list26.size);
-                  for (int _i27 = 0; _i27 < _list26.size; ++_i27)
+                  org.apache.thrift.protocol.TList _list18 = iprot.readListBegin();
+                  struct.success = new ArrayList<ProgramRunRecord>(_list18.size);
+                  for (int _i19 = 0; _i19 < _list18.size; ++_i19)
                   {
-                    FlowRunRecord _elem28; // required
-                    _elem28 = new FlowRunRecord();
-                    _elem28.read(iprot);
-                    struct.success.add(_elem28);
+                    ProgramRunRecord _elem20; // required
+                    _elem20 = new ProgramRunRecord();
+                    _elem20.read(iprot);
+                    struct.success.add(_elem20);
                   }
                   iprot.readListEnd();
                 }
@@ -7971,9 +7971,9 @@ public class AppFabricService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (FlowRunRecord _iter29 : struct.success)
+            for (ProgramRunRecord _iter21 : struct.success)
             {
-              _iter29.write(oprot);
+              _iter21.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -8012,9 +8012,9 @@ public class AppFabricService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (FlowRunRecord _iter30 : struct.success)
+            for (ProgramRunRecord _iter22 : struct.success)
             {
-              _iter30.write(oprot);
+              _iter22.write(oprot);
             }
           }
         }
@@ -8029,14 +8029,14 @@ public class AppFabricService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list31 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<FlowRunRecord>(_list31.size);
-            for (int _i32 = 0; _i32 < _list31.size; ++_i32)
+            org.apache.thrift.protocol.TList _list23 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<ProgramRunRecord>(_list23.size);
+            for (int _i24 = 0; _i24 < _list23.size; ++_i24)
             {
-              FlowRunRecord _elem33; // required
-              _elem33 = new FlowRunRecord();
-              _elem33.read(iprot);
-              struct.success.add(_elem33);
+              ProgramRunRecord _elem25; // required
+              _elem25 = new ProgramRunRecord();
+              _elem25.read(iprot);
+              struct.success.add(_elem25);
             }
           }
           struct.setSuccessIsSet(true);
@@ -8780,7 +8780,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private ResourceInfo info; // required
+    private ArchiveInfo info; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -8850,7 +8850,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.INFO, new org.apache.thrift.meta_data.FieldMetaData("info", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceInfo.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ArchiveInfo.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(init_args.class, metaDataMap);
     }
@@ -8860,7 +8860,7 @@ public class AppFabricService {
 
     public init_args(
       AuthToken token,
-      ResourceInfo info)
+      ArchiveInfo info)
     {
       this();
       this.token = token;
@@ -8875,7 +8875,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetInfo()) {
-        this.info = new ResourceInfo(other.info);
+        this.info = new ArchiveInfo(other.info);
       }
     }
 
@@ -8912,11 +8912,11 @@ public class AppFabricService {
       }
     }
 
-    public ResourceInfo getInfo() {
+    public ArchiveInfo getInfo() {
       return this.info;
     }
 
-    public void setInfo(ResourceInfo info) {
+    public void setInfo(ArchiveInfo info) {
       this.info = info;
     }
 
@@ -8949,7 +8949,7 @@ public class AppFabricService {
         if (value == null) {
           unsetInfo();
         } else {
-          setInfo((ResourceInfo)value);
+          setInfo((ArchiveInfo)value);
         }
         break;
 
@@ -9150,7 +9150,7 @@ public class AppFabricService {
               break;
             case 2: // INFO
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.info = new ResourceInfo();
+                struct.info = new ArchiveInfo();
                 struct.info.read(iprot);
                 struct.setInfoIsSet(true);
               } else { 
@@ -9223,7 +9223,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.info = new ResourceInfo();
+          struct.info = new ArchiveInfo();
           struct.info.read(iprot);
           struct.setInfoIsSet(true);
         }
@@ -9244,7 +9244,7 @@ public class AppFabricService {
       schemes.put(TupleScheme.class, new init_resultTupleSchemeFactory());
     }
 
-    private ResourceIdentifier success; // required
+    private ArchiveId success; // required
     private AppFabricServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -9313,7 +9313,7 @@ public class AppFabricService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ArchiveId.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -9324,7 +9324,7 @@ public class AppFabricService {
     }
 
     public init_result(
-      ResourceIdentifier success,
+      ArchiveId success,
       AppFabricServiceException e)
     {
       this();
@@ -9337,7 +9337,7 @@ public class AppFabricService {
      */
     public init_result(init_result other) {
       if (other.isSetSuccess()) {
-        this.success = new ResourceIdentifier(other.success);
+        this.success = new ArchiveId(other.success);
       }
       if (other.isSetE()) {
         this.e = new AppFabricServiceException(other.e);
@@ -9354,11 +9354,11 @@ public class AppFabricService {
       this.e = null;
     }
 
-    public ResourceIdentifier getSuccess() {
+    public ArchiveId getSuccess() {
       return this.success;
     }
 
-    public void setSuccess(ResourceIdentifier success) {
+    public void setSuccess(ArchiveId success) {
       this.success = success;
     }
 
@@ -9406,7 +9406,7 @@ public class AppFabricService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((ResourceIdentifier)value);
+          setSuccess((ArchiveId)value);
         }
         break;
 
@@ -9606,7 +9606,7 @@ public class AppFabricService {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new ResourceIdentifier();
+                struct.success = new ArchiveId();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -9683,7 +9683,7 @@ public class AppFabricService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new ResourceIdentifier();
+          struct.success = new ArchiveId();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
@@ -9711,7 +9711,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private ResourceIdentifier resource; // required
+    private ArchiveId resource; // required
     private ByteBuffer chunk; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -9785,7 +9785,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.RESOURCE, new org.apache.thrift.meta_data.FieldMetaData("resource", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ArchiveId.class)));
       tmpMap.put(_Fields.CHUNK, new org.apache.thrift.meta_data.FieldMetaData("chunk", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -9797,7 +9797,7 @@ public class AppFabricService {
 
     public chunk_args(
       AuthToken token,
-      ResourceIdentifier resource,
+      ArchiveId resource,
       ByteBuffer chunk)
     {
       this();
@@ -9814,7 +9814,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetResource()) {
-        this.resource = new ResourceIdentifier(other.resource);
+        this.resource = new ArchiveId(other.resource);
       }
       if (other.isSetChunk()) {
         this.chunk = org.apache.thrift.TBaseHelper.copyBinary(other.chunk);
@@ -9856,11 +9856,11 @@ public class AppFabricService {
       }
     }
 
-    public ResourceIdentifier getResource() {
+    public ArchiveId getResource() {
       return this.resource;
     }
 
-    public void setResource(ResourceIdentifier resource) {
+    public void setResource(ArchiveId resource) {
       this.resource = resource;
     }
 
@@ -9925,7 +9925,7 @@ public class AppFabricService {
         if (value == null) {
           unsetResource();
         } else {
-          setResource((ResourceIdentifier)value);
+          setResource((ArchiveId)value);
         }
         break;
 
@@ -10171,7 +10171,7 @@ public class AppFabricService {
               break;
             case 2: // RESOURCE
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.resource = new ResourceIdentifier();
+                struct.resource = new ArchiveId();
                 struct.resource.read(iprot);
                 struct.setResourceIsSet(true);
               } else { 
@@ -10263,7 +10263,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.resource = new ResourceIdentifier();
+          struct.resource = new ArchiveId();
           struct.resource.read(iprot);
           struct.setResourceIsSet(true);
         }
@@ -10648,7 +10648,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private ResourceIdentifier resource; // required
+    private ArchiveId resource; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -10718,7 +10718,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.RESOURCE, new org.apache.thrift.meta_data.FieldMetaData("resource", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ArchiveId.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deploy_args.class, metaDataMap);
     }
@@ -10728,7 +10728,7 @@ public class AppFabricService {
 
     public deploy_args(
       AuthToken token,
-      ResourceIdentifier resource)
+      ArchiveId resource)
     {
       this();
       this.token = token;
@@ -10743,7 +10743,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetResource()) {
-        this.resource = new ResourceIdentifier(other.resource);
+        this.resource = new ArchiveId(other.resource);
       }
     }
 
@@ -10780,11 +10780,11 @@ public class AppFabricService {
       }
     }
 
-    public ResourceIdentifier getResource() {
+    public ArchiveId getResource() {
       return this.resource;
     }
 
-    public void setResource(ResourceIdentifier resource) {
+    public void setResource(ArchiveId resource) {
       this.resource = resource;
     }
 
@@ -10817,7 +10817,7 @@ public class AppFabricService {
         if (value == null) {
           unsetResource();
         } else {
-          setResource((ResourceIdentifier)value);
+          setResource((ArchiveId)value);
         }
         break;
 
@@ -11018,7 +11018,7 @@ public class AppFabricService {
               break;
             case 2: // RESOURCE
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.resource = new ResourceIdentifier();
+                struct.resource = new ArchiveId();
                 struct.resource.read(iprot);
                 struct.setResourceIsSet(true);
               } else { 
@@ -11091,7 +11091,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.resource = new ResourceIdentifier();
+          struct.resource = new ArchiveId();
           struct.resource.read(iprot);
           struct.setResourceIsSet(true);
         }
@@ -11472,7 +11472,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private ResourceIdentifier resource; // required
+    private ArchiveId resource; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -11542,7 +11542,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.RESOURCE, new org.apache.thrift.meta_data.FieldMetaData("resource", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ArchiveId.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(dstatus_args.class, metaDataMap);
     }
@@ -11552,7 +11552,7 @@ public class AppFabricService {
 
     public dstatus_args(
       AuthToken token,
-      ResourceIdentifier resource)
+      ArchiveId resource)
     {
       this();
       this.token = token;
@@ -11567,7 +11567,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetResource()) {
-        this.resource = new ResourceIdentifier(other.resource);
+        this.resource = new ArchiveId(other.resource);
       }
     }
 
@@ -11604,11 +11604,11 @@ public class AppFabricService {
       }
     }
 
-    public ResourceIdentifier getResource() {
+    public ArchiveId getResource() {
       return this.resource;
     }
 
-    public void setResource(ResourceIdentifier resource) {
+    public void setResource(ArchiveId resource) {
       this.resource = resource;
     }
 
@@ -11641,7 +11641,7 @@ public class AppFabricService {
         if (value == null) {
           unsetResource();
         } else {
-          setResource((ResourceIdentifier)value);
+          setResource((ArchiveId)value);
         }
         break;
 
@@ -11842,7 +11842,7 @@ public class AppFabricService {
               break;
             case 2: // RESOURCE
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.resource = new ResourceIdentifier();
+                struct.resource = new ArchiveId();
                 struct.resource.read(iprot);
                 struct.setResourceIsSet(true);
               } else { 
@@ -11915,7 +11915,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.resource = new ResourceIdentifier();
+          struct.resource = new ArchiveId();
           struct.resource.read(iprot);
           struct.setResourceIsSet(true);
         }
@@ -12403,7 +12403,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private ResourceIdentifier identifier; // required
+    private ArchiveId identifier; // required
     private String hostname; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -12477,7 +12477,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ArchiveId.class)));
       tmpMap.put(_Fields.HOSTNAME, new org.apache.thrift.meta_data.FieldMetaData("hostname", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -12489,7 +12489,7 @@ public class AppFabricService {
 
     public promote_args(
       AuthToken token,
-      ResourceIdentifier identifier,
+      ArchiveId identifier,
       String hostname)
     {
       this();
@@ -12506,7 +12506,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetIdentifier()) {
-        this.identifier = new ResourceIdentifier(other.identifier);
+        this.identifier = new ArchiveId(other.identifier);
       }
       if (other.isSetHostname()) {
         this.hostname = other.hostname;
@@ -12547,11 +12547,11 @@ public class AppFabricService {
       }
     }
 
-    public ResourceIdentifier getIdentifier() {
+    public ArchiveId getIdentifier() {
       return this.identifier;
     }
 
-    public void setIdentifier(ResourceIdentifier identifier) {
+    public void setIdentifier(ArchiveId identifier) {
       this.identifier = identifier;
     }
 
@@ -12607,7 +12607,7 @@ public class AppFabricService {
         if (value == null) {
           unsetIdentifier();
         } else {
-          setIdentifier((ResourceIdentifier)value);
+          setIdentifier((ArchiveId)value);
         }
         break;
 
@@ -12853,7 +12853,7 @@ public class AppFabricService {
               break;
             case 2: // IDENTIFIER
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.identifier = new ResourceIdentifier();
+                struct.identifier = new ArchiveId();
                 struct.identifier.read(iprot);
                 struct.setIdentifierIsSet(true);
               } else { 
@@ -12945,7 +12945,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.identifier = new ResourceIdentifier();
+          struct.identifier = new ArchiveId();
           struct.identifier.read(iprot);
           struct.setIdentifierIsSet(true);
         }
@@ -13431,7 +13431,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private FlowIdentifier identifier; // required
+    private ProgramId identifier; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -13501,7 +13501,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(remove_args.class, metaDataMap);
     }
@@ -13511,7 +13511,7 @@ public class AppFabricService {
 
     public remove_args(
       AuthToken token,
-      FlowIdentifier identifier)
+      ProgramId identifier)
     {
       this();
       this.token = token;
@@ -13526,7 +13526,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetIdentifier()) {
-        this.identifier = new FlowIdentifier(other.identifier);
+        this.identifier = new ProgramId(other.identifier);
       }
     }
 
@@ -13563,11 +13563,11 @@ public class AppFabricService {
       }
     }
 
-    public FlowIdentifier getIdentifier() {
+    public ProgramId getIdentifier() {
       return this.identifier;
     }
 
-    public void setIdentifier(FlowIdentifier identifier) {
+    public void setIdentifier(ProgramId identifier) {
       this.identifier = identifier;
     }
 
@@ -13600,7 +13600,7 @@ public class AppFabricService {
         if (value == null) {
           unsetIdentifier();
         } else {
-          setIdentifier((FlowIdentifier)value);
+          setIdentifier((ProgramId)value);
         }
         break;
 
@@ -13801,7 +13801,7 @@ public class AppFabricService {
               break;
             case 2: // IDENTIFIER
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.identifier = new FlowIdentifier();
+                struct.identifier = new ProgramId();
                 struct.identifier.read(iprot);
                 struct.setIdentifierIsSet(true);
               } else { 
@@ -13874,7 +13874,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.identifier = new FlowIdentifier();
+          struct.identifier = new ProgramId();
           struct.identifier.read(iprot);
           struct.setIdentifierIsSet(true);
         }
@@ -14255,7 +14255,7 @@ public class AppFabricService {
     }
 
     private AuthToken token; // required
-    private FlowIdentifier id; // required
+    private ProgramId id; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -14325,7 +14325,7 @@ public class AppFabricService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(removeApplication_args.class, metaDataMap);
     }
@@ -14335,7 +14335,7 @@ public class AppFabricService {
 
     public removeApplication_args(
       AuthToken token,
-      FlowIdentifier id)
+      ProgramId id)
     {
       this();
       this.token = token;
@@ -14350,7 +14350,7 @@ public class AppFabricService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetId()) {
-        this.id = new FlowIdentifier(other.id);
+        this.id = new ProgramId(other.id);
       }
     }
 
@@ -14387,11 +14387,11 @@ public class AppFabricService {
       }
     }
 
-    public FlowIdentifier getId() {
+    public ProgramId getId() {
       return this.id;
     }
 
-    public void setId(FlowIdentifier id) {
+    public void setId(ProgramId id) {
       this.id = id;
     }
 
@@ -14424,7 +14424,7 @@ public class AppFabricService {
         if (value == null) {
           unsetId();
         } else {
-          setId((FlowIdentifier)value);
+          setId((ProgramId)value);
         }
         break;
 
@@ -14625,7 +14625,7 @@ public class AppFabricService {
               break;
             case 2: // ID
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.id = new FlowIdentifier();
+                struct.id = new ProgramId();
                 struct.id.read(iprot);
                 struct.setIdIsSet(true);
               } else { 
@@ -14698,7 +14698,7 @@ public class AppFabricService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.id = new FlowIdentifier();
+          struct.id = new ProgramId();
           struct.id.read(iprot);
           struct.setIdIsSet(true);
         }

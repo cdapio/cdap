@@ -11,6 +11,8 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.ArchiveId;
+import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ResourceIdentifier;
@@ -163,8 +165,7 @@ public class TestHelper {
       ApplicationSpecification appSpec = application.configure();
       Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
 
-      ResourceIdentifier id = appFabricServer.init(
-        token, new ResourceInfo(account, applicationId, fileName, 0, System.currentTimeMillis()));
+      ArchiveId id = appFabricServer.init(token, new ArchiveInfo(account, applicationId, fileName));
 
       // Upload the jar file to remote location.
       BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);

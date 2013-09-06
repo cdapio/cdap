@@ -13,6 +13,8 @@ import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
+import com.continuuity.app.services.ProgramDescriptor;
+import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -129,8 +131,8 @@ public class DeployRunStopTest {
     TestHelper.deployApplication(GenSinkApp.class);
 
     AuthToken token = new AuthToken("12345");
-    FlowIdentifier flowIdentifier = new FlowIdentifier(DefaultId.ACCOUNT.getId(), "GenSinkApp", "GenSinkFlow", 1);
-    server.start(token, new FlowDescriptor(flowIdentifier, ImmutableMap.<String, String>of()));
+    ProgramId flowIdentifier = new ProgramId(DefaultId.ACCOUNT.getId(), "GenSinkApp", "GenSinkFlow");
+    server.start(token, new ProgramDescriptor(flowIdentifier, ImmutableMap.<String, String>of()));
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 

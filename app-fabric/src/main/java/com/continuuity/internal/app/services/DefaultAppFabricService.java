@@ -25,19 +25,20 @@ import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.ActiveFlow;
+import com.continuuity.app.services.ActiveProgram;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
+import com.continuuity.app.services.ArchiveId;
+import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.FlowDescriptor;
-import com.continuuity.app.services.FlowIdentifier;
-import com.continuuity.app.services.FlowRunRecord;
-import com.continuuity.app.services.FlowStatus;
+import com.continuuity.app.services.ProgramDescriptor;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.app.services.ProgramRunRecord;
+import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.app.services.ResourceIdentifier;
-import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.app.services.RunIdentifier;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -234,7 +235,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
-  private Type entityTypeToType(FlowIdentifier identifier) {
+  private Type entityTypeToType(ProgramId identifier) {
     switch (identifier.getType()) {
       case FLOW:
         return Type.FLOW;
@@ -267,11 +268,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param descriptor
    */
   @Override
-  public synchronized RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
+  public synchronized RunIdentifier start(AuthToken token, ProgramDescriptor descriptor)
     throws AppFabricServiceException, TException {
 
     try {
-      FlowIdentifier id = descriptor.getIdentifier();
+      ProgramId id = descriptor.getIdentifier();
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
       Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage(UserErrors.ALREADY_RUNNING));
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
@@ -311,7 +312,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param id
    */
   @Override
-  public synchronized FlowStatus status(AuthToken token, FlowIdentifier id)
+  public synchronized ProgramStatus status(AuthToken token, ProgramId id)
     throws AppFabricServiceException, TException {
 
     try {
@@ -324,8 +325,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
       int version = 1;  // Note, how to get version?
       if (runtimeInfo == null) {
-        return new FlowStatus(id.getApplicationId(), id.getFlowId(),
-                              version, null, ProgramController.State.STOPPED.toString());
+        return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
+                                 ProgramController.State.STOPPED.toString());
       }
 
       Id.Program programId = runtimeInfo.getProgramId();
@@ -335,7 +336,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       // UI friendly. Internal states of program controller are reasonable and hence
       // no point in changing them.
       String status = controllerStateToString(runtimeInfo.getController().getState());
-      return new FlowStatus(programId.getApplicationId(), programId.getId(), version, runId, status);
+      return new ProgramStatus(programId.getApplicationId(), programId.getId(), runId, status);
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
       throw new AppFabricServiceException(throwable.getMessage());
@@ -359,7 +360,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param identifier
    */
   @Override
-  public synchronized RunIdentifier stop(AuthToken token, FlowIdentifier identifier)
+  public synchronized RunIdentifier stop(AuthToken token, ProgramId identifier)
     throws AppFabricServiceException, TException {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
@@ -387,7 +388,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param instances
    */
   @Override
-  public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances)
+  public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
     throws AppFabricServiceException, TException {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
@@ -411,15 +412,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param accountId
    */
   @Override
-  public List<ActiveFlow> getFlows(String accountId) throws AppFabricServiceException, TException {
+  public List<ActiveProgram> getPrograms(String accountId) throws AppFabricServiceException, TException {
 
     try {
       Table<Type, Id.Program, List<RunRecord>> histories = store.getAllRunHistory(Id.Account.from(accountId));
-      List<ActiveFlow> result = Lists.newLinkedList();
+      List<ActiveProgram> result = Lists.newLinkedList();
       for (Table.Cell<Type, Id.Program, List<RunRecord>> cell : histories.cellSet()) {
         Id.Program programId = cell.getColumnKey();
         for (RunRecord runRecord : cell.getValue()) {
-          ActiveFlow activeFlow = new ActiveFlow(programId.getApplicationId(),
+          ActiveProgram activeProgram = new ActiveProgram(programId.getApplicationId(),
                                                  programId.getId(),
                                                  typeToEntityType(cell.getRowKey()),
                                                  runRecord.getStopTs(),
@@ -427,7 +428,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                  null,        // TODO
                                                  0            // TODO
                                                  );
-            result.add(activeFlow);
+            result.add(activeProgram);
         }
       }
       return result;
@@ -438,7 +439,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(FlowIdentifier identifier) {
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = null;
     switch (identifier.getType()) {
       case FLOW:
@@ -472,7 +473,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param id
    */
   @Override
-  public String getSpecification(FlowIdentifier id)
+  public String getSpecification(ProgramId id)
     throws AppFabricServiceException, TException {
 
     ApplicationSpecification appSpec = null;
@@ -509,7 +510,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return null;
   }
 
-  private QueryDefinitionImpl getQueryDefn(final FlowIdentifier identifier)
+  private QueryDefinitionImpl getQueryDefn(final ProgramId identifier)
     throws AppFabricServiceException {
     ApplicationSpecification appSpec = null;
     try {
@@ -529,7 +530,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return queryDef;
   }
 
-  private FlowDefinitionImpl getFlowDef(final FlowIdentifier id)
+  private FlowDefinitionImpl getFlowDef(final ProgramId id)
     throws AppFabricServiceException, UnsupportedTypeException {
     ApplicationSpecification appSpec = null;
     try {
@@ -551,7 +552,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
-  private FlowDefinitionImpl getFlowDef4Flow(FlowIdentifier id, FlowSpecification flowSpec) {
+  private FlowDefinitionImpl getFlowDef4Flow(ProgramId id, FlowSpecification flowSpec) {
     FlowDefinitionImpl flowDef = new FlowDefinitionImpl();
     MetaDefinitionImpl metaDefinition = new MetaDefinitionImpl();
     metaDefinition.setApp(id.getApplicationId());
@@ -563,7 +564,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   // we re-use the ability of existing UI to display flows as a way to display and run mapreduce jobs (for now)
-  private FlowDefinitionImpl getFlowDef4MapReduce(FlowIdentifier id, MapReduceSpecification spec)
+  private FlowDefinitionImpl getFlowDef4MapReduce(ProgramId id, MapReduceSpecification spec)
     throws UnsupportedTypeException {
     FlowSpecification flowSpec = FlowSpecification.Builder.with()
       .setName(spec.getName())
@@ -589,7 +590,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return getFlowDef4Flow(id, flowSpec);
   }
 
-  private void fillConnectionsAndStreams(final FlowIdentifier id, final FlowSpecification spec,
+  private void fillConnectionsAndStreams(final ProgramId id, final FlowSpecification spec,
                                          final FlowDefinitionImpl def) {
     List<ConnectionDefinitionImpl> connections = new ArrayList<ConnectionDefinitionImpl>();
     // we gather streams across all connections, hence we need to eliminate duplicate streams hence using map
@@ -654,7 +655,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param id of the program.
    */
   @Override
-  public List<FlowRunRecord> getHistory(FlowIdentifier id) throws AppFabricServiceException, TException {
+  public List<ProgramRunRecord> getHistory(ProgramId id) throws AppFabricServiceException, TException {
     List<RunRecord> log;
     try {
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
@@ -664,9 +665,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
                                                           id.toString(), e.getMessage()));
       }
-      List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
+      List<ProgramRunRecord> history = new ArrayList<ProgramRunRecord>();
       for (RunRecord runRecord : log) {
-        history.add(new FlowRunRecord(runRecord.getPid(), runRecord.getStartTs(),
+        history.add(new ProgramRunRecord(runRecord.getPid(), runRecord.getStartTs(),
                                       runRecord.getStopTs(), runRecord.getEndStatus())
         );
       }
@@ -722,14 +723,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    *   <i>Note:</i> As the state of upload are transient they are not being persisted on the server.
    * </p>
    *
-   * @param info ResourceInfo
-   * @return ResourceIdentifier instance containing the resource id and
+   * @param info ArchiveInfo
+   * @return ArchiveId instance containing the resource id and
    * resource version.
    */
   @Override
-  public ResourceIdentifier init(AuthToken token, ResourceInfo info) throws AppFabricServiceException {
+  public ArchiveId init(AuthToken token, ArchiveInfo info) throws AppFabricServiceException {
     LOG.debug("Init deploying application " + info.toString());
-    ResourceIdentifier identifier = new ResourceIdentifier(info.getAccountId(), "appId", "resourceId", 1);
+    ArchiveId identifier = new ArchiveId(info.getAccountId(), "appId", "resourceId");
 
     try {
       if (sessions.containsKey(info.getAccountId())) {
@@ -758,7 +759,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @throws AppFabricServiceException
    */
   @Override
-  public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws AppFabricServiceException {
+  public void chunk(AuthToken token, ArchiveId resource, ByteBuffer chunk) throws AppFabricServiceException {
     LOG.debug("Receiving chunk of application " + resource.toString());
     if (!sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("A session id has not been created for upload. Please call #init");
@@ -790,7 +791,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param resource identifier to be finalized.
    */
   @Override
-  public void deploy(AuthToken token, final ResourceIdentifier resource) throws AppFabricServiceException {
+  public void deploy(AuthToken token, final ArchiveId resource) throws AppFabricServiceException {
     LOG.debug("Finishing deploy of application " + resource.toString());
     if (!sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("No information about archive being uploaded is available.");
@@ -853,17 +854,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @throws AppFabricServiceException
    */
   @Override
-  public DeploymentStatus dstatus(AuthToken token, ResourceIdentifier resource) throws AppFabricServiceException {
+  public DeploymentStatus dstatus(AuthToken token, ArchiveId resource) throws AppFabricServiceException {
     try {
       if (!sessions.containsKey(resource.getAccountId())) {
         SessionInfo info = retrieve(resource.getAccountId());
         DeploymentStatus status = new DeploymentStatus(info.getStatus().getCode(),
-                                                       info.getStatus().getMessage(), null);
+                                                       info.getStatus().getMessage());
         return status;
       } else {
         SessionInfo info = sessions.get(resource.getAccountId());
         DeploymentStatus status = new DeploymentStatus(info.getStatus().getCode(),
-                                                       info.getStatus().getMessage(), null);
+                                                       info.getStatus().getMessage());
         return status;
       }
     } catch (Throwable throwable) {
@@ -880,7 +881,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @throws AppFabricServiceException
    */
   @Override
-  public boolean promote(AuthToken authToken, ResourceIdentifier id, String hostname)
+  public boolean promote(AuthToken authToken, ArchiveId id, String hostname)
     throws AppFabricServiceException {
 
     try {
@@ -974,13 +975,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Deletes a program specified by {@code FlowIdentifier}.
+   * Deletes a program specified by {@code ProgramId}.
    *
    * @param identifier of a flow.
    * @throws AppFabricServiceException when there is an issue deactivating the flow.
    */
   @Override
-  public void remove(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException {
+  public void remove(AuthToken token, ProgramId identifier) throws AppFabricServiceException {
     try {
       Preconditions.checkNotNull(identifier, "No application id provided.");
 
@@ -1014,7 +1015,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   @Override
-  public void removeApplication(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException {
+  public void removeApplication(AuthToken token, ProgramId identifier) throws AppFabricServiceException {
     try {
       Preconditions.checkNotNull(identifier, "No application id provided.");
 
@@ -1174,7 +1175,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private boolean save(SessionInfo info) {
     try {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      String accountId = info.getResourceIdenitifier().getAccountId();
+      String accountId = info.getArchiveId().getAccountId();
       Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
       if (!outputDir.exists()) {
         return false;

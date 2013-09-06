@@ -36,7 +36,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
 
   private static final org.apache.thrift.protocol.TField OVERALL_FIELD_DESC = new org.apache.thrift.protocol.TField("overall", org.apache.thrift.protocol.TType.I32, (short)1);
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField VERIFICATION_FIELD_DESC = new org.apache.thrift.protocol.TField("verification", org.apache.thrift.protocol.TType.LIST, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -46,13 +45,11 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
 
   private int overall; // required
   private String message; // required
-  private List<VerificationStatus> verification; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     OVERALL((short)1, "overall"),
-    MESSAGE((short)2, "message"),
-    VERIFICATION((short)3, "verification");
+    MESSAGE((short)2, "message");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -71,8 +68,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
           return OVERALL;
         case 2: // MESSAGE
           return MESSAGE;
-        case 3: // VERIFICATION
-          return VERIFICATION;
         default:
           return null;
       }
@@ -122,9 +117,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.VERIFICATION, new org.apache.thrift.meta_data.FieldMetaData("verification", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, VerificationStatus.class))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DeploymentStatus.class, metaDataMap);
   }
@@ -134,14 +126,12 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
 
   public DeploymentStatus(
     int overall,
-    String message,
-    List<VerificationStatus> verification)
+    String message)
   {
     this();
     this.overall = overall;
     setOverallIsSet(true);
     this.message = message;
-    this.verification = verification;
   }
 
   /**
@@ -154,13 +144,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     if (other.isSetMessage()) {
       this.message = other.message;
     }
-    if (other.isSetVerification()) {
-      List<VerificationStatus> __this__verification = new ArrayList<VerificationStatus>();
-      for (VerificationStatus other_element : other.verification) {
-        __this__verification.add(new VerificationStatus(other_element));
-      }
-      this.verification = __this__verification;
-    }
   }
 
   public DeploymentStatus deepCopy() {
@@ -172,7 +155,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     setOverallIsSet(false);
     this.overall = 0;
     this.message = null;
-    this.verification = null;
   }
 
   public int getOverall() {
@@ -220,44 +202,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     }
   }
 
-  public int getVerificationSize() {
-    return (this.verification == null) ? 0 : this.verification.size();
-  }
-
-  public java.util.Iterator<VerificationStatus> getVerificationIterator() {
-    return (this.verification == null) ? null : this.verification.iterator();
-  }
-
-  public void addToVerification(VerificationStatus elem) {
-    if (this.verification == null) {
-      this.verification = new ArrayList<VerificationStatus>();
-    }
-    this.verification.add(elem);
-  }
-
-  public List<VerificationStatus> getVerification() {
-    return this.verification;
-  }
-
-  public void setVerification(List<VerificationStatus> verification) {
-    this.verification = verification;
-  }
-
-  public void unsetVerification() {
-    this.verification = null;
-  }
-
-  /** Returns true if field verification is set (has been assigned a value) and false otherwise */
-  public boolean isSetVerification() {
-    return this.verification != null;
-  }
-
-  public void setVerificationIsSet(boolean value) {
-    if (!value) {
-      this.verification = null;
-    }
-  }
-
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case OVERALL:
@@ -276,14 +220,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
       }
       break;
 
-    case VERIFICATION:
-      if (value == null) {
-        unsetVerification();
-      } else {
-        setVerification((List<VerificationStatus>)value);
-      }
-      break;
-
     }
   }
 
@@ -294,9 +230,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
 
     case MESSAGE:
       return getMessage();
-
-    case VERIFICATION:
-      return getVerification();
 
     }
     throw new IllegalStateException();
@@ -313,8 +246,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
       return isSetOverall();
     case MESSAGE:
       return isSetMessage();
-    case VERIFICATION:
-      return isSetVerification();
     }
     throw new IllegalStateException();
   }
@@ -350,15 +281,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
         return false;
     }
 
-    boolean this_present_verification = true && this.isSetVerification();
-    boolean that_present_verification = true && that.isSetVerification();
-    if (this_present_verification || that_present_verification) {
-      if (!(this_present_verification && that_present_verification))
-        return false;
-      if (!this.verification.equals(that.verification))
-        return false;
-    }
-
     return true;
   }
 
@@ -375,11 +297,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     builder.append(present_message);
     if (present_message)
       builder.append(message);
-
-    boolean present_verification = true && (isSetVerification());
-    builder.append(present_verification);
-    if (present_verification)
-      builder.append(verification);
 
     return builder.toHashCode();
   }
@@ -408,16 +325,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     }
     if (isSetMessage()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetVerification()).compareTo(typedOther.isSetVerification());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetVerification()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.verification, typedOther.verification);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -451,14 +358,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
       sb.append("null");
     } else {
       sb.append(this.message);
-    }
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("verification:");
-    if (this.verification == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.verification);
     }
     first = false;
     sb.append(")");
@@ -521,25 +420,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // VERIFICATION
-            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-              {
-                org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                struct.verification = new ArrayList<VerificationStatus>(_list0.size);
-                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-                {
-                  VerificationStatus _elem2; // required
-                  _elem2 = new VerificationStatus();
-                  _elem2.read(iprot);
-                  struct.verification.add(_elem2);
-                }
-                iprot.readListEnd();
-              }
-              struct.setVerificationIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -559,18 +439,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
       if (struct.message != null) {
         oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
         oprot.writeString(struct.message);
-        oprot.writeFieldEnd();
-      }
-      if (struct.verification != null) {
-        oprot.writeFieldBegin(VERIFICATION_FIELD_DESC);
-        {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.verification.size()));
-          for (VerificationStatus _iter3 : struct.verification)
-          {
-            _iter3.write(oprot);
-          }
-          oprot.writeListEnd();
-        }
         oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
@@ -597,31 +465,19 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
       if (struct.isSetMessage()) {
         optionals.set(1);
       }
-      if (struct.isSetVerification()) {
-        optionals.set(2);
-      }
-      oprot.writeBitSet(optionals, 3);
+      oprot.writeBitSet(optionals, 2);
       if (struct.isSetOverall()) {
         oprot.writeI32(struct.overall);
       }
       if (struct.isSetMessage()) {
         oprot.writeString(struct.message);
       }
-      if (struct.isSetVerification()) {
-        {
-          oprot.writeI32(struct.verification.size());
-          for (VerificationStatus _iter4 : struct.verification)
-          {
-            _iter4.write(oprot);
-          }
-        }
-      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, DeploymentStatus struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
         struct.overall = iprot.readI32();
         struct.setOverallIsSet(true);
@@ -629,20 +485,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
       if (incoming.get(1)) {
         struct.message = iprot.readString();
         struct.setMessageIsSet(true);
-      }
-      if (incoming.get(2)) {
-        {
-          org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.verification = new ArrayList<VerificationStatus>(_list5.size);
-          for (int _i6 = 0; _i6 < _list5.size; ++_i6)
-          {
-            VerificationStatus _elem7; // required
-            _elem7 = new VerificationStatus();
-            _elem7.read(iprot);
-            struct.verification.add(_elem7);
-          }
-        }
-        struct.setVerificationIsSet(true);
       }
     }
   }
