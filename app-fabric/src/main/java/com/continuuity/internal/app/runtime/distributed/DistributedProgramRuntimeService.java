@@ -3,22 +3,38 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.Id;
+import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.queue.QueueSpecification;
+import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.AbstractProgramRuntimeService;
 import com.continuuity.app.runtime.ProgramController;
+import com.continuuity.app.store.Store;
+import com.continuuity.app.store.StoreFactory;
+import com.continuuity.common.queue.QueueName;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,10 +50,18 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   private final WeaveRunner weaveRunner;
 
+  // TODO (terence): Injection of Store and QueueAdmin is a hack for queue reconfiguration.
+  // Need to remove it when FlowProgramRunner can runs inside Weave AM.
+  private final Store store;
+  private final QueueAdmin queueAdmin;
+
   @Inject
-  DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, WeaveRunner weaveRunner) {
+  DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, WeaveRunner weaveRunner,
+                                   StoreFactory storeFactory, QueueAdmin queueAdmin) {
     super(programRunnerFactory);
     this.weaveRunner = weaveRunner;
+    this.store = storeFactory.create();
+    this.queueAdmin = queueAdmin;
   }
 
   @Override
@@ -82,9 +106,14 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
     Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
 
-    runtimeInfo = createRuntimeInfo(type, programId, controller);
-    updateRuntimeInfo(type, runId, runtimeInfo);
-    return runtimeInfo;
+    if (runtimeInfo != null) {
+      runtimeInfo = createRuntimeInfo(type, programId, controller);
+      updateRuntimeInfo(type, runId, runtimeInfo);
+      return runtimeInfo;
+    } else {
+      LOG.warn("Unable to find program {} {}", type, programId);
+      return null;
+    }
   }
 
   @Override
@@ -109,26 +138,43 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         if (result.containsKey(runId)) {
           continue;
         }
+
         Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
         RuntimeInfo runtimeInfo = createRuntimeInfo(type, programId, controller);
-        result.put(runId, runtimeInfo);
-        updateRuntimeInfo(type, runId, runtimeInfo);
+        if (runtimeInfo != null) {
+          result.put(runId, runtimeInfo);
+          updateRuntimeInfo(type, runId, runtimeInfo);
+        } else {
+          LOG.warn("Unable to find program {} {}", type, programId);
+        }
       }
     }
     return ImmutableMap.copyOf(result);
   }
 
   private RuntimeInfo createRuntimeInfo(Type type, Id.Program programId, WeaveController controller) {
-    ProgramController programController = createController(type, programId.getId(), controller);
-    return programController == null ? null : new SimpleRuntimeInfo(programController, type, programId);
+    try {
+      Program program = store.loadProgram(programId, type);
+      ProgramController programController = createController(program, controller);
+      return programController == null ? null : new SimpleRuntimeInfo(programController, type, programId);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
-  private ProgramController createController(Type type, String programId, WeaveController controller) {
+  private ProgramController createController(Program program, WeaveController controller) {
     AbstractWeaveProgramController programController = null;
-    switch (type) {
-      case FLOW:
-        programController = new FlowWeaveProgramController(programId, controller);
+    String programId = program.getId().getId();
+
+    switch (program.getProcessorType()) {
+      case FLOW: {
+        FlowSpecification flowSpec = program.getSpecification().getFlows().get(programId);
+        DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
+          program, controller, queueAdmin, getFlowletQueues(program, flowSpec)
+        );
+        programController = new FlowWeaveProgramController(programId, controller, instanceUpdater);
         break;
+      }
       case PROCEDURE:
         programController = new ProcedureWeaveProgramController(programId, controller);
         break;
@@ -145,5 +191,30 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     } catch (IllegalArgumentException e) {
       return null;
     }
+  }
+
+  // TODO (terence) : This method is part of the hack mentioned above. It should be removed when
+  // FlowProgramRunner moved to run in AM.
+  private Multimap<String, QueueName> getFlowletQueues(Program program, FlowSpecification flowSpec) {
+    // Generate all queues specifications
+    Id.Account accountId = Id.Account.from(program.getAccountId());
+    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
+      = new SimpleQueueSpecificationGenerator(accountId).create(flowSpec);
+
+    // For storing result from flowletId to queue.
+    ImmutableSetMultimap.Builder<String, QueueName> resultBuilder = ImmutableSetMultimap.builder();
+
+    // Loop through each flowlet
+    for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
+      String flowletId = entry.getKey();
+      long groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
+      int instances = entry.getValue().getInstances();
+
+      // For each queue that the flowlet is a consumer, store the number of instances for this flowlet
+      for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.column(flowletId).values())) {
+        resultBuilder.put(flowletId, queueSpec.getQueueName());
+      }
+    }
+    return resultBuilder.build();
   }
 }
