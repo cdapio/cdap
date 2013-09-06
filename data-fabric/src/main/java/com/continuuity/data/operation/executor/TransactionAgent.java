@@ -40,11 +40,10 @@ public interface TransactionAgent {
   public void start() throws OperationException;
 
   /**
-   * Start the interaction with this agent.
-   * @param timeout the timeout for the transaction, or null for no timeout
+   * Start the interaction with this agent for a long transaction.
    * @throws OperationException if something goes wrong in data fabric
    */
-  public void start(Integer timeout) throws OperationException;
+  public void startLong() throws OperationException;
 
   /**
    * Ends the interaction with this agent, indicating failure. This can mean, for

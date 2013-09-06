@@ -70,7 +70,7 @@ public class OpenCloseDataSetTest {
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
 
     // start tx to write in queue in tx
-    Transaction tx = txSystemClient.start();
+    Transaction tx = txSystemClient.startShort();
     ((TransactionAware) producer).startTx(tx);
 
     StreamEventCodec codec = new StreamEventCodec();

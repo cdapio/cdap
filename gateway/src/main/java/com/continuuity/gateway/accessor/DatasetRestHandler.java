@@ -727,7 +727,7 @@ public class DatasetRestHandler extends NettyRestHandler {
   }
 
   private Transaction startTx() {
-    Transaction tx = accessor.getTxSystemClient().start();
+    Transaction tx = accessor.getTxSystemClient().startShort();
     for (TransactionAware txAware : accessor.getInstantiator().getInstantiator().getTransactionAware()) {
       txAware.startTx(tx);
     }

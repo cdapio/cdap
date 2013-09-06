@@ -1,7 +1,7 @@
 package com.continuuity.performance.opex;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.Write;
 import com.continuuity.performance.benchmark.Agent;

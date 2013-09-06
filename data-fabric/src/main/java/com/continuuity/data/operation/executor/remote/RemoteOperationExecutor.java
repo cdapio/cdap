@@ -590,25 +590,37 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public com.continuuity.data2.transaction.Transaction start() throws OperationException {
+  public com.continuuity.data2.transaction.Transaction startLong() throws OperationException {
     return this.execute(
       new Operation<com.continuuity.data2.transaction.Transaction>("startTx") {
         @Override
         public com.continuuity.data2.transaction.Transaction execute(OperationExecutorClient client)
           throws TException, OperationException {
-          return client.start();
+          return client.startLong();
         }
       });
   }
 
   @Override
-  public com.continuuity.data2.transaction.Transaction start(final Integer timeout) throws OperationException {
+  public com.continuuity.data2.transaction.Transaction startShort() throws OperationException {
     return this.execute(
       new Operation<com.continuuity.data2.transaction.Transaction>("startTx") {
         @Override
         public com.continuuity.data2.transaction.Transaction execute(OperationExecutorClient client)
           throws TException, OperationException {
-          return client.start(timeout);
+          return client.startShort();
+        }
+      });
+  }
+
+  @Override
+  public com.continuuity.data2.transaction.Transaction startShort(final int timeout) throws OperationException {
+    return this.execute(
+      new Operation<com.continuuity.data2.transaction.Transaction>("startTx") {
+        @Override
+        public com.continuuity.data2.transaction.Transaction execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          return client.startShort(timeout);
         }
       });
   }

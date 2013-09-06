@@ -441,7 +441,7 @@ public abstract class QueueTest {
     }
 
     public void start() throws OperationException {
-      transaction = opex.start();
+      transaction = opex.startShort();
       for (TransactionAware txAware : txAwares) {
         txAware.startTx(transaction);
       }

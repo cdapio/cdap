@@ -22,18 +22,27 @@ public class TalkingToOpexTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public Transaction start() {
+  public Transaction startShort() {
     try {
-      return opex.start();
+      return opex.startShort();
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public Transaction start(Integer timeout) {
+  public Transaction startShort(int timeout) {
     try {
-      return opex.start(timeout);
+      return opex.startShort(timeout);
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public Transaction startLong() {
+    try {
+      return opex.startLong();
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }

@@ -871,22 +871,32 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
   // Temporary TxDs2 stuff
 
   @Override
-  public TTransaction2 startTx() throws TOperationException, TException {
+  public TTransaction2 startLong() throws TOperationException, TException {
     try {
-      return wrap(this.opex.start());
+      return wrap(this.opex.startLong());
     } catch (OperationException e) {
       throw wrap(e);
     }
   }
 
   @Override
-  public TTransaction2 startTxTimeout(int timeout) throws TOperationException, TException {
+  public TTransaction2 startShort() throws TOperationException, TException {
     try {
-      return wrap(this.opex.start(timeout == -1 ? null : timeout));
+      return wrap(this.opex.startShort());
     } catch (OperationException e) {
       throw wrap(e);
     }
   }
+
+  @Override
+  public TTransaction2 startShortTimeout(int timeout) throws TOperationException, TException {
+    try {
+      return wrap(this.opex.startShort(timeout));
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
+
 
   @Override
   public boolean canCommitTx(TTransaction2 tx, Set<ByteBuffer> changes) throws TOperationException, TException {
