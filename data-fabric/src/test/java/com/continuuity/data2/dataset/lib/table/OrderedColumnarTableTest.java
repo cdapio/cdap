@@ -74,7 +74,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     DataSetManager manager = getTableManager();
     manager.create("myTable");
     try {
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       OrderedColumnarTable myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
@@ -83,7 +83,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify($(C1, V1), myTable1.get(R1, $(C1, C2)));
 
       // start new tx (doesn't see changes of the tx1)
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
       OrderedColumnarTable myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
@@ -103,7 +103,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
 
       // start tx3 and verify that changes of tx1 are not visible yet (even though they are flushed)
-      Transaction tx3 = txClient.start();
+      Transaction tx3 = txClient.startShort();
       OrderedColumnarTable myTable3 = getTable("myTable");
       ((TransactionAware) myTable3).startTx(tx3);
       verify($(), myTable3.get(R1, $(C1, C2)));
@@ -115,7 +115,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx1));
       // start tx4 and verify that changes of tx1 are now visible
       // NOTE: table instance can be re-used in series of transactions
-      Transaction tx4 = txClient.start();
+      Transaction tx4 = txClient.startShort();
       ((TransactionAware) myTable3).startTx(tx4);
       verify($(C1, V1), myTable3.get(R1, $(C1, C2)));
 
@@ -143,7 +143,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
       // verifying that none of the changes of tx2 made it to be visible to other txs
       // NOTE: table instance can be re-used in series of transactions
-      Transaction tx5 = txClient.start();
+      Transaction tx5 = txClient.startShort();
       ((TransactionAware) myTable3).startTx(tx5);
       verify($(C1, V1), myTable3.get(R1, $(C1, C2)));
       verify($(), myTable3.get(R2, $(C1, C2)));
@@ -161,7 +161,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     DataSetManager manager = getTableManager();
     manager.create("myTable");
     try {
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       OrderedColumnarTable myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
@@ -179,7 +179,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(myTable1.compareAndSwap(R1, C2, V5, V2));
 
       // start new tx (doesn't see changes of the tx1)
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
 
       // committing tx1 in stages to check races are handled well
       // * first, flush operations of table
@@ -194,7 +194,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(myTable2.compareAndSwap(R1, C1, null, V3));
 
       // start tx3 and verify same thing again
-      Transaction tx3 = txClient.start();
+      Transaction tx3 = txClient.startShort();
       OrderedColumnarTable myTable3 = getTable("myTable");
       ((TransactionAware) myTable3).startTx(tx3);
       Assert.assertTrue(myTable3.compareAndSwap(R1, C1, null, V2));
@@ -206,7 +206,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
 
       // start tx4 and verify that changes of tx1 are now visible
-      Transaction tx4 = txClient.start();
+      Transaction tx4 = txClient.startShort();
       OrderedColumnarTable myTable4 = getTable("myTable");
       ((TransactionAware) myTable4).startTx(tx4);
       verify($(C1, V1, C2, V2), myTable4.get(R1, $(C1, C2)));
@@ -229,7 +229,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx4));
 
       // verifying the result contents in next transaction
-      Transaction tx5 = txClient.start();
+      Transaction tx5 = txClient.startShort();
       // NOTE: table instance can be re-used in series of transactions
       ((TransactionAware) myTable4).startTx(tx5);
       verify($(C2, V4), myTable4.get(R1, $(C1, C2)));
@@ -248,7 +248,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     manager.create("myTable");
     OrderedColumnarTable myTable1 = null, myTable2 = null, myTable3 = null, myTable4 = null;
     try {
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, $(C1), $(L4));
@@ -266,7 +266,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify($(C5, V5), myTable1.get(R1, $(C5)));
 
       // start new tx (doesn't see changes of the tx1)
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
 
       // committing tx1 in stages to check races are handled well
       // * first, flush operations of table
@@ -282,7 +282,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify($(C1), l(55L), myTable2.increment(R1, $(C1), l(55L)));
 
       // start tx3 and verify same thing again
-      Transaction tx3 = txClient.start();
+      Transaction tx3 = txClient.startShort();
       myTable3 = getTable("myTable");
       ((TransactionAware) myTable3).startTx(tx3);
       verify($(), myTable3.get(R1, $(C1, C2, C5)));
@@ -295,7 +295,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
 
       // start tx4 and verify that changes of tx1 are now visible
-      Transaction tx4 = txClient.start();
+      Transaction tx4 = txClient.startShort();
       myTable4 = getTable("myTable");
       ((TransactionAware) myTable4).startTx(tx4);
       verify($(C1, L1, C2, L2, C5, V5), myTable4.get(R1, $(C1, C2, C3, C4, C5)));
@@ -317,7 +317,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx4));
 
       // verifying the result contents in next transaction
-      Transaction tx5 = txClient.start();
+      Transaction tx5 = txClient.startShort();
       // NOTE: table instance can be re-used in series of transactions
       ((TransactionAware) myTable4).startTx(tx5);
       verify($(C3, L5, C4, L3, C5, V5), myTable4.get(R1, $(C1, C2, C3, C4, C5)));
@@ -338,7 +338,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     manager.create("myTable");
     try {
       // write r1->c1,v1 and commit
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       OrderedColumnarTable myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, $(C1, C2), $(V1, V2));
@@ -348,7 +348,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
       // Now, we will test delete ops
       // start new tx2
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
       OrderedColumnarTable myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
@@ -368,7 +368,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify($(C1, V3), myTable2.get(R1, $(C1, C2)));
 
       // start tx3 and verify that changes of tx2 are not visible yet
-      Transaction tx3 = txClient.start();
+      Transaction tx3 = txClient.startShort();
       // NOTE: table instance can be re-used between tx
       ((TransactionAware) myTable1).startTx(tx3);
       verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
@@ -377,16 +377,16 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx3));
 
       // starting tx4 before committing tx2 so that we can check conflicts are detected wrt deletes
-      Transaction tx4 = txClient.start();
+      Transaction tx4 = txClient.startShort();
       // starting tx5 before committing tx2 so that we can check conflicts are detected wrt deletes
-      Transaction tx5 = txClient.start();
+      Transaction tx5 = txClient.startShort();
 
       // commit tx2 in stages to see how races are handled wrt delete ops
       Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable2).commitTx());
 
       // start tx6 and verify that changes of tx2 are not visible yet (even though they are flushed)
-      Transaction tx6 = txClient.start();
+      Transaction tx6 = txClient.startShort();
       // NOTE: table instance can be re-used between tx
       ((TransactionAware) myTable1).startTx(tx6);
       verify($(C1, V1, C2, V2), myTable1.get(R1, $(C1, C2)));
@@ -398,7 +398,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx2));
 
       // start tx7 and verify that changes of tx2 are now visible
-      Transaction tx7 = txClient.start();
+      Transaction tx7 = txClient.startShort();
       // NOTE: table instance can be re-used between tx
       ((TransactionAware) myTable1).startTx(tx7);
       verify($(C1, V3), myTable1.get(R1, $(C1, C2)));
@@ -434,7 +434,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     manager.create("myTable");
     try {
       // write r1...r5 and commit
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       OrderedColumnarTable myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, $(C1), $(V1));
@@ -448,7 +448,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
       // Now, we will test scans
       // currently not testing races/conflicts/etc as this logic is not there for scans yet; so using one same tx
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
       OrderedColumnarTable myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
@@ -488,7 +488,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx2));
 
       // Checking that changes are reflected in new scans in new tx
-      Transaction tx3 = txClient.start();
+      Transaction tx3 = txClient.startShort();
       // NOTE: table can be re-used betweet tx
       ((TransactionAware) myTable1).startTx(tx3);
 
@@ -514,7 +514,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     manager.create("myTable");
     try {
       // write test data and commit
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       OrderedColumnarTable myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, $(C1, C2, C3, C4, C5), $(V1, V2, V3, V4, V5));
@@ -524,7 +524,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx1));
 
       // Now, we will test column range get
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
       OrderedColumnarTable myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
@@ -564,7 +564,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx2));
 
       // Checking that changes are reflected in new scans in new tx
-      Transaction tx3 = txClient.start();
+      Transaction tx3 = txClient.startShort();
       // NOTE: table can be re-used betweet tx
       ((TransactionAware) myTable1).startTx(tx3);
 
@@ -588,14 +588,14 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     try {
       // test no conflict if changing different tables
 
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       OrderedColumnarTable table1 = getTable("table1");
       ((TransactionAware) table1).startTx(tx1);
       // write r1->c1,v1 but not commit
       table1.put(R1, $(C1), $(V1));
 
       // start new tx
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
       OrderedColumnarTable table2 = getTable("table2");
       ((TransactionAware) table2).startTx(tx2);
 
@@ -603,7 +603,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       table2.put(R1, $(C1), $(V2));
 
       // start new tx
-      Transaction tx3 = txClient.start();
+      Transaction tx3 = txClient.startShort();
       OrderedColumnarTable table1_2 = getTable("table1");
       ((TransactionAware) table1_2).startTx(tx3);
 
@@ -635,7 +635,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     manager.create("myTable");
     try {
 
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       OrderedColumnarTable myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
@@ -654,7 +654,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       txClient.abort(tx1);
 
       // start new tx
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
       OrderedColumnarTable myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 

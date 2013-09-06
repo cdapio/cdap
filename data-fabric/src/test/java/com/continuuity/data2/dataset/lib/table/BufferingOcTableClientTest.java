@@ -21,7 +21,7 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
     DataSetManager manager = getTableManager();
     manager.create("myTable");
     try {
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       BufferingOcTableClient myTable1 = new BufferingOcTableWithPersistingFailure(getTable("myTable"));
       myTable1.startTx(tx1);
       // write some data but not commit
@@ -48,7 +48,7 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
       txClient.abort(tx1);
 
       // start new tx
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
       OrderedColumnarTable myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 

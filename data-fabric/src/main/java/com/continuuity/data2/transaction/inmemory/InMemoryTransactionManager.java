@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,10 +31,52 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * This is the central place to manage all active transactions in the system.
  *
+ * A transaction consists of
+ * <ul>
+ *   <li>A write pointer: This is the version used for all writes of that transaction.</li>
+ *   <li>A read pointer: All reads under the transaction use this as an upper bound for the version.</li>
+ *   <li>A set of excluded versions: These are the write versions of other transactions that must be excluded from
+ *   reads, because those transactions are still in progress, or they failed but couldn't be properly rolled back.</li>
+ * </ul>
+ * To use the transaction system, a client must follow this sequence of steps:
+ * <ol>
+ *   <li>Request a new transaction.</li>
+ *   <li>Use the transaction to read and write datasets. Datasets are encouraged to cache the writes of the
+ *     transaction in memory, to reduce the cost of rollback in case the transaction fails. </li>
+ *   <li>Check whether the transaction has conflicts. For this, the set of change keys are submitted via canCommit(),
+ *     and the transaction manager verifies that none of these keys are in conflict with other transactions that
+ *     committed since the start of this transaction.</li>
+ *   <li>If the transaction has conflicts:
+ *   <ol>
+ *     <li>Roll back the changes in every dataset that was changed. This can happen in-memory if the
+ *       changes were cached.</li>
+ *     <li>Abort the transaction to remove it from the active transactions.</li>
+ *   </ol>
+ *   <li>If the transaction has no conflicts:</li>
+ *   <ol>
+ *     <li>Persist all datasets changes to storage.</li>
+ *     <li>Commit the transaction. This will repeat the conflict detection, because more overlapping transactions
+ *       may have committed since the first conflict check.</li>
+ *     <li>If the transaction has conflicts:</li>
+ *     <ol>
+ *       <li>Roll back the changes in every dataset that was changed. This is more expensive because
+ *         changes must be undone in persistent storage.</li>
+ *       <li>Abort the transaction to remove it from the active transactions.</li>
+ *     </ol>
+ *   </ol>
+ * </ol>
+ * Transactions may be short or long-running. A short transaction is started with a timeout, and if it is not
+ * committed before that timeout, it is invalidated and excluded from future reads. A long-running transaction has
+ * no timeout and will remain active until it is committed or aborted. Long transactions are typically used in
+ * map/reduce jobs and can produce enormous amounts of changes. Therefore, long transactions do not participate in
+ * conflict detection (they would almost always have conflicts). We also assume that the changes of long transactions
+ * are not tracked, and therefore cannot be rolled back. Hence, when a long transaction is aborted, it remains in the
+ * list of excluded transactions to make its writes invisible.
  */
-// todo: optimize heavily
 public class InMemoryTransactionManager {
+  // todo: optimize heavily
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionManager.class);
 
@@ -232,6 +273,7 @@ public class InMemoryTransactionManager {
 
   // not synchronized because it is only called from start() which is synchronized
   private void saveWaterMarkIfNeeded() {
+    ensureInitialized();
     try {
       if (nextWritePointer >= waterMark) {
         waterMark += claimSize;
@@ -251,27 +293,31 @@ public class InMemoryTransactionManager {
   }
 
   /**
-   * Start a transaction with the default timeout.
+   * Start a short transaction with the default timeout.
    */
-  public Transaction start() {
-    return start(defaultTimeout);
+  public Transaction startShort() {
+    return startShort(defaultTimeout);
   }
 
   /**
-   * Start a transaction with a given timeout. The contract is that transactions that have no timeout are considered
-   * long-running transactions and do not participate in conflict detection. Also, aborting a long-running transaction
-   * moves it to the invalid list because we assume that its writes cannot be rolled back.
-   * @param timeoutInSeconds the time out period in seconds. Null means no timeout.
+   * Start a short transaction with a given timeout.
+   * @param timeoutInSeconds the time out period in seconds.
    */
-  public synchronized Transaction start(@Nullable Integer timeoutInSeconds) {
-    ensureInitialized();
+  public synchronized Transaction startShort(int timeoutInSeconds) {
     saveWaterMarkIfNeeded();
-    Transaction tx = new Transaction(readPointer, nextWritePointer, invalidArray, getInProgressAsArray());
-    long currentTime =  System.currentTimeMillis();
-    long expiration = timeoutInSeconds == null ? -currentTime : currentTime + 1000L * timeoutInSeconds;
-    inProgress.put(nextWritePointer, expiration);
-    nextWritePointer++;
-    return tx;
+    inProgress.put(nextWritePointer, System.currentTimeMillis() + 1000L * timeoutInSeconds);
+    return new Transaction(readPointer, nextWritePointer++, invalidArray, getInProgressAsArray());
+  }
+
+  /**
+   * Start a long transaction. Long transactions and do not participate in conflict detection. Also, aborting a long
+   * transaction moves it to the invalid list because we assume that its writes cannot be rolled back.
+   */
+  public synchronized Transaction startLong() {
+    saveWaterMarkIfNeeded();
+    inProgress.put(nextWritePointer, -System.currentTimeMillis());
+    return new Transaction(readPointer, nextWritePointer++, invalidArray, getInProgressAsArray());
+
   }
 
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {

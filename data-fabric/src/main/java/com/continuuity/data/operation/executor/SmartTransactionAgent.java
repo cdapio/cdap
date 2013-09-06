@@ -156,14 +156,14 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
   }
 
   @Override
-  public void start(Integer timeout) throws OperationException {
+  public void startLong() throws OperationException {
     // Transaction agent can be started only once
     if (this.state != State.New) {
       // in this case we want to throw a runtime exception. The transaction has started
       // and we must abort or commit it, otherwise data fabric may be inconsistent.
       throw new IllegalStateException("Transaction has already started.");
     }
-    super.start(timeout);
+    super.startLong();
     this.state = State.Running;
   }
 
