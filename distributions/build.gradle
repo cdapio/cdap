@@ -88,9 +88,7 @@ task reactor_sdk_dist (type: Zip, dependsOn: ':web-app:build') {
   from combinedApiJar.outputs
   from combinedApiSourceJar.outputs
   from combinedApiJavadocJar.outputs
-  from project(':singlenode').files('src/dist') {
-    filter(ReplaceTokens, tokens: [VERSION: project.version])
-  }
+  from project(':singlenode').files('src/dist')
   from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
 
 
@@ -166,15 +164,15 @@ task reactor_sdk_dist (type: Zip, dependsOn: ':web-app:build') {
   }
 
   //webapp
-  into ("web-app/developer/client"){
+  into ("web-app/local/client"){
     from project(':web-app').file('build/local/client')
   }
 
-  into("web-app/developer/server"){
+  into("web-app/local/server"){
     from project(':web-app').file('build/local/server')
   }
 
-  into("web-app/developer/common"){
+  into("web-app/local/common"){
     from project(':web-app').file('build/local/common')
   }
 

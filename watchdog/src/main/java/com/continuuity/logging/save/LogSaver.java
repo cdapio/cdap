@@ -78,6 +78,7 @@ public final class LogSaver extends AbstractIdleService {
   private final long inactiveIntervalMs;
   private final long eventBucketIntervalMs;
   private final long eventProcessingDelayMs;
+  private final long topicCreationSleepMs;
   private final long retentionDurationMs;
   private final long maxLogFileSizeBytes;
 
@@ -156,6 +157,11 @@ public final class LogSaver extends AbstractIdleService {
                                                   LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_PROCESSING_DELAY_MS);
     Preconditions.checkArgument(this.eventProcessingDelayMs > 0,
                                 "Event processing delay interval is invalid: %s", this.eventProcessingDelayMs);
+
+    this.topicCreationSleepMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
+                                                  LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
+    Preconditions.checkArgument(this.topicCreationSleepMs > 0,
+                                "Topic creation wait sleep is invalid: %s", this.topicCreationSleepMs);
   }
 
   @Override
@@ -197,9 +203,29 @@ public final class LogSaver extends AbstractIdleService {
     @Override
     public void run() {
       KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaSaveFetchTimeoutMs);
+
       try {
         // Wait for service to start
         start().get();
+
+        // Wait for topic creation
+        LOG.info("Waiting for leader for topic {}, partition {}...", topic, partition);
+        while (true) {
+          try {
+            if (kafkaConsumer.isLeaderPresent()) {
+              break;
+            }
+            LOG.debug("Leader for topic {}, partition {} is not available yet... sleeping", topic, partition);
+            TimeUnit.MILLISECONDS.sleep(topicCreationSleepMs);
+          } catch (InterruptedException e) {
+            LOG.warn("Received exception", e);
+            Thread.currentThread().interrupt();
+          } catch (Throwable e) {
+            LOG.error("Caught exception while waiting for leader.", e);
+          }
+        }
+
+        LOG.info("Leader for topic {}, partition {} available.", topic, partition);
 
         CheckpointInfo checkpointInfo = checkpointManager.getCheckpoint();
         lastOffset = checkpointInfo == null ? -1 : checkpointInfo.getOffset();

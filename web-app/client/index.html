@@ -21,6 +21,7 @@
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
+
   <script src="/core/lib/rickshaw.js"></script>
   <script src="/third_party/select2/select2.min.js"></script>
 
@@ -276,8 +277,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduce/{id}/reducers" title="Mapping" unit="percent"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduce/{id}/reducers" title="Reducing" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduces/{id}/reducers" title="Mapping" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduces/{id}/reducers" title="Reducing" unit="percent"}}</div>
 
     </div>
     <div id="panels">
@@ -434,7 +435,7 @@
                       <tr>
                         <td>
                           {{#each contrib}}
-                            <div {{action navigate on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
+                            <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
                           {{/each}}
                         </td>
                         <td class="flowlet-popup-input">
@@ -497,7 +498,7 @@
                       </td>
                       <td>
                       {{#each contrib}}
-                      <div {{action navigate on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
+                      <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
                       {{/each}}
                       </td>
                       </tr>
@@ -586,8 +587,8 @@
             <tbody>
             {{#each runs}}
               <tr class="run-list" {{action "loadRun" runId}}>
-                <td>{{started}}</td>
-                <td>{{ended}}</td>
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>
               </tr>
             {{/each}}
@@ -973,8 +974,8 @@
               <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
               </td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduce/{id}/mappers" unit="percent"}}</td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduce/{id}/reducers" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduces/{id}/mappers" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduces/{id}/reducers" unit="percent"}}</td>
             </tr>
           {{/each}}
           </tbody>

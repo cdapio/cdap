@@ -39,6 +39,7 @@ public class OpexServiceMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(OpexServiceMain.class);
 
+  private static final int NOOP = 0;
   private static final int START = 1;
   private static final int STOP = 2;
 

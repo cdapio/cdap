@@ -3,17 +3,11 @@
  */
 package com.continuuity;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.service.ServerException;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.SettableFuture;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.Executor;
@@ -25,9 +19,9 @@ import java.util.concurrent.Executor;
  * All output is sent to our Logging service.
  */
 public class WebCloudAppService extends AbstractExecutionThreadService {
-  private static final Logger logger = LoggerFactory.getLogger(WebCloudAppService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WebCloudAppService.class);
   private static final String NODE_JS_EXECUTABLE = "node";
-  private static final String WEB_APP = "web-app/developer/server/main.js";
+  private static final String WEB_APP = "web-app/local/server/main.js";
   private Process process;
   private BufferedReader bufferedReader;
 
@@ -38,6 +32,7 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, WEB_APP);
     builder.redirectErrorStream(true);
+    LOG.info("Starting Web Cloud App ...");
     process = builder.start();
     final InputStream is = process.getInputStream();
     final InputStreamReader isr = new InputStreamReader(is);
@@ -49,13 +44,14 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void run() throws Exception {
+    LOG.info("Web Cloud App running ...");
     try {
       String line;
       while ((line = bufferedReader.readLine()) != null) {
-        logger.trace(line);
+        LOG.trace(line);
       }
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      LOG.error(e.getMessage());
     }
   }
 
@@ -89,6 +85,7 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void shutDown() throws Exception {
+    LOG.info("Shutting down Web Cloud App ...");
     process.waitFor();
   }
 }

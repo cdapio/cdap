@@ -338,45 +338,46 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
           }
         }
       }
+      if (!Em.isEmpty(urls)) {
+        this.HTTP.post('metrics', urls, function (response, status) {
 
-      this.HTTP.post('metrics', urls, function (response, status) {
+          if (response.result) {
 
-        if (response.result) {
+            var s = null, series = [], selected = self.get('selected.content'),
+              result = response.result, metric, d;
 
-          var s = null, series = [], selected = self.get('selected.content'),
-            result = response.result, metric, d;
+            for (var i = 0; i < result.length; i ++) {
 
-          for (var i = 0; i < result.length; i ++) {
+              if ((metric = findMetric(result[i].path))) {
 
-            if ((metric = findMetric(result[i].path))) {
+                s = {
+                  name: metric.metric + ' (' + metric.element + ', ' + metric.type + ')',
+                  color: metric.color,
+                  data: []
+                }, d = response.result[i].result.data;
 
-              s = {
-                name: metric.metric + ' (' + metric.element + ', ' + metric.type + ')',
-                color: metric.color,
-                data: []
-              }, d = response.result[i].result.data;
+                for (var j = 0; j < d.length; j ++) {
+                  s.data.push({
+                    x: d[j].time,
+                    y: d[j].value
+                  });
+                }
 
-              for (var j = 0; j < d.length; j ++) {
-                s.data.push({
-                  x: d[j].time,
-                  y: d[j].value
-                });
+                series.push(s);
+
               }
 
-              series.push(s);
-
             }
+            self.set('series', series);
 
           }
-          self.set('series', series);
 
-        }
+          setTimeout(function () {
+            self.update();
+          }, 1000);
 
-        setTimeout(function () {
-          self.update();
-        }, 1000);
-
-      });
+        });
+      }
 
     }.observes('selected.[]'),
 

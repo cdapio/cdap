@@ -12,6 +12,7 @@ define([], function () {
 
 			var self = this;
 			var model = this.get("model");
+			this.clearTriggers(true);
 
 			self.interval = setInterval(function () {
 				self.updateStats();
@@ -36,12 +37,23 @@ define([], function () {
 
 		},
 
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted');
+		},
+
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+			this.set('aggregatesCompleted', value);
+		},
+
 		updateStats: function () {
-
+			if (!this.ajaxCompleted()) {
+				return;
+			}
 			var models = [this.get('model')].concat(this.get('elements.Flow.content'));
-
-      C.Util.updateTimeSeries(models, this.HTTP);
-      C.Util.updateAggregates(models, this.HTTP);
+			this.clearTriggers(false);
+      C.Util.updateTimeSeries(models, this.HTTP, this);
+      C.Util.updateAggregates(models, this.HTTP, this);
 
 		},
 

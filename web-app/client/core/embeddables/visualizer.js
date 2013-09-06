@@ -29,24 +29,29 @@ define([], function () {
 				conns[flowlets[j].name] = [];
 			}
 		}
+
 		return conns;
 	}
 	function ___fixStreams () {
 
 		var flowlets = this.get('controller').elements.Flowlet;
-		var i, k, j, fs = this.get('controller').get('model').flowletStreams;
-		for (i in fs) {
+		var fs = this.get('controller').get('model').flowletStreams;
 
-			var flowlet = this.get('controller').get_flowlet(i), streams = [];
+		for (var i in fs) {
+			if (Object.prototype.toString.call(fs[i]) === '[object Object]') {
 
-			for (j in fs[i]) {
-				streams.push(C.Stream.create({
-					id: j,
-					type: fs[i][j].second,
-					url: fs[i][j].first
-				}));
+				var flowlet = this.get('controller').get_flowlet(fs[i].name), streams = [];
+
+				for (var j in fs[i]) {
+					streams.push(C.Stream.create({
+						id: j,
+						type: fs[i][j].second,
+						url: fs[i][j].first
+					}));
+				}
+
+				flowlet.streams = streams;
 			}
-			flowlet.streams = streams;
 		}
 	}
 	//** End Hax
@@ -57,7 +62,6 @@ define([], function () {
 		elementId: 'flowviz',
 
 		init: function () {
-
 			this._super();
 
 			this.sourcespec = {
@@ -86,11 +90,11 @@ define([], function () {
 			this.set('__location', {});
 			this.set('__inserted', {});
 			this.set('__numColumns', 0);
+			this.set('__positioningWatch', []);
 
 		},
 
 		didInsertElement: function () {
-
 			var flowSources = [];
 
 			// Insert input stream node
@@ -173,6 +177,7 @@ define([], function () {
 
 			if (!id) { // Append the first node
 				this.get('controller').elements.Flowlet.content.forEach(function (item, index) {
+
 					if (!this.__cxn[item.id] || this.__cxn[item.id].length === 0) {
 						this.__append(this.get('controller').get_flowlet(item.id), 0);
 						this.__insert(item.id);

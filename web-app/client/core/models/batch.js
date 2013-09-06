@@ -5,14 +5,14 @@
 define(['core/lib/date'], function (Datejs) {
 
   var METRICS_PATHS = {
-    //'/process/busyness/{{appId}}/mapreduce/{{jobId}}?count=30': 'busyness',
-    '/process/completion/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersCompletion',
-    '/process/completion/{{appId}}/mapreduce/{{jobId}}/reducers?count=30': 'reducersCompletion',
-    //'/process/bytes/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/ins?aggregate=true': 'mappersEntriesIn',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/outs?aggregate=true': 'mappersEntriesOut',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/ins?aggregate=true': 'reducersEntriesIn',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut'
+    //'/process/busyness/{{appId}}/mapreduces/{{jobId}}?count=30': 'busyness',
+    '/process/completion/{{appId}}/mapreduces/{{jobId}}/mappers?count=30': 'mappersCompletion',
+    '/process/completion/{{appId}}/mapreduces/{{jobId}}/reducers?count=30': 'reducersCompletion',
+    //'/process/bytes/{{appId}}/mapreduces/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
+    '/process/entries/{{appId}}/mapreduces/{{jobId}}/mappers/ins?aggregate=true': 'mappersEntriesIn',
+    '/process/entries/{{appId}}/mapreduces/{{jobId}}/mappers/outs?aggregate=true': 'mappersEntriesOut',
+    '/process/entries/{{appId}}/mapreduces/{{jobId}}/reducers/ins?aggregate=true': 'reducersEntriesIn',
+    '/process/entries/{{appId}}/mapreduces/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut'
   };
 
   var METRIC_TYPES = {

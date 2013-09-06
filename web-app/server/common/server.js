@@ -314,8 +314,8 @@ WebAppServer.prototype.bindRoutes = function(io) {
       { name: 'Errors per Second', path: '/process/errors/{parent}/flows/{id}' }
     ],
     'Batch': [
-      { name: 'Completion', path: '/process/completion/{parent}/mapreduce/{id}' },
-      { name: 'Entries Processed', path: '/process/entries/{parent}/mapreduce/{id}' }
+      { name: 'Completion', path: '/process/completion/{parent}/mapreduces/{id}' },
+      { name: 'Entries Processed', path: '/process/entries/{parent}/mapreduces/{id}' }
     ],
     'Dataset': [
       { name: 'Bytes per Second', path: '/store/bytes/datasets/{id}' },
@@ -585,6 +585,16 @@ WebAppServer.prototype.bindRoutes = function(io) {
         self.Api.manager(accountID, method, params, function (error, result) {
           if (error) {
             self.logger.error(error);
+          }
+          if (method === 'getFlowHistory') {
+            for (var i = result.length - 1; i >= 0; i--) {
+              if ('startTime' in result[i]) {
+                result[i]['startTime'] = parseInt(result[i]['startTime'], 10);
+              }
+              if ('endTime' in result[i]) {
+                result[i]['endTime'] = parseInt(result[i]['endTime'], 10);
+              }
+            }
           }
           res.send({ result: result, error: error });
         });

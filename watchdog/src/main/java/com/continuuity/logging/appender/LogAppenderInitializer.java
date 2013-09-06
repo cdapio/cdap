@@ -20,6 +20,10 @@ public class LogAppenderInitializer {
   }
 
   public void initialize() {
+    initialize(org.slf4j.Logger.ROOT_LOGGER_NAME);
+  }
+
+  public void initialize(String name) {
     LOG.info("Initializing log appender {}", logAppender.getName());
 
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -32,7 +36,7 @@ public class LogAppenderInitializer {
     logAppender.setContext(loggerContext);
     logAppender.start();
 
-    Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+    Logger rootLogger = loggerContext.getLogger(name);
     rootLogger.addAppender(logAppender);
   }
 }

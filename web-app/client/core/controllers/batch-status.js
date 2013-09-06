@@ -10,7 +10,7 @@ define(['helpers/plumber'], function (Plumber) {
     elements: Em.Object.create(),
 
     load: function () {
-
+      this.clearTriggers(true);
       var self = this;
 
       this.interval = setInterval(function () {
@@ -29,11 +29,21 @@ define(['helpers/plumber'], function (Plumber) {
       }, C.EMBEDDABLE_DELAY);
     },
 
+    ajaxCompleted: function () {
+      return this.get('timeseriesCompleted');
+    },
+
+    clearTriggers: function (value) {
+      this.set('timeseriesCompleted', value);
+    },
+
     updateStats: function () {
-
+      if (!this.ajaxCompleted()) {
+        return;
+      }
       this.get('model').updateState(this.HTTP);
-
-      C.Util.updateTimeSeries([this.get('model')], this.HTTP);
+      this.clearTriggers(false);
+      C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
 
       // C.Util.updateTimeSeries([this.get('model')], this.HTTP);
       // C.Util.updateAggregates([this.get('model'),

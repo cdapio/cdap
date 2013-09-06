@@ -7,7 +7,7 @@ define([], function () {
 	var Controller = Ember.Controller.extend({
 
 		load: function () {
-
+			this.clearTriggers(true);
 			var model = this.get('model');
 			var self = this;
 
@@ -31,12 +31,23 @@ define([], function () {
 
 		},
 
+		ajaxCompleted: function () {
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted');
+		},
+
+		clearTriggers: function (value) {
+			this.set('timeseriesCompleted', value);
+			this.set('aggregatesCompleted', value);
+		},
+
 		updateStats: function () {
-
+			if (!this.ajaxCompleted()) {
+				return;
+			}
 			this.get('model').updateState(this.HTTP);
-
-			C.Util.updateTimeSeries([this.get('model')], this.HTTP);
-			C.Util.updateAggregates([this.get('model')], this.HTTP);
+			this.clearTriggers(false);
+			C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
+			C.Util.updateAggregates([this.get('model')], this.HTTP, this);
 
 		},
 		/**

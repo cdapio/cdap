@@ -1,8 +1,11 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import java.util.Map;
 
 /**
  *
@@ -40,5 +43,17 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   @Override
   public void dropAll() throws Exception {
     queueService.reset();
+  }
+
+  @Override
+  public void configureInstances(QueueName queueName, long groupId, int instances) {
+    // No-op for InMemoryQueueAdmin
+    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
+  }
+
+  @Override
+  public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
+    // No-op for InMemoryQueueAdmin
+    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
   }
 }

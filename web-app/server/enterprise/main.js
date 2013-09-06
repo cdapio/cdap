@@ -82,7 +82,7 @@ entServer.start();
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  entServer.logger.error('Uncaught Exception', err);
+//  entServer.logger.info('Uncaught Exception', err);
 });
 
 /**

@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Logging configuration helper.
@@ -28,6 +29,7 @@ public final class LoggingConfiguration {
   public static final String LOG_SAVER_EVENT_PROCESSING_DELAY_MS = "log.saver.event.processing.delay.ms";
   public static final String LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = "log.saver.inactive.file.interval.ms";
   public static final String LOG_SAVER_CHECKPOINT_INTERVAL_MS = "log.saver.checkpoint.interval.ms";
+  public static final String LOG_SAVER_TOPIC_WAIT_SLEEP_MS = "log.saver.topic.wait.sleep.ms";
   public static final String LOG_RETENTION_DURATION_DAYS = "log.retention.duration.days";
   public static final String LOG_MAX_FILE_SIZE_BYTES = "log.max.file.size.bytes";
   public static final String KAFKA_PRODUCER_TYPE = "kafka.producer.type";
@@ -50,6 +52,7 @@ public final class LoggingConfiguration {
   public static final long DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = 60 * 60 * 1000;
   public static final long DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS = 60 * 1000;
   public static final long DEFAULT_LOG_RETENTION_DURATION_DAYS = 30;
+  public static final long DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
 
   private LoggingConfiguration() {}
 

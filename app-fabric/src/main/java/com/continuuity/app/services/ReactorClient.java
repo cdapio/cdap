@@ -39,10 +39,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Client for interacting with Local Reactor's app-fabric service to perform the following operations:
- * a) Deploy app
- * b) Start/Stop/Status of flow, procedure or map reduce job
- * c) Promote app to cloud
- * d) Scale number of flowlet instances
+ * a) Deploy app.
+ * b) Start/Stop/Status of flow, procedure or map reduce job.
+ * c) Promote app to cloud.
+ * d) Scale number of flowlet instances.
  * <p/>
  * Usage:
  * ReactorClient client = new ReactorClient();
@@ -146,7 +146,7 @@ public final class ReactorClient {
   }
 
   /**
-   * Executes the configured operation
+   * Executes the configured operation.
    */
   private void executeInternal() throws TException, InterruptedException, AppFabricServiceException, IOException {
     Preconditions.checkNotNull(command, "App client is not configured to run");
@@ -430,7 +430,7 @@ public final class ReactorClient {
     String command;
     try {
       command = parseArguments(args, config);
-      if(command == null || "help".equals(command)) {
+      if (command == null || "help".equals(command)) {
         return command;
       }
     } catch (UsageException e) {

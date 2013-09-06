@@ -60,9 +60,10 @@ define([], function () {
 
 			http.rpc('runnable', 'status', [app_id, flow_id, -1],
 				function (response) {
-
 					if (response.result) {
-						self.set('currentState', response.result.status);
+						if (self.get('name') === response.result.flowId) {
+							self.set('currentState', response.result.status);
+						}
 					}
 
 			});
@@ -158,6 +159,14 @@ define([], function () {
 			var flow_id = model_id[1];
 
 			http.rest('apps', app_id, 'flows', flow_id, function (model, error) {
+				if (model.hasOwnProperty('flowletStreams')) {
+					var flowletStreamArr = [];
+					for (entry in model['flowletStreams']) {
+						model['flowletStreams'][entry]['name'] = entry;
+						flowletStreamArr.push(model['flowletStreams'][entry]);
+					}
+					model['flowletStreams'] = flowletStreamArr;
+				}
 
 				model.applicationId = app_id;
 				model = C.Flow.create(model);
@@ -166,10 +175,10 @@ define([], function () {
 					function (response, error) {
 
 					if (response.error) {
-							promise.reject(error);
+						promise.reject(error);
 					} else {
-							model.set('currentState', response.result.status);
-							promise.resolve(model);
+						model.set('currentState', response.result.status);
+						promise.resolve(model);
 					}
 
 				});

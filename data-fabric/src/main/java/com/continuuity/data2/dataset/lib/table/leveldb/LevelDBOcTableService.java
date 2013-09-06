@@ -31,16 +31,30 @@ public class LevelDBOcTableService {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBOcTableService.class);
 
-  private final int blockSize;
-  private final long cacheSize;
-  private final String basePath;
-  private final WriteOptions writeOptions;
+  private int blockSize;
+  private long cacheSize;
+  private String basePath;
+  private WriteOptions writeOptions;
 
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
-  @Inject
-  public LevelDBOcTableService(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
+  private static final LevelDBOcTableService SINGLETON = new LevelDBOcTableService();
 
+  public static LevelDBOcTableService getInstance() {
+    return SINGLETON;
+  }
+
+  /**
+   * Protect the constructor as this class needs to be singleton.
+   */
+  private LevelDBOcTableService() {
+  }
+
+  /**
+   * For guice injecting configuration object to this singleton.
+   */
+  @Inject
+  public void setConfiguration(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
 
@@ -128,7 +142,7 @@ public class LevelDBOcTableService {
   }
 
 
-  public static String getDBPath(String basePath, String tableName) {
+  private static String getDBPath(String basePath, String tableName) {
     String encodedTableName;
     try {
       encodedTableName = URLEncoder.encode(tableName, "ASCII");

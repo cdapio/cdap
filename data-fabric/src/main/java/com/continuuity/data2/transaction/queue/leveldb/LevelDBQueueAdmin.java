@@ -1,9 +1,12 @@
 package com.continuuity.data2.transaction.queue.leveldb;
 
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import java.util.Map;
 
 /**
  *
@@ -45,5 +48,17 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   public void dropAll() throws Exception {
     // hack: we know that all queues stored in one table
     service.dropTable(QUEUE_TABLE_NAME);
+  }
+
+  @Override
+  public void configureInstances(QueueName queueName, long groupId, int instances) {
+    // No-op
+    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
+  }
+
+  @Override
+  public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
+    // No-op
+    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
   }
 }
