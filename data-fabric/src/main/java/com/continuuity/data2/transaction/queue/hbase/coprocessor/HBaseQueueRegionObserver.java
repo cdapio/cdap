@@ -16,6 +16,7 @@ import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.Store;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -29,6 +30,9 @@ import java.util.NavigableMap;
  * RegionObserver for queue table. This class should only have JSE and HBase classes dependencies only.
  * It can also has dependencies on continuuity classes provided that all the transitive dependencies stay within
  * the mentioned scope.
+ *
+ * This region observer does queue eviction during flush time and compact time by using queue consumer state
+ * information to determine if a queue entry row can be omitted during flush/compact.
  */
 public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
@@ -43,6 +47,16 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e,
                                   Store store, InternalScanner scanner) throws IOException {
+    if (!e.getEnvironment().getRegion().isAvailable()) {
+      return scanner;
+    }
+
+    return new EvictionInternalScanner(e.getEnvironment(), scanner);
+  }
+
+  @Override
+  public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
+                                    InternalScanner scanner, CompactionRequest request) throws IOException {
     if (!e.getEnvironment().getRegion().isAvailable()) {
       return scanner;
     }
@@ -91,70 +105,26 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         // Check if it is eligible for eviction.
         KeyValue keyValue = result.get(0);
 
-        // If current queue is known and prefix match, then it's a queue entry, hence should be eligible.
-        boolean eligible = (currentQueue != null
-          && isPrefix(keyValue.getBuffer(), keyValue.getRowOffset() + 2, keyValue.getRowLength() - 2, currentQueue));
-
-        if (!eligible) {
-          // If not eligible, it could be scanned into the next queue entry or simply it hasn't see any queue entry yet.
+        // If current queue is unknown or the row is not a queue entry of current queue,
+        // it either because it scans into next queue entry or simply current queue is not known.
+        // Hence needs to find the currentQueue
+        if (currentQueue == null || !isQueueEntry(currentQueue, keyValue)) {
+          // If not eligible, it either because it scans into next queue entry or simply current queue is not known.
           currentQueue = null;
 
-          // Either case, it check if current row is a queue entry.
-          eligible = isPrefix(keyValue.getBuffer(),
-                              keyValue.getRowOffset() + 2,
-                              keyValue.getRowLength() - 2,
-                              QUEUE_BYTES);
-
-          if (!eligible) {
-            if (LOG.isDebugEnabled()) {
-              String key = Bytes.toStringBinary(keyValue.getBuffer(),
-                                                keyValue.getRowOffset(),
-                                                keyValue.getRowLength());
-              LOG.debug("Row " + key + " is not eligible for eviction.");
-            }
+          // Either case, it checks if current row is a queue entry of QUEUE type (not STREAM).
+          if (!isQueueEntry(keyValue)) {
             return hasNext;
           }
         }
 
         // This row is a queue entry. If currentQueue is null, meaning it's a new queue encountered during scan.
         if (currentQueue == null) {
-          // Entry key is always (2 MD5 bytes + queueName + longWritePointer + intCounter)
-          int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - LONG_BYTES - INT_BYTES;
-          currentQueue = Arrays.copyOfRange(keyValue.getBuffer(), keyValue.getRowOffset() + 2, queueNameEnd);
+          currentQueue = getQueueName(keyValue);
           consumerConfig = getConsumerConfig(currentQueue);
         }
 
-        boolean evict;
-        if (consumerConfig.getNumGroups() == 0) {
-          // If no consumer group, this queue is dead, should be ok to evict.
-          evict = true;
-        } else if (consumerConfig.getNumGroups() < 0) {
-          // If unknown consumer config (due to error), keep the queue.
-          evict = false;
-        } else {
-          // Need to determine if this row can be evicted iff all consumer groups must have committed process this row.
-          int consumedGroups = 0;
-          // Inspect each state column
-          for (KeyValue kv : result) {
-            if (!isStateColumn(kv)) {
-              continue;
-            }
-            // If any consumer has a state != PROCESSED, it should not be evicted
-            if (!isProcessed(kv, consumerInstance)) {
-              break;
-            }
-            // If it is PROCESSED, check if this row is smaller than the consumer instance startRow.
-            // Essentially a loose check of committed PROCESSED.
-            byte[] startRow = consumerConfig.getStartRow(consumerInstance);
-            if (startRow != null && Bytes.compareTo(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(),
-                                                    startRow, 0, startRow.length) < 0) {
-              consumedGroups++;
-            }
-          }
-          evict = consumedGroups == consumerConfig.getNumGroups();
-        }
-
-        if (evict) {
+        if (canEvict(consumerConfig, result)) {
           result.clear();
           hasNext = scanner.next(result, limit, metric);
         } else {
@@ -236,6 +206,68 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         }
       }
       return true;
+    }
+
+    /**
+     * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
+     */
+    private byte[] getQueueName(KeyValue keyValue) {
+      // Entry key is always (2 MD5 bytes + queueName + longWritePointer + intCounter)
+      int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - LONG_BYTES - INT_BYTES;
+      return Arrays.copyOfRange(keyValue.getBuffer(), keyValue.getRowOffset() + 2, queueNameEnd);
+    }
+
+    /**
+     * Returns true if the given KeyValue row is a queue entry of the given queue.
+     */
+    private boolean isQueueEntry(byte[] queueName, KeyValue keyValue) {
+      return isPrefix(keyValue.getBuffer(), keyValue.getRowOffset() + 2, keyValue.getRowLength() - 2, queueName);
+    }
+
+    /**
+     * Returns true if the given KeyValue row is a queue entry, regardless what queue it is.
+     */
+    private boolean isQueueEntry(KeyValue keyValue) {
+      // Only match the type of the queue.
+      return isQueueEntry(QUEUE_BYTES, keyValue);
+    }
+
+    /**
+     * Determines the given queue entry row can be evicted.
+     * @param result All KeyValues of a queue entry row.
+     * @return true if it can be evicted, false otherwise.
+     */
+    private boolean canEvict(QueueConsumerConfig consumerConfig, List<KeyValue> result) {
+      // If no consumer group, this queue is dead, should be ok to evict.
+      if (consumerConfig.getNumGroups() == 0) {
+        return true;
+      }
+
+      // If unknown consumer config (due to error), keep the queue.
+      if (consumerConfig.getNumGroups() < 0) {
+        return false;
+      }
+
+      // Need to determine if this row can be evicted iff all consumer groups have committed process this row.
+      int consumedGroups = 0;
+      // Inspect each state column
+      for (KeyValue kv : result) {
+        if (!isStateColumn(kv)) {
+          continue;
+        }
+        // If any consumer has a state != PROCESSED, it should not be evicted
+        if (!isProcessed(kv, consumerInstance)) {
+          break;
+        }
+        // If it is PROCESSED, check if this row is smaller than the consumer instance startRow.
+        // Essentially a loose check of committed PROCESSED.
+        byte[] startRow = consumerConfig.getStartRow(consumerInstance);
+        if (startRow != null && Bytes.compareTo(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(),
+                                                startRow, 0, startRow.length) < 0) {
+          consumedGroups++;
+        }
+      }
+      return consumedGroups == consumerConfig.getNumGroups();
     }
 
     /**
