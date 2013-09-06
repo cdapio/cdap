@@ -10,7 +10,6 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.queue.AbstractQueue2Consumer;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
-import com.continuuity.data2.transaction.queue.QueueEvictor;
 import com.continuuity.data2.transaction.queue.QueueScanner;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
@@ -27,6 +26,8 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -40,13 +41,36 @@ import java.util.Set;
  */
 final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
 
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueue2Consumer.class);
+
+  // Persist latest start row every n entries consumed.
+  private static final int PERSIST_START_ROW_LIMIT = 10000;
+
   private final HTable hTable;
   private final Filter processedStateFilter;
+  private final HBaseConsumerStateStore stateStore;
+  private boolean closed;
 
-  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName, QueueEvictor queueEvictor) {
-    super(consumerConfig, queueName, queueEvictor);
+  /**
+   * Creates a HBaseQueue2Consumer.
+   * @param consumerConfig Configuration of the consumer.
+   * @param hTable The HTable instance to use for communicating with HBase. This consumer is responsible for closing it.
+   * @param queueName Name of the queue.
+   * @param consumerState The persisted state of this consumer.
+   * @param stateStore The store for persisting state for this consumer.
+   */
+  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+                      HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
+    // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
+    super(consumerConfig, queueName);
     this.hTable = hTable;
     this.processedStateFilter = createStateFilter();
+    this.stateStore = stateStore;
+    byte[] startRow = consumerState.getStartRow();
+
+    if (startRow != null && startRow.length > 0) {
+      this.startRow = startRow;
+    }
   }
 
   @Override
@@ -93,9 +117,6 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     Scan scan = new Scan();
     scan.setCaching(numRows);
     scan.setStartRow(startRow);
-    // ANDREAS it seems that startRow never gets updated. That means we will always rescan entries that we have
-    // already read and decided to ignore.
-    // TERENCE: The update is done in the shouldInclude() method.
     scan.setStopRow(stopRow);
     scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.DATA_COLUMN);
     scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.META_COLUMN);
@@ -108,10 +129,27 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
 
   @Override
   public void close() throws IOException {
+    if (closed) {
+      return;
+    }
     try {
-      super.close();
+      stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
     } finally {
       hTable.close();
+      closed = true;
+    }
+  }
+
+  @Override
+  public void postTxCommit() {
+    super.postTxCommit();
+    if (commitCount >= PERSIST_START_ROW_LIMIT) {
+      try {
+        stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
+        commitCount = 0;
+      } catch (IOException e) {
+        LOG.error("Failed to persist start row to HBase.", e);
+      }
     }
   }
 
