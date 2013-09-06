@@ -21,9 +21,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.Uninterruptibles;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,9 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Common queue consumer for persisting engines such as HBase and LevelDB.
@@ -49,12 +43,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   // Multiple of batches to fetch per scan.
   // Number of rows to scan = max(MIN_FETCH_ROWS, dequeueBatchSize * groupSize * PREFETCH_BATCHES)
   private static final int PREFETCH_BATCHES = 10;
-
-  private static final long EVICTION_TIMEOUT_SECONDS = 10;
-  // How many commits to trigger eviction.
-  private static final int EVICTION_LIMIT = 1000;
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractQueue2Consumer.class);
 
   private static final Function<SimpleQueueEntry, byte[]> ENTRY_TO_BYTE_ARRAY =
     new Function<SimpleQueueEntry, byte[]>() {
@@ -70,7 +58,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   private final SortedMap<byte[], SimpleQueueEntry> consumingEntries;
   protected final byte[] stateColumnName;
   private final byte[] queueRowPrefix;
-  private final QueueEvictor queueEvictor;
   protected byte[] startRow;
   protected Transaction transaction;
   private boolean committed;
@@ -83,16 +70,15 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     throws IOException, InterruptedException;
   protected abstract QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException;
 
-  protected AbstractQueue2Consumer(ConsumerConfig consumerConfig, QueueName queueName, QueueEvictor queueEvictor) {
+  protected AbstractQueue2Consumer(ConsumerConfig consumerConfig, QueueName queueName) {
     this.consumerConfig = consumerConfig;
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
-    this.startRow = Bytes.concat(queueRowPrefix, Bytes.toBytes(0L), Bytes.toBytes(0));
+    this.startRow = getRowKey(0L, 0);
     this.stateColumnName = Bytes.add(QueueConstants.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
-    this.queueEvictor = queueEvictor;
   }
 
   @Override
@@ -169,7 +155,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     if (consumingEntries.isEmpty()) {
       return true;
     }
-    // TODO pre-compute this in constructor
+
     byte[] stateContent = encodeStateColumn(ConsumerEntryState.PROCESSED);
     updateState(consumingEntries.keySet(), stateColumnName, stateContent);
     commitCount += consumingEntries.size();
@@ -183,26 +169,16 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
       // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
       // that is smaller than smallest of exclude list
       long[] excludedList = transaction.getExcludedList();
-      byte[] lastKey;
       if (excludedList.length == 0) {
         // No need to copy, as after postTxCommit, no one will use the consumingEntries except
         // next call should be startTx which will clear the consumingEntries.
-        lastKey = consumingEntries.lastKey();
+        startRow = getNextRow(consumingEntries.lastKey());
       } else {
-        SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getNextRow(excludedList[0], 0));
-        // If nothing smallest than the smallest of excluded list, then it can't advance.
-        lastKey = headMap.isEmpty() ? startRow : headMap.firstKey();
-      }
-
-      // Update startRow to next of lastKey (same transaction, counter + 1)
-      int counterOff = queueRowPrefix.length + Longs.BYTES;
-      Bytes.putInt(lastKey, counterOff, Bytes.toInt(lastKey, counterOff) + 1);
-      startRow = lastKey;
-
-      if (commitCount >= EVICTION_LIMIT) {
-        commitCount = 0;
-        // Fire and forget
-        queueEvictor.evict(transaction);
+        SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getRowKey(excludedList[0], 0));
+        // If nothing smaller than the smallest of excluded list, then it can't advance.
+        if (!headMap.isEmpty()) {
+          startRow = getNextRow(headMap.firstKey());
+        }
       }
     }
   }
@@ -231,22 +207,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
       undoState(consumingEntries.keySet(), stateColumnName);
     }
     return true;
-  }
-
-  @Override
-  public void close() throws IOException {
-    try {
-      if (transaction != null) {
-        // Use whatever last transaction for eviction.
-        // Has to block until eviction is completed
-        Uninterruptibles.getUninterruptibly(queueEvictor.evict(transaction),
-                                            EVICTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      }
-    } catch (ExecutionException e) {
-      LOG.warn("Failed to perform queue eviction.", e.getCause());
-    } catch (TimeoutException e) {
-      LOG.warn("Timeout when performing queue eviction.", e);
-    }
   }
 
   /**
@@ -391,7 +351,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
         // If the PROCESSED entry write pointer is smaller than smallest in excluded list, then it must be processed.
         if (excludedList.length == 0 || excludedList[0] > enqueueWritePointer) {
-          startRow = getNextRow(enqueueWritePointer, counter);
+          startRow = getNextRow(startRow, enqueueWritePointer, counter);
         }
         return false;
       }
@@ -421,11 +381,32 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     }
   }
 
-  private byte[] getNextRow(long writePointer, int count) {
-    byte[] row = new byte[queueRowPrefix.length + Longs.BYTES + Ints.BYTES];
-    Bytes.putBytes(row, 0, queueRowPrefix, 0, queueRowPrefix.length);
+  /**
+   * Creates a new byte[] that gives the entry row key for the given enqueue transaction and counter.
+   */
+  private byte[] getRowKey(long writePointer, int count) {
+    byte[] row = Arrays.copyOf(queueRowPrefix, queueRowPrefix.length + Longs.BYTES + Ints.BYTES);
+    Bytes.putLong(row, queueRowPrefix.length, writePointer);
+    Bytes.putInt(row, queueRowPrefix.length + Longs.BYTES, count);
+    return row;
+  }
+
+  /**
+   * Get the next row based on the given write pointer and counter. It modifies the given row byte[] in place
+   * and returns it.
+   */
+  private byte[] getNextRow(byte[] row, long writePointer, int count) {
     Bytes.putLong(row, queueRowPrefix.length, writePointer);
     Bytes.putInt(row, queueRowPrefix.length + Longs.BYTES, count + 1);
+    return row;
+  }
+
+  /**
+   * Get the next row based on the given row. It modifies the given row byte[] in place and return sit.
+   */
+  private byte[] getNextRow(byte[] row) {
+    int counterOff = queueRowPrefix.length + Longs.BYTES;
+    Bytes.putInt(row, counterOff, Bytes.toInt(row, counterOff) + 1);
     return row;
   }
 

@@ -10,7 +10,6 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.queue.AbstractQueue2Consumer;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
-import com.continuuity.data2.transaction.queue.QueueEvictor;
 import com.continuuity.data2.transaction.queue.QueueScanner;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
@@ -52,13 +51,22 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   private final HBaseConsumerStateStore stateStore;
   private boolean closed;
 
+  /**
+   * Creates a HBaseQueue2Consumer.
+   * @param consumerConfig Configuration of the consumer.
+   * @param hTable The HTable instance to use for communicating with HBase. This consumer is responsible for closing it.
+   * @param queueName Name of the queue.
+   * @param consumerState The persisted state of this consumer.
+   * @param stateStore The store for persisting state for this consumer.
+   */
   HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
-                      byte[] startRow, HBaseConsumerStateStore stateStore) {
+                      HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
     // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
-    super(consumerConfig, queueName, QueueEvictor.NOOP);
+    super(consumerConfig, queueName);
     this.hTable = hTable;
     this.processedStateFilter = createStateFilter();
     this.stateStore = stateStore;
+    byte[] startRow = consumerState.getStartRow();
 
     if (startRow != null && startRow.length > 0) {
       this.startRow = startRow;
@@ -124,11 +132,11 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     if (closed) {
       return;
     }
-    closed = true;
     try {
-      stateStore.saveStartRow(startRow);
+      stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
     } finally {
       hTable.close();
+      closed = true;
     }
   }
 
@@ -137,10 +145,10 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     super.postTxCommit();
     if (commitCount >= PERSIST_START_ROW_LIMIT) {
       try {
-        stateStore.saveStartRow(startRow);
+        stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
         commitCount = 0;
       } catch (IOException e) {
-        LOG.error("Fail to persist start row to HBase.", e);
+        LOG.error("Failed to persist start row to HBase.", e);
       }
     }
   }

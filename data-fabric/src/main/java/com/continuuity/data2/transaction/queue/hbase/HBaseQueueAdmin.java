@@ -197,23 +197,21 @@ public class HBaseQueueAdmin implements QueueAdmin {
     try {
       byte[] rowKey = queueName.toBytes();
 
-      // Get all latest entry rowkey of all existing instances
+      // Get all latest entry row key of all existing instances
       // Consumer state column is named as "<groupId><instanceId>"
       Get get = new Get(rowKey);
       get.addFamily(QueueConstants.COLUMN_FAMILY);
       get.setFilter(new ColumnPrefixFilter(Bytes.toBytes(groupId)));
-      Result result = hTable.get(get);
+      List<HBaseConsumerState> consumerStates = HBaseConsumerState.create(hTable.get(get));
 
-      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
-
-      int oldInstances = columns.size();
+      int oldInstances = consumerStates.size();
 
       // Nothing to do if size doesn't change
       if (oldInstances == instances) {
         return;
       }
       // Compute and applies changes
-      hTable.batch(getConfigMutations(groupId, instances, rowKey, columns, new ArrayList<Mutation>()));
+      hTable.batch(getConfigMutations(groupId, instances, rowKey, consumerStates, new ArrayList<Mutation>()));
 
     } finally {
       hTable.close();
@@ -243,21 +241,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
         columns = ImmutableSortedMap.of();
       }
       Map<Long, Integer> oldGroupInfo = Maps.newHashMap();
-      byte[] smallest = null;
-
-      for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
-        // Consumer state column is named as "<groupId><instanceId>"
-        long groupId = Bytes.toLong(entry.getKey());
-
-        // Map key is sorted by groupId then instanceId, hence keep putting the instance + 1 will gives the group size.
-        oldGroupInfo.put(groupId, Bytes.toInt(entry.getKey(), Longs.BYTES) + 1);
-
-        // Update smallest if the group still exists from the new groups.
-        if (groupInfo.containsKey(groupId)
-            && (smallest == null || Bytes.BYTES_COMPARATOR.compare(entry.getValue(), smallest) < 0)) {
-          smallest = entry.getValue();
-        }
-      }
+      byte[] smallest = decodeGroupInfo(groupInfo, columns, oldGroupInfo);
 
       List<Mutation> mutations = Lists.newArrayList();
 
@@ -292,7 +276,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
             columns.subMap(HBaseQueueUtils.getConsumerStateColumn(groupId, 0),
                            HBaseQueueUtils.getConsumerStateColumn(groupId, oldGroupInfo.get(groupId)));
 
-          mutations = getConfigMutations(groupId, instances, rowKey, columnMap, mutations);
+          mutations = getConfigMutations(groupId, instances, rowKey, HBaseConsumerState.create(columnMap), mutations);
         }
       }
       mutations.add(put);
@@ -307,25 +291,45 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
+  private byte[] decodeGroupInfo(Map<Long, Integer> groupInfo,
+                                 Map<byte[], byte[]> columns, Map<Long, Integer> oldGroupInfo) {
+    byte[] smallest = null;
+
+    for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
+      // Consumer state column is named as "<groupId><instanceId>"
+      long groupId = Bytes.toLong(entry.getKey());
+
+      // Map key is sorted by groupId then instanceId, hence keep putting the instance + 1 will gives the group size.
+      oldGroupInfo.put(groupId, Bytes.toInt(entry.getKey(), Longs.BYTES) + 1);
+
+      // Update smallest if the group still exists from the new groups.
+      if (groupInfo.containsKey(groupId)
+          && (smallest == null || Bytes.BYTES_COMPARATOR.compare(entry.getValue(), smallest) < 0)) {
+        smallest = entry.getValue();
+      }
+    }
+    return smallest;
+  }
+
   private List<Mutation> getConfigMutations(long groupId, int instances, byte[] rowKey,
-                                            SortedMap<byte[], byte[]> columns, List<Mutation> mutations) {
+                                            List<HBaseConsumerState> consumerStates, List<Mutation> mutations) {
     // Find smallest startRow among existing instances
     byte[] smallest = null;
-    for (byte[] value : columns.values()) {
-      if (smallest == null || Bytes.BYTES_COMPARATOR.compare(value, smallest) < 0) {
-        smallest = value;
+    for (HBaseConsumerState consumerState : consumerStates) {
+      if (smallest == null || Bytes.BYTES_COMPARATOR.compare(consumerState.getStartRow(), smallest) < 0) {
+        smallest = consumerState.getStartRow();
       }
     }
     Preconditions.checkArgument(smallest != null, "No startRow found for consumer group %s", groupId);
 
-    int oldInstances = columns.size();
+    int oldInstances = consumerStates.size();
 
     // If size increase, simply pick the lowest startRow from existing instances as startRow for the new instance
     if (instances > oldInstances) {
       // Set the startRow of the new instances to the smallest among existing
       Put put = new Put(rowKey);
       for (int i = oldInstances; i < instances; i++) {
-        put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(groupId, i), smallest);
+        new HBaseConsumerState(smallest, groupId, i).updatePut(put);
       }
       mutations.add(put);
 
@@ -334,17 +338,16 @@ public class HBaseQueueAdmin implements QueueAdmin {
       // The map is sorted by instance ID
       Put put = new Put(rowKey);
       Delete delete = new Delete(rowKey);
-      for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
-        // Consumer state column is named as "groupId:instanceId"
-        int instanceId = Bytes.toInt(entry.getKey(), Longs.BYTES);
-        if (instanceId < instances) {
-          if (Bytes.BYTES_COMPARATOR.compare(smallest, entry.getValue()) < 0) {
-            // Updates
-            put.add(QueueConstants.COLUMN_FAMILY, entry.getKey(), smallest);
-          }
+      for (HBaseConsumerState consumerState : consumerStates) {
+        HBaseConsumerState newState = new HBaseConsumerState(smallest,
+                                                             consumerState.getGroupId(),
+                                                             consumerState.getInstanceId());
+        if (consumerState.getInstanceId() < instances) {
+          // Updates to smallest rowKey
+          newState.updatePut(put);
         } else {
           // Delete old instances
-          delete.deleteColumns(QueueConstants.COLUMN_FAMILY, entry.getKey());
+          newState.delete(delete);
         }
       }
       if (!put.isEmpty()) {

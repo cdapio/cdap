@@ -5,6 +5,8 @@ package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
 /**
  * Helper class for holding consumer groupId and instanceId for hash map lookup.
+ *
+ * NOTE: This class is not thread safe.
  */
 final class ConsumerInstance {
   private long groupId;
@@ -24,6 +26,9 @@ final class ConsumerInstance {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (o == null || o.getClass() != ConsumerInstance.class) {
       return false;
     }

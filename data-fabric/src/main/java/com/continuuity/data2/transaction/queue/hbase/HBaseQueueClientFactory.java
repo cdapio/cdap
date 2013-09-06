@@ -63,7 +63,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     }
     HTable hTable = createHTable();
     HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig, hTable);
-    return new HBaseQueue2Consumer(consumerConfig, hTable, queueName, stateStore.getStartRow(), stateStore);
+    return new HBaseQueue2Consumer(consumerConfig, hTable, queueName, stateStore.getState(), stateStore);
   }
 
   @Override
