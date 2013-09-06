@@ -27,7 +27,7 @@ public class LevelDBQueueEvictor implements QueueEvictor {
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueEvictor.class);
 
   private static final Transaction ALL_LATEST_TRANSACTION =
-    new Transaction(KeyValue.LATEST_TIMESTAMP, KeyValue.LATEST_TIMESTAMP, new long[0]);
+    new Transaction(KeyValue.LATEST_TIMESTAMP, KeyValue.LATEST_TIMESTAMP, new long[0], new long[0]);
 
   private final LevelDBOcTableCore core;
   private final byte[] queueRowPrefix;

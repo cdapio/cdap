@@ -1,6 +1,7 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
 
 import java.util.Arrays;
@@ -18,8 +19,7 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferingOcTab
   }
 
   protected static NavigableMap<byte[], byte[]> getLatestNotExcluded(
-    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap,
-    long[] excluded) {
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap, Transaction tx) {
 
     // todo: for some subclasses it is ok to do changes in place...
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -28,7 +28,7 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferingOcTab
       // todo: not cool to rely on external implementation specifics
       for (Map.Entry<Long, byte[]> versionAndValue : column.getValue().entrySet()) {
         // NOTE: we know that excluded versions are ordered
-        if (Arrays.binarySearch(excluded, versionAndValue.getKey()) < 0) {
+        if (tx.isVisible(versionAndValue.getKey())) {
           result.put(column.getKey(), versionAndValue.getValue());
           break;
         }
@@ -39,12 +39,11 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferingOcTab
   }
 
   protected static NavigableMap<byte[], NavigableMap<byte[], byte[]>> getLatestNotExcludedRows(
-    NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rows,
-    long[] excluded) {
+    NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rows, Transaction tx) {
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
     for (Map.Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowMap : rows.entrySet()) {
-      NavigableMap<byte[], byte[]> visibleRowMap = getLatestNotExcluded(rowMap.getValue(), excluded);
+      NavigableMap<byte[], byte[]> visibleRowMap = getLatestNotExcluded(rowMap.getValue(), tx);
       if (visibleRowMap.size() > 0) {
         result.put(rowMap.getKey(), visibleRowMap);
       }

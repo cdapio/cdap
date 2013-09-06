@@ -98,7 +98,7 @@ public class BenchmarkRunner {
     return count;
   }
 
-  private void run() throws Exception {
+  private BenchmarkResult run(BenchmarkResult result) throws Exception {
     // 1. initialize benchmark
     LOG.debug("Executing benchmark.initialize()");
     benchmark.initialize();
@@ -135,7 +135,7 @@ public class BenchmarkRunner {
       groupMetrics[j] = new BenchmarkMetric();
 
       for (int i = 0; i < group.getNumAgents(); ++i) {
-        BenchmarkRunnable br = new BenchmarkRunnable(group, i, groupMetrics[j]);
+        BenchmarkRunnable br = new BenchmarkRunnable(group, i, groupMetrics[j], false);
         LOG.debug("Starting thread for benchmark agent {} of group {}", i, j);
         agentFutureList.add(agentCompletionPool.submit(br, null));
       }
@@ -170,6 +170,8 @@ public class BenchmarkRunner {
       collectorFutureList.get(i).cancel(true);
     }
 
+    consoleReporter.getResults(result);
+
     // 7. wait for remaining benchmark threads to finish
     LOG.debug("Waiting for remaining benchmark threads to finish...");
     for (int i = 1; i < totalNumAgents; i++) {
@@ -180,6 +182,8 @@ public class BenchmarkRunner {
 
     collectorThreadPool.shutdown();
     agentThreadPool.shutdown();
+
+    return result;
   }
 
   void shutdown() {
@@ -189,22 +193,21 @@ public class BenchmarkRunner {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    // create a runner
-    BenchmarkRunner runner = new BenchmarkRunner();
-
+  public BenchmarkResult doRun(String[] args) throws Exception {
     try {
       // configure it
-      boolean ok = runner.parseOptions(args);
-
-      // run it
-      if (ok) {
-        runner.run();
+      if (parseOptions(args)) {
+        return run(new BenchmarkResult(benchName, args));
       }
+      return null;
     } finally {
       // shut it down
-      runner.shutdown();
+      shutdown();
     }
+  }
+
+  public static void main(String[] args) throws Exception {
+    new BenchmarkRunner().doRun(args);
     LOG.info("Benchmark executed successfully.");
   }
 }

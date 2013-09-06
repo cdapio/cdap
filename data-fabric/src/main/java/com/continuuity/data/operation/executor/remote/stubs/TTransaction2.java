@@ -32,7 +32,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
 
   private static final org.apache.thrift.protocol.TField WRITE_POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("writePointer", org.apache.thrift.protocol.TType.I64, (short)1);
   private static final org.apache.thrift.protocol.TField READ_POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("readPointer", org.apache.thrift.protocol.TType.I64, (short)2);
-  private static final org.apache.thrift.protocol.TField EXCLUDES_FIELD_DESC = new org.apache.thrift.protocol.TField("excludes", org.apache.thrift.protocol.TType.LIST, (short)3);
+  private static final org.apache.thrift.protocol.TField INVALIDS_FIELD_DESC = new org.apache.thrift.protocol.TField("invalids", org.apache.thrift.protocol.TType.LIST, (short)3);
+  private static final org.apache.thrift.protocol.TField IN_PROGRESS_FIELD_DESC = new org.apache.thrift.protocol.TField("inProgress", org.apache.thrift.protocol.TType.LIST, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -42,13 +43,15 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
 
   public long writePointer; // required
   public long readPointer; // required
-  public List<Long> excludes; // required
+  public List<Long> invalids; // required
+  public List<Long> inProgress; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     WRITE_POINTER((short)1, "writePointer"),
     READ_POINTER((short)2, "readPointer"),
-    EXCLUDES((short)3, "excludes");
+    INVALIDS((short)3, "invalids"),
+    IN_PROGRESS((short)4, "inProgress");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -67,8 +70,10 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
           return WRITE_POINTER;
         case 2: // READ_POINTER
           return READ_POINTER;
-        case 3: // EXCLUDES
-          return EXCLUDES;
+        case 3: // INVALIDS
+          return INVALIDS;
+        case 4: // IN_PROGRESS
+          return IN_PROGRESS;
         default:
           return null;
       }
@@ -119,7 +124,10 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.READ_POINTER, new org.apache.thrift.meta_data.FieldMetaData("readPointer", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.EXCLUDES, new org.apache.thrift.meta_data.FieldMetaData("excludes", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.INVALIDS, new org.apache.thrift.meta_data.FieldMetaData("invalids", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64))));
+    tmpMap.put(_Fields.IN_PROGRESS, new org.apache.thrift.meta_data.FieldMetaData("inProgress", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -132,14 +140,16 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
   public TTransaction2(
     long writePointer,
     long readPointer,
-    List<Long> excludes)
+    List<Long> invalids,
+    List<Long> inProgress)
   {
     this();
     this.writePointer = writePointer;
     setWritePointerIsSet(true);
     this.readPointer = readPointer;
     setReadPointerIsSet(true);
-    this.excludes = excludes;
+    this.invalids = invalids;
+    this.inProgress = inProgress;
   }
 
   /**
@@ -150,12 +160,19 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     __isset_bit_vector.or(other.__isset_bit_vector);
     this.writePointer = other.writePointer;
     this.readPointer = other.readPointer;
-    if (other.isSetExcludes()) {
-      List<Long> __this__excludes = new ArrayList<Long>();
-      for (Long other_element : other.excludes) {
-        __this__excludes.add(other_element);
+    if (other.isSetInvalids()) {
+      List<Long> __this__invalids = new ArrayList<Long>();
+      for (Long other_element : other.invalids) {
+        __this__invalids.add(other_element);
       }
-      this.excludes = __this__excludes;
+      this.invalids = __this__invalids;
+    }
+    if (other.isSetInProgress()) {
+      List<Long> __this__inProgress = new ArrayList<Long>();
+      for (Long other_element : other.inProgress) {
+        __this__inProgress.add(other_element);
+      }
+      this.inProgress = __this__inProgress;
     }
   }
 
@@ -169,7 +186,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     this.writePointer = 0;
     setReadPointerIsSet(false);
     this.readPointer = 0;
-    this.excludes = null;
+    this.invalids = null;
+    this.inProgress = null;
   }
 
   public long getWritePointer() {
@@ -218,42 +236,81 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     __isset_bit_vector.set(__READPOINTER_ISSET_ID, value);
   }
 
-  public int getExcludesSize() {
-    return (this.excludes == null) ? 0 : this.excludes.size();
+  public int getInvalidsSize() {
+    return (this.invalids == null) ? 0 : this.invalids.size();
   }
 
-  public java.util.Iterator<Long> getExcludesIterator() {
-    return (this.excludes == null) ? null : this.excludes.iterator();
+  public java.util.Iterator<Long> getInvalidsIterator() {
+    return (this.invalids == null) ? null : this.invalids.iterator();
   }
 
-  public void addToExcludes(long elem) {
-    if (this.excludes == null) {
-      this.excludes = new ArrayList<Long>();
+  public void addToInvalids(long elem) {
+    if (this.invalids == null) {
+      this.invalids = new ArrayList<Long>();
     }
-    this.excludes.add(elem);
+    this.invalids.add(elem);
   }
 
-  public List<Long> getExcludes() {
-    return this.excludes;
+  public List<Long> getInvalids() {
+    return this.invalids;
   }
 
-  public TTransaction2 setExcludes(List<Long> excludes) {
-    this.excludes = excludes;
+  public TTransaction2 setInvalids(List<Long> invalids) {
+    this.invalids = invalids;
     return this;
   }
 
-  public void unsetExcludes() {
-    this.excludes = null;
+  public void unsetInvalids() {
+    this.invalids = null;
   }
 
-  /** Returns true if field excludes is set (has been assigned a value) and false otherwise */
-  public boolean isSetExcludes() {
-    return this.excludes != null;
+  /** Returns true if field invalids is set (has been assigned a value) and false otherwise */
+  public boolean isSetInvalids() {
+    return this.invalids != null;
   }
 
-  public void setExcludesIsSet(boolean value) {
+  public void setInvalidsIsSet(boolean value) {
     if (!value) {
-      this.excludes = null;
+      this.invalids = null;
+    }
+  }
+
+  public int getInProgressSize() {
+    return (this.inProgress == null) ? 0 : this.inProgress.size();
+  }
+
+  public java.util.Iterator<Long> getInProgressIterator() {
+    return (this.inProgress == null) ? null : this.inProgress.iterator();
+  }
+
+  public void addToInProgress(long elem) {
+    if (this.inProgress == null) {
+      this.inProgress = new ArrayList<Long>();
+    }
+    this.inProgress.add(elem);
+  }
+
+  public List<Long> getInProgress() {
+    return this.inProgress;
+  }
+
+  public TTransaction2 setInProgress(List<Long> inProgress) {
+    this.inProgress = inProgress;
+    return this;
+  }
+
+  public void unsetInProgress() {
+    this.inProgress = null;
+  }
+
+  /** Returns true if field inProgress is set (has been assigned a value) and false otherwise */
+  public boolean isSetInProgress() {
+    return this.inProgress != null;
+  }
+
+  public void setInProgressIsSet(boolean value) {
+    if (!value) {
+      this.inProgress = null;
     }
   }
 
@@ -275,11 +332,19 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       }
       break;
 
-    case EXCLUDES:
+    case INVALIDS:
       if (value == null) {
-        unsetExcludes();
+        unsetInvalids();
       } else {
-        setExcludes((List<Long>)value);
+        setInvalids((List<Long>)value);
+      }
+      break;
+
+    case IN_PROGRESS:
+      if (value == null) {
+        unsetInProgress();
+      } else {
+        setInProgress((List<Long>)value);
       }
       break;
 
@@ -294,8 +359,11 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     case READ_POINTER:
       return Long.valueOf(getReadPointer());
 
-    case EXCLUDES:
-      return getExcludes();
+    case INVALIDS:
+      return getInvalids();
+
+    case IN_PROGRESS:
+      return getInProgress();
 
     }
     throw new IllegalStateException();
@@ -312,8 +380,10 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       return isSetWritePointer();
     case READ_POINTER:
       return isSetReadPointer();
-    case EXCLUDES:
-      return isSetExcludes();
+    case INVALIDS:
+      return isSetInvalids();
+    case IN_PROGRESS:
+      return isSetInProgress();
     }
     throw new IllegalStateException();
   }
@@ -349,12 +419,21 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
         return false;
     }
 
-    boolean this_present_excludes = true && this.isSetExcludes();
-    boolean that_present_excludes = true && that.isSetExcludes();
-    if (this_present_excludes || that_present_excludes) {
-      if (!(this_present_excludes && that_present_excludes))
+    boolean this_present_invalids = true && this.isSetInvalids();
+    boolean that_present_invalids = true && that.isSetInvalids();
+    if (this_present_invalids || that_present_invalids) {
+      if (!(this_present_invalids && that_present_invalids))
         return false;
-      if (!this.excludes.equals(that.excludes))
+      if (!this.invalids.equals(that.invalids))
+        return false;
+    }
+
+    boolean this_present_inProgress = true && this.isSetInProgress();
+    boolean that_present_inProgress = true && that.isSetInProgress();
+    if (this_present_inProgress || that_present_inProgress) {
+      if (!(this_present_inProgress && that_present_inProgress))
+        return false;
+      if (!this.inProgress.equals(that.inProgress))
         return false;
     }
 
@@ -394,12 +473,22 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetExcludes()).compareTo(typedOther.isSetExcludes());
+    lastComparison = Boolean.valueOf(isSetInvalids()).compareTo(typedOther.isSetInvalids());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetExcludes()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.excludes, typedOther.excludes);
+    if (isSetInvalids()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.invalids, typedOther.invalids);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetInProgress()).compareTo(typedOther.isSetInProgress());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetInProgress()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.inProgress, typedOther.inProgress);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -432,11 +521,19 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     sb.append(this.readPointer);
     first = false;
     if (!first) sb.append(", ");
-    sb.append("excludes:");
-    if (this.excludes == null) {
+    sb.append("invalids:");
+    if (this.invalids == null) {
       sb.append("null");
     } else {
-      sb.append(this.excludes);
+      sb.append(this.invalids);
+    }
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("inProgress:");
+    if (this.inProgress == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.inProgress);
     }
     first = false;
     sb.append(")");
@@ -499,20 +596,38 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // EXCLUDES
+          case 3: // INVALIDS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
                 org.apache.thrift.protocol.TList _list132 = iprot.readListBegin();
-                struct.excludes = new ArrayList<Long>(_list132.size);
+                struct.invalids = new ArrayList<Long>(_list132.size);
                 for (int _i133 = 0; _i133 < _list132.size; ++_i133)
                 {
                   long _elem134; // required
                   _elem134 = iprot.readI64();
-                  struct.excludes.add(_elem134);
+                  struct.invalids.add(_elem134);
                 }
                 iprot.readListEnd();
               }
-              struct.setExcludesIsSet(true);
+              struct.setInvalidsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 4: // IN_PROGRESS
+            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list135 = iprot.readListBegin();
+                struct.inProgress = new ArrayList<Long>(_list135.size);
+                for (int _i136 = 0; _i136 < _list135.size; ++_i136)
+                {
+                  long _elem137; // required
+                  _elem137 = iprot.readI64();
+                  struct.inProgress.add(_elem137);
+                }
+                iprot.readListEnd();
+              }
+              struct.setInProgressIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -538,13 +653,25 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       oprot.writeFieldBegin(READ_POINTER_FIELD_DESC);
       oprot.writeI64(struct.readPointer);
       oprot.writeFieldEnd();
-      if (struct.excludes != null) {
-        oprot.writeFieldBegin(EXCLUDES_FIELD_DESC);
+      if (struct.invalids != null) {
+        oprot.writeFieldBegin(INVALIDS_FIELD_DESC);
         {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.excludes.size()));
-          for (long _iter135 : struct.excludes)
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.invalids.size()));
+          for (long _iter138 : struct.invalids)
           {
-            oprot.writeI64(_iter135);
+            oprot.writeI64(_iter138);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      if (struct.inProgress != null) {
+        oprot.writeFieldBegin(IN_PROGRESS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.inProgress.size()));
+          for (long _iter139 : struct.inProgress)
+          {
+            oprot.writeI64(_iter139);
           }
           oprot.writeListEnd();
         }
@@ -574,22 +701,34 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       if (struct.isSetReadPointer()) {
         optionals.set(1);
       }
-      if (struct.isSetExcludes()) {
+      if (struct.isSetInvalids()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetInProgress()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetWritePointer()) {
         oprot.writeI64(struct.writePointer);
       }
       if (struct.isSetReadPointer()) {
         oprot.writeI64(struct.readPointer);
       }
-      if (struct.isSetExcludes()) {
+      if (struct.isSetInvalids()) {
         {
-          oprot.writeI32(struct.excludes.size());
-          for (long _iter136 : struct.excludes)
+          oprot.writeI32(struct.invalids.size());
+          for (long _iter140 : struct.invalids)
           {
-            oprot.writeI64(_iter136);
+            oprot.writeI64(_iter140);
+          }
+        }
+      }
+      if (struct.isSetInProgress()) {
+        {
+          oprot.writeI32(struct.inProgress.size());
+          for (long _iter141 : struct.inProgress)
+          {
+            oprot.writeI64(_iter141);
           }
         }
       }
@@ -598,7 +737,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TTransaction2 struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.writePointer = iprot.readI64();
         struct.setWritePointerIsSet(true);
@@ -609,16 +748,29 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TList _list137 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-          struct.excludes = new ArrayList<Long>(_list137.size);
-          for (int _i138 = 0; _i138 < _list137.size; ++_i138)
+          org.apache.thrift.protocol.TList _list142 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+          struct.invalids = new ArrayList<Long>(_list142.size);
+          for (int _i143 = 0; _i143 < _list142.size; ++_i143)
           {
-            long _elem139; // required
-            _elem139 = iprot.readI64();
-            struct.excludes.add(_elem139);
+            long _elem144; // required
+            _elem144 = iprot.readI64();
+            struct.invalids.add(_elem144);
           }
         }
-        struct.setExcludesIsSet(true);
+        struct.setInvalidsIsSet(true);
+      }
+      if (incoming.get(3)) {
+        {
+          org.apache.thrift.protocol.TList _list145 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+          struct.inProgress = new ArrayList<Long>(_list145.size);
+          for (int _i146 = 0; _i146 < _list145.size; ++_i146)
+          {
+            long _elem147; // required
+            _elem147 = iprot.readI64();
+            struct.inProgress.add(_elem147);
+          }
+        }
+        struct.setInProgressIsSet(true);
       }
     }
   }
