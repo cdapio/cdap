@@ -271,7 +271,8 @@ struct TTransaction {
 struct TTransaction2 {
   1: i64 writePointer,
   2: i64 readPointer,
-  3: list<i64> excludes,
+  3: list<i64> invalids,
+  4: list<i64> inProgress,
 }
 
 struct TKeyRange {

@@ -3,7 +3,8 @@ namespace java com.continuuity.data.transaction.thrift
 struct TTransaction {
   1: i64 readPointer,
   2: i64 writePointer,
-  3: binary excludedList
+  3: binary invalids,
+  4: binary inProgress,
 }
 
 service TTransactionService {

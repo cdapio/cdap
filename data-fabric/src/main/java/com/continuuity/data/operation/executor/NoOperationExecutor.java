@@ -241,13 +241,13 @@ public class NoOperationExecutor implements OperationExecutor {
   public com.continuuity.data2.transaction.Transaction start() throws OperationException {
     long wp = tx.incrementAndGet();
     // NOTE: -1 here is because we have logic that uses (readpointer + 1) as a "exclusive stop key" in some datasets
-    return new com.continuuity.data2.transaction.Transaction(Long.MAX_VALUE - 1, wp, new long[]{});
+    return new com.continuuity.data2.transaction.Transaction(Long.MAX_VALUE - 1, wp, new long[0], new long[0]);
   }
 
   @Override
   public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException {
     long wp = tx.incrementAndGet();
-    return new com.continuuity.data2.transaction.Transaction(Long.MAX_VALUE - 1, wp, new long[]{});
+    return new com.continuuity.data2.transaction.Transaction(Long.MAX_VALUE - 1, wp, new long[0], new long[0]);
   }
 
   @Override
