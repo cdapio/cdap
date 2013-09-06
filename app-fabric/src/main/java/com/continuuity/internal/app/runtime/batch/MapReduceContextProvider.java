@@ -52,10 +52,7 @@ public final class MapReduceContextProvider {
   private static final String HCONF_ATTR_TX_READ_POINTER_READ_POINT = "hconf.program.tx.read_pointer.read";
   private static final String HCONF_ATTR_TX_READ_POINTER_EXCLUDES = "hconf.program.tx.read_pointer.excludes";
 
-  private static final String HCONF_ATTR_NEW_TX_WRITE_POINTER = "hconf.program.newtx.write_pointer";
-  private static final String HCONF_ATTR_NEW_TX_READ_POINTER = "hconf.program.newtx.read_pointer";
-  private static final String HCONF_ATTR_NEW_TX_INVALIDS = "hconf.program.newtx.invalids";
-  private static final String HCONF_ATTR_NEW_TX_IN_PROGRESS = "hconf.program.newtx.inprogress";
+  private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
 
   private final JobContext jobContext;
   private AbstractMapReduceContextBuilder contextBuilder;
@@ -262,18 +259,11 @@ public final class MapReduceContextProvider {
   }
 
   private void setTx2(Transaction tx) {
-    jobContext.getConfiguration().setLong(HCONF_ATTR_NEW_TX_WRITE_POINTER, tx.getWritePointer());
-    jobContext.getConfiguration().setLong(HCONF_ATTR_NEW_TX_READ_POINTER, tx.getReadPointer());
-    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX_INVALIDS, new Gson().toJson(tx.getInvalids()));
-    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX_IN_PROGRESS, new Gson().toJson(tx.getInProgress()));
+    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX, tx.toJson());
   }
 
   private Transaction getTx2() {
-    long writePointer = Long.valueOf(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_WRITE_POINTER));
-    long readPointer = Long.valueOf(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_READ_POINTER));
-    long[] invalids = new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_INVALIDS), long[].class),
-      inProgress = new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX_IN_PROGRESS), long[].class);
-    return new Transaction(readPointer, writePointer, invalids, inProgress);
+    return Transaction.fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX));
   }
 
   private synchronized AbstractMapReduceContextBuilder getBuilder(CConfiguration conf) {

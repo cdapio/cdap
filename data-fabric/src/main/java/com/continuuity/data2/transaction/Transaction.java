@@ -1,7 +1,7 @@
 package com.continuuity.data2.transaction;
 
-import com.continuuity.data.engine.leveldb.KeyValue;
 import com.google.common.base.Objects;
+import com.google.gson.Gson;
 
 import java.util.Arrays;
 
@@ -14,9 +14,12 @@ public class Transaction {
   private final long[] invalids;
   private final long[] inProgress;
 
+  private static final Gson gson = new Gson();
+
   private static final long[] NO_EXCLUDES = { };
+
   public static final Transaction ALL_VISIBLE_LATEST =
-    new Transaction(KeyValue.LATEST_TIMESTAMP, KeyValue.LATEST_TIMESTAMP, NO_EXCLUDES, NO_EXCLUDES);
+    new Transaction(Long.MAX_VALUE, Long.MAX_VALUE, NO_EXCLUDES, NO_EXCLUDES);
 
   public Transaction(long readPointer, long writePointer, long[] invalids, long[] inProgress) {
     this.readPointer = readPointer;
@@ -55,9 +58,7 @@ public class Transaction {
   }
 
   public boolean isVisible(long version) {
-    return version <= getReadPointer()
-      && Arrays.binarySearch(inProgress, version) < 0
-      && Arrays.binarySearch(invalids, version) < 0;
+    return version <= getReadPointer() && !isExcluded(version);
   }
 
   public boolean hasExcludes() {
@@ -65,10 +66,17 @@ public class Transaction {
   }
 
 
-  public int getNumberOfExcludes() {
+  public int excludesSize() {
     return invalids.length + inProgress.length;
   }
 
+  public String toJson() {
+    return gson.toJson(this);
+  }
+
+  public static Transaction fromJson(String json) {
+    return gson.fromJson(json, Transaction.class);
+  }
 
   @Override
   public String toString() {

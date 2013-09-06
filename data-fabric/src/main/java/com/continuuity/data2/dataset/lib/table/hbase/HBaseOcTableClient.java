@@ -145,7 +145,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
     scan.setTimeRange(0, getMaxStamp(tx));
     // todo: optimise for no excluded list separately
-    scan.setMaxVersions(tx.getNumberOfExcludes() + 1);
+    scan.setMaxVersions(tx.excludesSize() + 1);
 
     ResultScanner resultScanner = hTable.getScanner(scan);
     return new HBaseScanner(resultScanner, tx);
@@ -185,7 +185,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
 //   todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
 //         on the other hand, looks like the above suggestion WILL NOT WORK
-    get.setMaxVersions(tx.getNumberOfExcludes() + 1);
+    get.setMaxVersions(tx.excludesSize() + 1);
 
     // todo: push filtering logic to server
     // todo: cache fetched from server locally
