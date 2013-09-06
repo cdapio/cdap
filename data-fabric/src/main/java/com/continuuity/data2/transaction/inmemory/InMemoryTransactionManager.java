@@ -7,6 +7,7 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.Transaction;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -304,10 +305,12 @@ public class InMemoryTransactionManager {
    * @param timeoutInSeconds the time out period in seconds.
    */
   public synchronized Transaction startShort(int timeoutInSeconds) {
+    Preconditions.checkArgument(timeoutInSeconds > 0, "timeout must be positive but is %s", timeoutInSeconds);
     saveWaterMarkIfNeeded();
-    inProgress.put(nextWritePointer, System.currentTimeMillis() + 1000L * timeoutInSeconds);
-    return new Transaction(readPointer, nextWritePointer++, invalidArray, getInProgressAsArray(),
-                           firstShortInProgress());
+    Transaction tx = new Transaction(
+      readPointer, nextWritePointer, invalidArray, getInProgressAsArray(), firstShortInProgress());
+    inProgress.put(nextWritePointer++, System.currentTimeMillis() + 1000L * timeoutInSeconds);
+    return tx;
   }
 
   /**
@@ -316,10 +319,10 @@ public class InMemoryTransactionManager {
    */
   public synchronized Transaction startLong() {
     saveWaterMarkIfNeeded();
-    inProgress.put(nextWritePointer, -System.currentTimeMillis());
-    return new Transaction(readPointer, nextWritePointer++, invalidArray, getInProgressAsArray(),
-                           firstShortInProgress());
-
+    Transaction tx = new Transaction(
+      readPointer, nextWritePointer, invalidArray, getInProgressAsArray(), firstShortInProgress());
+    inProgress.put(nextWritePointer++, -System.currentTimeMillis());
+    return tx;
   }
 
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
