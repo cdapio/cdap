@@ -1,5 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
+import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -17,6 +18,8 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -28,12 +31,23 @@ import java.util.List;
  */
 @Path("/v2")
 public class MetadataServiceHandler extends AuthenticatedHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataServiceHandler.class);
   private final MetadataService service;
 
   @Inject
   public MetadataServiceHandler(MetadataService service, GatewayAuthenticator authenticator) {
     super(authenticator);
     this.service = service;
+  }
+
+  @Override
+  public void init(HandlerContext context) {
+    LOG.info("Starting MetadataServiceHandler.");
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    LOG.info("Stopping MetadataServiceHandler.");
   }
 
   /**
