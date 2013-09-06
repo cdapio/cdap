@@ -5,9 +5,11 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.weave.discovery.Discoverable;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import junit.framework.Assert;
@@ -29,8 +31,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 
+import static com.continuuity.gateway.GatewayFastTestsSuite.GET;
 import static com.continuuity.gateway.GatewayFastTestsSuite.POST;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
@@ -88,7 +92,7 @@ public class ProcedureHandlerTest  {
   }
 
   @Test
-  public void testProcedureCall() throws Exception {
+  public void testPostProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
     Type type = new TypeToken<Map<String, String>>() {}.getType();
     Gson gson = new Gson();
@@ -107,7 +111,31 @@ public class ProcedureHandlerTest  {
   }
 
   @Test
-  public void testNoProcedureCall() throws Exception {
+  public void testPostEmptyProcedureCall() throws Exception {
+    HttpResponse response =
+      POST("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", "",
+           new Header[]{new BasicHeader("X-Test", "1234")});
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals("", responseStr);
+    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
+  }
+
+  @Test
+  public void testPostNullProcedureCall() throws Exception {
+    HttpResponse response =
+      POST("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", null,
+           new Header[]{new BasicHeader("X-Test", "1234")});
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals("", responseStr);
+    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
+  }
+
+  @Test
+  public void testPostNoProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
     HttpResponse response =
       POST("/v2/apps/testApp1/procedures/testProc2/methods/testMethod1",
@@ -117,7 +145,7 @@ public class ProcedureHandlerTest  {
   }
 
   @Test
-  public void testChunkedProcedureCall() throws Exception {
+  public void testPostChunkedProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key5", "val5");
     Type type = new TypeToken<Map<String, String>>() {}.getType();
     Gson gson = new Gson();
@@ -135,12 +163,75 @@ public class ProcedureHandlerTest  {
   }
 
   @Test
-  public void testErrorProcedureCall() throws Exception {
+  public void testPostErrorProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
     HttpResponse response =
       POST("/v2/apps/testApp2/procedures/testProc2/methods/testExceptionMethod",
            new Gson().toJson(content, new TypeToken<Map<String, String>>() {
            }.getType()));
+    Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testGetProcedureCall() throws Exception {
+    Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
+    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    Gson gson = new Gson();
+
+    HttpResponse response =
+      GET("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1?" + getQueryParams(content),
+          new Header[]{new BasicHeader("X-Test", "1234")});
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals(content, gson.fromJson(responseStr, type));
+    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
+  }
+
+  @Test
+  public void testGetEmptyProcedureCall() throws Exception {
+    HttpResponse response =
+      GET("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1",
+          new Header[]{new BasicHeader("X-Test", "1234")});
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals("", responseStr);
+    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
+  }
+
+  @Test
+  public void testGetNoProcedureCall() throws Exception {
+    Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
+    HttpResponse response =
+      GET("/v2/apps/testApp1/procedures/testProc2/methods/testMethod1&" + getQueryParams(content));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testGetChunkedProcedureCall() throws Exception {
+    Map<String, String> content = ImmutableMap.of("key1", "val1", "key5", "val5");
+    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    Gson gson = new Gson();
+    String contentStr = gson.toJson(content, type);
+    Assert.assertNotNull(contentStr);
+    Assert.assertFalse(contentStr.isEmpty());
+
+    HttpResponse response =
+      GET("/v2/apps/testApp2/procedures/testProc2/methods/testChunkedMethod?" + getQueryParams(content));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    String expected = contentStr + contentStr;
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals(expected, responseStr);
+    System.out.println(responseStr);
+  }
+
+  @Test
+  public void testGetErrorProcedureCall() throws Exception {
+    Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
+    HttpResponse response =
+      GET("/v2/apps/testApp2/procedures/testProc2/methods/testExceptionMethod?" + getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
   }
 
@@ -196,5 +287,13 @@ public class ProcedureHandlerTest  {
                                                 hostname, port));
     HttpResponse response = httpclient.execute(request);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+  }
+
+  private String getQueryParams(Map<String, String> params) {
+    List<String> plist = Lists.newArrayList();
+    for (Map.Entry<String, String> entry : params.entrySet()) {
+      plist.add(String.format("%s=%s", entry.getKey(), entry.getValue()));
+    }
+    return Joiner.on("&").join(plist);
   }
 }

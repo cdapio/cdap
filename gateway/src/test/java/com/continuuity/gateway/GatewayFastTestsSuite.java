@@ -98,8 +98,16 @@ public class GatewayFastTestsSuite {
   }
 
   public static HttpResponse GET(String resource) throws Exception {
+    return GET(resource, null);
+  }
+
+  public static HttpResponse GET(String resource, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet("http://" + hostname + ":" + port + resource);
+
+    if (headers != null) {
+      get.setHeaders(headers);
+    }
     return client.execute(get);
   }
 
@@ -121,7 +129,10 @@ public class GatewayFastTestsSuite {
   public static HttpResponse POST(String resource, String body, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
-    post.setEntity(new StringEntity(body));
+
+    if (body != null) {
+      post.setEntity(new StringEntity(body));
+    }
 
     if (headers != null) {
       post.setHeaders(headers);

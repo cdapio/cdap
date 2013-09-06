@@ -1,5 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -8,7 +9,10 @@ import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
@@ -22,13 +26,17 @@ import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +56,14 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 public class ProcedureHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandler.class);
   private final DiscoveryServiceClient discoveryServiceClient;
-  final AsyncHttpClient asyncHttpClient;
+  private final AsyncHttpClient asyncHttpClient;
+  private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
+    @Override
+    protected Gson initialValue() {
+      return new Gson();
+    }
+  };
 
   @Inject
   public ProcedureHandler(GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
@@ -68,9 +83,47 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
   @POST
   @Path("/apps/{appId}/procedures/{procedureName}/methods/{methodName}")
-  public void procedureCall(HttpRequest request, final HttpResponder responder,
+  public void procedurePost(HttpRequest request, final HttpResponder responder,
                             @PathParam("appId") String appId, @PathParam("procedureName") String procedureName,
                             @PathParam("methodName") String methodName) {
+
+    try {
+
+      procedureCall(request, responder, appId, procedureName, methodName, request.getContent().array());
+
+    }  catch (Throwable e) {
+      responder.sendStatus(INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
+  @Path("/apps/{appId}/procedures/{procedureName}/methods/{methodName}")
+  public void procedureGet(HttpRequest request, final HttpResponder responder,
+                            @PathParam("appId") String appId, @PathParam("procedureName") String procedureName,
+                            @PathParam("methodName") String methodName) {
+
+    try {
+      // Parameters in query string allows multiple values for a singe key, however procedures take one value for one
+      // key, so will randomly pick one value for a key.
+      byte [] body = null;
+      Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+
+      if (!queryParams.isEmpty()) {
+        String json = gson.get().toJson(Maps.transformEntries(queryParams, MULTIMAP_TO_MAP_FUNCTION),
+                                           QUERY_PARAMS_TYPE);
+        body = Bytes.toBytes(json);
+      }
+
+      procedureCall(request, responder, appId, procedureName, methodName, body);
+
+    }  catch (Throwable e) {
+      responder.sendStatus(INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void procedureCall(HttpRequest request, final HttpResponder responder,
+                            String appId, String procedureName, String methodName,
+                            byte [] body) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -95,9 +148,11 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
       // Construct request
       RequestBuilder requestBuilder = new RequestBuilder("POST");
-      requestBuilder
-        .setUrl(relayUri)
-        .setBody(request.getContent().array());
+      requestBuilder.setUrl(relayUri);
+
+      if (body != null) {
+        requestBuilder.setBody(body);
+      }
 
       // Add headers
       for (Map.Entry<String, String> entry : request.getHeaders()) {
@@ -165,4 +220,15 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       return 0;
     }
   }
+
+  private static final Maps.EntryTransformer<String, List<String>, String> MULTIMAP_TO_MAP_FUNCTION =
+    new Maps.EntryTransformer<String, List<String>, String>() {
+      @Override
+      public String transformEntry(@Nullable String key, @Nullable List<String> value) {
+        if (value == null || value.isEmpty()) {
+          return null;
+        }
+        return value.get(0);
+      }
+    };
 }
