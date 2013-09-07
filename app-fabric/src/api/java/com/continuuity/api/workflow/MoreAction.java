@@ -7,7 +7,9 @@ package com.continuuity.api.workflow;
  *
  * @param <T>
  */
-public interface FirstTask<T> {
+public interface MoreAction<T> {
 
-  T startWith(Runnable task);
+  MoreAction<T> then(WorkFlowAction action);
+
+  T last(WorkFlowAction action);
 }

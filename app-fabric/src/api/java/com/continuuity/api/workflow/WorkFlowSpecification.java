@@ -24,21 +24,13 @@ public interface WorkFlowSpecification {
     private String name;
     private String description;
 
-    public static NameSetter<
-                    DescriptionSetter<
-                      FirstTask<
-                        MoreTask<
-                          Creator<WorkFlowSpecification>
-                        >
-                      >
-                    >
-                  > with() {
+    public static NameSetter<DescriptionSetter<FirstAction<MoreAction<Creator<WorkFlowSpecification>>>>> with() {
       Builder builder = new Builder();
-      return NameSetterImpl.create(builder,
-        DescriptionSetterImpl.create(builder,
-          FirstTaskImpl.create(builder,
-            MoreTaskImpl.create(builder,
-              CreatorImpl.create(builder)))));
+      return NameSetterImpl.create(
+        builder, DescriptionSetterImpl.create(
+        builder, FirstActionImpl.create(
+        builder, MoreActionImpl.create(
+        builder, CreatorImpl.create(builder)))));
     }
 
     private static final class NameSetterImpl<T> implements NameSetter<T> {
@@ -83,47 +75,47 @@ public interface WorkFlowSpecification {
       }
     }
 
-    private static final class FirstTaskImpl<T> implements FirstTask<T> {
+    private static final class FirstActionImpl<T> implements FirstAction<T> {
 
       private final Builder builder;
       private final T next;
 
-      static <T> FirstTask<T> create(Builder builder, T next) {
-        return new FirstTaskImpl<T>(builder, next);
+      static <T> FirstAction<T> create(Builder builder, T next) {
+        return new FirstActionImpl<T>(builder, next);
       }
 
-      private FirstTaskImpl(Builder builder, T next) {
+      private FirstActionImpl(Builder builder, T next) {
         this.builder = builder;
         this.next = next;
       }
 
       @Override
-      public T startWith(Runnable task) {
+      public T startWith(WorkFlowAction action) {
         return next;
       }
     }
 
-    private static final class MoreTaskImpl<T> implements MoreTask<T> {
+    private static final class MoreActionImpl<T> implements MoreAction<T> {
 
       private final Builder builder;
       private final T next;
 
-      static <T> MoreTask<T> create(Builder builder, T next) {
-        return new MoreTaskImpl<T>(builder, next);
+      static <T> MoreAction<T> create(Builder builder, T next) {
+        return new MoreActionImpl<T>(builder, next);
       }
 
-      private MoreTaskImpl(Builder builder, T next) {
+      private MoreActionImpl(Builder builder, T next) {
         this.builder = builder;
         this.next = next;
       }
 
       @Override
-      public MoreTask<T> then(Runnable task) {
+      public MoreAction<T> then(WorkFlowAction action) {
         return this;
       }
 
       @Override
-      public T last(Runnable task) {
+      public T last(WorkFlowAction action) {
         return next;
       }
     }
