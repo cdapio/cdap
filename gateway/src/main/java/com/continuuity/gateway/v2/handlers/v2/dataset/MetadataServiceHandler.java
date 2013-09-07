@@ -81,9 +81,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of streams associated with application.
    */
   @GET
-  @Path("/apps/{appId}/streams")
+  @Path("/apps/{app-id}/streams")
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
-                              @PathParam("appId") final String appId) {
+                              @PathParam("app-id") final String appId) {
 
     if (appId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
@@ -148,9 +148,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of dataset associated with application.
    */
   @GET
-  @Path("/apps/{appId}/datasets")
+  @Path("/apps/{app-id}/datasets")
   public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
-                               @PathParam("appId") final String appId) {
+                               @PathParam("app-id") final String appId) {
     if (appId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       return;
@@ -214,9 +214,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a procedure specification.
    */
   @GET
-  @Path("/procedures/{procedureId}")
+  @Path("/procedures/{procedure-id}")
   public void getProcedureSpecification(HttpRequest request, HttpResponder responder,
-                                        @PathParam("procedureId") final String procedureId) {
+                                        @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
@@ -232,9 +232,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of procedure associated with account & application.
    */
   @GET
-  @Path("/apps/{appId}/procedures")
+  @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
-                              @PathParam("appId") final String appId) {
+                              @PathParam("app-id") final String appId) {
     if (appId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       return;
@@ -298,9 +298,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a mapreduce specification.
    */
   @GET
-  @Path("/mapreduces/{mapreduceId}")
+  @Path("/mapreduces/{mapreduce-id}")
   public void getMapReduceSpecification(HttpRequest request, HttpResponder responder,
-                                        @PathParam("mapreduceId") final String mapreduceId) {
+                                        @PathParam("mapreduce-id") final String mapreduceId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
@@ -316,9 +316,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of mapreduce jobs associated with account & application.
    */
   @GET
-  @Path("/apps/{appId}/mapreduces")
+  @Path("/apps/{app-id}/mapreduces")
   public void getMapReducesByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("appId") final String appId) {
+                                 @PathParam("app-id") final String appId) {
 
     if (appId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
@@ -383,9 +383,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of applications associated with account.
    */
   @GET
-  @Path("/apps/{appId}")
+  @Path("/apps/{app-id}")
   public void getApps(HttpRequest request, HttpResponder responder,
-                      @PathParam("appId") final String appId) {
+                      @PathParam("app-id") final String appId) {
 
     if (appId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
@@ -447,9 +447,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a flow specification.
    */
   @GET
-  @Path("/flows/{flowId}")
+  @Path("/flows/{flow-id}")
   public void getFlowSpecification(HttpRequest request, HttpResponder responder,
-                                   @PathParam("flowId") final String flowId) {
+                                   @PathParam("flow-id") final String flowId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
@@ -465,9 +465,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of flow associated with account & application.
    */
   @GET
-  @Path("/apps/{appId}/flows")
+  @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
-                            @PathParam("appId") final String appId) {
+                            @PathParam("app-id") final String appId) {
 
     if (appId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
@@ -503,9 +503,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns all flows associated with a stream.
    */
   @GET
-  @Path("/streams/{streamId}/flows")
+  @Path("/streams/{stream-id}/flows")
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
-                               @PathParam("streamId") final String streamId) {
+                               @PathParam("stream-id") final String streamId) {
     if (streamId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       return;
@@ -541,9 +541,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    */
 
   @GET
-  @Path("/datasets/{datasetId}/flows")
+  @Path("/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
-                                   @PathParam("datasetId") final String datasetId) {
+                                   @PathParam("dataset-id") final String datasetId) {
     if (datasetId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       return;

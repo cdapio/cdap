@@ -132,8 +132,8 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @PUT
-  @Path("/streams/{streamId}")
-  public void create(HttpRequest request, HttpResponder responder, @PathParam("streamId") String destination) {
+  @Path("/streams/{stream-id}")
+  public void create(HttpRequest request, HttpResponder responder, @PathParam("stream-id") String destination) {
     GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
       new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
     helper.setMethod("create");
@@ -172,9 +172,9 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/streams/{streamId}")
+  @Path("/streams/{stream-id}")
   public void enqueue(HttpRequest request, final HttpResponder responder,
-                      @PathParam("streamId") final String destination) {
+                      @PathParam("stream-id") final String destination) {
     final GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
       new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
     helper.setMethod("enqueue");
@@ -249,9 +249,9 @@ public class StreamHandler extends AbstractHttpHandler {
   // 1. obtain a consumerId with GET stream?q=newConsumer
   // 2. dequeue an event with GET stream?q=dequeue with the consumerId as an HTTP header
   @GET
-  @Path("/streams/{streamId}")
+  @Path("/streams/{stream-id}")
   public void dispatchGet(HttpRequest request, HttpResponder responder,
-                          @PathParam("streamId") String destination) {
+                          @PathParam("stream-id") String destination) {
     GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
       new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
 

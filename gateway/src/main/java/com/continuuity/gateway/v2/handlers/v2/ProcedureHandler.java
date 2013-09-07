@@ -88,10 +88,10 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/apps/{appId}/procedures/{procedureName}/methods/{methodName}")
+  @Path("/apps/{app-id}/procedures/{procedure-name}/methods/{method-name}")
   public void procedurePost(HttpRequest request, final HttpResponder responder,
-                            @PathParam("appId") String appId, @PathParam("procedureName") String procedureName,
-                            @PathParam("methodName") String methodName) {
+                            @PathParam("app-id") String appId, @PathParam("procedure-name") String procedureName,
+                            @PathParam("method-name") String methodName) {
 
     try {
 
@@ -104,7 +104,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/apps/{appId}/procedures/{procedureName}/methods/{methodName}")
+  @Path("/apps/{app-id}/procedures/{procedure-name}/methods/{method-name}")
   public void procedureGet(HttpRequest request, final HttpResponder responder,
                             @PathParam("appId") String appId, @PathParam("procedureName") String procedureName,
                             @PathParam("methodName") String methodName) {
