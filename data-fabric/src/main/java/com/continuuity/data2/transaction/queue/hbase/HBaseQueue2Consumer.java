@@ -44,7 +44,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueue2Consumer.class);
 
   // Persist latest start row every n entries consumed.
-  private static final int PERSIST_START_ROW_LIMIT = 10000;
+  private static final int PERSIST_START_ROW_LIMIT = 1000;
 
   private final HTable hTable;
   private final Filter processedStateFilter;
