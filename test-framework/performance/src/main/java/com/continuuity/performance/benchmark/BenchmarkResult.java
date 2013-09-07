@@ -47,6 +47,9 @@ public class BenchmarkResult {
     return groupResults.values();
   }
 
+  /**
+   * Group result.
+   */
   public static class GroupResult {
     private final String name;
     private final int numInstances;

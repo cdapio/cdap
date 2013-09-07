@@ -22,7 +22,7 @@ public class MetadataTool {
 
   public static void main(String[] args) throws Exception {
     CConfiguration config = CConfiguration.create();
-    config.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, args[0]);
+    config.set(Constants.Zookeeper.QUORUM, args[0]);
     OperationExecutor opex = new RemoteOperationExecutor(config);
     MetadataService service = new MetadataService(opex);
 

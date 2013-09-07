@@ -19,7 +19,7 @@ public final class Constants {
    * Zookeeper Configuration.
    */
   public static final class Zookeeper {
-    public static final String CFG_ZOOKEEPER_ENSEMBLE = "zookeeper.quorum";
+    public static final String QUORUM = "zookeeper.quorum";
     public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
   }
 
@@ -27,7 +27,7 @@ public final class Constants {
    * Thrift configuration.
    */
   public static final class Thrift {
-    public static final String CFG_MAX_READ_BUFFER = "thrift.max.read.buffer";
+    public static final String MAX_READ_BUFFER = "thrift.max.read.buffer";
     public static final int DEFAULT_MAX_READ_BUFFER = 16 * 1024 * 1024;
   }
 
@@ -40,33 +40,83 @@ public final class Constants {
   }
 
   /**
+   * App Fabric Configuration
+   */
+  public static final class AppFabric {
+    /**
+     * Default constants for common.
+     */
+    public static final int DEFAULT_SERVER_PORT = 45000;
+    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
+
+
+    /**
+     * App Fabric Server.
+     */
+    public static final String SERVER_ADDRESS = "app.server.address";
+    public static final String SERVER_PORT = "app.server.port";
+    public static final String OUTPUT_DIR = "app.output.dir";
+    public static final String TEMP_DIR = "app.temp.dir";
+    public static final String REST_PORT = "app.rest.port";
+  }
+
+  /**
+   * Gateway Configurations
+   */
+  public static final class Gateway {
+    public static final String ADDRESS = "gateway.server.address";
+    public static final String PORT = "stream.rest.port";
+    public static final String BACKLOG = "gateway.connection.backlog";
+    public static final String EXEC_THREADS = "gateway.exec.threads";
+    public static final String BOSS_THREADS = "gateway.boss.threads";
+    public static final String WORKER_THREADS = "gateway.worker.threads";
+    public static final String MAX_CACHED_STREAM_EVENTS_NUM = "gateway.max.cached.stream.events.num";
+    public static final String MAX_CACHED_EVENTS_PER_STREAM_NUM = "gateway.max.cached.events.per.stream.num";
+    public static final String MAX_CACHED_STREAM_EVENTS_BYTES = "gateway.max.cached.stream.events.bytes";
+    public static final String STREAM_EVENTS_FLUSH_INTERVAL_MS = "gateway.stream.events.flush.interval.ms";
+    public static final String STREAM_EVENTS_CALLBACK_NUM_THREADS = "gateway.stream.callback.exec.num.threads";
+    public static final String CONFIG_AUTHENTICATION_REQUIRED = "authentication.required";
+    public static final String CLUSTER_NAME = "cluster.name";
+
+    /**
+     * Defaults
+     */
+    public static final int DEFAULT_PORT = 10000;
+    public static final int DEFAULT_BACKLOG = 20000;
+    public static final int DEFAULT_EXEC_THREADS = 20;
+    public static final int DEFAULT_BOSS_THREADS = 1;
+    public static final int DEFAULT_WORKER_THREADS = 10;
+    public static final int DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM = 10000;
+    public static final int DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM = 5000;
+    public static final long DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES = 50 * 1024 * 1024;
+    public static final long DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS = 150;
+    public static final int DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS = 5;
+    public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
+    public static final String CLUSTER_NAME_DEFAULT = "localhost";
+
+
+    /**
+     * Others
+     */
+    public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
+    public static final String GATEWAY_PREFIX = "gateway.";
+    public static final String GATEWAY_V2_HTTP_HANDLERS = "gateway.http.handler";
+    public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
+    public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
+    public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
+  }
+
+  /**
    * Common across components.
    */
   public static final String CFG_ZOOKEEPER_ENSEMBLE = "zookeeper.quorum";
-  public static final String CFG_MAX_READ_BUFFER = "thrift.max.read.buffer";
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
   public static final String CFG_YARN_USER = "yarn.user";
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
 
-  /**
-   * Default constants for common.
-   */
-  public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
-  public static final int DEFAULT_MAX_READ_BUFFER = 16 * 1024 * 1024;
-  public static final int DEFAULT_APP_FABRIC_SERVER_PORT = 45000;
-  public static final String DEFAULT_APP_FABRIC_SERVER_ADDRESS = "localhost";
-
-
-  /**
-   * App Fabric Server.
-   */
-  public static final String CFG_APP_FABRIC_SERVER_ADDRESS = "app.server.address";
-  public static final String CFG_APP_FABRIC_SERVER_PORT = "app.server.port";
-  public static final String CFG_APP_FABRIC_OUTPUT_DIR  = "app.output.dir";
-  public static final String CFG_APP_FABRIC_TEMP_DIR    = "app.temp.dir";
-  public static final String CFG_APP_FABRIC_REST_PORT   = "app.rest.port";
 
   /**
    * Data Fabric.

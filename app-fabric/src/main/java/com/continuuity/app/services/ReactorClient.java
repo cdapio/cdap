@@ -151,7 +151,8 @@ public final class ReactorClient {
     Preconditions.checkNotNull(command, "App client is not configured to run");
     Preconditions.checkNotNull(configuration, "App client configuration is not set");
 
-    int port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+    int port = configuration.getInt(Constants.AppFabric.SERVER_PORT,
+                                    Constants.AppFabric.DEFAULT_SERVER_PORT);
     TTransport transport = null;
     TProtocol protocol;
 

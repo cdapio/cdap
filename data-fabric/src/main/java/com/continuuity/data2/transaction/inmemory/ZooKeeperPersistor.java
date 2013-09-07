@@ -52,7 +52,8 @@ public class ZooKeeperPersistor extends AbstractIdleService implements StatePers
 
   @Override
   protected void startUp() throws Exception {
-    String zkQuorum = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
+    String zkQuorum = conf.get(Constants.Zookeeper.QUORUM,
+                               Constants.Zookeeper.DEFAULT_ZOOKEEPER_ENSEMBLE);
     zkClient =
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(

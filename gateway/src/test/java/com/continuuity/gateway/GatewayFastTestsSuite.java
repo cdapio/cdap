@@ -1,16 +1,12 @@
 package com.continuuity.gateway;
 
-import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.*;
-import com.continuuity.common.guice.ConfigModule;
-import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.v2.Gateway;
-import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.handlers.v2.PingHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.ProcedureHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.appfabric.AppFabricServiceHandlerTest;
@@ -24,12 +20,6 @@ import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.discovery.DiscoveryService;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.continuuity.weave.discovery.InMemoryDiscoveryService;
-import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKClientServices;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -43,13 +33,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
-
-import java.io.File;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test Suite for running all API tests.
@@ -73,10 +59,11 @@ public class GatewayFastTestsSuite {
     protected void before() throws Throwable {
 
 
-      conf.setInt(GatewayConstants.ConfigKeys.PORT, 0);
-      conf.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
-      conf.set("app.output.dir", System.getProperty("java.io.tmpdir"));
-      conf.set("app.tmp.dir", System.getProperty("java.io.tmpdir"));
+      conf.setInt(Constants.Gateway.PORT, 0);
+      conf.set(Constants.Gateway.ADDRESS, hostname);
+      conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
+      conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+      conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
       // Set up our Guice injections
       Injector injector = Guice.createInjector(

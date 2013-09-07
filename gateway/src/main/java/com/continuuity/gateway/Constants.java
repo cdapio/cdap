@@ -132,11 +132,6 @@ public final class Constants {
     return collectorName + "." + propertyName;
   }
 
-  public static boolean isContinuuityHeader(String header) {
-    return header.startsWith(CONTINUUITY_PREFIX);
-  }
-
-  // Defaults for various configurations
 
   /**
    * Default number of worker threads for a connector.

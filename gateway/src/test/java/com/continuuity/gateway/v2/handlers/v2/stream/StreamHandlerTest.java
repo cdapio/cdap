@@ -2,15 +2,14 @@ package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.v2.Gateway;
-import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
@@ -70,8 +69,8 @@ public class StreamHandlerTest {
   private static CConfiguration configuration = CConfiguration.create();
 
   private void startGateway() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.PORT, 0);
-    configuration.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
+    configuration.setInt(com.continuuity.common.conf.Constants.Gateway.PORT, 0);
+    configuration.set(com.continuuity.common.conf.Constants.Gateway.ADDRESS, hostname);
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
@@ -163,14 +162,14 @@ public class StreamHandlerTest {
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.HEADER_STREAM_CONSUMER).length);
-    String groupId = response.getFirstHeader(Constants.HEADER_STREAM_CONSUMER).getValue();
+    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
+    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
     EntityUtils.consume(response.getEntity());
 
     // Dequeue 10 entries
     for (int i = 0; i < 10; ++i) {
       httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue?q=dequeue", hostname, port));
-      httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
+      httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int actual = Integer.parseInt(EntityUtils.toString(response.getEntity()));
@@ -181,7 +180,7 @@ public class StreamHandlerTest {
 
     // Dequeue-ing again should give NO_CONTENT
     httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue?q=dequeue", hostname, port));
-    httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
+    httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
@@ -204,8 +203,8 @@ public class StreamHandlerTest {
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.HEADER_STREAM_CONSUMER).length);
-    String groupId = response.getFirstHeader(Constants.HEADER_STREAM_CONSUMER).getValue();
+    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
+    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
     EntityUtils.consume(response.getEntity());
 
     ExecutorService executorService = Executors.newFixedThreadPool(5);
@@ -222,7 +221,7 @@ public class StreamHandlerTest {
     for (int i = 0; i < BatchEnqueue.NUM_ELEMENTS; ++i) {
       httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=dequeue", hostname,
                                           port));
-      httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
+      httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int entry = Integer.parseInt(EntityUtils.toString(response.getEntity()));
@@ -284,26 +283,26 @@ public class StreamHandlerTest {
 
   @Test
   public void testAsyncBatchStreamEnqueueLiimitEventsPerStream() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
+    configuration.setInt(Constants.Gateway.MAX_CACHED_EVENTS_PER_STREAM_NUM,
                          BatchAsyncEnqueue.NUM_ELEMENTS / 3);
     testAsyncBatchStreamEnqueue();
   }
 
   @Test
   public void testAsyncBatchStreamEnqueueLimitBytes() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES, 1000);
+    configuration.setInt(Constants.Gateway.MAX_CACHED_STREAM_EVENTS_BYTES, 1000);
     testAsyncBatchStreamEnqueue();
   }
 
   @Test
   public void testAsyncBatchStreamEnqueueLimitFlushInterval() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS, 100);
+    configuration.setInt(Constants.Gateway.STREAM_EVENTS_FLUSH_INTERVAL_MS, 100);
     testAsyncBatchStreamEnqueue();
   }
 
   @Test
   public void testAsyncBatchStreamEnqueueLimitNumEvents() throws Exception {
-    configuration.setInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM, BatchAsyncEnqueue.NUM_ELEMENTS / 3);
+    configuration.setInt(Constants.Gateway.MAX_CACHED_STREAM_EVENTS_NUM, BatchAsyncEnqueue.NUM_ELEMENTS / 3);
     testAsyncBatchStreamEnqueue();
   }
 
@@ -324,8 +323,8 @@ public class StreamHandlerTest {
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.HEADER_STREAM_CONSUMER).length);
-    String groupId = response.getFirstHeader(Constants.HEADER_STREAM_CONSUMER).getValue();
+    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
+    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
     EntityUtils.consume(response.getEntity());
 
     ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
@@ -347,7 +346,7 @@ public class StreamHandlerTest {
       httpGet
         = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=dequeue", hostname,
                                     port));
-      httpGet.setHeader(Constants.HEADER_STREAM_CONSUMER, groupId);
+      httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals("Failed for entry number " + i,
                           HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());

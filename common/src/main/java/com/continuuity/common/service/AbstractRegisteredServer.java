@@ -97,8 +97,8 @@ public abstract class AbstractRegisteredServer {
    */
   public final void start(String[] args, CConfiguration conf)
     throws ServerException {
-    String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE,
-                                 Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
+    String zkEnsemble = conf.get(Constants.Zookeeper.QUORUM,
+                                 Constants.Zookeeper.DEFAULT_ZOOKEEPER_ENSEMBLE);
     Log.info("AbstractRegisteredServer using ensemble {}", zkEnsemble);
 
     Preconditions.checkNotNull(zkEnsemble);
@@ -212,9 +212,9 @@ public abstract class AbstractRegisteredServer {
    * @return max read buffer size.
    */
   public long getMaxReadBuffer(CConfiguration configuration) {
-    String maxReadBufferStr = configuration.get(Constants.CFG_MAX_READ_BUFFER);
+    String maxReadBufferStr = configuration.get(Constants.Thrift.MAX_READ_BUFFER);
     if (maxReadBufferStr == null || maxReadBufferStr.isEmpty()) {
-      return Constants.DEFAULT_MAX_READ_BUFFER;
+      return Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
     }
     long maxReadBuffer = Integer.valueOf(maxReadBufferStr);
     return maxReadBuffer;

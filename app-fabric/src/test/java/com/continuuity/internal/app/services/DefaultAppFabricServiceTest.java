@@ -4,7 +4,6 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.BenchApp;
 import com.continuuity.DumbProgrammerApp;
 import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
@@ -16,26 +15,19 @@ import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
-import com.continuuity.app.services.FlowIdentifier;
-import com.continuuity.app.services.FlowRunRecord;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
-import com.continuuity.app.services.ResourceIdentifier;
-import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.BufferFileInputStream;
-import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
-import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.google.gson.Gson;
 import com.google.inject.Injector;
 import org.apache.thrift.TException;
 import org.junit.Assert;
@@ -169,7 +161,7 @@ public class DefaultAppFabricServiceTest {
     TestHelper.deployApplication(ToyApp.class, "ToyApp.jar");
 
     // Start a simple Jetty Server to simulate remote http server.
-    Server jServer = new Server(configuration.getInt(Constants.CFG_APP_FABRIC_REST_PORT, 10007));
+    Server jServer = new Server(configuration.getInt(Constants.AppFabric.REST_PORT, 10007));
     try {
       jServer.setHandler(new AbstractHandler() {
         @Override

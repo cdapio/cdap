@@ -74,7 +74,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
                                 ServiceAnnouncer serviceAnnouncer,
-                                @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS) InetAddress hostname,
+                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                 MetricsCollectionService metricsCollectionService) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.serviceAnnouncer = serviceAnnouncer;

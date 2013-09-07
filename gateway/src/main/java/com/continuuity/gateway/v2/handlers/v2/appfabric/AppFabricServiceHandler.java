@@ -230,8 +230,28 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private void getHistory(HttpRequest request, HttpResponder responder, String appId, String id) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      JsonArray result = getRunnableHistory(accountId, appId, id);
-      responder.sendJson(HttpResponseStatus.OK, result);
+      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        List<ProgramRunRecord> records = client.getHistory(new ProgramId(accountId, appId, id));
+        JsonArray history = new JsonArray();
+        for (ProgramRunRecord record : records) {
+          JsonObject object = new JsonObject();
+          object.addProperty("runid", record.getRunId());
+          object.addProperty("start", record.getStartTime());
+          object.addProperty("end", record.getEndTime());
+          object.addProperty("status", record.getEndStatus());
+          history.add(object);
+        }
+        responder.sendJson(HttpResponseStatus.OK, history);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (Exception e) {
@@ -559,6 +579,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private void runnableSpecification(HttpRequest request, HttpResponder responder, ProgramId id) {
     try {
       String accountId = getAuthenticatedAccountId(request);
+      id.setAccountId(accountId);
       TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
@@ -573,36 +594,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           client.getOutputProtocol().getTransport().close();
         }
       }
-      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (Exception e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    }
-  }
-
-  private JsonArray getRunnableHistory(String accountId, String appId, String runnableid) throws Exception {
-    TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
-    AppFabricService.Client client = new AppFabricService.Client(protocol);
-    try {
-      List<ProgramRunRecord> records = client.getHistory(new ProgramId(accountId, appId, runnableid));
-      JsonArray history = new JsonArray();
-      for (ProgramRunRecord record : records) {
-        JsonObject object = new JsonObject();
-        object.addProperty("runid", record.getRunId());
-        object.addProperty("start", record.getStartTime());
-        object.addProperty("end", record.getEndTime());
-        object.addProperty("status", record.getEndStatus());
-        history.add(object);
-      }
-      return history;
-    } finally {
-      if (client.getInputProtocol().getTransport().isOpen()) {
-        client.getInputProtocol().getTransport().close();
-      }
-      if (client.getOutputProtocol().getTransport().isOpen()) {
-        client.getOutputProtocol().getTransport().close();
-      }
     }
   }
 

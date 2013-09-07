@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
@@ -9,7 +10,6 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
-import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.handlers.v2.PingHandler;
 import com.continuuity.gateway.v2.handlers.v2.appfabric.AppFabricServiceHandler;
 import com.continuuity.gateway.v2.handlers.v2.ProcedureHandler;
@@ -18,10 +18,6 @@ import com.continuuity.gateway.v2.handlers.v2.log.LogHandler;
 import com.continuuity.gateway.v2.handlers.v2.stream.StreamHandler;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.weave.discovery.DiscoveryService;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.continuuity.weave.discovery.InMemoryDiscoveryService;
-import com.continuuity.weave.discovery.ZKDiscoveryService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
@@ -29,7 +25,6 @@ import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -69,7 +64,7 @@ public class GatewayModules extends RuntimeModule {
 
         Multibinder<HttpHandler> handlerBinder =
           Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                   Names.named(GatewayConstants.GATEWAY_V2_HTTP_HANDLERS));
+                                   Names.named(Constants.Gateway.GATEWAY_V2_HTTP_HANDLERS));
         handlerBinder.addBinding().to(StreamHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(PingHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(MetadataServiceHandler.class).in(Scopes.SINGLETON);
@@ -78,8 +73,8 @@ public class GatewayModules extends RuntimeModule {
         handlerBinder.addBinding().to(ProcedureHandler.class).in(Scopes.SINGLETON);
 
         boolean requireAuthentication = cConf.getBoolean(
-          GatewayConstants.ConfigKeys.CONFIG_AUTHENTICATION_REQUIRED,
-          GatewayConstants.CONFIG_AUTHENTICATION_REQUIRED_DEFAULT
+          Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED,
+          Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED_DEFAULT
         );
 
         GatewayAuthenticator authenticator;
@@ -87,8 +82,8 @@ public class GatewayModules extends RuntimeModule {
           PassportClient passportClient = PassportClient.create(
               cConf.get(PassportConstants.CFG_PASSPORT_SERVER_URI)
             );
-          String clusterName = cConf.get(GatewayConstants.ConfigKeys.CLUSTER_NAME,
-                                         GatewayConstants.CLUSTER_NAME_DEFAULT);
+          String clusterName = cConf.get(Constants.Gateway.CLUSTER_NAME,
+                                         Constants.Gateway.CLUSTER_NAME_DEFAULT);
           authenticator = new PassportVPCAuthenticator(clusterName, passportClient);
         } else {
           authenticator = new NoAuthenticator();
@@ -98,9 +93,9 @@ public class GatewayModules extends RuntimeModule {
       }
 
       @Provides
-      @Named(GatewayConstants.ConfigKeys.ADDRESS)
+      @Named(Constants.Gateway.ADDRESS)
       public final InetAddress providesHostname(CConfiguration cConf) {
-        return Networks.resolve(cConf.get(GatewayConstants.ConfigKeys.ADDRESS),
+        return Networks.resolve(cConf.get(Constants.Gateway.ADDRESS),
                                 new InetSocketAddress("localhost", 0).getAddress());
       }
     };

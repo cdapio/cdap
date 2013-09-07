@@ -38,7 +38,6 @@ import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
-import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.RunIdentifier;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -225,8 +224,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.store = storeFactory.create();
-    this.archiveDir = configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir"))
-                                          + "/archive";
+    this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
+                                        System.getProperty("java.io.tmpdir")) + "/archive";
     this.mds = new MetadataService(opex);
 
     // Note: This is hacky to start service like this.
@@ -922,7 +921,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         schema = "http";
       }
 
-      int port = configuration.getInt(Constants.CFG_APP_FABRIC_REST_PORT, 10007);
+      int port = configuration.getInt(Constants.AppFabric.REST_PORT, 10007);
       String url = String.format("%s://%s:%d/app", schema, hostname, port);
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)

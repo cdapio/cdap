@@ -5,6 +5,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.verification.VerifyResult;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
@@ -14,12 +15,10 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.GatewayMetrics;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
-import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
@@ -68,7 +67,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 @Path("/v2")
 public class StreamHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
-  private static final String NAME = GatewayConstants.STREAM_HANDLER_NAME;
+  private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;
 
   private final StreamCache streamCache;
   private final MetadataService metadataService;
@@ -136,7 +135,7 @@ public class StreamHandler extends AbstractHttpHandler {
   @Path("/streams/{streamId}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("streamId") String destination) {
     GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME), gatewayMetrics);
+      new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
     helper.setMethod("create");
     helper.setScope(destination);
 
@@ -177,7 +176,7 @@ public class StreamHandler extends AbstractHttpHandler {
   public void enqueue(HttpRequest request, final HttpResponder responder,
                       @PathParam("streamId") final String destination) {
     final GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME), gatewayMetrics);
+      new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
     helper.setMethod("enqueue");
     helper.setScope(destination);
 
@@ -198,8 +197,8 @@ public class StreamHandler extends AbstractHttpHandler {
       // build a new event from the request, start with the headers
       Map<String, String> headers = Maps.newHashMap();
       // set some built-in headers
-      headers.put(Constants.HEADER_FROM_COLLECTOR, NAME);
-      headers.put(Constants.HEADER_DESTINATION_STREAM, destination);
+      headers.put(Constants.Gateway.HEADER_FROM_COLLECTOR, NAME);
+      headers.put(Constants.Gateway.HEADER_DESTINATION_STREAM, destination);
       // and transfer all other headers that are to be preserved
       String prefix = destination + ".";
       for (String header : request.getHeaderNames()) {
@@ -254,7 +253,7 @@ public class StreamHandler extends AbstractHttpHandler {
   public void dispatchGet(HttpRequest request, HttpResponder responder,
                           @PathParam("streamId") String destination) {
     GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, Constants.GATEWAY_PREFIX + NAME), gatewayMetrics);
+      new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
 
     String accountId = authenticate(request, responder, helper);
     if (accountId == null) {
@@ -306,17 +305,17 @@ public class StreamHandler extends AbstractHttpHandler {
     helper.setScope(destination);
 
     // there must be a header with the consumer id in the request
-    String idHeader = request.getHeader(Constants.HEADER_STREAM_CONSUMER);
+    String idHeader = request.getHeader(Constants.Gateway.HEADER_STREAM_CONSUMER);
     Long groupId = null;
     if (idHeader == null) {
       LOG.trace("Received a dequeue request for stream {} without header {}",
-                destination, Constants.HEADER_STREAM_CONSUMER);
+                destination, Constants.Gateway.HEADER_STREAM_CONSUMER);
     } else {
       try {
         groupId = Long.valueOf(idHeader);
       } catch (NumberFormatException e) {
         LOG.trace("Received a dequeue request with a invalid header {} for stream {}",
-                  destination, Constants.HEADER_STREAM_CONSUMER, e);
+                  destination, Constants.Gateway.HEADER_STREAM_CONSUMER, e);
       }
     }
 
@@ -406,7 +405,7 @@ public class StreamHandler extends AbstractHttpHandler {
     byte [] body = Bytes.toBytes(groupId);
 
     ImmutableMultimap<String, String> headers = ImmutableMultimap.of(
-      Constants.HEADER_STREAM_CONSUMER, Long.toString(groupId));
+      Constants.Gateway.HEADER_STREAM_CONSUMER, Long.toString(groupId));
     responder.sendByteArray(HttpResponseStatus.OK, body, headers);
 
     helper.finish(Success);

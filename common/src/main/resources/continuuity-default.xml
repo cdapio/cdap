@@ -87,7 +87,7 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>data.rest,stream.flume,procedure.rest,meta.rest</value>
+        <value>data.rest,stream.flume,meta.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
@@ -187,28 +187,6 @@
     <property>
         <name>meta.rest.middle</name>
         <value>/metadata/</value>
-    </property>
-
-    <!-- Procedure Handler -->
-    <property>
-        <name>procedure.rest.class</name>
-        <value>com.continuuity.gateway.accessor.QueryRestAccessor</value>
-        <description>Specifies the class for the REST accessor</description>
-    </property>
-
-    <property>
-        <name>procedure.rest.port</name>
-        <value>10010</value>
-    </property>
-
-    <property>
-        <name>procedure.rest.threads</name>
-        <value>20</value>
-    </property>
-
-    <property>
-        <name>procedure.rest.middle</name>
-        <value>/procedure/</value>
     </property>
 
     <!-- Stream handles -->
