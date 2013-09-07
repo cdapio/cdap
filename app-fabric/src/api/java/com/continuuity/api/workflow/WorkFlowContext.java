@@ -8,4 +8,5 @@ package com.continuuity.api.workflow;
  */
 public interface WorkFlowContext {
 
+  WorkFlowSpecification getSpecification();
 }

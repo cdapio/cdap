@@ -6,6 +6,9 @@ package com.continuuity.api.workflow;
 import com.continuuity.api.builder.Creator;
 import com.continuuity.api.builder.DescriptionSetter;
 import com.continuuity.api.builder.NameSetter;
+import com.continuuity.internal.builder.BaseBuilder;
+import com.continuuity.internal.builder.SimpleDescriptionSetter;
+import com.continuuity.internal.builder.SimpleNameSetter;
 
 /**
  *
@@ -16,63 +19,55 @@ public interface WorkFlowSpecification {
 
   String getDescription();
 
+
+  /**
+   *
+   * @param <T>
+   */
+  interface FirstAction<T> {
+
+    T startWith(WorkFlowAction action);
+  }
+
+  /**
+   *
+   * @param <T>
+   */
+  interface MoreAction<T> {
+
+    MoreAction<T> then(WorkFlowAction action);
+
+    T last(WorkFlowAction action);
+  }
+
   /**
    *
    */
-  final class Builder {
-
-    private String name;
-    private String description;
+  final class Builder extends BaseBuilder<WorkFlowSpecification> {
 
     public static NameSetter<DescriptionSetter<FirstAction<MoreAction<Creator<WorkFlowSpecification>>>>> with() {
       Builder builder = new Builder();
-      return NameSetterImpl.create(
-        builder, DescriptionSetterImpl.create(
-        builder, FirstActionImpl.create(
+
+      return SimpleNameSetter.create(
+        getNameSetter(builder), SimpleDescriptionSetter.create(
+        getDescriptionSetter(builder), FirstActionImpl.create(
         builder, MoreActionImpl.create(
-        builder, CreatorImpl.create(builder)))));
+        builder, (Creator<WorkFlowSpecification>) builder))));
     }
 
-    private static final class NameSetterImpl<T> implements NameSetter<T> {
+    @Override
+    public WorkFlowSpecification build() {
+      return new WorkFlowSpecification() {
+        @Override
+        public String getName() {
+          return name;
+        }
 
-      private final Builder builder;
-      private final T next;
-
-      static <T> NameSetter<T> create(Builder builder, T next) {
-        return new NameSetterImpl<T>(builder, next);
-      }
-
-      private NameSetterImpl(Builder builder, T next) {
-        this.builder = builder;
-        this.next = next;
-      }
-
-      @Override
-      public T setName(String name) {
-        builder.name = name;
-        return next;
-      }
-    }
-
-    private static final class DescriptionSetterImpl<T> implements DescriptionSetter<T> {
-
-      private final Builder builder;
-      private final T next;
-
-      static <T> DescriptionSetter<T> create(Builder builder, T next) {
-        return new DescriptionSetterImpl<T>(builder, next);
-      }
-
-      private DescriptionSetterImpl(Builder builder, T next) {
-        this.builder = builder;
-        this.next = next;
-      }
-
-      @Override
-      public T setDescription(String description) {
-        builder.description = description;
-        return next;
-      }
+        @Override
+        public String getDescription() {
+          return description;
+        }
+      };
     }
 
     private static final class FirstActionImpl<T> implements FirstAction<T> {
@@ -117,34 +112,6 @@ public interface WorkFlowSpecification {
       @Override
       public T last(WorkFlowAction action) {
         return next;
-      }
-    }
-
-    private static final class CreatorImpl implements Creator<WorkFlowSpecification> {
-
-      private final Builder builder;
-
-      static Creator<WorkFlowSpecification> create(Builder builder) {
-        return new CreatorImpl(builder);
-      }
-
-      private CreatorImpl(Builder builder) {
-        this.builder = builder;
-      }
-
-      @Override
-      public WorkFlowSpecification build() {
-        return new WorkFlowSpecification() {
-          @Override
-          public String getName() {
-            return builder.name;
-          }
-
-          @Override
-          public String getDescription() {
-            return builder.description;
-          }
-        };
       }
     }
 

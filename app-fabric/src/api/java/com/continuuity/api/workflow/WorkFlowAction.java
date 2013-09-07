@@ -21,6 +21,13 @@ package com.continuuity.api.workflow;
 public interface WorkFlowAction extends Runnable {
 
   /**
+   * Provides a specification about this {@link WorkFlowAction}.
+   *
+   * @return An instance of {@link WorkFlowSpecification}.
+   */
+  WorkFlowActionSpecification configure();
+
+  /**
    * Initializes a {@link WorkFlowAction}. This method is called before the {@link #run()} method.
    *
    * @param context Context object containing runtime information for this action.
