@@ -1,45 +1,28 @@
-package com.continuuity.gateway.v2.handlers.v2.appfabric;
+package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.FlowDescriptor;
-import com.continuuity.app.services.FlowIdentifier;
-import com.continuuity.app.services.FlowRunRecord;
-import com.continuuity.app.services.FlowStatus;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
-import com.continuuity.app.services.ResourceIdentifier;
-import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.Services;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -53,12 +36,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.List;
-
-import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 
 /**
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.

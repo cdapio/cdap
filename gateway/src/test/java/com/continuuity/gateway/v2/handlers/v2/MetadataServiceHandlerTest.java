@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2.handlers.v2.dataset;
+package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.metadata.thrift.Account;
@@ -75,7 +75,8 @@ public class MetadataServiceHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/streams");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {
+    }.getType());
     Assert.assertEquals("s1", o.get(0).get("id"));
     Assert.assertEquals("s1-name", o.get(0).get("name"));
     Assert.assertEquals("s1-desc", o.get(0).get("description"));

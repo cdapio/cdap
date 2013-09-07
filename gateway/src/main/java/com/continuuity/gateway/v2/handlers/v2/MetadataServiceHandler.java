@@ -1,10 +1,8 @@
-package com.continuuity.gateway.v2.handlers.v2.dataset;
+package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;

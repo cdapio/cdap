@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2.handlers.v2.appfabric;
+package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
