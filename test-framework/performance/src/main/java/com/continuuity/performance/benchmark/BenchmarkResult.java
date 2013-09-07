@@ -43,7 +43,6 @@ public class BenchmarkResult {
     return runtimeMillis;
   }
 
-
   public Collection<GroupResult> getGroupResults() {
     return groupResults.values();
   }
