@@ -35,6 +35,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -74,8 +75,8 @@ public class GatewayFastTestsSuite {
 
       conf.setInt(GatewayConstants.ConfigKeys.PORT, 0);
       conf.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
-      conf.set("app.output.dir", "/tmp");
-      conf.set("app.tmp.dir", "/tmp");
+      conf.set("app.output.dir", System.getProperty("java.io.tmpdir"));
+      conf.set("app.tmp.dir", System.getProperty("java.io.tmpdir"));
 
       // Set up our Guice injections
       Injector injector = Guice.createInjector(
@@ -162,6 +163,13 @@ public class GatewayFastTestsSuite {
     }
     return client.execute(post);
   }
+
+  public static HttpResponse DELETE(String resource) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpDelete delete = new HttpDelete("http://" + hostname + ":" + port + resource);
+    return client.execute(delete);
+  }
+
 
   public static MetadataService.Iface getMds() {
     return mds;

@@ -495,4 +495,17 @@
         <description>Kafka replication factor</description>
     </property>
 
+    <!--
+        Global Configuration.
+    -->
+    <property>
+        <name>enable.unrecoverable.reset</name>
+        <value>false</value>
+        <description>
+            WARNING! - Enabling this option enables the deletion of all applications and data.
+            No recovery is possible!
+        </description>
+    </property>
+
+
 </configuration>

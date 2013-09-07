@@ -32,6 +32,14 @@ public final class Constants {
   }
 
   /**
+   * Dangerous Options
+   */
+  public static final class Dangerous {
+    public static final String UNRECOVERABLE_RESET = "enable.unrecoverable.reset";
+    public static final boolean DEFAULT_UNRECOVERABLE_RESET = false;
+  }
+
+  /**
    * Common across components.
    */
   public static final String CFG_ZOOKEEPER_ENSEMBLE = "zookeeper.quorum";
