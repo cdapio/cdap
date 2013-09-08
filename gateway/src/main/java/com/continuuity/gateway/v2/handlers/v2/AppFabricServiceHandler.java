@@ -238,6 +238,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Promote an application another reactor.
+   */
+
+
+  /**
    * Returns number of instances for a flowlet within a flow.
    */
   @GET
