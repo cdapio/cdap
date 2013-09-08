@@ -189,6 +189,9 @@ public class SingleNodeMain {
     boolean inMemory = false;
     String webAppPath = WebCloudAppService.WEB_APP;
 
+    // Path where web cloud app is.
+    String webAppPath = WebCloudAppService.WEB_APP;
+
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
         usage(false);

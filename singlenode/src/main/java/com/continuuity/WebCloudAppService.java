@@ -26,7 +26,6 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
   private Process process;
   private BufferedReader bufferedReader;
 
-
   public WebCloudAppService() {
     this(WEB_APP);
   }
@@ -34,6 +33,7 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
   public WebCloudAppService(String webAppPath) {
     this.webAppPath = webAppPath;
   }
+
   /**
    * Start the service.
    */
@@ -41,7 +41,7 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
     builder.redirectErrorStream(true);
-    LOG.info("Starting Web Cloud App ...");
+    LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");
     process = builder.start();
     final InputStream is = process.getInputStream();
     final InputStreamReader isr = new InputStreamReader(is);
