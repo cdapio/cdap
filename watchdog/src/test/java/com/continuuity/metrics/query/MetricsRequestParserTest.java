@@ -164,8 +164,8 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("metric", request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());
 
-    request
-      = MetricsRequestParser.parse(URI.create("/user/apps/app1/mapreduces/mapred1/mappers/metric?aggregate=true"));
+    request =
+      MetricsRequestParser.parse(URI.create("/user/apps/app1/mapreduces/mapred1/mappers/metric?aggregate=true"));
     Assert.assertEquals("app1.b.mapred1.m", request.getContextPrefix());
     Assert.assertEquals("metric", request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());
