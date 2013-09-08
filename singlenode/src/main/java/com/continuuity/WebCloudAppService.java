@@ -21,18 +21,27 @@ import java.util.concurrent.Executor;
 public class WebCloudAppService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(WebCloudAppService.class);
   private static final String NODE_JS_EXECUTABLE = "node";
-  private static final String WEB_APP = "web-app/local/server/main.js";
+  public static final String WEB_APP = "web-app/local/server/main.js";
+  private final String webAppPath;
   private Process process;
   private BufferedReader bufferedReader;
+
+  public WebCloudAppService() {
+    this(WEB_APP);
+  }
+
+  public WebCloudAppService(String webAppPath) {
+    this.webAppPath = webAppPath;
+  }
 
   /**
    * Start the service.
    */
   @Override
   protected void startUp() throws Exception {
-    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, WEB_APP);
+    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
     builder.redirectErrorStream(true);
-    LOG.info("Starting Web Cloud App ...");
+    LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");
     process = builder.start();
     final InputStream is = process.getInputStream();
     final InputStreamReader isr = new InputStreamReader(is);
