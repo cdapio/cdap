@@ -68,7 +68,7 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
       InMemoryOcTableService.getRowRange(getName(), startRow, stopRow, tx.getReadPointer());
 
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange =
-      getLatestNotExcludedRows(rowRange, tx.getExcludedList());
+      getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
     return new InMemoryScanner(rows.entrySet().iterator());
@@ -91,11 +91,11 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
     }
 
     // if exclusion list is empty, do simple "read last" value call todo: explain
-    if (tx.getExcludedList().length == 0) {
+    if (!tx.hasExcludes()) {
       return unwrapDeletes(filterByColumns(getLatest(rowMap), columns));
     }
 
-    NavigableMap<byte[], byte[]> result = filterByColumns(getLatestNotExcluded(rowMap, tx.getExcludedList()), columns);
+    NavigableMap<byte[], byte[]> result = filterByColumns(getLatestNotExcluded(rowMap, tx), columns);
     return unwrapDeletes(result);
   }
 

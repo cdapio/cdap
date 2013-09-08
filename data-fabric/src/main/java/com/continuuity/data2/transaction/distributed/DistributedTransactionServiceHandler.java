@@ -51,7 +51,8 @@ public final class DistributedTransactionServiceHandler implements TTransactionS
     Transaction transaction = transactionSystem.start();
     return new TTransaction(transaction.getReadPointer(),
                             transaction.getWritePointer(),
-                            Converters.encodeLongs(transaction.getExcludedList()));
+                            Converters.encodeLongs(transaction.getInvalids()),
+                            Converters.encodeLongs(transaction.getInProgress()));
   }
 
   @Override

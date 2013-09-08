@@ -2,6 +2,7 @@ package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -15,11 +16,11 @@ import java.util.Map;
 public class HBaseScanner implements Scanner {
 
   private final ResultScanner scanner;
-  private final long[] excludedVersions;
+  private final Transaction tx;
 
-  public HBaseScanner(ResultScanner scanner, long[] excludedVersions){
+  public HBaseScanner(ResultScanner scanner, Transaction tx){
     this.scanner = scanner;
-    this.excludedVersions = excludedVersions;
+    this.tx = tx;
   }
 
   @Override
@@ -37,7 +38,7 @@ public class HBaseScanner implements Scanner {
           break;
         }
 
-        Map<byte[], byte[]> rowMap = HBaseOcTableClient.getRowMap(result, excludedVersions);
+        Map<byte[], byte[]> rowMap = HBaseOcTableClient.getRowMap(result, tx);
         if (rowMap.size() > 0) {
           return new ImmutablePair<byte[], Map<byte[], byte[]>>(result.getRow(), rowMap);
         }

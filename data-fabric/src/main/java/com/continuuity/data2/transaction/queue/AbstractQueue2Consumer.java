@@ -167,14 +167,14 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   public void postTxCommit() {
     if (!consumingEntries.isEmpty()) {
       // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
-      // that is smaller than smallest of exclude list
-      long[] excludedList = transaction.getExcludedList();
-      if (excludedList.length == 0) {
+      // that is smaller than smallest of in progress list
+      long[] inProgress = transaction.getInProgress();
+      if (inProgress.length == 0) {
         // No need to copy, as after postTxCommit, no one will use the consumingEntries except
         // next call should be startTx which will clear the consumingEntries.
         startRow = getNextRow(consumingEntries.lastKey());
       } else {
-        SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getRowKey(excludedList[0], 0));
+        SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getRowKey(inProgress[0], 0));
         // If nothing smaller than the smallest of excluded list, then it can't advance.
         if (!headMap.isEmpty()) {
           startRow = getNextRow(headMap.firstKey());
@@ -250,7 +250,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   private void populateRowCache(Set<byte[]> excludeRows, int maxBatchSize) throws IOException {
 
     long readPointer = transaction.getReadPointer();
-    long[] excludedList = transaction.getExcludedList();
 
     // Scan the table for queue entries.
     int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * consumerConfig.getGroupSize() * PREFETCH_BATCHES);
@@ -280,7 +279,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
           break;
         }
         // If the write is in the excluded list, ignore it.
-        if (Arrays.binarySearch(excludedList, writePointer) >= 0) {
+        if (transaction.isExcluded(writePointer)) {
           continue;
         }
 
@@ -342,15 +341,14 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         return false;
       }
 
-      // If state is PROCESSED and committed, ignore it
-      long[] excludedList = transaction.getExcludedList();
+      // If state is PROCESSED and committed, ignore it:
       ConsumerEntryState state = getState(stateValue);
-      if (state == ConsumerEntryState.PROCESSED
-          && stateWritePointer <= transaction.getReadPointer()
-          && Arrays.binarySearch(excludedList, stateWritePointer) < 0) {
+      if (state == ConsumerEntryState.PROCESSED && transaction.isVisible(stateWritePointer)) {
 
-        // If the PROCESSED entry write pointer is smaller than smallest in excluded list, then it must be processed.
-        if (excludedList.length == 0 || excludedList[0] > enqueueWritePointer) {
+        // If the entry's enqueue write pointer is smaller than smallest in progress tx, then everything before it
+        // must be processed, too (it is not possible that an enqueue before this is still in progress). So it is
+        // safe to move the start row after this entry.
+        if (enqueueWritePointer < transaction.getFirstInProgress()) {
           startRow = getNextRow(startRow, enqueueWritePointer, counter);
         }
         return false;

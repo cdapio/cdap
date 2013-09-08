@@ -40,6 +40,7 @@ public class Constants {
   public static final String CFG_APP_FABRIC_SERVER_PORT = "app.server.port";
   public static final String CFG_APP_FABRIC_OUTPUT_DIR  = "app.output.dir";
   public static final String CFG_APP_FABRIC_TEMP_DIR    = "app.temp.dir";
+  public static final String CFG_APP_FABRIC_REST_PORT   = "app.rest.port";
 
   /**
    * Data Fabric.

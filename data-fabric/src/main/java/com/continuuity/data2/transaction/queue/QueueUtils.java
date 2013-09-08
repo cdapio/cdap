@@ -10,8 +10,6 @@ import com.google.common.hash.Hashing;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
-import java.util.Arrays;
-
 /**
  *
  */
@@ -52,7 +50,7 @@ public final class QueueUtils {
    */
   public static boolean isCommittedProcessed(byte[] stateBytes, Transaction tx) {
     long writePointer = Bytes.toLong(stateBytes, 0, Longs.BYTES);
-    if (writePointer > tx.getReadPointer() || Arrays.binarySearch(tx.getExcludedList(), writePointer) >= 0) {
+    if (!tx.isVisible(writePointer)) {
       return false;
     }
     byte state = stateBytes[Longs.BYTES + Ints.BYTES];
