@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
@@ -18,12 +19,20 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.io.CharStreams;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.apache.commons.io.IOUtils;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -36,7 +45,12 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
@@ -114,9 +128,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Deletes an application specified by appId
    */
   @DELETE
-  @Path("/apps/{appId}")
+  @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
-                        @PathParam("appId") final String appId) {
+                        @PathParam("app-id") final String appId) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -134,6 +148,76 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  /**
+   * Deletes an application specified by appId
+   */
+  @POST
+  @Path("/apps/{app-id}/promote")
+  public void promoteApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    try {
+      String postBody = null;
+
+      try {
+        postBody = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
+      } catch (IOException e) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        return;
+      }
+
+      Map<String, String> o = null;
+      try {
+        o = new Gson().fromJson(postBody, new TypeToken<HashMap<String, String>>(){}.getType());
+      } catch (JsonSyntaxException e) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Not a valid body specified.");
+        return;
+      }
+
+      if (!o.containsKey("hostname")) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Hostname not specified.");
+        return;
+      }
+
+      // Checks DNS, Ipv4, Ipv6 address in one go.
+      try {
+        InetAddress address = InetAddress.getByName(o.get("hostname"));
+      } catch (UnknownHostException e) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Unknown hostname.");
+        return;
+      }
+
+      String accountId = getAuthenticatedAccountId(request);
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        try {
+          if (!client.promote(token,
+                         new ArchiveId(accountId, appId, "promote-" + System.currentTimeMillis() + ".jar"),
+                         o.get("hostname"))) {
+            responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to promote application " + appId);
+          } else {
+            responder.sendStatus(HttpResponseStatus.OK);
+          }
+        } catch (AppFabricServiceException e) {
+          responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+          return;
+        }
+
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (Exception e) {

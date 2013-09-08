@@ -907,12 +907,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     throws AppFabricServiceException {
 
     try {
-      Preconditions.checkArgument(authToken.isSetToken(), "API key is not set");
       Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
 
       final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(id.getAccountId(),
                                                                                           id.getApplicationId()));
-      if (!appArchive.exists()) {
+      if (appArchive == null || !appArchive.exists()) {
         throw new AppFabricServiceException("Unable to locate the application.");
       }
 
