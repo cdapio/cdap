@@ -92,7 +92,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Stream> streams = service.getStreamsByApplication(accountId, appId);
       if (streams.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
@@ -158,7 +158,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Dataset> datasets = service.getDatasetsByApplication(accountId, appId);
       if (datasets.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
@@ -242,7 +242,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Query> procedures = service.getQueriesByApplication(accountId, appId);
       if (procedures.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
@@ -327,7 +327,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Mapreduce> mapreduces = service.getMapreducesByApplication(accountId, appId);
       if (mapreduces.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
@@ -476,7 +476,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Flow> flows = service.getFlowsByApplication(accountId, appId);
       if (flows.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
@@ -513,7 +513,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Flow> flows = service.getFlowsByStream(accountId, streamId);
       if (flows.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
@@ -551,7 +551,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       List<Flow> flows = service.getFlowsByStream(accountId, datasetId);
       if (flows.size() < 1) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
