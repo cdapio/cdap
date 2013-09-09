@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.log;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -14,6 +15,8 @@ import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -27,6 +30,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Path("/v2")
 public class LogHandler extends AuthenticatedHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(LogHandler.class);
+
   private final LogReader logReader;
   private final String logPattern;
 
@@ -41,24 +46,29 @@ public class LogHandler extends AuthenticatedHttpHandler {
     this.logPattern = cConfig.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
   }
 
+  @Override
+  public void init(HandlerContext context) {
+    LOG.info("Starting LogHandler.");
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    LOG.info("Stopping LogHandler.");
+  }
+
   @GET
   @Path("/apps/{appId}/{entityType}/{entityId}/logs")
   public void list(HttpRequest request, HttpResponder responder,
                    @PathParam("appId") String appId, @PathParam("entityType") String entityType,
                    @PathParam("entityId") String entityId) {
 
-    long fromTimeMs;
-    long toTimeMs;
-    Filter filter;
-    LoggingContext loggingContext;
-    ChunkedLogReaderCallback logCallback;
     try {
       String accountId = getAuthenticatedAccountId(request);
 
       // Parse fromTime, toTime and filter
       Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-      fromTimeMs = parseTimestamp(queryParams.get("fromTime"));
-      toTimeMs = parseTimestamp(queryParams.get("toTime"));
+      long fromTimeMs = parseTimestamp(queryParams.get("fromTime"));
+      long toTimeMs = parseTimestamp(queryParams.get("toTime"));
 
       if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
         responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
@@ -69,25 +79,23 @@ public class LogHandler extends AuthenticatedHttpHandler {
       if (queryParams.get("filter") != null && !queryParams.get("filter").isEmpty()) {
         filterStr = queryParams.get("filter").get(0);
       }
-      filter = FilterParser.parse(filterStr);
+      Filter filter = FilterParser.parse(filterStr);
 
-      loggingContext =
+      LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      logCallback = new ChunkedLogReaderCallback(responder, logPattern);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-      return;
-    } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }  catch (Throwable e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      return;
-    }
+      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern);
 
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter,
                        logCallback);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @GET
@@ -96,11 +104,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @PathParam("appId") String appId, @PathParam("entityType") String entityType,
                    @PathParam("entityId") String entityId) {
 
-    long fromOffset;
-    int maxEvents;
-    Filter filter;
-    LoggingContext loggingContext;
-    LogReaderCallback logCallback;
     try {
       String accountId = getAuthenticatedAccountId(request);
 
@@ -109,30 +112,28 @@ public class LogHandler extends AuthenticatedHttpHandler {
       if (queryParams.get("filter") != null && !queryParams.get("filter").isEmpty()) {
         filterStr = queryParams.get("filter").get(0);
       }
-      filter = FilterParser.parse(filterStr);
+      Filter filter = FilterParser.parse(filterStr);
 
-      maxEvents = queryParams.get("max") != null && !queryParams.get("max").isEmpty() ?
+      int maxEvents = queryParams.get("max") != null && !queryParams.get("max").isEmpty() ?
         Integer.parseInt(queryParams.get("max").get(0)) : 50;
 
-      fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
+      long fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
         Long.parseLong(queryParams.get("fromOffset").get(0)) : -1;
 
-      loggingContext =
+      LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      logCallback = new LogReaderCallback(responder, logPattern);
+      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern);
+
+      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-      return;
     } catch (IllegalArgumentException e) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
     } catch (Throwable e) {
+      LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      return;
     }
-
-    logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
   }
 
   @GET
@@ -141,11 +142,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @PathParam("appId") String appId, @PathParam("entityType") String entityType,
                    @PathParam("entityId") String entityId) {
 
-    long fromOffset;
-    int maxEvents;
-    Filter filter;
-    LoggingContext loggingContext;
-    LogReaderCallback logCallback;
     try {
       String accountId = getAuthenticatedAccountId(request);
 
@@ -154,30 +150,28 @@ public class LogHandler extends AuthenticatedHttpHandler {
       if (queryParams.get("filter") != null && !queryParams.get("filter").isEmpty()) {
         filterStr = queryParams.get("filter").get(0);
       }
-      filter = FilterParser.parse(filterStr);
+      Filter filter = FilterParser.parse(filterStr);
 
-      maxEvents = queryParams.get("max") != null && !queryParams.get("max").isEmpty() ?
+      int maxEvents = queryParams.get("max") != null && !queryParams.get("max").isEmpty() ?
         Integer.parseInt(queryParams.get("max").get(0)) : 50;
 
-      fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
+      long fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
         Long.parseLong(queryParams.get("fromOffset").get(0)) : -1;
 
-      loggingContext =
+      LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      logCallback = new LogReaderCallback(responder, logPattern);
+      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern);
+
+      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-      return;
     } catch (IllegalArgumentException e) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
     } catch (Throwable e) {
+      LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      return;
     }
-
-    logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
   }
 
   private static long parseTimestamp(List<String> parameter) {
