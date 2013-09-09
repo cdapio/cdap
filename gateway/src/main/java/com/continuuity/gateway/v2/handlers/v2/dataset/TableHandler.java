@@ -95,7 +95,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @PUT
-  @Path("/data/table/{name}")
+  @Path("/tables/{name}")
   public void createTable(HttpRequest request, final HttpResponder responder, @PathParam("name") String tableName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -125,7 +125,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @PUT
-  @Path("/data/table/{name}/row/{key}")
+  @Path("/tables/{name}/row/{key}")
   public void writeTableRow(HttpRequest request, final HttpResponder responder,
                             @PathParam("name") String tableName, @PathParam("key") String key) {
 
@@ -188,7 +188,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/data/table/{name}/row/{key}")
+  @Path("/tables/{name}/row/{key}")
   public void readTableRow(HttpRequest request, final HttpResponder responder,
                             @PathParam("name") String tableName, @PathParam("key") String key) {
 
@@ -267,7 +267,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/data/table/{name}/row/{key}")
+  @Path("/tables/{name}/row/{key}")
   public void incrementTableRow(HttpRequest request, final HttpResponder responder,
                                 @PathParam("name") String tableName, @PathParam("key") String key) {
     try {
@@ -343,7 +343,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
 
 
   @DELETE
-  @Path("/data/table/{name}/row/{key}")
+  @Path("/tables/{name}/row/{key}")
   public void deleteTableRow(HttpRequest request, final HttpResponder responder,
                              @PathParam("name") String tableName, @PathParam("key") String key) {
     try {

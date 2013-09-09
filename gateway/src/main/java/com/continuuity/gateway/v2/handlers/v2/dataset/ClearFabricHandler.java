@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.util.List;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
@@ -67,13 +66,46 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
   }
 
   @DELETE
-  @Path("/data/{type}")
-  public void createTable(HttpRequest request, final HttpResponder responder, @PathParam("type") String clearType) {
+  @Path("/data")
+  public void clearData(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ClearFabric.ToClear.DATA);
+  }
+
+  @DELETE
+  @Path("/meta")
+  public void clearMeta(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ClearFabric.ToClear.META);
+  }
+
+  @DELETE
+  @Path("/datasets")
+  public void clearTables(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ClearFabric.ToClear.TABLES);
+  }
+
+  @DELETE
+  @Path("/queues")
+  public void clearQueues(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ClearFabric.ToClear.QUEUES);
+  }
+
+  @DELETE
+  @Path("/streams")
+  public void clearStreams(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ClearFabric.ToClear.STREAMS);
+  }
+
+  @DELETE
+  @Path("/all")
+  public void clearAll(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ClearFabric.ToClear.ALL);
+  }
+
+  private void clear(HttpRequest request, final HttpResponder responder, ClearFabric.ToClear toClear) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       OperationContext context = new OperationContext(accountId);
 
-      ClearFabric.ToClear toClear = ClearFabric.ToClear.valueOf(clearType.toUpperCase());
       ClearFabric clearFabric = new ClearFabric(toClear);
 
       try {

@@ -53,7 +53,7 @@ public class ClearFabricHandlerTest {
     Assert.assertTrue(verifyQueue(queueName));
 
     // clear all
-    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/data/all").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/all").getStatusLine().getStatusCode());
     // verify all are gone
     Assert.assertFalse(verifyTable(tableName));
     Assert.assertFalse(verifyStream(streamName));
@@ -78,7 +78,7 @@ public class ClearFabricHandlerTest {
     Assert.assertTrue(verifyQueue(queueName));
 
     // clear all
-    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/data/tables").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/datasets").getStatusLine().getStatusCode());
     // verify all are gone
     Assert.assertFalse(verifyTable(tableName));
     Assert.assertTrue(verifyStream(streamName));
@@ -86,11 +86,11 @@ public class ClearFabricHandlerTest {
   }
 
   @Test
-  public void testClearDataInvalid() throws Exception {
+  public void testClearQueues() throws Exception {
     // setup accessor
-    String tableName = "mannamanna3";
-    String streamName = "doobdoobee3";
-    String queueName = "doobee3";
+    String tableName = "mannamanna2";
+    String streamName = "doobdoobee2";
+    String queueName = "doobee2";
 
     // create a stream, a queue, a table
     TableHandlerTest.createTable(tableName);
@@ -103,7 +103,11 @@ public class ClearFabricHandlerTest {
     Assert.assertTrue(verifyQueue(queueName));
 
     // clear all
-    Assert.assertEquals(400, GatewayFastTestsSuite.DELETE("/v2/data/app").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/queues").getStatusLine().getStatusCode());
+    // verify all are gone
+    Assert.assertTrue(verifyTable(tableName));
+    Assert.assertTrue(verifyStream(streamName));
+    Assert.assertFalse(verifyQueue(queueName));
   }
 
   static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());

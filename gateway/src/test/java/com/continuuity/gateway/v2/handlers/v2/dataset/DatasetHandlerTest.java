@@ -13,15 +13,15 @@ public class DatasetHandlerTest {
 
   @Test
   public void testTruncateTable() throws Exception {
-    String urlPrefix = "/v2/data";
-    String tablePrefix = urlPrefix + "/table/";
+    String urlPrefix = "/v2";
+    String tablePrefix = urlPrefix + "/tables/";
     String table = "ttTbl_" + System.nanoTime();
     TableHandlerTest.assertCreate(tablePrefix, HttpStatus.SC_OK, table);
     TableHandlerTest.assertWrite(tablePrefix, HttpStatus.SC_OK, table + "/row/abc", "{ \"c1\":\"v1\"}");
     // make sure both columns are there
     TableHandlerTest.assertRead(tablePrefix, 1, 1, table + "/row/abc");
 
-    assertTruncate(urlPrefix, HttpStatus.SC_OK, "/dataset/" + table + "/truncate");
+    assertTruncate(urlPrefix, HttpStatus.SC_OK, "/datasets/" + table + "/truncate");
 
     // make sure data was removed: 204 on read
     TableHandlerTest.assertReadFails(tablePrefix, table + "/row/abc", HttpStatus.SC_NO_CONTENT);

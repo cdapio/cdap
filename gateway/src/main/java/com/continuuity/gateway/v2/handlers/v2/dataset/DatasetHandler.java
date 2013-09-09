@@ -71,7 +71,7 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
   }
 
   @DELETE
-  @Path("/data/dataset/{name}/truncate")
+  @Path("/datasets/{name}/truncate")
   public void deleteTableRow(HttpRequest request, final HttpResponder responder,
                              @PathParam("name") String tableName) {
     try {
