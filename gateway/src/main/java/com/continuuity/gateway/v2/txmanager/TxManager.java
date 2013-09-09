@@ -27,7 +27,12 @@ public class TxManager {
 
   public TxManager(TransactionSystemClient txClient, TransactionAware...txAware) {
     this.txClient = txClient;
-    txAwares = ImmutableList.copyOf(txAware);
+    this.txAwares = ImmutableList.copyOf(txAware);
+  }
+
+  public TxManager(TransactionSystemClient txClient, Iterable<TransactionAware> txAwares) {
+    this.txClient = txClient;
+    this.txAwares = ImmutableList.copyOf(txAwares);
   }
 
   public void start() throws OperationException {

@@ -399,7 +399,7 @@ public class Util {
       }
     }
     // this can never happen because we only call it with null, hex, base64, or url
-    throw new RuntimeException("Unexpected encoding: " + encoding + " Only hex, base64 and url are supported.");
+    throw new IllegalArgumentException("Unexpected encoding: " + encoding + " Only hex, base64 and url are supported.");
   }
 
   public static byte[] decodeBinary(String str, String encoding) throws NumberFormatException {
@@ -431,7 +431,7 @@ public class Util {
       }
     }
     // this can never happen because we only call it with null, hex, base64, or url
-    throw new RuntimeException("Unexpected encoding: " + encoding + " Only hex, base64 and url are supported.");
+    throw new IllegalArgumentException("Unexpected encoding: " + encoding + " Only hex, base64 and url are supported.");
   }
 
   public static boolean supportedEncoding(String enc) {
