@@ -4,6 +4,7 @@
 
 package com.continuuity.api.flow;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.internal.UserErrors;
@@ -162,15 +163,42 @@ public interface FlowSpecification {
       MoreFlowlet add(String name, Flowlet flowlet);
 
       /**
+       * Add a flowlet to flow with the given name and with the resources specified.
+       * The name given would overrides the one
+       * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
+       * returned by {@link Flowlet#configure()}.
+       * @param name Name of the flowlet
+       * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @param resourceSpec {@link ResourceSpecification} to use for each instance
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets.
+       */
+      MoreFlowlet add(String name, Flowlet flowlet, ResourceSpecification resourceSpec);
+
+      /**
        * Add a flowlet to flow with the given name with minimum number of instances to begin with.
        * The name given would overrides the one
        * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
        * returned by {@link Flowlet#configure()}.
        * @param name Name of the flowlet
        * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @param instances Number of instances for the flowlet
        * @return An instance of {@link MoreFlowlet} for adding more flowlets.
        */
       MoreFlowlet add(String name, Flowlet flowlet, int instances);
+
+      /**
+       * Add a flowlet to flow with the given name with minimum number of instances to begin with and with each
+       * instance given the resources specified.
+       * The name given would overrides the one
+       * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
+       * returned by {@link Flowlet#configure()}.
+       * @param name Name of the flowlet
+       * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @param instances Number of instances for the flowlet
+       * @param resourceSpec {@link ResourceSpecification} to use for each instance
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets.
+       */
+      MoreFlowlet add(String name, Flowlet flowlet, int instances, ResourceSpecification resourceSpec);
     }
 
     /**
@@ -194,18 +222,28 @@ public interface FlowSpecification {
       }
 
       @Override
+      public MoreFlowlet add(String name, Flowlet flowlet, ResourceSpecification resourceSpec) {
+        return add(name, flowlet, 1, resourceSpec);
+      }
+
+      @Override
       public MoreFlowlet add(String name, Flowlet flowlet, int instances) {
+        return add(name, flowlet, instances, ResourceSpecification.BASIC);
+      }
+
+      @Override
+      public MoreFlowlet add(String name, Flowlet flowlet, int instances, ResourceSpecification resourceSpec) {
 
         Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
 
-        FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
+        FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances, resourceSpec);
         String flowletName = flowletDef.getFlowletSpec().getName();
 
         Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
-          flowletName, instances));
+                                                                 flowletName, instances));
 
         Preconditions.checkArgument(!flowlets.containsKey(flowletName),
-                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
+                                    UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
 
         flowlets.put(flowletName, flowletDef);
 
