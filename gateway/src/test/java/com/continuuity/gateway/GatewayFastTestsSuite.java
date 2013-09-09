@@ -8,12 +8,10 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.GatewayConstants;
-import com.continuuity.gateway.v2.handlers.v2.PingHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.ProcedureHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.dataset.MetadataServiceHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.log.LogHandlerTest;
+import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
@@ -24,8 +22,10 @@ import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -41,8 +41,8 @@ import org.junit.runners.Suite.SuiteClasses;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
-  ProcedureHandlerTest.class})
+@SuiteClasses(value = {/*PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
+  ProcedureHandlerTest.class,*/ TableHandlerTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
@@ -50,6 +50,7 @@ public class GatewayFastTestsSuite {
   private static CConfiguration conf = CConfiguration.create();
 
   private static final InMemoryDiscoveryService IN_MEMORY_DISCOVERY_SERVICE = new InMemoryDiscoveryService();
+  private static Injector injector;
   private static MetadataService.Iface mds;
 
   @ClassRule
@@ -60,7 +61,7 @@ public class GatewayFastTestsSuite {
       conf.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
 
       // Set up our Guice injections
-      Injector injector = Guice.createInjector(
+      injector = Guice.createInjector(
         new DataFabricModules().getInMemoryModules(),
         new ConfigModule(conf),
         new LocationRuntimeModule().getInMemoryModules(),
@@ -70,11 +71,12 @@ public class GatewayFastTestsSuite {
           protected void configure() {
             // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
             // AppFabricServiceModule
-            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-            bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-            bind(StoreFactory.class).to(MDSStoreFactory.class);
-            bind(LogReader.class).to(MockLogReader.class);
+            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class).in(Scopes.SINGLETON);
+            bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Scopes.SINGLETON);
+            bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
+            bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
             bind(DiscoveryServiceClient.class).toInstance(IN_MEMORY_DISCOVERY_SERVICE);
+            bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
           }
         }
       );
@@ -93,8 +95,8 @@ public class GatewayFastTestsSuite {
     }
   };
 
-  public static InMemoryDiscoveryService getInMemoryDiscoveryService() {
-    return IN_MEMORY_DISCOVERY_SERVICE;
+  public static Injector getInjector() {
+    return injector;
   }
 
   public static HttpResponse GET(String resource) throws Exception {
@@ -114,6 +116,15 @@ public class GatewayFastTestsSuite {
   public static HttpResponse PUT(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    return client.execute(put);
+  }
+
+  public static HttpResponse PUT(String resource, String body) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    if (body != null) {
+      put.setEntity(new StringEntity(body));
+    }
     return client.execute(put);
   }
 
@@ -138,6 +149,12 @@ public class GatewayFastTestsSuite {
       post.setHeaders(headers);
     }
     return client.execute(post);
+  }
+
+  public static HttpResponse DELETE(String resource) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpDelete delete = new HttpDelete("http://" + hostname + ":" + port + resource);
+    return client.execute(delete);
   }
 
   public static MetadataService.Iface getMds() {

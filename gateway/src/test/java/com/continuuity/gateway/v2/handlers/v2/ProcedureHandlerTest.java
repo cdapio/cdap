@@ -5,6 +5,7 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.DiscoveryService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -59,7 +60,8 @@ public class ProcedureHandlerTest  {
     httpService.startAndWait();
 
     // Register services of test server
-    GatewayFastTestsSuite.getInMemoryDiscoveryService().register(new Discoverable() {
+    DiscoveryService discoveryService = GatewayFastTestsSuite.getInjector().getInstance(DiscoveryService.class);
+    discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
         return String.format("procedure.%s.%s.%s", "developer", "testApp1", "testProc1");
@@ -71,7 +73,7 @@ public class ProcedureHandlerTest  {
       }
     });
 
-    GatewayFastTestsSuite.getInMemoryDiscoveryService().register(new Discoverable() {
+    discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
         return String.format("procedure.%s.%s.%s", "developer", "testApp2", "testProc2");
