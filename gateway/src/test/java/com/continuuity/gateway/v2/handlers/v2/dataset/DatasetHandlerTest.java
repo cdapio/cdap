@@ -15,7 +15,7 @@ public class DatasetHandlerTest {
   public void testTruncateTable() throws Exception {
     String urlPrefix = "/v2/data";
     String tablePrefix = urlPrefix + "/table/";
-    String table = "ttTbl";
+    String table = "ttTbl_" + System.nanoTime();
     TableHandlerTest.assertCreate(tablePrefix, HttpStatus.SC_OK, table);
     TableHandlerTest.assertWrite(tablePrefix, HttpStatus.SC_OK, table + "/row/abc", "{ \"c1\":\"v1\"}");
     // make sure both columns are there

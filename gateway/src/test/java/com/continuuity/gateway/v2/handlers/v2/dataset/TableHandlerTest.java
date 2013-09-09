@@ -41,7 +41,7 @@ public class TableHandlerTest {
 
   @Test
   public void testTableReads() throws Exception {
-    Table t = newTable("tTR");
+    Table t = newTable("tTR_" + System.nanoTime());
     // write a row with 10 cols c0...c9 with values v0..v9
     String row = "tTR10";
     byte[] rowKey = row.getBytes();
@@ -90,7 +90,7 @@ public class TableHandlerTest {
   @Test
   public void testTableWritesAndDeletes() throws Exception {
     String urlPrefix = "/v2/data";
-    Table t = newTable("tTW");
+    Table t = newTable("tTW_" + System.nanoTime());
     String row = "abc";
     byte[] c1 = { 'c', '1' }, c2 = { 'c', '2' }, c3 = { 'c', '3' };
     byte[] v1 = { 'v', '1' }, mt = { }, v3 = { 'v', '3' };
@@ -147,7 +147,7 @@ public class TableHandlerTest {
   @Test
   public void testIncrement() throws Exception {
     String urlPrefix = "/v2/data";
-    Table t = newTable("tI");
+    Table t = newTable("tI_" + System.nanoTime());
     String row = "abc";
     // directly write a row with two columns, a long, b not
     final byte[] a = { 'a' }, b = { 'b' }, c = { 'c' };
@@ -226,7 +226,7 @@ public class TableHandlerTest {
   public void testEncodingOfKeysAndValues() throws Exception {
 
     // first create the table
-    String tableName = "tEOCAV";
+    String tableName = "tEOCAV_" + System.nanoTime();
     Table table = createTable(tableName);
     byte[] x = { 'x' }, y = { 'y' }, z = { 'z' }, a = { 'a' };
 
@@ -268,7 +268,7 @@ public class TableHandlerTest {
     Assert.assertTrue(read.isEmpty());
 
     // increment column using REST
-    assertIncrement(tablePrefix, 200, "eA" + "?op=increment" + "&encoding=base64", "{\"YQ\":42}");
+    assertIncrement(tablePrefix, 200, "eA" + "?encoding=base64", "{\"YQ\":42}");
     // verify the value was written using the Table
     // starting new tx so that we see what was committed
     txManager.commit();
