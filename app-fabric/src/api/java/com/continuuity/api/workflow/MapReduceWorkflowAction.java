@@ -8,11 +8,11 @@ import com.continuuity.api.batch.MapReduce;
 /**
  *
  */
-public final class MapReduceWorkFlowAction extends AbstractWorkFlowAction {
+public final class MapReduceWorkflowAction extends AbstractWorkflowAction {
 
   private final MapReduce mapReduce;
 
-  public MapReduceWorkFlowAction(MapReduce mapReduce) {
+  public MapReduceWorkflowAction(MapReduce mapReduce) {
     this.mapReduce = mapReduce;
   }
 

@@ -6,16 +6,16 @@ package com.continuuity.api.workflow;
 /**
  *
  */
-public abstract class AbstractWorkFlowAction implements WorkFlowAction {
+public abstract class AbstractWorkflowAction implements WorkflowAction {
 
   private final String name;
-  private WorkFlowContext context;
+  private WorkflowContext context;
 
-  protected AbstractWorkFlowAction() {
+  protected AbstractWorkflowAction() {
     name = getClass().getSimpleName();
   }
 
-  protected AbstractWorkFlowAction(String name) {
+  protected AbstractWorkflowAction(String name) {
     this.name = name;
   }
 
@@ -28,7 +28,7 @@ public abstract class AbstractWorkFlowAction implements WorkFlowAction {
   }
 
   @Override
-  public void initialize(WorkFlowContext context) throws Exception {
+  public void initialize(WorkflowContext context) throws Exception {
     this.context = context;
   }
 
@@ -37,19 +37,19 @@ public abstract class AbstractWorkFlowAction implements WorkFlowAction {
     // No-op
   }
 
-  protected final WorkFlowContext getContext() {
+  protected final WorkflowContext getContext() {
     return context;
   }
 
   /**
-   * @return {@link Class#getSimpleName() Simple classname} of this {@link WorkFlowAction}.
+   * @return {@link Class#getSimpleName() Simple classname} of this {@link WorkflowAction}.
    */
   protected String getName() {
     return name;
   }
 
   /**
-   * @return A descriptive message about this {@link WorkFlowAction}.
+   * @return A descriptive message about this {@link WorkflowAction}.
    */
   protected String getDescription() {
     return String.format("WorkFlowAction of %s.", getName());

@@ -13,7 +13,7 @@ import com.continuuity.internal.builder.SimpleNameSetter;
 /**
  *
  */
-public interface WorkFlowSpecification {
+public interface WorkflowSpecification {
 
   String getName();
 
@@ -26,7 +26,7 @@ public interface WorkFlowSpecification {
    */
   interface FirstAction<T> {
 
-    T startWith(WorkFlowAction action);
+    T startWith(WorkflowAction action);
   }
 
   /**
@@ -35,29 +35,29 @@ public interface WorkFlowSpecification {
    */
   interface MoreAction<T> {
 
-    MoreAction<T> then(WorkFlowAction action);
+    MoreAction<T> then(WorkflowAction action);
 
-    T last(WorkFlowAction action);
+    T last(WorkflowAction action);
   }
 
   /**
    *
    */
-  final class Builder extends BaseBuilder<WorkFlowSpecification> {
+  final class Builder extends BaseBuilder<WorkflowSpecification> {
 
-    public static NameSetter<DescriptionSetter<FirstAction<MoreAction<Creator<WorkFlowSpecification>>>>> with() {
+    public static NameSetter<DescriptionSetter<FirstAction<MoreAction<Creator<WorkflowSpecification>>>>> with() {
       Builder builder = new Builder();
 
       return SimpleNameSetter.create(
         getNameSetter(builder), SimpleDescriptionSetter.create(
         getDescriptionSetter(builder), FirstActionImpl.create(
         builder, MoreActionImpl.create(
-        builder, (Creator<WorkFlowSpecification>) builder))));
+        builder, (Creator<WorkflowSpecification>) builder))));
     }
 
     @Override
-    public WorkFlowSpecification build() {
-      return new WorkFlowSpecification() {
+    public WorkflowSpecification build() {
+      return new WorkflowSpecification() {
         @Override
         public String getName() {
           return name;
@@ -85,7 +85,7 @@ public interface WorkFlowSpecification {
       }
 
       @Override
-      public T startWith(WorkFlowAction action) {
+      public T startWith(WorkflowAction action) {
         return next;
       }
     }
@@ -105,12 +105,12 @@ public interface WorkFlowSpecification {
       }
 
       @Override
-      public MoreAction<T> then(WorkFlowAction action) {
+      public MoreAction<T> then(WorkflowAction action) {
         return this;
       }
 
       @Override
-      public T last(WorkFlowAction action) {
+      public T last(WorkflowAction action) {
         return next;
       }
     }

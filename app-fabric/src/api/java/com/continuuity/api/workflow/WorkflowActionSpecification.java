@@ -10,25 +10,25 @@ import com.continuuity.internal.builder.SimpleNameSetter;
 /**
  *
  */
-public interface WorkFlowActionSpecification {
+public interface WorkflowActionSpecification {
 
   String getName();
 
   String getDescription();
 
-  final class Builder extends BaseBuilder<WorkFlowActionSpecification> {
+  final class Builder extends BaseBuilder<WorkflowActionSpecification> {
 
-    public static NameSetter<DescriptionSetter<Creator<WorkFlowActionSpecification>>> with() {
+    public static NameSetter<DescriptionSetter<Creator<WorkflowActionSpecification>>> with() {
       Builder builder = new Builder();
       return SimpleNameSetter.create(
         getNameSetter(builder), SimpleDescriptionSetter.create(
-        getDescriptionSetter(builder), (Creator<WorkFlowActionSpecification>) builder
+        getDescriptionSetter(builder), (Creator<WorkflowActionSpecification>) builder
       ));
     }
 
     @Override
-    public WorkFlowActionSpecification build() {
-      return new WorkFlowActionSpecification() {
+    public WorkflowActionSpecification build() {
+      return new WorkflowActionSpecification() {
         @Override
         public String getName() {
           return name;
