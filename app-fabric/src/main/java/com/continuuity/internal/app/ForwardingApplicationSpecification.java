@@ -6,6 +6,7 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.workflow.WorkflowSpecification;
 
 import java.util.Map;
 
@@ -53,5 +54,10 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, MapReduceSpecification> getMapReduces() {
     return delegate.getMapReduces();
+  }
+
+  @Override
+  public Map<String, WorkflowSpecification> getWorkflows() {
+    return delegate.getWorkflows();
   }
 }

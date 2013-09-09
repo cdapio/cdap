@@ -10,7 +10,8 @@ package com.continuuity.app.program;
 public enum Type {
   FLOW(1),
   PROCEDURE(2),
-  MAPREDUCE(3);
+  MAPREDUCE(3),
+  WORKFLOW(4);
 
   private final int programType;
 

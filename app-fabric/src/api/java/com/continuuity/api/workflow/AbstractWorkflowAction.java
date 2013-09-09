@@ -20,8 +20,8 @@ public abstract class AbstractWorkflowAction implements WorkflowAction {
   }
 
   @Override
-  public WorkFlowActionSpecification configure() {
-    return WorkFlowActionSpecification.Builder.with()
+  public WorkflowActionSpecification configure() {
+    return WorkflowActionSpecification.Builder.with()
       .setName(getName())
       .setDescription(getDescription())
       .build();

@@ -9,41 +9,52 @@ import com.continuuity.api.builder.NameSetter;
 import com.continuuity.internal.builder.BaseBuilder;
 import com.continuuity.internal.builder.SimpleDescriptionSetter;
 import com.continuuity.internal.builder.SimpleNameSetter;
+import com.continuuity.internal.workflow.DefaultWorkflowActionSpecification;
+import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+
+import java.util.List;
 
 /**
  *
  */
 public interface WorkflowSpecification {
 
+  String getClassName();
+
   String getName();
 
   String getDescription();
 
-
-  /**
-   *
-   * @param <T>
-   */
-  interface FirstAction<T> {
-
-    T startWith(WorkflowAction action);
-  }
-
-  /**
-   *
-   * @param <T>
-   */
-  interface MoreAction<T> {
-
-    MoreAction<T> then(WorkflowAction action);
-
-    T last(WorkflowAction action);
-  }
+  List<WorkflowActionSpecification> getActions();
 
   /**
    *
    */
   final class Builder extends BaseBuilder<WorkflowSpecification> {
+
+    private final List<WorkflowActionSpecification> actions = Lists.newArrayList();
+
+    /**
+     *
+     * @param <T>
+     */
+    public interface FirstAction<T> {
+
+      T startWith(WorkflowAction action);
+    }
+
+    /**
+     *
+     * @param <T>
+     */
+    public interface MoreAction<T> {
+
+      MoreAction<T> then(WorkflowAction action);
+
+      T last(WorkflowAction action);
+    }
 
     public static NameSetter<DescriptionSetter<FirstAction<MoreAction<Creator<WorkflowSpecification>>>>> with() {
       Builder builder = new Builder();
@@ -57,17 +68,7 @@ public interface WorkflowSpecification {
 
     @Override
     public WorkflowSpecification build() {
-      return new WorkflowSpecification() {
-        @Override
-        public String getName() {
-          return name;
-        }
-
-        @Override
-        public String getDescription() {
-          return description;
-        }
-      };
+      return new DefaultWorkflowSpecification(name, description, actions);
     }
 
     private static final class FirstActionImpl<T> implements FirstAction<T> {
@@ -86,6 +87,9 @@ public interface WorkflowSpecification {
 
       @Override
       public T startWith(WorkflowAction action) {
+        Preconditions.checkArgument(action != null, "WorkflowAction is null.");
+        WorkflowActionSpecification spec = action.configure();
+        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
         return next;
       }
     }
@@ -106,11 +110,15 @@ public interface WorkflowSpecification {
 
       @Override
       public MoreAction<T> then(WorkflowAction action) {
+        Preconditions.checkArgument(action != null, "WorkflowAction is null.");
+        WorkflowActionSpecification spec = action.configure();
+        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
         return this;
       }
 
       @Override
       public T last(WorkflowAction action) {
+        then(action);
         return next;
       }
     }

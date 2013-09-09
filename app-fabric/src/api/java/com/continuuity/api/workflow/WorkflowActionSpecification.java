@@ -6,11 +6,14 @@ import com.continuuity.api.builder.NameSetter;
 import com.continuuity.internal.builder.BaseBuilder;
 import com.continuuity.internal.builder.SimpleDescriptionSetter;
 import com.continuuity.internal.builder.SimpleNameSetter;
+import com.continuuity.internal.workflow.DefaultWorkflowActionSpecification;
 
 /**
  *
  */
 public interface WorkflowActionSpecification {
+
+  String getClassName();
 
   String getName();
 
@@ -28,17 +31,7 @@ public interface WorkflowActionSpecification {
 
     @Override
     public WorkflowActionSpecification build() {
-      return new WorkflowActionSpecification() {
-        @Override
-        public String getName() {
-          return name;
-        }
-
-        @Override
-        public String getDescription() {
-          return description;
-        }
-      };
+      return new DefaultWorkflowActionSpecification(name, description);
     }
 
     private Builder() {

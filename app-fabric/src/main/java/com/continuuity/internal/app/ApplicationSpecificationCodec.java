@@ -10,6 +10,7 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.DefaultApplicationSpecification;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
@@ -46,6 +47,8 @@ final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationS
                                                 new TypeToken<Map<String, ProcedureSpecification>>(){}.getType()));
     jsonObj.add("mapReduces", context.serialize(src.getMapReduces(),
                                                 new TypeToken<Map<String, MapReduceSpecification>>(){}.getType()));
+    jsonObj.add("workflows", context.serialize(src.getWorkflows(),
+                                               new TypeToken<Map<String, WorkflowSpecification>>(){}.getType()));
     return jsonObj;
   }
 
@@ -66,7 +69,10 @@ final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationS
           jsonObj.get("procedures"), new TypeToken<Map<String, ProcedureSpecification>>(){}.getType());
     Map<String, MapReduceSpecification> mapReduces = context.deserialize(
           jsonObj.get("mapReduces"), new TypeToken<Map<String, MapReduceSpecification>>(){}.getType());
+    Map<String, WorkflowSpecification> workflows = context.deserialize(
+          jsonObj.get("workflows"), new TypeToken<Map<String, WorkflowSpecification>>(){}.getType());
 
-    return new DefaultApplicationSpecification(name, description, streams, datasets, flows, procedures, mapReduces);
+    return new DefaultApplicationSpecification(name, description, streams, datasets,
+                                               flows, procedures, mapReduces, workflows);
   }
 }

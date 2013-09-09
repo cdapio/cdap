@@ -25,7 +25,7 @@ public interface WorkflowAction extends Runnable {
    *
    * @return An instance of {@link WorkflowSpecification}.
    */
-  WorkFlowActionSpecification configure();
+  WorkflowActionSpecification configure();
 
   /**
    * Initializes a {@link WorkflowAction}. This method is called before the {@link #run()} method.
