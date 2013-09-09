@@ -4,6 +4,7 @@
 
 package com.continuuity.api.flow;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
@@ -46,6 +47,7 @@ public final class FlowletDefinition {
   public static final String ANY_INPUT = "";
 
   private final FlowletSpecification flowletSpec;
+  private final ResourceSpecification resourceSpec;
   private int instances;
   private final Set<String> datasets;
 
@@ -54,7 +56,7 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> inputs;
   private Map<String, Set<Schema>> outputs;
 
-  FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
+  FlowletDefinition(String flowletName, Flowlet flowlet, int instances, ResourceSpecification resourceSpec) {
     FlowletSpecification flowletSpec = flowlet.configure();
 
     this.instances = instances;
@@ -76,6 +78,7 @@ public final class FlowletDefinition {
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
                                                        datasets, flowletSpec.getArguments());
+    this.resourceSpec = resourceSpec;
   }
 
   /**
@@ -96,6 +99,7 @@ public final class FlowletDefinition {
     this.outputTypes = definition.outputTypes;
     this.inputs = definition.inputs;
     this.outputs = definition.outputs;
+    this.resourceSpec = ResourceSpecification.BASIC;
   }
 
   /**
@@ -110,6 +114,13 @@ public final class FlowletDefinition {
    */
   public int getInstances() {
     return instances;
+  }
+
+  /**
+   * @return Resource specification configured for this flowlet.
+   */
+  public ResourceSpecification getResourceSpec() {
+    return resourceSpec;
   }
 
   /**

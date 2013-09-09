@@ -46,10 +46,11 @@ public final class FlowWeaveApplication implements WeaveApplication {
     String programName = programLocation.getName();
     WeaveSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
+      FlowletDefinition flowletDefinition = entry.getValue();
       ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-        .setCores(1)
-        .setMemory(FLOWLET_MEMORY_MB, ResourceSpecification.SizeUnit.MEGA)  // TODO (ENG-2526): have it exposed to user
-        .setInstances(entry.getValue().getInstances())
+        .setCores(flowletDefinition.getResourceSpec().getCores())
+        .setMemory(flowletDefinition.getResourceSpec().getMemorySize(), ResourceSpecification.SizeUnit.MEGA)
+        .setInstances(flowletDefinition.getInstances())
         .build();
 
       String flowletName = entry.getKey();
