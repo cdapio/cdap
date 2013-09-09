@@ -120,7 +120,7 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private List<DataSetSpecification> getAllUsedDataSets(DataSetSpecification config) {
+  static List<DataSetSpecification> getAllUsedDataSets(DataSetSpecification config) {
     List<DataSetSpecification> all = new ArrayList<DataSetSpecification>();
     LinkedList<DataSetSpecification> stack = Lists.newLinkedList();
     stack.add(config);
