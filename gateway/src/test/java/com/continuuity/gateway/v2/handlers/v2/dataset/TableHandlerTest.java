@@ -238,7 +238,7 @@ public class TableHandlerTest {
     return table;
   }
 
-  void assertRead(String prefix, int start, int end, String query) throws Exception {
+  static void assertRead(String prefix, int start, int end, String query) throws Exception {
     HttpResponse response = GatewayFastTestsSuite.GET(prefix + query);
     Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
@@ -250,22 +250,27 @@ public class TableHandlerTest {
       Assert.assertEquals("v" + i, map.get("c" + i));
     }
   }
-  void assertReadFails(String prefix, String query, int expected) throws Exception {
+  static void assertReadFails(String prefix, String query, int expected) throws Exception {
     HttpResponse response = GatewayFastTestsSuite.GET(prefix + query);
       Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
-  void assertWrite(String prefix, int expected, String query, String json) throws Exception {
+  static void assertWrite(String prefix, int expected, String query, String json) throws Exception {
     HttpResponse response = GatewayFastTestsSuite.PUT(prefix + query, json);
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
-  void assertDelete(String prefix, int expected, String query) throws Exception {
+  static void assertDelete(String prefix, int expected, String query) throws Exception {
     HttpResponse response = GatewayFastTestsSuite.DELETE(prefix + query);
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
-  Map<String, Long> assertIncrement(String prefix, int expected, String query, String json) throws Exception {
+  static void assertCreate(String prefix, int expected, String query) throws Exception {
+    HttpResponse response = GatewayFastTestsSuite.PUT(prefix + query);
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
+
+  static Map<String, Long> assertIncrement(String prefix, int expected, String query, String json) throws Exception {
     HttpResponse response = GatewayFastTestsSuite.POST(prefix + query, json);
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
     if (expected != HttpStatus.SC_OK) {
