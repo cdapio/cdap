@@ -43,7 +43,7 @@ public interface ResourceSpecification {
   static final class Builder {
 
     private int cores;
-    private int memory;
+    private int memorySize;
 
     public static Builder with() {
       return new Builder();
@@ -55,17 +55,17 @@ public interface ResourceSpecification {
     }
 
     public Builder setMemory(int size, SizeUnit unit) {
-      Builder.this.memory = size * unit.multiplier;
+      Builder.this.memorySize = size * unit.multiplier;
       return Builder.this;
     }
 
     public ResourceSpecification build() {
-      return new DefaultResourceSpecification(cores, memory);
+      return new DefaultResourceSpecification(cores, memorySize);
     }
 
     private Builder() {
       this.cores = 1;
-      this.memory = 512;
+      this.memorySize = 512;
     }
   }
 }

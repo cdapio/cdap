@@ -6,6 +6,7 @@ import com.continuuity.api.ResourceSpecification;
  * Straightforward implementation of {@link ResourceSpecification}.
  */
 public final class DefaultResourceSpecification implements ResourceSpecification {
+
   private final int cores;
   private final int memorySize;
 
@@ -13,7 +14,6 @@ public final class DefaultResourceSpecification implements ResourceSpecification
     this.cores = cores;
     this.memorySize = memorySize;
   }
-
   @Override
   public int getCores() {
     return cores;
