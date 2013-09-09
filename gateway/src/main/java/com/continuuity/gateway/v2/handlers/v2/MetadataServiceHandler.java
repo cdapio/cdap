@@ -195,7 +195,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
-
       JsonObject object = new JsonObject();
       object.addProperty("id", dataset.getId());
       object.addProperty("name", dataset.getName());
@@ -606,7 +605,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns all dataset associated with a stream.
+   * Returns all flows associated with a dataset.
    */
   @GET
   @Path("/datasets/{dataset-id}/flows")
@@ -619,7 +618,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Flow> flows = service.getFlowsByStream(accountId, datasetId);
+      List<Flow> flows = service.getFlowsByDataset(accountId, datasetId);
       if (flows.size() < 1) {
         responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
