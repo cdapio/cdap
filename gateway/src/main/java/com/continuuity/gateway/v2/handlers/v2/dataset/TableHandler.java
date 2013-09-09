@@ -3,6 +3,9 @@ package com.continuuity.gateway.v2.handlers.v2.dataset;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.dataset.table.Delete;
+import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
@@ -33,7 +36,9 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -58,6 +63,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 public class TableHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TableHandler.class);
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private static final Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() {}.getType();
 
   private final MetadataService metadataService;
   private final DataSetInstantiatorFromMetaData datasetInstantiator;
@@ -247,6 +253,137 @@ public class TableHandler extends AuthenticatedHttpHandler {
         txManager.abort();
         responder.sendStatus(INTERNAL_SERVER_ERROR);
       }
+    } catch (DataSetInstantiationException e) {
+      LOG.trace("Cannot instantiate table {}", tableName, e);
+      responder.sendStatus(NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(BAD_REQUEST);
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @POST
+  @Path("/data/table/{name}/row/{key}")
+  public void incrementTableRow(HttpRequest request, final HttpResponder responder,
+                                @PathParam("name") String tableName, @PathParam("key") String key) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+
+      // Fetch table
+      Table table = datasetInstantiator.getDataSet(tableName, new OperationContext(accountId));
+
+      // decode row key using the given encoding
+      String encoding = getEncoding(queryParams);
+      byte [] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
+
+      // Read values from request body
+      Map<String, String> valueMap = getValuesMap(request);
+      // decode the columns and values into byte arrays
+      if (valueMap == null || valueMap.isEmpty()) {
+        // this happens when we have no content
+        throw new IllegalArgumentException("request body has no columns to write");
+      }
+
+      // decode the columns and values into byte arrays
+      byte[][] cols = new byte[valueMap.size()][];
+      long[] vals = new long[valueMap.size()];
+      int i = 0;
+      for (Map.Entry<String, String> entry : valueMap.entrySet()) {
+        cols[i] = Util.decodeBinary(entry.getKey(), encoding);
+        vals[i] = Long.parseLong(entry.getValue());
+        i++;
+      }
+      Increment increment = new Increment(rowKey, cols, vals);
+
+      // now execute the increment
+      TxManager txManager = new TxManager(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txManager.start();
+      try {
+        Map<byte[], Long> results = table.incrementAndGet(increment);
+        txManager.commit();
+
+        // first convert the bytes to strings
+        Map<String, Long> map = Maps.newTreeMap();
+        for (Map.Entry<byte[], Long> entry : results.entrySet()) {
+          map.put(Util.encodeBinary(entry.getKey(), encoding), entry.getValue());
+        }
+        // now write a json string representing the map
+        responder.sendJson(OK, map, LONG_MAP_TYPE);
+
+      } catch (OperationException e) {
+        // if this was an illegal increment, then it was a bad request
+        if (StatusCode.ILLEGAL_INCREMENT == e.getStatus()) {
+          responder.sendString(BAD_REQUEST, "attempt to increment a value that is not a long");
+        } else {
+          // otherwise it is an internal error
+          LOG.trace("Error during Increment: ", e);
+          responder.sendStatus(INTERNAL_SERVER_ERROR);
+        }
+        txManager.abort();
+      }
+
+    } catch (DataSetInstantiationException e) {
+      LOG.trace("Cannot instantiate table {}", tableName, e);
+      responder.sendStatus(NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(BAD_REQUEST);
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  @DELETE
+  @Path("/data/table/{name}/row/{key}")
+  public void deleteTableRow(HttpRequest request, final HttpResponder responder,
+                             @PathParam("name") String tableName, @PathParam("key") String key) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+
+      // Fetch table
+      Table table = datasetInstantiator.getDataSet(tableName, new OperationContext(accountId));
+
+      // decode row key using the given encoding
+      String encoding = getEncoding(queryParams);
+      byte [] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
+
+      List<String> columns = getColumns(queryParams);
+      if (columns == null || columns.isEmpty()) {
+        responder.sendString(BAD_REQUEST, "delete must have columns");
+        return;
+      }
+
+      byte[][] cols = new byte[columns.size()][];
+      int i = 0;
+      for (String column : columns) {
+        cols[i++] = Util.decodeBinary(column, encoding);
+      }
+      Delete delete = new Delete(rowKey, cols);
+
+      // now execute the delete operation
+      TxManager txManager = new TxManager(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txManager.start();
+      try {
+        table.write(delete);
+        txManager.commit();
+        responder.sendStatus(OK);
+      } catch (OperationException e) {
+        LOG.trace("Error during Delete: ", e);
+        txManager.abort();
+        responder.sendStatus(INTERNAL_SERVER_ERROR);
+      }
+
     } catch (DataSetInstantiationException e) {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
