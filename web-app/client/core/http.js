@@ -54,7 +54,7 @@ define([], function () {
 			var callback = this.findCallback(arguments);
 			var options = {
 				url: path,
-				type: "POST",
+				type: 'POST',
 				timeout: AJAX_TIMEOUT
 			};
 			if (!jQuery.isEmptyObject(object)) {
@@ -81,13 +81,17 @@ define([], function () {
 			var object = this.findObject(arguments);
 			var callback = this.findCallback(arguments);
 
-			$.ajax({
+			var options = {
 				url: path,
-				data: JSON.stringify(object),
 				type: 'PUT',
-				timeout: AJAX_TIMEOUT,
-				contentType: "application/json"
-			}).done(function (response, status) {
+				timeout: AJAX_TIMEOUT
+			};
+			console.log(object)
+			if (!jQuery.isEmptyObject(object)) {
+				options['data'] = JSON.stringify(object);
+				options['contentType'] = 'application/json';
+			}
+			$.ajax(options).done(function (response, status) {
 
 				if (response.error && response.error.fatal) {
 					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
@@ -166,7 +170,7 @@ define([], function () {
 			if (typeof object === 'function') {
 				object = args[args.length - 2];
 			}
-			return (!object || typeof object === 'string' ? null : object);
+			return object instanceof Object ? object : null;
 		},
 
 		/*

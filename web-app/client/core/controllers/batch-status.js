@@ -69,17 +69,14 @@ define(['helpers/plumber'], function (Plumber) {
      * Lifecycle
      */
 
-    start: function (app, id, version, config) {
+    start: function (appId, id, version, config) {
 
       var self = this;
       var model = this.get('model');
-      var app = this.get('model.application');
-
-      app = this.get('model.application');
 
       model.set('currentState', 'STARTING');
 
-      this.HTTP.post('rest', 'apps', app.get('id'), 'mapreduces', id, 'start', function (response) {
+      this.HTTP.post('rest', 'apps', appId, 'mapreduces', id, 'start', function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);

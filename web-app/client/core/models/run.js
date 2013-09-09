@@ -11,20 +11,20 @@ define([], function () {
 		}.property(),
 
 		started: function () {
-			return this.startTime >= 0 ? $.timeago(this.startTime*1000) : 'Never';
+			return this.start >= 0 ? $.timeago(this.start*1000) : 'Never';
 		}.property('timeTrigger'),
 
 		startDate: function () {
-			return new Date(this.startTime*1000);
-		}.property('startTime'),
+			return new Date(this.start*1000);
+		}.property('start'),
 		
 		ended: function () {
-			return this.endTime >= 0 ? $.timeago(this.endTime*1000) : 'Never';
+			return this.end >= 0 ? $.timeago(this.end*1000) : 'Never';
 		}.property('timeTrigger'),
 
 		endDate: function () {
-			return new Date(this.endTime*1000);
-		}.property('endTime'),
+			return new Date(this.end*1000);
+		}.property('end'),
 		
 		statusClass: function () {
 			return {
@@ -32,15 +32,15 @@ define([], function () {
 				'stopping': 'label label-warning',
 				'running': 'label label-success',
 				'failed': 'label label-warning'
-			}[this.endStatus.toLowerCase()];
-		}.property('endStatus'),
+			}[this.status.toLowerCase()];
+		}.property('status'),
 		
 		detail: function () {
-			var state = this.get('endStatus');
+			var state = this.get('status');
 			return {
 				'STOPPED': 'Stopped by user'
 			}[state];
-		}.property('endStatus')
+		}.property('status')
 	
 	});
 

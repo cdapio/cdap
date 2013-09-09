@@ -35,8 +35,8 @@ define([], function () {
 			this.HTTP.rest('apps', model.app, 'flows', model.name, 'history',
 					function (response) {
 
-						if (response.result) {
-							var history = response.result;
+						if (response) {
+							var history = response;
 
 							for (var i = 0; i < history.length; i ++) {
 

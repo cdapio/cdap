@@ -192,7 +192,7 @@ define([], function () {
 
 		transition: function (elements, action, transition, endState, done) {
 
-			var i = elements.length, model, app = this.get('model.id');
+			var i = elements.length, model, appId = this.get('model.id');
 			var remaining = i;
 
 			var HTTP = this.HTTP;
@@ -205,22 +205,18 @@ define([], function () {
 					continue;
 				}
 
-				(function () {
+				var model = elements[i];
+				var entityType = model.get('type').toLowerCase() + 's';
+				model.set('currentState', transition);
+				HTTP.post('rest', 'apps', appId, entityType, model.get('name'), action,
+					function (response) {
 
-					var model = elements[i];
-					model.set('currentState', transition);
-					HTTP.rpc('runnable', action, [app, model.get('name'),
-						model.get('version'), model.get('type').toUpperCase()],
-						function (response) {
+						model.set('currentState', endState);
+						if (!--remaining && typeof done === 'function') {
+							done();
+						}
 
-							model.set('currentState', endState);
-							if (!--remaining && typeof done === 'function') {
-								done();
-							}
-
-					});
-
-				})();
+				});
 
 			}
 

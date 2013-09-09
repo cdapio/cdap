@@ -101,19 +101,21 @@ define([], function () {
 		submit: function (event) {
 
 			var self = this;
-			C.get('gateway', {
-				method: 'query',
-				params: {
-					service: this.get('model').serviceName,
-					app: this.get('model').applicationId,
-					method: this.get('requestMethod'),
-					payload: this.get('requestParams')
-				}
-			}, function (error, response) {
+			var appId = this.get('model').applicationId;
+			var procedureName = this.get('model').serviceName;
+			var methodName = this.get('requestMethod');
+
+			this.HTTP.post('rest', 'apps', appId, 'procedures', procedureName, 'methods', methodName, {
+				service: this.get('model').serviceName,
+				app: this.get('model').applicationId,
+				method: this.get('requestMethod'),
+				payload: this.get('requestParams')
+			}, function (response) {
 
 				if (error) {
 					self.set('responseCode', error.statusCode);
-					self.set('responseBody', JSON.stringify(error.response, undefined, 2) || '[ No Content ]');
+					self.set('responseBody',
+						JSON.stringify(error.response, undefined, 2) || '[ No Content ]');
 				} else {
 					self.set('responseCode', response.statusCode);
 					var pretty;
