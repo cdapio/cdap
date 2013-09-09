@@ -93,6 +93,8 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       }
     }
 
+    // TODO (terence) : Checks for map reduce and workflow?
+
     // Emit the input to next stage.
     emit(input);
   }

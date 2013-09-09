@@ -13,15 +13,11 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class WorkflowProgramRunner implements ProgramRunner {
-
-  private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramRunner.class);
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
@@ -36,11 +32,13 @@ public class WorkflowProgramRunner implements ProgramRunner {
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getProgramName());
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getProgramName());
 
-    // TODO
     RunId runId = RunIds.generate();
     WorkflowDriver driver = new WorkflowDriver(program, workflowSpec);
-    driver.start();
 
-    return new WorkflowProgramController(program.getProgramName(), driver, runId);
+    // Controller needs to be created before starting the driver so that the state change of the driver
+    // service can be fully captured by the controller.
+    ProgramController controller = new WorkflowProgramController(program.getProgramName(), driver, runId);
+    driver.start();
+    return controller;
   }
 }

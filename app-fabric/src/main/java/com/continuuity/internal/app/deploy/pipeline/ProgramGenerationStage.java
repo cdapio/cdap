@@ -4,6 +4,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
@@ -49,9 +50,10 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       throw new IOException("Failed to create directory");
     }
 
+    // TODO (terence): This needs to be refactored
     // Now, we iterate through FlowSpecification and generate programs
     for (FlowSpecification flow : appSpec.getFlows().values()) {
-      String name = String.format(Locale.ENGLISH, "%s/%s", Type.FLOW.toString(), applicationName);
+      String name = String.format(Locale.ENGLISH, "%s/%s", Type.FLOW, applicationName);
       Location flowAppDir = newOutputDir.append(name);
       if (!flowAppDir.exists()) {
         flowAppDir.mkdirs();
@@ -64,7 +66,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
 
     // Iterate through ProcedureSpecification and generate program
     for (ProcedureSpecification procedure : appSpec.getProcedures().values()) {
-      String name = String.format(Locale.ENGLISH, "%s/%s", Type.PROCEDURE.toString(), applicationName);
+      String name = String.format(Locale.ENGLISH, "%s/%s", Type.PROCEDURE, applicationName);
       Location procedureAppDir = newOutputDir.append(name);
       if (!procedureAppDir.exists()) {
         procedureAppDir.mkdirs();
@@ -77,7 +79,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
 
     // Iterate through MapReduceSpecification and generate program
     for (MapReduceSpecification job : appSpec.getMapReduces().values()) {
-      String name = String.format(Locale.ENGLISH, "%s/%s", Type.MAPREDUCE.toString(), applicationName);
+      String name = String.format(Locale.ENGLISH, "%s/%s", Type.MAPREDUCE, applicationName);
       Location jobAppDir = newOutputDir.append(name);
       if (!jobAppDir.exists()) {
         jobAppDir.mkdirs();
@@ -88,7 +90,18 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       programs.add(new Program(loc));
     }
 
-    // ...
+    // Iterate through WorkflowSpecification and generate program
+    for (WorkflowSpecification workflow : appSpec.getWorkflows().values()) {
+      String name = String.format(Locale.ENGLISH, "%s/%s", Type.WORKFLOW, applicationName);
+      Location workflowAppDir = newOutputDir.append(name);
+      if (!workflowAppDir.exists()) {
+        workflowAppDir.mkdirs();
+      }
+      Location output = workflowAppDir.append(String.format("%s.jar", workflow.getName()));
+      Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, workflow.getName(),
+                                          workflow.getClassName(), Type.WORKFLOW, appSpec);
+      programs.add(new Program(loc));
+    }
 
     // Emits the received specification with programs.
     emit(new ApplicationWithPrograms(o, programs.build()));

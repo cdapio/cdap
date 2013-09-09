@@ -17,7 +17,12 @@ public final class MapReduceWorkflowAction extends AbstractWorkflowAction {
   }
 
   @Override
+  public WorkflowActionSpecification configure() {
+    return super.configure();    //To change body of overridden methods use File | Settings | File Templates.
+  }
+
+  @Override
   public void run() {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 }
