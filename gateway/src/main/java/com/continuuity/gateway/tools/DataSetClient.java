@@ -3,7 +3,6 @@ package com.continuuity.gateway.tools;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
@@ -322,7 +321,7 @@ public class DataSetClient {
     }
 
     boolean useSsl = !forceNoSSL && (apikey != null);
-    String baseUrl = Util.findBaseUrl(config, DatasetRestAccessor.class, null, hostname, port, useSsl);
+    String baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, useSsl);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
                            "Please use --host and --port to specify.");
@@ -338,9 +337,8 @@ public class DataSetClient {
     HttpResponse response;
 
     // construct the full URL and verify its well-formedness
-    URI uri;
     try {
-      uri = URI.create(baseUrl);
+      URI.create(baseUrl);
     } catch (IllegalArgumentException e) {
       // this can only happen if the --host, or --base are not valid for a URL
       System.err.println("Invalid base URL '" + baseUrl + "'. Check the validity of --host or --port arguments.");
@@ -348,7 +346,7 @@ public class DataSetClient {
     }
 
     // must be a table operation
-    String requestUrl = baseUrl + "Table/" + table;
+    String requestUrl = baseUrl + "tables/" + table;
     if ("create".equals(command)) {
       // url is already complete, submit as a put
       try {
@@ -368,7 +366,7 @@ public class DataSetClient {
       return "OK.";
     }
     // all operations other than create require row
-    requestUrl += "/" + row;
+    requestUrl += "/row/" + row;
     String sep = "?";
     if ("read".equals(command)) {
       if (startcol != null) {
@@ -447,9 +445,9 @@ public class DataSetClient {
     }
 
     if ("increment".equals(command)) {
-      requestUrl += "?op=increment";
+      requestUrl += "?";
       if (encoding != null) {
-        requestUrl += "&encoding=" + encoding;
+        requestUrl += "encoding=" + encoding;
       }
       // request URL is complete - construct the Json body
       byte[] requestBody = buildJson(true);
@@ -497,6 +495,7 @@ public class DataSetClient {
       if (!checkHttpStatus(response)) {
         return null;
       }
+      return "OK.";
     }
 
     return null;
@@ -539,7 +538,7 @@ public class DataSetClient {
     try {
       if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         // get the error message from the body of the response
-        String reason = response.getEntity().getContent() == null ? null :
+        String reason = response.getEntity() == null || response.getEntity().getContent() == null ? null :
           IOUtils.toString(response.getEntity().getContent());
         if (verbose) {
           System.out.println(response.getStatusLine());

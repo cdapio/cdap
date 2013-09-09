@@ -49,7 +49,8 @@ import org.junit.runners.Suite.SuiteClasses;
  */
 @RunWith(value = Suite.class)
 @SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
-  ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class})
+  ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
+  DataSetClientTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
@@ -105,6 +106,10 @@ public class GatewayFastTestsSuite {
 
   public static Injector getInjector() {
     return injector;
+  }
+
+  public static int getPort() {
+    return port;
   }
 
   public static HttpResponse GET(String resource) throws Exception {
