@@ -76,6 +76,38 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Returns a stream associated with account.
+   */
+  @GET
+  @Path("/streams/{streamId}")
+  public void getStreamSpecification(HttpRequest request, HttpResponder responder,
+                                     @PathParam("streamId") final String streamId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Stream stream = service.getStream(new Account(accountId), new Stream(streamId));
+      if (stream == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+      JsonObject object = new JsonObject();
+      object.addProperty("id", stream.getId());
+      object.addProperty("name", stream.getName());
+      object.addProperty("description", stream.getDescription());
+      object.addProperty("capacityInBytes", stream.getCapacityInBytes());
+      object.addProperty("expiryInSeconds", stream.getExpiryInSeconds());
+      object.addProperty("exists", stream.isExists());
+      object.addProperty("specification", stream.getSpecification());
+      responder.sendJson(HttpResponseStatus.OK, object);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
    * Returns a list of streams associated with application.
    */
   @GET
@@ -133,6 +165,45 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns a dataset associated with account.
+   */
+  @GET
+  @Path("/datasets/{datasetId}")
+  public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
+                                      @PathParam("datasetId") final String datasetId) {
+
+    if (datasetId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      Dataset dataset = service.getDataset(new Account(accountId), new Dataset(datasetId));
+      if (dataset == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      JsonObject object = new JsonObject();
+      object.addProperty("id", dataset.getId());
+      object.addProperty("name", dataset.getName());
+      object.addProperty("description", dataset.getDescription());
+      object.addProperty("type", dataset.getType());
+      object.addProperty("exists", dataset.isExists());
+      object.addProperty("specification", dataset.getSpecification());
+      responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (IllegalArgumentException e) {
@@ -537,7 +608,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Returns all dataset associated with a stream.
    */
-
   @GET
   @Path("/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
