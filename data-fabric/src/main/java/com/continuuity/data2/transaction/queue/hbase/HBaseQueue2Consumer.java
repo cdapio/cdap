@@ -44,6 +44,9 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueue2Consumer.class);
 
   // Persist latest start row every n entries consumed.
+  // The smaller this number, the more frequent latest startRow is persisted, which makes more
+  // entries could be evicted since startRow is used by the eviction logic to determine what can be evicted.
+  // The down side of decreasing this value is more overhead on each postCommit call for writing to HBase.
   private static final int PERSIST_START_ROW_LIMIT = 1000;
 
   private final HTable hTable;
