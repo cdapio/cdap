@@ -2,97 +2,22 @@ package com.continuuity.gateway;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data.operation.Operation;
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.WriteOperation;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.tools.StreamClient;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.After;
+import com.continuuity.gateway.v2.GatewayConstants;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Tests the stream client.
  */
 public class StreamClientTest {
+  private static final String hostname = "127.0.0.1";
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTest.class);
-
-  Gateway gateway = null;
-
-  String name = "access.rest";
-  String prefix = "/continuuity";
-  String path = "/stream/";
-  int port = 0;
-
-  CConfiguration configuration = null;
-
-  /**
-   * Set up our data fabric and insert some test key/value pairs.
-   */
-  @Before
-  public void setupAppFabricAndGateway() throws Exception {
-    StreamClient.debug = true;
-    configuration = new CConfiguration();
-
-    // Set up our Guice injections
-    Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
-    OperationExecutor executor = injector.getInstance(OperationExecutor.class);
-
-    String[][] keyValues = {
-        { "cat", "pfunk" }, // a simple key and value
-        { "the cat", "pfunk" }, // a key with a blank
-        { "k\u00eby", "v\u00e4l\u00fce" } // key and value with non-ascii chars
-    };
-    // create a batch of writes
-    List<WriteOperation> operations = new ArrayList<WriteOperation>(keyValues.length);
-    for (String[] kv : keyValues) {
-      operations.add(new Write(kv[0].getBytes("ISO8859_1"), Operation.KV_COL,
-          kv[1].getBytes("ISO8859_1")));
-    }
-    // execute the batch and ensure it was successful
-    executor.commit(TestUtil.DEFAULT_CONTEXT, operations);
-
-    // configure a gateway
-    port = PortDetector.findFreePort();
-    configuration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
-    configuration.set(Constants.CONFIG_CONNECTORS, name);
-//    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_CLASSNAME),
-//                      DataRestAccessor.class.getCanonicalName());
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_CLASSNAME),
-                      RestCollector.class.getCanonicalName());
-    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
-    configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_MIDDLE), path);
-
-    // Now create our Gateway with a dummy consumer (we don't run collectors)
-    // and make sure to pass the data fabric executor to the gateway.
-    gateway = new Gateway();
-    gateway.setExecutor(executor);
-    gateway.setConsumer(new TestUtil.NoopConsumer());
-    gateway.setDiscoveryServiceClient(injector.getInstance(DiscoveryServiceClient.class));
-    gateway.start(null, configuration);
-  }
-
-  @After
-  public void shutDownGateway() throws Exception {
-    // and shut down
-    gateway.stop(false);
-  }
 
   /**
    * This tests the StreamClient command line tool for various combinations of
@@ -105,11 +30,13 @@ public class StreamClientTest {
    */
   @Test
   public void testUsage() throws Exception {
+    CConfiguration configuration = CConfiguration.create();
+    String port = Integer.toString(GatewayFastTestsSuite.getPort());
 
     // argument combinations that should return success
     String[][] goodArgsList = {
         { "--help" }, // print help
-        { "create", "--stream", "firststream" }, // create simple stream
+        { "create", "--stream", "teststream", "--host", hostname, "--port", port }, // create simple stream
 //        { "id", "--stream", "firststream" }, // fetch from simple stream
 //        { "send", "--stream", "firststream", "--body", "funk" }, // send event to stream
 //        { "fetch", "--stream", "firststream", "--consumer", "firstconsumer" }, // fetch from simple stream
@@ -135,16 +62,50 @@ public class StreamClientTest {
   }
 
   @Test
-  public void testCreateStream() throws OperationException {
-    // write a value
-    Assert.assertEquals("OK.", command("firststream", new String[] {
+  public void testStreamFetch() throws OperationException {
+    String streamId = "fetchstream";
+    Assert.assertEquals("OK.", command(streamId, new String[] {
       "create"}));
-    Assert.assertEquals("OK.", command("firststream", new String[] {
+    Assert.assertEquals("OK.", command(streamId, new String[] {
       "info"}));
+
+    String groupId = command(streamId, new String[] {"group"});
+    Assert.assertNotNull(groupId);
+
+    Assert.assertEquals("", command(streamId, new String[]{
+      "fetch", "--group", groupId}));
+
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "send", "--body", "body1", "--header", "hname", "hvalue"}));
+
+    Assert.assertEquals("body1", command(streamId, new String[] {
+      "fetch", "--group", groupId}));
+  }
+
+  @Test
+  public void testStreamView() throws OperationException {
+    String streamId = "viewstream";
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "create"}));
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "info"}));
+
+    Assert.assertEquals("0 events.", command(streamId, new String[]{
+      "view"}));
+
+    Assert.assertEquals("OK.", command(streamId, new String[]{
+      "send", "--body", "body1", "--header", "hname", "hvalue"}));
+
+    Assert.assertEquals("1 events.", command(streamId, new String[] {
+      "view"}));
 
   }
 
   private String command(String streamId, String[] args) {
+    CConfiguration configuration = CConfiguration.create();
+    configuration.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
+    configuration.setInt(GatewayConstants.ConfigKeys.PORT, GatewayFastTestsSuite.getPort());
+
     if (streamId != null) {
       args = Arrays.copyOf(args, args.length + 2);
       args[args.length - 2] = "--stream";
