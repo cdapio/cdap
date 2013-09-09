@@ -65,6 +65,7 @@ define([], function () {
 		statusButtonAction: function () {
 			return 'No Action';
 		}.property(),
+
 		statusButtonClass: function () {
 			return 'btn btn-warning';
 		}.property(),
@@ -116,14 +117,14 @@ define([], function () {
 		/**
 		 * Lifecycle
 		 */
-		start: function (app, id, version, config) {
+		start: function (appId, id, version, config) {
 
 			var self = this;
 			var model = this.get('model');
 
 			model.set('currentState', 'STARTING');
-
-			this.HTTP.post('rest', 'apps', app.get('id'), 'flows', id, 'start',
+			console.log(arguments)
+			this.HTTP.post('rest', 'apps', appId, 'flows', id, 'start',
 				function (response) {
 
 					if (response.error) {
@@ -135,14 +136,15 @@ define([], function () {
 			});
 
 		},
-		stop: function (app, id, version) {
+
+		stop: function (appId, id, version) {
 
 			var self = this;
 			var model = this.get('model');
 
 			model.set('currentState', 'STOPPING');
 
-			this.HTTP.post('rest', 'apps', app.get('id'), 'flows', id, 'stop',
+			this.HTTP.post('rest', 'apps', appId, 'flows', id, 'stop',
 				function (response) {
 
 					if (response.error) {

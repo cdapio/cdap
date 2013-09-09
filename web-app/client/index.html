@@ -357,9 +357,9 @@
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
           </ul>
 
-          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.meta.app"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Stop" ><span class="btn-stop"></span><span>Stop</span></button>
+          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.app"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Stop" ><span class="btn-stop"></span><span>Stop</span></button>
 
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.meta.app"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.app"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
           <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 

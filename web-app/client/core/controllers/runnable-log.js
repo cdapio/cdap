@@ -79,7 +79,7 @@ define([], function () {
 						if (response.length) {
 							
 							for (var i = 0; i < response.length; i ++) {
-								response[i].logLine = '<code>' + response[i].logLine + '</code>';
+								response[i].log = '<code>' + response[i].log + '</code>';
 								
 								// Determines offset of last line shown in log view.
 								fromOffset = (response[i].offset > fromOffset ?
@@ -91,7 +91,7 @@ define([], function () {
 							
 							}
 							response = response.map(function (entry) {
-								return entry.logLine;
+								return entry.log;
 							}).join('');
 
 						}
@@ -166,7 +166,7 @@ define([], function () {
 
 						if (response.length) {
 							for (var i = 0; i < response.length; i ++) {
-								response[i].logLine = '<code>' + response[i].logLine + '</code>';
+								response[i].log = '<code>' + response[i].log + '</code>';
 
 								// Reset offset if the current line is older than inital line.
 								if (response[i].offset < initialOffset) {
@@ -176,7 +176,7 @@ define([], function () {
 							}
 
 							response = response.map(function (entry) {
-								return entry.logLine;
+								return entry.log;
 							}).join('');
 
 						}

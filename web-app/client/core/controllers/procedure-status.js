@@ -54,14 +54,14 @@ define([], function () {
 		 * Lifecycle
 		 */
 
-		start: function (app, id, version, config) {
+		start: function (appId, id, version, config) {
 
 			var self = this;
 			var model = this.get('model');
 
 			model.set('currentState', 'STARTING');
 
-			this.HTTP.post('rest', 'apps', app.get('id'), 'procedures', id, 'start',
+			this.HTTP.post('rest', 'apps', appId, 'procedures', id, 'start',
 				function (response) {
 
 					if (response.error) {
@@ -73,14 +73,14 @@ define([], function () {
 			});
 
 		},
-		stop: function (app, id, version) {
+		stop: function (appId, id, version) {
 
 			var self = this;
 			var model = this.get('model');
 
 			model.set('currentState', 'STOPPING');
 
-			this.HTTP.post('rest', 'apps', app.get('id'), 'procedures', id, 'stop',
+			this.HTTP.post('rest', 'apps', appId, 'procedures', id, 'stop',
 				function (response) {
 
 					if (response.error) {

@@ -405,7 +405,6 @@ WebAppServer.prototype.bindRoutes = function(io) {
   this.app.put('/rest/*', function (req, res) {
     var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    
     request.post('http://' + path, function (error, response, body) {
 
       if (!error && response.statusCode == 200) {
@@ -424,7 +423,6 @@ WebAppServer.prototype.bindRoutes = function(io) {
   this.app.post('/rest/*', function (req, res) {
     var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    
     request.post('http://' + path, function (error, response, body) {
 
       if (!error && response.statusCode == 200) {
