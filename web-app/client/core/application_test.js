@@ -12,7 +12,6 @@ define(['core/application'], function(App) {
     });
 
     it('should have defaults defined', function() {
-      expect(app.ENTITY_MAP['FLOW']).toBeDefined();
       expect(app.LOG_TRANSITIONS).toBeDefined();
       expect(app.POLLING_INTERVAL).toBeDefined();
       expect(app.EMBEDDABLE_DELAY).toBeDefined();

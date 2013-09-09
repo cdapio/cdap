@@ -237,7 +237,7 @@ define([], function () {
 				var version = flow.version || -1;
 				var flowlet = model.name;
 
-				this.HTTP.rpc('runnable', 'setInstances', [app, flow, version, flowlet, instances],
+				this.HTTP.put('runnable', 'setInstances', [app, flow, version, flowlet, instances],
 					function (response) {
 
 					if (response.error) {

@@ -73,6 +73,32 @@ define([], function () {
 
 		},
 
+		put: function () {
+
+			var path = this.findPath(arguments);
+			var object = this.findObject(arguments);
+			var callback = this.findCallback(arguments);
+
+			$.ajax({
+				url: path,
+				data: JSON.stringify(object),
+				type: 'PUT',
+				timeout: AJAX_TIMEOUT,
+				contentType: "application/json"
+			}).done(function (response, status) {
+
+				if (response.error && response.error.fatal) {
+					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+				} else {
+					callback(response, status);
+				}
+
+			}).fail(function (xhr, status, error) {
+				callback(error, status);
+			});
+
+		},
+
 		rpc: function () {
 
 			var args = [].slice.call(arguments);
@@ -88,7 +114,7 @@ define([], function () {
 
 		},
 
-		"delete": function () {
+		del: function () {
 
 			var path = this.findPath(arguments);
 			var callback = this.findCallback(arguments);

@@ -58,7 +58,7 @@ define([], function () {
 
 				resize();
 
-				self.HTTP.get('logs', 'getLogNext', app, id , self.get('entityType'),
+				self.HTTP.rest('apps', app, self.get('entityType'), id, 'logs', 'next',
 					{
 						fromOffset: fromOffset,
 						maxSize: maxSize,
@@ -76,21 +76,21 @@ define([], function () {
 						}
 
 
-						if (response.result.length) {
+						if (response.length) {
 							
-							for (var i = 0; i < response.result.length; i ++) {
-								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
+							for (var i = 0; i < response.length; i ++) {
+								response[i].logLine = '<code>' + response[i].logLine + '</code>';
 								
 								// Determines offset of last line shown in log view.
-								fromOffset = (response.result[i].offset > fromOffset ?
-									response.result[i].offset : fromOffset);
+								fromOffset = (response[i].offset > fromOffset ?
+									response[i].offset : fromOffset);
 								
 								if (!self.get('initialOffset')) {
-									self.set('initialOffset', response.result[i].offset);
+									self.set('initialOffset', response[i].offset);
 								}
 							
 							}
-							response = response.result.map(function (entry) {
+							response = response.map(function (entry) {
 								return entry.logLine;
 							}).join('');
 
@@ -146,7 +146,7 @@ define([], function () {
 			var maxSize = this.get('maxSize');
 			var initialOffset = this.get('initialOffset');
 
-			self.HTTP.get('logs', 'getLogPrev', app, id , self.get('entityType'),
+			self.HTTP.rest('apps', app, self.get('entityType'), id, 'logs', 'prev',
 					{
 						fromOffset: initialOffset,
 						maxSize: maxSize,
@@ -164,18 +164,18 @@ define([], function () {
 						}
 
 
-						if (response.result.length) {
-							for (var i = 0; i < response.result.length; i ++) {
-								response.result[i].logLine = '<code>' + response.result[i].logLine + '</code>';
+						if (response.length) {
+							for (var i = 0; i < response.length; i ++) {
+								response[i].logLine = '<code>' + response[i].logLine + '</code>';
 
 								// Reset offset if the current line is older than inital line.
-								if (response.result[i].offset < initialOffset) {
-									initialOffset =  response.result[i].offset;
+								if (response[i].offset < initialOffset) {
+									initialOffset =  response[i].offset;
 								}
 
 							}
 
-							response = response.result.map(function (entry) {
+							response = response.map(function (entry) {
 								return entry.logLine;
 							}).join('');
 

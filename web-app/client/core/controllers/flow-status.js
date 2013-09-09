@@ -9,10 +9,10 @@ define([], function () {
 		elements: Em.Object.create(),
 
 		load: function () {
+
 			this.clearTriggers(true);
 			var model = this.get('model');
 			var self = this;
-
 			var flowlets = model.flowlets;
 			var objects = [];
 			for (var i = 0; i < flowlets.length; i ++) {
@@ -123,7 +123,7 @@ define([], function () {
 
 			model.set('currentState', 'STARTING');
 
-			this.HTTP.rpc('runnable', 'start', [app, id, version, 'FLOW', config],
+			this.HTTP.post('rest', 'apps', app.get('id'), 'flows', id, 'start',
 				function (response) {
 
 					if (response.error) {
@@ -142,7 +142,7 @@ define([], function () {
 
 			model.set('currentState', 'STOPPING');
 
-			this.HTTP.rpc('runnable', 'stop', [app, id, version, 'FLOW'],
+			this.HTTP.post('rest', 'apps', app.get('id'), 'flows', id, 'stop',
 				function (response) {
 
 					if (response.error) {
@@ -179,38 +179,38 @@ define([], function () {
 				this[action.toLowerCase()](app, id, -1);
 			}
 		},
-		"delete": function () {
+		// "delete": function () {
 
-			var self = this;
+		// 	var self = this;
 
-			if (this.get('model').get('currentState') !== 'STOPPED' &&
-				this.get('model').get('currentState') !== 'DEPLOYED') {
-				C.Modal.show('Cannot Delete', 'Please stop the Flow before deleting.');
-			} else {
-				C.Modal.show(
-					"Delete Flow",
-					"You are about to remove a Flow, which is irreversible. You can upload this Flow again if you'd like. Do you want to proceed?",
-					$.proxy(function (event) {
+		// 	if (this.get('model').get('currentState') !== 'STOPPED' &&
+		// 		this.get('model').get('currentState') !== 'DEPLOYED') {
+		// 		C.Modal.show('Cannot Delete', 'Please stop the Flow before deleting.');
+		// 	} else {
+		// 		C.Modal.show(
+		// 			"Delete Flow",
+		// 			"You are about to remove a Flow, which is irreversible. You can upload this Flow again if you'd like. Do you want to proceed?",
+		// 			$.proxy(function (event) {
 
-						var flow = this.get('model');
+		// 				var flow = this.get('model');
 
-						self.HTTP.rpc('runnable', 'remove', [flow.app, flow.name, flow.version],
-							function (response) {
+		// 				self.HTTP.rpc('runnable', 'remove', [flow.app, flow.name, flow.version],
+		// 					function (response) {
 
-							C.Modal.hide(function () {
+		// 					C.Modal.hide(function () {
 
-								if (response.error) {
-									C.Modal.show('Delete Error', response.error.message || 'No reason given. Please check the logs.');
-								} else {
-									window.history.go(-1);
-								}
+		// 						if (response.error) {
+		// 							C.Modal.show('Delete Error', response.error.message || 'No reason given. Please check the logs.');
+		// 						} else {
+		// 							window.history.go(-1);
+		// 						}
 
-							});
+		// 					});
 
-						});
-					}, this));
-			}
-		},
+		// 				});
+		// 			}, this));
+		// 	}
+		// },
 
 		setFlowletLabel: function (label) {
 

@@ -61,7 +61,7 @@ define([], function () {
 
 			model.set('currentState', 'STARTING');
 
-			this.HTTP.rpc('runnable', 'start', [app, id, version, 'QUERY', config],
+			this.HTTP.post('rest', 'apps', app.get('id'), 'procedures', id, 'start',
 				function (response) {
 
 					if (response.error) {
@@ -80,7 +80,7 @@ define([], function () {
 
 			model.set('currentState', 'STOPPING');
 
-			this.HTTP.rpc('runnable', 'stop', [app, id, version, 'QUERY'],
+			this.HTTP.post('rest', 'apps', app.get('id'), 'procedures', id, 'stop',
 				function (response) {
 
 					if (response.error) {

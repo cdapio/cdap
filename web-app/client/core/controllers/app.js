@@ -32,7 +32,7 @@ define([], function () {
 			/*
 			 * Load Streams
 			 */
-			this.HTTP.get('rest', 'apps', model.id, 'streams', function (objects) {
+			this.HTTP.rest('apps', model.id, 'streams', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -48,7 +48,7 @@ define([], function () {
 			/*
 			 * Load Flows
 			 */
-			this.HTTP.get('rest', 'apps', model.id, 'flows', function (objects) {
+			this.HTTP.rest('apps', model.id, 'flows', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -62,7 +62,7 @@ define([], function () {
       /*
        * Load Mapreduces
        */
-      this.HTTP.get('rest', 'apps', model.id, 'mapreduce', function (objects) {
+      this.HTTP.rest('apps', model.id, 'mapreduces', function (objects) {
 
           var i = objects.length;
           while (i--) {
@@ -76,7 +76,7 @@ define([], function () {
 			/*
 			 * Load Datasets
 			 */
-			this.HTTP.get('rest', 'apps', model.id, 'datasets', function (objects) {
+			this.HTTP.rest('apps', model.id, 'datasets', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -90,7 +90,7 @@ define([], function () {
 			/*
 			 * Load Procedures
 			 */
-			this.HTTP.get('rest', 'apps', model.id, 'procedures', function (objects) {
+			this.HTTP.rest('apps', model.id, 'procedures', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -209,7 +209,6 @@ define([], function () {
 
 					var model = elements[i];
 					model.set('currentState', transition);
-
 					HTTP.rpc('runnable', action, [app, model.get('name'),
 						model.get('version'), model.get('type').toUpperCase()],
 						function (response) {
@@ -348,8 +347,9 @@ define([], function () {
 
 			destination += '.continuuity.net';
 
-			this.HTTP.rpc('fabric', 'promote', [model.id, destination, C.Env.get('credential')],
-				function (response) {
+			this.HTTP.post('rest', 'apps', model.id, 'promote', {
+				hostname: destination
+			}, function (response) {
 
 				if (response.error) {
 
