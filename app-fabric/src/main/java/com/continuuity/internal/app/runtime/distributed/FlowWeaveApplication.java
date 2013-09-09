@@ -21,8 +21,6 @@ import java.util.Map;
  */
 public final class FlowWeaveApplication implements WeaveApplication {
 
-  private static final int FLOWLET_MEMORY_MB = 512;
-
   private final FlowSpecification spec;
   private final Program program;
   private final File hConfig;
