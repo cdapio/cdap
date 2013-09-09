@@ -2,6 +2,7 @@ package com.continuuity.performance.opex;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -50,7 +51,8 @@ public class RemoteOpexProvider extends OpexProvider {
           .remote.Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT, timeout);
     }
 
-    Injector injector = Guice.createInjector(module);
+    Injector injector = Guice.createInjector(module,
+                                             new LocationRuntimeModule().getDistributedModules());
     return injector.getInstance(OperationExecutor.class);
   }
 }
