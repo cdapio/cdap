@@ -119,7 +119,7 @@ public class DatasetRestAccessorTest {
   }
 
   static Transaction startTx(DataSetInstantiatorFromMetaData instantiator) throws Exception {
-    Transaction tx = txSystemClient.start();
+    Transaction tx = txSystemClient.startShort();
     for (TransactionAware txAware : instantiator.getInstantiator().getTransactionAware()) {
       txAware.startTx(tx);
     }

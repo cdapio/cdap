@@ -84,7 +84,7 @@ public class TxBenchmark extends OpexBenchmark {
             @Override
             public long runOnce(long iteration) throws BenchmarkException {
               try {
-                Transaction tx = opex.start();
+                Transaction tx = opex.startShort();
                 if (sleep > 0) {
                   TimeUnit.MICROSECONDS.sleep(sleep);
                 } else if (sleep == 0) {

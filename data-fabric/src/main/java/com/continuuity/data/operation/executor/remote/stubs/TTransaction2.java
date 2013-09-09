@@ -6,26 +6,20 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
+
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
 import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTransaction2._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TTransaction2");
@@ -34,6 +28,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
   private static final org.apache.thrift.protocol.TField READ_POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("readPointer", org.apache.thrift.protocol.TType.I64, (short)2);
   private static final org.apache.thrift.protocol.TField INVALIDS_FIELD_DESC = new org.apache.thrift.protocol.TField("invalids", org.apache.thrift.protocol.TType.LIST, (short)3);
   private static final org.apache.thrift.protocol.TField IN_PROGRESS_FIELD_DESC = new org.apache.thrift.protocol.TField("inProgress", org.apache.thrift.protocol.TType.LIST, (short)4);
+  private static final org.apache.thrift.protocol.TField FIRST_SHORT_FIELD_DESC = new org.apache.thrift.protocol.TField("firstShort", org.apache.thrift.protocol.TType.I64, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -45,13 +40,15 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
   public long readPointer; // required
   public List<Long> invalids; // required
   public List<Long> inProgress; // required
+  public long firstShort; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     WRITE_POINTER((short)1, "writePointer"),
     READ_POINTER((short)2, "readPointer"),
     INVALIDS((short)3, "invalids"),
-    IN_PROGRESS((short)4, "inProgress");
+    IN_PROGRESS((short)4, "inProgress"),
+    FIRST_SHORT((short)5, "firstShort");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -74,6 +71,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
           return INVALIDS;
         case 4: // IN_PROGRESS
           return IN_PROGRESS;
+        case 5: // FIRST_SHORT
+          return FIRST_SHORT;
         default:
           return null;
       }
@@ -116,7 +115,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
   // isset id assignments
   private static final int __WRITEPOINTER_ISSET_ID = 0;
   private static final int __READPOINTER_ISSET_ID = 1;
-  private BitSet __isset_bit_vector = new BitSet(2);
+  private static final int __FIRSTSHORT_ISSET_ID = 2;
+  private BitSet __isset_bit_vector = new BitSet(3);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -130,6 +130,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     tmpMap.put(_Fields.IN_PROGRESS, new org.apache.thrift.meta_data.FieldMetaData("inProgress", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64))));
+    tmpMap.put(_Fields.FIRST_SHORT, new org.apache.thrift.meta_data.FieldMetaData("firstShort", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TTransaction2.class, metaDataMap);
   }
@@ -141,7 +143,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     long writePointer,
     long readPointer,
     List<Long> invalids,
-    List<Long> inProgress)
+    List<Long> inProgress,
+    long firstShort)
   {
     this();
     this.writePointer = writePointer;
@@ -150,6 +153,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     setReadPointerIsSet(true);
     this.invalids = invalids;
     this.inProgress = inProgress;
+    this.firstShort = firstShort;
+    setFirstShortIsSet(true);
   }
 
   /**
@@ -174,6 +179,7 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       }
       this.inProgress = __this__inProgress;
     }
+    this.firstShort = other.firstShort;
   }
 
   public TTransaction2 deepCopy() {
@@ -188,6 +194,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     this.readPointer = 0;
     this.invalids = null;
     this.inProgress = null;
+    setFirstShortIsSet(false);
+    this.firstShort = 0;
   }
 
   public long getWritePointer() {
@@ -314,6 +322,29 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     }
   }
 
+  public long getFirstShort() {
+    return this.firstShort;
+  }
+
+  public TTransaction2 setFirstShort(long firstShort) {
+    this.firstShort = firstShort;
+    setFirstShortIsSet(true);
+    return this;
+  }
+
+  public void unsetFirstShort() {
+    __isset_bit_vector.clear(__FIRSTSHORT_ISSET_ID);
+  }
+
+  /** Returns true if field firstShort is set (has been assigned a value) and false otherwise */
+  public boolean isSetFirstShort() {
+    return __isset_bit_vector.get(__FIRSTSHORT_ISSET_ID);
+  }
+
+  public void setFirstShortIsSet(boolean value) {
+    __isset_bit_vector.set(__FIRSTSHORT_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case WRITE_POINTER:
@@ -348,6 +379,14 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       }
       break;
 
+    case FIRST_SHORT:
+      if (value == null) {
+        unsetFirstShort();
+      } else {
+        setFirstShort((Long)value);
+      }
+      break;
+
     }
   }
 
@@ -364,6 +403,9 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
 
     case IN_PROGRESS:
       return getInProgress();
+
+    case FIRST_SHORT:
+      return Long.valueOf(getFirstShort());
 
     }
     throw new IllegalStateException();
@@ -384,6 +426,8 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       return isSetInvalids();
     case IN_PROGRESS:
       return isSetInProgress();
+    case FIRST_SHORT:
+      return isSetFirstShort();
     }
     throw new IllegalStateException();
   }
@@ -434,6 +478,15 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       if (!(this_present_inProgress && that_present_inProgress))
         return false;
       if (!this.inProgress.equals(that.inProgress))
+        return false;
+    }
+
+    boolean this_present_firstShort = true;
+    boolean that_present_firstShort = true;
+    if (this_present_firstShort || that_present_firstShort) {
+      if (!(this_present_firstShort && that_present_firstShort))
+        return false;
+      if (this.firstShort != that.firstShort)
         return false;
     }
 
@@ -493,6 +546,16 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetFirstShort()).compareTo(typedOther.isSetFirstShort());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetFirstShort()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.firstShort, typedOther.firstShort);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -535,6 +598,10 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
     } else {
       sb.append(this.inProgress);
     }
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("firstShort:");
+    sb.append(this.firstShort);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -632,6 +699,14 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 5: // FIRST_SHORT
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.firstShort = iprot.readI64();
+              struct.setFirstShortIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -677,6 +752,9 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
         }
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(FIRST_SHORT_FIELD_DESC);
+      oprot.writeI64(struct.firstShort);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -707,7 +785,10 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       if (struct.isSetInProgress()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetFirstShort()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
       if (struct.isSetWritePointer()) {
         oprot.writeI64(struct.writePointer);
       }
@@ -732,12 +813,15 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
           }
         }
       }
+      if (struct.isSetFirstShort()) {
+        oprot.writeI64(struct.firstShort);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TTransaction2 struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
         struct.writePointer = iprot.readI64();
         struct.setWritePointerIsSet(true);
@@ -771,6 +855,10 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
           }
         }
         struct.setInProgressIsSet(true);
+      }
+      if (incoming.get(4)) {
+        struct.firstShort = iprot.readI64();
+        struct.setFirstShortIsSet(true);
       }
     }
   }

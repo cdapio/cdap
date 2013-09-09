@@ -9,17 +9,23 @@ import java.util.Collection;
  */
 public interface TransactionSystemClient {
   /**
-   * Starts new transaction.
+   * Starts new short transaction.
    * @return instance of {@link Transaction}
    */
-  Transaction start();
+  Transaction startShort();
 
   /**
-   * Starts new transaction.
-   * @param timeout the timeout for the transaction, or null for no timeout
+   * Starts new short transaction.
+   * @param timeout the timeout for the transaction
    * @return instance of {@link Transaction}
    */
-  Transaction start(Integer timeout);
+  Transaction startShort(int timeout);
+
+  /**
+   * Starts new long transaction.
+   * @return instance of {@link Transaction}
+   */
+  Transaction startLong();
 
   // this pre-commit detects conflicts with other transactions committed so far
   // NOTE: the changes set should not change after this operation, this may help us do some extra optimizations
@@ -42,15 +48,11 @@ public interface TransactionSystemClient {
    */
   boolean canCommit(Transaction tx, Collection<byte[]> changeIds);
 
-  // this is called to make tx changes visible (i.e. removes it from excluded list) after all changes are committed by
-  // client
-  // todo: can it return false
-
   /**
    * Makes transaction visible. It will again check conflicts of changes submitted previously with
    * {@link #canCommit(Transaction, java.util.Collection)}
    * @param tx transaction to make visible.
-   * @return
+   * @return true if transaction can be committed otherwise false
    */
   boolean commit(Transaction tx);
 

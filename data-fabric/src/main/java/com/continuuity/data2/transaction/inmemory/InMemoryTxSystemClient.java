@@ -19,21 +19,23 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public Transaction start() {
-    return txManager.start();
+  public Transaction startLong() {
+    return txManager.startLong();
   }
 
   @Override
-  public Transaction start(Integer timeout) {
-    return txManager.start(timeout);
+  public Transaction startShort() {
+    return txManager.startShort();
+  }
+
+  @Override
+  public Transaction startShort(int timeout) {
+    return txManager.startShort(timeout);
   }
 
   @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
-    if (changeIds.size() == 0) {
-      return true;
-    }
-    return txManager.canCommit(tx, changeIds);
+    return changeIds.size() == 0 || txManager.canCommit(tx, changeIds);
   }
 
   @Override
