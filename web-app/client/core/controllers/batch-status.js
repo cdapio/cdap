@@ -79,10 +79,7 @@ define(['helpers/plumber'], function (Plumber) {
 
       model.set('currentState', 'STARTING');
 
-        app = this.get('model').get('application');
-
-      this.HTTP.rpc('runnable', 'start', [app, id, version, 'FLOW', config],
-        function (response) {
+      this.HTTP.post('rest', 'apps', app.get('id'), 'mapreduces', id, 'start', function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);
@@ -102,8 +99,7 @@ define(['helpers/plumber'], function (Plumber) {
 
       model.set('currentState', 'STOPPING');
 
-      this.HTTP.rpc('runnable', 'stop', [app, id, version, 'FLOW'],
-        function (response) {
+      this.HTTP.post('rest', 'apps', app.get('id'), 'mapreduces', id, 'stop', function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);
@@ -142,34 +138,34 @@ define(['helpers/plumber'], function (Plumber) {
       }
     },
 
-    "delete": function () {
+    // "delete": function () {
 
-      var self = this;
+    //   var self = this;
 
-      C.Modal.show("Delete Batch",
-        "Are you sure you would like to delete this Batch? This action is not reversible.",
-        $.proxy(function (event) {
+    //   C.Modal.show("Delete Batch",
+    //     "Are you sure you would like to delete this Batch? This action is not reversible.",
+    //     $.proxy(function (event) {
 
-          var batch = this.get('model');
+    //       var batch = this.get('model');
 
-          self.HTTP.rpc('runnable', 'remove', [batch.app, batch.name, batch.version],
-            function (response) {
+    //       self.HTTP.rpc('runnable', 'remove', [batch.app, batch.name, batch.version],
+    //         function (response) {
 
-            C.Modal.hide(function () {
+    //         C.Modal.hide(function () {
 
-              if (response.error) {
-                C.Modal.show('Delete Error',
-                  response.error.message || 'No reason given. Please check the logs.');
-              } else {
-                window.history.go(-1);
-              }
+    //           if (response.error) {
+    //             C.Modal.show('Delete Error',
+    //               response.error.message || 'No reason given. Please check the logs.');
+    //           } else {
+    //             window.history.go(-1);
+    //           }
 
-            });
+    //         });
 
-          });
-        }, this));
+    //       });
+    //     }, this));
 
-    }
+    // }
 
   });
 

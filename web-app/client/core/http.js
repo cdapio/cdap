@@ -52,11 +52,39 @@ define([], function () {
 			var path = this.findPath(arguments);
 			var object = this.findObject(arguments);
 			var callback = this.findCallback(arguments);
+			var options = {
+				url: path,
+				type: "POST",
+				timeout: AJAX_TIMEOUT
+			};
+			if (!jQuery.isEmptyObject(object)) {
+				options['data'] = JSON.stringify(object);
+				options['contentType'] = 'application/json';
+			}
+			$.ajax(options).done(function (response, status) {
+
+				if (response.error && response.error.fatal) {
+					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+				} else {
+					callback(response, status);
+				}
+
+			}).fail(function (xhr, status, error) {
+				callback(error, status);
+			});
+
+		},
+
+		put: function () {
+
+			var path = this.findPath(arguments);
+			var object = this.findObject(arguments);
+			var callback = this.findCallback(arguments);
 
 			$.ajax({
 				url: path,
 				data: JSON.stringify(object),
-				type: "POST",
+				type: 'PUT',
 				timeout: AJAX_TIMEOUT,
 				contentType: "application/json"
 			}).done(function (response, status) {
@@ -88,7 +116,7 @@ define([], function () {
 
 		},
 
-		"delete": function () {
+		del: function () {
 
 			var path = this.findPath(arguments);
 			var callback = this.findCallback(arguments);

@@ -15,15 +15,16 @@ var express = require('express'),
   cookie = require('cookie'),
   utils = require('connect').utils,
   crypto = require('crypto'),
-  path = require('path');
+  path = require('path'),
+  request = require('request');
 
 var Api = require('../common/api');
 
 /**
  * Generic web app server. This is a base class used for creating different editions of the server.
  * This provides base server functionality, logging, routes and socket io setup.
- * @param {string} dirPath from where module is instantiated. This is used becuase __dirname defaults
- *    to the location of this module.
+ * @param {string} dirPath from where module is instantiated. This is used becuase __dirname
+ * defaults to the location of this module.
  * @param {string} logLevel log level {TRACE|INFO|ERROR}
  */
 var WebAppServer = function(dirPath, logLevel) {
@@ -40,6 +41,12 @@ WebAppServer.prototype.Api = Api;
  * Server version.
  */
 WebAppServer.prototype.VERSION = '';
+
+/**
+ * API version.
+ */
+WebAppServer.prototype.API_VERSION = 'v2';
+
 
 /**
  * Express app framework.
@@ -393,134 +400,183 @@ WebAppServer.prototype.bindRoutes = function(io) {
   });
 
   /*
-   * REST handler
+   * REST PUT handler.
+   */
+  this.app.put('/rest/*', function (req, res) {
+    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
+    request.post('http://' + path, function (error, response, body) {
+
+      if (!error && response.statusCode == 200) {
+        res.send(body);
+      } else {
+        self.logger.error('Could not fetch REST', path, error || response.statusCode);
+        res.status(500);
+        res.send(path, error || response.statusCode);
+      }
+    });        
+  });
+
+  /*
+   * REST POST handler.
+   */
+  this.app.post('/rest/*', function (req, res) {
+    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
+    request.post('http://' + path, function (error, response, body) {
+
+      if (!error && response.statusCode == 200) {
+        res.send(body);
+      } else {
+        self.logger.error('Could not fetch REST', path, error || response.statusCode);
+        res.status(500);
+        res.send(path, error || response.statusCode);
+      }
+    });        
+  });
+
+  /*
+   * REST GET handler.
    */
   this.app.get('/rest/*', function (req, res) {
 
-    var accountID = 'developer';
-    var path = req.url.slice(6).split('/');
-    var hierarchy = {};
+    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
-    self.logger.trace('GET ' + req.url);
+    request('http://' + path, function (error, response, body) {
 
-    if (!path[path.length - 1]) {
-      path = path.slice(0, path.length - 1);
-    }
-
-    var methods = [], ids = [];
-    for (var i = 0; i < path.length; i ++) {
-      if (i % 2) {
-        ids.push(path[i]);
+      if (!error && response.statusCode == 200) {
+        res.send(body);
       } else {
-        methods.push(path[i]);
+        self.logger.error('Could not fetch REST', path, error || response.statusCode);
+        res.status(500);
+        res.send(path, error || response.statusCode);
       }
-    }
+    });
+    // var accountID = 'developer';
+    // var path = req.url.slice(6).split('/');
+    // var hierarchy = {};
 
-    var method = null, params = [];
+    // self.logger.trace('GET ' + req.url);
 
-    if ((methods[0] === 'apps' || methods[0] === 'streams' ||
-      methods[0] === 'datasets') && methods[1]) {
+    // if (!path[path.length - 1]) {
+    //   path = path.slice(0, path.length - 1);
+    // }
 
-      if (ids[1]) {
-        method = singularREST[methods[1]];
-        params = [typesREST[methods[1]], { id: ids[1] }];
-      } else {
-        method = pluralREST[methods[1]] + selectiveREST[methods[0]];
-        params = [ids[0]];
-      }
+    // var methods = [], ids = [];
+    // for (var i = 0; i < path.length; i ++) {
+    //   if (i % 2) {
+    //     ids.push(path[i]);
+    //   } else {
+    //     methods.push(path[i]);
+    //   }
+    // }
 
-    } else {
+    // var method = null, params = [];
 
-      if (ids[0]) {
-        method = singularREST[methods[0]];
-        params = [typesREST[methods[0]], { id: ids[0] } ];
-      } else {
-        method = pluralREST[methods[0]];
-        params = [];
-      }
+    // if ((methods[0] === 'apps' || methods[0] === 'streams' ||
+    //   methods[0] === 'datasets') && methods[1]) {
 
-    }
+    //   if (ids[1]) {
+    //     method = singularREST[methods[1]];
+    //     params = [typesREST[methods[1]], { id: ids[1] }];
+    //   } else {
+    //     method = pluralREST[methods[1]] + selectiveREST[methods[0]];
+    //     params = [ids[0]];
+    //   }
 
-    if (methods[0] === 'all') {
+    // } else {
 
-      var count = 0, all = [];
-      for (var name in pluralREST) {
-        methods.push(pluralREST[name]);
+    //   if (ids[0]) {
+    //     method = singularREST[methods[0]];
+    //     params = [typesREST[methods[0]], { id: ids[0] } ];
+    //   } else {
+    //     method = pluralREST[methods[0]];
+    //     params = [];
+    //   }
 
-        count++;
-        self.Api.metadata(accountID, pluralREST[name], [], function (error, response) {
+    // }
 
-          if (error) {
-            self.logger.error(error);
-            res.status(500);
-            res.send({
-              error: error
-            });
-          } else {
+    // if (methods[0] === 'all') {
 
-            var i = response.length, type = this.type;
+    //   var count = 0, all = [];
+    //   for (var name in pluralREST) {
+    //     methods.push(pluralREST[name]);
 
-            // Determine the type of an element.
-            if (type !== 'mapreduce') {
-              type = type.slice(0, type.length - 1);
-            } else {
-              type = 'batch';
-            }
-            type = type.charAt(0).toUpperCase() + type.slice(1);
+    //     count++;
+    //     self.Api.metadata(accountID, pluralREST[name], [], function (error, response) {
 
-            while (i--) {
-              response[i].type = type;
-            }
+    //       if (error) {
+    //         self.logger.error(error);
+    //         res.status(500);
+    //         res.send({
+    //           error: error
+    //         });
+    //       } else {
 
-            all = all.concat(response);
-            if (!--count) {
-              res.send(all);
-            }
+    //         var i = response.length, type = this.type;
 
-          }
-        }.bind({type: name}));
-      }
+    //         // Determine the type of an element.
+    //         if (type !== 'mapreduce') {
+    //           type = type.slice(0, type.length - 1);
+    //         } else {
+    //           type = 'batch';
+    //         }
+    //         type = type.charAt(0).toUpperCase() + type.slice(1);
 
-    } else {
+    //         while (i--) {
+    //           response[i].type = type;
+    //         }
 
-    if (method === 'getQuery' || method === 'getMapreduce') {
-      params[1].application = ids[0];
-    }
+    //         all = all.concat(response);
+    //         if (!--count) {
+    //           res.send(all);
+    //         }
 
-    if (method === 'getFlow') {
+    //       }
+    //     }.bind({type: name}));
+    //   }
 
-      self.Api.manager(accountID, 'getFlowDefinition', [ids[0], ids[1]],
-        function (error, response) {
+    // } else {
 
-          if (error) {
-            self.logger.error(error);
-            res.status(500);
-            res.send({
-              error: error
-            });
-          } else {
-            res.send(response);
-          }
+    // if (method === 'getQuery' || method === 'getMapreduce') {
+    //   params[1].application = ids[0];
+    // }
 
-      });
+    // if (method === 'getFlow') {
 
-    } else {
+    //   self.Api.manager(accountID, 'getFlowDefinition', [ids[0], ids[1]],
+    //     function (error, response) {
 
-      self.Api.metadata(accountID, method, params, function (error, response) {
+    //       if (error) {
+    //         self.logger.error(error);
+    //         res.status(500);
+    //         res.send({
+    //           error: error
+    //         });
+    //       } else {
+    //         res.send(response);
+    //       }
 
-          if (error) {
-            self.logger.error(error);
-            res.status(500);
-            res.send({
-              error: error
-            });
-          } else {
-            res.send(response);
-          }
+    //   });
 
-      });
+    // } else {
 
-    }}
+    //   self.Api.metadata(accountID, method, params, function (error, response) {
+
+    //       if (error) {
+    //         self.logger.error(error);
+    //         res.status(500);
+    //         res.send({
+    //           error: error
+    //         });
+    //       } else {
+    //         res.send(response);
+    //       }
+
+    //   });
+
+    // }}
 
   });
 
@@ -584,7 +640,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
       case 'runnable':
         self.Api.manager(accountID, method, params, function (error, result) {
           if (error) {
-            self.logger.error(error);
+            //self.logger.error(error);
           }
           if (method === 'getFlowHistory') {
             for (var i = result.length - 1; i >= 0; i--) {
@@ -682,8 +738,24 @@ WebAppServer.prototype.bindRoutes = function(io) {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', function (req, res) {
+
     var accountID = 'developer';
     var sessionId = req.session.id;
+    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'] + '/' + self.API_VERSION;
+
+    // request({
+    //   method: 'PUT',
+    //   uri: 'http://' + url + '/apps',
+    //   multipart: [
+    //     { body: req.params.file }
+    //   ] 
+    // }, function (error, response, body) {
+    //     if (!error && response.statusCode == 200) {
+    //       res.send('Upload complete.')
+    //     } else {
+    //       res.send('Failed to upload app.')
+    //     }
+    // });
     self.Api.upload(accountID, req, res, req.params.file, io.sockets["in"](sessionId));
   });
 
