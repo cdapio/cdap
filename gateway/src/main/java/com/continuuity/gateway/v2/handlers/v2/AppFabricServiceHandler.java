@@ -108,6 +108,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
 
         client.deploy(token, rIdentifier);
+        responder.sendStatus(HttpResponseStatus.OK);
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();
@@ -116,7 +117,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           client.getOutputProtocol().getTransport().close();
         }
       }
-      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (Exception e) {
