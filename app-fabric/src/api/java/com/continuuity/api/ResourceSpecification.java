@@ -3,6 +3,10 @@ package com.continuuity.api;
 
 import com.continuuity.internal.DefaultResourceSpecification;
 
+/**
+ * This interface provides specifications for resource requirements, which currently include
+ * number of cores and amount of memory in megabytes.
+ */
 public interface ResourceSpecification {
 
   final ResourceSpecification BASIC = Builder.with().setCores(1).setMemory(512, SizeUnit.MEGA).build();
