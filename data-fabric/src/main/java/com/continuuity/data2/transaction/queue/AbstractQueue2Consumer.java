@@ -284,7 +284,13 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         }
 
         // Based on the strategy to determine if include the given entry or not.
+        byte[] dataBytes = entry.getSecond().get(QueueConstants.DATA_COLUMN);
         byte[] metaBytes = entry.getSecond().get(QueueConstants.META_COLUMN);
+
+        if (dataBytes == null || metaBytes == null) {
+          continue;
+        }
+
         byte[] stateBytes = entry.getSecond().get(stateColumnName);
 
         int counter = Bytes.toInt(rowKey, rowKey.length - 4, Ints.BYTES);
@@ -292,8 +298,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
           continue;
         }
 
-        entryCache.put(rowKey,
-                       new SimpleQueueEntry(rowKey, entry.getSecond().get(QueueConstants.DATA_COLUMN), stateBytes));
+        entryCache.put(rowKey, new SimpleQueueEntry(rowKey, dataBytes, stateBytes));
       }
     } finally {
       scanner.close();

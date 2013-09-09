@@ -14,7 +14,6 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.weave.api.RunId;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -26,6 +25,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   private final String flowId;
   private final String flowletId;
+  private final long groupId;
   private final int instanceId;
   private final FlowletSpecification flowletSpec;
 
@@ -43,6 +43,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     super(program, runId, datasets);
     this.flowId = program.getProgramName();
     this.flowletId = flowletId;
+    this.groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.runtimeArguments = runtimeArguments;
@@ -121,8 +122,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   }
 
   public long getGroupId() {
-    int gid = 100000 + Objects.hashCode(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
-    return   0xffffffffL & gid;
+    return groupId;
   }
 
   public String getMetricContext() {
