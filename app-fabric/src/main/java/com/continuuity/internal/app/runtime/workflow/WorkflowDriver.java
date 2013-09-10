@@ -56,10 +56,10 @@ public final class WorkflowDriver extends AbstractExecutionThreadService {
         LOG.warn("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
         // this will always rethrow
         Throwables.propagateIfPossible(t, Exception.class);
+      } finally {
+        // Destroy the action.
+        destroy(actionSpec, action);
       }
-
-      // Destroy the action.
-      destroy(actionSpec, action);
     }
 
     // If there is some task left when the loop exited, it must be called by explicit stop of this driver.

@@ -7,6 +7,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
+import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowContext;
 import com.continuuity.api.workflow.WorkflowSpecification;
 
@@ -38,8 +39,10 @@ public class WorkflowApp implements Application {
       return WorkflowSpecification.Builder.with()
         .setName("FunWorkflow")
         .setDescription("FunWorkflow description")
-        .startWith(new DummyAction())
-        .last(new DummyAction())
+        .startWith(new CustomAction("step1"))
+        .then(new CustomAction("step2"))
+        .then(new CustomAction("step3"))
+        .last(new CustomAction("step4"))
         .build();
     }
   }
@@ -47,7 +50,21 @@ public class WorkflowApp implements Application {
   /**
    *
    */
-  public static final class DummyAction extends AbstractWorkflowAction {
+  public static final class CustomAction extends AbstractWorkflowAction {
+
+    private final String name;
+
+    public CustomAction(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public WorkflowActionSpecification configure() {
+      return WorkflowActionSpecification.Builder.with()
+        .setName(name)
+        .setDescription(name)
+        .build();
+    }
 
     @Override
     public void initialize(WorkflowContext context) throws Exception {
