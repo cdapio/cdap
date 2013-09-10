@@ -3,7 +3,6 @@ package com.continuuity.gateway.tools;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
@@ -74,6 +73,12 @@ public class DataSetClient {
 
   boolean forceNoSSL = false;    // to disable SSL even with api key and remote host
 
+  boolean clearAll = false;      // to clear everything
+  boolean clearQueues = false;   // to clear all event streams
+  boolean clearStreams = false;  // to clear all intra-flow queues
+  boolean clearTables = false;   // to clear all named tables
+  boolean clearMeta = false;     // to clear all meta data
+
   /**
    * Print the usage statement and return null (or empty string if this is not
    * an error case). See getValue() for an explanation of the return type.
@@ -95,6 +100,7 @@ public class DataSetClient {
     out.println("  " + name + " write --table name --row <row key> ...");
     out.println("  " + name + " increment --table name --row <row key> ...");
     out.println("  " + name + " delete --table name --row <row key> ...");
+    out.println("  " + name + " clear [ --all | --queues | --streams | --datasets | --meta]");
     out.println();
     out.println("Additional options:");
     out.println("  --table <name>          To specify the table to operate on");
@@ -234,6 +240,16 @@ public class DataSetClient {
         pretty = true;
       } else if ("--json".equals(arg)) {
         pretty = false;
+      } else if ("--all".equals(arg)) {
+        clearAll = true;
+      } else if ("--queues".equals(arg)) {
+        clearQueues = true;
+      } else if ("--streams".equals(arg)) {
+        clearStreams = true;
+      } else if ("--datasets".equals(arg)) {
+        clearTables = true;
+      } else if ("--meta".equals(arg)) {
+        clearMeta = true;
       } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
@@ -245,7 +261,7 @@ public class DataSetClient {
   }
 
   static List<String> supportedCommands =
-    Arrays.asList("read", "write", "increment", "delete", "create");
+    Arrays.asList("read", "write", "increment", "delete", "create", "clear");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -259,7 +275,7 @@ public class DataSetClient {
       usage("Unsupported command '" + command + "'.");
     }
 
-    if (table == null) {
+    if (table == null && !"clear".equals(command)) {
       usage("--table is required for table operations.");
     }
 
@@ -270,7 +286,7 @@ public class DataSetClient {
       if (!columns.isEmpty() || startcol != null || stopcol != null || limit != -1 || !values.isEmpty()) {
         usage("specifying columns or values is not allowed for table create command.");
       }
-    } else {
+    } else if (!"clear".equals(command)){
       if (row == null) {
         usage("--row is required for table operations.");
       }
@@ -295,6 +311,17 @@ public class DataSetClient {
           } catch (NumberFormatException e) {
             usage("for increment all values must be numbers");
           }
+        }
+      }
+
+      // verify that clear command specifies what to clear
+      if ("clear".equals(command)) {
+        if (table != null) {
+          usage("A table cannot be specified for --clear");
+        }
+        if (!(clearAll || clearMeta || clearQueues || clearStreams || clearTables)) {
+          usage("You must specify what to clear - please us --all, " +
+                  "--queues, --datasets, --meta or --streams.");
         }
       }
     }
@@ -322,7 +349,7 @@ public class DataSetClient {
     }
 
     boolean useSsl = !forceNoSSL && (apikey != null);
-    String baseUrl = Util.findBaseUrl(config, DatasetRestAccessor.class, null, hostname, port, useSsl);
+    String baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, useSsl);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
                            "Please use --host and --port to specify.");
@@ -338,9 +365,8 @@ public class DataSetClient {
     HttpResponse response;
 
     // construct the full URL and verify its well-formedness
-    URI uri;
     try {
-      uri = URI.create(baseUrl);
+      URI.create(baseUrl);
     } catch (IllegalArgumentException e) {
       // this can only happen if the --host, or --base are not valid for a URL
       System.err.println("Invalid base URL '" + baseUrl + "'. Check the validity of --host or --port arguments.");
@@ -348,7 +374,7 @@ public class DataSetClient {
     }
 
     // must be a table operation
-    String requestUrl = baseUrl + "Table/" + table;
+    String requestUrl = baseUrl + "tables/" + table;
     if ("create".equals(command)) {
       // url is already complete, submit as a put
       try {
@@ -368,7 +394,7 @@ public class DataSetClient {
       return "OK.";
     }
     // all operations other than create require row
-    requestUrl += "/" + row;
+    requestUrl += "/row/" + row;
     String sep = "?";
     if ("read".equals(command)) {
       if (startcol != null) {
@@ -447,9 +473,9 @@ public class DataSetClient {
     }
 
     if ("increment".equals(command)) {
-      requestUrl += "?op=increment";
+      requestUrl += "?";
       if (encoding != null) {
-        requestUrl += "&encoding=" + encoding;
+        requestUrl += "encoding=" + encoding;
       }
       // request URL is complete - construct the Json body
       byte[] requestBody = buildJson(true);
@@ -497,7 +523,43 @@ public class DataSetClient {
       if (!checkHttpStatus(response)) {
         return null;
       }
+      return "OK.";
     }
+
+  if ("clear".equals(command)) {
+    if (clearAll) {
+      requestUrl = baseUrl + "/all";
+    } else {
+      if (clearQueues) {
+        requestUrl = baseUrl + "/queues";
+      }
+      if (clearStreams) {
+        requestUrl = baseUrl + "/streams";
+      }
+      if (clearTables) {
+        requestUrl = baseUrl + "/datasets";
+      }
+      if (clearMeta) {
+        requestUrl = baseUrl + "/meta";
+      }
+    }
+    // now execute the delete
+    try {
+      HttpDelete delete = new HttpDelete(requestUrl);
+      if (apikey != null) {
+        delete.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      }
+      response = client.execute(delete);
+      client.getConnectionManager().shutdown();
+    } catch (IOException e) {
+      System.err.println("Error sending HTTP request: " + e.getMessage());
+      return null;
+    }
+    if (!checkHttpStatus(response)) {
+      return null;
+    }
+    return "OK.";
+  }
 
     return null;
   }
@@ -539,7 +601,7 @@ public class DataSetClient {
     try {
       if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         // get the error message from the body of the response
-        String reason = response.getEntity().getContent() == null ? null :
+        String reason = response.getEntity() == null || response.getEntity().getContent() == null ? null :
           IOUtils.toString(response.getEntity().getContent());
         if (verbose) {
           System.out.println(response.getStatusLine());

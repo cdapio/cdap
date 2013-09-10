@@ -30,6 +30,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
@@ -426,8 +427,7 @@ public class StreamHandler extends AbstractHttpHandler {
       boolean existsInMDS = existingStream.isExists();
 
       if (existsInMDS) {
-        byte[] responseBody = "{}".getBytes();
-        responder.sendJson(HttpResponseStatus.OK, responseBody);
+        responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
         helper.finish(Success);
       } else {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);

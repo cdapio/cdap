@@ -5,9 +5,12 @@ import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.thrift.server.THsHaServer;
+import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TThreadedSelectorServer;
+import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
@@ -45,11 +48,14 @@ public class OperationExecutorService extends AbstractRegisteredServer {
   /* the internet address to run on */
   String address;
 
+  /* the number of IO threads to use for the thrift service */
+  int ioThreads;
+
   /* the number of threads to use for the thrift service */
   int threads;
 
   /* the thrift service */
-  THsHaServer server;
+  TServer server;
 
   /* the operation executor for the actual data fabric */
   OperationExecutor opex;
@@ -78,7 +84,9 @@ public class OperationExecutorService extends AbstractRegisteredServer {
       this.port = conf.getInt(Constants.CFG_DATA_OPEX_SERVER_PORT,
           Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
       this.address = conf.get(Constants.CFG_DATA_OPEX_SERVER_ADDRESS,
-        Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
+          Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
+      this.ioThreads = conf.getInt(Constants.CFG_DATA_OPEX_SERVER_IO_THREADS,
+          Constants.DEFAULT_DATA_OPEX_SERVER_IO_THREADS);
       this.threads = conf.getInt(Constants.CFG_DATA_OPEX_SERVER_THREADS,
           Constants.DEFAULT_DATA_OPEX_SERVER_THREADS);
 
@@ -88,23 +96,30 @@ public class OperationExecutorService extends AbstractRegisteredServer {
           " threads at " + socketAddr.toString());
 
       // create a new thread pool
-      this.executorService = Executors.newCachedThreadPool();
+      this.executorService = Executors.newFixedThreadPool(threads,
+                                                          new ThreadFactoryBuilder()
+                                                            .setNameFormat("opex-thrift-%d")
+                                                            .build());
 
+      TOperationExecutor.Processor<TOperationExecutor.Iface> processor = new TOperationExecutor.
+        Processor<TOperationExecutor.Iface>(
+        new TOperationExecutorImpl(this.opex));
       // configure a thrift service
-      THsHaServer.Args serverArgs =
-          new THsHaServer.Args(new TNonblockingServerSocket(socketAddr))
-              .executorService(executorService)
-              .processor(new TOperationExecutor.
-                  Processor<TOperationExecutor.Iface>(
-                      new TOperationExecutorImpl(this.opex)))
-              .workerThreads(20);
+
+      TThreadedSelectorServer.Args serverArgs =
+        new TThreadedSelectorServer.Args(new TNonblockingServerSocket(socketAddr))
+          .selectorThreads(ioThreads)
+          .transportFactory(new TFramedTransport.Factory())
+          .processor(processor)
+          .executorService(executorService);
+
 
       // ENG-443 - Set the max read buffer size. This is important as this will
       // prevent the server from throwing OOME if telnetd to the port
       // it's running on.
       serverArgs.maxReadBufferBytes = getMaxReadBuffer(conf);
 
-      this.server = new THsHaServer(serverArgs);
+      this.server = new TThreadedSelectorServer(serverArgs);
 
       // and done, return the payload
       RegisteredServerInfo info = new RegisteredServerInfo(address, port);
