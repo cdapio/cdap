@@ -66,7 +66,7 @@ public class HBaseQueueTest extends QueueTest {
 
     // Customize test configuration
     cConf = dataFabricModule.getConfiguration();
-    cConf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, HBaseTestBase.getZkConnectionString());
+    cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
     cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
               Integer.toString(Networks.getRandomPort()));
 

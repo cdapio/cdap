@@ -15,29 +15,26 @@ struct AuthToken {
  */
 enum EntityType {
   FLOW,
-  QUERY,
+  PROCEDURE,
   MAPREDUCE,
 }
 
 /**
  * Identifies the resource that is being deployed.
  */
-struct ResourceIdentifier {
+struct ArchiveId {
  1:required string accountId,
  2:required string applicationId,
  3:required string resource,
- 4:required i32 version,
 }
 
 /**
  * Information about resource
  */
- struct ResourceInfo {
+ struct ArchiveInfo {
   1:required string accountId,
   2:required string applicationId,
   3:required string filename,
-  4:required i32 size,
-  5:required i64 modtime,
  }
 
 /**
@@ -63,18 +60,16 @@ struct VerificationStatus {
 struct DeploymentStatus {
   1:i32 overall,
   2:string message,
-  3:list<VerificationStatus> verification,
 }
 
 /**
  * Following structure identifies and individual flow in the system.
  */
-struct FlowIdentifier {
+struct ProgramId {
  1:required string accountId,
  2:required string applicationId,
  3:required string flowId,
- 4:required i32 version = -1,
- 5:optional EntityType type = EntityType.FLOW,
+ 4:optional EntityType type = EntityType.FLOW,
 }
 
 /**
@@ -87,28 +82,27 @@ struct RunIdentifier {
 /**
  * Structure specifies the return of status call for a given flow.
  */
-struct FlowStatus {
+struct ProgramStatus {
  1:string applicationId,
  2:string flowId,
- 3:i32 version,
- 4:RunIdentifier runId,
- 5:string status,
+ 3:RunIdentifier runId,
+ 4:string status,
 }
 
 /**
- * FlowDescription include FlowIdentifier and few more things needed to start
+ * ProgramDescription include ProgramId and few more things needed to start
  * the flow. It includes parameters or arguments that will be passed around to
- * Flow during start.
+ * program during start.
  */
-struct FlowDescriptor {
-  1:FlowIdentifier identifier,
+struct ProgramDescriptor {
+  1:ProgramId identifier,
   2:map<string, string> arguments,
 }
 
 /**
- * Provides the state of flows.
+ * Provides the state of runnables.
  */
-struct ActiveFlow {
+struct ActiveProgram {
   1: string applicationId,
   2: string flowId,
   3: EntityType type,
@@ -119,9 +113,9 @@ struct ActiveFlow {
 }
 
 /**
- * Information returned for each Flow run.
+ * Information returned for each Program run.
  */
-struct FlowRunRecord {
+struct ProgramRunRecord {
   1: string runId,
   2: i64 startTime,
   3: i64 endTime,
@@ -129,51 +123,58 @@ struct FlowRunRecord {
 }
 
 /**
- * Flow Service for managing flows. 
+ * Program Service for managing flows. 
  */
 service AppFabricService {
 
   /**
-   * Starts a Flow
+   * Starts a program
    */
-  RunIdentifier start(1:AuthToken token,  2: FlowDescriptor descriptor)
+  RunIdentifier start(1:AuthToken token,  2: ProgramDescriptor descriptor)
     throws (1: AppFabricServiceException e),
 
   /**
-   * Checks the status of a Flow
+   * Checks the status of a program
    */
-  FlowStatus status(1:AuthToken token, 2: FlowIdentifier identifier)
+  ProgramStatus status(1:AuthToken token, 2: ProgramId identifier)
     throws (1: AppFabricServiceException e),
 
   /**
-   * Stops a Flow
+   * Stops a program
    */
-  RunIdentifier stop(1: AuthToken token,  2: FlowIdentifier identifier)
+  RunIdentifier stop(1: AuthToken token,  2: ProgramId identifier)
     throws (1: AppFabricServiceException e),
 
   /**
    * Set number of instance of a flowlet.
    */
-  void setInstances(1: AuthToken token, 2: FlowIdentifier identifier,
+  void setInstances(1: AuthToken token, 2: ProgramId identifier,
                     3: string flowletId, 4:i16 instances )
     throws (1: AppFabricServiceException e),
 
   /**
+   * Get number of instance of a flowlet.
+   */
+   i32 getInstances(1: AuthToken token, 2: ProgramId identifier, 
+                    3: string flowletId)
+     throws (1: AppFabricServiceException e),
+
+  /**
    * Returns the state of flows within a given account id.
    */
-  list<ActiveFlow> getFlows(1: string accountId)
+  list<ActiveProgram> getPrograms(1: string accountId)
      throws(1: AppFabricServiceException e),
 
   /**
-   * Returns definition of a flow.
+   * Returns Runnable specification.
    */
-  string getFlowDefinition(1: FlowIdentifier id)
+  string getSpecification(1: ProgramId id)
     throws (1: AppFabricServiceException e),
 
   /**
    * Returns run information for a given flow id.
    */
-  list<FlowRunRecord> getFlowHistory(1: FlowIdentifier id)
+  list<ProgramRunRecord> getHistory(1: ProgramId id)
       throws (1: AppFabricServiceException e),
 
   /**
@@ -186,26 +187,26 @@ service AppFabricService {
   /**
    * Begins uploading of FAR
    */
-  ResourceIdentifier init(1:AuthToken token, 2:ResourceInfo info)
+  ArchiveId init(1:AuthToken token, 2:ArchiveInfo info)
     throws (1:AppFabricServiceException e),
 
   /**
    * Chunk of FAR is uploaded
    */
   void chunk(1:AuthToken token,
-             2:ResourceIdentifier resource, 3:binary chunk)
+             2:ArchiveId resource, 3:binary chunk)
     throws (1: AppFabricServiceException e),
 
   /**
    * Finalizes uploading of FAR
    */
-  void deploy(1:AuthToken token, 2:ResourceIdentifier resource)
+  void deploy(1:AuthToken token, 2:ArchiveId resource)
     throws (1: AppFabricServiceException e),
 
   /**
    * Status of upload
    */
-  DeploymentStatus dstatus(1:AuthToken token, 2:ResourceIdentifier resource)
+  DeploymentStatus dstatus(1:AuthToken token, 2:ArchiveId resource)
     throws (1: AppFabricServiceException e),
 
   /**
@@ -213,24 +214,24 @@ service AppFabricService {
    * NOTE: On this call we use overload flowid to hostname (totally wrong - but we didn't wanted to changed)
    * Javascript binding that has patching to be done. Hate Thrift.!!!!!
    */
-  bool promote(1:AuthToken token, 2:ResourceIdentifier identifier, 3:string hostname)
+  bool promote(1:AuthToken token, 2:ArchiveId identifier, 3:string hostname)
     throws (1: AppFabricServiceException e),
 
   /**
-   * Disables a Flow or Procedure
+   * Disables a Program
    */
-  void remove(1:AuthToken token, 2:FlowIdentifier identifier)
+  void remove(1:AuthToken token, 2:ProgramId identifier)
     throws (1: AppFabricServiceException e),
 
   /**
-   * Deletes all Flows and Procedures of the given application.
-   * It current takes a FlowIdentifier, but this method only interest in account id and application id.
+   * Deletes all Programs for a application
+   * It current takes a ProgramId, but this method only interest in account id and application id.
    */
-  void removeApplication(1:AuthToken token, 2:FlowIdentifier id)
+  void removeApplication(1:AuthToken token, 2:ProgramId id)
     throws (1: AppFabricServiceException e),
 
   /**
-   * Disables all Flows and Queries of the account
+   * Disables all Programs for the account.
    */
   void removeAll(1:AuthToken token, 2:string accountId)
     throws (1: AppFabricServiceException e),

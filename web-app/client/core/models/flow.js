@@ -22,7 +22,7 @@ define([], function () {
 			this.set('timeseries', Em.Object.create());
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
-			this.set('app', this.get('applicationId') || this.get('application') || this.get('meta').app);
+			this.set('app', this.get('applicationId') || this.get('app') || this.get('meta').app);
 			this.set('id', this.get('app') + ':' +
 				(this.get('flowId') || this.get('id') || this.get('meta').name));
 
@@ -58,14 +58,10 @@ define([], function () {
 			var app_id = this.get('app'),
 				flow_id = this.get('name');
 
-			http.rpc('runnable', 'status', [app_id, flow_id, -1],
-				function (response) {
-					if (response.result) {
-						if (self.get('name') === response.result.flowId) {
-							self.set('currentState', response.result.status);
-						}
-					}
-
+			http.rest('apps', app_id, 'flows', flow_id, 'status', function (response) {
+				if (!jQuery.isEmptyObject(response)) {
+					self.set('currentState', response.status);
+				}
 			});
 
 		},
@@ -151,7 +147,7 @@ define([], function () {
 		type: 'Flow',
 		kind: 'Model',
 		find: function(model_id, http) {
-
+			var self = this;
 			var promise = Ember.Deferred.create();
 
 			var model_id = model_id.split(':');
@@ -159,6 +155,8 @@ define([], function () {
 			var flow_id = model_id[1];
 
 			http.rest('apps', app_id, 'flows', flow_id, function (model, error) {
+				
+				var model = self.transformModel(model);
 				if (model.hasOwnProperty('flowletStreams')) {
 					var flowletStreamArr = [];
 					for (entry in model['flowletStreams']) {
@@ -170,23 +168,87 @@ define([], function () {
 
 				model.applicationId = app_id;
 				model = C.Flow.create(model);
-
-				http.rpc('runnable', 'status', [app_id, flow_id, -1],
-					function (response, error) {
-
-					if (response.error) {
-						promise.reject(error);
-					} else {
-						model.set('currentState', response.result.status);
+				
+				http.rest('apps', app_id, 'flows', flow_id, 'status', function (response) {
+					if (!jQuery.isEmptyObject(response)) {
+						model.set('currentState', response.status);
 						promise.resolve(model);
+					} else {
+						promise.reject('Status not found');
 					}
-
 				});
 
 			});
 
 			return promise;
 
+		},
+
+		transformModel: function (model) {
+			var obj = {};
+			var meta = {};
+			if (model.hasOwnProperty('name')) {
+				meta.name = model.name;
+			}
+			obj.meta = meta;
+			var datasets = [];
+			var flowlets = [];
+			var flowletStreams = {};
+			if (model.hasOwnProperty('flowlets')) {
+				for (var descriptor in model.flowlets) {
+					var flowlet = model.flowlets[descriptor];
+					flowlets.push({
+						name: flowlet.flowletSpec.name,
+						classname: flowlet.flowletSpec.className,
+						instances: flowlet.instances,
+					});
+
+					if (!Em.isEmpty(flowlet.datasets)) {
+						datasets.push.apply(datasets, flowlet.datasets);
+					}
+
+					var strObj = {};
+					if (!jQuery.isEmptyObject(flowlet.inputs)) {
+						if (flowlet.inputs.hasOwnProperty('')) {
+							strObj['queue_IN'] = {
+								second: 'IN'
+							};
+						}
+					}
+					if (!jQuery.isEmptyObject(flowlet.outputs)) {
+						if (flowlet.outputs.hasOwnProperty('queue')) {
+							strObj['queue_OUT'] = {
+								second: 'OUT'
+							};
+						}
+					}
+					flowletStreams[descriptor] = strObj;
+				}
+			}
+			obj.flowletStreams = flowletStreams;
+			obj.datasets = datasets;
+			obj.flowlets = flowlets;
+			var connections = [];
+			var flowStreams = [];
+			for (var i = 0; i < model.connections.length; i++) {
+				var cn = model.connections[i];
+				var from = {};
+				var to = {};
+				from[cn.sourceType.toLowerCase()] = cn.sourceName;
+				to['flowlet'] = cn.targetName;
+				connections.push({
+					from: from,
+					to: to
+				});
+				if (cn.sourceType === 'STREAM') {
+					flowStreams.push({
+						name: cn.sourceName
+					});
+				}
+			}
+			obj.flowStreams = flowStreams;
+			obj.connections = connections;
+			return obj;
 		}
 
 	});

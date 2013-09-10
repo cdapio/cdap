@@ -109,7 +109,7 @@ public class ReactorTestBase {
     CConfiguration configuration = CConfiguration.create();
     configuration.set("app.output.dir", outputDir.getAbsolutePath());
     configuration.set("app.tmp.dir", tmpDir.getAbsolutePath());
-    configuration.set(Constants.CFG_APP_FABRIC_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+    configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),

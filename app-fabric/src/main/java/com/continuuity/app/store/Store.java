@@ -113,6 +113,14 @@ public interface Store {
   void setFlowletInstances(Id.Program id, String flowletId, int count) throws OperationException;
 
   /**
+   * Gets number of instances of specific flowlet.
+   * @param id flow id
+   * @param flowletId flowlet id
+   * @throws OperationException
+   */
+  int getFlowletInstances(Id.Program id, String flowletId) throws OperationException;
+
+  /**
    * Removes program data.
    * @param id program to remove
    */

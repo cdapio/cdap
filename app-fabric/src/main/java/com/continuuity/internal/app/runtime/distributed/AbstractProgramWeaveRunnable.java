@@ -147,7 +147,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         ZKClientServices.delegate(
           ZKClients.reWatchOnExpire(
             ZKClients.retryOnFailure(
-              ZKClientService.Builder.of(cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE))
+              ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
                 .setSessionTimeout(10000)
                 .build(),
               RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
@@ -277,7 +277,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                            new AbstractModule() {
       @Override
       protected void configure() {
-        bind(InetAddress.class).annotatedWith(Names.named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS))
+        bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
                                .toInstance(context.getHost());
 
         // For program loading

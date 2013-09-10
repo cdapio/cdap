@@ -139,7 +139,7 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
       server = new THsHaServer(serverArgs);
 
       // Set the server name.
-      setServerName(Constants.SERVICE_METRICS_FRONTEND_SERVER);
+      setServerName(Constants.Service.METRICS_FRONTEND);
 
       // Provide the registration info of service.
       RegisteredServerInfo info

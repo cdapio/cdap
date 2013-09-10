@@ -11,7 +11,7 @@ import java.net.ServerSocket;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Abstracts one of the servers in the ensemble
+ * Abstracts one of the servers in the ensemble.
  */
 class InstanceSpecification {
   private static final Logger LOG = LoggerFactory.getLogger(InstanceSpecification.class);

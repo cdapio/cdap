@@ -9,9 +9,9 @@ import com.continuuity.common.collect.Collector;
 import com.continuuity.common.collect.FirstNCollector;
 import com.continuuity.common.collect.LastNCollector;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
@@ -481,7 +481,7 @@ public class StreamClient {
       // print all the headers
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
-        if (!verbose && Constants.isContinuuityHeader(name)) {
+        if (!verbose && name.startsWith(Constants.Gateway.CONTINUUITY_PREFIX)) {
           continue;
         }
         System.out.println(name + ": " + event.getHeaders().get(name));
@@ -670,7 +670,7 @@ public class StreamClient {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(uri + "?q=dequeue");
-    get.addHeader(Constants.HEADER_STREAM_CONSUMER, consumer);
+    get.addHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, consumer);
     if (apikey != null) {
       get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
     }
@@ -723,7 +723,7 @@ public class StreamClient {
       String sep = "";
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
-        if (!verbose && Constants.isContinuuityHeader(name)) {
+        if (!verbose && name.startsWith(Constants.Gateway.CONTINUUITY_PREFIX)) {
           continue;
         }
         System.out.print(sep + name + "=" + event.getHeaders().get(name));

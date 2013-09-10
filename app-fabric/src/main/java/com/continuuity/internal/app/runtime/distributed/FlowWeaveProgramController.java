@@ -19,10 +19,13 @@ final class FlowWeaveProgramController extends AbstractWeaveProgramController {
   private static final Logger LOG = LoggerFactory.getLogger(FlowWeaveProgramController.class);
 
   private final Lock lock;
+  private final DistributedFlowletInstanceUpdater instanceUpdater;
 
-  FlowWeaveProgramController(String programName, WeaveController controller) {
+  FlowWeaveProgramController(String programName, WeaveController controller,
+                             DistributedFlowletInstanceUpdater instanceUpdater) {
     super(programName, controller);
     this.lock = new ReentrantLock();
+    this.instanceUpdater = instanceUpdater;
   }
 
   @Override
@@ -46,14 +49,12 @@ final class FlowWeaveProgramController extends AbstractWeaveProgramController {
   /**
    * Change the number of instances of the running flowlet. Notice that this method needs to be
    * synchronized as change of instances involves multiple steps that need to be completed all at once.
-   * @param flowletName Name of the flowlet
+   * @param flowletId Name of the flowlet
    * @param newInstanceCount New instance count
    * @throws java.util.concurrent.ExecutionException
    * @throws InterruptedException
    */
-  private synchronized void changeInstances(String flowletName, final int newInstanceCount) throws Exception {
-    weaveController.sendCommand(flowletName, ProgramCommands.SUSPEND).get();
-    weaveController.changeInstances(flowletName, newInstanceCount).get();
-    weaveController.sendCommand(flowletName, ProgramCommands.RESUME).get();
+  private synchronized void changeInstances(String flowletId, int newInstanceCount) throws Exception {
+    instanceUpdater.update(flowletId, newInstanceCount);
   }
 }

@@ -4,8 +4,7 @@ package com.continuuity.gateway;
  * Constants is a utility class that contains a set of universal constants
  * that are used throughout the Gateway project.
  */
-@Deprecated
-public class Constants {
+public final class Constants {
   /**
    * The prefix for all continuity classes.
    */
@@ -133,18 +132,10 @@ public class Constants {
     return collectorName + "." + propertyName;
   }
 
-  public static boolean isContinuuityHeader(String header) {
-    return header.startsWith(CONTINUUITY_PREFIX);
-  }
-
-  // Defaults for various configurations
 
   /**
    * Default number of worker threads for a connector.
    */
   public static final int DEFAULT_THREADS = 20;
 
-  public static final String METRICS_SERVICE_NAME =
-        com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
-  public static final String FLOW_SERVICE_NAME = "app.fabric.service";
 } // end of Constants class
