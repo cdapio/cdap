@@ -14,6 +14,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
@@ -50,6 +52,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
@@ -57,10 +60,11 @@ import java.util.Map;
 @Path("/v2")
 public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
-  private final DiscoveryServiceClient discoveryClient;
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
-  private final EndpointStrategy endpointStrategy;
+
+  private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
+  private EndpointStrategy endpointStrategy;
 
   @Inject
   public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
@@ -68,7 +72,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     super(authenticator);
     this.discoveryClient = discoveryClient;
     this.conf = conf;
-    this.endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC));
+  }
+
+  @Override
+  public void init(HandlerContext context) {
+    this.endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)),
+      1L, TimeUnit.SECONDS);
   }
 
   /**
