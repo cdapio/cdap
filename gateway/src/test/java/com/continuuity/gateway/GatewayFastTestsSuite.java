@@ -1,20 +1,14 @@
 package com.continuuity.gateway;
 
-import com.continuuity.app.store.StoreFactory;
-import com.continuuity.common.conf.*;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.guice.ConfigModule;
-import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.Gateway;
+import com.continuuity.gateway.v2.handlers.v2.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.MetadataServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.PingHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.ProcedureHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.ClearFabricHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.DatasetHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandlerTest;
@@ -22,13 +16,9 @@ import com.continuuity.gateway.v2.handlers.v2.log.LogHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
-import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
-import com.continuuity.weave.discovery.DiscoveryService;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -53,15 +43,13 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(value = Suite.class)
 @SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, AppFabricServiceHandlerTest.class, TableHandlerTest.class,
-  DatasetHandlerTest.class, ClearFabricHandlerTest.class})
+  DatasetHandlerTest.class, ClearFabricHandlerTest.class, DataSetClientTest.class, StreamClientTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
-  private static DiscoveryService discoveryService;
 
-  private static final InMemoryDiscoveryService IN_MEMORY_DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   private static Injector injector;
   private static MetadataService.Iface mds;
   private static AppFabricServer appFabricServer;
@@ -94,7 +82,6 @@ public class GatewayFastTestsSuite {
         }
       );
 
-      discoveryService = injector.getInstance(DiscoveryService.class);
       gateway = injector.getInstance(Gateway.class);
       mds = injector.getInstance(MetadataService.Iface.class);
       injector.getInstance(InMemoryTransactionManager.class).init();
@@ -114,6 +101,10 @@ public class GatewayFastTestsSuite {
 
   public static Injector getInjector() {
     return injector;
+  }
+
+  public static int getPort() {
+    return port;
   }
 
   public static HttpResponse GET(String resource) throws Exception {
