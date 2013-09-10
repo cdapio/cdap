@@ -28,7 +28,9 @@ public class WorkflowApp implements Application {
       .withWorkflow().add(new FunWorkflow()).build();
   }
 
-
+  /**
+   *
+   */
   public static class FunWorkflow implements Workflow {
 
     @Override
@@ -42,6 +44,9 @@ public class WorkflowApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class DummyAction extends AbstractWorkflowAction {
 
     @Override

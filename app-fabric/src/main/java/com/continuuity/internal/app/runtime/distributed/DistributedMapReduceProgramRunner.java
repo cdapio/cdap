@@ -47,7 +47,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getProgramName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getProgramName());
 
-    LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + spec.getName());
+    LOG.info("Launching distributed map reduce: " + program.getProgramName() + ":" + spec.getName());
 
     String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
     // TODO (ENG-2526): deal with logging

@@ -48,7 +48,7 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
     ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getProgramName());
     Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getProgramName());
 
-    LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + procedureSpec.getName());
+    LOG.info("Launching distributed procedure: " + program.getProgramName() + ":" + procedureSpec.getName());
 
     String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
     // TODO (ENG-2526): deal with logging
