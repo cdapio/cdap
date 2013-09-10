@@ -21,11 +21,6 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
-<<<<<<< HEAD
-import com.continuuity.weave.discovery.DiscoveryService;
-import com.continuuity.weave.discovery.InMemoryDiscoveryService;
-=======
->>>>>>> feature/gateway-client
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
