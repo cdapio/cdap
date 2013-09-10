@@ -255,14 +255,9 @@ define([], function () {
 
 					var app = this.get('model');
 
-					C.get('far', {
-						method: 'remove',
-						params: [app.id]
-					}, function () {
-
+					this.HTTP.del('rest', 'apps', app.id, function (response) {
 						self.transitionToRoute('index');
-
-					});
+					})
 
 				}, this));
 

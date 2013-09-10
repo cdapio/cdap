@@ -123,7 +123,6 @@ define([], function () {
 			var model = this.get('model');
 
 			model.set('currentState', 'STARTING');
-			console.log(arguments)
 			this.HTTP.post('rest', 'apps', appId, 'flows', id, 'start',
 				function (response) {
 

@@ -6,7 +6,7 @@ define([], function () {
 
 	Em.debug('Loading HTTP Resource');
 
-	var AJAX_TIMEOUT = 1000000;
+	var AJAX_TIMEOUT = 30000;
 
 	var Resource = Em.Object.extend({
 
@@ -86,7 +86,7 @@ define([], function () {
 				type: 'PUT',
 				timeout: AJAX_TIMEOUT
 			};
-			console.log(object)
+
 			if (!jQuery.isEmptyObject(object)) {
 				options['data'] = JSON.stringify(object);
 				options['contentType'] = 'application/json';
@@ -105,26 +105,24 @@ define([], function () {
 
 		},
 
-		rpc: function () {
-
-			var args = [].slice.call(arguments);
-			args.unshift('rpc');
-
-			var object = args[args.length - 2];
-
-			if (typeof object === 'object' && object.length) {
-				args[args.length - 2] = object;
-			}
-
-			this.post.apply(this, args);
-
-		},
-
 		del: function () {
 
 			var path = this.findPath(arguments);
 			var callback = this.findCallback(arguments);
-			this.post(path + '?_method=DELETE', callback);
+			var options = {
+				url: path,
+				type: 'DELETE',
+				timeout: AJAX_TIMEOUT
+			};
+			$.ajax(options).done(function (response, status) {
+				if (response.error) {
+					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+				} else {
+					callback(response, status);
+				}
+			}).fail(function (xhr, status, error) {
+				callback(error, status);
+			});
 
 		},
 
