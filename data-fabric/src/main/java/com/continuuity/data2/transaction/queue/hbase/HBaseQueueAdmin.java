@@ -79,7 +79,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public void create(String name) throws Exception {
     byte[] tableName = Bytes.toBytes(name);
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
-                                                       "/queue"));
+                                                       QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
     HBaseQueueUtils.createTableIfNotExists(admin, tableName, QueueConstants.COLUMN_FAMILY,
