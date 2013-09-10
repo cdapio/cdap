@@ -10,6 +10,10 @@ import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowContext;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -52,6 +56,8 @@ public class WorkflowApp implements Application {
    */
   public static final class CustomAction extends AbstractWorkflowAction {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CustomAction.class);
+
     private final String name;
 
     public CustomAction(String name) {
@@ -69,18 +75,24 @@ public class WorkflowApp implements Application {
     @Override
     public void initialize(WorkflowContext context) throws Exception {
       super.initialize(context);
-      System.out.println("Custom action initialized: " + context.getSpecification().getName());
+      LOG.info("Custom action initialized: " + context.getSpecification().getName());
     }
 
     @Override
     public void destroy() {
       super.destroy();
-      System.out.println("Custom action destroyed: " + getContext().getSpecification().getName());
+      LOG.info("Custom action destroyed: " + getContext().getSpecification().getName());
     }
 
     @Override
     public void run() {
-      System.out.println("Custom action run");
+      LOG.info("Custom action run");
+      try {
+        TimeUnit.SECONDS.sleep(10);
+      } catch (InterruptedException e) {
+        LOG.warn("Interrupted", e);
+      }
+      LOG.info("Custom run completed.");
     }
   }
 }

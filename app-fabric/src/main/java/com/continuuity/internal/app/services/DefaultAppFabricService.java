@@ -14,6 +14,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
@@ -235,29 +236,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   private Type entityTypeToType(ProgramId identifier) {
-    switch (identifier.getType()) {
-      case FLOW:
-        return Type.FLOW;
-      case PROCEDURE:
-        return Type.PROCEDURE;
-      case MAPREDUCE:
-        return Type.MAPREDUCE;
-    }
-    // Never hit
-    throw new IllegalArgumentException("Type not supported: " + identifier.getType());
+    return Type.valueOf(identifier.getType().name());
   }
 
   private EntityType typeToEntityType(Type type) {
-    switch (type) {
-      case FLOW:
-        return EntityType.FLOW;
-      case PROCEDURE:
-        return EntityType.PROCEDURE;
-      case MAPREDUCE:
-        return EntityType.MAPREDUCE;
-    }
-    // Never hit
-    throw new IllegalArgumentException("Type not suppported: " + type);
+    return EntityType.valueOf(type.name());
   }
 
   /**
@@ -276,14 +259,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage(UserErrors.ALREADY_RUNNING));
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
 
-      Program program;
-      try {
-        program = store.loadProgram(programId, entityTypeToType(id));
-      } catch (Throwable th) {
-        // TODO: hack: in that case the flow is mapreduce ;)
-        id.setType(EntityType.MAPREDUCE);
-        program = store.loadProgram(programId, entityTypeToType(id));
-      }
+      Program program = store.loadProgram(programId, entityTypeToType(id));
 
       BasicArguments userArguments = new BasicArguments();
       if (descriptor.isSetArguments()) {
@@ -316,11 +292,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
-      // TODO: hack: this might be a mapreduce job ;)
-      if (runtimeInfo == null && id.getType() == EntityType.FLOW) {
-        id.setType(EntityType.MAPREDUCE);
-        runtimeInfo = findRuntimeInfo(id);
-      }
 
       int version = 1;  // Note, how to get version?
       if (runtimeInfo == null) {
@@ -462,18 +433,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = null;
-    switch (identifier.getType()) {
-      case FLOW:
-        runtimeInfos = runtimeService.list(Type.FLOW).values();
-        break;
-      case PROCEDURE:
-        runtimeInfos = runtimeService.list(Type.PROCEDURE).values();
-        break;
-      case MAPREDUCE:
-        runtimeInfos = runtimeService.list(Type.MAPREDUCE).values();
-        break;
-    }
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos
+      = runtimeService.list(Type.valueOf(identifier.getType().name())).values();
+
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
             identifier.getAccountId(), identifier.getFlowId());
 
@@ -519,6 +481,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           MapReduceSpecification specification = appSpec.getMapReduces().get(id.getFlowId());
           return new Gson().toJson(specification);
         }
+      } else if (id.getType() == EntityType.WORKFLOW) {
+        if (appSpec.getWorkflows().containsKey(runnableId)) {
+          WorkflowSpecification specification = appSpec.getWorkflows().get(id.getFlowId());
+          return new Gson().toJson(specification);
+        }
       }
     } catch (OperationException e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
@@ -550,28 +517,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // TODO: fill values (incl. list of datasets ) once they are added to ProcedureSpecification
     queryDef.setServiceName(procedureSpec.getName());
     return queryDef;
-  }
-
-  private FlowDefinitionImpl getFlowDef(final ProgramId id)
-    throws AppFabricServiceException, UnsupportedTypeException {
-    ApplicationSpecification appSpec = null;
-    try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
-                                                        id.getApplicationId()));
-    } catch (OperationException e) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      throw  new AppFabricServiceException("Could not retrieve application spec for " + id.toString() + "." +
-                                             e.getMessage());
-    }
-
-    Preconditions.checkArgument(appSpec != null, "Not application specification found.");
-    FlowSpecification flowSpec = appSpec.getFlows().get(id.getFlowId());
-    if (flowSpec == null) {
-      // TODO: this is hack for a mapreduce job ;)
-      return getFlowDef4MapReduce(id, appSpec.getMapReduces().get(id.getFlowId()));
-    } else {
-      return getFlowDef4Flow(id, flowSpec);
-    }
   }
 
   private FlowDefinitionImpl getFlowDef4Flow(ProgramId id, FlowSpecification flowSpec) {

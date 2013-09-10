@@ -14,13 +14,12 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -28,7 +27,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
-import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -57,10 +55,11 @@ import java.util.Map;
 @Path("/v2")
 public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
-  private final DiscoveryServiceClient discoveryClient;
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
-  private final EndpointStrategy endpointStrategy;
+
+  private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
+  private EndpointStrategy endpointStrategy;
 
   @Inject
   public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
@@ -68,6 +67,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     super(authenticator);
     this.discoveryClient = discoveryClient;
     this.conf = conf;
+  }
+
+  @Override
+  public void init(HandlerContext context) {
+    super.init(context);
     this.endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC));
   }
 
@@ -450,6 +454,21 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Starts a workflow.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/start")
+  public void startWorkflow(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") final String appId,
+                             @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    runnableStartStop(request, responder, id, "start");
+  }
+
+  /**
    * Stops a flow.
    */
   @POST
@@ -492,7 +511,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setType(EntityType.MAPREDUCE);
     runnableStartStop(request, responder, id, "stop");
   }
-
 
 
   private void runnableStartStop(HttpRequest request, HttpResponder responder,
@@ -566,6 +584,22 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(mapreduceId);
     id.setType(EntityType.PROCEDURE);
+    runnableStatus(request, responder, id);
+  }
+
+
+  /**
+   * Returns status of a workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/status")
+  public void workflowStatus(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") final String appId,
+                             @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
     runnableStatus(request, responder, id);
   }
 

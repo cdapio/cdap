@@ -37,19 +37,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public final synchronized RuntimeInfo run(Program program, ProgramOptions options) {
-    ProgramRunner runner = null;
-
-    switch (program.getProcessorType()) {
-      case FLOW:
-        runner = programRunnerFactory.create(ProgramRunnerFactory.Type.FLOW);
-        break;
-      case PROCEDURE:
-        runner = programRunnerFactory.create(ProgramRunnerFactory.Type.PROCEDURE);
-        break;
-      case MAPREDUCE:
-        runner = programRunnerFactory.create(ProgramRunnerFactory.Type.MAPREDUCE);
-        break;
-    }
+    ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type
+                                                                           .valueOf(program.getProcessorType().name()));
 
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getProcessorType());
     final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(program, options), program);
