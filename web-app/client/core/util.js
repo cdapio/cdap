@@ -586,28 +586,27 @@ define([], function () {
 
 			C.Modal.show(
 				"Reset Reactor",
-				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor. Are you sure you would like to do this?",
+				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor."
+				+ " Are you sure you would like to do this?",
 				function () {
 
 					C.Util.interrupt();
 
-					C.get('far', {
-						method: 'reset',
-						params: []
-					}, function (error, response) {
-
-						if (error) {
-
+					jQuery.ajax({
+						url: '/rest/apps',
+						type: 'DELETE'
+					}).done(function (response, status) {
+						if (response.error) {
 							C.Util.proceed(function () {
 								C.Modal.show("Reset Error", error.message);
-							});
-
+							});							
 						} else {
-
 							window.location = '/';
-
 						}
-
+					}).fail(function (xhr, status, error) {
+						C.Util.proceed(function () {
+							C.Modal.show("Reset Error", error.message);
+						});							
 					});
 
 				});

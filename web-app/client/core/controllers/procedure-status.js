@@ -145,39 +145,6 @@ define([], function () {
 			if (action && action.toLowerCase() in this) {
 				this[action.toLowerCase()](app, id, -1);
 			}
-		},
-
-		'delete': function () {
-
-			if (this.get('model').get('currentState') !== 'STOPPED' &&
-				this.get('model').get('currentState') !== 'DEPLOYED') {
-				C.Modal.show('Cannot Delete', 'Please stop the Procedure before deleting.');
-			} else {
-				C.Modal.show(
-					"Delete Procedure",
-					"You are about to remove a Procedure, which is irreversible. You can upload this Procedure again if you'd like. Do you want to proceed?",
-					$.proxy(function (event) {
-
-						var procedure = this.get('model');
-
-						C.get('far', {
-							method: 'remove',
-							params: [procedure.app, procedure.name, procedure.version, 'QUERY']
-						}, function (error, response) {
-
-							C.Modal.hide(function () {
-
-								if (error) {
-									C.Modal.show('Delete Error', error.message || 'No reason given. Please check the logs.');
-								} else {
-									window.history.go(-1);
-								}
-
-							});
-
-						});
-					}, this));
-			}
 		}
 
 	});

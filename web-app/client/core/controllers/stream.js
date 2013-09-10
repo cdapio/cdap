@@ -61,34 +61,7 @@ define([], function () {
 			clearInterval(this.interval);
 			this.set('elements', Em.Object.create());
 
-		},
-
-		"delete": function () {
-
-			C.Modal.show("Delete Stream",
-				"Are you sure you would like to delete this Stream? This action is not reversible.",
-				$.proxy(function (event) {
-
-					var stream = this.get('model');
-
-					C.get('metadata', {
-						method: 'deleteStream',
-						params: ['Stream', {
-							id: stream.id
-						}]
-					}, function (error, response) {
-
-						if (error) {
-							C.Modal.show('Delete Error', error.message);
-						} else {
-							window.history.go(-1);
-						}
-
-					});
-				}, this));
-
 		}
-
 	});
 
 	Controller.reopenClass({

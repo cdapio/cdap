@@ -400,6 +400,25 @@ WebAppServer.prototype.bindRoutes = function(io) {
   });
 
   /*
+   * REST DELETE handler.
+   */
+  this.app.del('/rest/*', function (req, res) {
+
+    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
+    request.del('http://' + path, function (error, response, body) {
+
+      if (!error && response.statusCode == 200) {
+        res.send(body);
+      } else {
+        self.logger.error('Could not fetch REST', path, error || response.statusCode);
+        res.status(500);
+        res.send(path, error || response.statusCode);
+      }
+    });        
+  });
+
+  /*
    * REST PUT handler.
    */
   this.app.put('/rest/*', function (req, res) {
@@ -741,7 +760,8 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
     var accountID = 'developer';
     var sessionId = req.session.id;
-    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'] + '/' + self.API_VERSION;
+    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'] 
+      + '/' + self.API_VERSION;
 
     // request({
     //   method: 'PUT',
