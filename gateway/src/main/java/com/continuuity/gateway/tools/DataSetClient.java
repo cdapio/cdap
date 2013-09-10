@@ -73,6 +73,12 @@ public class DataSetClient {
 
   boolean forceNoSSL = false;    // to disable SSL even with api key and remote host
 
+  boolean clearAll = false;      // to clear everything
+  boolean clearQueues = false;   // to clear all event streams
+  boolean clearStreams = false;  // to clear all intra-flow queues
+  boolean clearTables = false;   // to clear all named tables
+  boolean clearMeta = false;     // to clear all meta data
+
   /**
    * Print the usage statement and return null (or empty string if this is not
    * an error case). See getValue() for an explanation of the return type.
@@ -94,6 +100,7 @@ public class DataSetClient {
     out.println("  " + name + " write --table name --row <row key> ...");
     out.println("  " + name + " increment --table name --row <row key> ...");
     out.println("  " + name + " delete --table name --row <row key> ...");
+    out.println("  " + name + " clear [ --all | --queues | --streams | --datasets | --meta]");
     out.println();
     out.println("Additional options:");
     out.println("  --table <name>          To specify the table to operate on");
@@ -233,6 +240,16 @@ public class DataSetClient {
         pretty = true;
       } else if ("--json".equals(arg)) {
         pretty = false;
+      } else if ("--all".equals(arg)) {
+        clearAll = true;
+      } else if ("--queues".equals(arg)) {
+        clearQueues = true;
+      } else if ("--streams".equals(arg)) {
+        clearStreams = true;
+      } else if ("--datasets".equals(arg)) {
+        clearTables = true;
+      } else if ("--meta".equals(arg)) {
+        clearMeta = true;
       } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
@@ -244,7 +261,7 @@ public class DataSetClient {
   }
 
   static List<String> supportedCommands =
-    Arrays.asList("read", "write", "increment", "delete", "create");
+    Arrays.asList("read", "write", "increment", "delete", "create", "clear");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -258,7 +275,7 @@ public class DataSetClient {
       usage("Unsupported command '" + command + "'.");
     }
 
-    if (table == null) {
+    if (table == null && !"clear".equals(command)) {
       usage("--table is required for table operations.");
     }
 
@@ -269,7 +286,7 @@ public class DataSetClient {
       if (!columns.isEmpty() || startcol != null || stopcol != null || limit != -1 || !values.isEmpty()) {
         usage("specifying columns or values is not allowed for table create command.");
       }
-    } else {
+    } else if (!"clear".equals(command)){
       if (row == null) {
         usage("--row is required for table operations.");
       }
@@ -294,6 +311,17 @@ public class DataSetClient {
           } catch (NumberFormatException e) {
             usage("for increment all values must be numbers");
           }
+        }
+      }
+
+      // verify that clear command specifies what to clear
+      if ("clear".equals(command)) {
+        if (table != null) {
+          usage("A table cannot be specified for --clear");
+        }
+        if (!(clearAll || clearMeta || clearQueues || clearStreams || clearTables)) {
+          usage("You must specify what to clear - please us --all, " +
+                  "--queues, --datasets, --meta or --streams.");
         }
       }
     }
@@ -497,6 +525,41 @@ public class DataSetClient {
       }
       return "OK.";
     }
+
+  if ("clear".equals(command)) {
+    if (clearAll) {
+      requestUrl = baseUrl + "/all";
+    } else {
+      if (clearQueues) {
+        requestUrl = baseUrl + "/queues";
+      }
+      if (clearStreams) {
+        requestUrl = baseUrl + "/streams";
+      }
+      if (clearTables) {
+        requestUrl = baseUrl + "/datasets";
+      }
+      if (clearMeta) {
+        requestUrl = baseUrl + "/meta";
+      }
+    }
+    // now execute the delete
+    try {
+      HttpDelete delete = new HttpDelete(requestUrl);
+      if (apikey != null) {
+        delete.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      }
+      response = client.execute(delete);
+      client.getConnectionManager().shutdown();
+    } catch (IOException e) {
+      System.err.println("Error sending HTTP request: " + e.getMessage());
+      return null;
+    }
+    if (!checkHttpStatus(response)) {
+      return null;
+    }
+    return "OK.";
+  }
 
     return null;
   }

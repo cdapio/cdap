@@ -21,8 +21,11 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
+<<<<<<< HEAD
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
+=======
+>>>>>>> feature/gateway-client
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -53,9 +56,7 @@ public class GatewayFastTestsSuite {
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
-  private static DiscoveryService discoveryService;
 
-  private static final InMemoryDiscoveryService IN_MEMORY_DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   private static Injector injector;
   private static MetadataService.Iface mds;
   private static AppFabricServer appFabricServer;
@@ -88,7 +89,6 @@ public class GatewayFastTestsSuite {
         }
       );
 
-      discoveryService = injector.getInstance(DiscoveryService.class);
       gateway = injector.getInstance(Gateway.class);
       mds = injector.getInstance(MetadataService.Iface.class);
       injector.getInstance(InMemoryTransactionManager.class).init();
