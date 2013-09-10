@@ -66,12 +66,6 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
   }
 
   @DELETE
-  @Path("/data")
-  public void clearData(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ClearFabric.ToClear.DATA);
-  }
-
-  @DELETE
   @Path("/meta")
   public void clearMeta(HttpRequest request, final HttpResponder responder) {
     clear(request, responder, ClearFabric.ToClear.META);

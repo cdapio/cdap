@@ -69,7 +69,6 @@ public class StreamClient {
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
   int port = -1;               // the port of the gateway
-  String connector = null;       // the name of the rest collector
   String apikey = null;          // the api key for authentication.
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
@@ -180,7 +179,6 @@ public class StreamClient {
         if (++pos >= args.length) {
           usage(true);
         }
-        connector = args[pos];
       } else if ("--apikey".equals(arg)) {
         if (++pos >= args.length) {
           usage(true);
@@ -280,9 +278,6 @@ public class StreamClient {
     }
     if (port > 0 && hostname == null) {
       usage("A hostname must be provided when a port is specified.");
-    }
-    if (connector != null && baseUrl != null) {
-      usage("Only one of --connector or --base may be specified.");
     }
     // verify that only one encoding is given for the body
     if (hex && urlenc) {
