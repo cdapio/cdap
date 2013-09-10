@@ -1,8 +1,9 @@
-package com.continuuity.gateway;
+package com.continuuity.gateway.v2.tools;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.tools.DataSetClient;
 import org.junit.Assert;
 import org.junit.Test;

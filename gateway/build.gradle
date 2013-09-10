@@ -59,4 +59,5 @@ configurations {
  */
 test {
   exclude '**/v2/handlers/v2/**'
+  exclude '**/v2/tools/**'
 }
