@@ -935,17 +935,25 @@ public class OperationExecutorClient extends ConverterUtils {
     return "remote-client";
   }
 
-  public com.continuuity.data2.transaction.Transaction start() throws OperationException, TException {
+  public com.continuuity.data2.transaction.Transaction startLong() throws OperationException, TException {
     try {
-      return unwrap(client.startTx());
+      return unwrap(client.startLong());
     } catch (TOperationException te) {
       throw unwrap(te);
     }
   }
 
-  public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException, TException {
+  public com.continuuity.data2.transaction.Transaction startShort() throws OperationException, TException {
     try {
-      return unwrap(client.startTxTimeout(timeout == null ? -1 : timeout));
+      return unwrap(client.startShort());
+    } catch (TOperationException te) {
+      throw unwrap(te);
+    }
+  }
+
+  public com.continuuity.data2.transaction.Transaction startShort(int timeout) throws OperationException, TException {
+    try {
+      return unwrap(client.startShortTimeout(timeout));
     } catch (TOperationException te) {
       throw unwrap(te);
     }

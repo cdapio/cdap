@@ -284,7 +284,13 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         }
 
         // Based on the strategy to determine if include the given entry or not.
+        byte[] dataBytes = entry.getSecond().get(QueueConstants.DATA_COLUMN);
         byte[] metaBytes = entry.getSecond().get(QueueConstants.META_COLUMN);
+
+        if (dataBytes == null || metaBytes == null) {
+          continue;
+        }
+
         byte[] stateBytes = entry.getSecond().get(stateColumnName);
 
         int counter = Bytes.toInt(rowKey, rowKey.length - 4, Ints.BYTES);
@@ -292,8 +298,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
           continue;
         }
 
-        entryCache.put(rowKey,
-                       new SimpleQueueEntry(rowKey, entry.getSecond().get(QueueConstants.DATA_COLUMN), stateBytes));
+        entryCache.put(rowKey, new SimpleQueueEntry(rowKey, dataBytes, stateBytes));
       }
     } finally {
       scanner.close();
@@ -348,7 +353,8 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         // If the entry's enqueue write pointer is smaller than smallest in progress tx, then everything before it
         // must be processed, too (it is not possible that an enqueue before this is still in progress). So it is
         // safe to move the start row after this entry.
-        if (enqueueWritePointer < transaction.getFirstInProgress()) {
+        // Note: here we ignore the long-running transactions, because we know they don't interact with queues.
+        if (enqueueWritePointer < transaction.getFirstShortInProgress()) {
           startRow = getNextRow(startRow, enqueueWritePointer, counter);
         }
         return false;

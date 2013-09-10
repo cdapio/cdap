@@ -26,6 +26,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 
@@ -36,6 +37,13 @@ import java.util.Map;
 public class HttpResponder {
   private final Channel channel;
   private final boolean keepalive;
+
+  private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
+    @Override
+    protected Gson initialValue() {
+      return new Gson();
+    }
+  };
 
   public HttpResponder(Channel channel, boolean keepalive) {
     this.channel = channel;
@@ -48,11 +56,21 @@ public class HttpResponder {
    * @param object Object that will be serialized into Json and sent back as content.
    */
   public void sendJson(HttpResponseStatus status, Object object){
+    sendJson(status, object, object.getClass());
+  }
+
+  /**
+   * Sends json response back to the client.
+   * @param status Status of the response.
+   * @param object Object that will be serialized into Json and sent back as content.
+   * @param type Type of object.
+   */
+  public void sendJson(HttpResponseStatus status, Object object, Type type){
     try {
       ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
       JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(channelBuffer),
                                                                     Charsets.UTF_8));
-      new Gson().toJson(object, object.getClass(), jsonWriter);
+      gson.get().toJson(object, type, jsonWriter);
       jsonWriter.close();
 
       sendContent(status, channelBuffer, "application/json", ImmutableMultimap.<String, String>of());

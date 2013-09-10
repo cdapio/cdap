@@ -17,6 +17,7 @@ import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.inject.Inject;
 
 /**
  * This is an instantiator that looks up each data set name in the meta
@@ -47,6 +48,7 @@ public final class DataSetInstantiatorFromMetaData {
    * @param opex the operation executor to use for data access
    * @param mds  the meta data store to use for meta data access
    */
+  @Inject
   public DataSetInstantiatorFromMetaData(OperationExecutor opex, LocationFactory locationFactory,
                                          DataSetAccessor dataSetAccessor, TransactionSystemClient txSystemClient,
                                          MetadataService mds) {

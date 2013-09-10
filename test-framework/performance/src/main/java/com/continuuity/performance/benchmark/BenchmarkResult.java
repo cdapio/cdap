@@ -48,7 +48,7 @@ public class BenchmarkResult {
   }
 
   /**
-   * Group result.
+   * Used to summarize a group result.
    */
   public static class GroupResult {
     private final String name;

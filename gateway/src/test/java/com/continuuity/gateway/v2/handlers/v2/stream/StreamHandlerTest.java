@@ -9,6 +9,7 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
@@ -27,6 +28,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -71,6 +73,8 @@ public class StreamHandlerTest {
   private void startGateway() throws Exception {
     configuration.setInt(com.continuuity.common.conf.Constants.Gateway.PORT, 0);
     configuration.set(com.continuuity.common.conf.Constants.Gateway.ADDRESS, hostname);
+    configuration.set(com.continuuity.common.conf.Constants.CFG_LOCAL_DATA_DIR,
+                      System.getProperty("java.io.tmpdir"));
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
@@ -83,11 +87,12 @@ public class StreamHandlerTest {
         protected void configure() {
           // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
           // AppFabricServiceModule
-          bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-          bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-          bind(StoreFactory.class).to(MDSStoreFactory.class);
-          bind(LogReader.class).to(MockLogReader.class);
+          bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class).in(Scopes.SINGLETON);
+          bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Scopes.SINGLETON);
+          bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
+          bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
           bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
+          bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -111,7 +116,7 @@ public class StreamHandlerTest {
 
     // Try to get info on a non-existant stream
     DefaultHttpClient httpclient = new DefaultHttpClient();
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream1", hostname, port));
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream1/info", hostname, port));
     HttpResponse response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
@@ -123,12 +128,7 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // getInfo should now return 200
-    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream1", hostname, port));
-    response = httpclient.execute(httpGet);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    EntityUtils.consume(response.getEntity());
-
-    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream1?q=info", hostname, port));
+    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream1/info", hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
@@ -158,7 +158,7 @@ public class StreamHandlerTest {
     }
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue?q=newConsumer",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/consumerid",
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -168,7 +168,7 @@ public class StreamHandlerTest {
 
     // Dequeue 10 entries
     for (int i = 0; i < 10; ++i) {
-      httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue?q=dequeue", hostname, port));
+      httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue", hostname, port));
       httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -179,7 +179,7 @@ public class StreamHandlerTest {
     }
 
     // Dequeue-ing again should give NO_CONTENT
-    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue?q=dequeue", hostname, port));
+    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue", hostname, port));
     httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
@@ -199,7 +199,7 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=newConsumer",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumerid",
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -219,7 +219,7 @@ public class StreamHandlerTest {
     List<Integer> actual = Lists.newArrayList();
     // Dequeue all entries
     for (int i = 0; i < BatchEnqueue.NUM_ELEMENTS; ++i) {
-      httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=dequeue", hostname,
+      httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/dequeue", hostname,
                                           port));
       httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);
@@ -319,7 +319,7 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=newConsumer",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumerid",
                                                 hostname, port));
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -344,7 +344,7 @@ public class StreamHandlerTest {
     // Dequeue all entries
     for (int i = 0; i < concurrencyLevel * BatchEnqueue.NUM_ELEMENTS; ++i) {
       httpGet
-        = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue?q=dequeue", hostname,
+        = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/dequeue", hostname,
                                     port));
       httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
       response = httpclient.execute(httpGet);

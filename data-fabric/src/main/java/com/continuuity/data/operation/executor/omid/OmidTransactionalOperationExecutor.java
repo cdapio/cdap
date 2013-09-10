@@ -1421,15 +1421,21 @@ public class OmidTransactionalOperationExecutor
 
 
   @Override
-  public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException {
+  public com.continuuity.data2.transaction.Transaction startLong() throws OperationException {
     txSystemMetrics.gauge("tx.start.ops", 1);
-    return txManager.start(timeout);
+    return txManager.startLong();
   }
 
   @Override
-  public com.continuuity.data2.transaction.Transaction start() throws OperationException {
+  public com.continuuity.data2.transaction.Transaction startShort() throws OperationException {
     txSystemMetrics.gauge("tx.start.ops", 1);
-    return txManager.start();
+    return txManager.startShort();
+  }
+
+  @Override
+  public com.continuuity.data2.transaction.Transaction startShort(int timeout) throws OperationException {
+    txSystemMetrics.gauge("tx.start.ops", 1);
+    return txManager.startShort(timeout);
   }
 
   @Override

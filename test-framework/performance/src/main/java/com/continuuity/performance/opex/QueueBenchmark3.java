@@ -1,8 +1,8 @@
 package com.continuuity.performance.opex;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
@@ -19,6 +19,7 @@ import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -108,7 +109,7 @@ public class QueueBenchmark3 extends OpexBenchmark {
     sleepThread(FOREVER);
   }
   long doEnqueue(long iteration, int agentId) throws BenchmarkException {
-    if (pauseAllAgents.get() == true) {
+    if (pauseAllAgents.get()) {
       pauseThread();
     }
 
@@ -135,7 +136,7 @@ public class QueueBenchmark3 extends OpexBenchmark {
   }
 
   long doDequeue(int consumerId) throws BenchmarkException {
-    if (pauseAllAgents.get() == true) {
+    if (pauseAllAgents.get()) {
       pauseThread();
     }
 

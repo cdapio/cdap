@@ -38,7 +38,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -245,13 +243,10 @@ public class StreamHandler extends AbstractHttpHandler {
     }
   }
 
-  // GET means client wants to view the content of a queue.
-  // 1. obtain a consumerId with GET stream?q=newConsumer
-  // 2. dequeue an event with GET stream?q=dequeue with the consumerId as an HTTP header
   @GET
-  @Path("/streams/{stream-id}")
-  public void dispatchGet(HttpRequest request, HttpResponder responder,
-                          @PathParam("stream-id") String destination) {
+  @Path("/streams/{streamId}/dequeue")
+  public void dequeue(HttpRequest request, HttpResponder responder,
+                      @PathParam("streamId") String destination) {
     GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
       new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
 
@@ -260,47 +255,6 @@ public class StreamHandler extends AbstractHttpHandler {
       return;
     }
 
-    try {
-      // validate the existence of the stream
-      if (!streamCache.validateStream(accountId, destination)) {
-        helper.finish(NotFound);
-        LOG.trace("Received a request for non-existent stream {}", destination);
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-    } catch (OperationException e) {
-      LOG.error("Exception during validation of stream {}", destination, e);
-    }
-
-    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-    if (queryParams == null || queryParams.isEmpty()) {
-      info(responder, helper, destination, accountId);
-      return;
-    }
-
-    // Dispatch GET request
-    List<String> qParams = queryParams.get("q");
-    if (qParams != null && qParams.size() == 1) {
-      if ("newConsumer".equals(qParams.get(0))) {
-        newId(responder, helper, destination, accountId);
-        return;
-      } else if ("dequeue".equals(qParams.get(0))) {
-        dequeue(request, responder, helper, destination, accountId);
-        return;
-      } else if ("info".equals(qParams.get(0))) {
-        info(responder, helper, destination, accountId);
-        return;
-      }
-    }
-
-    // respond with error for unknown requests
-    helper.finish(BadRequest);
-    LOG.trace("Received an unsupported request - {}", request);
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-  }
-
-  private void dequeue(HttpRequest request, HttpResponder responder, GatewayMetricsHelperWrapper helper,
-                       String destination, String accountId) {
     helper.setMethod("dequeue");
     helper.setScope(destination);
 
@@ -329,6 +283,14 @@ public class StreamHandler extends AbstractHttpHandler {
     QueueName queueName = QueueName.fromStream(accountId, destination);
     ConsumerHolder consumerHolder;
     try {
+      // validate the existence of the stream
+      if (!streamCache.validateStream(accountId, destination)) {
+        helper.finish(NotFound);
+        LOG.trace("Received a request for non-existent stream {}", destination);
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
       consumerHolder = queueConsumerCache.get(new ConsumerKey(queueName, groupId));
     } catch (Exception e) {
       LOG.error("Caught exception during creation of consumer for stream {}", destination, e);
@@ -385,10 +347,32 @@ public class StreamHandler extends AbstractHttpHandler {
     helper.finish(Success);
   }
 
-  private void newId(HttpResponder responder, GatewayMetricsHelperWrapper helper,
-                     String destination, String accountId) {
+  @GET
+  @Path("/streams/{streamId}/consumerid")
+  public void newConsumer(HttpRequest request, HttpResponder responder,
+                          @PathParam("streamId") String destination) {
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
+      new MetricsHelper(this.getClass(), cMetrics, NAME), gatewayMetrics);
+
+    String accountId = authenticate(request, responder, helper);
+    if (accountId == null) {
+      return;
+    }
+
     helper.setMethod("getNewId");
     helper.setScope(destination);
+
+    try {
+      // validate the existence of the stream
+      if (!streamCache.validateStream(accountId, destination)) {
+        helper.finish(NotFound);
+        LOG.trace("Received a request for non-existent stream {}", destination);
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+    } catch (OperationException e) {
+      LOG.error("Exception during validation of stream {}", destination, e);
+    }
 
     // TODO: ENG-3203. The new queue implementation does not have getGroupId method yet.
     // Hence temporarily generating groupID using stream name, accountId and nano time.
@@ -411,14 +395,32 @@ public class StreamHandler extends AbstractHttpHandler {
     helper.finish(Success);
   }
 
-  private void info(HttpResponder responder, GatewayMetricsHelperWrapper helper,
-                    String destination, String accountId) {
+  @GET
+  @Path("/streams/{streamId}/info")
+  public void getInfo(HttpRequest request, HttpResponder responder,
+                      @PathParam("streamId") String destination) {
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
+      new MetricsHelper(this.getClass(), cMetrics, NAME), gatewayMetrics);
+
+    String accountId = authenticate(request, responder, helper);
+    if (accountId == null) {
+      return;
+    }
+
     helper.setMethod("getQueueInfo");
     helper.setScope(destination);
 
     // TODO: ENG-3203. The new queue implementation does not have getQueueInfo method yet.
     // Hence for now just checking whether stream exists or not.
     try {
+      // validate the existence of the stream
+      if (!streamCache.validateStream(accountId, destination)) {
+        helper.finish(NotFound);
+        LOG.trace("Received a request for non-existent stream {}", destination);
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
       //Check if a stream exists
       Stream existingStream = metadataService.getStream(new Account(accountId), new Stream(destination));
       boolean existsInMDS = existingStream.isExists();

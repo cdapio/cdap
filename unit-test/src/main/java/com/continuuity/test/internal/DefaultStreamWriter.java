@@ -86,7 +86,7 @@ public final class DefaultStreamWriter implements StreamWriter {
     TransactionAware txAware = (TransactionAware) producer;
 
     // start tx to write in queue in tx
-    Transaction tx = txSystemClient.start();
+    Transaction tx = txSystemClient.startShort();
     txAware.startTx(tx);
     try {
       producer.enqueue(new QueueEntry(codec.encodePayload(event)));

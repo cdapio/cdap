@@ -69,7 +69,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return "app.fabric.service";
+        return Constants.Service.APP_FABRIC;
       }
 
       @Override

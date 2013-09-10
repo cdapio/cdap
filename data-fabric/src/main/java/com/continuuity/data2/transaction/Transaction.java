@@ -13,19 +13,23 @@ public class Transaction {
   private final long writePointer;
   private final long[] invalids;
   private final long[] inProgress;
+  private final long firstShortInProgress;
 
   private static final Gson gson = new Gson();
 
   private static final long[] NO_EXCLUDES = { };
+  public static final long NO_TX_IN_PROGRESS = Long.MAX_VALUE;
 
   public static final Transaction ALL_VISIBLE_LATEST =
-    new Transaction(Long.MAX_VALUE, Long.MAX_VALUE, NO_EXCLUDES, NO_EXCLUDES);
+    new Transaction(Long.MAX_VALUE, Long.MAX_VALUE, NO_EXCLUDES, NO_EXCLUDES, NO_TX_IN_PROGRESS);
 
-  public Transaction(long readPointer, long writePointer, long[] invalids, long[] inProgress) {
+  public Transaction(long readPointer, long writePointer, long[] invalids, long[] inProgress,
+                     long firstShortInProgress) {
     this.readPointer = readPointer;
     this.writePointer = writePointer;
     this.invalids = invalids;
     this.inProgress = inProgress;
+    this.firstShortInProgress = firstShortInProgress;
   }
 
   public long getReadPointer() {
@@ -45,7 +49,11 @@ public class Transaction {
   }
 
   public long getFirstInProgress() {
-    return inProgress.length == 0 ? Long.MAX_VALUE : inProgress[0];
+    return inProgress.length == 0 ? NO_TX_IN_PROGRESS : inProgress[0];
+  }
+
+  public long getFirstShortInProgress() {
+    return firstShortInProgress;
   }
 
   public boolean isInProgress(long version) {

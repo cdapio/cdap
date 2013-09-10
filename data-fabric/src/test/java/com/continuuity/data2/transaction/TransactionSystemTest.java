@@ -18,8 +18,8 @@ public abstract class TransactionSystemTest {
     TransactionSystemClient client1 = getClient();
     TransactionSystemClient client2 = getClient();
 
-    Transaction tx1 = client1.start();
-    Transaction tx2 = client2.start();
+    Transaction tx1 = client1.startShort();
+    Transaction tx2 = client2.startShort();
 
     List<byte[]> changeSet = Lists.newArrayList(Bytes.toBytes("one"), Bytes.toBytes("two"));
     Assert.assertTrue(client1.canCommit(tx1, changeSet));

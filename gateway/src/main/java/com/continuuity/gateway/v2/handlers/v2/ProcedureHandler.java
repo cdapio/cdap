@@ -106,8 +106,8 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-name}/methods/{method-name}")
   public void procedureGet(HttpRequest request, final HttpResponder responder,
-                            @PathParam("appId") String appId, @PathParam("procedureName") String procedureName,
-                            @PathParam("methodName") String methodName) {
+                            @PathParam("app-id") String appId, @PathParam("procedure-name") String procedureName,
+                            @PathParam("method-name") String methodName) {
 
     try {
       // Parameters in query string allows multiple values for a singe key, however procedures take one value for one

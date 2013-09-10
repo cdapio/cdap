@@ -96,7 +96,7 @@ public class MetadataServiceHandlerTest {
   @Test
   public void testGetInvalidStreamsByApp() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app2/streams");
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   @Test

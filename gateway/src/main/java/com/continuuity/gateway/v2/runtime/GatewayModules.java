@@ -10,10 +10,13 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
+import com.continuuity.gateway.v2.handlers.v2.MetadataServiceHandler;
 import com.continuuity.gateway.v2.handlers.v2.PingHandler;
 import com.continuuity.gateway.v2.handlers.v2.AppFabricServiceHandler;
 import com.continuuity.gateway.v2.handlers.v2.ProcedureHandler;
-import com.continuuity.gateway.v2.handlers.v2.MetadataServiceHandler;
+import com.continuuity.gateway.v2.handlers.v2.dataset.ClearFabricHandler;
+import com.continuuity.gateway.v2.handlers.v2.dataset.DatasetHandler;
+import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandler;
 import com.continuuity.gateway.v2.handlers.v2.log.LogHandler;
 import com.continuuity.gateway.v2.handlers.v2.stream.StreamHandler;
 import com.continuuity.passport.PassportConstants;
@@ -71,6 +74,9 @@ public class GatewayModules extends RuntimeModule {
         handlerBinder.addBinding().to(AppFabricServiceHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(LogHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(ProcedureHandler.class).in(Scopes.SINGLETON);
+        handlerBinder.addBinding().to(TableHandler.class).in(Scopes.SINGLETON);
+        handlerBinder.addBinding().to(DatasetHandler.class).in(Scopes.SINGLETON);
+        handlerBinder.addBinding().to(ClearFabricHandler.class).in(Scopes.SINGLETON);
 
         boolean requireAuthentication = cConf.getBoolean(
           Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED,
