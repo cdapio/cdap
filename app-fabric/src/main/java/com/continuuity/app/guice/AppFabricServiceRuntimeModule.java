@@ -69,9 +69,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     }
 
     @Provides
-    @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS)
+    @Named(Constants.AppFabric.SERVER_ADDRESS)
     public InetAddress providesHostname(CConfiguration cConf) {
-      return Networks.resolve(cConf.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS),
+      return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
     }
   }

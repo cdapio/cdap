@@ -5,7 +5,7 @@
 package com.continuuity.gateway.collector;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.Constants;
+import com.continuuity.common.conf.Constants;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
@@ -41,8 +41,7 @@ public class NettyFlumeCollector extends FlumeCollector {
   public void configure(CConfiguration configuration) throws Exception {
     super.configure(configuration);
     // the only additional option we need is number of netty threads
-    this.threads = configuration.getInt(Constants.buildConnectorPropertyName(
-      this.getName(), Constants.CONFIG_THREADS), Constants.DEFAULT_THREADS);
+    this.threads = configuration.getInt(this.getName() + ".threads", Constants.Gateway.DEFAULT_WORKER_THREADS);
   }
 
   @Override

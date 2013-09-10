@@ -21,11 +21,11 @@ define([], function () {
 			this.set('timeseries', Em.Object.create());
 			this.set('metrics', []);
 
-			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
+			this.set('name', (this.get('flowId') || this.get('id') || this.name));
 
-			this.set('app', this.get('applicationId') || this.get('application'));
+			this.set('app', this.get('applicationId') || this.get('app'));
 			this.set('id', this.get('app') + ':' +
-				(this.get('flowId') || this.get('id') || this.get('meta').name));
+				(this.get('flowId') || this.get('id') || this.name));
 
 		},
 		controlLabel: function () {
@@ -68,13 +68,11 @@ define([], function () {
 			var app_id = this.get('app'),
 				procedure_id = this.get('name');
 
-			http.rpc('runnable', 'status', [app_id, procedure_id, -1, 'QUERY'],
+			http.rest('apps', app_id, 'procedures', procedure_id, 'status',
 				function (response) {
 
-					if (response.result) {
-						if (self.get('name') === response.result.flowId) {
-							self.set('currentState', response.result.status);
-						}
+					if (!jQuery.isEmptyObject(response)) {
+						self.set('currentState', response.status);
 					}
 
 			});
@@ -152,7 +150,7 @@ define([], function () {
 		type: 'Procedure',
 		kind: 'Model',
 		find: function(model_id, http) {
-
+			var self = this;
 			var promise = Ember.Deferred.create();
 
 			var model_id = model_id.split(':');
@@ -160,17 +158,15 @@ define([], function () {
 			var procedure_id = model_id[1];
 
 			http.rest('apps', app_id, 'procedures', procedure_id, function (model, error) {
-
+				var model = self.transformModel(model);
 				model.applicationId = app_id;
 				model = C.Procedure.create(model);
 
-				http.rpc('runnable', 'status', [app_id, procedure_id, -1, 'QUERY'],
+				http.rest('apps', app_id, 'procedures', procedure_id, 'status',
 					function (response) {
 
-						if (response.error) {
-							promise.reject(response.error);
-						} else {
-							model.set('currentState', response.result.status);
+						if (!jQuery.isEmptyObject(response)) {
+							model.set('currentState', response.status);
 							promise.resolve(model);
 						}
 
@@ -180,6 +176,16 @@ define([], function () {
 
 			return promise;
 
+		},
+
+		transformModel: function (model) {
+			return {
+				id: model.name,
+				name: model.name,
+				description: model.description,
+				serviceName: model.name,
+				datasets: model.datasets
+			};
 		}
 	});
 

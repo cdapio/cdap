@@ -49,8 +49,7 @@ define([], function () {
 				}
 				return res;
 			}
-
-			var streams = flow.flowletStreams.filter(function (stream) {
+			var streams = flow.flowletStreams.filter(function  (stream) {
 				return stream.name === model.name;
 			})[0];
 			var inputs = [], outputs = [];
@@ -77,7 +76,6 @@ define([], function () {
 					});
 				}
 			}
-			
 			this.get('model').set('inputs', inputs);
 			this.get('model').set('outputs', outputs);
 
@@ -237,8 +235,8 @@ define([], function () {
 				var version = flow.version || -1;
 				var flowlet = model.name;
 
-				this.HTTP.rpc('runnable', 'setInstances', [app, flow, version, flowlet, instances],
-					function (response) {
+				this.HTTP.put('rest', 'apps', app, 'flows', flow, 'flowlets', flowlet, 'instances',
+					instances, function (response) {
 
 					if (response.error) {
 						C.Modal.show('Container Error', response.error);

@@ -12,7 +12,7 @@ import org.junit.Test;
 public class PingHandlerTest {
   @Test
   public void testPing() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/ping");
+    HttpResponse response = GatewayFastTestsSuite.GET("/ping");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("OK.\n", EntityUtils.toString(response.getEntity()));
   }

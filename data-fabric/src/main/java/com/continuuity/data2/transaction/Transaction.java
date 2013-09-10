@@ -23,7 +23,8 @@ public class Transaction {
   public static final Transaction ALL_VISIBLE_LATEST =
     new Transaction(Long.MAX_VALUE, Long.MAX_VALUE, NO_EXCLUDES, NO_EXCLUDES, NO_TX_IN_PROGRESS);
 
-  public Transaction(long readPointer, long writePointer, long[] invalids, long[] inProgress, long firstShortInProgress) {
+  public Transaction(long readPointer, long writePointer, long[] invalids, long[] inProgress,
+                     long firstShortInProgress) {
     this.readPointer = readPointer;
     this.writePointer = writePointer;
     this.invalids = invalids;

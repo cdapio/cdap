@@ -106,7 +106,7 @@ public class SingleNodeMain {
     zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
     zookeeper.startAndWait();
 
-    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionStr());
+    configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
     transactionManager.init();
@@ -167,8 +167,9 @@ public class SingleNodeMain {
     out.println("  ./continuuity-reactor [options]");
     out.println("");
     out.println("Additional options:");
-    out.println("  --help      To print this message");
-    out.println("  --in-memory To run everything in memory");
+    out.println("  --web-app-path  Path to web-app");
+    out.println("  --help          To print this message");
+    out.println("  --in-memory     To run everything in memory");
     out.println("");
 
     if (error) {
@@ -186,8 +187,6 @@ public class SingleNodeMain {
 
     // Single node use persistent data fabric by default
     boolean inMemory = false;
-
-    // Path where web cloud app is.
     String webAppPath = WebCloudAppService.WEB_APP;
 
     if (args.length > 0) {

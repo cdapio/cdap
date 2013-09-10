@@ -125,7 +125,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     @Inject
     private DiscoveryServiceAnnouncer(DiscoveryService discoveryService,
-                                      @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS) InetAddress hostname) {
+                                      @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname) {
       this.discoveryService = discoveryService;
       this.hostname = hostname;
     }

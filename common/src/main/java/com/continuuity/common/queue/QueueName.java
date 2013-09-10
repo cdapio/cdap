@@ -72,7 +72,7 @@ public final class QueueName {
 
 
   /**
-   * Called from static method {@code QueueName#from(URI)} and {@code QueueName#from(bytes[])}
+   * Called from static method {@code QueueName#from(URI)} and {@code QueueName#from(bytes[])}.
    *
    * @param uri of the queue.
    */

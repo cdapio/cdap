@@ -4,7 +4,7 @@ import com.continuuity.common.utils.PortDetector;
 import java.io.IOException;
 
 /**
- * Thread safe, lazy instantiator idiom
+ * Thread safe, lazy instantiator idiom.
  */
 public final class OnDemandInMemoryZookeeperServer {
   private static volatile InMemoryZookeeper inMemoryZookeeper = null;

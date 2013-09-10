@@ -330,7 +330,7 @@ public final class PerformanceTestRunner {
             ZKClients.reWatchOnExpire(
               ZKClients.retryOnFailure(
                 ZKClientService.Builder.of(
-                  config.get(Constants.CFG_ZOOKEEPER_ENSEMBLE)).setSessionTimeout(10000).build(),
+                  config.get(Constants.Zookeeper.QUORUM)).setSessionTimeout(10000).build(),
                 RetryStrategies.fixDelay(2, TimeUnit.SECONDS))));
         discoveryServiceModule = new DiscoveryRuntimeModule(zkClientService).getDistributedModules();
       } else {
@@ -345,7 +345,7 @@ public final class PerformanceTestRunner {
             bind(DiscoveryServiceClient.class).toInstance(new DiscoveryServiceClient() {
               @Override
               public Iterable<Discoverable> discover(final String name) {
-                if (Constants.SERVICE_METRICS.equals(name)) {
+                if (Constants.Service.METRICS.equals(name)) {
                   return ImmutableList.<Discoverable>of(new Discoverable() {
                     @Override
                     public String getName() {
@@ -402,10 +402,10 @@ public final class PerformanceTestRunner {
               binder.bind(AuthToken.class).toInstance(TestHelper.DUMMY_AUTH_TOKEN);
             }
             @Provides
-            @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS)
+            @Named(Constants.AppFabric.SERVER_ADDRESS)
             @SuppressWarnings(value = "unused")
             public InetAddress providesHostname(CConfiguration cConf) {
-              return Networks.resolve(cConf.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS),
+              return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                                       new InetSocketAddress("localhost", 0).getAddress());
             }
           }
@@ -420,10 +420,10 @@ public final class PerformanceTestRunner {
 
   // Get an AppFabricClient for communication with the AppFabric of a local or remote Reactor.
   private static AppFabricService.Client getAppFabricClient(CConfiguration config) throws TTransportException  {
-    String  appFabricServerHost = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
-                                             Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
-    int  appFabricServerPort = config.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT,
-                                             Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+    String  appFabricServerHost = config.get(Constants.AppFabric.SERVER_ADDRESS,
+                                             Constants.AppFabric.DEFAULT_SERVER_ADDRESS);
+    int  appFabricServerPort = config.getInt(Constants.AppFabric.SERVER_PORT,
+                                             Constants.AppFabric.DEFAULT_SERVER_PORT);
     LOG.debug("Connecting with AppFabric Server at {}:{}", appFabricServerHost, appFabricServerPort);
     return new AppFabricService.Client(getThriftProtocol(appFabricServerHost, appFabricServerPort));
   }

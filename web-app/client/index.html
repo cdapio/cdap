@@ -211,16 +211,6 @@
       <h1>{{model.name}} <span>Stream</span></h1>
     </div>
     <div id="info">
-      <div class="info-box" style="float: right; border: 0;">
-        <div id="action-buttons">
-          <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:16px;">Actions
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a {{action "delete" on="click"}}>Delete This Stream</a></li>
-          </ul>
-        </div>
-      </div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Events In" metrics="/collect/events/streams/{id}"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
@@ -268,7 +258,7 @@
             <li><a {{action "delete"}} {{bindAttr state="model.currentState"}} {{bindAttr batchId="model.id"}} {{bindAttr applicationId="model.application"}}>Delete This Job</a></li>
           </ul>
 
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.applicationId"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.app"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
           <button style="border-right:0;" class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
@@ -357,9 +347,9 @@
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
           </ul>
 
-          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.meta.app"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Stop" ><span class="btn-stop"></span><span>Stop</span></button>
+          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.app"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Stop" ><span class="btn-stop"></span><span>Stop</span></button>
 
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.meta.app"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.app"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
           <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
@@ -586,7 +576,7 @@
             </thead>
             <tbody>
             {{#each runs}}
-              <tr class="run-list" {{action "loadRun" runId}}>
+              <tr class="run-list" {{action "loadRun" runid}}>
                 <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
                 <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>
@@ -619,16 +609,6 @@
       <h1>{{model.name}} <span>Dataset</span></h1>
     </div>
     <div id="info">
-      <div class="info-box" style="float: right; border: 0;">
-        <div id="action-buttons">
-            <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:16px;">Actions
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a {{action "delete" on="click"}}>Delete This Dataset</a></li>
-          </ul>
-        </div>
-      </div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Write Rate" metrics="/store/writes/datasets/{id}"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Read Rate (All)" metrics="/store/reads/datasets/{id}"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
@@ -666,13 +646,6 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
-
-          <button class="btn dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a {{action "delete"}} {{bindAttr state="model.currentState"}} {{bindAttr flowId="model.id"}} {{bindAttr applicationId="model.application"}}>Delete This Procedure</a></li>
-          </ul>
 
           <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 

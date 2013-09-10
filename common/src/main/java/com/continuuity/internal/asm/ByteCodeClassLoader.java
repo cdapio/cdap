@@ -11,7 +11,7 @@ import java.util.Map;
 public class ByteCodeClassLoader extends MultiClassLoader {
 
   /**
-   * Map from class name to bytecode
+   * Map from class name to bytecode.
    */
   protected final Map<String, byte[]> bytecodes;
 

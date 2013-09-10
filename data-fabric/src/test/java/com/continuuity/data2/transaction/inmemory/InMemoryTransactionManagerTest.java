@@ -32,7 +32,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   public static void startZK() throws IOException, InterruptedException {
     zk = new InMemoryZookeeper();
     conf = CConfiguration.create();
-    conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zk.getConnectionString());
+    conf.set(Constants.Zookeeper.QUORUM, zk.getConnectionString());
   }
 
   @AfterClass

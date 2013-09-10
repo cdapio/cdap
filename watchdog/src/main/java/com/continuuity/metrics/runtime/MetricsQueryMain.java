@@ -46,7 +46,9 @@ public final class MetricsQueryMain extends DaemonMain {
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE)).setSessionTimeout(10000).build(),
+            ZKClientService.Builder.of(
+              cConf.get(Constants.Zookeeper.QUORUM)
+            ).setSessionTimeout(10000).build(),
             RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
           )
         )

@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.http.core.NettyHttpService;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -23,21 +24,20 @@ public class Gateway extends AbstractIdleService {
 
   @Inject
   public Gateway(CConfiguration cConf,
-                 @Named(GatewayConstants.ConfigKeys.ADDRESS) InetAddress hostname,
-                 @Named(GatewayConstants.GATEWAY_V2_HTTP_HANDLERS) Set<HttpHandler> handlers) {
+                 @Named(Constants.Gateway.ADDRESS) InetAddress hostname,
+                 @Named(Constants.Gateway.GATEWAY_V2_HTTP_HANDLERS) Set<HttpHandler> handlers) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
     builder.setHost(hostname.getCanonicalHostName());
-    builder.setPort(cConf.getInt(GatewayConstants.ConfigKeys.PORT, GatewayConstants.DEFAULT_PORT));
-    builder.setConnectionBacklog(cConf.getInt(GatewayConstants.ConfigKeys.BACKLOG,
-                                              GatewayConstants.DEFAULT_BACKLOG));
-    builder.setExecThreadPoolSize(cConf.getInt(GatewayConstants.ConfigKeys.EXEC_THREADS,
-                                               GatewayConstants.DEFAULT_EXEC_THREADS));
-    builder.setBossThreadPoolSize(cConf.getInt(GatewayConstants.ConfigKeys.BOSS_THREADS,
-                                               GatewayConstants.DEFAULT_BOSS_THREADS));
-    builder.setWorkerThreadPoolSize(cConf.getInt(GatewayConstants.ConfigKeys.WORKER_THREADS,
-                                                 GatewayConstants.DEFAULT_WORKER_THREADS));
+    builder.setPort(cConf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT));
+    builder.setConnectionBacklog(cConf.getInt(Constants.Gateway.BACKLOG, Constants.Gateway.DEFAULT_BACKLOG));
+    builder.setExecThreadPoolSize(cConf.getInt(Constants.Gateway.EXEC_THREADS,
+                                               Constants.Gateway.DEFAULT_EXEC_THREADS));
+    builder.setBossThreadPoolSize(cConf.getInt(Constants.Gateway.BOSS_THREADS,
+                                               Constants.Gateway.DEFAULT_BOSS_THREADS));
+    builder.setWorkerThreadPoolSize(cConf.getInt(Constants.Gateway.WORKER_THREADS,
+                                                 Constants.Gateway.DEFAULT_WORKER_THREADS));
 
     httpService = builder.build();
   }
