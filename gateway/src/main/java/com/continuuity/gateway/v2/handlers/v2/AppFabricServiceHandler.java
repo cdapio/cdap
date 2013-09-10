@@ -12,7 +12,6 @@ import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.conf.Services;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.http.core.HttpResponder;
@@ -69,7 +68,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     super(authenticator);
     this.discoveryClient = discoveryClient;
     this.conf = conf;
-    this.endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Services.APP_FABRIC));
+    this.endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC));
   }
 
   /**
@@ -95,7 +94,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
 
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       try {
@@ -135,7 +134,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         client.removeApplication(token, new ProgramId(accountId, appId, ""));
@@ -194,7 +193,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         try {
@@ -235,7 +234,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         client.removeAll(token, accountId);
@@ -292,7 +291,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private void getHistory(HttpRequest request, HttpResponder responder, String appId, String id) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         List<ProgramRunRecord> records = client.getHistory(new ProgramId(accountId, appId, id));
@@ -337,7 +336,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         int count = client.getInstances(token, new ProgramId(accountId, appId, flowId), flowletId);
@@ -385,7 +384,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         client.setInstances(token, new ProgramId(accountId, appId, flowId), flowletId, instances);
@@ -502,7 +501,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       id.setAccountId(accountId);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         if ("start".equals(action)) {
@@ -576,7 +575,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       id.setAccountId(accountId);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         ProgramStatus status = client.status(token, id);
@@ -647,7 +646,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       id.setAccountId(accountId);
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         String specification = client.getSpecification(id);
@@ -681,7 +680,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  getThriftProtocol(Services.APP_FABRIC, endpointStrategy);
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         client.reset(token, accountId);

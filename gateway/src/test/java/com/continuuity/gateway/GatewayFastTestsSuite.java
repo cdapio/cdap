@@ -52,7 +52,8 @@ import org.junit.runners.Suite.SuiteClasses;
  */
 @RunWith(value = Suite.class)
 @SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
-  ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class})
+  ProcedureHandlerTest.class, AppFabricServiceHandlerTest.class, TableHandlerTest.class,
+  DatasetHandlerTest.class, ClearFabricHandlerTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
@@ -73,7 +74,6 @@ public class GatewayFastTestsSuite {
 
 
       conf.setInt(Constants.Gateway.PORT, 0);
-      conf.setInt(Constants.AppFabric.SERVER_PORT, 0);
       conf.set(Constants.Gateway.ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
