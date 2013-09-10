@@ -66,4 +66,13 @@
         <description>Log file rotation interval (in minutes)</description>
     </property>
 
+    <property>
+        <name>enable.unrecoverable.reset</name>
+        <value>true</value>
+        <description>
+            WARNING! - Enabling this option enables the deletion of all applications and data.
+            No recovery is possible!
+        </description>
+    </property>
+
 </configuration>
