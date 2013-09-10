@@ -6,7 +6,7 @@ define([], function () {
 
 	Em.debug('Loading HTTP Resource');
 
-	var AJAX_TIMEOUT = 1000000;
+	var AJAX_TIMEOUT = 30000;
 
 	var Resource = Em.Object.extend({
 
@@ -52,14 +52,16 @@ define([], function () {
 			var path = this.findPath(arguments);
 			var object = this.findObject(arguments);
 			var callback = this.findCallback(arguments);
-
-			$.ajax({
+			var options = {
 				url: path,
-				data: JSON.stringify(object),
-				type: "POST",
-				timeout: AJAX_TIMEOUT,
-				contentType: "application/json"
-			}).done(function (response, status) {
+				type: 'POST',
+				timeout: AJAX_TIMEOUT
+			};
+			if (!jQuery.isEmptyObject(object)) {
+				options['data'] = JSON.stringify(object);
+				options['contentType'] = 'application/json';
+			}
+			$.ajax(options).done(function (response, status) {
 
 				if (response.error && response.error.fatal) {
 					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
@@ -73,26 +75,54 @@ define([], function () {
 
 		},
 
-		rpc: function () {
+		put: function () {
 
-			var args = [].slice.call(arguments);
-			args.unshift('rpc');
+			var path = this.findPath(arguments);
+			var object = this.findObject(arguments);
+			var callback = this.findCallback(arguments);
 
-			var object = args[args.length - 2];
+			var options = {
+				url: path,
+				type: 'PUT',
+				timeout: AJAX_TIMEOUT
+			};
 
-			if (typeof object === 'object' && object.length) {
-				args[args.length - 2] = object;
+			if (!jQuery.isEmptyObject(object)) {
+				options['data'] = JSON.stringify(object);
+				options['contentType'] = 'application/json';
 			}
+			$.ajax(options).done(function (response, status) {
 
-			this.post.apply(this, args);
+				if (response.error && response.error.fatal) {
+					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+				} else {
+					callback(response, status);
+				}
+
+			}).fail(function (xhr, status, error) {
+				callback(error, status);
+			});
 
 		},
 
-		"delete": function () {
+		del: function () {
 
 			var path = this.findPath(arguments);
 			var callback = this.findCallback(arguments);
-			this.post(path + '?_method=DELETE', callback);
+			var options = {
+				url: path,
+				type: 'DELETE',
+				timeout: AJAX_TIMEOUT
+			};
+			$.ajax(options).done(function (response, status) {
+				if (response.error) {
+					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+				} else {
+					callback(response, status);
+				}
+			}).fail(function (xhr, status, error) {
+				callback(error, status);
+			});
 
 		},
 
@@ -138,7 +168,7 @@ define([], function () {
 			if (typeof object === 'function') {
 				object = args[args.length - 2];
 			}
-			return (!object || typeof object === 'string' ? null : object);
+			return object instanceof Object ? object : null;
 		},
 
 		/*

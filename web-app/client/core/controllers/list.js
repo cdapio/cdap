@@ -16,18 +16,22 @@ define([], function () {
 			'Procedure': 'Query',
 			'Dataset': 'Store'
 		},
+
 		__plurals: {
 			'App': 'apps',
 			'Flow': 'flows',
-			'Batch': 'mapreduce',
+			'Batch': 'mapreduces',
 			'Stream': 'streams',
 			'Procedure': 'procedures',
 			'Dataset': 'datasets'
 		},
+
 		entityTypes: new Em.Set(),
+
 		title: function () {
 			return this.__titles[this.get('entityType')];
 		}.property('entityType'),
+
 		load: function (type) {
 			this.clearTriggers(true);
 			var self = this;
@@ -35,7 +39,7 @@ define([], function () {
 
 			this.entityTypes.add(type);
 
-			this.HTTP.get('rest', this.__plurals[type], function (objects) {
+			this.HTTP.rest(this.__plurals[type], function (objects) {
 
 				var i = objects.length;
 				while (i--) {

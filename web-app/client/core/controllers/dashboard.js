@@ -35,7 +35,7 @@ define([], function () {
 			 * Load Apps
 			 * Also load all Elements for each App to calculate per-App totals
 			 */
-			this.HTTP.get('rest', 'apps', function (objects) {
+			this.HTTP.rest('apps', function (objects) {
 				var i = objects.length;
 
 				while (i--) {
@@ -43,19 +43,19 @@ define([], function () {
 
 					(function (id, index) {
 
-						self.HTTP.get('rest', 'apps', id, 'streams', function (items) {
+						self.HTTP.rest('apps', id, 'streams', function (items) {
 							objects[index].set('counts.Stream', items.length);
 						});
 
-						self.HTTP.get('rest', 'apps', id, 'flows', function (items) {
+						self.HTTP.rest('apps', id, 'flows', function (items) {
 							objects[index].set('counts.Flow', items.length);
 						});
 
-						self.HTTP.get('rest', 'apps', id, 'datasets', function (items) {
+						self.HTTP.rest('apps', id, 'datasets', function (items) {
 							objects[index].set('counts.Dataset', items.length);
 						});
 
-						self.HTTP.get('rest', 'apps', id, 'procedures', function (items) {
+						self.HTTP.rest('apps', id, 'procedures', function (items) {
 							objects[index].set('counts.Procedure', items.length);
 						});
 

@@ -81,7 +81,7 @@ public final class LogSaverMain extends DaemonMain {
                                                                      LocationFactory locationFactory) {
           String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
           return new YarnWeaveRunnerService(yarnConfiguration,
-                                            configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE) + zkNamespace,
+                                            configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
                                             LocationFactories.namespace(locationFactory, "weave"));
         }
       }

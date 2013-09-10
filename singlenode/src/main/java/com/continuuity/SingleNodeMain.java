@@ -64,9 +64,9 @@ public class SingleNodeMain {
 
   private InMemoryZKServer zookeeper;
 
-  public SingleNodeMain(List<Module> modules, CConfiguration configuration) {
+  public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
     this.configuration = configuration;
-    this.webCloudAppService = new WebCloudAppService();
+    this.webCloudAppService = new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
@@ -106,7 +106,7 @@ public class SingleNodeMain {
     zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
     zookeeper.startAndWait();
 
-    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionStr());
+    configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
     transactionManager.init();
@@ -167,8 +167,9 @@ public class SingleNodeMain {
     out.println("  ./continuuity-reactor [options]");
     out.println("");
     out.println("Additional options:");
-    out.println("  --help      To print this message");
-    out.println("  --in-memory To run everything in memory");
+    out.println("  --web-app-path  Path to web-app");
+    out.println("  --help          To print this message");
+    out.println("  --in-memory     To run everything in memory");
     out.println("");
 
     if (error) {
@@ -186,6 +187,7 @@ public class SingleNodeMain {
 
     // Single node use persistent data fabric by default
     boolean inMemory = false;
+    String webAppPath = WebCloudAppService.WEB_APP;
 
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
@@ -196,6 +198,8 @@ public class SingleNodeMain {
       } else if ("--leveldb-disable".equals(args[0])) {
         // this option overrides a setting that tells if level db can be used for persistence
         configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, false);
+      } else if ("--web-app-path".equals(args[0])) {
+        webAppPath = args[1];
       } else {
         usage(true);
       }
@@ -211,7 +215,7 @@ public class SingleNodeMain {
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
 
-    SingleNodeMain main = new SingleNodeMain(modules, configuration);
+    SingleNodeMain main = new SingleNodeMain(modules, configuration, webAppPath);
     try {
       main.startUp(args);
     } catch (Exception e) {

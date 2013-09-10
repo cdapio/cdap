@@ -47,11 +47,34 @@ public final class DistributedTransactionServiceHandler implements TTransactionS
   }
 
   @Override
-  public TTransaction start() throws TException {
-    Transaction transaction = transactionSystem.start();
+  public TTransaction startShort() throws TException {
+    Transaction transaction = transactionSystem.startShort();
     return new TTransaction(transaction.getReadPointer(),
                             transaction.getWritePointer(),
-                            Converters.encodeLongs(transaction.getExcludedList()));
+                            Converters.encodeLongs(transaction.getInvalids()),
+                            Converters.encodeLongs(transaction.getInProgress()),
+                            transaction.getFirstShortInProgress());
+  }
+
+
+  @Override
+  public TTransaction startShortTimeout(int timeout) throws TException {
+    Transaction transaction = transactionSystem.startShort(timeout);
+    return new TTransaction(transaction.getReadPointer(),
+                            transaction.getWritePointer(),
+                            Converters.encodeLongs(transaction.getInvalids()),
+                            Converters.encodeLongs(transaction.getInProgress()),
+                            transaction.getFirstShortInProgress());
+  }
+
+  @Override
+  public TTransaction startLong() throws TException {
+    Transaction transaction = transactionSystem.startLong();
+    return new TTransaction(transaction.getReadPointer(),
+                            transaction.getWritePointer(),
+                            Converters.encodeLongs(transaction.getInvalids()),
+                            Converters.encodeLongs(transaction.getInProgress()),
+                            transaction.getFirstShortInProgress());
   }
 
   @Override

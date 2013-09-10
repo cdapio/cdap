@@ -4,6 +4,8 @@
 
 package com.continuuity.internal.app.deploy;
 
+import com.continuuity.app.services.ArchiveId;
+import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
@@ -30,11 +32,6 @@ public final class SessionInfo {
   private String filename;
 
   /**
-   * Size of the file.
-   */
-  private int size;
-
-  /**
    * Location of the archive file.
    */
   private Location archive;
@@ -42,7 +39,7 @@ public final class SessionInfo {
   /**
    * Redundant, but useful resource information.
    */
-  private transient ResourceIdentifier identifier;
+  private transient ArchiveId identifier;
 
   /**
    * Outputstream associated with file.
@@ -64,11 +61,10 @@ public final class SessionInfo {
    *
    * @param info about the resource being uploaded.
    */
-  public SessionInfo(ResourceIdentifier identifier, ResourceInfo info, Location archive, DeployStatus status) {
+  public SessionInfo(ArchiveId identifier, ArchiveInfo info, Location archive, DeployStatus status) {
     this.identifier = identifier;
     this.regtime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     this.filename = info.getFilename();
-    this.size = info.getSize();
     this.archive = archive;
     this.status = status;
   }
@@ -104,7 +100,7 @@ public final class SessionInfo {
    * Returs the resource identifier associated with the resource.
    * @return resource identifier.
    */
-  public ResourceIdentifier getResourceIdenitifier() {
+  public ArchiveId getArchiveId() {
     return identifier;
   }
 
@@ -116,14 +112,6 @@ public final class SessionInfo {
     return archive;
   }
 
-  /**
-   * Returns the size of the resource being uploaded
-   *
-   * @return size of the resource being uploaded.
-   */
-  public int getFileSize() {
-    return size;
-  }
 
   public DeployStatus getStatus() {
     return status;
@@ -160,7 +148,6 @@ public final class SessionInfo {
     SessionInfo that = (SessionInfo) other;
     return
       Objects.equal(filename, that.filename) &&
-      Objects.equal(size, that.size) &&
       Objects.equal(regtime, that.regtime) &&
       Objects.equal(archive, that.archive) &&
       Objects.equal(identifier, that.identifier);
@@ -172,7 +159,7 @@ public final class SessionInfo {
    * @return hash code for this object.
    */
   public int hashCode() {
-    return Objects.hashCode(filename, size, regtime, archive, identifier);
+    return Objects.hashCode(filename, regtime, archive, identifier);
   }
 
   /**
@@ -183,7 +170,6 @@ public final class SessionInfo {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("filename", filename)
-      .add("size", size)
       .add("regtime", regtime)
       .add("archive", archive)
       .add("identifier", identifier)

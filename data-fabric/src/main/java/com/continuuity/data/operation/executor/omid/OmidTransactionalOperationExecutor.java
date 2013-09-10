@@ -147,6 +147,7 @@ public class OmidTransactionalOperationExecutor
   private MetricsCollector dataSetMetrics;
   private MetricsCollector txSystemMetrics;
 
+  Thread txSystemMetricsReporter;
   private final InMemoryTransactionManager txManager;
 
   @Inject
@@ -1420,15 +1421,21 @@ public class OmidTransactionalOperationExecutor
 
 
   @Override
-  public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException {
+  public com.continuuity.data2.transaction.Transaction startLong() throws OperationException {
     txSystemMetrics.gauge("tx.start.ops", 1);
-    return txManager.start(timeout);
+    return txManager.startLong();
   }
 
   @Override
-  public com.continuuity.data2.transaction.Transaction start() throws OperationException {
+  public com.continuuity.data2.transaction.Transaction startShort() throws OperationException {
     txSystemMetrics.gauge("tx.start.ops", 1);
-    return txManager.start();
+    return txManager.startShort();
+  }
+
+  @Override
+  public com.continuuity.data2.transaction.Transaction startShort(int timeout) throws OperationException {
+    txSystemMetrics.gauge("tx.start.ops", 1);
+    return txManager.startShort(timeout);
   }
 
   @Override
@@ -1465,10 +1472,10 @@ public class OmidTransactionalOperationExecutor
   // this is a hack for reporting gauge metric: current metrics system supports only counters that are aggregated on
   // 10-sec basis, so we need to report gauge not more frequently than every 10 sec.
   private void startTxSystemMetricsReporter() {
-    Thread txSystemMetricsReporter = new Thread("tx-reporter") {
+    txSystemMetricsReporter = new Thread("tx-reporter") {
       @Override
       public void run() {
-        while (true) {
+        while (!isInterrupted()) {
           int excludedListSize = txManager.getExcludedListSize();
           if (txSystemMetrics != null && excludedListSize > 0) {
             txSystemMetrics.gauge("tx.excluded", excludedListSize);
@@ -1485,6 +1492,12 @@ public class OmidTransactionalOperationExecutor
     };
     txSystemMetricsReporter.setDaemon(true);
     txSystemMetricsReporter.start();
+  }
+
+  public void shutdown() {
+    if (txSystemMetricsReporter != null) {
+      txSystemMetricsReporter.interrupt();
+    }
   }
 
   Transaction startTransaction(boolean trackChanges) {

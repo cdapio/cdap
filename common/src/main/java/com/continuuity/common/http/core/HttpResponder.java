@@ -174,7 +174,7 @@ public class HttpResponder {
    * @param headers Headers to be sent back.
    */
   public void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
-                           Multimap<String, String> headers){
+                          Multimap<String, String> headers){
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
 
     if (content != null) {

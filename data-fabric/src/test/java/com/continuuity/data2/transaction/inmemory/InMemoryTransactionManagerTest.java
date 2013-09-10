@@ -32,7 +32,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   public static void startZK() throws IOException, InterruptedException {
     zk = new InMemoryZookeeper();
     conf = CConfiguration.create();
-    conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zk.getConnectionString());
+    conf.set(Constants.Zookeeper.QUORUM, zk.getConnectionString());
   }
 
   @AfterClass
@@ -69,13 +69,13 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       Assert.assertEquals(0, txm.getInvalidSize());
       Assert.assertEquals(0, txm.getCommittedSize());
       // start a transaction and leave it open
-      Transaction tx1 = txm.start();
+      Transaction tx1 = txm.startShort();
       // start a long running transaction and leave it open
-      Transaction tx2 = txm.start(null);
-      Transaction tx3 = txm.start(null);
+      Transaction tx2 = txm.startLong();
+      Transaction tx3 = txm.startLong();
       // start and commit a bunch of transactions
       for (int i = 0; i < 10; i++) {
-        Transaction tx = txm.start();
+        Transaction tx = txm.startShort();
         if (!(txm.canCommit(tx, Collections.singleton(new byte[] { (byte) i })) && txm.commit(tx))) {
          txm.abort(tx);
         }
@@ -88,11 +88,11 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       // transaction should now be invalid
       Assert.assertEquals(1, txm.getInvalidSize());
       // run another transaction
-      Transaction txx = txm.start();
+      Transaction txx = txm.startShort();
       // verify the exclude
-      Assert.assertEquals(tx1.getWritePointer(), txx.getExcludedList()[0]);
-      Assert.assertEquals(tx2.getWritePointer(), txx.getExcludedList()[1]);
-      Assert.assertEquals(tx3.getWritePointer(), txx.getExcludedList()[2]);
+      Assert.assertFalse(txx.isVisible(tx1.getWritePointer()));
+      Assert.assertFalse(txx.isVisible(tx2.getWritePointer()));
+      Assert.assertFalse(txx.isVisible(tx3.getWritePointer()));
       // try to commit the last transaction that was started
       if (!(txm.canCommit(txx, Collections.singleton(new byte[] { 0x0a })) && txm.commit(txx))) {
         txm.abort(txx);
@@ -106,7 +106,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       Assert.assertEquals(0, txm.getInvalidSize());
       // run another bunch of transactions
       for (int i = 0; i < 10; i++) {
-        Transaction tx = txm.start();
+        Transaction tx = txm.startShort();
         if (!(txm.canCommit(tx, Collections.singleton(new byte[] { (byte) i })) && txm.commit(tx))) {
           txm.abort(tx);
         }
@@ -130,21 +130,21 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     final byte[] a = { 'a' };
     final byte[] b = { 'b' };
     // start a tx1, add a change A and commit
-    Transaction tx1 = txManager.start();
+    Transaction tx1 = txManager.startShort();
     Assert.assertTrue(txManager.canCommit(tx1, Collections.singleton(a)));
     Assert.assertTrue(txManager.commit(tx1));
     // start a tx2 and add a change B
-    Transaction tx2 = txManager.start();
+    Transaction tx2 = txManager.startShort();
     Assert.assertTrue(txManager.canCommit(tx2, Collections.singleton(b)));
     // start a tx3
-    Transaction tx3 = txManager.start();
+    Transaction tx3 = txManager.startShort();
     // restart
     txManager.close();
     before(); // starts a new tx manager
     // commit tx2
     Assert.assertTrue(txManager.commit(tx2));
     // start another transaction, must be greater than tx3
-    Transaction tx4 = txManager.start();
+    Transaction tx4 = txManager.startShort();
     Assert.assertTrue(tx4.getWritePointer() > tx3.getWritePointer());
     // tx1 must be visble from tx2, but tx3 and tx4 must not
     Assert.assertTrue(tx2.isVisible(tx1.getWritePointer()));
@@ -153,7 +153,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     // add same change for tx3
     Assert.assertFalse(txManager.canCommit(tx3, Collections.singleton(b)));
     // check visibility with new xaction
-    Transaction tx5 = txManager.start();
+    Transaction tx5 = txManager.startShort();
     Assert.assertTrue(tx5.isVisible(tx1.getWritePointer()));
     Assert.assertTrue(tx5.isVisible(tx2.getWritePointer()));
     Assert.assertFalse(tx5.isVisible(tx3.getWritePointer()));
@@ -163,19 +163,19 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     txManager.abort(tx4);
     txManager.abort(tx5);
     // start new tx and verify its exclude list is empty
-    Transaction tx6 = txManager.start();
-    Assert.assertEquals(0, tx6.getExcludedList().length);
+    Transaction tx6 = txManager.startShort();
+    Assert.assertFalse(tx6.hasExcludes());
     txManager.abort(tx6);
 
     // now start 5 x claim size transactions
-    Transaction tx = txManager.start();
+    Transaction tx = txManager.startShort();
     for (int i = 1; i < 50; i++) {
-      tx = txManager.start();
+      tx = txManager.startShort();
     }
     // simulate crash by starting a new tx manager
     before();
     // get a new transaction and verify it is greater
-    Transaction txAfter = txManager.start();
+    Transaction txAfter = txManager.startShort();
     Assert.assertTrue(txAfter.getWritePointer() > tx.getWritePointer());
   }
 }

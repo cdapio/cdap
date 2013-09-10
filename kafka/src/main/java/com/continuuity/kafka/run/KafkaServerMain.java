@@ -38,7 +38,7 @@ public class KafkaServerMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     CConfiguration cConf = CConfiguration.create();
-    String zkConnectStr = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    String zkConnectStr = cConf.get(Constants.Zookeeper.QUORUM);
     String zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
     int port = cConf.getInt(KafkaConstants.ConfigKeys.PORT_CONFIG, -1);

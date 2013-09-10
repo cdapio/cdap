@@ -41,12 +41,13 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   @Inject
   public AppFabricServer(AppFabricService.Iface service, CConfiguration configuration,
                          DiscoveryService discoveryService,
-                         @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS) InetAddress hostname) {
+                         @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname) {
     this.conf = configuration;
     this.hostname = hostname;
     this.service = service;
     this.discoveryService = discoveryService;
-    this.port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT,
+                                     Constants.AppFabric.DEFAULT_SERVER_PORT);
   }
 
   /**
@@ -68,7 +69,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return "app.fabric.service";
+        return Constants.Service.APP_FABRIC;
       }
 
       @Override
@@ -81,7 +82,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       .executorService(executor)
       .processor(new AppFabricService.Processor<AppFabricService.Iface>(service))
       .workerThreads(THREAD_COUNT);
-    options.maxReadBufferBytes = Constants.DEFAULT_MAX_READ_BUFFER;
+    options.maxReadBufferBytes = Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
     server = new TThreadedSelectorServer(options);
   }
 

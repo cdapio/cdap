@@ -145,10 +145,10 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
     scan.setTimeRange(0, getMaxStamp(tx));
     // todo: optimise for no excluded list separately
-    scan.setMaxVersions(tx.getExcludedList().length + 1);
+    scan.setMaxVersions(tx.excludesSize() + 1);
 
     ResultScanner resultScanner = hTable.getScanner(scan);
-    return new HBaseScanner(resultScanner, tx.getExcludedList());
+    return new HBaseScanner(resultScanner, tx);
   }
 
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, byte[][] columns) throws IOException {
@@ -173,7 +173,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     get.setTimeRange(0L, getMaxStamp(tx));
 
     // if exclusion list is empty, do simple "read last" value call todo: explain
-    if (tx.getExcludedList().length == 0) {
+    if (!tx.hasExcludes()) {
       get.setMaxVersions(1);
       Result result = hTable.get(get);
       if (result.isEmpty()) {
@@ -185,21 +185,21 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
 //   todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
 //         on the other hand, looks like the above suggestion WILL NOT WORK
-    get.setMaxVersions(tx.getExcludedList().length + 1);
+    get.setMaxVersions(tx.excludesSize() + 1);
 
     // todo: push filtering logic to server
     // todo: cache fetched from server locally
 
     Result result = hTable.get(get);
-    return getRowMap(result, tx.getExcludedList());
+    return getRowMap(result, tx);
   }
 
-  static NavigableMap<byte[], byte[]> getRowMap(Result result, long[] excludedVersions) {
+  static NavigableMap<byte[], byte[]> getRowMap(Result result, Transaction tx) {
     if (result.isEmpty()) {
       return EMPTY_ROW_MAP;
     }
 
-    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(DATA_COLFAM), excludedVersions);
+    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(DATA_COLFAM), tx);
     return unwrapDeletes(rowMap);
   }
 

@@ -59,7 +59,7 @@ public final class MetricsQueryService extends AbstractIdleService {
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return Constants.SERVICE_METRICS;
+        return Constants.Service.METRICS;
       }
 
       @Override

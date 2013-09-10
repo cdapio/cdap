@@ -36,7 +36,7 @@ public class TxManager {
   }
 
   public void start() throws OperationException {
-    transaction = txClient.start();
+    transaction = txClient.startShort();
     for (TransactionAware txAware : txAwares) {
       txAware.startTx(transaction);
     }

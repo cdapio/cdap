@@ -67,33 +67,6 @@ define([], function () {
 
 			clearInterval(this.interval);
 
-		},
-
-		"delete": function () {
-
-			C.Modal.show(
-				"Delete Dataset",
-				"Are you sure you would like to delete this Dataset? This action is not reversible.",
-				$.proxy(function (event) {
-
-					var model = this.get('model');
-
-					C.get('metadata', {
-						method: 'deleteDataset',
-						params: ['Dataset', {
-							id: model.id
-						}]
-					}, function (error, response) {
-
-						if (error) {
-							C.Modal.show('Delete Error', error.message);
-						} else {
-							window.history.go(-1);
-						}
-
-					});
-				}, this));
-
 		}
 
 	});

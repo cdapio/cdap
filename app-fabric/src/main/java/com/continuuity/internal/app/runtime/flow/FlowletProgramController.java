@@ -35,12 +35,20 @@ final class FlowletProgramController extends AbstractProgramController {
   protected void doSuspend() throws Exception {
     LOG.info("Suspending flowlet: " + flowletContext);
     driver.suspend();
+    // Close all consumers
+    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
+      queueConsumerSupplier.close();
+    }
     LOG.info("Flowlet suspended: " + flowletContext);
   }
 
   @Override
   protected void doResume() throws Exception {
     LOG.info("Resuming flowlet: " + flowletContext);
+    // Open consumers
+    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
+      queueConsumerSupplier.open(flowletContext.getInstanceCount());
+    }
     driver.resume();
     LOG.info("Flowlet resumed: " + flowletContext);
   }
@@ -49,6 +57,10 @@ final class FlowletProgramController extends AbstractProgramController {
   protected void doStop() throws Exception {
     LOG.info("Stopping flowlet: " + flowletContext);
     driver.stopAndWait();
+    // Close all consumers
+    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
+      queueConsumerSupplier.close();
+    }
     LOG.info("Flowlet stopped: " + flowletContext);
   }
 
@@ -66,9 +78,8 @@ final class FlowletProgramController extends AbstractProgramController {
   }
 
   private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) {
+    Preconditions.checkState(getState() == State.SUSPENDED,
+                             "Cannot change instance count of a flowlet without suspension.");
     flowletContext.setInstanceCount(instanceCount);
-    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
-      queueConsumerSupplier.updateInstanceCount(instanceCount);
-    }
   }
 }

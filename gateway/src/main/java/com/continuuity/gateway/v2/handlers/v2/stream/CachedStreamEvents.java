@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
@@ -11,8 +12,6 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -45,7 +44,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 final class CachedStreamEvents {
   private static final Logger LOG = LoggerFactory.getLogger(CachedStreamEvents.class);
-  private static final String METRICS_CONTEXT = Constants.GATEWAY_PREFIX + "." + GatewayConstants.STREAM_HANDLER_NAME;
+  private static final String METRICS_CONTEXT = Constants.Gateway.GATEWAY_PREFIX + "."
+    + Constants.Gateway.STREAM_HANDLER_NAME;
 
   private final LoadingCache<QueueName, ProducerStreamEntries> eventCache;
 

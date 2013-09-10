@@ -1,7 +1,8 @@
 package com.continuuity.gateway;
 
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.*;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.metadata.MetaDataStore;
@@ -10,19 +11,21 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.Gateway;
-import com.continuuity.gateway.v2.GatewayConstants;
+import com.continuuity.gateway.v2.handlers.v2.MetadataServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.PingHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.ProcedureHandlerTest;
+import com.continuuity.gateway.v2.handlers.v2.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.ClearFabricHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.DatasetHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.dataset.MetadataServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.log.LogHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
+import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
@@ -50,49 +53,53 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(value = Suite.class)
 @SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
-  DataSetClientTest.class, StreamClientTest.class})
+  DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
+  private static DiscoveryService discoveryService;
 
   private static final InMemoryDiscoveryService IN_MEMORY_DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   private static Injector injector;
   private static MetadataService.Iface mds;
+  private static AppFabricServer appFabricServer;
+
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
     @Override
     protected void before() throws Throwable {
-      conf.setInt(GatewayConstants.ConfigKeys.PORT, 0);
-      conf.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
+
+
+      conf.setInt(Constants.Gateway.PORT, 0);
+      conf.set(Constants.Gateway.ADDRESS, hostname);
+      conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
+      conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+      conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
       // Set up our Guice injections
       injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules(),
-        new ConfigModule(conf),
-        new LocationRuntimeModule().getInMemoryModules(),
         new GatewayModules(conf).getInMemoryModules(),
+        new AppFabricTestModule(conf),
         new AbstractModule() {
           @Override
           protected void configure() {
             // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
             // AppFabricServiceModule
-            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class).in(Scopes.SINGLETON);
-            bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Scopes.SINGLETON);
-            bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
             bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-            bind(DiscoveryServiceClient.class).toInstance(IN_MEMORY_DISCOVERY_SERVICE);
-            bind(DiscoveryService.class).toInstance(IN_MEMORY_DISCOVERY_SERVICE);
             bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
           }
         }
       );
 
+      discoveryService = injector.getInstance(DiscoveryService.class);
       gateway = injector.getInstance(Gateway.class);
       mds = injector.getInstance(MetadataService.Iface.class);
       injector.getInstance(InMemoryTransactionManager.class).init();
+      appFabricServer = injector.getInstance(AppFabricServer.class);
+      appFabricServer.startAndWait();
       gateway.startAndWait();
       port = gateway.getBindAddress().getPort();
     }
@@ -100,6 +107,7 @@ public class GatewayFastTestsSuite {
     @Override
     protected void after() {
       gateway.stopAndWait();
+      appFabricServer.stopAndWait();
       conf.clear();
     }
   };
@@ -144,6 +152,10 @@ public class GatewayFastTestsSuite {
   public static HttpResponse PUT(HttpPut put) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     return client.execute(put);
+  }
+
+  public static HttpPut getPUT(String resource) {
+    return new HttpPut("http://" + hostname + ":" + port + resource);
   }
 
   public static HttpResponse POST(String resource, String body) throws Exception {

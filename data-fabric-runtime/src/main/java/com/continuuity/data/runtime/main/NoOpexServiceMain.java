@@ -67,7 +67,7 @@ public class NoOpexServiceMain {
 
       // Add ZK info to conf
       CConfiguration configuration = CConfiguration.create();
-      configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
+      configuration.set(Constants.Zookeeper.QUORUM,
                         zkCluster.getConnectionString());
 
       System.out.println("Starting Operation Executor Service...");

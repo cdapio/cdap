@@ -238,16 +238,22 @@ public class NoOperationExecutor implements OperationExecutor {
   private AtomicLong tx = new AtomicLong(System.currentTimeMillis() * 100);
 
   @Override
-  public com.continuuity.data2.transaction.Transaction start() throws OperationException {
+  public com.continuuity.data2.transaction.Transaction startShort() throws OperationException {
     long wp = tx.incrementAndGet();
     // NOTE: -1 here is because we have logic that uses (readpointer + 1) as a "exclusive stop key" in some datasets
-    return new com.continuuity.data2.transaction.Transaction(Long.MAX_VALUE - 1, wp, new long[]{});
+    return new com.continuuity.data2.transaction.Transaction(
+      Long.MAX_VALUE - 1, wp, new long[0], new long[0],
+      com.continuuity.data2.transaction.Transaction.NO_TX_IN_PROGRESS);
   }
 
   @Override
-  public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException {
-    long wp = tx.incrementAndGet();
-    return new com.continuuity.data2.transaction.Transaction(Long.MAX_VALUE - 1, wp, new long[]{});
+  public com.continuuity.data2.transaction.Transaction startShort(int timeout) throws OperationException {
+    return startShort();
+  }
+
+  @Override
+  public com.continuuity.data2.transaction.Transaction startLong() throws OperationException {
+    return startShort();
   }
 
   @Override

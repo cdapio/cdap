@@ -20,6 +20,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
@@ -147,7 +148,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         ZKClientServices.delegate(
           ZKClients.reWatchOnExpire(
             ZKClients.retryOnFailure(
-              ZKClientService.Builder.of(cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE))
+              ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
                 .setSessionTimeout(10000)
                 .build(),
               RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
@@ -277,7 +278,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                            new AbstractModule() {
       @Override
       protected void configure() {
-        bind(InetAddress.class).annotatedWith(Names.named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS))
+        bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
                                .toInstance(context.getHost());
 
         // For program loading
@@ -292,9 +293,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         install(createQueueFactoryModule());
 
         // Bind remote operation executor
-        // NOTE: for demo purposes in 1.7 we do not contact Tx Manager remotly. TODO: this should not go into production
-//        bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
-        bind(OperationExecutor.class).to(NoOperationExecutor.class).in(Singleton.class);
+        bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
         bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);
 
         // Bind TxDs2 stuff

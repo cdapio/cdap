@@ -2,7 +2,6 @@ package com.continuuity.data2.transaction.queue.leveldb;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.leveldb.KeyValue;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.transaction.Transaction;
@@ -25,9 +24,6 @@ import java.util.concurrent.Executor;
 public class LevelDBQueueEvictor implements QueueEvictor {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueEvictor.class);
-
-  private static final Transaction ALL_LATEST_TRANSACTION =
-    new Transaction(KeyValue.LATEST_TIMESTAMP, KeyValue.LATEST_TIMESTAMP, new long[0]);
 
   private final LevelDBOcTableCore core;
   private final byte[] queueRowPrefix;
@@ -65,7 +61,7 @@ public class LevelDBQueueEvictor implements QueueEvictor {
     ImmutablePair<byte[], Map<byte[], byte[]>> row;
     List<byte[]> rowsToDelete = Lists.newArrayList();
     // the scan must be non-transactional in order to see the state columns (which have latest timestamp)
-    Scanner scanner = core.scan(queueRowPrefix, stopRow, ALL_LATEST_TRANSACTION);
+    Scanner scanner = core.scan(queueRowPrefix, stopRow, Transaction.ALL_VISIBLE_LATEST);
     try {
       while ((row = scanner.next()) != null) {
         int processed = 0;

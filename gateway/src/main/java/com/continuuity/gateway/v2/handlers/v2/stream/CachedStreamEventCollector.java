@@ -2,13 +2,12 @@ package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.v2.GatewayConstants;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -44,17 +43,17 @@ public class CachedStreamEventCollector extends AbstractIdleService {
                                     QueueClientFactory queueClientFactory) {
     this.flushTimer = new Timer("stream-rest-flush-thread", true);
 
-    int maxCachedEventsPerStream = cConfig.getInt(GatewayConstants.ConfigKeys.MAX_CACHED_EVENTS_PER_STREAM_NUM,
-                                                  GatewayConstants.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
-    int maxCachedEvents = cConfig.getInt(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_NUM,
-                                         GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
-    long maxCachedSizeBytes = cConfig.getLong(GatewayConstants.ConfigKeys.MAX_CACHED_STREAM_EVENTS_BYTES,
-                                              GatewayConstants.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
-    this.flushIntervalMs = cConfig.getLong(GatewayConstants.ConfigKeys.STREAM_EVENTS_FLUSH_INTERVAL_MS,
-                                           GatewayConstants.DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS);
+    int maxCachedEventsPerStream = cConfig.getInt(Constants.Gateway.MAX_CACHED_EVENTS_PER_STREAM_NUM,
+                                                  Constants.Gateway.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
+    int maxCachedEvents = cConfig.getInt(Constants.Gateway.MAX_CACHED_STREAM_EVENTS_NUM,
+                                         Constants.Gateway.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
+    long maxCachedSizeBytes = cConfig.getLong(Constants.Gateway.MAX_CACHED_STREAM_EVENTS_BYTES,
+                                              Constants.Gateway.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
+    this.flushIntervalMs = cConfig.getLong(Constants.Gateway.STREAM_EVENTS_FLUSH_INTERVAL_MS,
+                                           Constants.Gateway.DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS);
 
-    int numThreads = cConfig.getInt(GatewayConstants.ConfigKeys.STREAM_EVENTS_CALLBACK_NUM_THREADS,
-                                    GatewayConstants.DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS);
+    int numThreads = cConfig.getInt(Constants.Gateway.STREAM_EVENTS_CALLBACK_NUM_THREADS,
+                                    Constants.Gateway.DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS);
     this.callbackExecutorService = Executors.newFixedThreadPool(numThreads,
                                                                 new ThreadFactoryBuilder()
                                                                   .setDaemon(true)
@@ -108,7 +107,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
       byte[] bytes = serializer.encodePayload(event);
       Preconditions.checkArgument(bytes != null, String.format("Could not serialize event: %s", event));
 
-      String destination = event.getHeaders().get(Constants.HEADER_DESTINATION_STREAM);
+      String destination = event.getHeaders().get(Constants.Gateway.HEADER_DESTINATION_STREAM);
       if (destination == null) {
         LOG.trace("Enqueuing an event that has no destination. Using 'default' instead.");
         destination = "default";

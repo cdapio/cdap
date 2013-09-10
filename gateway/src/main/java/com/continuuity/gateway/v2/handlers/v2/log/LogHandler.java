@@ -57,10 +57,10 @@ public class LogHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/apps/{appId}/{entityType}/{entityId}/logs")
+  @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs")
   public void list(HttpRequest request, HttpResponder responder,
-                   @PathParam("appId") String appId, @PathParam("entityType") String entityType,
-                   @PathParam("entityId") String entityId) {
+                   @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
+                   @PathParam("entity-id") String entityId) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -99,10 +99,10 @@ public class LogHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/apps/{appId}/{entityType}/{entityId}/logs/next")
+  @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs/next")
   public void next(HttpRequest request, HttpResponder responder,
-                   @PathParam("appId") String appId, @PathParam("entityType") String entityType,
-                   @PathParam("entityId") String entityId) {
+                   @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
+                   @PathParam("entity-id") String entityId) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -137,10 +137,10 @@ public class LogHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/apps/{appId}/{entityType}/{entityId}/logs/prev")
+  @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs/prev")
   public void prev(HttpRequest request, HttpResponder responder,
-                   @PathParam("appId") String appId, @PathParam("entityType") String entityType,
-                   @PathParam("entityId") String entityId) {
+                   @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
+                   @PathParam("entity-id") String entityId) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);

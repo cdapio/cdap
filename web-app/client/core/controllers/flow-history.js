@@ -32,11 +32,11 @@ define([], function () {
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
 			this.set('elements.Batch', Em.ArrayProxy.create({content: objects}));
 
-			this.HTTP.rpc('runnable', 'getFlowHistory', [model.app, model.name],
+			this.HTTP.rest('apps', model.app, 'flows', model.name, 'history',
 					function (response) {
 
-						if (response.result) {
-							var history = response.result;
+						if (response) {
+							var history = response;
 
 							for (var i = 0; i < history.length; i ++) {
 
@@ -65,26 +65,25 @@ define([], function () {
 			var id = this.get('model').name;
 			var self = this;
 
-			C.get('monitor', {
-				method: 'getCounters',
-				params: [app, id, runId]
-			}, function (error, response) {
+			// C.get('monitor', {
+			// 	method: 'getCounters',
+			// 	params: [app, id, runId]
+			// }, function (error, response) {
+			// 	var metrics = response.params;
+			// 	var i = metrics.length;
+			// 	while (i--) {
 
-				var metrics = response.params;
-				var i = metrics.length;
-				while (i--) {
+			// 		if (metrics[i].name === 'processed.count') {
 
-					if (metrics[i].name === 'processed.count') {
+			// 			self.get_flowlet(metrics[i].qualifier).set('label', C.Util.number(metrics[i].value));
 
-						self.get_flowlet(metrics[i].qualifier).set('label', C.Util.number(metrics[i].value));
+			// 		}
 
-					}
+			// 	}
 
-				}
+			// 	$('#flowviz-container').removeClass('flowviz-fade');
 
-				$('#flowviz-container').removeClass('flowviz-fade');
-
-			});
+			// });
 
 		},
 

@@ -81,7 +81,7 @@ public class OpexServiceMain {
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE))
+            ZKClientService.Builder.of(configuration.get(Constants.Zookeeper.QUORUM))
                                    .setSessionTimeout(10000)
                                    .build(),
             RetryStrategies.fixDelay(2, TimeUnit.SECONDS)

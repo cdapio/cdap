@@ -11,10 +11,10 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.ArchiveId;
+import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
-import com.continuuity.app.services.ResourceIdentifier;
-import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -69,10 +69,10 @@ public class TestHelper {
   public static synchronized Injector getInjector(CConfiguration conf) {
     if (injector == null) {
       configuration = conf;
-      configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, TEMP_FOLDER.newFolder("app").getAbsolutePath());
-      configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, TEMP_FOLDER.newFolder("temp").getAbsolutePath());
-      configuration.set(Constants.CFG_APP_FABRIC_REST_PORT, Integer.toString(Networks.getRandomPort()));
-      configuration.set(Constants.CFG_APP_FABRIC_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+      configuration.set(Constants.AppFabric.OUTPUT_DIR, TEMP_FOLDER.newFolder("app").getAbsolutePath());
+      configuration.set(Constants.AppFabric.TEMP_DIR, TEMP_FOLDER.newFolder("temp").getAbsolutePath());
+      configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
+      configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(InMemoryTransactionManager.class).init();
     }
@@ -167,8 +167,7 @@ public class TestHelper {
       ApplicationSpecification appSpec = application.configure();
       Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
 
-      ResourceIdentifier id = appFabricServer.init(
-        token, new ResourceInfo(account, applicationId, fileName, 0, System.currentTimeMillis()));
+      ArchiveId id = appFabricServer.init(token, new ArchiveInfo(account, applicationId, fileName));
 
       // Upload the jar file to remote location.
       BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
