@@ -14,6 +14,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -48,6 +49,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
@@ -72,7 +74,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Override
   public void init(HandlerContext context) {
     super.init(context);
-    this.endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC));
+    this.endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)),
+      1L, TimeUnit.SECONDS);
   }
 
   /**
