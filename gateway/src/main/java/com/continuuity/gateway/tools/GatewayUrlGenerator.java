@@ -1,7 +1,7 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.v2.GatewayConstants;
+import com.continuuity.common.conf.Constants;
 
 /**
  * Helper to generate Gateway Url.
@@ -16,11 +16,11 @@ public class GatewayUrlGenerator {
   public static String getBaseUrl(CConfiguration config, String hostname, int port, boolean ssl) {
 
     if (port <= 0) {
-      port = config.getInt(GatewayConstants.ConfigKeys.PORT, -1);
+      port = config.getInt(Constants.Gateway.PORT, -1);
     }
 
     if (hostname == null) {
-      hostname = config.get(GatewayConstants.ConfigKeys.ADDRESS);
+      hostname = config.get(Constants.Gateway.ADDRESS);
     }
 
     if (port <= 0 || hostname == null) {

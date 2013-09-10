@@ -2,8 +2,8 @@ package com.continuuity.gateway;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.tools.DataSetClient;
-import com.continuuity.gateway.v2.GatewayConstants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,8 +30,8 @@ public class DataSetClientTest {
       "increment", "--table", table, "--row", row, "--column", column, "--value", "1",
       "--host", hostname, "--port", port }, configuration));
 
-    configuration.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
-    configuration.set(GatewayConstants.ConfigKeys.PORT, port);
+    configuration.set(Constants.Gateway.ADDRESS, hostname);
+    configuration.set(Constants.Gateway.PORT, port);
     Assert.assertEquals("42", new DataSetClient().execute(new String[]{
       "read", "--table", table, "--row", row, "--column", column, "--counter"}, configuration));
     Assert.assertEquals("OK.", new DataSetClient().execute(new String[]{

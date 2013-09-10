@@ -2,8 +2,8 @@ package com.continuuity.gateway;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.tools.StreamClient;
-import com.continuuity.gateway.v2.GatewayConstants;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -103,8 +103,8 @@ public class StreamClientTest {
 
   private String command(String streamId, String[] args) {
     CConfiguration configuration = CConfiguration.create();
-    configuration.set(GatewayConstants.ConfigKeys.ADDRESS, hostname);
-    configuration.setInt(GatewayConstants.ConfigKeys.PORT, GatewayFastTestsSuite.getPort());
+    configuration.set(Constants.Gateway.ADDRESS, hostname);
+    configuration.setInt(Constants.Gateway.PORT, GatewayFastTestsSuite.getPort());
 
     if (streamId != null) {
       args = Arrays.copyOf(args, args.length + 2);
