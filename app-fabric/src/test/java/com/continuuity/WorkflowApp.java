@@ -69,18 +69,18 @@ public class WorkflowApp implements Application {
     @Override
     public void initialize(WorkflowContext context) throws Exception {
       super.initialize(context);
-      System.out.println("Dummy action initialized: " + context.getSpecification().getName());
+      System.out.println("Custom action initialized: " + context.getSpecification().getName());
     }
 
     @Override
     public void destroy() {
       super.destroy();
-      System.out.println("Dummy action destroyed: " + getContext().getSpecification().getName());
+      System.out.println("Custom action destroyed: " + getContext().getSpecification().getName());
     }
 
     @Override
     public void run() {
-      System.out.println("Dummy action run");
+      System.out.println("Custom action run");
     }
   }
 }
