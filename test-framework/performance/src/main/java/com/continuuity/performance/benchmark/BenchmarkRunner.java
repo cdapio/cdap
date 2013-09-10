@@ -1,9 +1,11 @@
 package com.continuuity.performance.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +116,8 @@ public class BenchmarkRunner {
     BenchmarkMetric[] groupMetrics = new BenchmarkMetric[groups.length];
     List<Future> agentFutureList = new ArrayList<Future>(totalNumAgents);
 
-    ExecutorService agentThreadPool = Executors.newFixedThreadPool(totalNumAgents);
+    ExecutorService agentThreadPool = Executors.newFixedThreadPool(
+      totalNumAgents, new ThreadFactoryBuilder().setNameFormat("benchmark-runner-%d").build());
     CompletionService agentCompletionPool = new ExecutorCompletionService(agentThreadPool);
 
     for (int j = 0; j < groups.length; j++) {
