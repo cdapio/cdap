@@ -159,6 +159,7 @@ define([], function () {
 			$('#flowlet-popup-' + tabName + '-tab').addClass('tab-selected');
 
 		},
+
 		close: function () {
 
 			var model = this.get('controllers').get('FlowStatus').get('model');
@@ -176,6 +177,7 @@ define([], function () {
 			this.transitionToRoute('FlowStatus', model);
 
 		},
+		
 		navigate: function (flowletName) {
 
 			var model = this.get('controllers.FlowStatus').get_flowlet(flowletName);
@@ -186,9 +188,11 @@ define([], function () {
 			}
 
 		},
+
 		addOneInstance: function () {
 			this.confirm('Add 1 instance to ', +1);
 		},
+		
 		removeOneInstance: function () {
 
 			if (this.get('model').get('instances') > 1) {
@@ -203,6 +207,7 @@ define([], function () {
 			}
 
 		},
+		
 		confirm: function (message, value) {
 
 			var model = this.get('model');
@@ -219,6 +224,7 @@ define([], function () {
 				});
 
 		},
+		
 		addInstances: function (value, done) {
 
 			var flow = this.get('controllers').get('FlowStatus').get('model');

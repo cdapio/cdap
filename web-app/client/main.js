@@ -8,7 +8,7 @@ define (['core/application'], function (Application) {
 	/*
 	 * Determine whether to swap out specific components with mocks.
 	 */
-	var mocks = window.location.search.split('?')[1];
+    var mocks = window.location.search.split('?')[1];
 
 
 	if (mocks) {
@@ -62,7 +62,9 @@ define (['core/application'], function (Application) {
 
 							resource = container.lookup(type + ':main');
 							for (var event in C.__handlers[type]) {
-								resource.on(event, C.__handlers[type][event]);
+                                if (C.__handlers[type].hasOwnProperty(event)) {
+                                    resource.on(event, C.__handlers[type][event]);
+                                }
 							}
 							if (typeof resource.connect === 'function') {
 								resource.connect();
@@ -143,17 +145,19 @@ define (['core/application'], function (Application) {
 
 	function modelFinder (params) {
 		for (var key in params) {
-			/*
-			 * Converts e.g. 'app_id' into 'App', 'flow_id' into 'Flow'
-			 */
-			var type = key.charAt(0).toUpperCase() + key.slice(1, key.length - 3);
-			/*
-			 * Finds type and injects HTTP
-			 */
-			if (type in C) {
-				return C[type].find(params[key],
-					this.controllerFor('Application').HTTP);
-			}
+      if (params.hasOwnProperty(key)) {
+        /*
+         * Converts e.g. 'app_id' into 'App', 'flow_id' into 'Flow'
+         */
+        var type = key.charAt(0).toUpperCase() + key.slice(1, key.length - 3);
+        /*
+         * Finds type and injects HTTP
+         */
+        if (type in C) {
+          return C[type].find(params[key],
+            this.controllerFor('Application').HTTP);
+        }
+      }
 		}
 	}
 
