@@ -35,10 +35,13 @@ public class TransactionExecutorTest {
       }));
 
   static final DummyTxClient TX_CLIENT = (DummyTxClient) INJECTOR.getInstance(TransactionSystemClient.class);
+  static final TransactionExecutorFactory factory = INJECTOR.getInstance(TransactionExecutorFactory.class);
+
   final DummyTxAware ds1 = new DummyTxAware(), ds2 = new DummyTxAware();
+  final Collection<TransactionAware> txAwares = ImmutableList.<TransactionAware>of(ds1, ds2);
 
   private DefaultTransactionExecutor getExecutor() {
-    return new DefaultTransactionExecutor(TX_CLIENT, ds1, ds2);
+    return factory.createExecutor(txAwares);
   }
 
   static final byte[] A = { 'a' };
