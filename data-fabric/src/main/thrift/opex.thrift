@@ -325,5 +325,6 @@ service TOperationExecutor {
   TTransaction2 startShortTimeout(1: i32 timeout) throws (1: TOperationException ex),
   bool canCommitTx(1: TTransaction2 tx, 2: set<binary> changes) throws (1: TOperationException ex),
   bool commitTx(1: TTransaction2 tx) throws (1: TOperationException ex),
-  bool abortTx(1: TTransaction2 tx) throws (1: TOperationException ex),
+  void abortTx(1: TTransaction2 tx) throws (1: TOperationException ex),
+  void invalidateTx(1: TTransaction2 tx) throws (1: TOperationException ex),
 }
