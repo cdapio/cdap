@@ -18,6 +18,7 @@ dependencies {
     compile libraries.logback_core
     compile libraries.logback_classic
     compile libraries.google_guice
+    compile libraries.google_guice_assistedinject
     compile libraries.leveldb
     compile libraries.jsr_305
     compile libraries.weave_core

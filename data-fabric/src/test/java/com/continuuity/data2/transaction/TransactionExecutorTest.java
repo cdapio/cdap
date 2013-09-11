@@ -1,10 +1,17 @@
 package com.continuuity.data2.transaction;
 
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
+import com.google.inject.util.Modules;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,22 +25,34 @@ import java.util.List;
  */
 public class TransactionExecutorTest {
 
-  final DummyTxClient txSystem = new DummyTxClient(new InMemoryTransactionManager());
+  static final Injector injector = Guice.createInjector(Modules.override(
+    new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(InMemoryTransactionManager.class).toInstance(new InMemoryTransactionManager());
+          bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
+        }
+      }));
+
+  static final DummyTxClient txSystem = (DummyTxClient) injector.getInstance(TransactionSystemClient.class);
   final DummyTxAware ds1 = new DummyTxAware(), ds2 = new DummyTxAware();
 
-  private TransactionExecutor getExecutor() {
-    return new TransactionExecutor(txSystem, ds1, ds2);
+  private DefaultTransactionExecutor getExecutor() {
+    return new DefaultTransactionExecutor(txSystem, ds1, ds2);
   }
 
-  static final byte[] a = { 'a' };
-  static final byte[] b = { 'b' };
+  static final byte[] A = { 'a' };
+  static final byte[] B = { 'b' };
 
   final Function<Integer, Integer> testFunction = new Function<Integer, Integer>() {
     @Nullable
     @Override
     public Integer apply(@Nullable Integer input) {
-      ds1.addChange(a);
-      ds2.addChange(b);
+      ds1.addChange(A);
+      ds2.addChange(B);
+      if (input == null) {
+        throw new RuntimeException("function failed");
+      }
       return input * input;
     }
   };
@@ -263,13 +282,7 @@ public class TransactionExecutorTest {
     ds1.failRollbackTxOnce = 1;
     // execute: add a change to ds1 and ds2
     try {
-      getExecutor().execute(new Function<Integer, Object>() {
-        @Nullable
-        @Override
-        public Object apply(@Nullable Integer input) {
-          throw new RuntimeException("function failed");
-        }
-      }, 10);
+      getExecutor().execute(testFunction, null);
       Assert.fail("function failed - exception should be thrown");
     } catch (TransactionFailureException e) {
       Assert.assertEquals("function failed", e.getCause().getMessage());
@@ -376,7 +389,7 @@ public class TransactionExecutorTest {
       postCommitted = true;
       if (failPostCommitTxOnce == 2) {
         throw new RuntimeException("post failure");
-      };
+      }
     }
 
     @Override
@@ -404,6 +417,7 @@ public class TransactionExecutorTest {
     }
     CommitState state = CommitState.Started;
 
+    @Inject
     DummyTxClient(InMemoryTransactionManager txmgr) {
       super(txmgr);
     }
