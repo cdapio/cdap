@@ -18,7 +18,7 @@ import java.util.jar.Manifest;
 /**
  * Default implementation of program.
  */
-public final class DefaultProgram implements Program {
+final class DefaultProgram implements Program {
   private final ClassLoader jarClassLoader;
   private final String mainClassName;
   private final Type processorType;
