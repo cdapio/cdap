@@ -5,13 +5,12 @@ import com.continuuity.ResourceApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 /**
  *
@@ -50,10 +49,15 @@ public class ApplicationSpecificationTest {
     Assert.assertTrue(flowSpec.getFlowlets().containsKey("B"));
 
     FlowletDefinition flowletA = flowSpec.getFlowlets().get("A");
-    Assert.assertEquals(2, flowletA.getResourceSpec().getCores());
-    Assert.assertEquals(1024, flowletA.getResourceSpec().getMemorySize());
+    Assert.assertEquals(2, flowletA.getResourceSpec().getVirtualCores());
+    Assert.assertEquals(1024, flowletA.getResourceSpec().getMemoryMB());
     FlowletDefinition flowletB = flowSpec.getFlowlets().get("B");
-    Assert.assertEquals(5, flowletB.getResourceSpec().getCores());
-    Assert.assertEquals(2048, flowletB.getResourceSpec().getMemorySize());
+    Assert.assertEquals(5, flowletB.getResourceSpec().getVirtualCores());
+    Assert.assertEquals(2048, flowletB.getResourceSpec().getMemoryMB());
+
+    Assert.assertEquals(1, newSpec.getProcedures().size());
+    ProcedureSpecification procedureSpec = newSpec.getProcedures().values().iterator().next();
+    Assert.assertEquals(3, procedureSpec.getResources().getVirtualCores());
+    Assert.assertEquals(128, procedureSpec.getResources().getMemoryMB());
   }
 }

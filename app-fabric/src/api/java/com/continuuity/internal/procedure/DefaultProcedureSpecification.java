@@ -1,5 +1,6 @@
 package com.continuuity.internal.procedure;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.ProgramSpecificationHelper;
@@ -19,31 +20,41 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   private final String description;
   private final Set<String> dataSets;
   private final Map<String, String> arguments;
+  private final ResourceSpecification resources;
 
   public DefaultProcedureSpecification(String name, String description,
                                        Set<String> dataSets, Map<String, String> arguments) {
     this(null, name, description, dataSets, arguments);
   }
 
-  public DefaultProcedureSpecification(Procedure procedure) {
+  public DefaultProcedureSpecification(Procedure procedure, ResourceSpecification resources) {
     this.className = procedure.getClass().getName();
     ProcedureSpecification configureSpec = procedure.configure();
 
     this.name = configureSpec.getName();
     this.description = configureSpec.getDescription();
-    this.dataSets = ProgramSpecificationHelper.inspectDataSets(procedure.getClass(),
-                                    ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
+    this.dataSets = ProgramSpecificationHelper.inspectDataSets(
+      procedure.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
     this.arguments = configureSpec.getArguments();
+    this.resources = resources;
   }
 
   public DefaultProcedureSpecification(String className, String name, String description,
                                        Set<String> dataSets, Map<String, String> arguments) {
+    this(className, name, description, dataSets, arguments, ResourceSpecification.BASIC);
+  }
+
+  public DefaultProcedureSpecification(String className, String name, String description,
+                                       Set<String> dataSets, Map<String, String> arguments,
+                                       ResourceSpecification resources) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.dataSets = ImmutableSet.copyOf(dataSets);
     this.arguments = arguments == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(arguments);
+    this.resources = resources;
   }
+
 
   @Override
   public String getClassName() {
@@ -68,5 +79,10 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   @Override
   public Map<String, String> getArguments() {
     return arguments;
+  }
+
+  @Override
+  public ResourceSpecification getResources() {
+    return resources;
   }
 }

@@ -9,7 +9,9 @@ import com.continuuity.internal.DefaultResourceSpecification;
  */
 public interface ResourceSpecification {
 
-  final ResourceSpecification BASIC = Builder.with().setCores(1).setMemory(512, SizeUnit.MEGA).build();
+  final ResourceSpecification BASIC = Builder.with().setVirtualCores(1).setMemory(512, SizeUnit.MEGA).build();
+  static final int DEFAULT_VIRTUAL_CORES = 1;
+  static final int DEFAULT_MEMORY_MB = 512;
 
   /**
    * Unit for specifying memory size.
@@ -29,13 +31,13 @@ public interface ResourceSpecification {
    * Returns the number of CPU cores.
    * @return Number of CPU cores.
    */
-  int getCores();
+  int getVirtualCores();
 
   /**
-   * Returns the memory size in MB.
-   * @return Memory size
+   * Returns the memory in MB.
+   * @return Memory in MB
    */
-  int getMemorySize();
+  int getMemoryMB();
 
   /**
    * Builder for creating {@link ResourceSpecification}.
@@ -49,9 +51,13 @@ public interface ResourceSpecification {
       return new Builder();
     }
 
-    public Builder setCores(int cores) {
+    public Builder setVirtualCores(int cores) {
       Builder.this.cores = cores;
       return Builder.this;
+    }
+
+    public Builder setMemoryMB(int size) {
+      return Builder.this.setMemory(size, SizeUnit.MEGA);
     }
 
     public Builder setMemory(int size, SizeUnit unit) {
@@ -64,8 +70,8 @@ public interface ResourceSpecification {
     }
 
     private Builder() {
-      this.cores = 1;
-      this.memorySize = 512;
+      this.cores = DEFAULT_VIRTUAL_CORES;
+      this.memorySize = DEFAULT_MEMORY_MB;
     }
   }
 }

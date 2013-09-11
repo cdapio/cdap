@@ -46,8 +46,8 @@ public final class FlowWeaveApplication implements WeaveApplication {
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
       FlowletDefinition flowletDefinition = entry.getValue();
       ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-        .setCores(flowletDefinition.getResourceSpec().getCores())
-        .setMemory(flowletDefinition.getResourceSpec().getMemorySize(), ResourceSpecification.SizeUnit.MEGA)
+        .setCores(flowletDefinition.getResourceSpec().getVirtualCores())
+        .setMemory(flowletDefinition.getResourceSpec().getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
         .setInstances(flowletDefinition.getInstances())
         .build();
 

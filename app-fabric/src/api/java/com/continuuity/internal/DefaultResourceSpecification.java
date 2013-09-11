@@ -7,20 +7,20 @@ import com.continuuity.api.ResourceSpecification;
  */
 public final class DefaultResourceSpecification implements ResourceSpecification {
 
-  private final int cores;
-  private final int memorySize;
+  private final int virtualCores;
+  private final int memoryMB;
 
-  public DefaultResourceSpecification(int cores, int memorySize) {
-    this.cores = cores;
-    this.memorySize = memorySize;
+  public DefaultResourceSpecification(int cores, int memoryMB) {
+    this.virtualCores = cores;
+    this.memoryMB = memoryMB;
   }
   @Override
-  public int getCores() {
-    return cores;
+  public int getVirtualCores() {
+    return virtualCores;
   }
 
   @Override
-  public int getMemorySize() {
-    return memorySize;
+  public int getMemoryMB() {
+    return memoryMB;
   }
 }

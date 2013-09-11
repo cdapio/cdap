@@ -4,6 +4,7 @@
 
 package com.continuuity.api.procedure;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -45,6 +46,11 @@ public interface ProcedureSpecification {
    * @return An immutable map of arguments that was passed in when constructing the {@link ProcedureSpecification}.
    */
   Map<String, String> getArguments();
+
+  /**
+   * @return The {@link ResourceSpecification} for the procedure, containing how many resources to use.
+   */
+  ResourceSpecification getResources();
 
   /**
    * Builder for building {@link ProcedureSpecification}.

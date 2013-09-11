@@ -401,6 +401,15 @@ public interface ApplicationSpecification {
        * @return A {@link MoreProcedure} for adding more procedures.
        */
       MoreProcedure add(Procedure procedure);
+
+      /**
+       * Adds a {@link Procedure} to the application with resources set by {@link ResourceSpecification}.
+       *
+       * @param procedure The {@link Procedure} to be included in the application.
+       * @param resources The {@link ResourceSpecification} for the procedure to use.
+       * @return A {@link MoreProcedure} for adding more procedures.
+       */
+      MoreProcedure add(Procedure procedure, ResourceSpecification resources);
     }
 
     /**
@@ -440,8 +449,19 @@ public interface ApplicationSpecification {
        */
       @Override
       public MoreProcedure add(Procedure procedure) {
+        return add(procedure, ResourceSpecification.BASIC);
+      }
+
+      /**
+       * Adds a {@link Procedure} to the {@link Application}.
+       * @param procedure The {@link Procedure} to be included in the application.
+       * @param resources The {@link ResourceSpecification} for the procedure to use.
+       * @return An instance of {@link MoreProcedure}
+       */
+      @Override
+      public MoreProcedure add(Procedure procedure, ResourceSpecification resources) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure);
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, resources);
         procedures.put(spec.getName(), spec);
         return this;
       }
