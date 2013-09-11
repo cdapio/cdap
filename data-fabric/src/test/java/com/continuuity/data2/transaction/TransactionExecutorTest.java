@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class TransactionExecutorTest {
 
-  static final Injector injector = Guice.createInjector(Modules.override(
+  static final Injector INJECTOR = Guice.createInjector(Modules.override(
     new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
@@ -34,11 +34,11 @@ public class TransactionExecutorTest {
         }
       }));
 
-  static final DummyTxClient txSystem = (DummyTxClient) injector.getInstance(TransactionSystemClient.class);
+  static final DummyTxClient TX_CLIENT = (DummyTxClient) INJECTOR.getInstance(TransactionSystemClient.class);
   final DummyTxAware ds1 = new DummyTxAware(), ds2 = new DummyTxAware();
 
   private DefaultTransactionExecutor getExecutor() {
-    return new DefaultTransactionExecutor(txSystem, ds1, ds2);
+    return new DefaultTransactionExecutor(TX_CLIENT, ds1, ds2);
   }
 
   static final byte[] A = { 'a' };
@@ -79,12 +79,12 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds1.rolledBack);
     Assert.assertFalse(ds2.rolledBack);
     Assert.assertTrue(100 == result);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Committed);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Committed);
   }
 
   @Test
   public void testPostCommitFailure() throws TransactionFailureException {
-    ds1.failPostCommitTxOnce = 2;
+    ds1.failPostCommitTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -103,12 +103,12 @@ public class TransactionExecutorTest {
     Assert.assertTrue(ds2.postCommitted);
     Assert.assertFalse(ds1.rolledBack);
     Assert.assertFalse(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Committed);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Committed);
   }
 
   @Test
   public void testPersistFailure() throws TransactionFailureException {
-    ds1.failCommitTxOnce = 2;
+    ds1.failCommitTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -127,12 +127,12 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
   }
 
   @Test
   public void testPersistFalse() throws TransactionFailureException {
-    ds1.failCommitTxOnce = 1;
+    ds1.failCommitTxOnce = InduceFailure.ReturnFalse;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -151,13 +151,13 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
   }
 
   @Test
   public void testPersistAndRollbackFailure() throws TransactionFailureException {
-    ds1.failCommitTxOnce = 2;
-    ds1.failRollbackTxOnce = 2;
+    ds1.failCommitTxOnce = InduceFailure.ThrowException;
+    ds1.failRollbackTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -176,13 +176,13 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Invalidated);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
   public void testPersistAndRollbackFalse() throws TransactionFailureException {
-    ds1.failCommitTxOnce = 1;
-    ds1.failRollbackTxOnce = 1;
+    ds1.failCommitTxOnce = InduceFailure.ReturnFalse;
+    ds1.failRollbackTxOnce = InduceFailure.ReturnFalse;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -201,12 +201,12 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Invalidated);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
   public void testCommitFalse() throws TransactionFailureException {
-    txSystem.failCommitOnce = true;
+    TX_CLIENT.failCommitOnce = true;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -225,12 +225,12 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
   }
 
   @Test
   public void testCanCommitFalse() throws TransactionFailureException {
-    txSystem.failCanCommitOnce = true;
+    TX_CLIENT.failCanCommitOnce = true;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -249,13 +249,13 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
   }
 
   @Test
   public void testChangesAndRollbackFailure() throws TransactionFailureException {
-    ds1.failChangesTxOnce = 2;
-    ds1.failRollbackTxOnce = 2;
+    ds1.failChangesTxOnce = InduceFailure.ThrowException;
+    ds1.failRollbackTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -274,12 +274,12 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Invalidated);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
   public void testFunctionAndRollbackFailure() throws TransactionFailureException {
-    ds1.failRollbackTxOnce = 1;
+    ds1.failRollbackTxOnce = InduceFailure.ReturnFalse;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, null);
@@ -298,12 +298,12 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Invalidated);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
   public void testStartAndRollbackFailure() throws TransactionFailureException {
-    ds1.failStartTxOnce = 2;
+    ds1.failStartTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -322,8 +322,10 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertFalse(ds1.rolledBack);
     Assert.assertFalse(ds2.rolledBack);
-    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
   }
+
+  enum InduceFailure { NoFailure, ReturnFalse, ThrowException }
 
   static class DummyTxAware implements TransactionAware {
 
@@ -335,11 +337,11 @@ public class TransactionExecutorTest {
     boolean postCommitted = false;
     List<byte[]> changes = Lists.newArrayList();
 
-    int failStartTxOnce = 0; // 0 = true, 1 = false, 2 = throw
-    int failChangesTxOnce = 0; // 0 = true, 1 = false, 2 = throw
-    int failCommitTxOnce = 0; // 0 = true, 1 = false, 2 = throw
-    int failPostCommitTxOnce = 0; // 0 = true, 1 = false, 2 = throw
-    int failRollbackTxOnce = 0; // 0 = true, 1 = false, 2 = throw
+    InduceFailure failStartTxOnce = InduceFailure.NoFailure;
+    InduceFailure failChangesTxOnce = InduceFailure.NoFailure;
+    InduceFailure failCommitTxOnce = InduceFailure.NoFailure;
+    InduceFailure failPostCommitTxOnce = InduceFailure.NoFailure;
+    InduceFailure failRollbackTxOnce = InduceFailure.NoFailure;
 
     void addChange(byte[] key) {
       changes.add(key);
@@ -360,7 +362,8 @@ public class TransactionExecutorTest {
       reset();
       started = true;
       this.tx = tx;
-      if (failStartTxOnce == 2) {
+      if (failStartTxOnce == InduceFailure.ThrowException) {
+        failStartTxOnce = InduceFailure.NoFailure;
         throw new RuntimeException("start failure");
       }
     }
@@ -368,7 +371,8 @@ public class TransactionExecutorTest {
     @Override
     public Collection<byte[]> getTxChanges() {
       checked = true;
-      if (failChangesTxOnce == 2) {
+      if (failChangesTxOnce == InduceFailure.ThrowException) {
+        failChangesTxOnce = InduceFailure.NoFailure;
         throw new RuntimeException("changes failure");
       }
       return ImmutableList.copyOf(changes);
@@ -377,17 +381,22 @@ public class TransactionExecutorTest {
     @Override
     public boolean commitTx() throws Exception {
       committed = true;
-      if (failCommitTxOnce == 2) {
+      if (failCommitTxOnce == InduceFailure.ThrowException) {
+        failCommitTxOnce = InduceFailure.NoFailure;
         throw new RuntimeException("persist failure");
-      } else {
-        return failCommitTxOnce == 0;
       }
+      if (failCommitTxOnce == InduceFailure.ReturnFalse) {
+        failCommitTxOnce = InduceFailure.NoFailure;
+        return false;
+      }
+      return true;
     }
 
     @Override
     public void postTxCommit() {
       postCommitted = true;
-      if (failPostCommitTxOnce == 2) {
+      if (failPostCommitTxOnce == InduceFailure.ThrowException) {
+        failPostCommitTxOnce = InduceFailure.NoFailure;
         throw new RuntimeException("post failure");
       }
     }
@@ -395,11 +404,15 @@ public class TransactionExecutorTest {
     @Override
     public boolean rollbackTx() throws Exception {
       rolledBack = true;
-      if (failRollbackTxOnce == 2) {
+      if (failRollbackTxOnce == InduceFailure.ThrowException) {
+        failRollbackTxOnce = InduceFailure.NoFailure;
         throw new RuntimeException("rollback failure");
-      } else {
-        return failRollbackTxOnce == 0;
       }
+      if (failRollbackTxOnce == InduceFailure.ReturnFalse) {
+        failRollbackTxOnce = InduceFailure.NoFailure;
+        return false;
+      }
+      return true;
     }
 
     @Override

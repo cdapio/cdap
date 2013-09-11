@@ -1470,7 +1470,7 @@ public class OmidTransactionalOperationExecutor
   public void invalidate(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
     txSystemMetrics.gauge("tx.invalidate.ops", 1);
     txManager.invalidate(tx);
-    txSystemMetrics.gauge("tx.abort.successful", 1);
+    txSystemMetrics.gauge("tx.invalidate.successful", 1);
   }
 
   // this is a hack for reporting gauge metric: current metrics system supports only counters that are aggregated on

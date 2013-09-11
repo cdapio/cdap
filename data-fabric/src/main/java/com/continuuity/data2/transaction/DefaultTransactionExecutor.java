@@ -61,13 +61,15 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
     try {
       o = function.apply(input);
     } catch (Throwable e) {
-      abort(tx, new TransactionFailureException("transaction function failure", e));
+      String message = String.format("Transaction function failure for transaction %d. ", tx.getWritePointer());
+      abort(tx, new TransactionFailureException(message, e));
       // abort will throw
     }
+    // each of these steps will abort and rollback the tx in case if errors, and throw an exception
     checkForConflicts(tx);
     persist(tx);
     commit(tx);
-    postCommit();
+    postCommit(tx);
     return o;
   }
 
@@ -77,7 +79,8 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
       try {
         txAware.startTx(tx);
       } catch (Throwable e) {
-        String message = "Unable to start transaction aware '" + txAware.getName() + "': ";
+        String message = String.format("Unable to start transaction-aware '%s' for transaction %d. ",
+                                       txAware.getName(), tx.getWritePointer());
         LOG.warn(message, e);
         txClient.abort(tx);
         throw new TransactionFailureException(message, e);
@@ -92,15 +95,27 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
       try {
         changes.addAll(txAware.getTxChanges());
       } catch (Throwable e) {
-        String message = "Unable to retrieve changes from transaction aware '" + txAware.getName() + "': ";
+        String message = String.format("Unable to retrieve changes from transaction-aware '%s' for transaction %d. ",
+                                       txAware.getName(), tx.getWritePointer());
         LOG.warn(message, e);
         abort(tx, new TransactionFailureException(message, e));
         // abort will throw that exception
       }
     }
-    if (!txClient.canCommit(tx, changes)) {
-      abort(tx, null);
-      throw new TransactionConflictException("conflict detected");
+
+    boolean canCommit = false;
+    try {
+      canCommit = txClient.canCommit(tx, changes);
+    } catch (Throwable e) {
+      String message = String.format("Exception from canCommit for transaction %d.", tx.getWritePointer());
+      LOG.warn(message, e);
+      abort(tx, new TransactionFailureException(message, e));
+      // abort will throw that exception
+    }
+    if (!canCommit) {
+      String message = String.format("Conflict detected for transaction %d.", tx.getWritePointer());
+      abort(tx, new TransactionConflictException(message));
+      // abort will throw
     }
   }
 
@@ -115,7 +130,8 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
         cause = e;
       }
       if (!success) {
-        String message = "Unable to persist changes of transaction aware '" + txAware.getName() + "'. ";
+        String message = String.format("Unable to persist changes of transaction-aware '%s' for transaction %d. ",
+                                       txAware.getName(), tx.getWritePointer());
         if (cause == null) {
           LOG.warn(message);
         } else {
@@ -132,24 +148,26 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
     try {
       commitSuccess = txClient.commit(tx);
     } catch (Throwable e) {
-      String message = "exception from commit transaction";
+      String message = String.format("Exception from commit for transaction %d.", tx.getWritePointer());
       LOG.warn(message, e);
       abort(tx, new TransactionFailureException(message, e));
       // abort will throw that exception
     }
     if (!commitSuccess) {
-      abort(tx, new TransactionConflictException("conflict detected"));
+      String message = String.format("Conflict detected for transaction %d.", tx.getWritePointer());
+      abort(tx, new TransactionConflictException(message));
       // abort will throw
     }
   }
 
-  private void postCommit() throws TransactionFailureException {
+  private void postCommit(Transaction tx) throws TransactionFailureException {
     TransactionFailureException cause = null;
     for (TransactionAware txAware : txAwares) {
       try {
         txAware.postTxCommit();
       } catch (Throwable e) {
-        String message = "Unable to perform post-commit in transaction aware '" + txAware.getName() + "': ";
+        String message = String.format("Unable to perform post-commit in transaction-aware '%s' for transaction %d. ",
+                                       txAware.getName(), tx.getWritePointer());
         LOG.warn(message, e);
         cause = new TransactionFailureException(message, e);
       }
@@ -178,7 +196,8 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
           success = false;
         }
       } catch (Throwable e) {
-        String message = "Unable to roll back changes in transaction aware '" + txAware.getName() + "'. ";
+        String message = String.format("Unable to roll back changes in transaction-aware '%s' for transaction %d. ",
+                                       txAware.getName(), tx.getWritePointer());
         LOG.warn(message, e);
         if (cause == null) {
           cause = new TransactionFailureException(message, e);
