@@ -651,13 +651,27 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public boolean abort(final com.continuuity.data2.transaction.Transaction tx) throws OperationException {
-    return this.execute(
+  public void abort(final com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    this.execute(
       new Operation<Boolean>("abort") {
         @Override
         public Boolean execute(OperationExecutorClient client)
           throws TException, OperationException {
-          return client.abort(tx);
+          client.abort(tx);
+          return true;
+        }
+      });
+  }
+
+  @Override
+  public void invalidate(final com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    this.execute(
+      new Operation<Boolean>("invalidate") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          client.invalidate(tx);
+          return true;
         }
       });
   }

@@ -98,11 +98,9 @@ public class NoOpexService {
       // ENG-443 - Set the max read buffer size. This is important as this will
       // prevent the server from throwing OOME if telnetd to the port
       // it's running on.
-      serverArgs.maxReadBufferBytes = com.continuuity.common.conf.Constants.DEFAULT_MAX_READ_BUFFER;
+      serverArgs.maxReadBufferBytes = com.continuuity.common.conf.Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
 
       this.server = new THsHaServer(serverArgs);
-
-      LOG.info("service running on %s:%d", address, port);
 
       // serve() blocks and will only return when stop() is called
       this.server.serve();

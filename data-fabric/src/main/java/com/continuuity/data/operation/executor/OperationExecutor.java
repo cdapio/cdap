@@ -382,6 +382,6 @@ public interface OperationExecutor
     throws OperationException;
 
   public boolean commit(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
-
-  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
+  public void abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
+  public void invalidate(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
 }

@@ -98,6 +98,7 @@ public class TxManager {
     if (rollbacksSuccess) {
       txClient.abort(transaction);
     } else {
+      txClient.invalidate(transaction);
       throw new OperationException(StatusCode.INTERNAL_ERROR,
                                    "Not all TransactionAwares could be rolled back successfully");
     }

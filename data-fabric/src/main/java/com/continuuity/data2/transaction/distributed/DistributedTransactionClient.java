@@ -81,9 +81,18 @@ public final class DistributedTransactionClient implements TransactionSystemClie
   }
 
   @Override
-  public boolean abort(Transaction tx) {
+  public void abort(Transaction tx) {
     try {
-      return rpcClient.abort(Converters.convert(tx));
+      rpcClient.abort(Converters.convert(tx));
+    } catch (TException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void invalidate(Transaction tx) {
+    try {
+      rpcClient.invalidate(Converters.convert(tx));
     } catch (TException e) {
       throw Throwables.propagate(e);
     }
