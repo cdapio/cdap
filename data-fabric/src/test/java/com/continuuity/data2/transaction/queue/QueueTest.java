@@ -203,6 +203,12 @@ public abstract class QueueTest {
       public boolean rollbackTx() throws Exception {
         return true;
       }
+
+
+      @Override
+      public String getName() {
+        return "test";
+      }                                    
     });
 
     // First, try to enqueue and commit would fail

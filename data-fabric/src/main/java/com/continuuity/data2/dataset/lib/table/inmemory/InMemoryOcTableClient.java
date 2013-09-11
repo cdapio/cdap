@@ -30,13 +30,13 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   @Override
   protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff) {
-    InMemoryOcTableService.merge(getName(), buff, tx.getWritePointer());
+    InMemoryOcTableService.merge(getTableName(), buff, tx.getWritePointer());
   }
 
   @Override
   protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) {
     // NOTE: we could just use merge and pass the changes with all values = null, but separate method is more efficient
-    InMemoryOcTableService.undo(getName(), persisted, tx.getWritePointer());
+    InMemoryOcTableService.undo(getTableName(), persisted, tx.getWritePointer());
   }
 
   @Override
@@ -65,7 +65,7 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOcTableService.getRowRange(getName(), startRow, stopRow, tx.getReadPointer());
+      InMemoryOcTableService.getRowRange(getTableName(), startRow, stopRow, tx.getReadPointer());
 
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange =
       getLatestNotExcludedRows(rowRange, tx);
@@ -78,13 +78,13 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
     // no tx logic needed
     if (tx == null) {
       NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
-        InMemoryOcTableService.get(getName(), row, NO_TX_VERSION);
+        InMemoryOcTableService.get(getTableName(), row, NO_TX_VERSION);
 
       return unwrapDeletes(filterByColumns(getLatest(rowMap), columns));
     }
 
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
-      InMemoryOcTableService.get(getName(), row, tx.getReadPointer());
+      InMemoryOcTableService.get(getTableName(), row, tx.getReadPointer());
 
     if (rowMap == null) {
       return EMPTY_ROW_MAP;

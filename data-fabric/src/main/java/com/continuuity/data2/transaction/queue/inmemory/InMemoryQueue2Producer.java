@@ -16,7 +16,7 @@ public class InMemoryQueue2Producer extends AbstractQueue2Producer {
   private Transaction commitTransaction;
 
   public InMemoryQueue2Producer(QueueName queueName, InMemoryQueueService queueService, QueueMetrics queueMetrics) {
-    super(queueMetrics);
+    super(queueMetrics, queueName);
     this.queue = queueService.getQueue(queueName);
   }
 
