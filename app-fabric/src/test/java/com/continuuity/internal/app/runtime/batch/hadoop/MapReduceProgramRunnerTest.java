@@ -211,14 +211,14 @@ public class MapReduceProgramRunnerTest {
   private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
     final Program program = getProgram(app, programClass);
-    ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+    ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
 
     HashMap<String, String> userArgs = Maps.newHashMap();
     userArgs.put("metric", "metric");
     userArgs.put("startTs", "1");
     userArgs.put("stopTs", "3");
     userArgs.put("tag", "tag1");
-    return runner.run(program, new SimpleProgramOptions(program.getProgramName(),
+    return runner.run(program, new SimpleProgramOptions(program.getName(),
                                                         new BasicArguments(),
                                                         new BasicArguments(userArgs)));
   }

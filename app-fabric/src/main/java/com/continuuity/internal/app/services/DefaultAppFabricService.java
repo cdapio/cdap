@@ -433,9 +433,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos
-      = runtimeService.list(Type.valueOf(identifier.getType().name())).values();
-
+    Type type = Type.valueOf(identifier.getType().name());
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
             identifier.getAccountId(), identifier.getFlowId());
 
