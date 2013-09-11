@@ -486,18 +486,19 @@ public class InMemoryTransactionManager {
    * synchronized.
    */
   private Transaction createTransaction() {
-    long lowest = Transaction.NO_TX_IN_PROGRESS;
+    // For holding the first in progress short transaction Id (with timeout >= 0).
+    long firstShortTx = Transaction.NO_TX_IN_PROGRESS;
     long[] array = new long[inProgress.size()];
     int i = 0;
     for (Map.Entry<Long, Long> entry : inProgress.entrySet()) {
       long txId = entry.getKey();
       array[i++] = txId;
-      if (lowest == Transaction.NO_TX_IN_PROGRESS && entry.getValue() >= 0) {
-        lowest = txId;
+      if (firstShortTx == Transaction.NO_TX_IN_PROGRESS && entry.getValue() >= 0) {
+        firstShortTx = txId;
       }
     }
 
-    return new Transaction(readPointer, nextWritePointer, invalidArray, array, lowest);
+    return new Transaction(readPointer, nextWritePointer, invalidArray, array, firstShortTx);
   }
 
 /*
