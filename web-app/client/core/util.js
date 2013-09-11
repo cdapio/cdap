@@ -80,23 +80,12 @@ define([], function () {
 					}
 				}
 
-				var entered = 0;
-
 				element.bind('dragenter', function (e) {
 
 					ignoreDrag(e);
-					entered = new Date().getTime();
 					$('#drop-hover').fadeIn();
 
-				}).bind('dragleave', function (e) {
-
-					var now = new Date().getTime();
-					if (now - entered > 5) {
-						$('#drop-hover').fadeOut();
-					}
-
-				}).bind('dragover', ignoreDrag)
-					.bind('drop', drop);
+				}).bind('dragover', ignoreDrag).bind('drop', drop);
 
 			},
 
@@ -123,7 +112,18 @@ define([], function () {
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
 				xhr.send(file);
-
+				xhr.onreadystatechange = function () {
+					if (xhr.readyState == 4 && xhr.responseText === 'OK') {
+						$('#drop-hover').fadeOut();
+						window.location.reload();
+					} else {
+						C.Modal.show("Deployment Error", xhr.responseText);
+						$('#drop-hover').fadeOut(function () {
+							$('#drop-label').show();
+							$('#drop-loading').hide();
+						});
+					}
+				}
 			},
 
 			sendFiles: function (files, type) {
@@ -137,53 +137,6 @@ define([], function () {
 
 				if (files.length > 0) {
 					this.__sendFile();
-				}
-			},
-
-			update: function (response) {
-
-				if (response.error) {
-					C.Modal.show("Deployment Error", response.error);
-					$('#drop-hover').fadeOut(function () {
-						$('#drop-label').show();
-						$('#drop-loading').hide();
-					});
-					this.processing = false;
-
-				} else {
-
-					switch (response.step) {
-						case 0:
-						break;
-						case 1:
-						case 2:
-						case 3:
-							this.set('message', response.message);
-							break;
-						case undefined:
-							if (response.status === 'initialized') {
-								this.resource_identifier = response.resource_identifier;
-							}
-							this.set('message', response.status);
-						break;
-						case 5:
-							this.set('message', 'Drop a JAR to Deploy');
-							this.processing = false;
-							this.__sendFile();
-						break;
-						default:
-							this.set('message', 'Drop a JAR to Deploy');
-							this.processing = false;
-							this.set('warningMessage', response.message);
-
-							$('.modal').modal('hide');
-
-							C.Modal.show("Deployment Error", response.message);
-							$('#drop-hover').fadeOut(function () {
-								$('#drop-label').show();
-								$('#drop-loading').hide();
-							});
-					}
 				}
 			}
 		}),

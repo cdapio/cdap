@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class NettyHttpService extends AbstractIdleService {
 
   private static final Logger LOG  = LoggerFactory.getLogger(NettyHttpService.class);
-  private static final int MAX_INPUT_SIZE = 128 * 1024;
+  private static final int MAX_INPUT_SIZE = 1024 * 1024 * 1024;
 
   private ServerBootstrap bootstrap;
   private int bossThreadPoolSize;
