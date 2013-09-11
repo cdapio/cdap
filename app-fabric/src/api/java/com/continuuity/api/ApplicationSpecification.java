@@ -15,6 +15,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.DefaultApplicationSpecification;
+import com.continuuity.internal.DefaultResourceSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
@@ -401,15 +402,33 @@ public interface ApplicationSpecification {
        * @return A {@link MoreProcedure} for adding more procedures.
        */
       MoreProcedure add(Procedure procedure);
+    }
 
+    /**
+     * Interface for setting resources like virtual cores and memory for a {@link Procedure}.
+     */
+    public interface ProcedureResourceSetter {
       /**
-       * Adds a {@link Procedure} to the application with resources set by {@link ResourceSpecification}.
-       *
-       * @param procedure The {@link Procedure} to be included in the application.
-       * @param resources The {@link ResourceSpecification} for the procedure to use.
+       * Set the number of virtual cores the previously added Procedure should be able to use.
+       * @param cores number of cores the Procedure can use
        * @return A {@link MoreProcedure} for adding more procedures.
        */
-      MoreProcedure add(Procedure procedure, ResourceSpecification resources);
+      MoreProcedure setVirtualCores(int cores);
+
+      /**
+       * Set the amount of memory in MB the previously added Procedure should be able to use.
+       * @param memory amount of memory in MB the Procedure can use
+       * @return A {@link MoreProcedure} for adding more procedures.
+       */
+      MoreProcedure setMemoryMB(int memory);
+
+      /**
+       * Set the amount of memory in MB the previously added Procedure should be able to use.
+       * @param memory amount of memory units the Procedure can use
+       * @param unit unit of memory
+       * @return A {@link MoreProcedure} for adding more procedures.
+       */
+      MoreProcedure setMemory(int memory, ResourceSpecification.SizeUnit unit);
     }
 
     /**
@@ -440,7 +459,8 @@ public interface ApplicationSpecification {
     /**
      * Class for adding more {@link Procedure} and for proceeding to next configuration step.
      */
-    public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
+    public final class MoreProcedure implements ProcedureAdder, AfterProcedure, ProcedureResourceSetter {
+      private String lastProcedureAdded;
 
       /**
        * Adds a {@link Procedure} to the {@link Application}.
@@ -449,20 +469,11 @@ public interface ApplicationSpecification {
        */
       @Override
       public MoreProcedure add(Procedure procedure) {
-        return add(procedure, ResourceSpecification.BASIC);
-      }
-
-      /**
-       * Adds a {@link Procedure} to the {@link Application}.
-       * @param procedure The {@link Procedure} to be included in the application.
-       * @param resources The {@link ResourceSpecification} for the procedure to use.
-       * @return An instance of {@link MoreProcedure}
-       */
-      @Override
-      public MoreProcedure add(Procedure procedure, ResourceSpecification resources) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, resources);
-        procedures.put(spec.getName(), spec);
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, new DefaultResourceSpecification());
+        String procedureName = spec.getName();
+        procedures.put(procedureName, spec);
+        lastProcedureAdded = procedureName;
         return this;
       }
 
@@ -493,6 +504,24 @@ public interface ApplicationSpecification {
       @Override
       public AfterBatch noBatch() {
         return new MoreBatch();
+      }
+
+      @Override
+      public MoreProcedure setVirtualCores(int cores) {
+        procedures.get(lastProcedureAdded).getResources().setVirtualCores(cores);
+        return this;
+      }
+
+      @Override
+      public MoreProcedure setMemoryMB(int memory) {
+        procedures.get(lastProcedureAdded).getResources().setMemoryMB(memory);
+        return this;
+      }
+
+      @Override
+      public MoreProcedure setMemory(int memory, ResourceSpecification.SizeUnit unit) {
+        procedures.get(lastProcedureAdded).getResources().setMemory(memory, unit);
+        return this;
       }
     }
 

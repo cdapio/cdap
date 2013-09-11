@@ -8,8 +8,6 @@ import com.continuuity.internal.DefaultResourceSpecification;
  * number of cores and amount of memory in megabytes.
  */
 public interface ResourceSpecification {
-
-  final ResourceSpecification BASIC = Builder.with().setVirtualCores(1).setMemory(512, SizeUnit.MEGA).build();
   static final int DEFAULT_VIRTUAL_CORES = 1;
   static final int DEFAULT_MEMORY_MB = 512;
 
@@ -25,19 +23,42 @@ public interface ResourceSpecification {
     private SizeUnit(int multiplier) {
       this.multiplier = multiplier;
     }
+
+    public int getMultiplier() {
+      return this.multiplier;
+    }
   }
 
   /**
-   * Returns the number of CPU cores.
-   * @return Number of CPU cores.
+   * Returns the number of virtual cores.
+   * @return Number of virtual cores.
    */
   int getVirtualCores();
 
   /**
    * Returns the memory in MB.
-   * @return Memory in MB
+   * @return Memory in MB.
    */
   int getMemoryMB();
+
+  /**
+   * Set the number of virtual cores.
+   * @param cores Number of virtual cores.
+   */
+  void setVirtualCores(int cores);
+
+  /**
+   * Set the amount of memory in MB.
+   * @param memory Amount of memory in MB.
+   */
+  void setMemoryMB(int memory);
+
+  /**
+   *
+   * @param memory
+   * @param unit
+   */
+  void setMemory(int memory, SizeUnit unit);
 
   /**
    * Builder for creating {@link ResourceSpecification}.

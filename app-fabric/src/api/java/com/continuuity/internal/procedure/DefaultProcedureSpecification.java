@@ -3,6 +3,7 @@ package com.continuuity.internal.procedure;
 import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.internal.DefaultResourceSpecification;
 import com.continuuity.internal.ProgramSpecificationHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -41,7 +42,7 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
 
   public DefaultProcedureSpecification(String className, String name, String description,
                                        Set<String> dataSets, Map<String, String> arguments) {
-    this(className, name, description, dataSets, arguments, ResourceSpecification.BASIC);
+    this(className, name, description, dataSets, arguments, new DefaultResourceSpecification());
   }
 
   public DefaultProcedureSpecification(String className, String name, String description,

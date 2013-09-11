@@ -15,6 +15,7 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.internal.DefaultResourceSpecification;
 import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
@@ -99,7 +100,7 @@ public final class FlowletDefinition {
     this.outputTypes = definition.outputTypes;
     this.inputs = definition.inputs;
     this.outputs = definition.outputs;
-    this.resourceSpec = ResourceSpecification.BASIC;
+    this.resourceSpec = new DefaultResourceSpecification();
   }
 
   /**

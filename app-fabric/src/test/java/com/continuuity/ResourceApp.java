@@ -35,8 +35,7 @@ public class ResourceApp implements Application {
       .noDataSet()
       .withFlows().add(new ResourceFlow())
       .withProcedures()
-        .add(new DummyProcedure(),
-             ResourceSpecification.Builder.with().setVirtualCores(3).setMemoryMB(128).build())
+        .add(new DummyProcedure()).setVirtualCores(3).setMemoryMB(128)
       .noBatch()
       .build();
   }
@@ -53,9 +52,8 @@ public class ResourceApp implements Application {
         .setName("ResourceFlow")
         .setDescription("Simple Resource Flow")
         .withFlowlets()
-          .add("A", new A(), ResourceSpecification.Builder.with().setVirtualCores(2).setMemoryMB(1024).build())
-          .add("B", new B(), ResourceSpecification.Builder.with()
-            .setVirtualCores(5).setMemory(2, ResourceSpecification.SizeUnit.GIGA).build())
+          .add("A", new A()).setVirtualCores(2).setMemoryMB(1024)
+          .add("B", new B()).setVirtualCores(5).setMemory(2, ResourceSpecification.SizeUnit.GIGA)
         .connect()
           .fromStream("X").to("A")
           .fromStream("X").to("B")
