@@ -23,8 +23,8 @@ final class ResourceSpecificationCodec implements JsonSerializer<ResourceSpecifi
   public JsonElement serialize(ResourceSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
-    jsonObj.add("cores", new JsonPrimitive(src.getCores()));
-    jsonObj.add("memorySize", new JsonPrimitive(src.getMemorySize()));
+    jsonObj.add("virtualCores", new JsonPrimitive(src.getVirtualCores()));
+    jsonObj.add("memoryMB", new JsonPrimitive(src.getMemoryMB()));
 
     return jsonObj;
   }
@@ -34,8 +34,8 @@ final class ResourceSpecificationCodec implements JsonSerializer<ResourceSpecifi
                                           JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
-    int cores = jsonObj.get("cores").getAsInt();
-    int memorySize = jsonObj.get("memorySize").getAsInt();
+    int cores = jsonObj.get("virtualCores").getAsInt();
+    int memorySize = jsonObj.get("memoryMB").getAsInt();
 
     return new DefaultResourceSpecification(cores, memorySize);
   }

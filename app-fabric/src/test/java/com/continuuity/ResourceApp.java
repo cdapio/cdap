@@ -7,21 +7,13 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ResourceSpecification;
-import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.google.common.collect.Lists;
-
-import java.net.URI;
-import java.util.List;
+import com.continuuity.api.procedure.AbstractProcedure;
 
 /**
  * This is an Application used for only testing that sets various resources for different
@@ -42,10 +34,14 @@ public class ResourceApp implements Application {
       .withStreams().add(new Stream("X"))
       .noDataSet()
       .withFlows().add(new ResourceFlow())
-      .noProcedure()
+      .withProcedures()
+        .add(new DummyProcedure(),
+             ResourceSpecification.Builder.with().setVirtualCores(3).setMemoryMB(128).build())
       .noBatch()
       .build();
   }
+
+  private class DummyProcedure extends AbstractProcedure {}
 
   /**
    *
@@ -57,10 +53,9 @@ public class ResourceApp implements Application {
         .setName("ResourceFlow")
         .setDescription("Simple Resource Flow")
         .withFlowlets()
-          .add("A", new A(), ResourceSpecification.Builder.with()
-            .setCores(2).setMemory(1024, ResourceSpecification.SizeUnit.MEGA).build())
+          .add("A", new A(), ResourceSpecification.Builder.with().setVirtualCores(2).setMemoryMB(1024).build())
           .add("B", new B(), ResourceSpecification.Builder.with()
-            .setCores(5).setMemory(2, ResourceSpecification.SizeUnit.GIGA).build())
+            .setVirtualCores(5).setMemory(2, ResourceSpecification.SizeUnit.GIGA).build())
         .connect()
           .fromStream("X").to("A")
           .fromStream("X").to("B")
