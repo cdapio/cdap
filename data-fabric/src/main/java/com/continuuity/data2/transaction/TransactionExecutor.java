@@ -17,13 +17,21 @@ public class TransactionExecutor {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionExecutor.class);
 
-  final Collection<TransactionAware> txAwares;
-  final TransactionSystemClient txClient;
+  private final Collection<TransactionAware> txAwares;
+  private final TransactionSystemClient txClient;
 
   /**
    * Constructor for a transaction executor.
    */
-  public TransactionExecutor(Collection<TransactionAware> txAwares, TransactionSystemClient txClient) {
+  public TransactionExecutor(TransactionSystemClient txClient, Iterable<TransactionAware> txAwares) {
+    this.txAwares = ImmutableList.copyOf(txAwares);
+    this.txClient = txClient;
+  }
+
+  /**
+   * Constructor for a transaction executor.
+   */
+  public TransactionExecutor(TransactionSystemClient txClient, TransactionAware ... txAwares) {
     this.txAwares = ImmutableList.copyOf(txAwares);
     this.txClient = txClient;
   }
@@ -54,10 +62,7 @@ public class TransactionExecutor {
     }
     checkForConflicts(tx);
     persist(tx);
-    if (!txClient.commit(tx)) {
-      abort(tx, new TransactionConflictException("conflict detected"));
-      // abort will throw
-    }
+    commit(tx);
     postCommit();
     return o;
   }
@@ -83,7 +88,7 @@ public class TransactionExecutor {
       try {
         changes.addAll(txAware.getTxChanges());
       } catch (Throwable e) {
-        String message = "Unable to retrieve changes from transaction aware '\" + txAware.getName() + \"': ";
+        String message = "Unable to retrieve changes from transaction aware '" + txAware.getName() + "': ";
         LOG.warn(message, e);
         abort(tx, new TransactionFailureException(message, e));
         // abort will throw that exception
@@ -100,7 +105,7 @@ public class TransactionExecutor {
       try {
         txAware.commitTx();
       } catch (Throwable e) {
-        String message = "Unable to persist changes of transaction aware '\" + txAware.getName() + \"': ";
+        String message = "Unable to persist changes of transaction aware '" + txAware.getName() + "': ";
         LOG.warn(message, e);
         abort(tx, new TransactionFailureException(message, e));
         // abort will throw that exception
@@ -108,15 +113,35 @@ public class TransactionExecutor {
     }
   }
 
+  private void commit(Transaction tx) throws TransactionFailureException {
+    boolean commitSuccess = false;
+    try {
+      commitSuccess = txClient.commit(tx);
+    } catch (Throwable e) {
+      String message = "exception from commit transaction";
+      LOG.warn(message, e);
+      abort(tx, new TransactionFailureException(message, e));
+      // abort will throw that exception
+    }
+    if (!commitSuccess) {
+      abort(tx, new TransactionConflictException("conflict detected"));
+      // abort will throw
+    }
+  }
+
   private void postCommit() throws TransactionFailureException {
+    TransactionFailureException cause = null;
     for (TransactionAware txAware : txAwares) {
       try {
         txAware.postTxCommit();
       } catch (Throwable e) {
-        String message = "Unable to perform post-commit in transaction aware '\" + txAware.getName() + \"': ";
+        String message = "Unable to perform post-commit in transaction aware '" + txAware.getName() + "': ";
         LOG.warn(message, e);
-        throw new TransactionFailureException(message, e);
+        cause = new TransactionFailureException(message, e);
       }
+    }
+    if (cause != null) {
+      throw cause;
     }
   }
 
@@ -137,7 +162,7 @@ public class TransactionExecutor {
       try {
         success = success && txAware.rollbackTx();
       } catch (Throwable e) {
-        String message = "Unable to roll back changes in transaction aware '\" + txAware.getName() + \"'. ";
+        String message = "Unable to roll back changes in transaction aware '" + txAware.getName() + "'. ";
         LOG.warn(message, e);
         if (cause == null) {
           cause = new TransactionFailureException(message, e);
