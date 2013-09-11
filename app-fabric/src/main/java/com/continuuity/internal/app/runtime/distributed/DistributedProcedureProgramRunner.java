@@ -10,7 +10,6 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
@@ -41,14 +40,14 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getProcessorType();
+    Type processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.PROCEDURE, "Only PROCEDURE process type is supported.");
 
-    ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getProgramName());
-    Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getProgramName());
+    ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getName());
+    Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getName());
 
-    LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + procedureSpec.getName());
+    LOG.info("Launching distributed flow: " + program.getName() + ":" + procedureSpec.getName());
 
     String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
     // TODO (ENG-2526): deal with logging
@@ -56,10 +55,10 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
       = weaveRunner.prepare(new ProcedureWeaveApplication(program, procedureSpec, hConfFile, cConfFile))
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .withArguments(procedureSpec.getName(),
-                         String.format("--%s", RunnableOptions.JAR), program.getProgramJarLocation().getName())
+                         String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
           .withArguments(procedureSpec.getName(),
                          String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
 
-    return new ProcedureWeaveProgramController(program.getProgramName(), preparer.start()).startListen();
+    return new ProcedureWeaveProgramController(program.getName(), preparer.start()).startListen();
   }
 }

@@ -39,7 +39,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public final synchronized RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = null;
 
-    switch (program.getProcessorType()) {
+    switch (program.getType()) {
       case FLOW:
         runner = programRunnerFactory.create(ProgramRunnerFactory.Type.FLOW);
         break;
@@ -51,7 +51,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         break;
     }
 
-    Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getProcessorType());
+    Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
     final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(program, options), program);
     addRemover(runtimeInfo);
     runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);

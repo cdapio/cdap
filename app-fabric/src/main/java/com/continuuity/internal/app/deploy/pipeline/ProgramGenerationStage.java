@@ -3,6 +3,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.Configuration;
@@ -65,7 +66,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       Location output = programDir.append(String.format("%s.jar", spec.getName()));
       Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, spec.getName(), spec.getClassName(),
                                           type, appSpec);
-      programs.add(new Program(loc));
+      programs.add(Programs.create(loc));
     }
 
     // Emits the received specification with programs.
