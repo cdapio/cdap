@@ -6,6 +6,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
@@ -37,16 +38,29 @@ public class TransactionExecutorTest {
     }
   };
 
+  @Before
+  public void resetTxAwares() {
+    ds1.reset();
+    ds2.reset();
+  }
+
   @Test
   public void testSuccessful() throws TransactionFailureException {
     // execute: add a change to ds1 and ds2
     Integer result = getExecutor().execute(testFunction, 10);
     // verify both are committed and post-committed
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
     Assert.assertTrue(ds1.committed);
     Assert.assertTrue(ds2.committed);
     Assert.assertTrue(ds1.postCommitted);
     Assert.assertTrue(ds2.postCommitted);
+    Assert.assertFalse(ds1.rolledBack);
+    Assert.assertFalse(ds2.rolledBack);
     Assert.assertTrue(100 == result);
+    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Committed);
   }
 
   @Test
@@ -60,10 +74,17 @@ public class TransactionExecutorTest {
       Assert.assertEquals("post failure", e.getCause().getMessage());
     }
     // verify both are committed and post-committed
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
     Assert.assertTrue(ds1.committed);
     Assert.assertTrue(ds2.committed);
     Assert.assertTrue(ds1.postCommitted);
     Assert.assertTrue(ds2.postCommitted);
+    Assert.assertFalse(ds1.rolledBack);
+    Assert.assertFalse(ds2.rolledBack);
+    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Committed);
   }
 
   @Test
@@ -76,7 +97,11 @@ public class TransactionExecutorTest {
     } catch (TransactionFailureException e) {
       Assert.assertEquals("persist failure", e.getCause().getMessage());
     }
-    // verify both are committed and post-committed
+    // verify both are rolled back and tx is aborted
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
     Assert.assertTrue(ds1.committed);
     Assert.assertFalse(ds2.committed);
     Assert.assertFalse(ds1.postCommitted);
@@ -94,9 +119,13 @@ public class TransactionExecutorTest {
       getExecutor().execute(testFunction, 10);
       Assert.fail("persist failed - exception should be thrown");
     } catch (TransactionFailureException e) {
-      Assert.assertEquals("persist failure", e.getCause().getMessage());
+      Assert.assertNull(e.getCause()); // in this case, the ds simply returned false
     }
-    // verify both are committed and post-committed
+    // verify both are rolled back and tx is aborted
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
     Assert.assertTrue(ds1.committed);
     Assert.assertFalse(ds2.committed);
     Assert.assertFalse(ds1.postCommitted);
@@ -108,7 +137,7 @@ public class TransactionExecutorTest {
 
   @Test
   public void testPersistAndRollbackFailure() throws TransactionFailureException {
-    ds2.failCommitTxOnce = 2;
+    ds1.failCommitTxOnce = 2;
     ds1.failRollbackTxOnce = 2;
     // execute: add a change to ds1 and ds2
     try {
@@ -117,34 +146,42 @@ public class TransactionExecutorTest {
     } catch (TransactionFailureException e) {
       Assert.assertEquals("persist failure", e.getCause().getMessage());
     }
-    // verify both are committed and post-committed
+    // verify both are rolled back and tx is invalidated
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
     Assert.assertTrue(ds1.committed);
     Assert.assertFalse(ds2.committed);
     Assert.assertFalse(ds1.postCommitted);
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
-    Assert.assertTrue(ds2.rolledBack); // ensure ds2 got rolled back even though ds1 failed to roll back
+    Assert.assertTrue(ds2.rolledBack);
     Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
   public void testPersistAndRollbackFalse() throws TransactionFailureException {
-    ds2.failCommitTxOnce = 1;
+    ds1.failCommitTxOnce = 1;
     ds1.failRollbackTxOnce = 1;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
       Assert.fail("persist failed - exception should be thrown");
     } catch (TransactionFailureException e) {
-      Assert.assertEquals("persist failure", e.getCause().getMessage());
+      Assert.assertNull(e.getCause()); // in this case, the ds simply returned false
     }
-    // verify both are committed and post-committed
+    // verify both are rolled back and tx is invalidated
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
     Assert.assertTrue(ds1.committed);
     Assert.assertFalse(ds2.committed);
     Assert.assertFalse(ds1.postCommitted);
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
-    Assert.assertTrue(ds2.rolledBack); // ensure ds2 got rolled back even though ds1 failed to roll back
+    Assert.assertTrue(ds2.rolledBack);
     Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Invalidated);
   }
 
@@ -158,7 +195,11 @@ public class TransactionExecutorTest {
     } catch (TransactionConflictException e) {
       Assert.assertNull(e.getCause());
     }
-    // verify both are committed and post-committed
+    // verify both are rolled back and tx is aborted
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
     Assert.assertTrue(ds1.committed);
     Assert.assertTrue(ds2.committed);
     Assert.assertFalse(ds1.postCommitted);
@@ -168,11 +209,117 @@ public class TransactionExecutorTest {
     Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Aborted);
   }
 
+  @Test
+  public void testCanCommitFalse() throws TransactionFailureException {
+    txSystem.failCanCommitOnce = true;
+    // execute: add a change to ds1 and ds2
+    try {
+      getExecutor().execute(testFunction, 10);
+      Assert.fail("commit failed - exception should be thrown");
+    } catch (TransactionConflictException e) {
+      Assert.assertNull(e.getCause());
+    }
+    // verify both are rolled back and tx is aborted
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
+    Assert.assertFalse(ds1.committed);
+    Assert.assertFalse(ds2.committed);
+    Assert.assertFalse(ds1.postCommitted);
+    Assert.assertFalse(ds2.postCommitted);
+    Assert.assertTrue(ds1.rolledBack);
+    Assert.assertTrue(ds2.rolledBack);
+    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Aborted);
+  }
+
+  @Test
+  public void testChangesAndRollbackFailure() throws TransactionFailureException {
+    ds1.failChangesTxOnce = 2;
+    ds1.failRollbackTxOnce = 2;
+    // execute: add a change to ds1 and ds2
+    try {
+      getExecutor().execute(testFunction, 10);
+      Assert.fail("get changes failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      Assert.assertEquals("changes failure", e.getCause().getMessage());
+    }
+    // verify both are rolled back and tx is invalidated
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertFalse(ds2.checked);
+    Assert.assertFalse(ds1.committed);
+    Assert.assertFalse(ds2.committed);
+    Assert.assertFalse(ds1.postCommitted);
+    Assert.assertFalse(ds2.postCommitted);
+    Assert.assertTrue(ds1.rolledBack);
+    Assert.assertTrue(ds2.rolledBack);
+    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Invalidated);
+  }
+
+  @Test
+  public void testFunctionAndRollbackFailure() throws TransactionFailureException {
+    ds1.failRollbackTxOnce = 1;
+    // execute: add a change to ds1 and ds2
+    try {
+      getExecutor().execute(new Function<Integer, Object>() {
+        @Nullable
+        @Override
+        public Object apply(@Nullable Integer input) {
+          throw new RuntimeException("function failed");
+        }
+      }, 10);
+      Assert.fail("function failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      Assert.assertEquals("function failed", e.getCause().getMessage());
+    }
+    // verify both are rolled back and tx is invalidated
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertFalse(ds1.checked);
+    Assert.assertFalse(ds2.checked);
+    Assert.assertFalse(ds1.committed);
+    Assert.assertFalse(ds2.committed);
+    Assert.assertFalse(ds1.postCommitted);
+    Assert.assertFalse(ds2.postCommitted);
+    Assert.assertTrue(ds1.rolledBack);
+    Assert.assertTrue(ds2.rolledBack);
+    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Invalidated);
+  }
+
+  @Test
+  public void testStartAndRollbackFailure() throws TransactionFailureException {
+    ds1.failStartTxOnce = 2;
+    // execute: add a change to ds1 and ds2
+    try {
+      getExecutor().execute(testFunction, 10);
+      Assert.fail("start failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      Assert.assertEquals("start failure", e.getCause().getMessage());
+    }
+    // verify both are not rolled back and tx is aborted
+    Assert.assertTrue(ds1.started);
+    Assert.assertFalse(ds2.started);
+    Assert.assertFalse(ds1.checked);
+    Assert.assertFalse(ds2.checked);
+    Assert.assertFalse(ds1.committed);
+    Assert.assertFalse(ds2.committed);
+    Assert.assertFalse(ds1.postCommitted);
+    Assert.assertFalse(ds2.postCommitted);
+    Assert.assertFalse(ds1.rolledBack);
+    Assert.assertFalse(ds2.rolledBack);
+    Assert.assertEquals(txSystem.state, DummyTxClient.CommitState.Aborted);
+  }
 
   static class DummyTxAware implements TransactionAware {
 
     Transaction tx;
-    boolean committed = false, checked = false, rolledBack = false, postCommitted = false;
+    boolean started = false;
+    boolean committed = false;
+    boolean checked = false;
+    boolean rolledBack = false;
+    boolean postCommitted = false;
     List<byte[]> changes = Lists.newArrayList();
 
     int failStartTxOnce = 0; // 0 = true, 1 = false, 2 = throw
@@ -185,14 +332,21 @@ public class TransactionExecutorTest {
       changes.add(key);
     }
 
-    @Override
-    public void startTx(Transaction tx) {
-      this.tx = tx;
+    void reset() {
+      tx = null;
+      started = false;
       checked = false;
       committed = false;
       rolledBack = false;
       postCommitted = false;
       changes.clear();
+    }
+
+    @Override
+    public void startTx(Transaction tx) {
+      reset();
+      started = true;
+      this.tx = tx;
       if (failStartTxOnce == 2) {
         throw new RuntimeException("start failure");
       }

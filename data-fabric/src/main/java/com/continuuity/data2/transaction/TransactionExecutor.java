@@ -102,12 +102,22 @@ public class TransactionExecutor {
 
   private void persist(Transaction tx) throws TransactionFailureException {
     for (TransactionAware txAware : txAwares) {
+      boolean success;
+      Throwable cause = null;
       try {
-        txAware.commitTx();
+        success = txAware.commitTx();
       } catch (Throwable e) {
-        String message = "Unable to persist changes of transaction aware '" + txAware.getName() + "': ";
-        LOG.warn(message, e);
-        abort(tx, new TransactionFailureException(message, e));
+        success = false;
+        cause = e;
+      }
+      if (!success) {
+        String message = "Unable to persist changes of transaction aware '" + txAware.getName() + "'. ";
+        if (cause == null) {
+          LOG.warn(message);
+        } else {
+          LOG.warn(message, cause);
+        }
+        abort(tx, new TransactionFailureException(message, cause));
         // abort will throw that exception
       }
     }
@@ -160,7 +170,9 @@ public class TransactionExecutor {
     boolean success = true;
     for (TransactionAware txAware : txAwares) {
       try {
-        success = success && txAware.rollbackTx();
+        if (!txAware.rollbackTx()) {
+          success = false;
+        }
       } catch (Throwable e) {
         String message = "Unable to roll back changes in transaction aware '" + txAware.getName() + "'. ";
         LOG.warn(message, e);
