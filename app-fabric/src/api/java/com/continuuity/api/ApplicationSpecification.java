@@ -15,6 +15,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.DefaultApplicationSpecification;
+import com.continuuity.internal.DefaultResourceSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
@@ -404,6 +405,33 @@ public interface ApplicationSpecification {
     }
 
     /**
+     * Interface for setting resources like virtual cores and memory for a {@link Procedure}.
+     */
+    public interface ProcedureResourceSetter {
+      /**
+       * Set the number of virtual cores the previously added Procedure should be able to use.
+       * @param cores number of cores the Procedure can use
+       * @return A {@link MoreProcedure} for adding more procedures.
+       */
+      MoreProcedure setVirtualCores(int cores);
+
+      /**
+       * Set the amount of memory in MB the previously added Procedure should be able to use.
+       * @param memory amount of memory in MB the Procedure can use
+       * @return A {@link MoreProcedure} for adding more procedures.
+       */
+      MoreProcedure setMemoryMB(int memory);
+
+      /**
+       * Set the amount of memory in MB the previously added Procedure should be able to use.
+       * @param memory amount of memory units the Procedure can use
+       * @param unit unit of memory
+       * @return A {@link MoreProcedure} for adding more procedures.
+       */
+      MoreProcedure setMemory(int memory, ResourceSpecification.SizeUnit unit);
+    }
+
+    /**
      * Class for proceeding to next configuration step after {@link Procedure} configuration is completed.
      */
     public interface AfterProcedure {
@@ -431,7 +459,8 @@ public interface ApplicationSpecification {
     /**
      * Class for adding more {@link Procedure} and for proceeding to next configuration step.
      */
-    public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
+    public final class MoreProcedure implements ProcedureAdder, AfterProcedure, ProcedureResourceSetter {
+      private String lastProcedureAdded;
 
       /**
        * Adds a {@link Procedure} to the {@link Application}.
@@ -442,7 +471,9 @@ public interface ApplicationSpecification {
       public MoreProcedure add(Procedure procedure) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
         ProcedureSpecification spec = new DefaultProcedureSpecification(procedure);
-        procedures.put(spec.getName(), spec);
+        String procedureName = spec.getName();
+        procedures.put(procedureName, spec);
+        lastProcedureAdded = procedureName;
         return this;
       }
 
@@ -474,6 +505,24 @@ public interface ApplicationSpecification {
       public AfterBatch noBatch() {
         return new MoreBatch();
       }
+
+      @Override
+      public MoreProcedure setVirtualCores(int cores) {
+        procedures.get(lastProcedureAdded).getResources().setVirtualCores(cores);
+        return this;
+      }
+
+      @Override
+      public MoreProcedure setMemoryMB(int memory) {
+        procedures.get(lastProcedureAdded).getResources().setMemoryMB(memory);
+        return this;
+      }
+
+      @Override
+      public MoreProcedure setMemory(int memory, ResourceSpecification.SizeUnit unit) {
+        procedures.get(lastProcedureAdded).getResources().setMemory(memory, unit);
+        return this;
+      }
     }
 
     /**
@@ -487,6 +536,33 @@ public interface ApplicationSpecification {
        * @return an instance of {@link MoreBatch}
        */
       MoreBatch add(MapReduce mapReduce);
+    }
+
+    /**
+     * Defines interface for setting resources like cores and memory for batch jobs.
+     */
+    public interface BatchResourceSetter {
+      /**
+       * Set the number of virtual cores the previously added batch job should be able to use.
+       * @param cores number of cores the batch job can use
+       * @return an instance of {@link MoreBatch}
+       */
+      MoreBatch setVirtualCores(int cores);
+
+      /**
+       * Set the amount of memory in MB the previously added batch job should be able to use.
+       * @param memory amount of memory in MB the batch job can use
+       * @return an instance of {@link MoreBatch}
+       */
+      MoreBatch setMemoryMB(int memory);
+
+      /**
+       * Set the amount of memory in MB the previously added batch job should be able to use.
+       * @param memory amount of memory units the batch job can use
+       * @param unit unit of memory
+       * @return an instance of {@link MoreBatch}
+       */
+      MoreBatch setMemory(int memory, ResourceSpecification.SizeUnit unit);
     }
 
     /**
@@ -504,7 +580,9 @@ public interface ApplicationSpecification {
     /**
      * Class for adding more batch jobs to the application.
      */
-    public final class MoreBatch implements BatchAdder, AfterBatch {
+    public final class MoreBatch implements BatchAdder, AfterBatch, BatchResourceSetter {
+      private String lastBatchAdded;
+
       /**
        * Builds the {@link ApplicationSpecification} based on what is being configured.
        *
@@ -526,7 +604,27 @@ public interface ApplicationSpecification {
       public MoreBatch add(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
         MapReduceSpecification spec = new DefaultMapReduceSpecification(mapReduce);
-        mapReduces.put(spec.getName(), spec);
+        String batchName = spec.getName();
+        mapReduces.put(batchName, spec);
+        lastBatchAdded = batchName;
+        return this;
+      }
+
+      @Override
+      public MoreBatch setVirtualCores(int cores) {
+        mapReduces.get(lastBatchAdded).getResources().setVirtualCores(cores);
+        return this;
+      }
+
+      @Override
+      public MoreBatch setMemoryMB(int memory) {
+        mapReduces.get(lastBatchAdded).getResources().setMemoryMB(memory);
+        return this;
+      }
+
+      @Override
+      public MoreBatch setMemory(int memory, ResourceSpecification.SizeUnit unit) {
+        mapReduces.get(lastBatchAdded).getResources().setMemory(memory, unit);
         return this;
       }
     }

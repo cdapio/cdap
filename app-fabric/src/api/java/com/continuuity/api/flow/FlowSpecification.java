@@ -5,6 +5,7 @@
 package com.continuuity.api.flow;
 
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.internal.UserErrors;
@@ -117,6 +118,33 @@ public interface FlowSpecification extends ProgramSpecification {
     }
 
     /**
+     * Interface for setting resources like virtual cores and memory for a @link{Flowlet}.
+     */
+    public interface FlowletResourceSetter {
+      /**
+       * Set the number of virtual cores the previously added Flowlet should be able to use.
+       * @param cores number of cores the Flowlet can use
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets
+       */
+      MoreFlowlet setVirtualCores(int cores);
+
+      /**
+       * Set the amount of memory in MB the previously added Flowlet should be able to use.
+       * @param memory amount of memory in MB the Flowlet can use
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets
+       */
+      MoreFlowlet setMemoryMB(int memory);
+
+      /**
+       * Set the amount of memory in MB the previously added Flowlet should be able to use.
+       * @param memory amount of memory units the Flowlet can use
+       * @param unit unit of memory
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets
+       */
+      MoreFlowlet setMemory(int memory, ResourceSpecification.SizeUnit unit);
+    }
+
+    /**
      * FlowletAdder is responsible for capturing the information of a Flowlet during the
      * specification creation.
      */
@@ -154,6 +182,7 @@ public interface FlowSpecification extends ProgramSpecification {
        * returned by {@link Flowlet#configure()}.
        * @param name Name of the flowlet
        * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @param instances Number of instances for the flowlet
        * @return An instance of {@link MoreFlowlet} for adding more flowlets.
        */
       MoreFlowlet add(String name, Flowlet flowlet, int instances);
@@ -162,7 +191,8 @@ public interface FlowSpecification extends ProgramSpecification {
     /**
      * This class allows more flowlets to be defined. This is part of a controlled builder.
      */
-    public final class MoreFlowlet implements FlowletAdder {
+    public final class MoreFlowlet implements FlowletAdder, FlowletResourceSetter {
+      private String lastFlowletAdded;
 
       @Override
       public MoreFlowlet add(Flowlet flowlet) {
@@ -181,20 +211,38 @@ public interface FlowSpecification extends ProgramSpecification {
 
       @Override
       public MoreFlowlet add(String name, Flowlet flowlet, int instances) {
-
         Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
 
         FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
         String flowletName = flowletDef.getFlowletSpec().getName();
 
         Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
-          flowletName, instances));
+                                                                 flowletName, instances));
 
         Preconditions.checkArgument(!flowlets.containsKey(flowletName),
-                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
+                                    UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
 
         flowlets.put(flowletName, flowletDef);
+        lastFlowletAdded = flowletName;
 
+        return this;
+      }
+
+      @Override
+      public MoreFlowlet setVirtualCores(int cores) {
+        flowlets.get(lastFlowletAdded).getResourceSpec().setVirtualCores(cores);
+        return this;
+      }
+
+      @Override
+      public MoreFlowlet setMemoryMB(int memory) {
+        flowlets.get(lastFlowletAdded).getResourceSpec().setMemoryMB(memory);
+        return this;
+      }
+
+      @Override
+      public MoreFlowlet setMemory(int memory, ResourceSpecification.SizeUnit unit) {
+        flowlets.get(lastFlowletAdded).getResourceSpec().setMemory(memory, unit);
         return this;
       }
 

@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.app;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.reflect.TypeToken;
@@ -41,6 +42,7 @@ final class MapReduceSpecificationCodec implements JsonSerializer<MapReduceSpeci
     }
     jsonObj.add("datasets", context.serialize(src.getDataSets(), new TypeToken<Set<String>>(){}.getType()));
     jsonObj.add("arguments", context.serialize(src.getArguments(), new TypeToken<Map<String, String>>(){}.getType()));
+    jsonObj.add("resources", context.serialize(src.getResources(), new TypeToken<ResourceSpecification>(){}.getType()));
 
     return jsonObj;
   }
@@ -60,9 +62,11 @@ final class MapReduceSpecificationCodec implements JsonSerializer<MapReduceSpeci
     Set<String> dataSets = context.deserialize(jsonObj.get("datasets"), new TypeToken<Set<String>>(){}.getType());
     Map<String, String> arguments = context.deserialize(jsonObj.get("arguments"),
                                                         new TypeToken<Map<String, String>>(){}.getType());
+    ResourceSpecification resourceSpec = context.deserialize(jsonObj.get("resources"),
+                                                             new TypeToken<ResourceSpecification>(){}.getType());
 
     return new DefaultMapReduceSpecification(className, name, description,
                                                 inputDataSet, outputDataSet,
-                                                dataSets, arguments);
+                                                dataSets, arguments, resourceSpec);
   }
 }

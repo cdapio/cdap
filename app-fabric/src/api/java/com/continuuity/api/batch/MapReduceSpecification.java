@@ -1,5 +1,6 @@
 package com.continuuity.api.batch;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.base.Preconditions;
@@ -52,6 +53,11 @@ public interface MapReduceSpecification extends ProgramSpecification {
    *         source
    */
   String getInputDataSet();
+
+  /**
+   * @return {@link ResourceSpecification} containing resources the job is allowed to use
+   */
+  ResourceSpecification getResources();
 
   /**
    * Builder for building {@link MapReduceSpecification}.

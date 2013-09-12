@@ -21,8 +21,6 @@ import java.util.Map;
  */
 public final class FlowWeaveApplication implements WeaveApplication {
 
-  private static final int FLOWLET_MEMORY_MB = 512;
-
   private final FlowSpecification spec;
   private final Program program;
   private final File hConfig;
@@ -46,10 +44,11 @@ public final class FlowWeaveApplication implements WeaveApplication {
     String programName = programLocation.getName();
     WeaveSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
+      FlowletDefinition flowletDefinition = entry.getValue();
       ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-        .setCores(1)
-        .setMemory(FLOWLET_MEMORY_MB, ResourceSpecification.SizeUnit.MEGA)  // TODO (ENG-2526): have it exposed to user
-        .setInstances(entry.getValue().getInstances())
+        .setCores(flowletDefinition.getResourceSpec().getVirtualCores())
+        .setMemory(flowletDefinition.getResourceSpec().getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
+        .setInstances(flowletDefinition.getInstances())
         .build();
 
       String flowletName = entry.getKey();
