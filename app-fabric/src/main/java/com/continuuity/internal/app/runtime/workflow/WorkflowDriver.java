@@ -7,17 +7,20 @@ import com.continuuity.api.workflow.WorkflowAction;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.io.InstantiatorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Core of Workflow engine that drives the execution of Workflow.
@@ -28,6 +31,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private static final String LOGICAL_START_TIME = "logicalStartTime";
 
   private final Program program;
+  private final Map<String, String> runtimeArgs;
   private final WorkflowSpecification workflowSpec;
   private final long logicalStartTime;
   private final MapReduceRunnerFactory runnerFactory;
@@ -36,12 +40,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   WorkflowDriver(Program program, ProgramOptions options,
                  WorkflowSpecification workflowSpec, MapReduceProgramRunner programRunner) {
     this.program = program;
+    this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
     this.workflowSpec = workflowSpec;
     this.logicalStartTime = options.getArguments().hasOption(LOGICAL_START_TIME)
                                 ? Long.parseLong(options.getArguments().getOption(LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
-    this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner, program, logicalStartTime);
+    this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner,
+                                                            program, options.getUserArguments(), logicalStartTime);
   }
 
   @Override
@@ -96,7 +102,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
 
     try {
-      action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime, runnerFactory));
+      action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
+                                                 logicalStartTime, runnerFactory, runtimeArgs));
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);
       // this will always rethrow
@@ -113,5 +120,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       LOG.warn("Exception on WorkflowAction.destroy(): {}", actionSpec, t);
       // Just log, but not propagate
     }
+  }
+
+  private Map<String, String> createRuntimeArgs(Arguments args) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (Map.Entry<String, String> entry : args) {
+      builder.put(entry);
+    }
+    return builder.build();
   }
 }

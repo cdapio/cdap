@@ -3,15 +3,18 @@
  */
 package com.continuuity.internal.app.runtime.workflow;
 
+import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.batch.MapReduceContext;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.program.ForwardingProgram;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
@@ -23,6 +26,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.SettableFuture;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -34,14 +38,16 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
   private final WorkflowSpecification workflowSpec;
   private final ProgramRunner programRunner;
   private final Program workflowProgram;
+  private final Arguments userArguments;
   private final long logicalStartTime;
 
   WorkflowMapReduceRunnerFactory(WorkflowSpecification workflowSpec, ProgramRunner programRunner,
-                                        Program workflowProgram, long logicalStartTime) {
+                                        Program workflowProgram, Arguments userArguments, long logicalStartTime) {
     this.workflowSpec = workflowSpec;
     this.programRunner = programRunner;
     this.workflowProgram = workflowProgram;
     this.logicalStartTime = logicalStartTime;
+    this.userArguments = userArguments;
   }
 
   @Override
@@ -55,7 +61,7 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
     final ProgramOptions options = new SimpleProgramOptions(
       mapReduceProgram.getName(),
       new BasicArguments(ImmutableMap.of("logicalStartTime", Long.toString(logicalStartTime))),
-      new BasicArguments()
+      userArguments
     );
 
     return new Callable<MapReduceContext>() {
@@ -90,6 +96,16 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
       @Override
       public String getName() {
         return mapReduceSpec.getName();
+      }
+
+      @Override
+      public ApplicationSpecification getSpecification() {
+        return new ForwardingApplicationSpecification(super.getSpecification()) {
+          @Override
+          public Map<String, MapReduceSpecification> getMapReduces() {
+            return ImmutableMap.of(mapReduceSpec.getName(), mapReduceSpec);
+          }
+        };
       }
     };
   }

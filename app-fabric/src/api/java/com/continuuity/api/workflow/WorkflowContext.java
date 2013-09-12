@@ -5,6 +5,7 @@ package com.continuuity.api.workflow;
 
 import com.continuuity.api.batch.MapReduceContext;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -28,4 +29,9 @@ public interface WorkflowContext {
    * @throws IllegalArgumentException if no MapReduce with the given name is defined in the workflow.
    */
   Callable<MapReduceContext> getMapReduceRunner(String name);
+
+  /**
+   * @return A map of argument key and value.
+   */
+  Map<String, String> getRuntimeArguments();
 }

@@ -5,15 +5,21 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.batch.MapReduce;
+import com.continuuity.api.batch.MapReduceContext;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowContext;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.internal.app.runtime.batch.hadoop.WordCount;
+import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
+import java.io.File;
+import java.util.Map;
 
 /**
  *
@@ -43,13 +49,39 @@ public class WorkflowApp implements Application {
       return WorkflowSpecification.Builder.with()
         .setName("FunWorkflow")
         .setDescription("FunWorkflow description")
-        .startWith(new CustomAction("step1"))
-        .then(new CustomAction("step2"))
-        .then(new CustomAction("step3"))
-        .last(new CustomAction("step4"))
+        .startWith(new WordCountMapReduce())
+        .last(new CustomAction("verify"))
         .build();
     }
   }
+
+  /**
+   *
+   */
+  public static final class WordCountMapReduce implements MapReduce {
+
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("ClassicWordCount")
+        .setDescription("WordCount job from Hadoop examples")
+        .build();
+    }
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Map<String,String> args = context.getRuntimeArguments();
+      String inputPath = args.get("inputPath");
+      String outputPath = args.get("outputPath");
+      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
+    }
+
+    @Override
+    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+      // No-op
+    }
+  }
+
 
   /**
    *
@@ -87,11 +119,13 @@ public class WorkflowApp implements Application {
     @Override
     public void run() {
       LOG.info("Custom action run");
-      try {
-        TimeUnit.SECONDS.sleep(10);
-      } catch (InterruptedException e) {
-        LOG.warn("Interrupted", e);
+      File outputDir = new File(getContext().getRuntimeArguments().get("outputPath"));
+
+      LOG.info("output dir: {}", outputDir);
+      for (File file : outputDir.listFiles()) {
+        LOG.info("ouput: {}", file);
       }
+
       LOG.info("Custom run completed.");
     }
   }
