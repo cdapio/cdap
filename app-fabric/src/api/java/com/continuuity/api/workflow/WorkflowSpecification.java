@@ -79,7 +79,7 @@ public interface WorkflowSpecification extends ProgramSpecification {
 
     @Override
     public WorkflowSpecification build() {
-      return new DefaultWorkflowSpecification(name, description, actions);
+      return new DefaultWorkflowSpecification(name, description, actions, mapReduces);
     }
 
     /**

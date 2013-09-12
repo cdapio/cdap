@@ -3,27 +3,25 @@
  */
 package com.continuuity.internal.app;
 
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
  */
-final class WorkflowSpecificationCodec implements JsonSerializer<WorkflowSpecification>,
-                                                  JsonDeserializer<WorkflowSpecification> {
+final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<WorkflowSpecification> {
 
   @Override
   public JsonElement serialize(WorkflowSpecification src, Type typeOfSrc, JsonSerializationContext context) {
@@ -32,8 +30,9 @@ final class WorkflowSpecificationCodec implements JsonSerializer<WorkflowSpecifi
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-    jsonObj.add("actions", context.serialize(src.getActions(),
-                                             new TypeToken<List<WorkflowActionSpecification>>(){}.getType()));
+    jsonObj.add("actions", serializeList(src.getActions(), context, WorkflowActionSpecification.class));
+    jsonObj.add("mapReduces", serializeMap(src.getMapReduces(), context, MapReduceSpecification.class));
+
     return jsonObj;
   }
 
@@ -45,9 +44,11 @@ final class WorkflowSpecificationCodec implements JsonSerializer<WorkflowSpecifi
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
-    List<WorkflowActionSpecification> actions = context.deserialize(
-      jsonObj.get("actions"), new TypeToken<List<WorkflowActionSpecification>>(){}.getType());
+    List<WorkflowActionSpecification> actions = deserializeList(jsonObj.get("actions"), context,
+                                                                WorkflowActionSpecification.class);
+    Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"), context,
+                                                                    MapReduceSpecification.class);
 
-    return new DefaultWorkflowSpecification(className, name, description, actions);
+    return new DefaultWorkflowSpecification(className, name, description, actions, mapReduces);
   }
 }

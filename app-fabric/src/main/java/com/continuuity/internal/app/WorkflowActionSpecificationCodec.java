@@ -5,15 +5,12 @@ package com.continuuity.internal.app;
 
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowActionSpecification;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -21,8 +18,7 @@ import java.util.Map;
 /**
  *
  */
-final class WorkflowActionSpecificationCodec implements JsonSerializer<WorkflowActionSpecification>,
-                                                        JsonDeserializer<WorkflowActionSpecification> {
+final class WorkflowActionSpecificationCodec extends AbstractSpecificationCodec<WorkflowActionSpecification> {
 
   @Override
   public JsonElement serialize(WorkflowActionSpecification src, Type typeOfSrc, JsonSerializationContext context) {
@@ -31,7 +27,7 @@ final class WorkflowActionSpecificationCodec implements JsonSerializer<WorkflowA
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-    jsonObj.add("options", context.serialize(src.getOptions(), new TypeToken<Map<String, String>>(){}.getType()));
+    jsonObj.add("options", serializeMap(src.getOptions(), context, String.class));
 
     return jsonObj;
   }
@@ -44,9 +40,7 @@ final class WorkflowActionSpecificationCodec implements JsonSerializer<WorkflowA
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
-    Map<String, String> options = context.deserialize(jsonObj.get("options"),
-                                                        new TypeToken<Map<String, String>>(){}.getType());
-
+    Map<String, String> options = deserializeMap(jsonObj.get("options"), context, String.class);
 
     return new DefaultWorkflowActionSpecification(className, name, description, options);
   }
