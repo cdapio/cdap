@@ -32,15 +32,6 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
   }
 
   /**
-   * Constructor for a transaction executor.
-   */
-  @Inject
-  public DefaultTransactionExecutor(TransactionSystemClient txClient, @Assisted TransactionAware... txAwares) {
-    this.txAwares = ImmutableList.copyOf(txAwares);
-    this.txClient = txClient;
-  }
-
-  /**
    * Execute a function under transactional semantics. A transaction is started  and all datasets
    * are initialized with the transaction. Then the passed function is executed, the transaction
    * is committed, and the function return value is returned as the return value of this method.
