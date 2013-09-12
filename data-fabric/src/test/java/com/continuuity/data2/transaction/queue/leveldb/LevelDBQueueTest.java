@@ -8,6 +8,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueTest;
@@ -32,5 +33,6 @@ public class LevelDBQueueTest extends QueueTest {
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
+    executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 }

@@ -14,6 +14,8 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -52,6 +54,7 @@ public abstract class QueueTest {
   protected static QueueClientFactory queueClientFactory;
   protected static QueueAdmin queueAdmin;
   protected static InMemoryTransactionManager transactionManager;
+  protected static TransactionExecutorFactory executorFactory;
 
   @AfterClass
   public static void shutdownTx() {
@@ -59,7 +62,6 @@ public abstract class QueueTest {
       transactionManager.close();
     }
   }
-
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
@@ -203,6 +205,12 @@ public abstract class QueueTest {
       public boolean rollbackTx() throws Exception {
         return true;
       }
+
+
+      @Override
+      public String getName() {
+        return "test";
+      }                                    
     });
 
     // First, try to enqueue and commit would fail
@@ -486,14 +494,22 @@ public abstract class QueueTest {
     }
 
     public void abort() throws OperationException {
+      boolean success = true;
       for (TransactionAware txAware : txAwares) {
         try {
-          if (!txAware.rollbackTx() || !opex.abort(transaction)) {
+          if (!txAware.rollbackTx()) {
             LOG.error("Fail to rollback: {}", txAware);
+            success = false;
           }
         } catch (Exception e) {
           LOG.error("Exception in rollback: {}", txAware, e);
+          success = false;
         }
+      }
+      if (success) {
+        opex.abort(transaction);
+      } else {
+        opex.invalidate(transaction);
       }
     }
   }

@@ -44,7 +44,12 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public boolean abort(Transaction tx) {
-    return txManager.abort(tx);
+  public void abort(Transaction tx) {
+    txManager.abort(tx);
+  }
+
+  @Override
+  public void invalidate(Transaction tx) {
+    txManager.invalidate(tx);
   }
 }

@@ -30,7 +30,7 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
   private final List<byte[]> rollbackKeys;
 
   public HBaseQueue2Producer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics) {
-    super(queueMetrics);
+    super(queueMetrics, queueName);
     this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;

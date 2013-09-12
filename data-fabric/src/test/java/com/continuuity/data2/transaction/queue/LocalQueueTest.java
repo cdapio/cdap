@@ -8,6 +8,7 @@ import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueue2Producer;
@@ -38,6 +39,7 @@ public class LocalQueueTest extends QueueTest {
     opex = injector.getInstance(OperationExecutor.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
+    executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
   @Test

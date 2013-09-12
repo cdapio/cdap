@@ -414,6 +414,11 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     return row;
   }
 
+  @Override
+  public String getName() {
+    return getClass().getSimpleName() + "(queue = " + queueName + ")";
+  }
+
   /**
    * Implementation of dequeue result.
    */
