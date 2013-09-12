@@ -43,7 +43,6 @@ public class NettyRouter extends AbstractIdleService {
 
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
-  private final int clientConnectionBacklog;
   private final InetSocketAddress bindAddress;
   private final EndpointStrategy discoverableEndpoints;
   private final String serviceName;
@@ -60,14 +59,13 @@ public class NettyRouter extends AbstractIdleService {
   private volatile InetSocketAddress boundAddress;
 
   public NettyRouter(int serverBossThreadPoolSize, int serverWorkerThreadPoolSize, int serverConnectionBacklog,
-                     int clientBossThreadPoolSize, int clientWorkerThreadPoolSize, int clientConnectionBacklog,
+                     int clientBossThreadPoolSize, int clientWorkerThreadPoolSize,
                      InetSocketAddress bindAddress, EndpointStrategy discoverableEndpoints, String serviceName) {
     this.serverBossThreadPoolSize = serverBossThreadPoolSize;
     this.serverWorkerThreadPoolSize = serverWorkerThreadPoolSize;
     this.serverConnectionBacklog = serverConnectionBacklog;
     this.clientBossThreadPoolSize = clientBossThreadPoolSize;
     this.clientWorkerThreadPoolSize = clientWorkerThreadPoolSize;
-    this.clientConnectionBacklog = clientConnectionBacklog;
     this.bindAddress = bindAddress;
     this.discoverableEndpoints = discoverableEndpoints;
     this.serviceName = serviceName;
@@ -75,7 +73,7 @@ public class NettyRouter extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting Netty Router on address {}...", bindAddress);
+    LOG.info("Starting Netty Router for service {} on address {}...", serviceName, bindAddress);
 
     serverBossExecutor = createExecutorService(serverBossThreadPoolSize, "router-server-boss-thread-%d");
     serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize, "router-server-worker-thread-%d");
@@ -90,7 +88,6 @@ public class NettyRouter extends AbstractIdleService {
       new NioClientSocketChannelFactory(
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
         new ShareableWorkerPool<NioWorker>(new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize))));
-    serverBootstrap.setOption("backlog", clientConnectionBacklog);
 
     final ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
       @Override
@@ -129,12 +126,12 @@ public class NettyRouter extends AbstractIdleService {
     channelGroup.add(channel);
 
     boundAddress = (InetSocketAddress) channel.getLocalAddress();
-    LOG.info("Started Netty Router on address {}.", boundAddress);
+    LOG.info("Started Netty Router for service {} on address {}.", serviceName, boundAddress);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping Netty Router...");
+    LOG.info("Stopping Netty Router for service {} on address {}...", serviceName, boundAddress);
 
     serverBootstrap.shutdown();
     try {
@@ -153,7 +150,7 @@ public class NettyRouter extends AbstractIdleService {
       clientWorkerExecutor.shutdown();
     }
 
-    LOG.info("Stopped Netty Router.");
+    LOG.info("Stopped Netty Router for service {} on address {}.", serviceName, boundAddress);
   }
 
   public int getPort() {

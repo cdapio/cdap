@@ -131,10 +131,10 @@ public class NettyRouterTest {
       server1.cancelRegistration();
 
       testSync();
-
+    } finally {
       Assert.assertEquals(0, server1.getNumRequests());
       Assert.assertTrue(server2.getNumRequests() > 0);
-    } finally {
+
       server1.registerServer();
     }
   }
@@ -147,10 +147,10 @@ public class NettyRouterTest {
       server2.cancelRegistration();
 
       testSync();
-
+    } finally {
       Assert.assertEquals(0, server1.getNumRequests());
       Assert.assertEquals(0, server2.getNumRequests());
-    } finally {
+
       server1.registerServer();
       server2.registerServer();
     }
@@ -158,7 +158,7 @@ public class NettyRouterTest {
 
   private void testSync() throws Exception {
     for (int i = 0; i < 25; ++i) {
-      LOG.info("Sending request " + i);
+      LOG.trace("Sending request " + i);
       DefaultHttpClient client = new DefaultHttpClient();
       HttpGet get = new HttpGet(String.format("http://%s:%d%s/%s-%d",
                                               hostname, router.getPort(), "/v1/ping", "sync", i));
@@ -185,7 +185,7 @@ public class NettyRouterTest {
       EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
         ((DiscoveryServiceClient) discoveryService).discover(serviceName));
 
-      router = new NettyRouter(1, 5, 100, 1, 5, 100, new InetSocketAddress(hostname, 0),
+      router = new NettyRouter(1, 5, 100, 1, 5, new InetSocketAddress(hostname, 0),
                                endpointStrategy, serviceName);
       router.startAndWait();
     }
@@ -231,7 +231,7 @@ public class NettyRouterTest {
 
       registerServer();
 
-      LOG.info("Started server on {}", httpService.getBindAddress());
+      LOG.info("Started test server on {}", httpService.getBindAddress());
     }
 
     @Override
