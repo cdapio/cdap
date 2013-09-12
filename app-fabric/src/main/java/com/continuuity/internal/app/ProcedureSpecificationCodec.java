@@ -4,7 +4,6 @@
 
 package com.continuuity.internal.app;
 
-import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.google.common.reflect.TypeToken;
@@ -36,7 +35,6 @@ final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpeci
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("datasets", context.serialize(src.getDataSets(), new TypeToken<Set<String>>(){}.getType()));
     jsonObj.add("arguments", context.serialize(src.getArguments(), new TypeToken<Map<String, String>>(){}.getType()));
-    jsonObj.add("resources", context.serialize(src.getResources(), new TypeToken<ResourceSpecification>(){}.getType()));
 
     return jsonObj;
   }
@@ -52,9 +50,7 @@ final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpeci
     Set<String> dataSets = context.deserialize(jsonObj.get("datasets"), new TypeToken<Set<String>>(){}.getType());
     Map<String, String> arguments = context.deserialize(jsonObj.get("arguments"),
                                                         new TypeToken<Map<String, String>>(){}.getType());
-    ResourceSpecification resourceSpec = context.deserialize(jsonObj.get("resources"),
-                                                             new TypeToken<ResourceSpecification>(){}.getType());
 
-    return new DefaultProcedureSpecification(className, name, description, dataSets, arguments, resourceSpec);
+    return new DefaultProcedureSpecification(className, name, description, dataSets, arguments);
   }
 }

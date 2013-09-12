@@ -1,9 +1,7 @@
 package com.continuuity.internal.batch;
 
-import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.batch.MapReduceSpecification;
-import com.continuuity.internal.DefaultResourceSpecification;
 import com.continuuity.internal.ProgramSpecificationHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -23,12 +21,10 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   private final Map<String, String> arguments;
   private final String inputDataSet;
   private final String outputDataSet;
-  private final ResourceSpecification resources;
 
   public DefaultMapReduceSpecification(String name, String description, String inputDataSet, String outputDataSet,
                                        Set<String> dataSets, Map<String, String> arguments) {
-    this(null, name, description, inputDataSet, outputDataSet, dataSets, arguments,
-         DefaultResourceSpecification.create());
+    this(null, name, description, inputDataSet, outputDataSet, dataSets, arguments);
   }
 
   public DefaultMapReduceSpecification(MapReduce mapReduce) {
@@ -39,15 +35,13 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     this.description = configureSpec.getDescription();
     this.inputDataSet = configureSpec.getInputDataSet();
     this.outputDataSet = configureSpec.getOutputDataSet();
-    this.dataSets = ProgramSpecificationHelper.inspectDataSets(
-      mapReduce.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
+    this.dataSets = ProgramSpecificationHelper.inspectDataSets(mapReduce.getClass(),
+                                    ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
     this.arguments = configureSpec.getArguments();
-    this.resources = DefaultResourceSpecification.create();
   }
 
   public DefaultMapReduceSpecification(String className, String name, String description, String inputDataSet,
-                                       String outputDataSet, Set<String> dataSets, Map<String, String> arguments,
-                                       ResourceSpecification resources) {
+                                       String outputDataSet, Set<String> dataSets, Map<String, String> arguments) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -55,7 +49,6 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     this.outputDataSet = outputDataSet;
     this.dataSets = ImmutableSet.copyOf(dataSets);
     this.arguments = arguments == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(arguments);
-    this.resources = resources;
   }
 
   @Override
@@ -91,10 +84,5 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   @Override
   public String getInputDataSet() {
     return inputDataSet;
-  }
-
-  @Override
-  public ResourceSpecification getResources() {
-    return resources;
   }
 }
