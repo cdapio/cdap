@@ -19,4 +19,14 @@ public interface Schedule {
    * @return cronExpression for the schedule.
    */
   String getCronExpression();
+
+  /**
+   * @return Action for the schedule.
+   */
+  Action getAction();
+
+  /**
+   * Defines the ScheduleAction.
+   */
+  public enum Action {START, STOP};
 }

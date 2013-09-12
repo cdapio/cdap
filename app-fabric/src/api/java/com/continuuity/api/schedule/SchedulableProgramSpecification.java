@@ -6,7 +6,7 @@ import com.continuuity.internal.schedule.Schedule;
 import java.util.List;
 
 /**
- * Program specification that can be scheduled.
+ * Program specification that will be used to define programs that can be scheduled to run periodically.
  */
 public interface SchedulableProgramSpecification extends ProgramSpecification {
 
