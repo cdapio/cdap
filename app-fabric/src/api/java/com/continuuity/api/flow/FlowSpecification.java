@@ -5,7 +5,6 @@
 package com.continuuity.api.flow;
 
 import com.continuuity.api.ProgramSpecification;
-import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.internal.UserErrors;
