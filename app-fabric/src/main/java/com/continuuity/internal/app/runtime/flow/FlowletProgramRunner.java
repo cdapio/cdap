@@ -135,11 +135,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-      Type processorType = program.getProcessorType();
+      Type processorType = program.getType();
       Preconditions.checkNotNull(processorType, "Missing processor type.");
       Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
-      String processorName = program.getProgramName();
+      String processorName = program.getName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
 
       FlowSpecification flowSpec = appSpec.getFlows().get(processorName);
@@ -203,7 +203,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       LOG.info("Flowlet started: " + flowletContext);
 
 
-      return new FlowletProgramController(program.getProgramName(), flowletName,
+      return new FlowletProgramController(program.getName(), flowletName,
                                           flowletContext, driver, queueConsumerSuppliers);
 
     } catch (Exception e) {

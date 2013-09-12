@@ -166,7 +166,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     AbstractWeaveProgramController programController = null;
     String programId = program.getId().getId();
 
-    switch (program.getProcessorType()) {
+    switch (program.getType()) {
       case FLOW: {
         FlowSpecification flowSpec = program.getSpecification().getFlows().get(programId);
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(

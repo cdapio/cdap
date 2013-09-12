@@ -4,7 +4,6 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -144,11 +143,11 @@ public class MultiConsumerTest {
 
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override
         public String getName() {
-          return program.getProgramName();
+          return program.getName();
         }
 
         @Override
