@@ -40,7 +40,7 @@ public class MapredSpammer extends AbstractMapReduce {
     private final Spammer spammer = new Spammer(1);
 
     public void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
-      spammer.spam();
+      spammer.spamFor(1000 * 1000 * 1000);
       context.write(1, 1);
     }
   }
@@ -51,7 +51,7 @@ public class MapredSpammer extends AbstractMapReduce {
 
     public void reduce(Integer key, Iterable<Integer> values, Context context)
       throws IOException, InterruptedException {
-      spammer.spam();
+      spammer.spamFor(1000 * 1000 * 1000);
       context.write(Bytes.toBytes(key), Bytes.toBytes(key));
     }
   }
