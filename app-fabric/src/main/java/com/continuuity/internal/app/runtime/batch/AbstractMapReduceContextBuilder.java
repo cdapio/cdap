@@ -51,6 +51,7 @@ public abstract class AbstractMapReduceContextBuilder {
    * Build the instance of {@link BasicMapReduceContext}.
    * @param conf runtime configuration
    * @param runId program run id
+   * @param logicalStartTime The logical start time of the job.
    * @param tx transaction to use
    * @param classLoader classloader to use
    * @param programLocation program location
@@ -60,6 +61,7 @@ public abstract class AbstractMapReduceContextBuilder {
    * @return instance of {@link BasicMapReduceContext}
    */
   public BasicMapReduceContext build(CConfiguration conf, String runId,
+                                     long logicalStartTime,
                                      Arguments runtimeArguments,
                                      com.continuuity.data.operation.executor.Transaction tx,
                                      Transaction tx2,
@@ -109,7 +111,8 @@ public abstract class AbstractMapReduceContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, RunIds.fromString(runId), runtimeArguments, txAgent, dataSets, spec);
+      new BasicMapReduceContext(program, RunIds.fromString(runId), runtimeArguments,
+                                txAgent, dataSets, spec, logicalStartTime);
 
     // Setting extra context's configuration: mapreduce input and output
     if (inputDataSetName != null && inputSplits != null) {

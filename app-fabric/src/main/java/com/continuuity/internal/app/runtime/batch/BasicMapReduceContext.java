@@ -30,32 +30,35 @@ import java.util.Map;
  * Mapreduce job runtime context
  */
 public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
+
   private final MapReduceSpecification spec;
-  private Job job;
-
   private final MapReduceLoggingContext loggingContext;
-
-  private BatchReadable inputDataset;
-  private List<Split> inputDataSelection;
-  private BatchWritable outputDataset;
   private final MetricsCollector systemMapperMetrics;
   private final MetricsCollector systemReducerMetrics;
   private final TransactionAgent txAgent;
   private final Arguments runtimeArguments;
+  private final long logicalStartTime;
+
+  private BatchReadable inputDataset;
+  private List<Split> inputDataSelection;
+  private BatchWritable outputDataset;
+  private Job job;
 
   public BasicMapReduceContext(Program program, RunId runId, Arguments runtimeArguments,
                                TransactionAgent txAgent, Map<String, DataSet> datasets,
-                               MapReduceSpecification spec) {
-    this(program, runId, runtimeArguments, txAgent, datasets, spec, null);
+                               MapReduceSpecification spec, long logicalStartTime) {
+    this(program, runId, runtimeArguments, txAgent, datasets, spec, logicalStartTime, null);
   }
 
-
   public BasicMapReduceContext(Program program, RunId runId, Arguments runtimeArguments,
                                TransactionAgent txAgent, Map<String, DataSet> datasets,
-                               MapReduceSpecification spec, MetricsCollectionService metricsCollectionService) {
+                               MapReduceSpecification spec, long logicalStartTime,
+                               MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
     this.runtimeArguments = runtimeArguments;
     this.txAgent = txAgent;
+    this.logicalStartTime = logicalStartTime;
+    this.spec = spec;
 
     if (metricsCollectionService != null) {
       this.systemMapperMetrics = getMetricsCollector(MetricsScope.REACTOR, metricsCollectionService,
@@ -67,7 +70,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       this.systemReducerMetrics = null;
     }
     this.loggingContext = new MapReduceLoggingContext(getAccountId(), getApplicationId(), getProgramName());
-    this.spec = spec;
   }
 
   @Override
@@ -80,6 +82,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public MapReduceSpecification getSpecification() {
     return spec;
+  }
+
+  @Override
+  public long getLogicalStartTime() {
+    return logicalStartTime;
   }
 
   public void setJob(Job job) {

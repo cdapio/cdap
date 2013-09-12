@@ -7,6 +7,8 @@ import com.continuuity.api.workflow.WorkflowAction;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.io.InstantiatorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -20,17 +22,26 @@ import java.util.Iterator;
 /**
  * Core of Workflow engine that drives the execution of Workflow.
  */
-public final class WorkflowDriver extends AbstractExecutionThreadService {
+final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
+  private static final String LOGICAL_START_TIME = "logicalStartTime";
 
   private final Program program;
   private final WorkflowSpecification workflowSpec;
+  private final long logicalStartTime;
+  private final MapReduceRunnerFactory runnerFactory;
   private volatile boolean running;
 
-  public WorkflowDriver(Program program, WorkflowSpecification workflowSpec) {
+  WorkflowDriver(Program program, ProgramOptions options,
+                 WorkflowSpecification workflowSpec, MapReduceProgramRunner programRunner) {
     this.program = program;
     this.workflowSpec = workflowSpec;
+    this.logicalStartTime = options.getArguments().hasOption(LOGICAL_START_TIME)
+                                ? Long.parseLong(options.getArguments().getOption(LOGICAL_START_TIME))
+                                : System.currentTimeMillis();
+
+    this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner, program, logicalStartTime);
   }
 
   @Override
@@ -85,7 +96,7 @@ public final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
 
     try {
-      action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec));
+      action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime, runnerFactory));
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);
       // this will always rethrow

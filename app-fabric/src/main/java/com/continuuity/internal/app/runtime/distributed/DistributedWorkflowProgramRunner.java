@@ -40,14 +40,14 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getProcessorType();
+    Type processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.WORKFLOW, "Only WORKFLOW process type is supported.");
 
-    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getProgramName());
-    Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getProgramName());
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
+    Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
-    LOG.info("Launching distributed workflow: " + program.getProgramName() + ":" + workflowSpec.getName());
+    LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
 
     String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
     // TODO (ENG-2526): deal with logging
@@ -55,10 +55,10 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       = weaveRunner.prepare(new WorkflowWeaveApplication(program, workflowSpec, hConfFile, cConfFile))
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
       .withArguments(workflowSpec.getName(),
-                     String.format("--%s", RunnableOptions.JAR), program.getProgramJarLocation().getName())
+                     String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
       .withArguments(workflowSpec.getName(),
                      String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
 
-    return new WorkflowWeaveProgramController(program.getProgramName(), preparer.start()).startListen();
+    return new WorkflowWeaveProgramController(program.getName(), preparer.start()).startListen();
   }
 }

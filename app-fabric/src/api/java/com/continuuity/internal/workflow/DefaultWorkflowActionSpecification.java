@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  *
  */
-public final class DefaultWorkflowActionSpecification implements WorkflowActionSpecification {
+public class DefaultWorkflowActionSpecification implements WorkflowActionSpecification {
 
   private final String className;
   private final String name;

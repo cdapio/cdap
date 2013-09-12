@@ -1,5 +1,6 @@
 package com.continuuity.api.workflow;
 
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.builder.Creator;
 import com.continuuity.api.builder.DescriptionSetter;
 import com.continuuity.api.builder.NameSetter;
@@ -28,17 +29,16 @@ public interface WorkflowActionSpecification {
   /**
    *
    */
-  public interface SpecificationCreator extends Creator<WorkflowActionSpecification>,
-    OptionsSetter<Creator<WorkflowActionSpecification>> {
-  }
+  interface SpecificationCreator extends Creator<WorkflowActionSpecification>,
+                                         OptionsSetter<Creator<WorkflowActionSpecification>> { }
 
   /**
    *
    */
   final class Builder extends BaseBuilder<WorkflowActionSpecification> implements SpecificationCreator {
 
+    private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
     private final Map<String, String> options = Maps.newHashMap();
-
 
     public static NameSetter<DescriptionSetter<SpecificationCreator>> with() {
       Builder builder = new Builder();

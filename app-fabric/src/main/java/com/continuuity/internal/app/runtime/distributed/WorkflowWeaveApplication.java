@@ -40,7 +40,7 @@ public class WorkflowWeaveApplication implements WeaveApplication {
       .setInstances(1)
       .build();
 
-    Location programLocation = program.getProgramJarLocation();
+    Location programLocation = program.getJarLocation();
 
     return WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",

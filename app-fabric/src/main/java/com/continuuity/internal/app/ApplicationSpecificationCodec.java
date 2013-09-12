@@ -12,6 +12,8 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.DefaultApplicationSpecification;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -37,18 +39,14 @@ final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationS
 
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-    jsonObj.add("streams", context.serialize(src.getStreams(),
-                                             new TypeToken<Map<String, StreamSpecification>>(){}.getType()));
-    jsonObj.add("datasets", context.serialize(src.getDataSets(),
-                                              new TypeToken<Map<String, DataSetSpecification>>(){}.getType()));
-    jsonObj.add("flows", context.serialize(src.getFlows(),
-                                           new TypeToken<Map<String, FlowSpecification>>(){}.getType()));
-    jsonObj.add("procedures", context.serialize(src.getProcedures(),
-                                                new TypeToken<Map<String, ProcedureSpecification>>(){}.getType()));
-    jsonObj.add("mapReduces", context.serialize(src.getMapReduces(),
-                                                new TypeToken<Map<String, MapReduceSpecification>>(){}.getType()));
-    jsonObj.add("workflows", context.serialize(src.getWorkflows(),
-                                               new TypeToken<Map<String, WorkflowSpecification>>(){}.getType()));
+
+    jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
+    jsonObj.add("datasets", serializeMap(src.getDataSets(), context, DataSetSpecification.class));
+    jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
+    jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
+    jsonObj.add("mapReduces", serializeMap(src.getMapReduces(), context, MapReduceSpecification.class));
+    jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
+
     return jsonObj;
   }
 
@@ -59,20 +57,34 @@ final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationS
 
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
-    Map<String, StreamSpecification> streams = context.deserialize(
-          jsonObj.get("streams"), new TypeToken<Map<String, StreamSpecification>>(){}.getType());
-    Map<String, DataSetSpecification> datasets = context.deserialize(
-          jsonObj.get("datasets"), new TypeToken<Map<String, DataSetSpecification>>(){}.getType());
-    Map<String, FlowSpecification> flows = context.deserialize(
-          jsonObj.get("flows"), new TypeToken<Map<String, FlowSpecification>>(){}.getType());
-    Map<String, ProcedureSpecification> procedures = context.deserialize(
-          jsonObj.get("procedures"), new TypeToken<Map<String, ProcedureSpecification>>(){}.getType());
-    Map<String, MapReduceSpecification> mapReduces = context.deserialize(
-          jsonObj.get("mapReduces"), new TypeToken<Map<String, MapReduceSpecification>>(){}.getType());
-    Map<String, WorkflowSpecification> workflows = context.deserialize(
-          jsonObj.get("workflows"), new TypeToken<Map<String, WorkflowSpecification>>(){}.getType());
+
+    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"),
+                                                              context, StreamSpecification.class);
+    Map<String, DataSetSpecification> datasets = deserializeMap(jsonObj.get("datasets"),
+                                                                context, DataSetSpecification.class);
+    Map<String, FlowSpecification> flows = deserializeMap(jsonObj.get("flows"),
+                                                          context, FlowSpecification.class);
+    Map<String, ProcedureSpecification> procedures = deserializeMap(jsonObj.get("procedures"),
+                                                                    context, ProcedureSpecification.class);
+    Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"),
+                                                                    context, MapReduceSpecification.class);
+    Map<String, WorkflowSpecification> workflows = deserializeMap(jsonObj.get("workflows"),
+                                                                  context, WorkflowSpecification.class);
 
     return new DefaultApplicationSpecification(name, description, streams, datasets,
                                                flows, procedures, mapReduces, workflows);
+  }
+
+
+  private <V> JsonElement serializeMap(Map<String, V> map, JsonSerializationContext context, Class<V> valueType) {
+    TypeToken<Map<String, V>> token = new TypeToken<Map<String, V>>() {}.where(new TypeParameter<V>() {}, valueType);
+    return context.serialize(map, token.getType());
+  }
+
+  private <V> Map<String, V> deserializeMap(JsonElement json, JsonDeserializationContext context, Class<V> valueType) {
+
+    TypeToken<Map<String, V>> token = new TypeToken<Map<String, V>>(){}.where(new TypeParameter<V>() {}, valueType);
+    Map<String, V> map = context.deserialize(json, token.getType());
+    return map == null ? ImmutableMap.<String, V>of() : map;
   }
 }
