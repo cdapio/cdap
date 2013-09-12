@@ -4,6 +4,7 @@
 
 package com.continuuity.api.procedure;
 
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -18,22 +19,7 @@ import java.util.Set;
  * Instance of this class should be created through the {@link Builder} class
  * by invoking the {@link Builder#with()} method.
  */
-public interface ProcedureSpecification {
-
-  /**
-   * @return Class name of the {@link Procedure} class.
-   */
-  String getClassName();
-
-  /**
-   * @return Name of the {@link Procedure}
-   */
-  String getName();
-
-  /**
-   * @return Description to be associated with {@link Procedure}
-   */
-  String getDescription();
+public interface ProcedureSpecification extends ProgramSpecification {
 
   /**
    * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that

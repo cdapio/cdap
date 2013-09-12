@@ -54,6 +54,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.thrift.TException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -545,6 +546,8 @@ public class DatasetRestAccessorTest {
     return !result.isEmpty();
   }
 
+  // This test can be ignored since this functionality has been moved to v2 gateway.
+  @Ignore
   @Test
   public void testClearData() throws Exception {
     // setup accessor

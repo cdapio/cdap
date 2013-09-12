@@ -4,6 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
@@ -354,7 +355,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     }
 
     public Program create(String path) throws IOException {
-      return new Program(locationFactory.create(path));
+      return Programs.create(locationFactory.create(path));
     }
   }
 }

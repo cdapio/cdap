@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -108,7 +107,7 @@ public abstract class AbstractMapReduceContextBuilder {
     transactionProxy.setTransactionAgent(txAgent);
 
     // Creating mapreduce job context
-    MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getProgramName());
+    MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getName());
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, RunIds.fromString(runId), runtimeArguments, txAgent, dataSets, spec);
 

@@ -55,10 +55,10 @@ public class OpenCloseDataSetTest {
 
     // start the flow and procedure
     for (Program program : app.getPrograms()) {
-      if (program.getProcessorType().equals(Type.MAPREDUCE)) {
+      if (program.getType().equals(Type.MAPREDUCE)) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
       controllers.add(runner.run(program, new SimpleProgramOptions(program)));
     }
 
@@ -129,9 +129,9 @@ public class OpenCloseDataSetTest {
     // start the flow and procedure
     ProgramController controller = null;
     for (Program program : app.getPrograms()) {
-      if (program.getProcessorType().equals(Type.MAPREDUCE)) {
+      if (program.getType().equals(Type.MAPREDUCE)) {
         ProgramRunner runner = runnerFactory.create(
-          ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+          ProgramRunnerFactory.Type.valueOf(program.getType().name()));
         controller = runner.run(program, new SimpleProgramOptions(program));
       }
     }
