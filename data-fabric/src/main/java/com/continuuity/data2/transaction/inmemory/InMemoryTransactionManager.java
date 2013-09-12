@@ -390,7 +390,7 @@ public class InMemoryTransactionManager {
     return Transaction.NO_TX_IN_PROGRESS;
   }
 
-  public synchronized boolean abort(Transaction tx) {
+  public synchronized void abort(Transaction tx) {
     committingChangeSets.remove(tx.getWritePointer());
     // makes tx visible (assumes that all operations were rolled back)
     // remove from in-progress set, so that it does not get excluded in the future
@@ -412,7 +412,21 @@ public class InMemoryTransactionManager {
       // removed a tx from excludes: must move read pointer
       moveReadPointerIfNeeded(tx.getWritePointer());
     }
-    return true;
+  }
+
+  public synchronized void invalidate(Transaction tx) {
+    committingChangeSets.remove(tx.getWritePointer());
+    // add tx to invalids
+    invalid.add(tx.getWritePointer());
+    // todo: find a more efficient way to keep this sorted. Could it just be an array?
+    Collections.sort(invalid);
+    invalidArray = invalid.toLongArray();
+    // remove from in-progress set, so that it does not get excluded in the future
+    Long previous = inProgress.remove(tx.getWritePointer());
+    if (previous != null && previous >= 0) {
+      // tx was short-running: must move read pointer
+      moveReadPointerIfNeeded(tx.getWritePointer());
+    }
   }
 
   // hack for exposing important metric

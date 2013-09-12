@@ -116,7 +116,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       Assert.assertEquals(0, txm.getCommittedSize());
       // commit tx2, abort tx3
       Assert.assertTrue(txm.commit(tx2));
-      Assert.assertTrue(txm.abort(tx3));
+      txm.abort(tx3);
       // none of these should still be in the committed set (tx2 is long-running).
       Assert.assertEquals(1, txm.getInvalidSize());
       Assert.assertEquals(1, txm.getExcludedListSize());

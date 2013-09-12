@@ -976,9 +976,17 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException, TException {
+  public void abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException, TException {
     try {
-      return client.abortTx(wrap(tx));
+      client.abortTx(wrap(tx));
+    } catch (TOperationException te) {
+      throw unwrap(te);
+    }
+  }
+
+  public void invalidate(com.continuuity.data2.transaction.Transaction tx) throws OperationException, TException {
+    try {
+      client.invalidateTx(wrap(tx));
     } catch (TOperationException te) {
       throw unwrap(te);
     }

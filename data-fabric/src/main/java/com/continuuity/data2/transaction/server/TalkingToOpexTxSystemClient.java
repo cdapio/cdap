@@ -71,9 +71,18 @@ public class TalkingToOpexTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public boolean abort(Transaction tx) {
+  public void abort(Transaction tx) {
     try {
-      return opex.abort(tx);
+      opex.abort(tx);
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void invalidate(Transaction tx) {
+    try {
+      opex.invalidate(tx);
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }

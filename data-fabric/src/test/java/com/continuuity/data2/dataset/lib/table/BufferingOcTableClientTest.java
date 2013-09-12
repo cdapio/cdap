@@ -69,7 +69,7 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
     private BufferingOcTableClient delegate;
 
     private BufferingOcTableWithPersistingFailure(BufferingOcTableClient delegate) {
-      super(delegate.getName());
+      super(delegate.getTableName());
       this.delegate = delegate;
     }
 

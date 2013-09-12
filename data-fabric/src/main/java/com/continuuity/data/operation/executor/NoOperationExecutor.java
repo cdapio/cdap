@@ -268,8 +268,13 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
-    return true;
+  public void abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    // do nothing
+  }
+
+  @Override
+  public void invalidate(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    // do nothing
   }
 
   @Override
