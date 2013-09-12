@@ -28,7 +28,7 @@ import org.apache.hadoop.mapreduce.Job;
 public class ResourceApp implements Application {
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}
+   * {@link com.continuuity.api.ApplicationSpecification}.
    *
    * @return An instance of {@code ApplicationSpecification}.
    */
@@ -49,6 +49,9 @@ public class ResourceApp implements Application {
 
   private class DummyProcedure extends AbstractProcedure {}
 
+  /**
+   * Dummy batch job.
+   */
   public static class DummyBatch extends AbstractMapReduce {
 
     @Override

@@ -38,13 +38,13 @@ public class CPUSpammer extends AbstractFlowlet {
   KeyValueTable input;
 
   public CPUSpammer() {
-    spammer = new Spammer(32);
+    spammer = new Spammer(8);
   }
 
   @RoundRobin
   @ProcessInput("out")
   public void process(Integer number) throws OperationException {
-    long duration = spammer.spamFor(1000 * 1000);
+    long duration = spammer.spamFor(10 * 1000 * 1000);
     System.out.println("spammer spun for " + duration + " ms");
     output.write(Bytes.toBytes(1), Bytes.toBytes(1));
     input.write(Bytes.toBytes(1), Bytes.toBytes(1));

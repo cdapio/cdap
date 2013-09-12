@@ -39,7 +39,8 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     this.description = configureSpec.getDescription();
     this.inputDataSet = configureSpec.getInputDataSet();
     this.outputDataSet = configureSpec.getOutputDataSet();
-    this.dataSets = ProgramSpecificationHelper.inspectDataSets(mapReduce.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
+    this.dataSets = ProgramSpecificationHelper.inspectDataSets(
+      mapReduce.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
     this.arguments = configureSpec.getArguments();
     this.resources = DefaultResourceSpecification.create();
   }
