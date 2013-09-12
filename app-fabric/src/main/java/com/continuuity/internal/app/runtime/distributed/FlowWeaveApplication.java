@@ -40,7 +40,7 @@ public final class FlowWeaveApplication implements WeaveApplication {
                              Type.FLOW.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable();
 
-    Location programLocation = program.getProgramJarLocation();
+    Location programLocation = program.getJarLocation();
     String programName = programLocation.getName();
     WeaveSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {

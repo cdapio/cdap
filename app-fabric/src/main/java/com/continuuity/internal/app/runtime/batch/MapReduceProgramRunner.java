@@ -107,12 +107,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getProcessorType();
+    Type processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.MAPREDUCE, "Only MAPREDUCE process type is supported.");
 
-    MapReduceSpecification spec = appSpec.getMapReduces().get(program.getProgramName());
-    Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getProgramName());
+    MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
+    Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
     OperationContext opexContext = new OperationContext(program.getAccountId(), program.getApplicationId());
     TransactionProxy transactionProxy = new TransactionProxy();
@@ -137,7 +137,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // long-running transaction does not time out
       txAgent.startLong();
     } catch (OperationException e) {
-      LOG.error("Failed to start transaction for mapreduce job: " + program.getProgramName());
+      LOG.error("Failed to start transaction for mapreduce job: " + program.getName());
       throw Throwables.propagate(e);
     }
 
@@ -160,7 +160,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
         controller = new MapReduceProgramController(context);
 
         LOG.info("Starting MapReduce job: " + context.toString());
-        submit(job, program.getProgramJarLocation(), context, tx, txAgent.getCurrentTx());
+        submit(job, program.getJarLocation(), context, tx, txAgent.getCurrentTx());
 
       } catch (Throwable e) {
         // failed before job even started - release all resources of the context
@@ -192,7 +192,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       } catch (OperationException ex) {
         throw Throwables.propagate(ex);
       }
-      LOG.error("Failed to run mapreduce job: " + program.getProgramName(), e);
+      LOG.error("Failed to run mapreduce job: " + program.getName(), e);
       throw Throwables.propagate(e);
     }
   }

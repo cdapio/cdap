@@ -1,6 +1,7 @@
 package com.continuuity.api.batch;
 
 import com.continuuity.api.ResourceSpecification;
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -27,22 +28,7 @@ import java.util.Set;
  * </pre>
  * </p>
  */
-public interface MapReduceSpecification {
-
-  /**
-   * @return Class name of the {@link MapReduce} class.
-   */
-  String getClassName();
-
-  /**
-   * @return Name of the {@link MapReduce}
-   */
-  String getName();
-
-  /**
-   * @return Description to be associated with {@link MapReduce}
-   */
-  String getDescription();
+public interface MapReduceSpecification extends ProgramSpecification {
 
   /**
    * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that

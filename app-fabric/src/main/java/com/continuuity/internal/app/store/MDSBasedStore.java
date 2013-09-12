@@ -13,6 +13,7 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
@@ -102,7 +103,7 @@ public class MDSBasedStore implements Store {
   @Override
   public Program loadProgram(Id.Program id, Type type) throws IOException {
     Location programLocation = getProgramLocation(id, type);
-    return new Program(programLocation);
+    return Programs.create(programLocation);
   }
 
   /**

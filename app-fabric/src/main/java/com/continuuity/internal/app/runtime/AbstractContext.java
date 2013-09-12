@@ -60,7 +60,7 @@ public abstract class AbstractContext {
   }
 
   public String getProgramName() {
-    return program.getProgramName();
+    return program.getName();
   }
 
   public Program getProgram() {

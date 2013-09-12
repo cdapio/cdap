@@ -568,7 +568,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
           };
           var request = http.request(options, function (response) {
             if (response.statusCode !== 200) {
-              res.send(400, 'Cold not upload file.');
+              res.send(400, 'Could not upload file.');
               self.logger.error('Could not upload file ' + req.params.file);
             } else {
               res.send('OK');

@@ -235,29 +235,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   private Type entityTypeToType(ProgramId identifier) {
-    switch (identifier.getType()) {
-      case FLOW:
-        return Type.FLOW;
-      case PROCEDURE:
-        return Type.PROCEDURE;
-      case MAPREDUCE:
-        return Type.MAPREDUCE;
-    }
-    // Never hit
-    throw new IllegalArgumentException("Type not supported: " + identifier.getType());
+    return Type.valueOf(identifier.getType().name());
   }
 
   private EntityType typeToEntityType(Type type) {
-    switch (type) {
-      case FLOW:
-        return EntityType.FLOW;
-      case PROCEDURE:
-        return EntityType.PROCEDURE;
-      case MAPREDUCE:
-        return EntityType.MAPREDUCE;
-    }
-    // Never hit
-    throw new IllegalArgumentException("Type not suppported: " + type);
+    return EntityType.valueOf(type.name());
   }
 
   /**
@@ -462,18 +444,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = null;
-    switch (identifier.getType()) {
-      case FLOW:
-        runtimeInfos = runtimeService.list(Type.FLOW).values();
-        break;
-      case PROCEDURE:
-        runtimeInfos = runtimeService.list(Type.PROCEDURE).values();
-        break;
-      case MAPREDUCE:
-        runtimeInfos = runtimeService.list(Type.MAPREDUCE).values();
-        break;
-    }
+    Type type = Type.valueOf(identifier.getType().name());
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
             identifier.getAccountId(), identifier.getFlowId());
 

@@ -15,7 +15,7 @@ public final class FlowUtils {
     return Hashing.md5().newHasher()
                   .putString(program.getAccountId())
                   .putString(program.getApplicationId())
-                  .putString(program.getProgramName())
+                  .putString(program.getName())
                   .putString(flowletId).hash().asLong();
   }
 
