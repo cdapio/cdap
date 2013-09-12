@@ -59,40 +59,4 @@ public interface ResourceSpecification {
    * @param unit
    */
   void setMemory(int memory, SizeUnit unit);
-
-  /**
-   * Builder for creating {@link ResourceSpecification}.
-   */
-  static final class Builder {
-
-    private int cores;
-    private int memorySize;
-
-    public static Builder with() {
-      return new Builder();
-    }
-
-    public Builder setVirtualCores(int cores) {
-      Builder.this.cores = cores;
-      return Builder.this;
-    }
-
-    public Builder setMemoryMB(int size) {
-      return Builder.this.setMemory(size, SizeUnit.MEGA);
-    }
-
-    public Builder setMemory(int size, SizeUnit unit) {
-      Builder.this.memorySize = size * unit.multiplier;
-      return Builder.this;
-    }
-
-    public ResourceSpecification build() {
-      return new DefaultResourceSpecification(cores, memorySize);
-    }
-
-    private Builder() {
-      this.cores = DEFAULT_VIRTUAL_CORES;
-      this.memorySize = DEFAULT_MEMORY_MB;
-    }
-  }
 }
