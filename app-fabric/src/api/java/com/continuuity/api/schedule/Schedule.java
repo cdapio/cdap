@@ -1,4 +1,4 @@
-package com.continuuity.internal.schedule;
+package com.continuuity.api.schedule;
 
 /**
  * Defines the schedule to run a program. Cron-based scheduling is supported for the schedule.
@@ -28,5 +28,5 @@ public interface Schedule {
   /**
    * Defines the ScheduleAction.
    */
-  public enum Action {START, STOP};
+  enum Action {START, STOP};
 }

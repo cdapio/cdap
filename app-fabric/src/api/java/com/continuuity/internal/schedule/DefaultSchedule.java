@@ -1,14 +1,16 @@
 package com.continuuity.internal.schedule;
 
+import com.continuuity.api.schedule.Schedule;
+
 /**
  * Default schedule implementation.
  */
 public class DefaultSchedule implements Schedule {
 
-  private String name;
-  private String description;
-  private String cronExpression;
-  private Action action;
+  private final String name;
+  private final String description;
+  private final String cronExpression;
+  private final Action action;
 
   @Override
   public String getName() {

@@ -1,7 +1,6 @@
 package com.continuuity.api.schedule;
 
 import com.continuuity.api.ProgramSpecification;
-import com.continuuity.internal.schedule.Schedule;
 
 import java.util.List;
 
