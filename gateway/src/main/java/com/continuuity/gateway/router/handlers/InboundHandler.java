@@ -1,6 +1,7 @@
 package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.weave.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -25,6 +26,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
   private final ClientBootstrap clientBootstrap;
   private final EndpointStrategy discoverableEndpoints;
+  private final String serviceName;
 
   // This lock guards against the race condition that overrides the
   // OP_READ flag incorrectly.
@@ -32,9 +34,11 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private final Object trafficLock = new Object();
   private volatile Channel outboundChannel;
 
-  public InboundHandler(ClientBootstrap clientBootstrap, EndpointStrategy discoverableEndpoints) {
+  public InboundHandler(ClientBootstrap clientBootstrap, EndpointStrategy discoverableEndpoints,
+                        String serviceName) {
     this.clientBootstrap = clientBootstrap;
     this.discoverableEndpoints = discoverableEndpoints;
+    this.serviceName = serviceName;
   }
 
   @Override
@@ -43,9 +47,18 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     final Channel inboundChannel = e.getChannel();
     inboundChannel.setReadable(false);
 
+    // Discover endpoint.
+    Discoverable discoverable = discoverableEndpoints.pick();
+    if (discoverable == null) {
+      LOG.error("No discoverable endpoints found for service {}", serviceName);
+      inboundChannel.close();
+      return;
+    }
+
     // Connect to outbound service.
-    InetSocketAddress address = discoverableEndpoints.pick().getSocketAddress();
-    LOG.trace("Opening connection from {} to {}", inboundChannel.getLocalAddress(), address);
+    final InetSocketAddress address = discoverable.getSocketAddress();
+    LOG.trace("Opening connection from {} to {} for {}",
+              inboundChannel.getLocalAddress(), address, inboundChannel.getRemoteAddress());
     ChannelFuture outFuture = clientBootstrap.connect(address);
 
     outboundChannel = outFuture.getChannel();
@@ -57,9 +70,13 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
           // Connection attempt succeeded:
           // Begin to accept incoming traffic.
           inboundChannel.setReadable(true);
+          LOG.trace("Connection opened from {} to {} for {}",
+                    inboundChannel.getLocalAddress(), address, inboundChannel.getRemoteAddress());
         } else {
           // Close the connection if the connection attempt has failed.
           inboundChannel.close();
+          LOG.trace("Failed to open connection from {} to {} for {}",
+                    inboundChannel.getLocalAddress(), address, inboundChannel.getRemoteAddress(), future.getCause());
         }
       }
     });
@@ -101,7 +118,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    LOG.error("Got exception", e);
+    LOG.error("Got exception", e.getCause());
     closeOnFlush(e.getChannel());
   }
 

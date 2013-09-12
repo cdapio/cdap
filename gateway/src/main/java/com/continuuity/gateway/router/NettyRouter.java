@@ -46,6 +46,7 @@ public class NettyRouter extends AbstractIdleService {
   private final int clientConnectionBacklog;
   private final InetSocketAddress bindAddress;
   private final EndpointStrategy discoverableEndpoints;
+  private final String serviceName;
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
 
@@ -60,7 +61,7 @@ public class NettyRouter extends AbstractIdleService {
 
   public NettyRouter(int serverBossThreadPoolSize, int serverWorkerThreadPoolSize, int serverConnectionBacklog,
                      int clientBossThreadPoolSize, int clientWorkerThreadPoolSize, int clientConnectionBacklog,
-                     InetSocketAddress bindAddress, EndpointStrategy discoverableEndpoints) {
+                     InetSocketAddress bindAddress, EndpointStrategy discoverableEndpoints, String serviceName) {
     this.serverBossThreadPoolSize = serverBossThreadPoolSize;
     this.serverWorkerThreadPoolSize = serverWorkerThreadPoolSize;
     this.serverConnectionBacklog = serverConnectionBacklog;
@@ -69,6 +70,7 @@ public class NettyRouter extends AbstractIdleService {
     this.clientConnectionBacklog = clientConnectionBacklog;
     this.bindAddress = bindAddress;
     this.discoverableEndpoints = discoverableEndpoints;
+    this.serviceName = serviceName;
   }
 
   @Override
@@ -80,7 +82,8 @@ public class NettyRouter extends AbstractIdleService {
     clientBossExecutor = createExecutorService(clientBossThreadPoolSize, "router-client-boss-thread-%d");
     clientWorkerExecutor = createExecutorService(clientWorkerThreadPoolSize, "router-client-worker-thread-%d");
 
-    serverBootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(serverBossExecutor, serverWorkerExecutor));
+    serverBootstrap = new ServerBootstrap(
+      new NioServerSocketChannelFactory(serverBossExecutor, serverWorkerExecutor));
     serverBootstrap.setOption("backlog", serverConnectionBacklog);
 
     clientBootstrap = new ClientBootstrap(
@@ -104,7 +107,8 @@ public class NettyRouter extends AbstractIdleService {
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
-          pipeline.addLast("inbound-handler", new InboundHandler(clientBootstrap, discoverableEndpoints));
+          pipeline.addLast("inbound-handler",
+                           new InboundHandler(clientBootstrap, discoverableEndpoints, serviceName));
           return pipeline;
         }
       }
