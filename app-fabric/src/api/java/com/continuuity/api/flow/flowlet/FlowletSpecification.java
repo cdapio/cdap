@@ -4,6 +4,7 @@
 
 package com.continuuity.api.flow.flowlet;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -62,6 +63,11 @@ public interface FlowletSpecification {
   Map<String, String> getArguments();
 
   /**
+   * @return The {@link ResourceSpecification} for the flowlet.
+   */
+  ResourceSpecification getResources();
+
+  /**
    * Builder for creating instance of {@link FlowletSpecification}. The builder instance is
    * not reusable, meaning each instance of this class can only be used to create one instance
    * of {@link FlowletSpecification}.
@@ -73,6 +79,7 @@ public interface FlowletSpecification {
     private FailurePolicy failurePolicy = FailurePolicy.RETRY;
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
     private Map<String, String> arguments;
+    private ResourceSpecification resources = ResourceSpecification.BASIC;
 
     /**
      * Creates a {@link Builder} for building instance of this class.
@@ -151,12 +158,19 @@ public interface FlowletSpecification {
         return this;
       }
 
+      public AfterDescription withResources(ResourceSpecification resourceSpec) {
+        Preconditions.checkArgument(resourceSpec != null, "Resources cannot be null.");
+        resources = resourceSpec;
+        return this;
+      }
+
       /**
        * Creates an instance of {@link FlowletSpecification}.
        * @return An instance of {@link FlowletSpecification}.
        */
       public FlowletSpecification build() {
-        return new DefaultFlowletSpecification(name, description, failurePolicy, dataSets.build(), arguments);
+        return new DefaultFlowletSpecification(name, description, failurePolicy,
+                                               dataSets.build(), arguments, resources);
       }
     }
 

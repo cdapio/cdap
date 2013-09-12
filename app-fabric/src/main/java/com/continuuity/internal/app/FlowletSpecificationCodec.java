@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.app;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
@@ -37,6 +38,7 @@ final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecifica
     jsonObj.add("failurePolicy", new JsonPrimitive(src.getFailurePolicy().name()));
     jsonObj.add("datasets", context.serialize(src.getDataSets(), new TypeToken<Set<String>>(){}.getType()));
     jsonObj.add("arguments", context.serialize(src.getArguments(), new TypeToken<Map<String, String>>(){}.getType()));
+    jsonObj.add("resources", context.serialize(src.getResources(), new TypeToken<ResourceSpecification>(){}.getType()));
 
     return jsonObj;
   }
@@ -53,7 +55,9 @@ final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecifica
     Set<String> dataSets = context.deserialize(jsonObj.get("datasets"), new TypeToken<Set<String>>(){}.getType());
     Map<String, String> arguments = context.deserialize(jsonObj.get("arguments"),
                                                         new TypeToken<Map<String, String>>(){}.getType());
+    ResourceSpecification resources = context.deserialize(jsonObj.get("resources"),
+                                                          new TypeToken<ResourceSpecification>(){}.getType());
 
-    return new DefaultFlowletSpecification(className, name, description, policy, dataSets, arguments);
+    return new DefaultFlowletSpecification(className, name, description, policy, dataSets, arguments, resources);
   }
 }
