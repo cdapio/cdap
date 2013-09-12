@@ -9,8 +9,9 @@ public final class DefaultResourceSpecification implements ResourceSpecification
   private int virtualCores;
   private int memoryMB;
 
-  public DefaultResourceSpecification() {
-    this(ResourceSpecification.DEFAULT_VIRTUAL_CORES, ResourceSpecification.DEFAULT_MEMORY_MB);
+  public static ResourceSpecification create() {
+    return new DefaultResourceSpecification(ResourceSpecification.DEFAULT_VIRTUAL_CORES,
+                                            ResourceSpecification.DEFAULT_MEMORY_MB);
   }
 
   public DefaultResourceSpecification(int cores, int memoryMB) {

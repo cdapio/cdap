@@ -28,7 +28,7 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
     this(null, name, description, dataSets, arguments);
   }
 
-  public DefaultProcedureSpecification(Procedure procedure, ResourceSpecification resources) {
+  public DefaultProcedureSpecification(Procedure procedure) {
     this.className = procedure.getClass().getName();
     ProcedureSpecification configureSpec = procedure.configure();
 
@@ -37,12 +37,12 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
     this.dataSets = ProgramSpecificationHelper.inspectDataSets(
       procedure.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
     this.arguments = configureSpec.getArguments();
-    this.resources = resources;
+    this.resources = DefaultResourceSpecification.create();
   }
 
   public DefaultProcedureSpecification(String className, String name, String description,
                                        Set<String> dataSets, Map<String, String> arguments) {
-    this(className, name, description, dataSets, arguments, new DefaultResourceSpecification());
+    this(className, name, description, dataSets, arguments, DefaultResourceSpecification.create());
   }
 
   public DefaultProcedureSpecification(String className, String name, String description,

@@ -47,7 +47,7 @@ public class ResourceSpammerApp implements Application {
       .withProcedures()
         .add(new CPUSpamProcedure()).setVirtualCores(2).setMemoryMB(512)
       .withBatch()
-        .add(new MapredSpammer())
+        .add(new MapredSpammer()).setVirtualCores(2).setMemory(1, ResourceSpecification.SizeUnit.GIGA)
       .build();
   }
 }

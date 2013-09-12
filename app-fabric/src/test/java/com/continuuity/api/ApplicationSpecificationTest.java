@@ -3,6 +3,7 @@ package com.continuuity.api;
 
 import com.continuuity.ResourceApp;
 import com.continuuity.WordCountApp;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -59,5 +60,10 @@ public class ApplicationSpecificationTest {
     ProcedureSpecification procedureSpec = newSpec.getProcedures().values().iterator().next();
     Assert.assertEquals(3, procedureSpec.getResources().getVirtualCores());
     Assert.assertEquals(128, procedureSpec.getResources().getMemoryMB());
+
+    Assert.assertEquals(1, newSpec.getMapReduces().size());
+    MapReduceSpecification mapredSpec = newSpec.getMapReduces().values().iterator().next();
+    Assert.assertEquals(11, mapredSpec.getResources().getVirtualCores());
+    Assert.assertEquals(12345, mapredSpec.getResources().getMemoryMB());
   }
 }

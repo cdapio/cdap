@@ -470,7 +470,7 @@ public interface ApplicationSpecification {
       @Override
       public MoreProcedure add(Procedure procedure) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, new DefaultResourceSpecification());
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure);
         String procedureName = spec.getName();
         procedures.put(procedureName, spec);
         lastProcedureAdded = procedureName;
@@ -539,6 +539,33 @@ public interface ApplicationSpecification {
     }
 
     /**
+     * Defines interface for setting resources like cores and memory for batch jobs.
+     */
+    public interface BatchResourceSetter {
+      /**
+       * Set the number of virtual cores the previously added batch job should be able to use.
+       * @param cores number of cores the batch job can use
+       * @return an instance of {@link MoreBatch}
+       */
+      MoreBatch setVirtualCores(int cores);
+
+      /**
+       * Set the amount of memory in MB the previously added batch job should be able to use.
+       * @param memory amount of memory in MB the batch job can use
+       * @return an instance of {@link MoreBatch}
+       */
+      MoreBatch setMemoryMB(int memory);
+
+      /**
+       * Set the amount of memory in MB the previously added batch job should be able to use.
+       * @param memory amount of memory units the batch job can use
+       * @param unit unit of memory
+       * @return an instance of {@link MoreBatch}
+       */
+      MoreBatch setMemory(int memory, ResourceSpecification.SizeUnit unit);
+    }
+
+    /**
      * Defines interface for proceeding to the next step after adding batch jobs to the application.
      */
     public interface AfterBatch {
@@ -553,7 +580,9 @@ public interface ApplicationSpecification {
     /**
      * Class for adding more batch jobs to the application.
      */
-    public final class MoreBatch implements BatchAdder, AfterBatch {
+    public final class MoreBatch implements BatchAdder, AfterBatch, BatchResourceSetter {
+      private String lastBatchAdded;
+
       /**
        * Builds the {@link ApplicationSpecification} based on what is being configured.
        *
@@ -575,7 +604,27 @@ public interface ApplicationSpecification {
       public MoreBatch add(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
         MapReduceSpecification spec = new DefaultMapReduceSpecification(mapReduce);
-        mapReduces.put(spec.getName(), spec);
+        String batchName = spec.getName();
+        mapReduces.put(batchName, spec);
+        lastBatchAdded = batchName;
+        return this;
+      }
+
+      @Override
+      public MoreBatch setVirtualCores(int cores) {
+        mapReduces.get(lastBatchAdded).getResources().setVirtualCores(cores);
+        return this;
+      }
+
+      @Override
+      public MoreBatch setMemoryMB(int memory) {
+        mapReduces.get(lastBatchAdded).getResources().setMemoryMB(memory);
+        return this;
+      }
+
+      @Override
+      public MoreBatch setMemory(int memory, ResourceSpecification.SizeUnit unit) {
+        mapReduces.get(lastBatchAdded).getResources().setMemory(memory, unit);
         return this;
       }
     }

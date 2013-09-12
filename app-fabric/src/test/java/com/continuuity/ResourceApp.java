@@ -7,6 +7,10 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ResourceSpecification;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.batch.AbstractMapReduce;
+import com.continuuity.api.batch.MapReduceContext;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -14,6 +18,8 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.AbstractProcedure;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
 
 /**
  * This is an Application used for only testing that sets various resources for different
@@ -36,11 +42,31 @@ public class ResourceApp implements Application {
       .withFlows().add(new ResourceFlow())
       .withProcedures()
         .add(new DummyProcedure()).setVirtualCores(3).setMemoryMB(128)
-      .noBatch()
+      .withBatch()
+        .add(new DummyBatch()).setVirtualCores(11).setMemoryMB(12345)
       .build();
   }
 
   private class DummyProcedure extends AbstractProcedure {}
+
+  public static class DummyBatch extends AbstractMapReduce {
+
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("dummy")
+        .setDescription("dummy job")
+        .useDataSet("foo")
+        .useInputDataSet("foo")
+        .useOutputDataSet("bar")
+        .build();
+    }
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+    }
+  }
+
 
   /**
    *
@@ -68,14 +94,6 @@ public class ResourceApp implements Application {
 
     public A() {
       super("A");
-    }
-
-    @Override
-    public FlowletSpecification configure() {
-      return FlowletSpecification.Builder.with()
-        .setName("A")
-        .setDescription("A flowlet")
-        .build();
     }
 
     public void process(StreamEvent event) {

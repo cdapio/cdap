@@ -57,7 +57,7 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> inputs;
   private Map<String, Set<Schema>> outputs;
 
-  FlowletDefinition(String flowletName, Flowlet flowlet, int instances, ResourceSpecification resourceSpec) {
+  FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
     FlowletSpecification flowletSpec = flowlet.configure();
 
     this.instances = instances;
@@ -79,7 +79,7 @@ public final class FlowletDefinition {
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
                                                        datasets, flowletSpec.getArguments());
-    this.resourceSpec = resourceSpec;
+    this.resourceSpec = DefaultResourceSpecification.create();
   }
 
   /**
@@ -100,7 +100,7 @@ public final class FlowletDefinition {
     this.outputTypes = definition.outputTypes;
     this.inputs = definition.inputs;
     this.outputs = definition.outputs;
-    this.resourceSpec = new DefaultResourceSpecification();
+    this.resourceSpec = DefaultResourceSpecification.create();
   }
 
   /**

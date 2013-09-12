@@ -1,5 +1,6 @@
 package com.continuuity.api.batch;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -66,6 +67,11 @@ public interface MapReduceSpecification {
    *         source
    */
   String getInputDataSet();
+
+  /**
+   * @return {@link ResourceSpecification} containing resources the job is allowed to use
+   */
+  ResourceSpecification getResources();
 
   /**
    * Builder for building {@link MapReduceSpecification}.

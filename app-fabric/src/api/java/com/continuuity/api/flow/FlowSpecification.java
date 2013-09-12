@@ -228,8 +228,7 @@ public interface FlowSpecification {
       public MoreFlowlet add(String name, Flowlet flowlet, int instances) {
         Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
 
-        FlowletDefinition flowletDef =
-          new FlowletDefinition(name, flowlet, instances, new DefaultResourceSpecification());
+        FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
         String flowletName = flowletDef.getFlowletSpec().getName();
 
         Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
