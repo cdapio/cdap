@@ -46,7 +46,6 @@ setInterval(function () {
 	LOG_DELAY = false;
 }, 5000);
 
-
 /**
  * Export API.
  */
