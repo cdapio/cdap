@@ -6,15 +6,12 @@ package com.continuuity.internal.app;
 
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -23,8 +20,7 @@ import java.util.Set;
 /**
  *
  */
-final class MapReduceSpecificationCodec implements JsonSerializer<MapReduceSpecification>,
-                                                     JsonDeserializer<MapReduceSpecification> {
+final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapReduceSpecification> {
 
   @Override
   public JsonElement serialize(MapReduceSpecification src, Type typeOfSrc, JsonSerializationContext context) {
@@ -39,8 +35,8 @@ final class MapReduceSpecificationCodec implements JsonSerializer<MapReduceSpeci
     if (src.getOutputDataSet() != null) {
       jsonObj.add("outputDataSet", new JsonPrimitive(src.getOutputDataSet()));
     }
-    jsonObj.add("datasets", context.serialize(src.getDataSets(), new TypeToken<Set<String>>(){}.getType()));
-    jsonObj.add("arguments", context.serialize(src.getArguments(), new TypeToken<Map<String, String>>(){}.getType()));
+    jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
+    jsonObj.add("arguments", serializeMap(src.getArguments(), context, String.class));
 
     return jsonObj;
   }
@@ -57,9 +53,9 @@ final class MapReduceSpecificationCodec implements JsonSerializer<MapReduceSpeci
     String inputDataSet = inputDataSetElem == null ? null : inputDataSetElem.getAsString();
     JsonElement outputDataSetElem = jsonObj.get("outputDataSet");
     String outputDataSet = outputDataSetElem == null ? null : outputDataSetElem.getAsString();
-    Set<String> dataSets = context.deserialize(jsonObj.get("datasets"), new TypeToken<Set<String>>(){}.getType());
-    Map<String, String> arguments = context.deserialize(jsonObj.get("arguments"),
-                                                        new TypeToken<Map<String, String>>(){}.getType());
+
+    Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
+    Map<String, String> arguments = deserializeMap(jsonObj.get("arguments"), context, String.class);
 
     return new DefaultMapReduceSpecification(className, name, description,
                                                 inputDataSet, outputDataSet,

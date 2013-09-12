@@ -12,17 +12,12 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.DefaultApplicationSpecification;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeParameter;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -30,8 +25,7 @@ import java.util.Map;
 /**
  *
  */
-final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationSpecification>,
-  JsonDeserializer<ApplicationSpecification> {
+final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<ApplicationSpecification> {
 
   @Override
   public JsonElement serialize(ApplicationSpecification src, Type typeOfSrc, JsonSerializationContext context) {
@@ -39,7 +33,6 @@ final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationS
 
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasets", serializeMap(src.getDataSets(), context, DataSetSpecification.class));
     jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
@@ -73,18 +66,5 @@ final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationS
 
     return new DefaultApplicationSpecification(name, description, streams, datasets,
                                                flows, procedures, mapReduces, workflows);
-  }
-
-
-  private <V> JsonElement serializeMap(Map<String, V> map, JsonSerializationContext context, Class<V> valueType) {
-    TypeToken<Map<String, V>> token = new TypeToken<Map<String, V>>() {}.where(new TypeParameter<V>() {}, valueType);
-    return context.serialize(map, token.getType());
-  }
-
-  private <V> Map<String, V> deserializeMap(JsonElement json, JsonDeserializationContext context, Class<V> valueType) {
-
-    TypeToken<Map<String, V>> token = new TypeToken<Map<String, V>>(){}.where(new TypeParameter<V>() {}, valueType);
-    Map<String, V> map = context.deserialize(json, token.getType());
-    return map == null ? ImmutableMap.<String, V>of() : map;
   }
 }
