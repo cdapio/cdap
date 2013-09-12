@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
@@ -11,7 +12,7 @@ import com.continuuity.metadata.thrift.Stream;
  */
 public class DummyMDS extends MetadataService {
   DummyMDS() {
-    super(new NoOperationExecutor());
+    super(new SerializingMetaDataStore(new NoOperationExecutor()));
   }
 
   boolean allowAll = false;

@@ -2,6 +2,7 @@ package com.continuuity.metadata;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -47,7 +48,7 @@ public class MetadataServiceTest {
     );
     /* Instance of operation executor */
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-    mds = new MetadataService(opex);
+    mds = new MetadataService(injector.getInstance(MetaDataStore.class));
     account = new Account("demo");
   }
 
@@ -245,7 +246,7 @@ public class MetadataServiceTest {
   }
 
   /**
-   * Tests update of a application
+   * Tests update of a application.
    * @throws Exception
    */
   @Test

@@ -3,6 +3,7 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
@@ -29,7 +30,7 @@ public class GatewayRestCollectorTest {
       .getLogger(GatewayRestCollectorTest.class);
 
   // A set of constants we'll use in these tests
-  static String name = "collect.rest";
+  static final String NAME = "collect.rest";
   static final String PREFIX = "";
   static final String PATH = "/stream/";
   static final String STREAM = "pfunk";
@@ -58,6 +59,7 @@ public class GatewayRestCollectorTest {
     // Set up our Guice injections
     Injector injector = Guice.createInjector(new GatewayTestModule(myConfiguration));
     this.executor = injector.getInstance(OperationExecutor.class);
+    MetaDataStore metaDataStore = injector.getInstance(MetaDataStore.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
@@ -65,19 +67,20 @@ public class GatewayRestCollectorTest {
     // Create and populate a new config object
 
     myConfiguration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
-    myConfiguration.set(Constants.CONFIG_CONNECTORS, name);
-    myConfiguration.set(Constants.buildConnectorPropertyName(name,
+    myConfiguration.set(Constants.CONFIG_CONNECTORS, NAME);
+    myConfiguration.set(Constants.buildConnectorPropertyName(NAME,
         Constants.CONFIG_CLASSNAME), RestCollector.class.getCanonicalName());
-    myConfiguration.setInt(Constants.buildConnectorPropertyName(name,
+    myConfiguration.setInt(Constants.buildConnectorPropertyName(NAME,
         Constants.CONFIG_PORT), port);
-    myConfiguration.set(Constants.buildConnectorPropertyName(name,
+    myConfiguration.set(Constants.buildConnectorPropertyName(NAME,
         Constants.CONFIG_PATH_PREFIX), PREFIX);
-    myConfiguration.set(Constants.buildConnectorPropertyName(name,
+    myConfiguration.set(Constants.buildConnectorPropertyName(NAME,
         Constants.CONFIG_PATH_MIDDLE), PATH);
 
     // Now create our Gateway
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
+    theGateway.setMetaDataStore(metaDataStore);
     theGateway.setDiscoveryServiceClient(
         injector.getInstance(DiscoveryServiceClient.class));
 
@@ -86,7 +89,7 @@ public class GatewayRestCollectorTest {
     theGateway.setConsumer(theConsumer);
 
     // make sure the destination stream is defined in the meta data
-    MetadataService mds = new MetadataService(this.executor);
+    MetadataService mds = new MetadataService(metaDataStore);
     Stream stream = new Stream(GatewayRestCollectorTest.STREAM);
     stream.setName(GatewayRestCollectorTest.STREAM);
     mds.assertStream(new Account(TestUtil.DEFAULT_ACCOUNT_ID), stream);
@@ -121,7 +124,7 @@ public class GatewayRestCollectorTest {
     Assert.assertEquals(EVENTS_TO_SEND, consumer.eventsReceived());
     Assert.assertEquals(EVENTS_TO_SEND, consumer.eventsSucceeded());
     Assert.assertEquals(0, consumer.eventsFailed());
-    TestUtil.consumeQueueAsEvents(this.executor, STREAM, name, EVENTS_TO_SEND);
+    TestUtil.consumeQueueAsEvents(this.executor, STREAM, NAME, EVENTS_TO_SEND);
 
     // Stop the Gateway
     theGateway.stop(false);

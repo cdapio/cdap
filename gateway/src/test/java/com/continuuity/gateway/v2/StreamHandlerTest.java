@@ -1,16 +1,13 @@
-package com.continuuity.gateway.v2.handlers.v2.stream;
+package com.continuuity.gateway.v2;
 
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
@@ -60,7 +57,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test stream handler.
+ * Test stream handler. This is not part of GatewayFastTestsSuite because it needs to start the gateway multiple times.
  */
 public class StreamHandlerTest {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandlerTest.class);
@@ -88,7 +85,6 @@ public class StreamHandlerTest {
           // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
           // AppFabricServiceModule
           bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class).in(Scopes.SINGLETON);
-          bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Scopes.SINGLETON);
           bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
           bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
@@ -443,7 +439,7 @@ public class StreamHandlerTest {
 
   private static void testPing() throws Exception {
     DefaultHttpClient httpclient = new DefaultHttpClient();
-    HttpGet httpget = new HttpGet(String.format("http://%s:%d/v2/ping", hostname, port));
+    HttpGet httpget = new HttpGet(String.format("http://%s:%d/ping", hostname, port));
     HttpResponse response = httpclient.execute(httpget);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals("OK.\n", EntityUtils.toString(response.getEntity()));

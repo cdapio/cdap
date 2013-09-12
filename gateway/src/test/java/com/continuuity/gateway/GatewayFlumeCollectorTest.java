@@ -3,6 +3,7 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
@@ -34,14 +35,14 @@ public class GatewayFlumeCollectorTest {
       .getLogger(GatewayFlumeCollectorTest.class);
 
   // A set of constants we'll use in this test
-  static final String name = "collect.flume";
-  static final String destination = "foo";
-  static final int batchSize = 4;
-  static final int eventsToSend = 10;
+  static final String NAME = "collect.flume";
+  static final String DESTINATION = "foo";
+  static final int BATCH_SIZE = 4;
+  static final int EVENTS_TO_SEND = 10;
   static int port = 10000;
 
-  static final String apiKey = "SampleTestApiKey";
-  static final String cluster = "SampleTestClusterName";
+  static final String API_KEY = "SampleTestApiKey";
+  static final String CLUSTER = "SampleTestClusterName";
   
   // This is the Gateway object we'll use for these tests
   private Gateway theGateway = null;
@@ -65,6 +66,7 @@ public class GatewayFlumeCollectorTest {
     // Set up our Guice injections
     Injector injector = Guice.createInjector(new GatewayTestModule(myConfiguration));
     this.executor = injector.getInstance(OperationExecutor.class);
+    MetaDataStore metaDataStore = injector.getInstance(MetaDataStore.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
@@ -72,27 +74,28 @@ public class GatewayFlumeCollectorTest {
     // Create and populate a new config object
 
     myConfiguration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
-    myConfiguration.set(Constants.CONFIG_CONNECTORS, name);
+    myConfiguration.set(Constants.CONFIG_CONNECTORS, NAME);
     myConfiguration.set(
-        Constants.buildConnectorPropertyName(name, Constants.CONFIG_CLASSNAME),
+        Constants.buildConnectorPropertyName(NAME, Constants.CONFIG_CLASSNAME),
         NettyFlumeCollector.class.getCanonicalName());
     myConfiguration.setInt(Constants.
-        buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+        buildConnectorPropertyName(NAME, Constants.CONFIG_PORT), port);
 
     // Now create our Gateway
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
+    theGateway.setMetaDataStore(metaDataStore);
     theGateway.setDiscoveryServiceClient(
-        injector.getInstance(DiscoveryServiceClient.class));
+      injector.getInstance(DiscoveryServiceClient.class));
 
     // Set up a basic consumer
     Consumer theConsumer = new PrintlnConsumer();
     theGateway.setConsumer(theConsumer);
 
     // make sure the destination stream is defined in the meta data
-    MetadataService mds = new MetadataService(this.executor);
-    Stream stream = new Stream(destination);
-    stream.setName(destination);
+    MetadataService mds = new MetadataService(metaDataStore);
+    Stream stream = new Stream(DESTINATION);
+    stream.setName(DESTINATION);
     mds.assertStream(new Account(TestUtil.DEFAULT_ACCOUNT_ID), stream);
   } // end of setupGateway
 
@@ -117,10 +120,10 @@ public class GatewayFlumeCollectorTest {
     // Set the mocked passport client for authentication
     // Authentication configuration
     myConfiguration.setBoolean(Constants.CONFIG_AUTHENTICATION_REQUIRED, true);
-    myConfiguration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
+    myConfiguration.set(Constants.CONFIG_CLUSTER_NAME, CLUSTER);
     Map<String, List<String>> keysAndClusters =
       new TreeMap<String, List<String>>();
-    keysAndClusters.put(apiKey, Arrays.asList(cluster));
+    keysAndClusters.put(API_KEY, Arrays.asList(CLUSTER));
     theGateway.setPassportClient(new MockedPassportClient(keysAndClusters));
     theGateway.setConsumer(consumer);
 
@@ -133,12 +136,12 @@ public class GatewayFlumeCollectorTest {
     }
 
     // Send some events
-    TestUtil.enableAuth(apiKey);
-    TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-    Assert.assertEquals(eventsToSend, consumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
+    TestUtil.enableAuth(API_KEY);
+    TestUtil.sendFlumeEvents(port, DESTINATION, EVENTS_TO_SEND, BATCH_SIZE);
+    Assert.assertEquals(EVENTS_TO_SEND, consumer.eventsReceived());
+    Assert.assertEquals(EVENTS_TO_SEND, consumer.eventsSucceeded());
     Assert.assertEquals(0, consumer.eventsFailed());
-    TestUtil.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
+    TestUtil.consumeQueueAsEvents(this.executor, DESTINATION, NAME, EVENTS_TO_SEND);
     TestUtil.disableAuth();
 
     // Stop the Gateway
@@ -170,12 +173,12 @@ public class GatewayFlumeCollectorTest {
     }
 
     // Send some events
-    TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-    Assert.assertEquals(eventsToSend, consumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
+    TestUtil.sendFlumeEvents(port, DESTINATION, EVENTS_TO_SEND, BATCH_SIZE);
+    Assert.assertEquals(EVENTS_TO_SEND, consumer.eventsReceived());
+    Assert.assertEquals(EVENTS_TO_SEND, consumer.eventsSucceeded());
     Assert.assertEquals(0, consumer.eventsFailed());
-    TestUtil.consumeQueueAsEvents(this.executor, destination, name,
-                                  eventsToSend);
+    TestUtil.consumeQueueAsEvents(this.executor, DESTINATION, NAME,
+                                  EVENTS_TO_SEND);
 
     // Stop the Gateway
     theGateway.stop(false);
