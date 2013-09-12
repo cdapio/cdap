@@ -34,7 +34,8 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
   /**
    * Constructor for a transaction executor.
    */
-  public DefaultTransactionExecutor(TransactionSystemClient txClient, TransactionAware... txAwares) {
+  @Inject
+  public DefaultTransactionExecutor(TransactionSystemClient txClient, @Assisted TransactionAware... txAwares) {
     this.txAwares = ImmutableList.copyOf(txAwares);
     this.txClient = txClient;
   }

@@ -14,6 +14,8 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -52,6 +54,7 @@ public abstract class QueueTest {
   protected static QueueClientFactory queueClientFactory;
   protected static QueueAdmin queueAdmin;
   protected static InMemoryTransactionManager transactionManager;
+  protected static TransactionExecutorFactory executorFactory;
 
   @AfterClass
   public static void shutdownTx() {
@@ -59,7 +62,6 @@ public abstract class QueueTest {
       transactionManager.close();
     }
   }
-
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
