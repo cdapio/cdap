@@ -590,8 +590,12 @@ public interface ApplicationSpecification {
       @Override
       public MoreWorkflow add(Workflow workflow) {
         Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
-        WorkflowSpecification spec = workflow.configure();
-        workflows.put(spec.getName(), new DefaultWorkflowSpecification(workflow.getClass().getName(), spec));
+        WorkflowSpecification spec = new DefaultWorkflowSpecification(workflow.getClass().getName(),
+                                                                      workflow.configure());
+        workflows.put(spec.getName(), spec);
+
+        // Add MapReduces from workflow into application
+        mapReduces.putAll(spec.getMapReduces());
         return this;
       }
     }
