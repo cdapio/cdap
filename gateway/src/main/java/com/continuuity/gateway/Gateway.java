@@ -51,12 +51,6 @@ public class Gateway implements Server {
   private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
 
   /**
-   * New Gateway.
-   */
-  @Inject
-  com.continuuity.gateway.v2.Gateway gatewayV2;
-
-  /**
    * This is the consumer that all collectors will use.
    * Gateway can not function without a valid Consumer.
    */
@@ -183,13 +177,6 @@ public class Gateway implements Server {
   public void start(String[] args, CConfiguration conf) throws
     ServerException {
 
-    // Start gateway v2
-    if (gatewayV2 != null) {
-      gatewayV2.startAndWait();
-    } else {
-      LOG.warn("Gateway v2 is null, not starting it.");
-    }
-
     // Configure ourselves first
     configure(conf);
 
@@ -266,10 +253,6 @@ public class Gateway implements Server {
   public void stop(boolean now) throws ServerException {
 
     LOG.info("Gateway Shutting down");
-
-    if (gatewayV2 != null) {
-      gatewayV2.stopAndWait();
-    }
 
     // Stop all our connectors
     for (Connector connector : this.connectorList) {
