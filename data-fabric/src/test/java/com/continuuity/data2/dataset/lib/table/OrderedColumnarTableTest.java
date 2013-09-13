@@ -738,11 +738,23 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     DataSetManager manager = getTableManager();
     manager.create("myTable");
     try {
+      // write and commit one row/column
+      Transaction tx0 = txClient.startShort();
+      OrderedColumnarTable myTable0 = getTable("myTable");
+      ((TransactionAware) myTable0).startTx(tx0);
+      myTable0.put(R2, a(C2), a(V2));
+      Assert.assertTrue(txClient.canCommit(tx0, ((TransactionAware) myTable0).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable0).commitTx());
+      Assert.assertTrue(txClient.commit(tx0));
+      ((TransactionAware) myTable0).postTxCommit();
+
       Transaction tx1 = txClient.startShort();
       OrderedColumnarTable myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
       myTable1.put(R1, a(C1), a(V1));
+      // also overwrite the value from tx0
+      myTable1.put(R2, a(C2), a(V3));
       // verify can see changes inside tx
       verify(a(C1, V1), myTable1.get(R1, a(C1)));
 
@@ -763,6 +775,8 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
       // verify don't see rolled back changes
       verify(a(), myTable2.get(R1, a(C1)));
+      // verify we still see the previous value
+      verify(a(C2, V2), myTable2.get(R2, a(C2)));
 
     } finally {
       manager.drop("myTable");
@@ -779,6 +793,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(actual.isEmpty());
       return;
     }
+    Assert.assertFalse("result is empty, but expected " + expected.length / 2 + " columns", actual.isEmpty());
     verify(expected, actual.getValue());
   }
 
