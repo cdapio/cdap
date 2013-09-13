@@ -6,7 +6,7 @@ import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -117,7 +117,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
 
     // bind meta data store
-    bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
+    bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
     if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {

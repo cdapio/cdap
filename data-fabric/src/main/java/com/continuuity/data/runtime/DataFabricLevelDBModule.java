@@ -10,7 +10,7 @@ import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -102,7 +102,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
     // bind meta data store
-    bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
+    bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
     bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());

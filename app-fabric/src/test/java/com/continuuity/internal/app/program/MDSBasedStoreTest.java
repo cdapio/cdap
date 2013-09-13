@@ -27,7 +27,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
@@ -82,7 +82,7 @@ public class MDSBasedStoreTest {
           protected void configure() {
             bind(OperationExecutor.class).to(NoOperationExecutor.class);
             bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-            bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
+            bind(MetaDataStore.class).to(Serializing2MetaDataStore.class);
             bind(LocationFactory.class).to(LocalLocationFactory.class);
           }
         }
