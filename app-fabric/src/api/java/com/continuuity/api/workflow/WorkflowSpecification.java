@@ -109,10 +109,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       MapReduceSpecification mapReduceSpec = new DefaultMapReduceSpecification(mapReduce);
 
       // Rename the map reduce based on the step in the workflow.
-      final String mapReduceName = String.format("%s_%s_%d", name, mapReduceSpec.getName(), actions.size());
-      Preconditions.checkArgument(!mapReduces.containsKey(mapReduceName),
-                                  "MapReduce %s already added for stage %s", mapReduceSpec.getName(), actions.size());
-
+      final String mapReduceName = String.format("%s_%s", name, mapReduceSpec.getName());
       mapReduceSpec = new ForwardingMapReduceSpecification(mapReduceSpec) {
         @Override
         public String getName() {
