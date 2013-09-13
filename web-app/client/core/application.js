@@ -160,7 +160,6 @@ function(Components, Embeddables, HTTP, Socket, Util) {
 				 * Called when the socket is (re)connected.
 				 */
 				'connect': function (env) {
-
 					if (!C.initialized) {
 						C.setupEnvironment(env);
 					} else {
@@ -171,7 +170,6 @@ function(Components, Embeddables, HTTP, Socket, Util) {
 				 * Called when the socket experiences an error.
 				 */
 				'error': function (message, args) {
-
 					if (typeof message === "object") {
 						message = message.message;
 					}
