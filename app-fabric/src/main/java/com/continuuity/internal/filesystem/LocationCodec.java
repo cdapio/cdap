@@ -17,7 +17,7 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
 /**
- * Codec for {@link com.continuuity.weave.filesystem.Location}. We write {@link java.net.URI} for location.
+ * Codec for {@link Location}. We write {@link java.net.URI} for location.
  */
 public final class LocationCodec implements JsonSerializer<Location>, JsonDeserializer<Location> {
   private final LocationFactory lf;

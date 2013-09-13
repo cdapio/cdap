@@ -153,7 +153,7 @@ public class DeployRunStopTest {
     server = injector.getInstance(AppFabricService.Iface.class);
 
     // Create location factory.
-    lf = injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class);
+    lf = injector.getInstance(LocationFactory.class);
 
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);
