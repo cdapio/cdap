@@ -15,20 +15,10 @@ import com.continuuity.error.Err;
  * </ul>
  * </p>
  */
-public class DataSetVerification extends AbstractVerifier implements Verifier<DataSetSpecification> {
+public class DataSetVerification extends AbstractVerifier<DataSetSpecification> {
 
-  /**
-   * Verifies {@link DataSetSpecification} as defined within the {@link com.continuuity.api.Application}
-   *
-   * @param input to be verified
-   * @return An instance of {@link VerifyResult} depending of status of verification.
-   */
   @Override
-  public VerifyResult verify(final DataSetSpecification input) {
-    // Checks if DataSet name is an ID
-    if (!isId(input.getName())) {
-      return VerifyResult.failure(Err.NOT_AN_ID, "Dataset");
-    }
-    return VerifyResult.success();
+  protected String getName(DataSetSpecification input) {
+    return input.getName();
   }
 }
