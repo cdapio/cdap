@@ -15,7 +15,9 @@ import java.util.NavigableMap;
  * unit-test
  * @param <T> table type
  */
-public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClient> extends OrderedColumnarTableTest<T> {
+public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClient>
+  extends OrderedColumnarTableConcurrentTest<T> {
+
   @Test
   public void testRollingBackAfterExceptionDuringPersist() throws Exception {
     DataSetManager manager = getTableManager();
