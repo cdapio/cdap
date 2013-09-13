@@ -15,16 +15,22 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
+import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.app.runtime.schedule.Scheduler;
+import com.continuuity.internal.app.runtime.schedule.SimpleScheduleService;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.pipeline.PipelineFactory;
+import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
+import org.quartz.impl.StdSchedulerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -66,6 +72,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
       bind(StoreFactory.class).to(MDSStoreFactory.class);
+      bind(org.quartz.Scheduler.class).toInstance(getSchedulerInstance());
+      bind(SchedulerService.class).to(SimpleScheduleService.class).in(Scopes.SINGLETON);
+      bind(Scheduler.class).to(SchedulerService.class);
+
     }
 
     @Provides
@@ -73,6 +83,16 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     public InetAddress providesHostname(CConfiguration cConf) {
       return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
+    }
+
+    //TODO: Set up persistence.
+    private static org.quartz.Scheduler getSchedulerInstance() {
+      try {
+        return StdSchedulerFactory.getDefaultScheduler();
+      } catch (Throwable th){
+        throw Throwables.propagate(th);
+      }
+
     }
   }
 }
