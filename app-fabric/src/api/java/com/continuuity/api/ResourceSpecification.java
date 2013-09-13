@@ -1,7 +1,7 @@
 package com.continuuity.api;
 
 
-import com.continuuity.internal.DefaultResourceSpecification;
+import com.continuuity.weave.internal.DefaultResourceSpecification;
 
 /**
  * This interface provides specifications for resource requirements, which currently include
@@ -66,7 +66,7 @@ public interface ResourceSpecification {
     }
 
     public ResourceSpecification build() {
-      return new DefaultResourceSpecification(memoryMB, virtualCores);
+      return new Resources(memoryMB, virtualCores);
     }
 
     private Builder() {

@@ -3,7 +3,6 @@ package com.continuuity.internal.procedure;
 import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.DefaultResourceSpecification;
 import com.continuuity.internal.ProgramSpecificationHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

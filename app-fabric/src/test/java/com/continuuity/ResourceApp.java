@@ -6,6 +6,7 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.Resources;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -14,7 +15,6 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.DefaultResourceSpecification;
 
 /**
  * This is an Application used for only testing that sets various resources for different
@@ -47,7 +47,7 @@ public class ResourceApp implements Application {
       return ProcedureSpecification.Builder.with()
         .setName("dummy")
         .setDescription("dummy procedure")
-        .withResources(new DefaultResourceSpecification(128, 3))
+        .withResources(new Resources(128, 3))
         .build();
     }
   }
@@ -85,7 +85,7 @@ public class ResourceApp implements Application {
       return FlowletSpecification.Builder.with()
         .setName("A")
         .setDescription("A flowlet")
-        .withResources(new DefaultResourceSpecification(1024, 2))
+        .withResources(new Resources(1024, 2))
         .build();
     }
 
@@ -107,7 +107,7 @@ public class ResourceApp implements Application {
       return FlowletSpecification.Builder.with()
         .setName("B")
         .setDescription("B flowlet")
-        .withResources(new DefaultResourceSpecification(2048, 5))
+        .withResources(new Resources(2048, 5))
         .build();
     }
 

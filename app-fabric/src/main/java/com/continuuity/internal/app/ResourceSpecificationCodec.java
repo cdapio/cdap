@@ -1,7 +1,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.ResourceSpecification;
-import com.continuuity.internal.DefaultResourceSpecification;
+import com.continuuity.api.Resources;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -37,6 +37,6 @@ final class ResourceSpecificationCodec implements JsonSerializer<ResourceSpecifi
     int cores = jsonObj.get("virtualCores").getAsInt();
     int memorySize = jsonObj.get("memoryMB").getAsInt();
 
-    return new DefaultResourceSpecification(memorySize, cores);
+    return new Resources(memorySize, cores);
   }
 }
