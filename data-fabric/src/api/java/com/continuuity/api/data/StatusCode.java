@@ -15,6 +15,8 @@ public class StatusCode {
 
   public static final int TRANSACTION_CONFLICT = 503;
 
+  public static final int ENTRY_DOES_NOT_MATCH = 504;
+
   public static final int KEY_NOT_FOUND = 404;
 
   public static final int COLUMN_NOT_FOUND = 405;

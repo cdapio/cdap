@@ -3,7 +3,6 @@ package com.continuuity.data2.transaction;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
@@ -35,20 +34,19 @@ public class TransactionExecutorTest {
       }));
 
   static final DummyTxClient TX_CLIENT = (DummyTxClient) INJECTOR.getInstance(TransactionSystemClient.class);
-  static final TransactionExecutorFactory factory = INJECTOR.getInstance(TransactionExecutorFactory.class);
+  static final TransactionExecutorFactory FACTORY = INJECTOR.getInstance(TransactionExecutorFactory.class);
 
   final DummyTxAware ds1 = new DummyTxAware(), ds2 = new DummyTxAware();
   final Collection<TransactionAware> txAwares = ImmutableList.<TransactionAware>of(ds1, ds2);
 
   private DefaultTransactionExecutor getExecutor() {
-    return factory.createExecutor(txAwares);
+    return FACTORY.createExecutor(txAwares);
   }
 
   static final byte[] A = { 'a' };
   static final byte[] B = { 'b' };
 
-  final Function<Integer, Integer> testFunction = new Function<Integer, Integer>() {
-    @Nullable
+  final TransactionExecutor.Function<Integer, Integer> testFunction = new TransactionExecutor.Function<Integer, Integer>() {
     @Override
     public Integer apply(@Nullable Integer input) {
       ds1.addChange(A);
