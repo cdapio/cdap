@@ -5,19 +5,15 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.runtime.DaemonMain;
-import com.continuuity.common.utils.Copyright;
-import com.continuuity.common.utils.UsageException;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
-import com.continuuity.weave.api.WeaveRunnable;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.filesystem.LocationFactories;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -29,14 +25,13 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Iterator;
 
 /**
  * Generic wrapper class to run weave applications.
  */
-public class WeaveRunnerMain extends DaemonMain {
+public abstract class WeaveRunnerMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(WeaveRunnerMain.class);
 
   private WeaveRunnerService weaveRunnerService;
@@ -45,31 +40,24 @@ public class WeaveRunnerMain extends DaemonMain {
   private String yarnUser;
 
   private String serviceName;
-  private Class<?> clazz;
+  private WeaveApplication weaveApplication;
 
-  public static void main(String[] args) throws Exception {
-    new WeaveRunnerMain().doMain(args);
-  }
+  protected abstract WeaveApplication createWeaveApplication();
+  protected abstract CConfiguration getConfiguration();
 
   @Override
   public void init(String[] args) {
-    if (args.length != 1) {
-      throw usage();
+    CConfiguration cConf = getConfiguration();
+    if (cConf == null) {
+      throw new IllegalArgumentException("CConfiguration cannot be null");
     }
 
-    serviceName = args[0];
-
-    try {
-      clazz = Class.forName(serviceName);
-    } catch (ClassNotFoundException e) {
-      throw usage();
+    weaveApplication = createWeaveApplication();
+    if (weaveApplication == null) {
+      throw new IllegalArgumentException("WeaveApplication cannot be null");
     }
 
-    if (!(WeaveApplication.class.isAssignableFrom(clazz) || WeaveRunnable.class.isAssignableFrom(clazz))) {
-      throw usage();
-    }
-
-    CConfiguration cConf = CConfiguration.create();
+    serviceName = weaveApplication.configure().getName();
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -149,44 +137,8 @@ public class WeaveRunnerMain extends DaemonMain {
     }
   }
 
-  private RuntimeException usage() {
-    PrintStream out = System.err;
-    String name = "weave-runner";
-    if (System.getProperty("script") != null) {
-      name = System.getProperty("script").replaceAll("[./]", "");
-    }
-    Copyright.print(out);
-    out.println("Usage: ");
-    out.println("  " + name + " <class-name>");
-    out.println("  where:");
-    out.println("    class-name is WeaveApplication or WeaveRunnable (fully qualified name).");
-
-    return new UsageException();
-  }
-
   private WeavePreparer getPreparer() {
-    try {
-      if (clazz.isAssignableFrom(WeaveApplication.class)) {
-        WeaveApplication weaveApplication = (WeaveApplication) clazz.newInstance();
-        return prepareApplication(weaveApplication);
-      } else {
-        WeaveRunnable weaveRunnable = (WeaveRunnable) clazz.newInstance();
-        return prepareRunnable(weaveRunnable);
-      }
-    } catch (Exception e) {
-      LOG.error("Error instantiating class {}", serviceName, e);
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private WeavePreparer prepareRunnable(WeaveRunnable runnable) {
-    return weaveRunnerService.prepare(runnable)
-      .setUser(yarnUser)
-      .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
-  }
-
-  private WeavePreparer prepareApplication(WeaveApplication application) {
-    return weaveRunnerService.prepare(application)
+    return weaveRunnerService.prepare(weaveApplication)
       .setUser(yarnUser)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
   }
