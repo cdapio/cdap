@@ -24,6 +24,8 @@ public class AppWithMapReduce implements Application {
       .noStream()
       .withDataSets()
         .add(new KeyValueTable("jobConfig"))
+        .add(new KeyValueTable("beforeSubmit"))
+        .add(new KeyValueTable("onFinish"))
         .add(new SimpleTimeseriesTable("timeSeries"))
         .add(new Table("counters"))
       .noFlow()
@@ -64,6 +66,10 @@ public class AppWithMapReduce implements Application {
    *
    */
   public static final class AggregateTimeseriesByTag implements MapReduce {
+    @UseDataSet("beforeSubmit")
+    private KeyValueTable beforeSubmitTable;
+    @UseDataSet("onFinish")
+    private KeyValueTable onFinishTable;
     @UseDataSet("timeSeries")
     private SimpleTimeseriesTable table;
 
@@ -86,11 +92,13 @@ public class AppWithMapReduce implements Application {
       Long stopTs = Long.valueOf(context.getRuntimeArguments().get("stopTs"));
       String tag = context.getRuntimeArguments().get("tag");
       context.setInput(table, table.getInput(2, Bytes.toBytes(metricName), startTs, stopTs, Bytes.toBytes(tag)));
+      beforeSubmitTable.write(Bytes.toBytes("beforeSubmit"), Bytes.toBytes("beforeSubmit:done"));
     }
 
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
       System.out.println("Action taken on MapReduce job " + (succeeded ? "" : "un") + "successful completion");
+      onFinishTable.write(Bytes.toBytes("onFinish"), Bytes.toBytes("onFinish:done"));
     }
   }
 }

@@ -26,8 +26,17 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
 
   // the data fabric (an operation executor and an operation context
   private DataFabric fabric;
-  // the transaction proxy
-  private TransactionProxy transactionProxy;
+
+  /**
+   * Constructor from data fabric.
+   * @param fabric the data fabric
+   * @param classLoader the class loader to use for loading data set classes.
+   *                    If null, then the default class loader is used
+   */
+  public DataSetInstantiator(DataFabric fabric,
+                             ClassLoader classLoader) {
+    this(fabric, null, classLoader);
+  }
 
   /**
    * Constructor from data fabric and transaction proxy.
@@ -41,7 +50,6 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
                              ClassLoader classLoader) {
     super(classLoader);
     this.fabric = fabric;
-    this.transactionProxy = transactionProxy;
   }
 
   /**
@@ -53,6 +61,6 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
   public
   <T extends DataSet> T getDataSet(String dataSetName)
     throws DataSetInstantiationException {
-    return super.getDataSet(dataSetName, this.fabric, this.transactionProxy);
+    return super.getDataSet(dataSetName, this.fabric);
   }
 }

@@ -18,15 +18,13 @@ import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SmartTransactionAgent;
-import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
@@ -38,6 +36,7 @@ import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.ApplicationBundler;
 import com.continuuity.weave.internal.RunIds;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -67,31 +66,30 @@ import java.util.concurrent.TimeUnit;
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
 
-  private final OperationExecutor opex;
-
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DataSetAccessor dataSetAccessor;
   private final TransactionSystemClient txSystemClient;
+  private final TransactionExecutorFactory txExecutorFactory;
 
   private Job jobConf;
   private MapReduceProgramController controller;
-  private TransactionAgent txAgent;
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
-                                OperationExecutor opex, LocationFactory locationFactory,
+                                LocationFactory locationFactory,
                                 DataSetAccessor dataSetAccessor, TransactionSystemClient txSystemClient,
-                                MetricsCollectionService metricsCollectionService) {
+                                MetricsCollectionService metricsCollectionService,
+                                TransactionExecutorFactory txExecutorFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.opex = opex;
     this.locationFactory = locationFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.dataSetAccessor = dataSetAccessor;
     this.txSystemClient = txSystemClient;
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   @Inject (optional = true)
@@ -114,100 +112,63 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    OperationContext opexContext = new OperationContext(program.getAccountId(), program.getApplicationId());
-    TransactionProxy transactionProxy = new TransactionProxy();
+    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, program.getClassLoader());
+    dataSetInstantiator.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
+    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, spec.getDataSets());
 
-    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, opexContext);
-    DataSetInstantiator dataSetContext =
-      new DataSetInstantiator(dataFabric, transactionProxy, program.getClassLoader());
-    dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
-
-    // creating dataset instances earlier so that we can pass them to txAgent
-    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetContext, spec.getDataSets());
-
-    // Starting long-running transaction that we will also use in mapreduce tasks
-    com.continuuity.data.operation.executor.Transaction tx;
-    try {
-      tx = opex.startTransaction(opexContext, false);
-      txAgent = new SmartTransactionAgent(opex,
-                                          opexContext,
-                                          dataSetContext.getTransactionAware(),
-                                          txSystemClient,
-                                          tx);
-      // long-running transaction does not time out
-      txAgent.startLong();
-    } catch (OperationException e) {
-      LOG.error("Failed to start transaction for mapreduce job: " + program.getName());
-      throw Throwables.propagate(e);
-    }
-
-    transactionProxy.setTransactionAgent(txAgent);
+    RunId runId = RunIds.generate();
+    final BasicMapReduceContext context =
+      new BasicMapReduceContext(program, runId, options.getUserArguments(),
+                                dataSets, spec,
+                                dataSetInstantiator.getTransactionAware(),
+                                metricsCollectionService);
 
     try {
-      RunId runId = RunIds.generate();
-      final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, runId, options.getUserArguments(), txAgent,
-                                  dataSets, spec,
-                                  metricsCollectionService);
+      MapReduce job = (MapReduce) program.getMainClass().newInstance();
+      context.injectFields(job);
 
-      try {
-        MapReduce job = (MapReduce) program.getMainClass().newInstance();
-        context.injectFields(job);
+      // note: this sets logging context on the thread level
+      LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-        // note: this sets logging context on the thread level
-        LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+      controller = new MapReduceProgramController(context);
 
-        controller = new MapReduceProgramController(context);
-
-        LOG.info("Starting MapReduce job: " + context.toString());
-        submit(job, program.getJarLocation(), context, tx, txAgent.getCurrentTx());
-
-      } catch (Throwable e) {
-        // failed before job even started - release all resources of the context
-        context.close();
-        throw Throwables.propagate(e);
-      }
-
-      // adding listener which stops mapreduce job when controller stops.
-      controller.addListener(new AbstractListener() {
-        @Override
-        public void stopping() {
-          LOG.info("Stopping mapreduce job: " + context);
-          try {
-            if (!jobConf.isComplete()) {
-              jobConf.killJob();
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-          LOG.info("Mapreduce job stopped: " + context);
-        }
-      }, MoreExecutors.sameThreadExecutor());
-
-      return controller;
+      LOG.info("Starting MapReduce job: " + context.toString());
+      submit(job, program.getJarLocation(), context, dataSetInstantiator);
 
     } catch (Throwable e) {
-      try {
-        transactionProxy.getTransactionAgent().abort();
-      } catch (OperationException ex) {
-        throw Throwables.propagate(ex);
-      }
-      LOG.error("Failed to run mapreduce job: " + program.getName(), e);
+      // failed before job even started - release all resources of the context
+      context.close();
       throw Throwables.propagate(e);
     }
+
+    // adding listener which stops mapreduce job when controller stops.
+    controller.addListener(new AbstractListener() {
+      @Override
+      public void stopping() {
+        LOG.info("Stopping mapreduce job: " + context);
+        try {
+          if (!jobConf.isComplete()) {
+            jobConf.killJob();
+          }
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+        LOG.info("Mapreduce job stopped: " + context);
+      }
+    }, MoreExecutors.sameThreadExecutor());
+
+    return controller;
   }
 
-  private void submit(final MapReduce job, Location jobJarLocation, final BasicMapReduceContext context,
-                      com.continuuity.data.operation.executor.Transaction tx, Transaction tx2)
-    throws Exception {
+  private void submit(final MapReduce job, Location jobJarLocation,
+                      final BasicMapReduceContext context,
+                      final DataSetInstantiator dataSetInstantiator) throws Exception {
     jobConf = Job.getInstance(hConf);
     context.setJob(jobConf);
-    // additional mapreduce job initialization at run-time
-    job.beforeSubmit(context);
 
-    // we do flush to make operations executed in beforeSubmit() visible in mapreduce tasks (which may run in a
-    // different JVM)
-    context.flushOperations();
+    // additional mapreduce job initialization at run-time
+    beforeSubmit(job, context, dataSetInstantiator);
 
     // replace user's Mapper & Reducer's with our wrappers in job config
     wrapMapperClassIfNeeded(jobConf);
@@ -232,8 +193,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
-    // apart from everything we also remember tx, so that we can re-use it in mapreduce tasks
-    contextProvider.set(context, cConf, tx, tx2, programJarCopy.getName());
+    // We start long-running tx to be used by mapreduce job tasks.
+    final Transaction tx = txSystemClient.startLong();
+    // We remember tx, so that we can re-use it in mapreduce tasks
+    contextProvider.set(context, cConf, tx, programJarCopy.getName());
 
     new Thread() {
       @Override
@@ -268,13 +231,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
             throw Throwables.propagate(e);
           }
 
-          job.onFinish(success, context);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         } finally {
           // stopping controller when mapreduce job is finished
-          // (also that should finish transaction, but that might change after integration with "long running txs")
-          stopController(context, success);
+          stopController(success, context, job, tx, dataSetInstantiator);
           try {
             jobJar.delete();
           } catch (IOException e) {
@@ -290,6 +251,47 @@ public class MapReduceProgramRunner implements ProgramRunner {
         }
       }
     }.start();
+  }
+
+  private void beforeSubmit(final MapReduce job,
+                            final BasicMapReduceContext context,
+                            final DataSetInstantiator dataSetInstantiator)
+    throws TransactionFailureException {
+    DefaultTransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
+    txExecutor.execute(new Function() {
+      @Nullable
+      @Override
+      public Object apply(@Nullable Object input) {
+        try {
+          job.beforeSubmit(context);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+        return null;
+      }
+    }, null);
+  }
+
+  private void onFinish(final MapReduce job,
+                        final BasicMapReduceContext context,
+                        final DataSetInstantiator dataSetInstantiator,
+                        final boolean succeeded)
+    throws TransactionFailureException {
+    DefaultTransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
+    txExecutor.execute(new Function() {
+      @Nullable
+      @Override
+      public Object apply(@Nullable Object input) {
+        try {
+          job.onFinish(succeeded, context);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+        return null;
+      }
+    }, null);
   }
 
   private void reportStats(BasicMapReduceContext context) throws IOException, InterruptedException {
@@ -359,7 +361,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
   }
 
-  private void stopController(BasicMapReduceContext context, boolean success) {
+  private void stopController(boolean success,
+                              BasicMapReduceContext context,
+                              MapReduce job,
+                              Transaction tx,
+                              DataSetInstantiator dataSetInstantiator) {
     try {
       try {
         controller.stop().get();
@@ -368,12 +374,19 @@ public class MapReduceProgramRunner implements ProgramRunner {
         // we ignore the exception because we don't really care about the controller, but we must end the transaction!
       }
       try {
-        if (success) {
-          txAgent.finish();
-        } else {
-          txAgent.abort();
+        try {
+          if (success) {
+            // aborting long running tx: no need to do rollbacks, etc.
+            txSystemClient.commit(tx);
+          } else {
+            // committing long running tx: no need to commit datasets, as they were committed in external processes
+            txSystemClient.abort(tx);
+          }
+        } finally {
+          // whatever happens we want to call this
+          onFinish(job, context, dataSetInstantiator, success);
         }
-      } catch (OperationException e) {
+      } catch (Exception e) {
         throw Throwables.propagate(e);
       }
     } finally {

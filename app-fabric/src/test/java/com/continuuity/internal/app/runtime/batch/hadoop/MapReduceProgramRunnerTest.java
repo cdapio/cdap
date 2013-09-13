@@ -9,6 +9,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -17,6 +18,9 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -26,14 +30,19 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -50,17 +59,33 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapReduceProgramRunnerTest {
   private static Injector injector;
-  static {
+  private static TransactionExecutorFactory txExecutorFactory;
+
+  private DataSetInstantiator dataSetInstantiator;
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  @BeforeClass
+  public static void beforeClass() {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
     conf.setInt(InMemoryTransactionManager.CFG_TX_TIMEOUT, 1);
     conf.setInt(InMemoryTransactionManager.CFG_TX_CLEANUP_INTERVAL, 2);
     injector = TestHelper.getInjector(conf);
+    txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  @Before
+  public void before() {
+    injector.getInstance(InMemoryTransactionManager.class).init();
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
+    dataSetInstantiator =
+      new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
+                              getClass().getClassLoader());
+  }
 
   @Test
   public void testWordCount() throws Exception {
@@ -93,8 +118,8 @@ public class MapReduceProgramRunnerTest {
 
     txAgent.start();
 
-    jobConfigTable.write(tb("inputPath"), tb(inputPath));
-    jobConfigTable.write(tb("outputPath"), tb(outputDir.getPath()));
+    jobConfigTable.write(Bytes.toBytes("inputPath"), Bytes.toBytes(inputPath));
+    jobConfigTable.write(Bytes.toBytes("outputPath"), Bytes.toBytes(outputDir.getPath()));
 
     txAgent.finish();
 
@@ -119,83 +144,143 @@ public class MapReduceProgramRunnerTest {
   }
 
   @Test
-  public void testTimeSeriesRecordsCount() throws Exception {
+  public void testJobSuccess() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
-
-    injector.getInstance(InMemoryTransactionManager.class).init();
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
-
-    TransactionProxy proxy = new TransactionProxy();
-    DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, dataSetAccessor, opCtx),
-                              proxy,
-                              getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
 
-    TransactionAgent txAgent = new SynchronousTransactionAgent(opex, opCtx,
-                                                               dataSetInstantiator.getTransactionAware(),
-                                                               txSystemClient);
-    proxy.setTransactionAgent(txAgent);
+    // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
+    final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
+    final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
+    final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
 
-    TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
+    // 1) fill test data
+    fillTestInputData(txExecutorFactory, dataSetInstantiator, table, false);
 
-    txAgent.start();
-    fillTestInputData(table);
-    txAgent.finish();
-
-    Thread.sleep(2);
-
-    long start = System.currentTimeMillis();
+    // 2) run job
+    final long start = System.currentTimeMillis();
     runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class);
-    long stop = System.currentTimeMillis();
+    final long stop = System.currentTimeMillis();
 
-    Map<String, Long> expected = Maps.newHashMap();
-    // note: not all records add to the sum since filter by tag="tag1" and ts={1..3} is used
-    expected.put("tag1", 18L);
-    expected.put("tag2", 3L);
-    expected.put("tag3", 18L);
+    // 3) verify results
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(new Function<Object, Object>() {
+      @Nullable
+      @Override
+      public Object apply(@Nullable Object input) {
+        try {
+          Map<String, Long> expected = Maps.newHashMap();
+          // note: not all records add to the sum since filter by tag="tag1" and ts={1..3} is used
+          expected.put("tag1", 18L);
+          expected.put("tag2", 3L);
+          expected.put("tag3", 18L);
 
-    table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
-    txAgent.start();
+          List<TimeseriesTable.Entry> agg = null;
+          agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
+          Assert.assertEquals(expected.size(), agg.size());
+          for (TimeseriesTable.Entry entry : agg) {
+            String tag = Bytes.toString(entry.getTags()[0]);
+            Assert.assertEquals((long) expected.get(tag), Bytes.toLong(entry.getValue()));
+          }
 
-    List<TimeseriesTable.Entry> agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
-    Assert.assertEquals(expected.size(), agg.size());
-    for (TimeseriesTable.Entry entry : agg) {
-      String tag = Bytes.toString(entry.getTags()[0]);
-      Assert.assertEquals((long) expected.get(tag), Bytes.toLong(entry.getValue()));
-    }
+          Assert.assertArrayEquals(Bytes.toBytes("beforeSubmit:done"),
+                                   beforeSubmitTable.read(Bytes.toBytes("beforeSubmit")));
+          Assert.assertArrayEquals(Bytes.toBytes("onFinish:done"),
+                                   onFinishTable.read(Bytes.toBytes("onFinish")));
 
-    txAgent.finish();
+          return null;
+        } catch (OperationException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    }, null);
   }
 
-  private void fillTestInputData(TimeseriesTable table) throws OperationException {
+  // TODO: this tests failure in Map tasks. We also need to test: failure in Reduce task, kill of a job by user.
+  @Test
+  public void testJobFailure() throws Exception {
+    // We want to verify that when mapreduce job fails:
+    // * things written in beforeSubmit() remains and visible to others
+    // * things written in tasks not visible to others TODO AAA: do invalidate
+    // * things written in onfinish() remains and visible to others
+
+    // NOTE: the code of this test is similar to testTimeSeriesRecordsCount() test. We put some "bad data" intentionally
+    //       here to be recognized by map tasks as a message to emulate failure
+
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
+    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
+
+    // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
+    final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
+    final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
+    final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
+
+    // 1) fill test data
+    fillTestInputData(txExecutorFactory, dataSetInstantiator, table, true);
+
+    // 2) run job
+    final long start = System.currentTimeMillis();
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class);
+    final long stop = System.currentTimeMillis();
+
+    // 3) verify results
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(new Function<Object, Object>() {
+      @Nullable
+      @Override
+      public Object apply(@Nullable Object input) {
+        try {
+          // data should be rolled back todo: test that partially written is rolled back too
+          Assert.assertTrue(table.read(AggregateMetricsByTag.BY_TAGS, start, stop).isEmpty());
+
+          // but written beforeSubmit and onFinish is available to others
+          Assert.assertArrayEquals(Bytes.toBytes("beforeSubmit:done"),
+                                   beforeSubmitTable.read(Bytes.toBytes("beforeSubmit")));
+          Assert.assertArrayEquals(Bytes.toBytes("onFinish:done"),
+                                   onFinishTable.read(Bytes.toBytes("onFinish")));
+
+          return null;
+        } catch (OperationException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    }, null);
+  }
+
+  private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
+                                 DataSetInstantiator dataSetInstantiator,
+                                 final TimeseriesTable table,
+                                 final boolean withBadData) throws TransactionFailureException {
+    DefaultTransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    executor.execute(new Function<Object, Object>() {
+      @Nullable
+      @Override
+      public Object apply(@Nullable Object ignored) {
+        try {
+          fillTestInputData(table, withBadData);
+        } catch (OperationException e) {
+          throw Throwables.propagate(e);
+        }
+        return null;
+      }
+    }, null);
+  }
+
+  private void fillTestInputData(TimeseriesTable table, boolean withBadData) throws OperationException {
     byte[] metric1 = Bytes.toBytes("metric");
     byte[] metric2 = Bytes.toBytes("metric2");
     byte[] tag1 = Bytes.toBytes("tag1");
     byte[] tag2 = Bytes.toBytes("tag2");
     byte[] tag3 = Bytes.toBytes("tag3");
     // m1e1 = metric: 1, entity: 1
-    SimpleTimeseriesTable.Entry m1e1 =
-      new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(3L), 1, tag3, tag2, tag1);
-    table.write(m1e1);
-    SimpleTimeseriesTable.Entry m1e2 =
-      new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(10L), 2, tag2, tag3);
-    table.write(m1e2);
-    SimpleTimeseriesTable.Entry m1e3 =
-      new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(15L), 3, tag1, tag3);
-    table.write(m1e3);
-    SimpleTimeseriesTable.Entry m1e4 =
-      new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(23L), 4, tag2);
-    table.write(m1e4);
+    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(3L), 1, tag3, tag2, tag1));
+    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(10L), 2, tag2, tag3));
+    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(15L), 3, tag1, tag3));
+    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(23L), 4, tag2));
 
-    SimpleTimeseriesTable.Entry m2e1 =
-      new SimpleTimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3);
-    table.write(m2e1);
+    if (withBadData) {
+      // this data will make job fail
+      table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(55L), 5, tag1));
+    }
+
+    table.write(new SimpleTimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
   }
 
   private void runProgram(ApplicationWithPrograms app, Class<?> programClass) throws Exception {
@@ -230,10 +315,6 @@ public class MapReduceProgramRunnerTest {
       }
     }
     return null;
-  }
-
-  private byte[] tb(String val) {
-    return Bytes.toBytes(val);
   }
 
   private String createInput() throws IOException {

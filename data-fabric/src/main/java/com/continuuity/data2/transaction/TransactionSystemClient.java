@@ -12,6 +12,7 @@ public interface TransactionSystemClient {
    * Starts new short transaction.
    * @return instance of {@link Transaction}
    */
+  // TODO: "short" and "long" are very misleading names. Use transaction attributes like "detect conflicts or not", etc.
   Transaction startShort();
 
   /**
@@ -31,6 +32,8 @@ public interface TransactionSystemClient {
   // NOTE: the changes set should not change after this operation, this may help us do some extra optimizations
   // NOTE: there should be time constraint on how long does it take to commit changes by the client after this operation
   //       is submitted so that we can cleanup related resources
+  // NOTE: as of now you can call this method multiple times, each time the changeSet of tx will be updated. Not sure
+  //       if we can call it a feature or a side-affect of implementation.
 
   /**
    * Checks if transaction with the set of changes can be committed. E.g. it can check conflicts with other changes and

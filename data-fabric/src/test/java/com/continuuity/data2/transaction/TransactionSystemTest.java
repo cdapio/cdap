@@ -1,16 +1,22 @@
 package com.continuuity.data2.transaction;
 
 import com.continuuity.api.common.Bytes;
-import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  *
  */
 public abstract class TransactionSystemTest {
+
+  public static final byte[] C1 = Bytes.toBytes("change1");
+  public static final byte[] C2 = Bytes.toBytes("change2");
+  public static final byte[] C3 = Bytes.toBytes("change3");
+  public static final byte[] C4 = Bytes.toBytes("change4");
+
   protected abstract TransactionSystemClient getClient();
 
   @Test
@@ -21,14 +27,107 @@ public abstract class TransactionSystemTest {
     Transaction tx1 = client1.startShort();
     Transaction tx2 = client2.startShort();
 
-    List<byte[]> changeSet = Lists.newArrayList(Bytes.toBytes("one"), Bytes.toBytes("two"));
-    Assert.assertTrue(client1.canCommit(tx1, changeSet));
+    Assert.assertTrue(client1.canCommit(tx1, $(C1, C2)));
     // second one also can commit even thought there are conflicts with first since first one hasn't committed yet
-    Assert.assertTrue(client2.canCommit(tx2, changeSet));
+    Assert.assertTrue(client2.canCommit(tx2, $(C2, C3)));
 
     Assert.assertTrue(client1.commit(tx1));
 
     // now second one should not commit, since there are conflicts with tx1 that has been committed
     Assert.assertFalse(client2.commit(tx2));
+  }
+
+  // NOTE: this behavior is not set in stone, we do not call canCommit twice anywhere. Can be changed in future
+  @Test
+  public void testCanCommitTwice() {
+    TransactionSystemClient client = getClient();
+    Transaction tx1 = client.startShort();
+    Transaction tx2 = client.startShort();
+    Transaction tx3 = client.startShort();
+
+    // this can be called twice, every time change set will be updated
+    Assert.assertTrue(client.canCommit(tx1, $(C1, C2)));
+    Assert.assertTrue(client.canCommit(tx1, $(C2, C3)));
+    Assert.assertTrue(client.commit(tx1));
+
+    // changes of tx1 were updated, so no conflicts with C1 or C4
+    Assert.assertTrue(client.canCommit(tx2, $(C1, C4)));
+
+    // changes of tx1 were updated, so no conflicts with C1 or C4
+    Assert.assertFalse(client.canCommit(tx3, $(C3)));
+  }
+
+  @Test
+  public void testCommitTwice() {
+    TransactionSystemClient client = getClient();
+    Transaction tx = client.startShort();
+
+    Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
+    Assert.assertTrue(client.commit(tx));
+    // cannot commit twice same tx
+    Assert.assertFalse(client.commit(tx));
+  }
+
+  @Test
+  public void testAbortTwice() {
+    TransactionSystemClient client = getClient();
+    Transaction tx = client.startShort();
+
+    Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
+    client.abort(tx);
+    // abort of not active tx has no affect
+    client.abort(tx);
+  }
+
+  @Test
+  public void testReuseTx() {
+    TransactionSystemClient client = getClient();
+    Transaction tx = client.startShort();
+
+    Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
+    Assert.assertTrue(client.commit(tx));
+    // can't re-use same tx again
+    Assert.assertFalse(client.canCommit(tx, $(C3, C4)));
+    Assert.assertFalse(client.commit(tx));
+    // abort of not active tx has no affect
+    client.abort(tx);
+  }
+
+  @Test
+  public void testUseNotStarted() {
+    TransactionSystemClient client = getClient();
+    Transaction tx1 = client.startShort();
+    Assert.assertTrue(client.commit(tx1));
+
+    // we know this is one is older than current writePointer and was not used
+    Transaction txOld = new Transaction(tx1.getReadPointer(), tx1.getWritePointer() - 1,
+                                        new long[] {}, new long[] {}, Transaction.NO_TX_IN_PROGRESS);
+    Assert.assertFalse(client.canCommit(txOld, $(C3, C4)));
+    Assert.assertFalse(client.commit(txOld));
+    // abort of not active tx has no affect
+    client.abort(txOld);
+
+    // we know this is one is newer than current readPointer and was not used
+    Transaction txNew = new Transaction(tx1.getReadPointer(), tx1.getWritePointer() + 1,
+                                        new long[] {}, new long[] {}, Transaction.NO_TX_IN_PROGRESS);
+    Assert.assertFalse(client.canCommit(txNew, $(C3, C4)));
+    Assert.assertFalse(client.commit(txNew));
+    // abort of not active tx has no affect
+    client.abort(txNew);
+  }
+
+  @Test
+  public void testAbortAfterCommit() {
+    TransactionSystemClient client = getClient();
+    Transaction tx = client.startShort();
+
+    Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
+    Assert.assertTrue(client.commit(tx));
+    // abort of not active tx has no affect
+    client.abort(tx);
+  }
+
+  private Collection<byte[]> $(byte[]... val) {
+    return Arrays.asList(val);
   }
 }
