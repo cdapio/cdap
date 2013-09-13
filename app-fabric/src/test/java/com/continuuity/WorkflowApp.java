@@ -70,7 +70,7 @@ public class WorkflowApp implements Application {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      Map<String,String> args = context.getRuntimeArguments();
+      Map<String, String> args = context.getRuntimeArguments();
       String inputPath = args.get("inputPath");
       String outputPath = args.get("outputPath");
       WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);

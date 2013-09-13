@@ -776,6 +776,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         public void onSuccess(ApplicationWithPrograms result) {
           save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
           sessions.remove(resource.getAccountId());
+         // result.getAppSpecLoc().getSpecification();
         }
 
         @Override
