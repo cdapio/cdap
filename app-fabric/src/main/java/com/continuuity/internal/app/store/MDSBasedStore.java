@@ -84,7 +84,7 @@ public class MDSBasedStore implements Store {
   public MDSBasedStore(CConfiguration configuration,
                        MetaDataStore metaDataStore,
                        MetadataService.Iface metaDataService,
-                       com.continuuity.weave.filesystem.LocationFactory locationFactory) {
+                       LocationFactory locationFactory) {
     this.metaDataStore = metaDataStore;
     this.metaDataService = metaDataService;
     this.metadataServiceHelper = new MetadataServiceHelper(metaDataService);

@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  * that is forwarded to the next stage of processing.
  * </p>
  */
-public class LocalArchiveLoaderStage extends AbstractStage<com.continuuity.weave.filesystem.Location> {
+public class LocalArchiveLoaderStage extends AbstractStage<Location> {
   private final ApplicationSpecificationAdapter adapter;
   private final Id.Account id;
 
@@ -32,7 +32,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<com.continuuity.weave
    * Constructor with hit for handling type.
    */
   public LocalArchiveLoaderStage(Id.Account id) {
-    super(TypeToken.of(com.continuuity.weave.filesystem.Location.class));
+    super(TypeToken.of(Location.class));
     this.id = id;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
   }

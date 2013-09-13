@@ -44,6 +44,10 @@ public final class VerifyResult {
     return status;
   }
 
+  public boolean isSuccess() {
+    return status == Status.SUCCESS;
+  }
+
   /**
    * @return Descriptive message in case of failure.
    */
