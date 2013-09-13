@@ -17,22 +17,23 @@ public class AbstractVerifierTest {
    */
   @Test
   public void testId() throws Exception {
-    AbstractVerifier v = new AbstractVerifier() {
+    AbstractVerifier v = new AbstractVerifier<String>() {
+
       @Override
-      protected boolean isId(String name) {
-        return super.isId(name);
+      protected String getName(String input) {
+        return input;
       }
     };
-    Assert.assertTrue(v.isId("foo"));
-    Assert.assertTrue(v.isId("mydataset"));
-    Assert.assertFalse(v.isId("foo name"));
-    Assert.assertTrue(v.isId("foo-name"));
-    Assert.assertTrue(v.isId("foo_name"));
-    Assert.assertTrue(v.isId("foo1234"));
-    Assert.assertFalse(v.isId("foo^ name"));
-    Assert.assertFalse(v.isId("foo^name"));
-    Assert.assertFalse(v.isId("foo/name"));
-    Assert.assertFalse(v.isId("foo$name"));
+    Assert.assertTrue(v.verify("foo").isSuccess());
+    Assert.assertTrue(v.verify("mydataset").isSuccess());
+    Assert.assertFalse(v.verify("foo name").isSuccess());
+    Assert.assertTrue(v.verify("foo-name").isSuccess());
+    Assert.assertTrue(v.verify("foo_name").isSuccess());
+    Assert.assertTrue(v.verify("foo1234").isSuccess());
+    Assert.assertFalse(v.verify("foo^ name").isSuccess());
+    Assert.assertFalse(v.verify("foo^name").isSuccess());
+    Assert.assertFalse(v.verify("foo/name").isSuccess());
+    Assert.assertFalse(v.verify("foo$name").isSuccess());
   }
 
 }
