@@ -921,9 +921,18 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
   }
 
   @Override
-  public boolean abortTx(TTransaction2 tx) throws TOperationException, TException {
+  public void abortTx(TTransaction2 tx) throws TOperationException, TException {
     try {
-      return this.opex.abort(unwrap(tx));
+      this.opex.abort(unwrap(tx));
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public void invalidateTx(TTransaction2 tx) throws TOperationException, TException {
+    try {
+      this.opex.invalidate(unwrap(tx));
     } catch (OperationException e) {
       throw wrap(e);
     }

@@ -59,7 +59,12 @@ public interface TransactionSystemClient {
   /**
    * Makes transaction visible. You should call it only when all changes of this tx are undone.
    * @param tx transaction to make visible.
-   * @return
    */
-  boolean abort(Transaction tx);
+  void abort(Transaction tx);
+
+  /**
+   * Makes transaction invalid. You should call it if not all changes of this tx could be undone.
+   * @param tx transaction to invalidate.
+   */
+  void invalidate(Transaction tx);
 }

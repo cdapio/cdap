@@ -27,7 +27,7 @@ public final class LevelDBQueue2Producer extends AbstractQueue2Producer {
   private final NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes;
 
   public LevelDBQueue2Producer(LevelDBOcTableCore tableCore, QueueName queueName, QueueMetrics queueMetrics) {
-    super(queueMetrics);
+    super(queueMetrics, queueName);
     core = tableCore;
     changes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);

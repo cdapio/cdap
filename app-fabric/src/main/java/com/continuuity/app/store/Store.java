@@ -18,8 +18,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * {@link Store} operates on a {@link com.continuuity.app.program.Program}. It's responsible
- * for managing the non-runtime lifecycle of a {@link com.continuuity.app.program.Program}
+ * {@link Store} operates on a {@link Program}. It's responsible
+ * for managing the non-runtime lifecycle of a {@link Program}
  */
 public interface Store {
 
@@ -28,7 +28,7 @@ public interface Store {
    *
    * @param program id of the program
    * @param type of program
-   * @return An instance of {@link Program} if found.
+   * @return An instance of {@link com.continuuity.app.program.DefaultProgram} if found.
    * @throws IOException
    */
   Program loadProgram(Id.Program program, Type type) throws IOException;

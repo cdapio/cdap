@@ -62,12 +62,12 @@ public final class FlowProgramRunner implements ProgramRunner {
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getProcessorType();
+    Type processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
-    FlowSpecification flowSpec = appSpec.getFlows().get(program.getProgramName());
-    Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getProgramName());
+    FlowSpecification flowSpec = appSpec.getFlows().get(program.getName());
+    Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
     // Launch flowlet program runners
     RunId runId = RunIds.generate();
@@ -145,7 +145,7 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     FlowProgramController(Table<String, Integer, ProgramController> flowlets, RunId runId,
                           Program program, FlowSpecification flowSpec) {
-      super(program.getProgramName(), runId);
+      super(program.getName(), runId);
       this.flowlets = flowlets;
       this.program = program;
       this.flowSpec = flowSpec;

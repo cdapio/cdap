@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.batch.inmemory;
 
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -42,7 +43,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
 
   @Override
   protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
-    return new Program(locationFactory.create(programLocation));
+    return Programs.create(locationFactory.create(programLocation));
   }
 
   protected Injector createInjector() {

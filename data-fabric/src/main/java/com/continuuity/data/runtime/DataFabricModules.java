@@ -18,6 +18,9 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
@@ -29,6 +32,7 @@ import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueClientFacto
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 
 /**
@@ -71,6 +75,10 @@ public class DataFabricModules extends RuntimeModule {
         conf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
           .toInstance(conf);
+
+        install(new FactoryModuleBuilder()
+                  .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+                  .build(TransactionExecutorFactory.class));
       }
     };
   }

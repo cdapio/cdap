@@ -64,6 +64,9 @@ dependencies {
   compile libraries.hadoop_yarn_client
   compile libraries.hadoop_yarn_common
 
+  compile libraries.quartz
+  compile libraries.quartz_jobs
+
   // Thrift related stuff.
   thriftCompile libraries.thrift
   thriftCompile libraries.slf4j_api
