@@ -6,10 +6,10 @@ package com.continuuity.performance.apps.testing;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,23 +62,19 @@ public class LoggingApp implements Application {
     }
   }
 
-  private static class NumberSource extends AbstractGeneratorFlowlet {
+  private static class NumberSource extends AbstractFlowlet {
     private OutputEmitter<Integer> randomOutput;
 
     private Random random;
-    long millis = 10;
+
 
     public NumberSource() {
       random = new Random();
     }
 
+    @Tick(delay = 10, unit = TimeUnit.MILLISECONDS)
     public void generate() throws Exception {
       Integer randomNumber = new Integer(this.random.nextInt(10000));
-      try {
-        TimeUnit.MILLISECONDS.sleep(millis);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
       randomOutput.emit(randomNumber);
     }
   }

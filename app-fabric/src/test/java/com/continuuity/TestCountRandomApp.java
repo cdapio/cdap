@@ -2,17 +2,19 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Increment;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Count random app for testing.
@@ -59,6 +61,7 @@ public class TestCountRandomApp implements Application {
       super("NumberCounter");
     }
 
+    @ProcessInput
     public void process(Integer number) {
       try {
         counters.write(new Increment(number.toString().getBytes(), column, 1L));
@@ -76,6 +79,7 @@ public class TestCountRandomApp implements Application {
       super("NumberSplitter");
     }
 
+    @ProcessInput
     public void process(Integer number)  {
       output.emit(new Integer(number % 10000));
       output.emit(new Integer(number % 1000));
@@ -84,7 +88,7 @@ public class TestCountRandomApp implements Application {
     }
   }
 
-  private static class RandomSource extends AbstractGeneratorFlowlet {
+  private static class RandomSource extends AbstractFlowlet {
     private OutputEmitter<Integer> randomOutput;
 
     private Random random;
@@ -95,6 +99,7 @@ public class TestCountRandomApp implements Application {
       random = new Random();
     }
 
+    @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
     public void generate() throws Exception {
       Integer randomNumber = new Integer(this.random.nextInt(10000));
       try {
