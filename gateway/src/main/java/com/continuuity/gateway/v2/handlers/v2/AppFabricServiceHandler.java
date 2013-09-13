@@ -303,6 +303,18 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
   }
 
+  /**
+   * Returns workflow run history.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/history")
+  public void workflowHistory(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId,
+                              @PathParam("workflow-id") final String workflowId) {
+    getHistory(request, responder, appId, workflowId);
+
+  }
+
   private void getHistory(HttpRequest request, HttpResponder responder, String appId, String id) {
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -690,11 +702,26 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Returns specification of a workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}")
+  public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    runnableSpecification(request, responder, id);
+  }
+
+  /**
    * Returns specification of a mapreduce.
    */
   @GET
   @Path("/apps/{app-id}/mapreduces/{mapreduce-id}")
-  public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
+  public void workflowSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("mapreduce-id") final String mapreduceId) {
     ProgramId id = new ProgramId();

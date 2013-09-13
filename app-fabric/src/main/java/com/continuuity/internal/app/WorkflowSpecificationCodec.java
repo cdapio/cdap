@@ -4,6 +4,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
@@ -32,6 +33,8 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("actions", serializeList(src.getActions(), context, WorkflowActionSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduces(), context, MapReduceSpecification.class));
+    jsonObj.add("schedules", serializeList(src.getSchedules(), context, Schedule.class));
+
 
     return jsonObj;
   }
@@ -49,6 +52,8 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"), context,
                                                                     MapReduceSpecification.class);
 
-    return new DefaultWorkflowSpecification(className, name, description, actions, mapReduces);
+    List<Schedule> schedules = deserializeList(jsonObj.get("schedules"), context, Schedule.class);
+
+    return new DefaultWorkflowSpecification(className, name, description, actions, mapReduces, schedules);
   }
 }

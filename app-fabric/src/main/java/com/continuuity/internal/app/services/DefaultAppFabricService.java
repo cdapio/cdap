@@ -14,6 +14,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
@@ -58,6 +59,7 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowStreamDefinitionImpl;
@@ -207,6 +209,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
 
+  private final Scheduler scheduler;
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
@@ -215,7 +218,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                  LocationFactory locationFactory, ManagerFactory managerFactory,
                                  AuthorizationFactory authFactory, StoreFactory storeFactory,
                                  ProgramRuntimeService runtimeService, DiscoveryServiceClient discoveryServiceClient,
-                                 QueueAdmin queueAdmin) {
+                                 Scheduler scheduler, QueueAdmin queueAdmin) {
     this.opex = opex;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
@@ -228,6 +231,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                         System.getProperty("java.io.tmpdir")) + "/archive";
     this.mds = new MetadataService(opex);
+    this.scheduler = scheduler;
 
     // Note: This is hacky to start service like this.
     if (this.runtimeService.state() != Service.State.RUNNING) {
@@ -774,8 +778,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Futures.addCallback(future, new FutureCallback<ApplicationWithPrograms>() {
         @Override
         public void onSuccess(ApplicationWithPrograms result) {
-          save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
-          sessions.remove(resource.getAccountId());
+          ApplicationSpecification specification = result.getAppSpecLoc().getSpecification();
+          try {
+            setupSchedules(resource.getAccountId(), result.getAppSpecLoc().getApplicationId().getId(), specification);
+            save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
+            sessions.remove(resource.getAccountId());
+          } catch (IOException e) {
+            LOG.warn(StackTraceUtil.toStringStackTrace(e));
+            DeployStatus status = DeployStatus.FAILED;
+            status.setMessage(e.getMessage());
+            sessions.remove(resource.getAccountId());
+          }
         }
 
         @Override
@@ -1199,5 +1212,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn("Failed to retrieve session info for account.");
     }
     return null;
+  }
+
+  private void setupSchedules(String accountId, String applicationId,
+                              ApplicationSpecification specification)  throws IOException {
+
+    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
+      Id.Program programId = Id.Program.from(accountId, applicationId, entry.getKey());
+      Program program = store.loadProgram(programId, Type.WORKFLOW);
+      for (Schedule schedule : entry.getValue().getSchedules()) {
+        scheduler.schedule(program, schedule);
+      }
+    }
   }
 }
