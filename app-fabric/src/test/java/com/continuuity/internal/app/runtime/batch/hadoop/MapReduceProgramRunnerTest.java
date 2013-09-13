@@ -18,6 +18,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
@@ -35,6 +36,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -85,6 +87,11 @@ public class MapReduceProgramRunnerTest {
     dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               getClass().getClassLoader());
+  }
+
+  @After
+  public void after() {
+    InMemoryOcTableService.dropAll();
   }
 
   @Test
@@ -272,13 +279,10 @@ public class MapReduceProgramRunnerTest {
     // m1e1 = metric: 1, entity: 1
     table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(3L), 1, tag3, tag2, tag1));
     table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(10L), 2, tag2, tag3));
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(15L), 3, tag1, tag3));
+    // 55L will make job fail
+    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(withBadData ? 55L : 15L), 3, tag1));
     table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(23L), 4, tag2));
 
-    if (withBadData) {
-      // this data will make job fail
-      table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(55L), 5, tag1));
-    }
 
     table.write(new SimpleTimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
   }
