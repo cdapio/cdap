@@ -26,10 +26,15 @@ var Api = require('../common/api');
  * @param {string} dirPath from where module is instantiated. This is used becuase __dirname
  * defaults to the location of this module.
  * @param {string} logLevel log level {TRACE|INFO|ERROR}
+ * @param {boolean} https whether to use https for requests.
  */
-var WebAppServer = function(dirPath, logLevel) {
+var WebAppServer = function(dirPath, logLevel, https) {
   this.dirPath = dirPath;
   this.LOG_LEVEL = logLevel;
+  this.lib = http;
+  if (https) {
+    this.lib = https;
+  }
 };
 
 /**
@@ -111,9 +116,9 @@ WebAppServer.prototype.configureExpress = function() {
 
   // Workaround to make static files work on cloud.
   if (fs.existsSync(this.dirPath + '/../client/')) {
-    this.app.use(express['static'](this.dirPath + '/../client/'));
+    this.app.use(express.static(this.dirPath + '/../client/'));
   } else {
-    this.app.use(express['static'](this.dirPath + '/../../client/'));
+    this.app.use(express.static(this.dirPath + '/../../client/'));
   }
 };
 
@@ -123,7 +128,7 @@ WebAppServer.prototype.configureExpress = function() {
  * @param {string} secret cookie secret.
  */
 WebAppServer.prototype.setCookieSession = function(cookieName, secret) {
-    this.app.use(express.cookieParser());
+  this.app.use(express.cookieParser());
   this.app.use(express.session({secret: secret, key: cookieName}));
 };
 
@@ -134,7 +139,7 @@ WebAppServer.prototype.setCookieSession = function(cookieName, secret) {
  * @return {Object} instance of the http server.
  */
 WebAppServer.prototype.getServerInstance = function(app) {
-  return http.createServer(app);
+  return this.lib.createServer(app);
 };
 
 /**
@@ -142,11 +147,19 @@ WebAppServer.prototype.getServerInstance = function(app) {
  * @param {Object} Http server used by application.
  * @return {Object} instane of io socket listening to server.
  */
-WebAppServer.prototype.getSocketIo = function(server) {
-  var io = require('socket.io').listen(server);
-  io.configure('development', function(){
+WebAppServer.prototype.getSocketIo = function (server, environment, certs) {
+  var io;
+  if (certs) {
+    io = require('socket.io').listen(server, certs);
+  } else {
+    io = require('socket.io').listen(server);
+  }
+  io.configure(environment || 'development', function () {
+    io.enable('browser client minification');
+    io.enable('browser client gzip');
     io.set('transports', ['websocket', 'xhr-polling']);
     io.set('log level', 1);
+    io.set('resource', '/socket.io');
   });
   return io;
 };
@@ -162,7 +175,7 @@ WebAppServer.prototype.socketResponse = function(io, request, error, response) {
   // Emit to all open socket connections, this enables multi broswer tab support.
   io.sockets.emit('exec', error, {
     method: request.method,
-    params: typeof response === "string" ? JSON.parse(response) : response,
+    params: typeof response === 'string' ? JSON.parse(response) : response,
     id: request.id
   });
 };
@@ -173,7 +186,8 @@ WebAppServer.prototype.socketResponse = function(io, request, error, response) {
  * @param {string} product of evn for socket to emit.
  * @param {string} version.
  */
-WebAppServer.prototype.configureIoHandlers = function(io, product, version, cookieName, secret) {
+WebAppServer.prototype.configureIoHandlers = function(
+  io, product, version, cookieName, secret, location) {
   var self = this;
   var sockets = [];
 
@@ -186,6 +200,20 @@ WebAppServer.prototype.configureIoHandlers = function(io, product, version, cook
       var signedCookies = utils.parseSignedCookies(cookies, secret);
       var obj = utils.parseJSONCookies(signedCookies);
       data.session_id = obj[cookieName];
+      if ('continuuity-sso' in obj) {
+        if ('api_key' in obj['continuuity-sso']) {
+          data.api_key = obj['continuuity-sso'].api_key;  
+        }
+
+        if ('account_id' in obj['continuuity-sso']) {
+          data.account_id = obj['continuuity-sso'].account_id;  
+        }
+
+        if ('name' in obj['continuuity-sso']) {
+          data.name = obj['continuuity-sso'].name;  
+        }
+      }
+
 
     } else {
 
@@ -202,12 +230,35 @@ WebAppServer.prototype.configureIoHandlers = function(io, product, version, cook
 
     // Join room based on session id.
     newSocket.join(newSocket.handshake.session_id);
+    
+    var ip = '';
 
-    newSocket.emit('env', {
-      "product": product,
-      "version": version,
-      "credential": self.Api.credential
-    });
+    if (typeof Env !== 'undefined') {
+      if ('ip' in Env) {
+        ip = Env.ip;  
+      }
+    }
+    var envVars = {
+      'product': product,
+      'location': location || '',
+      'version': version || 'UNKNOWN',
+      'ip': ip
+    };
+    if (process.env.NODE_ENV !== 'production') {
+      envVars.credential = self.Api.credential;
+    } else {
+      if ('info' in self.config) {
+        envVars.cluster = self.config.info;
+      }
+      if ('handshake' in newSocket) {
+        envVars.account = {
+          'account_id': newSocket.handshake.account_id,
+          'name': newSocket.handshake.name
+        };
+      }
+    }
+    
+    newSocket.emit('env', envVars);
 
     newSocket.on('metadata', function (request) {
       self.Api.metadata(version, request.method, request.params, function (error, response) {
@@ -238,10 +289,10 @@ WebAppServer.prototype.configureIoHandlers = function(io, product, version, cook
 
         if (response && response.length) {
           var int64values = {
-            "lastStarted": 1,
-            "lastStopped": 1,
-            "startTime": 1,
-            "endTime": 1
+            'lastStarted': 1,
+            'lastStopped': 1,
+            'startTime': 1,
+            'endTime': 1
           };
           for (var i = 0; i < response.length; i ++) {
             for (var j in response[i]) {
@@ -265,7 +316,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
   var self = this;
   // Check to see if config is set.
   if(!this.configSet) {
-    this.logger.info("Configuration file not set ", this.config);
+    this.logger.info('Configuration file not set ', this.config);
     return false;
   }
 
@@ -358,7 +409,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
       method: 'GET'
     };
 
-    var request = http.request(options, function(response) {
+    var request = self.lib.request(options, function(response) {
       var data = '';
       response.on('data', function (chunk) {
         data += chunk;
@@ -501,7 +552,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
       }
     };
 
-    var request = http.request(options, function(response) {
+    var request = self.lib.request(options, function(response) {
       var data = '';
       response.on('data', function (chunk) {
         data += chunk;
@@ -566,7 +617,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
               'Transfer-Encoding': 'chunked'
             }
           };
-          var request = http.request(options, function (response) {
+          var request = self.lib.request(options, function (response) {
             if (response.statusCode !== 200) {
               res.send(400, 'Could not upload file.');
               self.logger.error('Could not upload file ' + req.params.file);
@@ -602,7 +653,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
       port: '80'
     };
 
-    var request = http.request(options, function(response) {
+    var request = self.lib.request(options, function(response) {
       var data = '';
       response.on('data', function (chunk) {
         data += chunk;
