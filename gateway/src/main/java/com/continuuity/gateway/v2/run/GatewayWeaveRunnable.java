@@ -91,7 +91,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       // Set Gateway port to 0, so that it binds to any free port.
       cConf.setInt(Constants.Gateway.PORT, 0);
 
-      LOG.trace("{}", cConf);
+      LOG.info("{}", cConf);
 
       // Initialize ZK client
       String zookeeper = cConf.get(CFG_ZOOKEEPER_ENSEMBLE);
