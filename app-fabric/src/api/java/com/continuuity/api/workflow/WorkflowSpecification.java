@@ -9,6 +9,7 @@ import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.builder.Creator;
 import com.continuuity.api.builder.DescriptionSetter;
 import com.continuuity.api.builder.NameSetter;
+import com.continuuity.api.schedule.Schedule;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.batch.ForwardingMapReduceSpecification;
 import com.continuuity.internal.builder.BaseBuilder;
@@ -33,48 +34,65 @@ public interface WorkflowSpecification extends ProgramSpecification {
 
   Map<String, MapReduceSpecification> getMapReduces();
 
+
+  /**
+   *
+   * @param <T>
+   */
+  public interface FirstAction<T> {
+
+    T startWith(WorkflowAction action);
+
+    T startWith(MapReduce mapReduce);
+  }
+
+  /**
+   *
+   * @param <T>
+   */
+  public interface MoreAction<T> {
+
+    MoreAction<T> then(WorkflowAction action);
+
+    MoreAction<T> then(MapReduce mapReduce);
+
+    T last(WorkflowAction action);
+
+    T last(MapReduce mapReduce);
+  }
+
+  /**
+   *
+   * @param <T>
+   */
+  public interface ScheduleSetter<T> {
+    T addSchedule(Schedule schedule);
+  }
+
+
   /**
    *
    */
-  final class Builder extends BaseBuilder<WorkflowSpecification> {
+  interface SpecificationCreator extends Creator<WorkflowSpecification>,
+    ScheduleSetter<SpecificationCreator> { }
+
+  /**
+   *
+   */
+  final class Builder extends BaseBuilder<WorkflowSpecification> implements SpecificationCreator {
 
     private final List<WorkflowActionSpecification> actions = Lists.newArrayList();
     private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
+    private final List<Schedule> schedules = Lists.newArrayList();
 
-    /**
-     *
-     * @param <T>
-     */
-    public interface FirstAction<T> {
-
-      T startWith(WorkflowAction action);
-
-      T startWith(MapReduce mapReduce);
-    }
-
-    /**
-     *
-     * @param <T>
-     */
-    public interface MoreAction<T> {
-
-      MoreAction<T> then(WorkflowAction action);
-
-      MoreAction<T> then(MapReduce mapReduce);
-
-      T last(WorkflowAction action);
-
-      T last(MapReduce mapReduce);
-    }
-
-    public static NameSetter<DescriptionSetter<FirstAction<MoreAction<Creator<WorkflowSpecification>>>>> with() {
+    public static NameSetter<DescriptionSetter<FirstAction<MoreAction<SpecificationCreator>>>> with() {
       Builder builder = new Builder();
 
       return SimpleNameSetter.create(
         getNameSetter(builder), SimpleDescriptionSetter.create(
         getDescriptionSetter(builder), FirstActionImpl.create(
         builder, MoreActionImpl.create(
-        builder, (Creator<WorkflowSpecification>) builder))));
+        builder, (SpecificationCreator) builder))));
     }
 
     @Override
@@ -105,6 +123,13 @@ public interface WorkflowSpecification extends ProgramSpecification {
       // Add the map reduce to this workflow and also add the map reduce action.
       mapReduces.put(mapReduceName, mapReduceSpec);
       return mapReduceSpec;
+    }
+
+
+    @Override
+    public SpecificationCreator addSchedule(Schedule schedule) {
+      schedules.add(schedule);
+      return this;
     }
 
     private static final class FirstActionImpl<T> implements FirstAction<T> {
