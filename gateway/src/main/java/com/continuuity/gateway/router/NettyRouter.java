@@ -1,9 +1,15 @@
 package com.continuuity.gateway.router;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.gateway.router.handlers.InboundHandler;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -25,6 +31,7 @@ import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,8 +51,8 @@ public class NettyRouter extends AbstractIdleService {
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
   private final InetSocketAddress bindAddress;
-  private final EndpointStrategy discoverableEndpoints;
-  private final String serviceName;
+  private final DiscoveryServiceClient discoveryServiceClient;
+  private final String destinationServiceName;
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
 
@@ -58,27 +65,41 @@ public class NettyRouter extends AbstractIdleService {
   private volatile ExecutorService clientWorkerExecutor;
   private volatile InetSocketAddress boundAddress;
 
-  public NettyRouter(int serverBossThreadPoolSize, int serverWorkerThreadPoolSize, int serverConnectionBacklog,
-                     int clientBossThreadPoolSize, int clientWorkerThreadPoolSize,
-                     InetSocketAddress bindAddress, EndpointStrategy discoverableEndpoints, String serviceName) {
-    this.serverBossThreadPoolSize = serverBossThreadPoolSize;
-    this.serverWorkerThreadPoolSize = serverWorkerThreadPoolSize;
-    this.serverConnectionBacklog = serverConnectionBacklog;
-    this.clientBossThreadPoolSize = clientBossThreadPoolSize;
-    this.clientWorkerThreadPoolSize = clientWorkerThreadPoolSize;
-    this.bindAddress = bindAddress;
-    this.discoverableEndpoints = discoverableEndpoints;
-    this.serviceName = serviceName;
+  @Inject
+  public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
+                     DiscoveryServiceClient discoveryServiceClient) {
+    this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
+                                                 Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
+    this.serverWorkerThreadPoolSize = cConf.getInt(Constants.Router.SERVER_WORKER_THREADS,
+                                                   Constants.Router.DEFAULT_SERVER_WORKER_THREADS);
+    this.serverConnectionBacklog = cConf.getInt(Constants.Router.BACKLOG,
+                                                Constants.Router.DEFAULT_BACKLOG);
+
+    this.clientBossThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_BOSS_THREADS,
+                                                 Constants.Router.DEFAULT_CLIENT_BOSS_THREADS);
+    this.clientWorkerThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_WORKER_THREADS,
+                                                   Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
+
+    this.bindAddress = new InetSocketAddress(hostname.getCanonicalHostName(),
+                                             cConf.getInt(Constants.Router.PORT, Constants.Router.DEFAULT_PORT));
+
+    this.discoveryServiceClient = discoveryServiceClient;
+
+    this.destinationServiceName = cConf.get(Constants.Router.DEST_SERVICE_NAME,
+                                            Constants.Router.DEFAULT_DEST_SERVICE_NAME);
   }
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting Netty Router for service {} on address {}...", serviceName, bindAddress);
+    LOG.info("Starting Netty Router for service {} on address {}...", destinationServiceName, bindAddress);
 
     serverBossExecutor = createExecutorService(serverBossThreadPoolSize, "router-server-boss-thread-%d");
     serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize, "router-server-worker-thread-%d");
     clientBossExecutor = createExecutorService(clientBossThreadPoolSize, "router-client-boss-thread-%d");
     clientWorkerExecutor = createExecutorService(clientWorkerThreadPoolSize, "router-client-worker-thread-%d");
+
+    final EndpointStrategy discoverableEndpoints = new RandomEndpointStrategy(
+      discoveryServiceClient.discover(destinationServiceName));
 
     serverBootstrap = new ServerBootstrap(
       new NioServerSocketChannelFactory(serverBossExecutor, serverWorkerExecutor));
@@ -105,7 +126,7 @@ public class NettyRouter extends AbstractIdleService {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("inbound-handler",
-                           new InboundHandler(clientBootstrap, discoverableEndpoints, serviceName));
+                           new InboundHandler(clientBootstrap, discoverableEndpoints, destinationServiceName));
           return pipeline;
         }
       }
@@ -126,12 +147,12 @@ public class NettyRouter extends AbstractIdleService {
     channelGroup.add(channel);
 
     boundAddress = (InetSocketAddress) channel.getLocalAddress();
-    LOG.info("Started Netty Router for service {} on address {}.", serviceName, boundAddress);
+    LOG.info("Started Netty Router for service {} on address {}.", destinationServiceName, boundAddress);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping Netty Router for service {} on address {}...", serviceName, boundAddress);
+    LOG.info("Stopping Netty Router for service {} on address {}...", destinationServiceName, boundAddress);
 
     serverBootstrap.shutdown();
     try {
@@ -150,7 +171,7 @@ public class NettyRouter extends AbstractIdleService {
       clientWorkerExecutor.shutdown();
     }
 
-    LOG.info("Stopped Netty Router for service {} on address {}.", serviceName, boundAddress);
+    LOG.info("Stopped Netty Router for service {} on address {}.", destinationServiceName, boundAddress);
   }
 
   public int getPort() {

@@ -1,7 +1,7 @@
 package com.continuuity.gateway.router;
 
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
@@ -12,6 +12,7 @@ import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.net.InetAddresses;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -67,7 +68,6 @@ public class NettyRouterTest {
     Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) discoveryService).discover(serviceName);
     for (int i = 0; i < 50 && Iterables.size(discoverables) != 2; ++i) {
       TimeUnit.MILLISECONDS.sleep(50);
-      discoverables = ((DiscoveryServiceClient) discoveryService).discover(serviceName);
     }
   }
 
@@ -182,11 +182,12 @@ public class NettyRouterTest {
 
     @Override
     protected void before() throws Throwable {
-      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
-        ((DiscoveryServiceClient) discoveryService).discover(serviceName));
-
-      router = new NettyRouter(1, 5, 100, 1, 5, new InetSocketAddress(hostname, 0),
-                               endpointStrategy, serviceName);
+      CConfiguration cConf = CConfiguration.create();
+      cConf.set(Constants.Router.DEST_SERVICE_NAME, serviceName);
+      cConf.set(Constants.Router.ADDRESS, hostname);
+      cConf.setInt(Constants.Router.PORT, 0);
+      router = new NettyRouter(cConf, InetAddresses.forString(hostname),
+                               (DiscoveryServiceClient) discoveryService);
       router.startAndWait();
     }
 
