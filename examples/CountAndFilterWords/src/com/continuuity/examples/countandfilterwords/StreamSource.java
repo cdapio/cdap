@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.countandfilterwords;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
@@ -34,6 +35,7 @@ public class StreamSource extends AbstractFlowlet {
   private OutputEmitter<String> output;
   private Metrics metric;
 
+  @ProcessInput
   public void process(StreamEvent event) {
     LOG.debug(this.getContext().getName() + ": Received event " + event);
 

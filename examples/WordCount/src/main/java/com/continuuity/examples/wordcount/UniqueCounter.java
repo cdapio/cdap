@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.wordcount;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -28,6 +29,7 @@ public class UniqueCounter extends AbstractFlowlet {
   @UseDataSet("uniqueCount")
   private UniqueCountTable uniqueCountTable;
 
+  @ProcessInput
   public void process(String word) throws OperationException {
     this.uniqueCountTable.updateUniqueCount(word);
   }
