@@ -16,8 +16,7 @@ import java.lang.reflect.Type;
 /**
  *
  */
-final class ResourceSpecificationCodec implements JsonSerializer<ResourceSpecification>,
-  JsonDeserializer<ResourceSpecification> {
+final class ResourceSpecificationCodec extends AbstractSpecificationCodec<ResourceSpecification> {
 
   @Override
   public JsonElement serialize(ResourceSpecification src, Type typeOfSrc, JsonSerializationContext context) {
