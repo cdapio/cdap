@@ -14,7 +14,7 @@ public final class SimpleProgramOptions implements ProgramOptions {
   private final Arguments userArguments;
 
   public SimpleProgramOptions(Program program) {
-    this(program.getProgramName(), new BasicArguments(), new BasicArguments());
+    this(program.getName(), new BasicArguments(), new BasicArguments());
   }
 
   public SimpleProgramOptions(String name, Arguments arguments, Arguments userArguments) {

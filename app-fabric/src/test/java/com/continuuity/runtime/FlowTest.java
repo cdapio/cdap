@@ -22,10 +22,12 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.test.internal.DefaultId;
@@ -69,11 +71,11 @@ public class FlowTest {
     // load on procedure.
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override
         public String getName() {
-          return program.getProgramName();
+          return program.getName();
         }
 
         @Override
@@ -121,14 +123,14 @@ public class FlowTest {
 
     for (final Program program : app.getPrograms()) {
       // running mapreduce is out of scope of this tests (there's separate unit-test for that)
-      if (program.getProcessorType() == Type.MAPREDUCE) {
+      if (program.getType() == Type.MAPREDUCE) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override
         public String getName() {
-          return program.getProgramName();
+          return program.getName();
         }
 
         @Override
@@ -203,14 +205,17 @@ public class FlowTest {
   public void testCountRandomApp() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(TestCountRandomApp.class);
 
+    System.out.println(ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator())
+                                                      .toJson(app.getAppSpecLoc().getSpecification()));
+
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
-      if (program.getProcessorType() == Type.FLOW) {
+      if (program.getType() == Type.FLOW) {
         ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
         controller = runner.run(program, new ProgramOptions() {
           @Override
           public String getName() {
-            return program.getProgramName();
+            return program.getName();
           }
 
           @Override
@@ -236,12 +241,12 @@ public class FlowTest {
 
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
-      if (program.getProcessorType() == Type.FLOW) {
+      if (program.getType() == Type.FLOW) {
         ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
         controller = runner.run(program, new ProgramOptions() {
           @Override
           public String getName() {
-            return program.getProgramName();
+            return program.getName();
           }
 
           @Override

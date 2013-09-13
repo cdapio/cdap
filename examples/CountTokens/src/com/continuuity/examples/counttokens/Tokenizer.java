@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.counttokens;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ public class Tokenizer extends AbstractFlowlet {
 
   private OutputEmitter<String> output;
 
+  @ProcessInput
   public void process(String line) {
     LOG.debug("Received line: " + line);
     if (line == null || line.isEmpty()) {

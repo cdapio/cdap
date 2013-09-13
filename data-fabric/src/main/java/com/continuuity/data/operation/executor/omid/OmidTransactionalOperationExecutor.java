@@ -1460,13 +1460,17 @@ public class OmidTransactionalOperationExecutor
   }
 
   @Override
-  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+  public void abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
     txSystemMetrics.gauge("tx.abort.ops", 1);
-    boolean aborted = txManager.abort(tx);
-    if (aborted) {
-      txSystemMetrics.gauge("tx.abort.successful", 1);
-    }
-    return aborted;
+    txManager.abort(tx);
+    txSystemMetrics.gauge("tx.abort.successful", 1);
+  }
+
+  @Override
+  public void invalidate(com.continuuity.data2.transaction.Transaction tx) throws OperationException {
+    txSystemMetrics.gauge("tx.invalidate.ops", 1);
+    txManager.invalidate(tx);
+    txSystemMetrics.gauge("tx.invalidate.successful", 1);
   }
 
   // this is a hack for reporting gauge metric: current metrics system supports only counters that are aggregated on

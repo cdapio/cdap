@@ -41,7 +41,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       FlowletSpecification flowletSpec, boolean asyncMode,
                       MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
-    this.flowId = program.getProgramName();
+    this.flowId = program.getName();
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
     this.instanceId = instanceId;

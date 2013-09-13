@@ -18,6 +18,7 @@
 package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.annotation.Output;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -46,6 +47,7 @@ public class WordSplitter extends AbstractFlowlet {
   @Output("wordArrayOut")
   private OutputEmitter<List<String>> wordListOutput;
 
+  @ProcessInput
   public void process(StreamEvent event) throws OperationException {
     // Input is a String, need to split it by whitespace
     String inputString = Charset.forName("UTF-8")

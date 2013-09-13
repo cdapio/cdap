@@ -6,8 +6,6 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
-import com.continuuity.app.verification.AbstractVerifier;
-import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.error.Err;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -36,7 +34,7 @@ import java.util.Set;
 * <p/>
 * </p>
 */
-public class FlowVerification extends AbstractVerifier implements Verifier<FlowSpecification> {
+public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
   /**
    * Verifies a single {@link FlowSpecification} for a {@link com.continuuity.api.flow.Flow}
@@ -47,12 +45,12 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
    */
   @Override
   public VerifyResult verify(final FlowSpecification input) {
-    String flowName = input.getName();
-
-    // Checks if Flow name is an ID
-    if (!isId(flowName)) {
-      return VerifyResult.failure(Err.NOT_AN_ID, "Flow");
+    VerifyResult verifyResult = super.verify(input);
+    if (!verifyResult.isSuccess()) {
+      return verifyResult;
     }
+
+    String flowName = input.getName();
 
     // Check if there are no flowlets.
     if (input.getFlowlets().size() == 0) {
@@ -133,6 +131,11 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
     }
 
     return VerifyResult.success();
+  }
+
+  @Override
+  protected String getName(FlowSpecification input) {
+    return input.getName();
   }
 
   private <K, V> Multimap<K, V> toMultimap(Map<K, ? extends Collection<V>> map) {

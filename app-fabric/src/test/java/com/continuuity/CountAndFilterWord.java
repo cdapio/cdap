@@ -2,6 +2,7 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -69,6 +70,7 @@ public class CountAndFilterWord implements Application {
       super("source");
     }
 
+    @ProcessInput
     public void process(StreamEvent event) {
       if (Common.debug) {
         System.out.println(this.getClass().getSimpleName() + ": Received event " + event);
@@ -97,6 +99,7 @@ public class CountAndFilterWord implements Application {
       super("split-words");
     }
 
+    @ProcessInput
     public void process(Map<String, String> map) {
       final String[] fields = { "title", "text" };
 
@@ -135,6 +138,7 @@ public class CountAndFilterWord implements Application {
       super("upper-filter");
     }
 
+    @ProcessInput
     public void process(Map<String, String> tupleIn) {
       if (Common.debug) {
         System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
@@ -168,6 +172,7 @@ public class CountAndFilterWord implements Application {
       super("countByField");
     }
 
+    @ProcessInput
     public void process(Map<String, String> tupleIn) {
       if (Common.debug) {
         System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);

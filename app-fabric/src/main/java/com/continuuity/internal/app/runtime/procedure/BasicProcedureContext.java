@@ -37,7 +37,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
                         Arguments runtimeArguments, ProcedureSpecification procedureSpec,
                         MetricsCollectionService collectionService) {
     super(program, runId, datasets);
-    this.procedureId = program.getProgramName();
+    this.procedureId = program.getName();
     this.instanceId = instanceId;
     this.procedureSpec = procedureSpec;
     this.procedureMetrics = new ProcedureMetrics(collectionService, getApplicationId(), getProcedureId());

@@ -304,25 +304,29 @@ public class InMemoryTransactionManager {
    * Start a short transaction with a given timeout.
    * @param timeoutInSeconds the time out period in seconds.
    */
-  public synchronized Transaction startShort(int timeoutInSeconds) {
+  public Transaction startShort(int timeoutInSeconds) {
     Preconditions.checkArgument(timeoutInSeconds > 0, "timeout must be positive but is %s", timeoutInSeconds);
-    saveWaterMarkIfNeeded();
-    Transaction tx = new Transaction(
-      readPointer, nextWritePointer, invalidArray, getInProgressAsArray(), firstShortInProgress());
-    inProgress.put(nextWritePointer++, System.currentTimeMillis() + 1000L * timeoutInSeconds);
-    return tx;
+    long currentTime = System.currentTimeMillis();
+    synchronized (this) {
+      saveWaterMarkIfNeeded();
+      Transaction tx = createTransaction();
+      inProgress.put(nextWritePointer++, currentTime + 1000L * timeoutInSeconds);
+      return tx;
+    }
   }
 
   /**
    * Start a long transaction. Long transactions and do not participate in conflict detection. Also, aborting a long
    * transaction moves it to the invalid list because we assume that its writes cannot be rolled back.
    */
-  public synchronized Transaction startLong() {
-    saveWaterMarkIfNeeded();
-    Transaction tx = new Transaction(
-      readPointer, nextWritePointer, invalidArray, getInProgressAsArray(), firstShortInProgress());
-    inProgress.put(nextWritePointer++, -System.currentTimeMillis());
-    return tx;
+  public Transaction startLong() {
+    long currentTime = System.currentTimeMillis();
+    synchronized (this) {
+      saveWaterMarkIfNeeded();
+      Transaction tx = createTransaction();
+      inProgress.put(nextWritePointer++, -currentTime);
+      return tx;
+    }
   }
 
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
@@ -344,7 +348,7 @@ public class InMemoryTransactionManager {
     return true;
   }
 
-  public synchronized boolean commit(Transaction tx) {
+  public boolean commit(Transaction tx) {
 
     // todo: these should be atomic
     // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot be attempted to
@@ -356,16 +360,18 @@ public class InMemoryTransactionManager {
       return false;
     }
 
-    if (changeSet != null) {
-      // double-checking if there are conflicts: someone may have committed since canCommit check
-      if (hasConflicts(tx, changeSet)) {
-        return false;
-      }
+    synchronized (this) {
+      if (changeSet != null) {
+        // double-checking if there are conflicts: someone may have committed since canCommit check
+        if (hasConflicts(tx, changeSet)) {
+          return false;
+        }
 
-      // Record the committed change set with the nextWritePointer as the commit time.
-      committedChangeSets.put(nextWritePointer, changeSet);
+        // Record the committed change set with the nextWritePointer as the commit time.
+        committedChangeSets.put(nextWritePointer, changeSet);
+      }
+      makeVisible(tx);
     }
-    makeVisible(tx);
 
     // All committed change sets that are smaller than the earliest started transaction can be removed.
     // here we ignore transactions that have no timeout, they are long-running and don't participate in
@@ -384,7 +390,7 @@ public class InMemoryTransactionManager {
     return Transaction.NO_TX_IN_PROGRESS;
   }
 
-  public synchronized boolean abort(Transaction tx) {
+  public synchronized void abort(Transaction tx) {
     committingChangeSets.remove(tx.getWritePointer());
     // makes tx visible (assumes that all operations were rolled back)
     // remove from in-progress set, so that it does not get excluded in the future
@@ -396,17 +402,31 @@ public class InMemoryTransactionManager {
       Collections.sort(invalid);
       invalidArray = invalid.toLongArray();
     } else if (previous == null) {
-        // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
-        if (invalid.rem(tx.getWritePointer())) {
-          invalidArray = invalid.toLongArray();
-          // removed a tx from excludes: must move read pointer
-          moveReadPointerIfNeeded(tx.getWritePointer());
-        }
+      // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
+      if (invalid.rem(tx.getWritePointer())) {
+        invalidArray = invalid.toLongArray();
+        // removed a tx from excludes: must move read pointer
+        moveReadPointerIfNeeded(tx.getWritePointer());
+      }
     } else {
       // removed a tx from excludes: must move read pointer
       moveReadPointerIfNeeded(tx.getWritePointer());
     }
-    return true;
+  }
+
+  public synchronized void invalidate(Transaction tx) {
+    committingChangeSets.remove(tx.getWritePointer());
+    // add tx to invalids
+    invalid.add(tx.getWritePointer());
+    // todo: find a more efficient way to keep this sorted. Could it just be an array?
+    Collections.sort(invalid);
+    invalidArray = invalid.toLongArray();
+    // remove from in-progress set, so that it does not get excluded in the future
+    Long previous = inProgress.remove(tx.getWritePointer());
+    if (previous != null && previous >= 0) {
+      // tx was short-running: must move read pointer
+      moveReadPointerIfNeeded(tx.getWritePointer());
+    }
   }
 
   // hack for exposing important metric
@@ -475,13 +495,24 @@ public class InMemoryTransactionManager {
     }
   }
 
-  private long[] getInProgressAsArray() {
+  /**
+   * Creates a new Transaction. This method only get called from start transaction, which is already
+   * synchronized.
+   */
+  private Transaction createTransaction() {
+    // For holding the first in progress short transaction Id (with timeout >= 0).
+    long firstShortTx = Transaction.NO_TX_IN_PROGRESS;
     long[] array = new long[inProgress.size()];
     int i = 0;
-    for (long txid : inProgress.keySet()) {
-      array[i++] = txid;
+    for (Map.Entry<Long, Long> entry : inProgress.entrySet()) {
+      long txId = entry.getKey();
+      array[i++] = txId;
+      if (firstShortTx == Transaction.NO_TX_IN_PROGRESS && entry.getValue() >= 0) {
+        firstShortTx = txId;
+      }
     }
-    return array;
+
+    return new Transaction(readPointer, nextWritePointer, invalidArray, array, firstShortTx);
   }
 
 /*

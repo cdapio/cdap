@@ -91,8 +91,13 @@ public final class DistributedTransactionServiceHandler implements TTransactionS
   }
 
   @Override
-  public boolean abort(TTransaction tx) throws TException {
-    return transactionSystem.abort(Converters.convert(tx));
+  public void abort(TTransaction tx) throws TException {
+    transactionSystem.abort(Converters.convert(tx));
+  }
+
+  @Override
+  public void invalidate(TTransaction tx) throws TException {
+    transactionSystem.invalidate(Converters.convert(tx));
   }
 
   @Override

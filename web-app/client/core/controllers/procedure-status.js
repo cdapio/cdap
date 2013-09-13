@@ -106,25 +106,18 @@ define([], function () {
 			var methodName = this.get('requestMethod');
 
 			this.HTTP.post('rest', 'apps', appId, 'procedures', procedureName, 'methods', methodName, {
-				service: this.get('model').serviceName,
-				app: this.get('model').applicationId,
-				method: this.get('requestMethod'),
-				payload: this.get('requestParams')
-			}, function (response) {
+					data: this.get('requestParams')
+				}, function (response) {
 
-				if (error) {
-					self.set('responseCode', error.statusCode);
-					self.set('responseBody',
-						JSON.stringify(error.response, undefined, 2) || '[ No Content ]');
-				} else {
-					self.set('responseCode', response.statusCode);
-					var pretty;
-					try {
-						pretty = JSON.stringify(JSON.parse(response.params.response), undefined, 2);
-					} catch (e) {
-						pretty = response.params.response;
+				if (response) {
+					if (typeof(response) === 'object') {
+						self.set('responseBody', JSON.stringify(response, undefined, 2) || '[ No content ]');	
+					} else {
+						self.set('responseBody', response || '[ No content ]');	
 					}
-					self.set('responseBody', pretty || '[ No Content ]');
+					
+				} else {
+					self.set('responseBody', '[ No response recevied ]');
 				}
 
 			});

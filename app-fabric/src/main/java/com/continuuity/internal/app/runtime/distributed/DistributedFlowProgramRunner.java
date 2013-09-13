@@ -61,18 +61,18 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getProcessorType();
+    Type processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
-    FlowSpecification flowSpec = appSpec.getFlows().get(program.getProgramName());
-    Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getProgramName());
+    FlowSpecification flowSpec = appSpec.getFlows().get(program.getName());
+    Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
     LOG.info("Configuring flowlets queues");
     Multimap<String, QueueName> flowletQueues = configureQueue(program, flowSpec);
 
     // Launch flowlet program runners
-    LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + flowSpec.getName());
+    LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
     // TODO (ENG-2313): deal with logging
     WeavePreparer preparer = weaveRunner.prepare(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile))
@@ -83,7 +83,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       "'" + new Gson().toJson(options.getUserArguments()).replace("\"", "\\\"").replace(" ", "\\ ") + "'";
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       preparer.withArguments(entry.getKey(),
-                             String.format("--%s", RunnableOptions.JAR), program.getProgramJarLocation().getName());
+                             String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName());
       preparer.withArguments(entry.getKey(),
                              String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
     }
@@ -93,7 +93,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
                                                                                               weavelController,
                                                                                               queueAdmin,
                                                                                               flowletQueues);
-    return new FlowWeaveProgramController(program.getProgramName(), weavelController, instanceUpdater).startListen();
+    return new FlowWeaveProgramController(program.getName(), weavelController, instanceUpdater).startListen();
   }
 
   /**

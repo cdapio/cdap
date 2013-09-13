@@ -4,14 +4,13 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.RoundRobin;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
@@ -91,14 +90,14 @@ public class MultiConsumerTest {
   /**
    *
    */
-  public static final class Generator extends AbstractGeneratorFlowlet {
+  public static final class Generator extends AbstractFlowlet {
 
     private OutputEmitter<Integer> output;
     @Output("str")
     private OutputEmitter<String> outString;
     private int i;
 
-    @Override
+    @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
     public void generate() throws Exception {
       if (i < 100) {
         output.emit(i);
@@ -144,11 +143,11 @@ public class MultiConsumerTest {
 
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override
         public String getName() {
-          return program.getProgramName();
+          return program.getName();
         }
 
         @Override

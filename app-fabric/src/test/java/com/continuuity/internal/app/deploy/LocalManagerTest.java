@@ -60,8 +60,8 @@ public class LocalManagerTest {
     ApplicationWithPrograms input = (ApplicationWithPrograms) p.get();
 
     Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);
-    Assert.assertEquals(input.getPrograms().iterator().next().getProcessorType(), Type.FLOW);
-    Assert.assertEquals(input.getPrograms().iterator().next().getProgramName(), "ToyFlow");
+    Assert.assertEquals(input.getPrograms().iterator().next().getType(), Type.FLOW);
+    Assert.assertEquals(input.getPrograms().iterator().next().getName(), "ToyFlow");
   }
 
 }

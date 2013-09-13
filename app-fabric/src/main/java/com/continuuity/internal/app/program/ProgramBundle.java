@@ -35,7 +35,7 @@ public final class ProgramBundle {
    * Clones a give application archive using the {@link com.continuuity.archive.ArchiveBundler}.
    * A new manifest file will be amended to the jar.
    *
-   * @return An instance of {@link com.continuuity.weave.filesystem.Location} containing the program JAR.
+   * @return An instance of {@link Location} containing the program JAR.
    *
    * @throws java.io.IOException in case of any issue related to copying jars.
    */

@@ -10,6 +10,7 @@ import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.RoundRobin;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
@@ -20,7 +21,6 @@ import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.Id;
@@ -67,6 +67,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -135,11 +136,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-      Type processorType = program.getProcessorType();
+      Type processorType = program.getType();
       Preconditions.checkNotNull(processorType, "Missing processor type.");
       Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
-      String processorName = program.getProgramName();
+      String processorName = program.getName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
 
       FlowSpecification flowSpec = appSpec.getFlows().get(processorName);
@@ -203,7 +204,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       LOG.info("Flowlet started: " + flowletContext);
 
 
-      return new FlowletProgramController(program.getProgramName(), flowletName,
+      return new FlowletProgramController(program.getName(), flowletName,
                                           flowletContext, driver, queueConsumerSuppliers);
 
     } catch (Exception e) {
@@ -265,70 +266,72 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                       Collection<ProcessSpecification> result)
     throws NoSuchMethodException, OperationException {
 
-    if (GeneratorFlowlet.class.isAssignableFrom(flowletType.getRawType())) {
-      Method method = flowletType.getRawType().getMethod("generate");
-      ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
-      int maxRetries = processInputAnnotation == null ? ProcessInput.DEFAULT_MAX_RETRIES
-                                                      : processInputAnnotation.maxRetries();
-      ProcessMethod generatorMethod = processMethodFactory.create(method, maxRetries);
-      ConsumerConfig dummyConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
-
-      return ImmutableList.of(processSpecFactory.create(ImmutableSet.<String>of(),
-                                                        Schema.of(Schema.Type.NULL), TypeToken.of(void.class),
-                                                        generatorMethod, dummyConfig, 1));
-    }
-
-    // Walk up the hierarchy of flowlet class to get all process methods
-    // It needs to be traverse twice because process method needs to know all output emitters.
+    // Walk up the hierarchy of flowlet class to get all ProcessInput and Tick methods
     for (TypeToken<?> type : flowletType.getTypes().classes()) {
       if (type.getRawType().equals(Object.class)) {
         break;
       }
-      // Extracts all process methods
+
+      // Extracts all process and tick methods
       for (Method method : type.getRawType().getDeclaredMethods()) {
         ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
-        if (!method.getName().startsWith(FlowletDefinition.PROCESS_METHOD_PREFIX) && processInputAnnotation == null) {
+        Tick tickAnnotation = method.getAnnotation(Tick.class);
+
+        if (processInputAnnotation == null && tickAnnotation == null) {
+          // Neither a process nor a tick method.
           continue;
         }
 
+        int maxRetries = (tickAnnotation == null) ? processInputAnnotation.maxRetries() : tickAnnotation.maxRetries();
+
+        ProcessMethod processMethod = processMethodFactory.create(method, maxRetries);
         Set<String> inputNames;
-        if (processInputAnnotation == null || processInputAnnotation.value().length == 0) {
-          inputNames = ImmutableSet.of(FlowletDefinition.ANY_INPUT);
+        Schema schema;
+        TypeToken<?> dataType;
+        ConsumerConfig consumerConfig;
+        int batchSize = 1;
+
+        if (tickAnnotation != null) {
+          inputNames = ImmutableSet.of();
+          consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
+          schema = Schema.of(Schema.Type.NULL);
+          dataType = TypeToken.of(void.class);
         } else {
-          inputNames = ImmutableSet.copyOf(processInputAnnotation.value());
-        }
-        int maxRetries = processInputAnnotation == null ? ProcessInput.DEFAULT_MAX_RETRIES
-                                                        : processInputAnnotation.maxRetries();
-
-        ConsumerConfig consumerConfig = getConsumerConfig(flowletContext, method);
-        Integer batchSize = getBatchSize(method);
-
-        try {
+          inputNames = Sets.newHashSet(processInputAnnotation.value());
+          if (inputNames.isEmpty()) {
+            // If there is no input name, it would be ANY_INPUT
+            inputNames.add(FlowletDefinition.ANY_INPUT);
+          }
           // If batch mode then generate schema for Iterator's parameter type
-          TypeToken<?> dataType = flowletType.resolveType(method.getGenericParameterTypes()[0]);
+          dataType = flowletType.resolveType(method.getGenericParameterTypes()[0]);
+          consumerConfig = getConsumerConfig(flowletContext, method);
+          Integer processBatchSize = getBatchSize(method);
 
-          if (batchSize != null) {
+          if (processBatchSize != null) {
             Preconditions.checkArgument(dataType.getRawType().equals(Iterator.class),
                                         "Only Iterator is supported.");
             Preconditions.checkArgument(dataType.getType() instanceof ParameterizedType,
                                         "Only ParameterizedType is supported for batch Iterator.");
             dataType = flowletType.resolveType(((ParameterizedType) dataType.getType()).getActualTypeArguments()[0]);
+            batchSize = processBatchSize;
           }
-          Schema schema = schemaGenerator.generate(dataType.getType());
 
-          ProcessMethod processMethod = processMethodFactory.create(method, maxRetries);
-          ProcessSpecification processSpec = processSpecFactory.create(inputNames, schema, dataType,
-                                                                       processMethod, consumerConfig,
-                                                                       (batchSize == null) ? 1 : batchSize);
-          if (processSpec != null) {
-            result.add(processSpec);
+          try {
+            schema = schemaGenerator.generate(dataType.getType());
+          } catch (UnsupportedTypeException e) {
+            throw Throwables.propagate(e);
           }
-        } catch (UnsupportedTypeException e) {
-          throw Throwables.propagate(e);
+        }
+
+        ProcessSpecification processSpec = processSpecFactory.create(inputNames, schema, dataType, processMethod,
+                                                                     consumerConfig, batchSize, tickAnnotation);
+        // Add processSpec
+        if (processSpec != null) {
+          result.add(processSpec);
         }
       }
     }
-    Preconditions.checkArgument(!result.isEmpty(), "No process method found for " + flowletType);
+    Preconditions.checkArgument(!result.isEmpty(), "No process or tick method found for " + flowletType);
     return result;
   }
 
@@ -460,7 +463,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new ProcessSpecificationFactory() {
       @Override
       public <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
-                                             ProcessMethod method, ConsumerConfig consumerConfig, int batchSize) {
+                                             ProcessMethod method, ConsumerConfig consumerConfig, int batchSize,
+                                             Tick tickAnnotation) {
         List<QueueReader> queueReaders = Lists.newLinkedList();
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
@@ -489,7 +493,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
         return new ProcessSpecification<T>(new RoundRobinQueueReader(queueReaders),
                                            createInputDatumDecoder(dataType, schema, schemaCache),
-                                           method);
+                                           method, tickAnnotation);
       }
     };
   }
@@ -562,6 +566,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
      * no input is available for the given method.
      */
     <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
-                                    ProcessMethod method, ConsumerConfig consumerConfig, int batchSize);
+                                    ProcessMethod method, ConsumerConfig consumerConfig, int batchSize,
+                                    Tick tickAnnotation);
   }
 }
