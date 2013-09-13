@@ -20,6 +20,7 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -44,9 +45,11 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +61,10 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+
+  // For decoding runtime arguments in the start command.
+  private static final Gson GSON = new Gson();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
   private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
@@ -180,7 +187,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
       Map<String, String> o = null;
       try {
-        o = new Gson().fromJson(postBody, new TypeToken<HashMap<String, String>>(){}.getType());
+        o = GSON.fromJson(postBody, MAP_STRING_STRING_TYPE);
       } catch (JsonSyntaxException e) {
         responder.sendError(HttpResponseStatus.BAD_REQUEST, "Not a valid body specified.");
         return;
@@ -539,7 +546,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         if ("start".equals(action)) {
-          client.start(token, new ProgramDescriptor(id, null));
+          client.start(token, new ProgramDescriptor(id, decodeRuntimeArguments(request)));
         } else if ("stop".equals(action)) {
           client.stop(token, id);
         }
@@ -556,6 +563,23 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (Exception e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  private Map<String, String> decodeRuntimeArguments(HttpRequest request) throws IOException {
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      return ImmutableMap.of();
+    }
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    try {
+      Map<String, String> args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+      return args == null ? ImmutableMap.<String, String>of() : args;
+    } catch (JsonSyntaxException e) {
+      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
+      throw e;
+    } finally {
+      reader.close();
     }
   }
 
