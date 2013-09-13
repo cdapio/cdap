@@ -216,10 +216,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
               continue;
             }
 
-            // Resetting back-off time to minimum back-off time, since an entry to process was de-queued and most likely
-            // more entries will follow.
-            entry.resetBackOff();
-
             if (!entry.isRetry()) {
               // Only increment the inflight count for non-retry entries.
               // The inflight would get decrement when the transaction committed successfully or input get ignored.
@@ -235,6 +231,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
                           result);
             } finally {
               invoked = true;
+              // Resetting back-off time to minimum back-off time,
+              // since an entry to process was de-queued and most likely more entries will follow.
+              entry.resetBackOff();
             }
 
           } catch (Throwable t) {
@@ -444,7 +443,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             FlowletProcessEntry.create(processEntry.getProcessSpec(),
                                        new ProcessSpecification<T>(new SingleItemQueueReader(input),
                                                                    processEntry.getProcessSpec().getInputDecoder(),
-                                                                   processEntry.getProcessSpec().getProcessMethod()));
+                                                                   processEntry.getProcessSpec().getProcessMethod(),
+                                                                   null));
           processQueue.offer(retryEntry);
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
