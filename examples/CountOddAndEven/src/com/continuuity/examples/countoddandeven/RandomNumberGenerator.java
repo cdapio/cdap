@@ -17,35 +17,24 @@
 
 package com.continuuity.examples.countoddandeven;
 
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
+import com.continuuity.api.annotation.Tick;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Random number generator.
  */
-public class RandomNumberGenerator extends AbstractGeneratorFlowlet {
+public class RandomNumberGenerator extends AbstractFlowlet {
 
   Random random = new Random();
-  long millis = 1;
-  int direction = 1;
 
   private OutputEmitter<Integer> randomOutput;
 
-  @Override
+  @Tick(delay = 100, unit = TimeUnit.MILLISECONDS)
   public void generate() throws Exception {
-    Integer randomNumber = new Integer(this.random.nextInt(10000));
-    try {
-      Thread.sleep(millis);
-      millis += direction;
-
-      if (millis > 100 || millis < 1) {
-        direction = direction * -1;
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    randomOutput.emit(randomNumber);
+    randomOutput.emit(random.nextInt(10000));
   }
 }

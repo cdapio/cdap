@@ -17,29 +17,23 @@
 
 package com.continuuity.examples.countrandom;
 
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
+import com.continuuity.api.annotation.Tick;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Random Source Flowlet {@code RandomSource}.
  */
-public class RandomSource extends AbstractGeneratorFlowlet {
+public class RandomSource extends AbstractFlowlet {
   private OutputEmitter<Integer> randomOutput;
 
   private final Random random = new Random();
-  private long millis = 1;
-  private int direction = 1;
 
+  @Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
   public void generate() throws InterruptedException {
-    Integer randomNumber = new Integer(this.random.nextInt(10000));
-    Thread.sleep(millis);
-    millis += direction;
-
-    if (millis > 100 || millis < 1) {
-      direction = direction * -1;
-    }
-    randomOutput.emit(randomNumber);
+    randomOutput.emit(random.nextInt(10000));
   }
 }

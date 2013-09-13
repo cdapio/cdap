@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.simplewriteandread;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
@@ -36,6 +37,7 @@ public class KeyValueSource extends AbstractFlowlet {
     super("source");
   }
 
+  @ProcessInput
   public void process(StreamEvent event) throws IllegalArgumentException {
     loger.debug(this.getContext().getName() + ": Received event " + event);
 

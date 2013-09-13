@@ -1,10 +1,12 @@
 package com.continuuity.internal.app.runtime.flow;
 
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.app.queue.QueueReader;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -14,24 +16,42 @@ final class ProcessSpecification<T> {
   private final QueueReader queueReader;
   private final ProcessMethod processMethod;
   private final Function<ByteBuffer, T> inputDatumDecoder;
+  private final Tick tickAnnotation;
 
   ProcessSpecification(QueueReader queueReader, Function<ByteBuffer, T> inputDatumDecoder,
-                       ProcessMethod processMethod) {
+                       ProcessMethod processMethod, Tick tickAnnotation) {
     this.queueReader = queueReader;
     this.inputDatumDecoder = inputDatumDecoder;
     this.processMethod = processMethod;
+    this.tickAnnotation = tickAnnotation;
   }
 
-  public QueueReader getQueueReader() {
+  QueueReader getQueueReader() {
     return queueReader;
   }
 
-  public ProcessMethod getProcessMethod() {
+  ProcessMethod getProcessMethod() {
     return processMethod;
   }
 
-  public Function<ByteBuffer, T> getInputDecoder() {
+  Function<ByteBuffer, T> getInputDecoder() {
     return inputDatumDecoder;
+  }
+
+  long getInitialCallDelay() {
+    return tickAnnotation == null ? 0L : convertToNano(tickAnnotation.initialDelay(), tickAnnotation.unit());
+  }
+
+  /**
+   * Returns the delay in nanoseconds. Should only applicable to {@link com.continuuity.api.annotation.Tick} method.
+   * @return delay time in nanoseconds.
+   */
+  long getCallDelay() {
+    return tickAnnotation == null ? 0L : convertToNano(tickAnnotation.delay(), tickAnnotation.unit());
+  }
+
+  private long convertToNano(long time, TimeUnit unit) {
+    return TimeUnit.NANOSECONDS.convert(time, unit);
   }
 
   @Override

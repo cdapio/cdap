@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.countrandom;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -30,6 +31,7 @@ public class NumberCounter extends AbstractFlowlet {
   @UseDataSet(CountRandom.TABLE_NAME)
   KeyValueTable counters;
 
+  @ProcessInput
   public void process(Integer number) throws OperationException {
     counters.increment(number.toString().getBytes(), 1L);
   }

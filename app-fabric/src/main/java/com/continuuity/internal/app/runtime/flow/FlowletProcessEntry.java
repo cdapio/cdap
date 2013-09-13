@@ -31,16 +31,17 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
   private long currentBackOff = BACKOFF_MIN;
 
   static <T> FlowletProcessEntry<T> create(ProcessSpecification<T> processSpec) {
-    return new FlowletProcessEntry<T>(processSpec, null);
+    return new FlowletProcessEntry<T>(processSpec, null, processSpec.getInitialCallDelay());
   }
 
   static <T> FlowletProcessEntry<T> create(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec) {
-    return new FlowletProcessEntry<T>(processSpec, retrySpec);
+    return new FlowletProcessEntry<T>(processSpec, retrySpec, 0);
   }
 
-  private FlowletProcessEntry(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec) {
+  private FlowletProcessEntry(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec, long nextDeque) {
     this.processSpec = processSpec;
     this.retrySpec = retrySpec;
+    this.nextDeque = nextDeque;
   }
 
   public boolean isRetry() {
@@ -67,7 +68,7 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
   }
 
   public void resetBackOff() {
-    nextDeque = 0;
+    nextDeque = System.nanoTime() + processSpec.getCallDelay();
     currentBackOff = BACKOFF_MIN;
   }
 
@@ -85,6 +86,6 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
   }
 
   public FlowletProcessEntry<T> resetRetry() {
-    return retrySpec == null ? this : new FlowletProcessEntry<T>(processSpec, null);
+    return retrySpec == null ? this : new FlowletProcessEntry<T>(processSpec, null, processSpec.getCallDelay());
   }
 }
