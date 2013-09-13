@@ -17,13 +17,13 @@
 
 package com.continuuity.examples.resourcespammer;
 
+import com.continuuity.api.Resources;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.DefaultResourceSpecification;
 
 /**
  * Procedure designed to use up lots of cpu {@code Spammer1Core}.
@@ -36,7 +36,7 @@ public class CPUSpamProcedure extends AbstractProcedure {
     return ProcedureSpecification.Builder.with()
       .setName("spamProcedure")
       .setDescription("procedure that spams cpu")
-      .withResources(new DefaultResourceSpecification(512, 2))
+      .withResources(new Resources(512, 2))
       .build();
   }
 

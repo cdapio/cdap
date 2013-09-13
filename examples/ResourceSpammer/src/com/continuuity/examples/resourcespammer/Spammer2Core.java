@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.resourcespammer;
 
+import com.continuuity.api.Resources;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.annotation.UseDataSet;
@@ -25,7 +26,6 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.internal.DefaultResourceSpecification;
 
 /**
  * Flowlet designed to use up lots of cpu {@code Spammer1Core}.
@@ -44,7 +44,7 @@ public class Spammer2Core extends AbstractFlowlet {
     return FlowletSpecification.Builder.with()
       .setName("2CoreSpammer")
       .setDescription("spams with 2 cores")
-      .withResources(new DefaultResourceSpecification(512, 2))
+      .withResources(new Resources(512, 2))
       .build();
   }
 
