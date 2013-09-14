@@ -5,6 +5,7 @@ import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
@@ -65,6 +66,7 @@ public class GatewayFlumeCollectorTest {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(new GatewayTestModule(myConfiguration));
+    injector.getInstance(InMemoryTransactionManager.class).init();
     this.executor = injector.getInstance(OperationExecutor.class);
     MetaDataStore metaDataStore = injector.getInstance(MetaDataStore.class);
 
@@ -76,8 +78,8 @@ public class GatewayFlumeCollectorTest {
     myConfiguration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     myConfiguration.set(Constants.CONFIG_CONNECTORS, NAME);
     myConfiguration.set(
-        Constants.buildConnectorPropertyName(NAME, Constants.CONFIG_CLASSNAME),
-        NettyFlumeCollector.class.getCanonicalName());
+      Constants.buildConnectorPropertyName(NAME, Constants.CONFIG_CLASSNAME),
+      NettyFlumeCollector.class.getCanonicalName());
     myConfiguration.setInt(Constants.
         buildConnectorPropertyName(NAME, Constants.CONFIG_PORT), port);
 
