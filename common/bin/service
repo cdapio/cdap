@@ -91,7 +91,6 @@ start() {
     if [ $MAIN_CMD ]; then
       # This app is configured as a NON-JAVA app
 
-      rotate_log $loglog
       check_before_start
 
       echo "`date` Starting $APP service on `hostname`"
@@ -117,7 +116,6 @@ start() {
       # sets the JAVA variable.
       set_java
 
-      rotate_log $loggc
       check_before_start
 
       echo "`date` Starting Java $APP service on `hostname`"
