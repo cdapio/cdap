@@ -2,7 +2,6 @@ package com.continuuity.gateway.accessor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.Accessor;
 import com.continuuity.gateway.MetaDataStoreAware;
 import com.continuuity.gateway.util.HttpConfig;
@@ -55,11 +54,6 @@ public class MetaDataRestAccessor
    */
   public MetaDataStore getMetaDataStore() {
     return mds;
-  }
-
-  @Override
-  public void setExecutor(OperationExecutor executor) {
-    super.setExecutor(executor);
   }
 
   @Override
