@@ -20,17 +20,15 @@ public class HBaseOcTableManager implements DataSetManager {
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   private final HBaseAdmin admin;
-  private final String tablePrefix;
 
   @Inject
-  public HBaseOcTableManager(CConfiguration cConf, Configuration hConf)
+  public HBaseOcTableManager(Configuration hConf)
     throws IOException {
     admin = new HBaseAdmin(hConf);
-    tablePrefix = HBaseTableUtil.getTablePrefix(cConf);
   }
 
   private String getHBaseTableName(String name) {
-    return HBaseTableUtil.getHBaseTableName(tablePrefix, name);
+    return HBaseTableUtil.getHBaseTableName(name);
   }
 
   @Override
@@ -40,7 +38,7 @@ public class HBaseOcTableManager implements DataSetManager {
 
   @Override
   public void create(String name) throws Exception {
-    if (admin.tableExists(HBaseTableUtil.getHBaseTableName(tablePrefix, name))) {
+    if (admin.tableExists(HBaseTableUtil.getHBaseTableName(name))) {
       return;
     }
     HTableDescriptor tableDescriptor = new HTableDescriptor(getHBaseTableName(name));

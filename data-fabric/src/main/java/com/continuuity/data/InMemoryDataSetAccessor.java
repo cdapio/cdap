@@ -1,15 +1,22 @@
 package com.continuuity.data;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  *
  */
-public class InMemoryDataSetAccessor implements DataSetAccessor {
+public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
+  @Inject
+  public InMemoryDataSetAccessor(@Named("DataFabricOperationExecutorConfig") CConfiguration conf) {
+    super(conf);
+  }
 
   @Override
   public DataSetClient getDataSetClient(String name, Class type) {

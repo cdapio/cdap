@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.queue.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
@@ -60,29 +61,34 @@ public class HBaseQueueAdmin implements QueueAdmin {
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
+  private String tableName;
 
   @Inject
   public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
+                         DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory) throws IOException {
     this.admin = new HBaseAdmin(hConf);
     this.cConf = cConf;
+    // todo: we have to do that because queues do not follow dataset semantic fully (yet)
+    this.tableName =
+      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace("queue", DataSetAccessor.Namespace.SYSTEM));
     this.locationFactory = locationFactory;
   }
 
   @Override
   public boolean exists(String name) throws Exception {
-    return admin.tableExists(name);
+    return admin.tableExists(tableName);
   }
 
   @Override
   public void create(String name) throws Exception {
-    byte[] tableName = Bytes.toBytes(name);
+    byte[] tableNameBytes = Bytes.toBytes(tableName);
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-    HBaseQueueUtils.createTableIfNotExists(admin, tableName, QueueConstants.COLUMN_FAMILY,
+    HBaseQueueUtils.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
                                            QueueConstants.MAX_CREATE_TABLE_WAIT,
                                            splits, createCoProcessorJar(jarDir, HBaseQueueRegionObserver.class),
                                            HBaseQueueRegionObserver.class.getName());
@@ -90,16 +96,15 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void truncate(String name) throws Exception {
-    byte[] tableName = Bytes.toBytes(name);
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
+    byte[] tableNameBytes = Bytes.toBytes(tableName);
+    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
+    admin.disableTable(tableNameBytes);
+    admin.deleteTable(tableNameBytes);
     admin.createTable(tableDescriptor);
   }
 
   @Override
   public void drop(String name) throws Exception {
-    byte[] tableName = Bytes.toBytes(name);
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
   }
@@ -179,7 +184,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
   @Override
   public void dropAll() throws Exception {
     // hack: we know that all queues are stored in one table
-    String tableName = HBaseTableUtil.getHBaseTableName(cConf, cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME));
     drop(tableName);
   }
 
@@ -187,7 +191,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public void configureInstances(QueueName queueName, long groupId, int instances) throws Exception {
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
-    String tableName = HBaseTableUtil.getHBaseTableName(cConf, cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME));
     if (!exists(tableName)) {
       create(tableName);
     }
@@ -222,7 +225,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    String tableName = HBaseTableUtil.getHBaseTableName(cConf, cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME));
     if (!exists(tableName)) {
       create(tableName);
     }
@@ -357,5 +359,9 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
 
     return mutations;
+  }
+
+  public String getTableName() {
+    return tableName;
   }
 }

@@ -1,5 +1,6 @@
 package com.continuuity.data;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -7,18 +8,21 @@ import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableClient;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableManager;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.IOException;
 
 /**
  *
  */
-public class LocalDataSetAccessor implements DataSetAccessor {
+public class LocalDataSetAccessor extends AbstractDataSetAccessor {
 
   private final LevelDBOcTableService service;
 
   @Inject
-  public LocalDataSetAccessor(LevelDBOcTableService service) {
+  public LocalDataSetAccessor(@Named("DataFabricOperationExecutorConfig") CConfiguration conf,
+                              LevelDBOcTableService service) {
+    super(conf);
     this.service = service;
   }
 

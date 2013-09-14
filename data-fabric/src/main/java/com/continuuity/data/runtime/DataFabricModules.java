@@ -55,11 +55,15 @@ public class DataFabricModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
+    CConfiguration conf = CConfiguration.create();
+    return getInMemoryModules(conf);
+  }
+
+  public Module getInMemoryModules(final CConfiguration conf) {
 
       return new AbstractModule() {
       @Override
       protected void configure() {
-        CConfiguration conf = CConfiguration.create();
         bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
         bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
         bind(OVCTableHandle.class).toInstance(MemoryOVCTableHandle.getInstance());

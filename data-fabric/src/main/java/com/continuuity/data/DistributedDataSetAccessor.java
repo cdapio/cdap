@@ -15,22 +15,21 @@ import java.io.IOException;
 /**
  *
  */
-public class DistributedDataSetAccessor implements DataSetAccessor {
-  private final CConfiguration cConf;
+public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
   private final Configuration hConf;
 
   @Inject
   public DistributedDataSetAccessor(@Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                                     @Named("HBaseOVCTableHandleHConfig") Configuration hConf)
     throws IOException {
-    this.cConf = cConf;
+    super(cConf);
     this.hConf = hConf;
   }
 
   @Override
   public DataSetClient getDataSetClient(String name, Class type) throws Exception {
     if (type == OrderedColumnarTable.class) {
-      return new HBaseOcTableClient(name, cConf, hConf);
+      return new HBaseOcTableClient(name, hConf);
     }
 
     return null;
@@ -39,7 +38,7 @@ public class DistributedDataSetAccessor implements DataSetAccessor {
   @Override
   public DataSetManager getDataSetManager(Class type) throws Exception {
     if (type == OrderedColumnarTable.class) {
-      return new HBaseOcTableManager(cConf, hConf);
+      return new HBaseOcTableManager(hConf);
     }
 
     return null;
