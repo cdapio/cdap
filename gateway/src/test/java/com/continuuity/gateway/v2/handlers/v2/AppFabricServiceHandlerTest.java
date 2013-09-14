@@ -1,29 +1,30 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
+import com.continuuity.api.Application;
+import com.continuuity.app.program.ManifestFields;
 import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import com.continuuity.weave.internal.utils.Dependencies;
+import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import junit.framework.Assert;
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 /**
  * Testing of App Fabric REST Endpoints.
@@ -33,18 +34,44 @@ public class AppFabricServiceHandlerTest {
   /**
    * Deploys and application.
    */
-  private HttpResponse deploy(String filename) throws Exception {
-    File archive = FileUtils.toFile(getClass().getResource("/" + filename));
+  private HttpResponse deploy(Class<? extends Application> application) throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
+
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
+    final String pkgName = application.getPackage().getName();
+
+    // Grab every classes under the application class package.
     try {
-      ByteStreams.copy(new FileInputStream(archive), bos);
+      Dependencies.findClassDependencies(application.getClassLoader(), new Dependencies.ClassAcceptor() {
+        @Override
+        public boolean accept(String className, URL classUrl, URL classPathUrl) {
+          try {
+            if (className.startsWith(pkgName)) {
+              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+              InputStream in = classUrl.openStream();
+              try {
+                ByteStreams.copy(in, jarOut);
+              } finally {
+                in.close();
+              }
+              return true;
+            }
+            return false;
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      }, application.getName());
     } finally {
-      bos.close();
+      jarOut.close();
     }
 
     HttpPut put = GatewayFastTestsSuite.getPUT("/v2/apps");
     put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, "api-key-example");
-    put.setHeader("X-Archive-Name", filename);
+    put.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
     put.setEntity(new ByteArrayEntity(bos.toByteArray()));
     return GatewayFastTestsSuite.PUT(put);
   }
@@ -54,7 +81,7 @@ public class AppFabricServiceHandlerTest {
    */
   @Test
   public void testDeploy() throws Exception {
-    HttpResponse response = deploy("WordCount.jar");
+    HttpResponse response = deploy(WordCount.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
@@ -63,9 +90,9 @@ public class AppFabricServiceHandlerTest {
    */
   @Test
   public void testDeleteApp() throws Exception {
-    HttpResponse response = deploy("WordCount.jar");
+    HttpResponse response = deploy(WordCount.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/apps/WordCount").getStatusLine().getStatusCode());
   }
 
   /**
@@ -73,7 +100,7 @@ public class AppFabricServiceHandlerTest {
    */
   @Test
   public void testDeleteAllApps() throws Exception {
-    HttpResponse response = deploy("WordCount.jar");
+    HttpResponse response = deploy(WordCount.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/apps").getStatusLine().getStatusCode());
   }
@@ -95,22 +122,22 @@ public class AppFabricServiceHandlerTest {
    */
   @Test
   public void testStartStopStatusOfFlow() throws Exception {
-    HttpResponse response = deploy("WordCount.jar");
+    HttpResponse response = deploy(WordCount.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     try {
       Assert.assertEquals(200,
-             GatewayFastTestsSuite.POST("/v2/apps/WordCountApp/flows/WordCountFlow/start", null)
+             GatewayFastTestsSuite.POST("/v2/apps/WordCount/flows/WordCounter/start", null)
                .getStatusLine().getStatusCode()
       );
-      Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+      Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCount", "WordCounter"));
     } finally {
       Assert.assertEquals(200,
-                          GatewayFastTestsSuite.POST("/v2/apps/WordCountApp/flows/WordCountFlow/stop", null)
+                          GatewayFastTestsSuite.POST("/v2/apps/WordCount/flows/WordCounter/stop", null)
                             .getStatusLine().getStatusCode()
       );
-      Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
-      Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
-      Assert.assertEquals(404, GatewayFastTestsSuite.DELETE("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
+      Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCount", "WordCounter"));
+      Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/apps/WordCount").getStatusLine().getStatusCode());
+      Assert.assertEquals(404, GatewayFastTestsSuite.DELETE("/v2/apps/WordCount").getStatusLine().getStatusCode());
     }
   }
 
@@ -120,23 +147,23 @@ public class AppFabricServiceHandlerTest {
   @Test
   public void testFlowHistory() throws Exception {
     try {
-      HttpResponse response = deploy("WordCount.jar");
+      HttpResponse response = deploy(WordCount.class);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       Assert.assertEquals(200,
-                          GatewayFastTestsSuite.POST("/v2/apps/WordCountApp/flows/WordCountFlow/start", null)
+                          GatewayFastTestsSuite.POST("/v2/apps/WordCount/flows/WordCounter/start", null)
                             .getStatusLine().getStatusCode());
       Assert.assertEquals(200,
-                          GatewayFastTestsSuite.POST("/v2/apps/WordCountApp/flows/WordCountFlow/stop", null)
+                          GatewayFastTestsSuite.POST("/v2/apps/WordCount/flows/WordCounter/stop", null)
                             .getStatusLine().getStatusCode());
       Assert.assertEquals(200,
-                          GatewayFastTestsSuite.POST("/v2/apps/WordCountApp/flows/WordCountFlow/start", null)
+                          GatewayFastTestsSuite.POST("/v2/apps/WordCount/flows/WordCounter/start", null)
                             .getStatusLine().getStatusCode());
       Assert.assertEquals(200,
-                          GatewayFastTestsSuite.POST("/v2/apps/WordCountApp/flows/WordCountFlow/stop", null)
+                          GatewayFastTestsSuite.POST("/v2/apps/WordCount/flows/WordCounter/stop", null)
                             .getStatusLine().getStatusCode());
-      Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/apps/WordCount").getStatusLine().getStatusCode());
 
-      response = GatewayFastTestsSuite.GET("/v2/apps/WordCountApp/flows/WordCountFlow/history");
+      response = GatewayFastTestsSuite.GET("/v2/apps/WordCount/flows/WordCounter/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
       List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>(){}.getType());
@@ -164,9 +191,9 @@ public class AppFabricServiceHandlerTest {
   @Test
   public void testRunnableSpecification() throws Exception {
     try {
-      HttpResponse response = deploy("WordCount.jar");
+      HttpResponse response = deploy(WordCount.class);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      response = GatewayFastTestsSuite.GET("/v2/apps/WordCountApp/flows/WordCountFlow");
+      response = GatewayFastTestsSuite.GET("/v2/apps/WordCount/flows/WordCounter");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
       Assert.assertNotNull(s);
@@ -181,7 +208,7 @@ public class AppFabricServiceHandlerTest {
   @Test
   public void testUnRecoverableReset() throws Exception {
     try {
-      HttpResponse response = deploy("WordCount.jar");
+      HttpResponse response = deploy(WordCount.class);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       response = GatewayFastTestsSuite.DELETE("/v2/unrecoverable/reset");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());

@@ -18,6 +18,7 @@
 
 package com.continuuity.examples.counttokens;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -36,6 +37,7 @@ public class TokenCounter extends AbstractFlowlet {
   @UseDataSet(CountTokens.TABLE_NAME)
   private KeyValueTable counters;
 
+  @ProcessInput
   public void process(String token) throws OperationException {
     LOG.debug(this.getContext().getName() + ": Received and " +
         "incrementing count for token " + token);

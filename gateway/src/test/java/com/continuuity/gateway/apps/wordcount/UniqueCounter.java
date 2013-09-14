@@ -15,32 +15,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.examples.countoddandeven;
+package com.continuuity.gateway.apps.wordcount;
 
-import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 /**
- * Based on the whether number is odd or even it puts the number on
- * different streams.
+ *
  */
-public class OddOrEven extends AbstractFlowlet {
-
-  @Output("evenNumbers")
-  private OutputEmitter<Integer> evenOutput;
-
-  @Output("oddNumbers")
-  private OutputEmitter<Integer> oddOutput;
+public class UniqueCounter extends AbstractFlowlet {
+  @UseDataSet("uniqueCount")
+  private UniqueCountTable uniqueCountTable;
 
   @ProcessInput
-  public void process(Integer number) {
-    if (number.intValue() % 2 == 0) {
-      evenOutput.emit(number);
-    } else {
-      oddOutput.emit(number);
-    }
+  public void process(String word) throws OperationException {
+    this.uniqueCountTable.updateUniqueCount(word);
   }
 }
-

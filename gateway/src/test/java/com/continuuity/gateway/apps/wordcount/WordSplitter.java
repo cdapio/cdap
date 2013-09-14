@@ -15,7 +15,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.examples.wordcount;
+package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;

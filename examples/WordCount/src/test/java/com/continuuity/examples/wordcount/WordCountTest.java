@@ -17,11 +17,11 @@
 
 package com.continuuity.examples.wordcount;
 
-import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
+import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
@@ -41,7 +41,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Word Count main test.
  */
-public class WordCountTest extends AppFabricTestBase {
+public class WordCountTest extends ReactorTestBase {
 
   static Type stringMapType = new TypeToken<Map<String, String>>() {
   }.getType();
