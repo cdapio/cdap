@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime.batch.hadoop;
+package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -20,6 +20,7 @@ import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -31,8 +32,6 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.google.common.base.Function;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
@@ -44,7 +43,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -98,8 +96,6 @@ public class MapReduceProgramRunnerTest {
   public void testWordCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
-    // transaction manager is a "service" and must be started
-    injector.getInstance(InMemoryTransactionManager.class).init();
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
@@ -121,7 +117,7 @@ public class MapReduceProgramRunnerTest {
                                                                dataSetInstantiator.getTransactionAware(),
                                                                txSystemClient);
     proxy.setTransactionAgent(txAgent);
-    KeyValueTable jobConfigTable = (KeyValueTable) dataSetInstantiator.getDataSet("jobConfig");
+    KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
 
     txAgent.start();
 
@@ -132,7 +128,10 @@ public class MapReduceProgramRunnerTest {
 
     runProgram(app, AppWithMapReduce.ClassicWordCount.class);
 
-    File outputFile = outputDir.listFiles()[0];
+    File[] outputFiles = outputDir.listFiles();
+    Assert.assertNotNull("no output files found", outputFiles);
+    Assert.assertTrue("no output files found", outputFiles.length > 0);
+    File outputFile = outputFiles[0];
     int lines = 0;
     BufferedReader reader = new BufferedReader(new FileReader(outputFile));
     try {
@@ -153,6 +152,18 @@ public class MapReduceProgramRunnerTest {
   @Test
   public void testJobSuccess() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
+
+    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
+    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
+                                                  app.getAppSpecLoc().getSpecification().getName());
+
+    TransactionProxy proxy = new TransactionProxy();
+    DataSetInstantiator dataSetInstantiator =
+      new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, dataSetAccessor, opCtx),
+                              proxy,
+                              getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
@@ -169,19 +180,17 @@ public class MapReduceProgramRunnerTest {
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(new Function<Object, Object>() {
-      @Nullable
-      @Override
-      public Object apply(@Nullable Object input) {
-        try {
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws OperationException {
           Map<String, Long> expected = Maps.newHashMap();
           // note: not all records add to the sum since filter by tag="tag1" and ts={1..3} is used
           expected.put("tag1", 18L);
           expected.put("tag2", 3L);
           expected.put("tag3", 18L);
 
-          List<TimeseriesTable.Entry> agg = null;
-          agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
+          List<TimeseriesTable.Entry> agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
           Assert.assertEquals(expected.size(), agg.size());
           for (TimeseriesTable.Entry entry : agg) {
             String tag = Bytes.toString(entry.getTags()[0]);
@@ -192,13 +201,8 @@ public class MapReduceProgramRunnerTest {
                                    beforeSubmitTable.read(Bytes.toBytes("beforeSubmit")));
           Assert.assertArrayEquals(Bytes.toBytes("onFinish:done"),
                                    onFinishTable.read(Bytes.toBytes("onFinish")));
-
-          return null;
-        } catch (OperationException e) {
-          throw Throwables.propagate(e);
         }
-      }
-    }, null);
+      });
   }
 
   // TODO: this tests failure in Map tasks. We also need to test: failure in Reduce task, kill of a job by user.
@@ -229,11 +233,10 @@ public class MapReduceProgramRunnerTest {
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(new Function<Object, Object>() {
-      @Nullable
-      @Override
-      public Object apply(@Nullable Object input) {
-        try {
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws OperationException {
           // data should be rolled back todo: test that partially written is rolled back too
           Assert.assertTrue(table.read(AggregateMetricsByTag.BY_TAGS, start, stop).isEmpty());
 
@@ -242,13 +245,8 @@ public class MapReduceProgramRunnerTest {
                                    beforeSubmitTable.read(Bytes.toBytes("beforeSubmit")));
           Assert.assertArrayEquals(Bytes.toBytes("onFinish:done"),
                                    onFinishTable.read(Bytes.toBytes("onFinish")));
-
-          return null;
-        } catch (OperationException e) {
-          throw Throwables.propagate(e);
-        }
       }
-    }, null);
+    });
   }
 
   private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
@@ -256,18 +254,12 @@ public class MapReduceProgramRunnerTest {
                                  final TimeseriesTable table,
                                  final boolean withBadData) throws TransactionFailureException {
     DefaultTransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
-    executor.execute(new Function<Object, Object>() {
-      @Nullable
+    executor.execute(new TransactionExecutor.Subroutine() {
       @Override
-      public Object apply(@Nullable Object ignored) {
-        try {
-          fillTestInputData(table, withBadData);
-        } catch (OperationException e) {
-          throw Throwables.propagate(e);
-        }
-        return null;
+      public void apply() throws OperationException {
+        fillTestInputData(table, withBadData);
       }
-    }, null);
+    });
   }
 
   private void fillTestInputData(TimeseriesTable table, boolean withBadData) throws OperationException {

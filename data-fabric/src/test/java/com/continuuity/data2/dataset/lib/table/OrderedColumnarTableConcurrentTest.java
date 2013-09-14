@@ -4,20 +4,18 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
-import com.google.common.base.Function;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Map;
 
 /**
- * This test emulates usage table by multiple concurrent clients
+ * This test emulates usage table by multiple concurrent clients.
  * @param <T> table type
  */
 public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumnarTable>
@@ -83,17 +81,11 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
       final T table = getTable("myTable");
       DefaultTransactionExecutor txExecutor =
         txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) table));
-      txExecutor.execute(new Function<Object, Object>() {
-        @Nullable
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
         @Override
-        public Object apply(@Nullable Object input) {
-          try {
-            verifyIncrements();
-            verifyAppends();
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-          return null;
+        public void apply() throws Exception {
+          verifyIncrements();
+          verifyAppends();
         }
 
         private void verifyAppends() throws Exception {
@@ -118,10 +110,10 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
                                                                   new byte[][]{COLUMN_TO_INCREMENT});
           Assert.assertFalse(result.isEmpty());
           byte[] val = result.getValue().get(COLUMN_TO_INCREMENT);
-          long sum1_100 = ((1 + 99) * 99 / 2);
-          Assert.assertEquals(incrementingClients.length * sum1_100, Bytes.toLong(val));
+          long sum1to100 = ((1 + 99) * 99 / 2);
+          Assert.assertEquals(incrementingClients.length * sum1to100, Bytes.toLong(val));
         }
-      }, null);
+      });
 
     } finally {
       getTableManager().drop("myTable");
@@ -144,20 +136,14 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
         DefaultTransactionExecutor txExecutor =
           txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) table));
         try {
-          txExecutor.execute(new Function<Object, Object>() {
-            @Nullable
+          txExecutor.execute(new TransactionExecutor.Subroutine() {
             @Override
-            public Object apply(@Nullable Object input) {
-              try {
-                table.increment(ROW_TO_INCREMENT,
-                                new byte[][]{COLUMN_TO_INCREMENT},
-                                new long[]{(long) executed[0]});
-              } catch (Exception e) {
-                throw Throwables.propagate(e);
-              }
-              return null;
+            public void apply() throws Exception {
+              table.increment(ROW_TO_INCREMENT,
+                              new byte[][]{COLUMN_TO_INCREMENT},
+                              new long[]{(long) executed[0]});
             }
-          }, null);
+          });
         } catch (Throwable t) {
           // do nothing: we'll retry execution
           t.printStackTrace();
@@ -188,19 +174,12 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
           final byte[] row2 = ROWS_TO_APPEND_TO[i * 2 + 1];
           boolean appended = false;
           while (!appended) {
-            Function<Object, Object> func;
             try {
-              func = new Function<Object, Object>() {
-                @Nullable
+              txExecutor.execute(new TransactionExecutor.Subroutine() {
                 @Override
-                public Object apply(@Nullable Object input) {
-                  try {
-                    appendColumn(row1);
-                    appendColumn(row2);
-                  } catch (Exception e) {
-                    throw Throwables.propagate(e);
-                  }
-                  return null;
+                public void apply() throws Exception {
+                  appendColumn(row1);
+                  appendColumn(row2);
                 }
 
                 private void appendColumn(byte[] row) throws Exception {
@@ -209,8 +188,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
                   byte[] columnToAppend = Bytes.toBytes("column" + columnsCount);
                   table.put(row, new byte[][]{columnToAppend}, new byte[][]{Bytes.toBytes("foo" + columnsCount)});
                 }
-              };
-              txExecutor.execute(func, null);
+              });
             } catch (Throwable t) {
               // do nothing: we'll retry
               appended = false;

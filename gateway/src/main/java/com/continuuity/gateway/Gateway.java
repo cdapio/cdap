@@ -327,7 +327,10 @@ public class Gateway implements Server {
     LOG.info("Setting Operations Executor to " +
                executor.getClass().getName() + ".");
     this.executor = executor;
-    this.mds = new MetadataService(executor);
+  }
+
+  public void setMetaDataStore(MetaDataStore store) {
+    this.metaDataStore = store;
   }
 
   public void setDiscoveryServiceClient(
@@ -359,7 +362,7 @@ public class Gateway implements Server {
     LOG.info("Configuring Gateway..");
 
     if (this.mds == null) {
-      this.mds = new MetadataService(executor);
+      this.mds = new MetadataService(this.metaDataStore);
     }
 
     if (storeFactory != null) {

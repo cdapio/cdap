@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime.batch.hadoop;
+package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;

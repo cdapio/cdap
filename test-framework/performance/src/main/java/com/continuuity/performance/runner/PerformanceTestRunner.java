@@ -9,7 +9,6 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.store.StoreFactory;
@@ -18,9 +17,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
@@ -397,7 +395,6 @@ public final class PerformanceTestRunner {
               binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
               binder.bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
               binder.bind(AppFabricService.Iface.class).toInstance(appFabricServer);
-              binder.bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
               binder.bind(StoreFactory.class).to(MDSStoreFactory.class);
               binder.bind(AuthToken.class).toInstance(TestHelper.DUMMY_AUTH_TOKEN);
             }

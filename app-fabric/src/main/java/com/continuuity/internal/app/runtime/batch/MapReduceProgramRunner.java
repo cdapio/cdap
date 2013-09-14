@@ -23,6 +23,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -36,7 +37,6 @@ import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.ApplicationBundler;
 import com.continuuity.weave.internal.RunIds;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -61,7 +61,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Runs {@link com.continuuity.api.batch.MapReduce} programs
+ * Runs {@link com.continuuity.api.batch.MapReduce} programs.
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
@@ -259,18 +259,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
     throws TransactionFailureException {
     DefaultTransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
-    txExecutor.execute(new Function() {
-      @Nullable
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
-      public Object apply(@Nullable Object input) {
-        try {
-          job.beforeSubmit(context);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-        return null;
+      public void apply() throws Exception {
+        job.beforeSubmit(context);
       }
-    }, null);
+    });
   }
 
   private void onFinish(final MapReduce job,
@@ -280,18 +274,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
     throws TransactionFailureException {
     DefaultTransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
-    txExecutor.execute(new Function() {
-      @Nullable
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
-      public Object apply(@Nullable Object input) {
-        try {
-          job.onFinish(succeeded, context);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-        return null;
+      public void apply() throws Exception {
+        job.onFinish(succeeded, context);
       }
-    }, null);
+    });
   }
 
   private void reportStats(BasicMapReduceContext context) throws IOException, InterruptedException {

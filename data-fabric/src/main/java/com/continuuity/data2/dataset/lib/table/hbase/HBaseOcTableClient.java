@@ -183,8 +183,8 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
       return unwrapDeletes(rowMap);
     }
 
-//   todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
-//         on the other hand, looks like the above suggestion WILL NOT WORK
+    // todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
+    //       on the other hand, looks like the above suggestion WILL NOT WORK
     get.setMaxVersions(tx.excludesSize() + 1);
 
     // todo: push filtering logic to server

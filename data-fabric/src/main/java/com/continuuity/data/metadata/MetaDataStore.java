@@ -12,7 +12,8 @@ import java.util.Map;
  */
 public interface MetaDataStore {
 
-  public final int DEFAULT_RETRIES_ON_CONFLICT = 3;
+  public static final int DEFAULT_RETRIES_ON_CONFLICT = 3;
+  public static final String META_DATA_TABLE_NAME = "meta";
 
   /**
    * Adds a new entry with conflict resolution.
