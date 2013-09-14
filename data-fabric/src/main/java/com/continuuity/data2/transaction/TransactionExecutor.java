@@ -1,5 +1,7 @@
 package com.continuuity.data2.transaction;
 
+import java.util.concurrent.Callable;
+
 /**
  * Utility that wraps the execution of a function into the context of a transaction.
  */
@@ -47,28 +49,17 @@ public interface TransactionExecutor {
   <I, O> O execute(Function<I, O> function, I input) throws TransactionFailureException;
 
   /**
-   * Execute a procedure under transactional semantics. A transaction is started  and all datasets
-   * are initialized with the transaction. Then the passed procedure is executed and the transaction
-   * is committed. If any exception is caught, the transaction is aborted and the original exception is
-   * rethrown, wrapped into a TransactionFailureException. If the transaction fails due to a write conflict,
-   * a TransactionConflictException is thrown.
-   * @param procedure the procedure to execute
-   * @param input the input parameter for the procedure
-   * @param <I> the input type of the procedure
-   * @throws TransactionConflictException if there is a write conflict with another transaction.
-   * @throws TransactionFailureException if any exception is caught, be it from the procedure or from the datasets.
+   * Like {@link #execute(Function, Object)} but without a return value.
    */
   <I> void execute(Procedure<I> procedure, I input) throws TransactionFailureException;
 
   /**
-   * Execute a subroutine under transactional semantics. A transaction is started  and all datasets
-   * are initialized with the transaction. Then the passed subroutine is executed and the transaction
-   * is committed. If any exception is caught, the transaction is aborted and the original exception is
-   * rethrown, wrapped into a TransactionFailureException. If the transaction fails due to a write conflict,
-   * a TransactionConflictException is thrown.
-   * @param subroutine the function to execute
-   * @throws TransactionConflictException if there is a write conflict with another transaction.
-   * @throws TransactionFailureException if any exception is caught, be it from the subroutine or from the datasets.
+   * Like {@link #execute(Function, Object)} but the callable has no argument.
+   */
+  <O> O execute(Callable<O> callable) throws TransactionFailureException;
+
+  /**
+   * Like {@link #execute(Function, Object)} but without argument or return value.
    */
   void execute(Subroutine subroutine) throws TransactionFailureException;
 

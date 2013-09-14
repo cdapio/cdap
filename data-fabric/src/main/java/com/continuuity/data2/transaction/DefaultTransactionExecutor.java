@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.concurrent.Callable;
 
 /**
  * Utility class that encapsulates the transaction life cycle over a given set of
@@ -58,6 +59,16 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
         return null;
       }
     }, input);
+  }
+
+  @Override
+  public <O> O execute(final Callable<O> callable) throws TransactionFailureException {
+    return execute(new Function<Void, O>() {
+      @Override
+      public O apply(Void input) throws Exception {
+        return callable.call();
+      }
+    }, null);
   }
 
   @Override

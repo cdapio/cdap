@@ -90,29 +90,54 @@ public class Serializing2MetaDataStore implements MetaDataStore {
 
   @Override
   public void add(OperationContext context, MetaDataEntry entry) throws OperationException {
-    add(context, entry, true);
+    add(context, entry, true); // resolve = true
   }
 
   @Override
   public void add(OperationContext context, MetaDataEntry entry, boolean resolve) throws OperationException {
-    write(context, null, entry, false, resolve);
+    write(context, null, entry, false, resolve); // expected = null, isUpdate = false
   }
 
   @Override
   public void update(OperationContext context, MetaDataEntry entry) throws OperationException {
-    update(context, entry, true);
+    update(context, entry, true); // resolve = true
   }
 
   @Override
   public void update(OperationContext context, MetaDataEntry entry, boolean resolve) throws OperationException {
-    write(context, null, entry, true, resolve);
+    write(context, null, entry, true, resolve); // expected = null, isUpdate = true
   }
 
   @Override
   public void swap(OperationContext context, MetaDataEntry expected, MetaDataEntry entry) throws OperationException {
-    write(context, expected, entry, true, true);
+    write(context, expected, entry, true, true); // update = true, resolve = true
   }
 
+  /**
+   * Common method to implement add, update and swap. Takes a new entry and writes it to the meta data store.
+   * @param expected If non-null, this method will only succeed if the current entry for the same meta data matches
+   *                 this entry. This can be used for optimistic concurrency control.
+   * @param entry The entry to write.
+   * @param isUpdate Whether this is an update or an insert. If true, and there is already an existing entry for the
+   *                 same meta data, this method will throw an exception.
+   * @param resolve Whether to resolve conflicts. This can happen in three ways:
+   *                <ol>
+   *                  <li>the transaction fails with write conflict, but the conflicting transaction wrote the same
+   *                    value</li>
+   *                  <li>for an insert (isUpdate = false), if there is already a value, but it matches the value
+   *                    to write</li>
+   *                  <li>for a swap, if the existing value does not match expected but matches the value to
+   *                    write</li>
+   *                </ol>
+   *                All three cases happen if multiple clients attempt the same update concurrently.
+   * @throws OperationException with status code:
+   * <ul>
+   *   <li>ENTRY_EXISTS if isUpdate is false and an entry already exists</li>
+   *   <li>ENTRY_NOT_FOUND if isUpdate is true and there is no existing entry</li>
+   *   <li>ENTRY_DOES_NOT_MATCH if expected is non-null and does not match the existing entry</li>
+   *   <li>WRITE_CONFLICT if the transaction fails with a write conflict</li>
+   * </ul>
+   */
   private void write(@SuppressWarnings("unused") OperationContext context,
                      final MetaDataEntry expected, final MetaDataEntry entry,
                      final boolean isUpdate, final boolean resolve)
