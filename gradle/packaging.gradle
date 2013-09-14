@@ -144,6 +144,7 @@ packaging {
                    '--url': 'http://www.continuuity.com/products',
                    '--architecture': 'all',
                    '--version': "${getPomVersion()}",
+                   '--deb-user': 'root',
                    '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
                    '--before-remove': "$rootProject.projectDir/distributions/src/debian/scripts/prerm",
                    '--after-remove': "$rootProject.projectDir/distributions/src/debian/scripts/postrm",
