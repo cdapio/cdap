@@ -66,26 +66,6 @@ public abstract class TransactionSystemTest {
     Assert.assertTrue(client5.canCommit(tx5, $(C3)));
   }
 
-  // NOTE: this behavior is not set in stone, we do not call canCommit twice anywhere. Can be changed in future
-  @Test
-  public void testCanCommitTwice() {
-    TransactionSystemClient client = getClient();
-    Transaction tx1 = client.startShort();
-    Transaction tx2 = client.startShort();
-    Transaction tx3 = client.startShort();
-
-    // this can be called twice, every time change set will be updated
-    Assert.assertTrue(client.canCommit(tx1, $(C1, C2)));
-    Assert.assertTrue(client.canCommit(tx1, $(C2, C3)));
-    Assert.assertTrue(client.commit(tx1));
-
-    // changes of tx1 were updated, so no conflicts with C1 or C4
-    Assert.assertTrue(client.canCommit(tx2, $(C1, C4)));
-
-    // changes of tx1 were updated, so no conflicts with C1 or C4
-    Assert.assertFalse(client.canCommit(tx3, $(C3)));
-  }
-
   @Test
   public void testCommitTwice() {
     TransactionSystemClient client = getClient();

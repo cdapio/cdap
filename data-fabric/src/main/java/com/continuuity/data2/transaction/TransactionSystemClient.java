@@ -33,7 +33,8 @@ public interface TransactionSystemClient {
   // NOTE: there should be time constraint on how long does it take to commit changes by the client after this operation
   //       is submitted so that we can cleanup related resources
   // NOTE: as of now you can call this method multiple times, each time the changeSet of tx will be updated. Not sure
-  //       if we can call it a feature or a side-affect of implementation.
+  //       if we can call it a feature or a side-affect of implementation. It makes more sense to append changeset, but
+  //       before we really need it we don't do it because it will slow down tx manager throughput.
 
   /**
    * Checks if transaction with the set of changes can be committed. E.g. it can check conflicts with other changes and

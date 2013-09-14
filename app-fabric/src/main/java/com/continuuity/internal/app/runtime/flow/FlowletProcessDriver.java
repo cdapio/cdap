@@ -9,7 +9,7 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data2.transaction.TransactionManager;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Function;
@@ -204,15 +204,15 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
 
           // Begin transaction and dequeue
-          TransactionAgent txAgent = dataFabricFacade.createAndUpdateTransactionAgentProxy();
+          TransactionManager txManager = dataFabricFacade.createTransactionManager();
           try {
-            txAgent.start();
+            txManager.start();
 
             InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
             if (!input.needProcess()) {
               entry.backOff();
               // End the transaction if nothing in the queue
-              txAgent.finish();
+              txManager.finish();
               continue;
             }
 
@@ -227,7 +227,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
               // Call the process method and commit the transaction
               ProcessMethod.ProcessResult result =
                 processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
-              postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txAgent, input,
+              postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txManager, input,
                           result);
             } finally {
               invoked = true;
@@ -239,7 +239,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           } catch (Throwable t) {
             LOG.error("Unexpected exception: {}", flowletContext, t);
             try {
-              txAgent.abort();
+              txManager.abort();
             } catch (OperationException e) {
               LOG.error("Fail to abort transaction: {}", flowletContext, e);
             }
@@ -272,7 +272,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     };
   }
 
-  private void postProcess(Executor executor, final ProcessMethodCallback callback, final TransactionAgent txAgent,
+  private void postProcess(Executor executor, final ProcessMethodCallback callback, final TransactionManager txManager,
                            final InputDatum input, final ProcessMethod.ProcessResult result) {
     executor.execute(new Runnable() {
       @Override
@@ -285,24 +285,21 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             if (input.getRetry() > 0) {
               input.reclaim();
             }
-            txAgent.finish();
+            txManager.finish();
           } else {
             failureCause = result.getCause();
-            txAgent.abort();
+            txManager.abort();
           }
         } catch (OperationException e) {
           LOG.error("Transaction operation failed: {}", e.getMessage(), e);
           failureCause = e;
           try {
             if (result.isSuccess()) {
-              txAgent.abort();
+              txManager.abort();
             }
           } catch (OperationException ex) {
             LOG.error("Fail to abort transaction: {}", inputContext, ex);
           }
-        } finally {
-          // we want to emit metrics after every retry after finish() so that deferred operations are also logged
-          flowletContext.getSystemMetrics().gauge("store.ops", txAgent.getSucceededCount());
         }
 
         if (failureCause == null) {
@@ -320,10 +317,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     return new InputAcknowledger() {
       @Override
       public void ack() throws OperationException {
-        TransactionAgent txAgent = dataFabricFacade.createTransactionAgent();
-        txAgent.start();
+        TransactionManager txManager = dataFabricFacade.createTransactionManager();
+        txManager.start();
         input.reclaim();
-        txAgent.finish();
+        txManager.finish();
       }
     };
   }
@@ -350,21 +347,21 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         hasRetry = true;
         ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
 
-        TransactionAgent txAgent = dataFabricFacade.createAndUpdateTransactionAgentProxy();
+        TransactionManager txManager = dataFabricFacade.createTransactionManager();
         try {
-          txAgent.start();
+          txManager.start();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
           flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", input.size());
 
           // Call the process method and commit the transaction
           ProcessMethod.ProcessResult result =
             processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
-          postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txAgent, input, result);
+          postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txManager, input, result);
 
         } catch (Throwable t) {
           LOG.error("Unexpected exception: {}", flowletContext, t);
           try {
-            txAgent.abort();
+            txManager.abort();
           } catch (OperationException e) {
             LOG.error("Fail to abort transaction: {}", flowletContext, e);
           }

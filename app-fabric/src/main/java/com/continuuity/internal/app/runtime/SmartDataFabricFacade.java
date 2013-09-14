@@ -3,20 +3,16 @@ package com.continuuity.internal.app.runtime;
 import com.continuuity.app.program.Program;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SmartTransactionAgent;
-import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -28,30 +24,24 @@ import com.google.inject.assistedinject.Assisted;
 import java.io.IOException;
 
 /**
- * A {@link DataFabricFacade} that will create a new {@link SmartTransactionAgent} every time
- * when the {@link #createAndUpdateTransactionAgentProxy} method is called.
- * Also the newly created {@link TransactionAgent} would be set into the given {@link TransactionProxy} instance.
+ * TODO
  */
 public final class SmartDataFabricFacade implements DataFabricFacade {
 
-  private final OperationExecutor opex;
   private final Program program;
-  private final TransactionProxy transactionProxy;
   private final DataSetInstantiator dataSetContext;
   private final QueueClientFactory queueClientFactory;
 
   private final TransactionSystemClient txSystemClient;
 
   @Inject
-  public SmartDataFabricFacade(OperationExecutor opex, LocationFactory locationFactory,
+  public SmartDataFabricFacade(LocationFactory locationFactory,
                                TransactionSystemClient txSystemClient, DataSetAccessor dataSetAccessor,
                                QueueClientFactory queueClientFactory, @Assisted Program program) {
-    this.opex = opex;
     this.program = program;
-    this.transactionProxy = new TransactionProxy();
     this.txSystemClient = txSystemClient;
     this.queueClientFactory = queueClientFactory;
-    this.dataSetContext = createDataSetContext(program, opex, locationFactory, dataSetAccessor, transactionProxy);
+    this.dataSetContext = createDataSetContext(program, locationFactory, dataSetAccessor);
   }
 
   @Override
@@ -60,17 +50,8 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public TransactionAgent createAndUpdateTransactionAgentProxy() {
-    OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
-    TransactionAgent agent = new SmartTransactionAgent(opex, ctx, dataSetContext.getTransactionAware(), txSystemClient);
-    transactionProxy.setTransactionAgent(agent);
-    return agent;
-  }
-
-  @Override
-  public TransactionAgent createTransactionAgent() {
-    OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
-    return new SmartTransactionAgent(opex, ctx, dataSetContext.getTransactionAware(), txSystemClient);
+  public TransactionManager createTransactionManager() {
+    return new TransactionManager(txSystemClient, dataSetContext.getTransactionAware());
   }
 
   @Override
@@ -99,14 +80,11 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   }
 
   private DataSetInstantiator createDataSetContext(Program program,
-                                                   OperationExecutor opex,
                                                    LocationFactory locationFactory,
-                                                   DataSetAccessor dataSetAccessor,
-                                                   TransactionProxy proxy) {
+                                                   DataSetAccessor dataSetAccessor) {
     try {
-      OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
-      DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, ctx);
-      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, proxy,
+      DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
+      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric,
                                                                         program.getMainClass().getClassLoader());
       dataSetInstantiator.setDataSets(ImmutableList.copyOf(program.getSpecification().getDataSets().values()));
       return dataSetInstantiator;

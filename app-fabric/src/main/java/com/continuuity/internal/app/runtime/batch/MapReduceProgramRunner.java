@@ -376,10 +376,15 @@ public class MapReduceProgramRunner implements ProgramRunner {
       try {
         try {
           if (success) {
-            // aborting long running tx: no need to do rollbacks, etc.
-            txSystemClient.commit(tx);
-          } else {
             // committing long running tx: no need to commit datasets, as they were committed in external processes
+            // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
+            // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
+            if (!txSystemClient.commit(tx)) {
+              LOG.warn("Mapreduce job transaction failed to commit");
+              success = false;
+            }
+          } else {
+            // aborting long running tx: no need to do rollbacks, etc.
             txSystemClient.abort(tx);
           }
         } finally {

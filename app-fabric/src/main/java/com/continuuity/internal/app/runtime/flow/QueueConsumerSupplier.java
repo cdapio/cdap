@@ -5,9 +5,9 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.transaction.TransactionManager;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -74,14 +74,14 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer>, Closeable
       if (consumer != null && consumer instanceof Closeable) {
         // Call close in a new transaction.
         // TODO (terence): Actually need to coordinates with other flowlets to drain the queue.
-        TransactionAgent txAgent = dataFabricFacade.createTransactionAgent();
-        txAgent.start();
+        TransactionManager txManager = dataFabricFacade.createTransactionManager();
+        txManager.start();
         try {
           ((Closeable) consumer).close();
-          txAgent.finish();
+          txManager.finish();
         } catch (OperationException e) {
           LOG.warn("Fail to commit transaction when closing consumer.");
-          txAgent.abort();
+          txManager.abort();
         }
       }
     } catch (Exception e) {
