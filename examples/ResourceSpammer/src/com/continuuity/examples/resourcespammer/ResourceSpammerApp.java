@@ -19,7 +19,6 @@ package com.continuuity.examples.resourcespammer;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.data.dataset.KeyValueTable;
 
 /**

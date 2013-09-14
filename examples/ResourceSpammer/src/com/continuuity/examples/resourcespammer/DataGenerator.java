@@ -18,20 +18,23 @@
 package com.continuuity.examples.resourcespammer;
 
 import com.continuuity.api.annotation.Output;
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
+import com.continuuity.api.annotation.Tick;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
-public class DataGenerator extends AbstractGeneratorFlowlet {
+public class DataGenerator extends AbstractFlowlet {
   @Output("out")
   private OutputEmitter<Integer> randomOutput;
 
   private final Random random = new Random();
 
+  @Tick(delay = 100L, unit = TimeUnit.MILLISECONDS)
   public void generate() throws InterruptedException {
     Integer randomNumber = new Integer(this.random.nextInt());
     randomOutput.emit(randomNumber);
