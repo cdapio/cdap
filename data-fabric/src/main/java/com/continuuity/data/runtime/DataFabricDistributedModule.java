@@ -50,8 +50,7 @@ public class DataFabricDistributedModule extends AbstractModule {
    * Create a module with default configuration for HBase and Continuuity.
    */
   public DataFabricDistributedModule() {
-    this.conf = loadConfiguration();
-    this.hbaseConf = HBaseConfiguration.create();
+    this(CConfiguration.create(), HBaseConfiguration.create());
   }
 
   /**
@@ -59,8 +58,7 @@ public class DataFabricDistributedModule extends AbstractModule {
    * and defaults for Continuuity.
    */
   public DataFabricDistributedModule(Configuration conf) {
-    this.hbaseConf = new Configuration(conf);
-    this.conf = loadConfiguration();
+    this(CConfiguration.create(), conf);
   }
 
   /**
@@ -68,20 +66,15 @@ public class DataFabricDistributedModule extends AbstractModule {
    * be used both for HBase and for Continuuity.
    */
   public DataFabricDistributedModule(CConfiguration conf) {
-    this.hbaseConf = new Configuration();
-    this.conf = conf;
+    this(conf, new Configuration());
   }
 
-  private CConfiguration loadConfiguration() {
-    @SuppressWarnings("UnnecessaryLocalVariable") CConfiguration conf = CConfiguration.create();
-
-    // this expects the port and number of threads for the opex service
-    // - data.opex.server.port <int>
-    // - data.opex.server.threads <int>
-    // this expects the zookeeper quorum for continuuity and for hbase
-    // - zookeeper.quorum host:port,...
-    // - hbase.zookeeper.quorum host:port,...
-    return conf;
+  /**
+   * Create a module with custom configuration for HBase and Continuuity.
+   */
+  public DataFabricDistributedModule(CConfiguration conf, Configuration hbaseConf) {
+    this.conf = conf;
+    this.hbaseConf = hbaseConf;
   }
 
   @Override
