@@ -61,7 +61,7 @@ public class MDSBasedStoreTest {
     metadataService = TestHelper.getInjector().getInstance(MetadataService.Iface.class);
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
 
-    // cleanups data
+    // clean up data
     MetaDataStore mds = TestHelper.getInjector().getInstance(MetaDataStore.class);
     for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
       mds.clear(new OperationContext(account), account, null);

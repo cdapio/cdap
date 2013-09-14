@@ -66,8 +66,6 @@ public class MapReduceProgramRunnerTest {
   public void testWordCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
-    // transaction manager is a "service" and must be started
-    injector.getInstance(InMemoryTransactionManager.class).init();
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
@@ -122,7 +120,6 @@ public class MapReduceProgramRunnerTest {
   public void testTimeSeriesRecordsCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
-    injector.getInstance(InMemoryTransactionManager.class).init();
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
