@@ -107,7 +107,7 @@ public class DataSetTest extends DataSetTestBase {
     }
   }
 
-  // tests that nested tables inside datasets use the name of the top-level dataset as the metric name
+  // tests that nested datasets inside dataset use the name of the top-level dataset as the metric name
   @Test
   public void testDataSetInstantiationWithMetricName() throws OperationException {
     // setup a dummy opex, transaction proxy and instantiator

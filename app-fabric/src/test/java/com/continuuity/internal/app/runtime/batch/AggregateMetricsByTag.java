@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime.batch.hadoop;
+package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
@@ -32,7 +32,11 @@ public class AggregateMetricsByTag {
 
     public void map(byte[] key, TimeseriesTable.Entry value, Context context) throws IOException, InterruptedException {
       for (byte[] tag : value.getTags()) {
-        context.write(new BytesWritable(tag), new LongWritable(Bytes.toLong(value.getValue())));
+        long val = Bytes.toLong(value.getValue());
+        if (55L == val) {
+          throw new RuntimeException("Intentional exception: someone on purpose added bad data as input");
+        }
+        context.write(new BytesWritable(tag), new LongWritable(val));
       }
     }
 

@@ -40,7 +40,7 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
     // agent)
     try {
       mrContext.flushOperations();
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.error("Failed to flush operations at the end of reducer of " + mrContext.toString());
       throw Throwables.propagate(e);
     } finally {
