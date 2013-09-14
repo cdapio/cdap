@@ -37,6 +37,35 @@ public abstract class TransactionSystemTest {
     Assert.assertFalse(client2.commit(tx2));
   }
 
+  @Test
+  public void testMultipleCommitsAtSameTime() {
+    // We want to check that if two txs finish at same time (wrt tx manager) they do not overwrite changesets of each
+    // other in tx manager used for conflicts detection (we had this bug)
+    // NOTE: you don't have to use multiple clients for that
+    TransactionSystemClient client1 = getClient();
+    TransactionSystemClient client2 = getClient();
+    TransactionSystemClient client3 = getClient();
+    TransactionSystemClient client4 = getClient();
+    TransactionSystemClient client5 = getClient();
+
+    Transaction tx1 = client1.startShort();
+    Transaction tx2 = client2.startShort();
+    Transaction tx3 = client3.startShort();
+    Transaction tx4 = client4.startShort();
+    Transaction tx5 = client5.startShort();
+
+    Assert.assertTrue(client1.canCommit(tx1, $(C1)));
+    Assert.assertTrue(client1.commit(tx1));
+
+    Assert.assertTrue(client2.canCommit(tx2, $(C2)));
+    Assert.assertTrue(client2.commit(tx2));
+
+    // verifying conflicts detection
+    Assert.assertFalse(client3.canCommit(tx3, $(C1)));
+    Assert.assertFalse(client4.canCommit(tx4, $(C2)));
+    Assert.assertTrue(client5.canCommit(tx5, $(C3)));
+  }
+
   // NOTE: this behavior is not set in stone, we do not call canCommit twice anywhere. Can be changed in future
   @Test
   public void testCanCommitTwice() {

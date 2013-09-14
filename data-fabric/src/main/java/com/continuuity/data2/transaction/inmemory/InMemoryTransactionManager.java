@@ -370,7 +370,14 @@ public class InMemoryTransactionManager {
         }
 
         // Record the committed change set with the nextWritePointer as the commit time.
-        committedChangeSets.put(nextWritePointer, changeSet);
+        // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
+        //       stored under one key
+        Set<ChangeId> changeIds = committedChangeSets.get(nextWritePointer);
+        if (changeIds != null) {
+          changeIds.addAll(changeSet);
+        } else {
+          committedChangeSets.put(nextWritePointer, changeSet);
+        }
       }
       makeVisible(tx);
     }
