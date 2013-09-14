@@ -4,11 +4,11 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.RoundRobin;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletException;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
@@ -75,12 +75,11 @@ public class BenchApp implements Application {
   /**
    *
    */
-  private static class Source extends AbstractGeneratorFlowlet {
+  private static class Source extends AbstractFlowlet {
     private static final Logger LOG = LoggerFactory.getLogger(Source.class);
 
     private static final String OUT = "Out";
 
-    private static final long SLEEP_INTERVAL_MS = 100L;
     public static final int MESSAGE_SIZE = 256;
 
     private final Random random = new Random();
@@ -96,7 +95,7 @@ public class BenchApp implements Application {
       this.instanceId = context.getInstanceId();
     }
 
-    @Override
+    @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
     public void generate() throws Exception {
       for (int i = 0; i < BenchFlow.BATCH_SIZE; i++){
         out.emit(createMessage());
