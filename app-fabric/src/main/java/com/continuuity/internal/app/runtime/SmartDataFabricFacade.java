@@ -12,7 +12,7 @@ import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionManager;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -50,8 +50,8 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public TransactionManager createTransactionManager() {
-    return new TransactionManager(txSystemClient, dataSetContext.getTransactionAware());
+  public TransactionContext createTransactionManager() {
+    return new TransactionContext(txSystemClient, dataSetContext.getTransactionAware());
   }
 
   @Override

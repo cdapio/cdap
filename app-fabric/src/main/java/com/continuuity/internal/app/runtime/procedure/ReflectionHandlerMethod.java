@@ -4,7 +4,7 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.data2.transaction.TransactionManager;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -36,12 +36,12 @@ final class ReflectionHandlerMethod implements HandlerMethod {
 
   @Override
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
-    TransactionManager txManager = txAgentSupplier.createTransactionManager();
+    TransactionContext txContext = txAgentSupplier.createTransactionManager();
 
     try {
-      txManager.start();
+      txContext.start();
 
-      TransactionResponder txResponder = new TransactionResponder(txManager, responder);
+      TransactionResponder txResponder = new TransactionResponder(txContext, responder);
       try {
         method.invoke(procedure, request, txResponder);
       } catch (Throwable t) {
