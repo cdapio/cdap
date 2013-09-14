@@ -43,103 +43,11 @@ public class Serializing2MetaDataStore implements MetaDataStore {
   private final TransactionExecutorFactory executorFactory;
   private final DataSetAccessor datasetAccessor;
 
-  private static byte[] makeRowKey(String account) {
-    return Bytes.toBytes(account);
-  }
-
-  private static byte[] makeRowKey(MetaDataEntry meta) {
-    return makeRowKey(meta.getAccount());
-  }
-
-  private static String extractAccountFromRowKey(byte[] rowkey) {
-    return Bytes.toString(rowkey);
-  }
-
-  private static byte[] makeColumnKey(String app, String type, String id) {
-    StringBuilder str = new StringBuilder();
-    str.append(type);
-    str.append('\0');
-    if (app != null) {
-      str.append(app);
-    }
-    str.append('\0');
-    str.append(id);
-    return Bytes.toBytes(str.toString());
-  }
-
-  byte[] makeColumnKey(MetaDataEntry meta) {
-    return makeColumnKey(meta.getApplication(), meta.getType(), meta.getId());
-  }
-
-  private static byte[] startColumnKey(String app, String type) {
-    StringBuilder str = new StringBuilder();
-    str.append(type);
-    if (app != null) {
-      str.append('\0');
-      str.append(app);
-    }
-    str.append('\0');
-    return Bytes.toBytes(str.toString());
-  }
-
-  private static byte[] stopColumnKey(String app, String type) {
-    StringBuilder str = new StringBuilder();
-    str.append(type);
-    if (app != null) {
-      str.append('\0');
-      str.append(app);
-    }
-    str.append('\1');
-    return Bytes.toBytes(str.toString());
-  }
-
-  private static String extractApplication(byte[] columnKey) {
-    String str = Bytes.toString(columnKey);
-    int pos = str.indexOf('\0');
-    if (pos < 0) {
-      return null;
-    }
-    int pos1 = str.indexOf('\0', pos + 1);
-    if (pos1 < 0) {
-      return null;
-    }
-    if (pos1 == pos + 1) {
-      return null;
-    }
-    return str.substring(pos + 1, pos1);
-  }
-
   // To avoid the overhead of creating new serializer, table client and tx executor for every call,
   // we keep a them for each thread in a thread local structure.
-  private class PerThread {
-    final MetaDataSerializer serializer;
-    final OrderedColumnarTable table;
-    final TransactionExecutor executor;
-
-    private PerThread(MetaDataSerializer serializer, OrderedColumnarTable table, TransactionExecutor executor) {
-      this.serializer = serializer;
-      this.table = table;
-      this.executor = executor;
-    }
-
-    private MetaDataSerializer getSerializer() {
-      return serializer;
-    }
-
-    private OrderedColumnarTable getTable() {
-      return table;
-    }
-
-    private TransactionExecutor getExecutor() {
-      return executor;
-    }
-  }
-
-  ThreadLocal<PerThread> threadLocal = new ThreadLocal<PerThread>();
-
-  private PerThread getPerThread() {
-    PerThread perThread = threadLocal.get();
-    if (perThread == null) {
+  ThreadLocal<PerThread> threadLocal = new ThreadLocal<PerThread>() {
+    @Override
+    protected PerThread initialValue() {
       OrderedColumnarTable table;
       try {
         table = datasetAccessor.getDataSetClient(META_TABLE_NAME, OrderedColumnarTable.class);
@@ -148,31 +56,20 @@ public class Serializing2MetaDataStore implements MetaDataStore {
         throw Throwables.propagate(e);
       }
       TransactionExecutor executor = executorFactory.createExecutor(ImmutableList.of((TransactionAware) table));
-      perThread = new PerThread(new MetaDataSerializer(), table, executor);
-      threadLocal.set(perThread);
+      return new PerThread(new MetaDataSerializer(), table, executor);
     }
-    return perThread;
-  }
+  };
 
   private MetaDataSerializer getSerializer() {
-    return getPerThread().getSerializer();
+    return threadLocal.get().getSerializer();
   }
 
   private OrderedColumnarTable getMetaTable() {
-    return getPerThread().getTable();
+    return threadLocal.get().getTable();
   }
 
   private TransactionExecutor getTransactionExecutor() {
-    return getPerThread().getExecutor();
-  }
-
-  private OperationException propagateException(TransactionFailureException e) throws OperationException {
-    if (e.getCause() != null && e.getCause() instanceof OperationException) {
-      throw (OperationException) e.getCause();
-    } else {
-      // some other problem
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
-    }
+    return threadLocal.get().getExecutor();
   }
 
   @Inject
@@ -252,7 +149,7 @@ public class Serializing2MetaDataStore implements MetaDataStore {
 
   private void doWrite(MetaDataEntry expected, MetaDataEntry entry, boolean update, boolean resolve) throws Exception {
 
-    final byte[] row = makeRowKey(entry);
+    final byte[] row = makeRowKey(entry.getAccount());
     final byte[] column = makeColumnKey(entry);
     final byte[] bytes = getSerializer().serialize(entry);
 
@@ -659,4 +556,113 @@ public class Serializing2MetaDataStore implements MetaDataStore {
     }
     return accounts;
   }
+
+  /**
+   * TransactionExecutor wraps exceptions into a TransactionFailureException. But the methods in this class
+   * only throw OperationException. This method checks whether the wrapped exception is an OperationException
+   * and, if so, throws that exception. Otherwise it re-wraps the exception into an Operationexception with
+   * status code of internal error, and throws that.
+   * @return nothing, because it always throws. However, declaring an exception to be returned alllows callers to
+   *         throw that exception, to tell the java compiler that execution is not continuing.
+   */
+  private OperationException propagateException(TransactionFailureException e) throws OperationException {
+    if (e.getCause() != null && e.getCause() instanceof OperationException) {
+      throw (OperationException) e.getCause();
+    } else {
+      // some other problem
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
+    }
+  }
+
+  //----------- helpers to deal with row/column keys ---------------------
+
+  private static byte[] makeRowKey(String account) {
+    return Bytes.toBytes(account);
+  }
+
+  private static String extractAccountFromRowKey(byte[] rowKey) {
+    return Bytes.toString(rowKey);
+  }
+
+  private static byte[] makeColumnKey(String app, String type, String id) {
+    StringBuilder str = new StringBuilder();
+    str.append(type);
+    str.append('\0');
+    if (app != null) {
+      str.append(app);
+    }
+    str.append('\0');
+    str.append(id);
+    return Bytes.toBytes(str.toString());
+  }
+
+  byte[] makeColumnKey(MetaDataEntry meta) {
+    return makeColumnKey(meta.getApplication(), meta.getType(), meta.getId());
+  }
+
+  private static byte[] startColumnKey(String app, String type) {
+    StringBuilder str = new StringBuilder();
+    str.append(type);
+    if (app != null) {
+      str.append('\0');
+      str.append(app);
+    }
+    str.append('\0');
+    return Bytes.toBytes(str.toString());
+  }
+
+  private static byte[] stopColumnKey(String app, String type) {
+    StringBuilder str = new StringBuilder();
+    str.append(type);
+    if (app != null) {
+      str.append('\0');
+      str.append(app);
+    }
+    str.append('\1');
+    return Bytes.toBytes(str.toString());
+  }
+
+  private static String extractApplication(byte[] columnKey) {
+    String str = Bytes.toString(columnKey);
+    int pos = str.indexOf('\0');
+    if (pos < 0) {
+      return null;
+    }
+    int pos1 = str.indexOf('\0', pos + 1);
+    if (pos1 < 0) {
+      return null;
+    }
+    if (pos1 == pos + 1) {
+      return null;
+    }
+    return str.substring(pos + 1, pos1);
+  }
+
+  /**
+   * Helper class for thread local structure.
+   */
+  private static class PerThread {
+    final MetaDataSerializer serializer;
+    final OrderedColumnarTable table;
+    final TransactionExecutor executor;
+
+    private PerThread(MetaDataSerializer serializer, OrderedColumnarTable table, TransactionExecutor executor) {
+      this.serializer = serializer;
+      this.table = table;
+      this.executor = executor;
+    }
+
+    private MetaDataSerializer getSerializer() {
+      return serializer;
+    }
+
+    private OrderedColumnarTable getTable() {
+      return table;
+    }
+
+    private TransactionExecutor getExecutor() {
+      return executor;
+    }
+  }
+
 }
