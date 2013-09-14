@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -37,7 +36,7 @@ public class ReducerWrapper extends Reducer {
       // memory by tx agent
       try {
         basicMapReduceContext.flushOperations();
-      } catch (OperationException e) {
+      } catch (Exception e) {
         LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext.toString());
         throw Throwables.propagate(e);
       }

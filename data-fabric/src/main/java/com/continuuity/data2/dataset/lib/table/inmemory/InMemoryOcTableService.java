@@ -107,6 +107,10 @@ public class InMemoryOcTableService {
     return result;
   }
 
+  public static void dropAll() {
+    tables.clear();
+  }
+
   private static void write(NavigableMap<byte[], NavigableMap<Long, byte[]>> dest,
                            NavigableMap<byte[], byte[]> src,
                            long version) {
