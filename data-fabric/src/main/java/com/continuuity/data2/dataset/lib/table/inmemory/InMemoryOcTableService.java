@@ -1,6 +1,7 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Longs;
@@ -26,7 +27,7 @@ public class InMemoryOcTableService {
 
   public static synchronized void create(String tableName) {
     tables.put(tableName,
-          new ConcurrentSkipListMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>(Bytes.BYTES_COMPARATOR));
+               new ConcurrentSkipListMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>(Bytes.BYTES_COMPARATOR));
   }
 
   public static synchronized void truncate(String tableName) {
@@ -107,8 +108,15 @@ public class InMemoryOcTableService {
     return result;
   }
 
+  // TODO: this should really not know about the meta table. We need a separate "name space" for system tables
   public static void dropAll() {
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> metaTable =
+      tables.get(MetaDataStore.META_DATA_TABLE_NAME);
     tables.clear();
+    if (metaTable != null) {
+      metaTable.clear();
+      tables.put(MetaDataStore.META_DATA_TABLE_NAME, metaTable);
+    }
   }
 
   private static void write(NavigableMap<byte[], NavigableMap<Long, byte[]>> dest,

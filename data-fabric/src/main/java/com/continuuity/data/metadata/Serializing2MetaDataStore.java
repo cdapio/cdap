@@ -37,9 +37,6 @@ public class Serializing2MetaDataStore implements MetaDataStore {
 
   private static final Logger LOG = LoggerFactory.getLogger(Serializing2MetaDataStore.class);
 
-  static final String META_TABLE_NAME = "meta";
-  private static final int NUM_RETRIES = 3;
-
   private final TransactionExecutorFactory executorFactory;
   private final DataSetAccessor datasetAccessor;
 
@@ -50,7 +47,7 @@ public class Serializing2MetaDataStore implements MetaDataStore {
     protected PerThread initialValue() {
       OrderedColumnarTable table;
       try {
-        table = datasetAccessor.getDataSetClient(META_TABLE_NAME, OrderedColumnarTable.class);
+        table = datasetAccessor.getDataSetClient(META_DATA_TABLE_NAME, OrderedColumnarTable.class);
       } catch (Exception e) {
         LOG.error("Failed to get a dataset client for meta data table.", e);
         throw Throwables.propagate(e);
@@ -80,8 +77,8 @@ public class Serializing2MetaDataStore implements MetaDataStore {
     // ensure the meta data table exists
     try {
       DataSetManager tableManager = accessor.getDataSetManager(OrderedColumnarTable.class);
-      if (!tableManager.exists(META_TABLE_NAME)) {
-        tableManager.create(META_TABLE_NAME);
+      if (!tableManager.exists(META_DATA_TABLE_NAME)) {
+        tableManager.create(META_DATA_TABLE_NAME);
       }
     } catch (Throwable e) {
       throw Throwables.propagate(e);
@@ -147,7 +144,7 @@ public class Serializing2MetaDataStore implements MetaDataStore {
 
     final TransactionExecutor executor = getTransactionExecutor();
 
-    for (int tries = 0; tries <= NUM_RETRIES; tries++) {
+    for (int tries = 0; tries <= DEFAULT_RETRIES_ON_CONFLICT; tries++) {
       try {
         executor.execute(new TransactionExecutor.Subroutine() {
           @Override
@@ -284,7 +281,7 @@ public class Serializing2MetaDataStore implements MetaDataStore {
     final byte[] column = makeColumnKey(application, type, id);
 
     final TransactionExecutor executor = getTransactionExecutor();
-    final int numRetries = retryAttempts < 0 ? NUM_RETRIES : retryAttempts;
+    final int numRetries = retryAttempts < 0 ? DEFAULT_RETRIES_ON_CONFLICT : retryAttempts;
 
     for (int tries = 0; tries <= numRetries; tries++) {
       try {

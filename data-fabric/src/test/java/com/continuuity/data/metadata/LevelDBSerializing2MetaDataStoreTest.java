@@ -24,7 +24,7 @@ public class LevelDBSerializing2MetaDataStoreTest extends LevelDBMetaDataStoreTe
     try {
       injector.getInstance(DataSetAccessor.class)
               .getDataSetManager(OrderedColumnarTable.class)
-              .truncate(Serializing2MetaDataStore.META_TABLE_NAME);
+              .truncate(MetaDataStore.META_DATA_TABLE_NAME);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
