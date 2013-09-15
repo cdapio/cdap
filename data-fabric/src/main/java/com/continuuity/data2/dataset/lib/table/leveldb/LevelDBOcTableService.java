@@ -104,7 +104,9 @@ public class LevelDBOcTableService {
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
 
-    return factory.open(new File(dbPath), options);
+    DB db = factory.open(new File(dbPath), options);
+    tables.put(tableName, db);
+    return db;
   }
 
   private void createTable(String name) throws IOException {
@@ -118,18 +120,8 @@ public class LevelDBOcTableService {
     options.cacheSize(cacheSize);
 
     DB db = null;
-    try {
-      db = factory.open(new File(dbPath), options);
-    } finally {
-      try {
-        if (db != null) {
-          db.close();
-        }
-      } catch (IOException e) {
-        LOG.warn("Error closing LevelDB database", e);
-        // but what else can we do? nothing?
-      }
-    }
+    db = factory.open(new File(dbPath), options);
+    tables.put(name, db);
   }
 
   public void dropTable(String name) throws Exception {

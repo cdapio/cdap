@@ -2,9 +2,8 @@ package com.continuuity.gateway.accessor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.Accessor;
+import com.continuuity.gateway.MetaDataStoreAware;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import com.continuuity.gateway.util.NettyRequestHandlerFactory;
@@ -22,7 +21,7 @@ import java.util.concurrent.Executors;
  * Accessor for retrieving information of Meta Data.
  */
 public class MetaDataRestAccessor
-  extends Accessor implements NettyRequestHandlerFactory {
+  extends Accessor implements MetaDataStoreAware, NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory
     .getLogger(MetaDataRestAccessor.class);
@@ -58,9 +57,8 @@ public class MetaDataRestAccessor
   }
 
   @Override
-  public void setExecutor(OperationExecutor executor) {
-    super.setExecutor(executor);
-    this.mds = new SerializingMetaDataStore(executor);
+  public void setMetadataStore(MetaDataStore mds) {
+    this.mds = mds;
   }
 
   /**
@@ -119,4 +117,5 @@ public class MetaDataRestAccessor
     }
     LOG.info("Stopped " + this);
   }
+
 }

@@ -4,6 +4,7 @@
 
 package com.continuuity.api.flow;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
@@ -74,7 +75,8 @@ public final class FlowletDefinition {
     this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(),
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
-                                                       datasets, flowletSpec.getArguments());
+                                                       datasets, flowletSpec.getArguments(),
+                                                       flowletSpec.getResources());
   }
 
   /**

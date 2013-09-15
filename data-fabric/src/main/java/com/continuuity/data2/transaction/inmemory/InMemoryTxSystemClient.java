@@ -35,7 +35,7 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
 
   @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
-    return changeIds.size() == 0 || txManager.canCommit(tx, changeIds);
+    return changeIds.isEmpty() || txManager.canCommit(tx, changeIds);
   }
 
   @Override

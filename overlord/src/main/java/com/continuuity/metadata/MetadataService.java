@@ -3,10 +3,8 @@ package com.continuuity.metadata;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
@@ -39,11 +37,11 @@ public class MetadataService extends MetadataHelper
 
   /**
    * Construction of metadata service handler.
-   * @param opex instance of opex.
+   * @param mds an instance of a meta data store
    */
   @Inject
-  public MetadataService(OperationExecutor opex) {
-    this.mds = new SerializingMetaDataStore(opex);
+  public MetadataService(MetaDataStore mds) {
+    this.mds = mds;
   }
 
   //-------------------- generic methods ---------------------------------
@@ -398,15 +396,20 @@ public class MetadataService extends MetadataHelper
       }
 
       String oldValue = entry.getTextField(field);
-      for (String x : oldValue.split(" ")) {
-        if (x.equals(item)) {
-          LOG.debug(String.format("No need to add '%s' to field %s of %s " +
-              "'%s': Already in current value '%s'.", item, field, what, id,
-              oldValue));
-          return true; // item is already in list
+      String newValue;
+      if (oldValue == null) {
+        newValue = item + " ";
+      } else {
+        for (String x : oldValue.split(" ")) {
+          if (x.equals(item)) {
+            LOG.debug(String.format("No need to add '%s' to field %s of %s " +
+                "'%s': Already in current value '%s'.", item, field, what, id,
+                oldValue));
+            return true; // item is already in list
+          }
         }
+        newValue = oldValue + item + " ";
       }
-      String newValue = oldValue == null ? item + " " : oldValue + item + " ";
 
       try {
         mds.swapField(opContext, account, app, type, id, field,

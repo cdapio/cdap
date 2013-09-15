@@ -11,16 +11,11 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.DetachedSmartTransactionAgent;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -63,8 +58,7 @@ public abstract class AbstractMapReduceContextBuilder {
   public BasicMapReduceContext build(CConfiguration conf, String runId,
                                      long logicalStartTime,
                                      Arguments runtimeArguments,
-                                     com.continuuity.data.operation.executor.Transaction tx,
-                                     Transaction tx2,
+                                     Transaction tx,
                                      ClassLoader classLoader,
                                      URI programLocation,
                                      @Nullable String inputDataSetName,
@@ -83,16 +77,12 @@ public abstract class AbstractMapReduceContextBuilder {
     }
 
     // Initializing dataset context and hooking it up with mapreduce job transaction
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-    OperationContext opexContext = new OperationContext(program.getAccountId(), program.getApplicationId());
 
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
 
-    TransactionProxy transactionProxy = new TransactionProxy();
-    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, opexContext);
+    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetContext =
-      new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
+      new DataSetInstantiator(dataFabric, classLoader);
     dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
 
     // creating dataset instances earlier so that we can pass them to txAgent
@@ -102,17 +92,19 @@ public abstract class AbstractMapReduceContextBuilder {
     Map<String, DataSet> dataSets = DataSets.createDataSets(
       dataSetContext, program.getSpecification().getDataSets().keySet());
 
-    TransactionAgent txAgent = new DetachedSmartTransactionAgent(opex, opexContext,
-                                                                 dataSetContext.getTransactionAware(),
-                                                                 txSystemClient,
-                                                                 tx, tx2);
-    transactionProxy.setTransactionAgent(txAgent);
-
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, RunIds.fromString(runId), runtimeArguments,
-                                txAgent, dataSets, spec, logicalStartTime);
+
+      new BasicMapReduceContext(program, RunIds.fromString(runId),
+                                runtimeArguments, dataSets, spec,
+                                dataSetContext.getTransactionAware(), logicalStartTime);
+
+    // propagating tx to all txAware guys
+    // NOTE: tx will be committed by client code
+    for (TransactionAware txAware : dataSetContext.getTransactionAware()) {
+      txAware.startTx(tx);
+    }
 
     // Setting extra context's configuration: mapreduce input and output
     if (inputDataSetName != null && inputSplits != null) {

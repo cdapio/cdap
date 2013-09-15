@@ -1,11 +1,35 @@
 package com.continuuity.data2.transaction;
 
-import com.google.common.base.Function;
+import java.util.concurrent.Callable;
 
 /**
  * Utility that wraps the execution of a function into the context of a transaction.
  */
 public interface TransactionExecutor {
+
+  /**
+   * A function is a class with a single method that takes an argument and returns a result.
+   * @param <I> the type of the argument
+   * @param <O> the type of the result
+   */
+  public interface Function<I, O> {
+    O apply(I input) throws Exception;
+  }
+
+  /**
+   * A procedure is a class with a single void method that takes an argument.
+   * @param <I> the type of the argument
+   */
+  public interface Procedure<I> {
+    void apply(I input) throws Exception;
+  }
+
+  /**
+   * A subroutine is a class with a single void method without arguments.
+   */
+  public interface Subroutine {
+    void apply() throws Exception;
+  }
 
   /**
    * Execute a function under transactional semantics. A transaction is started  and all datasets
@@ -23,6 +47,21 @@ public interface TransactionExecutor {
    * @throws TransactionFailureException if any exception is caught, be it from the function or from the datasets.
    */
   <I, O> O execute(Function<I, O> function, I input) throws TransactionFailureException;
+
+  /**
+   * Like {@link #execute(Function, Object)} but without a return value.
+   */
+  <I> void execute(Procedure<I> procedure, I input) throws TransactionFailureException;
+
+  /**
+   * Like {@link #execute(Function, Object)} but the callable has no argument.
+   */
+  <O> O execute(Callable<O> callable) throws TransactionFailureException;
+
+  /**
+   * Like {@link #execute(Function, Object)} but without argument or return value.
+   */
+  void execute(Subroutine subroutine) throws TransactionFailureException;
 
 }
 
