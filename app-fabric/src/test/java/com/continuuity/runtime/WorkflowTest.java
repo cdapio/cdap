@@ -5,6 +5,7 @@ package com.continuuity.runtime;
 
 import com.continuuity.WorkflowApp;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -14,7 +15,9 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.common.Threads;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -44,7 +47,12 @@ public class WorkflowTest {
 
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
-    Program program = app.getPrograms().iterator().next();
+    Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
+      @Override
+      public boolean apply(Program input) {
+        return input.getType() == Type.WORKFLOW;
+      }
+    }).next();
 
     final CountDownLatch latch = new CountDownLatch(1);
     String inputPath = createInput();
