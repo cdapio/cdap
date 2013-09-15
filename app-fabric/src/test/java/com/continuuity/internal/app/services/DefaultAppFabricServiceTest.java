@@ -22,6 +22,8 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
@@ -61,6 +63,12 @@ public class DefaultAppFabricServiceTest {
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);
     configuration = injector.getInstance(CConfiguration.class);
+
+    // clean up data
+    MetaDataStore mds = injector.getInstance(MetaDataStore.class);
+    for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
+      mds.clear(new OperationContext(account), account, null);
+    }
   }
 
   @Test

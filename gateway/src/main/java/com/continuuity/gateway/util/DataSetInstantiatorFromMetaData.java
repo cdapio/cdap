@@ -106,9 +106,7 @@ public final class DataSetInstantiatorFromMetaData {
                                                               instantiator.getTransactionAware(),
                                                               txSystemClient));
     // this just gets passed through to the data set instantiator
-    return this.instantiator.getDataSet(name,
-                                        new DataFabricImpl(opex, locationFactory, dataSetAccessor, context),
-                                        proxy);
+    return this.instantiator.getDataSet(name, new DataFabricImpl(opex, locationFactory, dataSetAccessor, context));
   }
 
   // used only for unit-tests

@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.purchase;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -30,6 +31,7 @@ public class PurchaseStreamReader extends AbstractFlowlet {
 
   OutputEmitter<Purchase> out;
 
+  @ProcessInput
   public void process(StreamEvent event) {
     String body = new String(event.getBody().array());
     // <name> bought <n> <items> for $<price>

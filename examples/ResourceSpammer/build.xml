@@ -1,0 +1,5 @@
+<?xml version="1.0" ?> 
+<project name="ResourceSpammerApp" default="jar">
+    <property name="example.package" value="com.continuuity.examples.resourcespammer"/>
+    <import file="../ant-common.xml"/>
+</project>

@@ -63,9 +63,7 @@
  * <h2>Flowlet</h2>
  * {@link com.continuuity.api.flow.flowlet.Flowlet} is a processing unit of a {@link com.continuuity.api.flow.Flow}
  * that defines business logic for processing events received on input and also can emit new events on the output
- * for downstream processing. There is also a special type of {@link com.continuuity.api.flow.flowlet.Flowlet} called
- * {@link com.continuuity.api.flow.flowlet.GeneratorFlowlet} that doesn't take any input and purely generates
- * outputs for downstream processing.
+ * for downstream processing.
  * <p>
  *   See {@link com.continuuity.api.flow.flowlet.Flowlet} for more details.
  * </p>

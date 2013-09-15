@@ -3,11 +3,12 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletException;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
@@ -21,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Flow and Procedure that checks if arguments
@@ -58,7 +60,7 @@ public class ArgumentCheckApp implements Application {
     }
   }
 
-  private class SimpleGeneratorFlowlet extends AbstractGeneratorFlowlet {
+  private class SimpleGeneratorFlowlet extends AbstractFlowlet {
     private FlowletContext context;
     OutputEmitter<String> out;
 
@@ -67,7 +69,7 @@ public class ArgumentCheckApp implements Application {
       this.context = context;
     }
 
-    @Override
+    @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
     public void generate() throws Exception {
       String arg = context.getRuntimeArguments().get("arg");
       if (!context.getRuntimeArguments().containsKey("arg") ||
@@ -79,12 +81,15 @@ public class ArgumentCheckApp implements Application {
   }
 
   private class SimpleConsumerFlowlet extends AbstractFlowlet {
+
+    @ProcessInput
     public void process(String arg) {
       if (!arg.equals("test")) {
         throw new IllegalArgumentException("User argument from prev flowlet not passed");
       }
     }
 
+    @ProcessInput
     public void process(int i) {
       // A dummy process method that has no matching upstream.
     }

@@ -2,17 +2,15 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletException;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.FlowDescriptor;
-import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.store.StoreFactory;
@@ -84,12 +82,12 @@ public class DeployRunStopTest {
     /**
      *
      */
-    public static final class GenFlowlet extends AbstractFlowlet implements GeneratorFlowlet {
+    public static final class GenFlowlet extends AbstractFlowlet {
 
       private OutputEmitter<String> output;
       private int i;
 
-      @Override
+      @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
       public void generate() throws Exception {
         if (i < 10000) {
           output.emit("Testing " + ++i);
@@ -153,7 +151,7 @@ public class DeployRunStopTest {
     server = injector.getInstance(AppFabricService.Iface.class);
 
     // Create location factory.
-    lf = injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class);
+    lf = injector.getInstance(LocationFactory.class);
 
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);

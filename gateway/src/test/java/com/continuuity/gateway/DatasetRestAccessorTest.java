@@ -10,6 +10,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationException;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -103,7 +104,7 @@ public class DatasetRestAccessorTest {
     locationFactory = injector.getInstance(LocationFactory.class);
     dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
-    mds = new MetadataService(executor);
+    mds = new MetadataService(injector.getInstance(MetaDataStore.class));
     instantiator = new DataSetInstantiatorFromMetaData(executor, locationFactory,
                                                        dataSetAccessor, txSystemClient,
                                                        mds);

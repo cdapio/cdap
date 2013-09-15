@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.countcounts;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ public class WordCounter extends AbstractFlowlet {
 
   private OutputEmitter<Counts> output;
 
+  @ProcessInput
   public void process(String line) {
     LOG.debug(this.getContext().getName() + ": Received line " + line);
 

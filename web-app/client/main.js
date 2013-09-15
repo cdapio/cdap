@@ -62,9 +62,9 @@ define (['core/application'], function (Application) {
 
 							resource = container.lookup(type + ':main');
 							for (var event in C.__handlers[type]) {
-                                if (C.__handlers[type].hasOwnProperty(event)) {
-                                    resource.on(event, C.__handlers[type][event]);
-                                }
+                if (C.__handlers[type].hasOwnProperty(event)) {
+                    resource.on(event, C.__handlers[type][event]);
+                }
 							}
 							if (typeof resource.connect === 'function') {
 								resource.connect();

@@ -11,8 +11,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
@@ -64,7 +62,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
       bind(AppFabricService.Iface.class).to(DefaultAppFabricService.class);
 
-      bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
       bind(StoreFactory.class).to(MDSStoreFactory.class);
     }
 

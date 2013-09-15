@@ -40,6 +40,9 @@ public class HBaseOcTableManager implements DataSetManager {
 
   @Override
   public void create(String name) throws Exception {
+    if (admin.tableExists(HBaseTableUtil.getHBaseTableName(tablePrefix, name))) {
+      return;
+    }
     HTableDescriptor tableDescriptor = new HTableDescriptor(getHBaseTableName(name));
     HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
     // todo: make stuff configurable

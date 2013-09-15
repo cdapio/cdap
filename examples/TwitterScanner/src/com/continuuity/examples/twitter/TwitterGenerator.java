@@ -17,8 +17,10 @@
 package com.continuuity.examples.twitter;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
+import com.continuuity.api.annotation.Tick;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import twitter4j.Status;
@@ -35,7 +37,7 @@ import twitter4j.conf.ConfigurationBuilder;
  * public timeline, wraps them in a Tuple and sends them to the next Flowlet
  * in our Flow.
  */
-public class TwitterGenerator extends AbstractGeneratorFlowlet {
+public class TwitterGenerator extends AbstractFlowlet {
 
   public StatusListener statusListener = new StatusListener() {
     @Override
@@ -86,7 +88,7 @@ public class TwitterGenerator extends AbstractGeneratorFlowlet {
    * of tweets (filled using twitter4j callback setup in initialize()) and emits
    * them to the next flowlet.
    */
-  @Override
+  @Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
   public void generate() throws InterruptedException {
     Tweet tweet = tweetQueue.take();
     output.emit(tweet);

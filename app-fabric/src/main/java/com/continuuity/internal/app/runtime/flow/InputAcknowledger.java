@@ -3,11 +3,11 @@
  */
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.transaction.TransactionFailureException;
 
 /**
  * Interface to represent sending an ack on a input.
  */
 interface InputAcknowledger {
-  void ack() throws OperationException;
+  void ack() throws TransactionFailureException;
 }

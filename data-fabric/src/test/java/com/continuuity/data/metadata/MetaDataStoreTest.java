@@ -1,10 +1,8 @@
 package com.continuuity.data.metadata;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.util.OperationUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -23,9 +21,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class MetaDataStoreTest {
 
-  static OperationExecutor opex;
   static MetaDataStore mds;
   static OperationContext context = OperationUtil.DEFAULT;
+
+  abstract void clearMetaData() throws OperationException;
 
   /**
    * Every subclass should implement this to verify that injection works and uses the correct table type.
@@ -110,7 +109,7 @@ public abstract class MetaDataStoreTest {
       mds.add(context, meta, false);
       Assert.fail("expected an OperationException for adding existing entry.");
     } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
+      Assert.assertEquals(StatusCode.ENTRY_EXISTS, e.getStatus());
     }
     // now add a modified record -> even conflict resolution must now fail
     meta.addField("new", "field");
@@ -118,7 +117,7 @@ public abstract class MetaDataStoreTest {
       mds.add(context, meta);
       Assert.fail("expected an OperationException for adding existing entry.");
     } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
+      Assert.assertEquals(StatusCode.ENTRY_EXISTS, e.getStatus());
     }
   }
 
@@ -146,9 +145,9 @@ public abstract class MetaDataStoreTest {
     // validate that swapping again fails with the old expected value
     try {
       mds.swap(context, meta, meta2);
-      Assert.fail("Expected write conflict");
+      Assert.fail("Expected mismatch");
     } catch (OperationException e) { // expected
-      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
+      Assert.assertEquals(StatusCode.ENTRY_DOES_NOT_MATCH, e.getStatus());
     }
 
     // update the entry to meta2, and try swapping again, should now succeed
@@ -167,7 +166,7 @@ public abstract class MetaDataStoreTest {
 
   @Test
   public void testList() throws OperationException {
-    opex.execute(context, new ClearFabric(ClearFabric.ToClear.META));
+    clearMetaData();
 
     testOneAddGet(false, "a", "p", "x", "1", "a", "1", null, null);
     testOneAddGet(false, "a", "p", "y", "2", "a", "2", null, null);
@@ -292,19 +291,11 @@ public abstract class MetaDataStoreTest {
 
   @Test
   public void testConcurrentUpdateField() throws Exception {
-    System.out.println("testUpdateField:");
     // create a meta data entry with two fields, one text one bin
-    //                        MetaDataEntry(account, application=null, type="test", id="abc")
     MetaDataEntry entry = new MetaDataEntry(context.getAccount(), null, "test", "abc");
     entry.addField("text", "0");
     entry.addField("bin", Bytes.toBytes(0));
     mds.add(context, entry);
-    //tableName = "meta"
-    //family = ?
-    //byte[] rowkey = _metadata_'\0'+<account>, i.e.
-    //byte[] column = <type>'\0'<application>'\0'<id> or <type>'\0''\0'<id>, i.e. test'\0''\0'abc
-    //value = serialized MetaDataEntry object
-    //      = account, application, id, type, Map<String, String> textFields, Map<String, byte[]> binaryFields
 
     // start two threads that loop n times
     //   - each attempts to update one of the fields
@@ -313,33 +304,24 @@ public abstract class MetaDataStoreTest {
 
     final AtomicInteger textConflicts = new AtomicInteger(0);
     final AtomicInteger binaryConflicts = new AtomicInteger(0);
+    final int numRounds = 1000;
 
     Thread textThread = new Thread() {
       @Override
       public void run() {
         int value = 1;
-        for (int i = 1; i <= 1000; i++) {
+        for (int i = 1; i <= numRounds; i++) {
           try {
-            //context, account, application=null, type="test", id="abc", field="text", newValue, retryAttempts=0
-            //row-key=_metadata_'\0'+<account>
-            //column=test'\0''\0'abc
-            //table.get(read.getKey(), read.getColumns(), this.oracle.getReadPointer());
-            //bytes[] value = result.getValue().get(column);
-            //MetaDataEntry entry = deserialized value
-            //change textfields map in entry
-            //bytes[] newValue = serialized entry
-            //table.compareAndSwap(row, column, value, newValue, readPointer, writeVersion)
             mds.updateField(context, context.getAccount(), null, "test", "abc", "text", Integer.toString(value), 0);
             value++;
           } catch (OperationException e) {
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
-//              System.err.println("Conflict for text " + i + ": " + value);
+              // System.err.println("Conflict for text " + i + ": " + value);
               textConflicts.incrementAndGet();
             } else {
-              Assert.fail(e.getMessage());
+              Assert.fail("failure for text " + i + ": " + e.getMessage());
             }
           } catch (Exception e) {
-//            e.printStackTrace();
             Assert.fail(e.getMessage());
           }
         }
@@ -349,17 +331,16 @@ public abstract class MetaDataStoreTest {
       @Override
       public void run() {
         int value = 1;
-        for (int i = 1; i <= 1000; i++) {
+        for (int i = 1; i <= numRounds; i++) {
           try {
-            //context, account, application=null, type="test", id="abc", field="bin", newValue, retryAttempts=0
             mds.updateField(context, context.getAccount(), null, "test", "abc", "bin", Bytes.toBytes(value), 0);
             value++;
           } catch (OperationException e) {
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
-              //System.err.println("Conflict for binary " + i + ": " + value);
+              // System.err.println("Conflict for binary " + i + ": " + value);
               binaryConflicts.incrementAndGet();
             } else {
-              Assert.fail(e.getMessage());
+              Assert.fail("failure for binary " + i + ": " + e.getMessage());
             }
           } catch (Exception e) {
             Assert.fail(e.getMessage());
@@ -382,8 +363,8 @@ public abstract class MetaDataStoreTest {
     System.out.println("text: " + text + ", " + textConflicts.get() + " conflicts");
     System.out.println("binary: " + Arrays.toString(binary) + ", " + binaryConflicts.get() + " conflicts");
 
-    Assert.assertEquals(1000, Integer.parseInt(text) + textConflicts.get());
-    Assert.assertEquals(1000, Bytes.toInt(binary) + binaryConflicts.get());
+    Assert.assertEquals(numRounds, Integer.parseInt(text) + textConflicts.get());
+    Assert.assertEquals(numRounds, Bytes.toInt(binary) + binaryConflicts.get());
   }
 
   class TextThread extends Thread {
@@ -395,14 +376,12 @@ public abstract class MetaDataStoreTest {
     public void run() {
       for (int i = 1; i <= 1000; i++) {
         try {
-          String old =
-              mds.get(context, context.getAccount(), null, "test", "xyz")
-              .getTextField("num");
+          String old = mds.get(context, context.getAccount(), null, "test", "xyz").getTextField("num");
           int value = Integer.valueOf(old);
-          mds.swapField(context, context.getAccount(), null, "test", "xyz",
-              "num", old, Integer.toString(value + 1), 0);
+          mds.swapField(context, context.getAccount(), null, "test", "xyz", "num", old, Integer.toString(value + 1), 0);
         } catch (OperationException e) {
-          if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
+          // conflicts can happen a) within the tx, and b) as a compare-and-swap failure
+          if (e.getStatus() == StatusCode.WRITE_CONFLICT || e.getStatus() == StatusCode.ENTRY_DOES_NOT_MATCH) {
             // System.out.println("Conflict for text " + i + ": " + value);
             conflicts.incrementAndGet();
           } else {
@@ -424,15 +403,12 @@ public abstract class MetaDataStoreTest {
     public void run() {
       for (int i = 1; i <= 1000; i++) {
         try {
-          byte[] old =
-              mds.get(context, context.getAccount(), null, "test", "xyz")
-              .getBinaryField("num");
+          byte[] old = mds.get(context, context.getAccount(), null, "test", "xyz").getBinaryField("num");
           int value = Bytes.toInt(old);
-          mds.swapField(context, context.getAccount(), null, "test", "xyz",
-              "num", old, Bytes.toBytes(value + 1), 0);
+          mds.swapField(context, context.getAccount(), null, "test", "xyz", "num", old, Bytes.toBytes(value + 1), 0);
         } catch (OperationException e) {
-          if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
-            // System.out.println("Conflict for binary " + i + ": " + value);
+          // conflicts can happen a) within the tx, and b) as a compare-and-swap failure
+          if (e.getStatus() == StatusCode.WRITE_CONFLICT || e.getStatus() == StatusCode.ENTRY_DOES_NOT_MATCH) {
             conflicts.incrementAndGet();
           } else {
             Assert.fail(e.getMessage());
@@ -495,8 +471,7 @@ public abstract class MetaDataStoreTest {
     AtomicInteger conflicts;
     MetaDataEntry entry;
     boolean resolve;
-    UpdateThread(AtomicInteger conflicts, MetaDataEntry entry,
-                 boolean resolve) {
+    UpdateThread(AtomicInteger conflicts, MetaDataEntry entry, boolean resolve) {
       this.conflicts =  conflicts;
       this.entry = entry;
       this.resolve = resolve;
@@ -508,7 +483,7 @@ public abstract class MetaDataStoreTest {
           mds.update(context, entry, resolve);
         } catch (OperationException e) {
           if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
-            // System.out.println("Conflict for text " + i + ": " + value);
+            // System.out.println("Conflict for run " + i);
             conflicts.incrementAndGet();
           } else {
             Assert.fail(e.getMessage());
@@ -548,7 +523,7 @@ public abstract class MetaDataStoreTest {
     updateThread3.join();
 
     // all threads write the same entry with conflict resolution
-    // this there should be no conflicts!
+    // thus there should be no conflicts!
     System.out.println("resolve = true:  " + conflicts.get() + " conflicts");
     Assert.assertEquals(0, conflicts.get());
 
@@ -563,7 +538,7 @@ public abstract class MetaDataStoreTest {
     updateThread3.join();
 
     // all threads write the same entry without conflict resolution
-    // this there must be conflicts!
+    // thus there must be conflicts!
     System.out.println("resolve = false: " + conflicts.get() + " conflicts");
     Assert.assertTrue(conflicts.get() > 0);
   }

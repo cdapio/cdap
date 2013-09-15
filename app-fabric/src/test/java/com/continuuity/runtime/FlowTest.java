@@ -22,10 +22,12 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.test.internal.DefaultId;
@@ -202,6 +204,9 @@ public class FlowTest {
   @Test
   public void testCountRandomApp() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(TestCountRandomApp.class);
+
+    System.out.println(ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator())
+                                                      .toJson(app.getAppSpecLoc().getSpecification()));
 
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {

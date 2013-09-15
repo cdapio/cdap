@@ -2,10 +2,13 @@ package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.google.inject.Inject;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Manages LevelDB tables.
@@ -43,8 +46,18 @@ public class LevelDBOcTableManager implements DataSetManager {
 
   @Override
   public void truncate(String name) throws Exception {
-    drop(name);
-    create(name);
+    // note: we cannot drop and recreate the database. That would invalidate all open clients.
+    DB db = service.getTable(name);
+    DBIterator iter = db.iterator();
+    try {
+      iter.seekToFirst();
+      while (iter.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iter.next();
+        db.delete(entry.getKey());
+      }
+    } finally {
+      iter.close();
+    }
   }
 
 }
