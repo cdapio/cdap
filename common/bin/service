@@ -91,14 +91,13 @@ start() {
     if [ $MAIN_CMD ]; then
       # This app is configured as a NON-JAVA app
 
-      rotate_log $loglog
       check_before_start
 
       echo "`date` Starting $APP service on `hostname`"
       echo "`date` Starting $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
-      nohup nice -n $NICENESS $MAIN_CMD $MAIN_CMD_ARGS </dev/null >$loglog 2>&1 &
+      nohup nice -n $NICENESS $MAIN_CMD $MAIN_CMD_ARGS </dev/null >>$loglog 2>&1 &
 
       echo $! >$pid
     elif [ $MAIN_CLASS ]; then
@@ -117,14 +116,13 @@ start() {
       # sets the JAVA variable.
       set_java
 
-      rotate_log $loggc
       check_before_start
 
       echo "`date` Starting Java $APP service on `hostname`"
       echo "`date` Starting Java $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
-      nohup nice -n $NICENESS "$JAVA" "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >$loglog 2>&1 &
+      nohup nice -n $NICENESS "$JAVA" "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
       echo $! >$pid
 
     else
