@@ -43,7 +43,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final MapReduceRunnerFactory runnerFactory;
   private NettyHttpService httpService;
   private volatile boolean running;
-  private volatile WorkflowActionSpecification currentAction;
+  private volatile WorkflowStatus workflowStatus;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, MapReduceProgramRunner programRunner) {
@@ -88,9 +88,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     // Executes actions step by step. Individually invoke the init()->run()->destroy() sequence.
     Iterator<WorkflowActionSpecification> iterator = workflowSpec.getActions().iterator();
+    int step = 0;
     while (running && iterator.hasNext()) {
       WorkflowActionSpecification actionSpec = iterator.next();
-      currentAction = actionSpec;
+      workflowStatus = new WorkflowStatus(state(), actionSpec, step++);
 
       WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
       try {
@@ -176,7 +177,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new Supplier<WorkflowStatus>() {
       @Override
       public WorkflowStatus get() {
-        return new WorkflowStatus(state(), currentAction);
+        return workflowStatus;
       }
     };
   }

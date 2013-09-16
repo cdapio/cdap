@@ -155,7 +155,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       public T startWith(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
         MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return startWith(new MapReduceWorkflowAction(mapReduceSpec.getName()));
+        return startWith(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
       }
     }
 
@@ -185,7 +185,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       public MoreAction<T> then(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
         MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return then(new MapReduceWorkflowAction(mapReduceSpec.getName()));
+        return then(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
       }
 
       @Override
