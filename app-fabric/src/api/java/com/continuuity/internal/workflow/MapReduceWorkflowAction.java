@@ -23,18 +23,20 @@ public final class MapReduceWorkflowAction implements WorkflowAction {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceWorkflowAction.class);
   private static final String MAP_REDUCE_NAME = "mapReduceName";
 
+  private final String name;
   private String mapReduceName;
   private Callable<MapReduceContext> mapReduceRunner;
   private WorkflowContext context;
 
-  public MapReduceWorkflowAction(String mapReduceName) {
+  public MapReduceWorkflowAction(String name, String mapReduceName) {
+    this.name = name;
     this.mapReduceName = mapReduceName;
   }
 
   @Override
   public WorkflowActionSpecification configure() {
     return WorkflowActionSpecification.Builder.with()
-      .setName(mapReduceName)
+      .setName(name)
       .setDescription("Workflow action for " + mapReduceName)
       .withOptions(ImmutableMap.of(MAP_REDUCE_NAME, mapReduceName))
       .build();

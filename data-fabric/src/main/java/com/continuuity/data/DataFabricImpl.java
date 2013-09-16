@@ -46,7 +46,7 @@ public class DataFabricImpl implements DataFabric {
   @Override
   public <T> T getDataSetClient(String name, Class<? extends T> type) {
     try {
-      return dataSetAccessor.getDataSetClient(name, type);
+      return dataSetAccessor.getDataSetClient(name, type, DataSetAccessor.Namespace.USER);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -55,7 +55,7 @@ public class DataFabricImpl implements DataFabric {
   @Override
   public <T> DataSetManager getDataSetManager(Class<? extends T> type) {
     try {
-      return dataSetAccessor.getDataSetManager(type);
+      return dataSetAccessor.getDataSetManager(type, DataSetAccessor.Namespace.USER);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

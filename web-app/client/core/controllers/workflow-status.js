@@ -13,31 +13,14 @@ define([], function () {
       this.clearTriggers(true);
       var model = this.get('model');
       var self = this;
-      var flowlets = model.flowlets;
-      var objects = [];
-      for (var i = 0; i < flowlets.length; i ++) {
-
-        flowlets[i].flow = model.get('name');
-        flowlets[i].app = model.get('app');
-
-        objects.push(C.Flowlet.create(flowlets[i]));
-
+      this.set('elements.Mapreduces', Em.ArrayProxy.create({content: []}));
+      for (var i = 0; i < model.actions.length; i++) {
+        this.get('elements.Mapreduces.content').pushObject(
+          C.Workflow.create(model.mapReduces[model.actions[i].name]));
       }
-      this.set('elements.Flowlet', Em.ArrayProxy.create({content: objects}));
+      console.log(this.get('elements.Mapreduces.content'));
 
-      this.setFlowletLabel('aggregate');
 
-      var streams = model.flowStreams;
-      objects = [];
-
-      for (var i = 0; i < streams.length; i ++) {
-        streams[i]['level'] = 'stream';
-        objects.push(C.Stream.create(streams[i]));
-        objects[i].trackMetric('/collect/events/streams/{id}', 'aggregates', 'events');
-
-      }
-
-      this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
 
       this.interval = setInterval(function () {
         self.updateStats();
@@ -55,35 +38,8 @@ define([], function () {
 
     unload: function () {
 
-      this.set('elements.Flowlet', Em.Object.create());
-      this.set('elements.Stream', Em.Object.create());
-
       clearInterval(this.interval);
 
-    },
-
-    statusButtonAction: function () {
-      return 'No Action';
-    }.property(),
-
-    statusButtonClass: function () {
-      return 'btn btn-warning';
-    }.property(),
-
-    get_flowlet: function (id) {
-      id = id + "";
-      var content = this.elements.Flowlet.content;
-      for (var k = 0; k < content.length; k++) {
-        if (content[k].name === id) {
-          return content[k];
-        }
-      }
-      content = this.elements.Stream.content;
-      for (k = 0; k < content.length; k++) {
-        if (content[k].name === id) {
-          return content[k];
-        }
-      }
     },
     
     ajaxCompleted: function () {
@@ -123,8 +79,7 @@ define([], function () {
       var model = this.get('model');
 
       model.set('currentState', 'STARTING');
-      this.HTTP.post('rest', 'apps', appId, 'flows', id, 'start',
-        function (response) {
+      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'start', function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);
@@ -143,26 +98,13 @@ define([], function () {
 
       model.set('currentState', 'STOPPING');
 
-      this.HTTP.post('rest', 'apps', appId, 'flows', id, 'stop',
-        function (response) {
+      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'stop', function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);
           }
 
       });
-
-    },
-
-    /**
-     * Action handlers from the View
-     */
-    config: function () {
-
-      var self = this;
-      var model = this.get('model');
-
-      this.transitionToRoute('FlowStatus.Config');
 
     },
 
@@ -179,43 +121,7 @@ define([], function () {
       if (action && action.toLowerCase() in this) {
         this[action.toLowerCase()](app, id, -1);
       }
-    },
-
-    setFlowletLabel: function (label) {
-
-      var paths = {
-        'rate': '/process/events/{app}/flows/{flow}/{id}/ins',
-        'pending': '/process/events/{app}/flows/{flow}/{id}/pending',
-        'aggregate': '/process/events/{app}/flows/{flow}/{id}'
-      };
-      var kinds = {
-        'rate': 'rates',
-        'pending': 'aggregates',
-        'aggregate': 'aggregates'
-      };
-
-      var flowlets = this.get('elements.Flowlet.content');
-      var streams = this.get('elements.Stream.content');
-
-      var i = flowlets.length;
-      while (i--) {
-        flowlets[i].clearMetrics();
-        flowlets[i].trackMetric(paths[label], kinds[label], 'events');
-      }
-
-      this.set('__currentFlowletLabel', label);
-
-    },
-
-    flowletLabelName: function () {
-
-      return {
-        'rate': 'Flowlet Rate',
-        'pending': 'Flowlet Pending',
-        'aggregate': 'Flowlet Processed'
-      }[this.__currentFlowletLabel];
-
-    }.property('__currentFlowletLabel')
+    }
 
   });
 

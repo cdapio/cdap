@@ -80,7 +80,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   /**
    * @return name of this table
    */
-  protected String getTableName() {
+  public String getTableName() {
     return name;
   }
 

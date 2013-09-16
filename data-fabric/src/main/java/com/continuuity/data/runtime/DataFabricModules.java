@@ -72,6 +72,11 @@ public class DataFabricModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
+    CConfiguration conf = CConfiguration.create();
+    return getInMemoryModules(conf);
+  }
+
+  public Module getInMemoryModules(final CConfiguration conf) {
 
       return new AbstractModule() {
       @Override
