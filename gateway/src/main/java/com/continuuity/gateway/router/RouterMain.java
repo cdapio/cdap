@@ -24,13 +24,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
-import static com.continuuity.data.operation.executor.remote.Constants.CFG_ZOOKEEPER_ENSEMBLE;
-
 /**
  * Main class to run Router from command line.
  */
-public class Main extends DaemonMain {
-  private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+public class RouterMain extends DaemonMain {
+  private static final Logger LOG = LoggerFactory.getLogger(RouterMain.class);
 
   private CConfiguration cConf;
   private ZKClientService zkClientService;
@@ -38,7 +36,7 @@ public class Main extends DaemonMain {
 
   public static void main(String[] args) {
     try {
-      new Main().doMain(args);
+      new RouterMain().doMain(args);
     } catch (Throwable e) {
       LOG.error("Got exception", e);
     }
@@ -52,7 +50,7 @@ public class Main extends DaemonMain {
       cConf = CConfiguration.create();
 
       // Initialize ZK client
-      String zookeeper = cConf.get(CFG_ZOOKEEPER_ENSEMBLE);
+      String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
       if (zookeeper == null) {
         LOG.error("No zookeeper quorum provided.");
         System.exit(1);

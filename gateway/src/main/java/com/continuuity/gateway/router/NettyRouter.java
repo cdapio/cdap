@@ -163,12 +163,6 @@ public class NettyRouter extends AbstractIdleService {
       clientBootstrap.shutdown();
       clientBootstrap.releaseExternalResources();
       serverBootstrap.releaseExternalResources();
-
-      serverBossExecutor.shutdown();
-      serverWorkerExecutor.shutdown();
-
-      clientBossExecutor.shutdown();
-      clientWorkerExecutor.shutdown();
     }
 
     LOG.info("Stopped Netty Router for service {} on address {}.", destinationServiceName, boundAddress);
