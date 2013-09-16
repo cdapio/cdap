@@ -231,6 +231,72 @@
     </div>
   </script>
 
+    <script type="text/x-handlebars" data-template-name="Workflow">
+    <div id="title">
+      {{view C.Embed.TimeSelector}}
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo WorkflowStatus model}}Status{{/linkTo}}</li>
+      </ul>
+      <h1>{{model.name}} <span>Workflow</span></h1>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="WorkflowStatus">
+    <div id="info">
+      <div class="info-box" style="float: right; border: 0;">
+        <div id="action-buttons" class="btn-group pull-right">
+          <button class="btn dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a {{action "delete"}} {{bindAttr state="model.currentState"}} {{bindAttr batchId="model.id"}} {{bindAttr applicationId="model.application"}}>Delete This Job</a></li>
+          </ul>
+
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.app"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+
+          <button style="border-right:0;" class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
+
+        </div>
+
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+
+      </div>
+
+    </div>
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="batchviz-container">
+          <div id="batchviz" class="clearfix chart">
+            {{#each elements.Mapreduces}}
+            <div class="batch-item">
+              <div class="batch-icon batch-map">
+                <div class="info-window">
+                  <div class="label">{{name}}</div>
+                  <div class="mapper-icon"></div>
+                  <div>{{model.metricData.mappersEntriesIn}} IN</div>
+                  <div>{{model.metricData.mappersEntriesOut}} OUT</div>
+                </div>
+              </div>
+              {{#if model.isRunning}}
+
+              <progress {{bindAttr value="model.metricData.mappersCompletion" }} max="100"></progress>
+              {{/if}}
+            </div>
+            {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
   <script type="text/x-handlebars" data-template-name="Batch">
 
     <div id="title">
