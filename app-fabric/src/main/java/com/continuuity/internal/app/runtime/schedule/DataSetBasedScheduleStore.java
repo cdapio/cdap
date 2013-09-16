@@ -35,8 +35,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataSetBasedScheduleStore.class);
 
-  //TODO: Use the namespacing feature from datasetmanager once it is in develop
-  private final String SCHEDULE_STORE_DATASET_NAME = "system:schedulestore";
+  private final String SCHEDULE_STORE_DATASET_NAME = "schedulestore";
 
   private static final byte[] JOB_KEY = Bytes.toBytes("jobs");
   private static final byte[] TRIGGER_KEY = Bytes.toBytes("trigger");
@@ -63,7 +62,8 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   }
 
   private void createDatasetIfNotExists() throws Exception {
-    DataSetManager dataSetManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class);
+    DataSetManager dataSetManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class,
+                                                                      DataSetAccessor.Namespace.SYSTEM);
     Preconditions.checkNotNull(dataSetManager, "Dataset Manager cannot be null");
  
     if (!dataSetManager.exists(SCHEDULE_STORE_DATASET_NAME)) {
@@ -80,9 +80,12 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     try {
 
       final OrderedColumnarTable table = dataSetAccessor.getDataSetClient(SCHEDULE_STORE_DATASET_NAME,
-                                                                    OrderedColumnarTable.class);
+                                                                          OrderedColumnarTable.class,
+                                                                          DataSetAccessor.Namespace.SYSTEM);
+
       Preconditions.checkNotNull(table, String.format("Could not get dataset client for data set: %s",
                                                       SCHEDULE_STORE_DATASET_NAME));
+
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
                             .execute(new TransactionExecutor.Subroutine() {
                               @Override
@@ -126,7 +129,8 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   private void readSchedulesFromPersistentStore() throws Exception {
 
     final OrderedColumnarTable table = dataSetAccessor.getDataSetClient(SCHEDULE_STORE_DATASET_NAME,
-                                                                        OrderedColumnarTable.class);
+                                                                        OrderedColumnarTable.class,
+                                                                        DataSetAccessor.Namespace.SYSTEM);
 
     Preconditions.checkNotNull(table, String.format("Could not get dataset client for data set: %s",
                                                     SCHEDULE_STORE_DATASET_NAME));
