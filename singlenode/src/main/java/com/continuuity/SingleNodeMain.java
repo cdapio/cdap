@@ -52,6 +52,7 @@ public class SingleNodeMain {
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
   private final Gateway gateway;
+  private final com.continuuity.gateway.v2.Gateway gatewayV2;
   private final MetricsFrontendServerInterface overloadFrontend;
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
@@ -71,6 +72,7 @@ public class SingleNodeMain {
     Injector injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     gateway = injector.getInstance(Gateway.class);
+    gatewayV2 = injector.getInstance(com.continuuity.gateway.v2.Gateway.class);
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -121,6 +123,7 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
+    gatewayV2.startAndWait();
     webCloudAppService.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -134,6 +137,7 @@ public class SingleNodeMain {
   public void shutDown() {
     try {
       webCloudAppService.stopAndWait();
+      gatewayV2.stopAndWait();
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
