@@ -14,6 +14,8 @@ import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.filesystem.LocationFactories;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -21,11 +23,15 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.util.Iterator;
 
 /**
@@ -33,6 +39,9 @@ import java.util.Iterator;
  */
 public abstract class WeaveRunnerMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(WeaveRunnerMain.class);
+
+  private final CConfiguration cConf;
+  private final Configuration hConf;
 
   private WeaveRunnerService weaveRunnerService;
   private WeaveController weaveController;
@@ -42,16 +51,15 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   private String serviceName;
   private WeaveApplication weaveApplication;
 
+  protected WeaveRunnerMain(CConfiguration cConf, Configuration hConf) {
+    this.cConf = cConf;
+    this.hConf = hConf;
+  }
+
   protected abstract WeaveApplication createWeaveApplication();
-  protected abstract CConfiguration getConfiguration();
 
   @Override
   public void init(String[] args) {
-    CConfiguration cConf = getConfiguration();
-    if (cConf == null) {
-      throw new IllegalArgumentException("CConfiguration cannot be null");
-    }
-
     weaveApplication = createWeaveApplication();
     if (weaveApplication == null) {
       throw new IllegalArgumentException("WeaveApplication cannot be null");
@@ -137,9 +145,41 @@ public abstract class WeaveRunnerMain extends DaemonMain {
     }
   }
 
+  protected File getSavedHConf() throws IOException {
+    File hConfFile = saveHConf(hConf, File.createTempFile("hConf", ".xml"));
+    hConfFile.deleteOnExit();
+    return hConfFile;
+  }
+
+  protected File getSavedCConf() throws IOException {
+    File cConfFile = saveCConf(cConf, File.createTempFile("cConf", ".xml"));
+    cConfFile.deleteOnExit();
+    return cConfFile;
+  }
+
   private WeavePreparer getPreparer() {
     return weaveRunnerService.prepare(weaveApplication)
       .setUser(yarnUser)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+  }
+
+  private static File saveHConf(Configuration conf, File file) throws IOException {
+    Writer writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      conf.writeXml(writer);
+    } finally {
+      writer.close();
+    }
+    return file;
+  }
+
+  private File saveCConf(CConfiguration conf, File file) throws IOException {
+    Writer writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      conf.writeXml(writer);
+    } finally {
+      writer.close();
+    }
+    return file;
   }
 }

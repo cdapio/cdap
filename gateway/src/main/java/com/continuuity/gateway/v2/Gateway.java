@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 public class Gateway extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
 
-  private final CConfiguration cConf;
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
   private Cancellable cancelDiscovery;
@@ -34,8 +33,6 @@ public class Gateway extends AbstractIdleService {
                  @Named(Constants.Gateway.ADDRESS) InetAddress hostname,
                  @Named(Constants.Gateway.GATEWAY_V2_HTTP_HANDLERS) Set<HttpHandler> handlers,
                  DiscoveryService discoveryService) {
-
-    this.cConf = cConf;
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
@@ -63,7 +60,7 @@ public class Gateway extends AbstractIdleService {
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return cConf.get(Constants.Service.GATEWAY);
+        return Constants.Service.GATEWAY;
       }
 
       @Override
