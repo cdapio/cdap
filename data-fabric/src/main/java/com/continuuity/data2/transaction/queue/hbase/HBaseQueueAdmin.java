@@ -78,11 +78,13 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public boolean exists(String name) throws Exception {
+    // NOTE: as of now, all queues stored in same table
     return admin.tableExists(tableName);
   }
 
   @Override
   public void create(String name) throws Exception {
+    // NOTE: as of now, all queues stored in same table
     byte[] tableNameBytes = Bytes.toBytes(tableName);
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
@@ -96,6 +98,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void truncate(String name) throws Exception {
+    // NOTE: as of now, all queues stored in same table
     byte[] tableNameBytes = Bytes.toBytes(tableName);
     HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
     admin.disableTable(tableNameBytes);
@@ -105,6 +108,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void drop(String name) throws Exception {
+    // NOTE: as of now, all queues stored in same table
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
   }
@@ -183,7 +187,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    // hack: we know that all queues are stored in one table
+    // NOTE: as of now, all queues stored in same table
     drop(tableName);
   }
 
