@@ -62,7 +62,7 @@ public final class WorkflowHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/apps/{app-id}/workflows/{workflow-name}/currentAction")
+  @Path("/apps/{app-id}/workflows/{workflow-name}/current")
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
 
