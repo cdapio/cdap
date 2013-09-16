@@ -6,6 +6,7 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
@@ -114,7 +115,7 @@ public class DataSetTest extends DataSetTestBase {
     OperationExecutor opex = new DummyOpex();
     TransactionProxy proxy = new TransactionProxy();
     LocationFactory locFactory = new LocalLocationFactory();
-    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor();
+    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(new CConfiguration());
     TransactionSystemClient txSystemClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
     DataSetInstantiator inst =
       new DataSetInstantiator(new DataFabricImpl(opex, locFactory, dataSetAccessor, OperationUtil.DEFAULT),

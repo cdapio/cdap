@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.queue.leveldb;
 
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.google.inject.Inject;
@@ -13,13 +14,14 @@ import java.util.Map;
  */
 @Singleton
 public class LevelDBQueueAdmin implements QueueAdmin {
-  public static final String QUEUE_TABLE_NAME = "__queues";
-
+  private final String tableName;
   private final LevelDBOcTableService service;
 
   @Inject
-  public LevelDBQueueAdmin(LevelDBOcTableService service) {
+  public LevelDBQueueAdmin(DataSetAccessor dataSetAccessor, LevelDBOcTableService service) {
     this.service = service;
+    // todo: we have to do that because queues do not follow dataset semantic fully (yet)
+    this.tableName = dataSetAccessor.namespace("queue", DataSetAccessor.Namespace.SYSTEM);
   }
 
   @Override
@@ -47,7 +49,7 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   @Override
   public void dropAll() throws Exception {
     // hack: we know that all queues stored in one table
-    service.dropTable(QUEUE_TABLE_NAME);
+    service.dropTable(tableName);
   }
 
   @Override
@@ -60,5 +62,9 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
     // No-op
     // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
+  }
+
+  public String getTableName() {
+    return tableName;
   }
 }
