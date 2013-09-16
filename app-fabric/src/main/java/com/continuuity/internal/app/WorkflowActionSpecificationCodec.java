@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  *
  */
-final class WorkflowActionSpecificationCodec extends AbstractSpecificationCodec<WorkflowActionSpecification> {
+public final class WorkflowActionSpecificationCodec extends AbstractSpecificationCodec<WorkflowActionSpecification> {
 
   @Override
   public JsonElement serialize(WorkflowActionSpecification src, Type typeOfSrc, JsonSerializationContext context) {
