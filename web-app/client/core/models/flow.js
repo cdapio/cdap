@@ -237,7 +237,7 @@ define([], function () {
 			obj.flowlets = flowlets;
 			var connections = [];
 			var flowStreams = [];
-			model.connections = this.validateConnections(model.connections);
+			//model.connections = this.validateConnections(model.connections);
 			for (var i = 0; i < model.connections.length; i++) {
 				var cn = model.connections[i];
 				var from = {};
@@ -282,8 +282,8 @@ define([], function () {
 				}
 			}
 
-			// Determine if there are any anomolies i.e. nodelevel3 --> nodelevel3 and increment to push
-			// node to column 4.
+			// Determine if there are any anomolies i.e. nodelevel3 --> nodelevel3 and increment to
+			// nodelevel3 --> nodelevel4.
 			for (var i = 0, len = connections.length; i < len; i++) {
 				var conn = connections[i];
 				if (assignments[conn['sourceName']] === assignments[conn['targetName']]) {

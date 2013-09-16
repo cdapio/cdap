@@ -138,8 +138,8 @@ define (['core/application'], function (Application) {
 		});
 
 		this.resource('Workflow', {path: '/workflows/:workflow_id'}, function () {
+			this.resource('WorkflowStatus', {path: '/'});
 			this.route('History', { path: '/history' });
-			this.route('Schedule', { path: '/schedule' });
 		});
 
 		this.route('Analyze', { path: '/analyze' });
@@ -286,7 +286,7 @@ define (['core/application'], function (Application) {
 		/*
 		 * Ensures that the model is handled properly (see basicRouter)
 		 */
-		WorflowRoute: Ember.Route.extend({
+		WorkflowRoute: Ember.Route.extend({
 			model: modelFinder
 		}),
 
