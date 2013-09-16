@@ -19,7 +19,7 @@ import javax.ws.rs.Path;
 /**
  * A HttpHandler for handling Workflow REST API.
  */
-final class WorkflowServiceHandler extends AbstractHttpHandler {
+public final class WorkflowServiceHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new GsonBuilder()
                                     .registerTypeAdapter(WorkflowActionSpecification.class,

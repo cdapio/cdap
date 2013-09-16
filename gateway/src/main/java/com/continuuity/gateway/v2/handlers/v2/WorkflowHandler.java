@@ -9,8 +9,7 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.io.ByteStreams;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
@@ -19,9 +18,7 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -30,15 +27,13 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Map;
 
 
 /**
- *
+ * A HttpHandler for gateway to pipe request to running Workflow.
  */
+@Path("/v2")
 public final class WorkflowHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowHandler.class);
@@ -67,7 +62,7 @@ public final class WorkflowHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/apps/{app-id}/workflows/{workflow-name}/status")
+  @Path("/apps/{app-id}/workflows/{workflow-name}/currentAction")
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
 
@@ -106,68 +101,28 @@ public final class WorkflowHandler extends AuthenticatedHttpHandler {
         public Void onCompleted(Response response) throws Exception {
           if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
             // Simply write through
-            response.getResponseBodyAsByteBuffer();
+            responder.sendBytes(HttpResponseStatus.OK, response.getResponseBodyAsByteBuffer(),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
+                                                     "application/json; charset=utf-8"));
+          } else {
+            responder.sendError(HttpResponseStatus.valueOf(response.getStatusCode()), response.getResponseBody());
           }
+          return null;
+        }
+
+        @Override
+        public void onThrowable(Throwable t) {
+          LOG.warn("Failed to request for workflow status", t);
+          responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Server failure " + t.getMessage());
         }
       });
-                                     new AsyncCompletionHandler<Void>() {
-                                       @Override
-                                       public Void onCompleted(Response response) throws Exception {
-                                         if (response.getStatusCode() == OK.getCode()) {
-                                           String contentType = response.getContentType();
-                                           ChannelBuffer content;
-
-                                           int contentLength = getContentLength(response);
-                                           if (contentLength > 0) {
-                                             content = ChannelBuffers.dynamicBuffer(contentLength);
-                                           } else {
-                                             // the transfer encoding is usually chunked, so no content length is
-                                             // provided. Just trying to read anything
-                                             content = ChannelBuffers.dynamicBuffer();
-                                           }
-
-                                           // Should not close the inputstream as per Response javadoc
-                                           InputStream input = response.getResponseBodyAsStream();
-                                           ByteStreams.copy(input, new ChannelBufferOutputStream(content));
-
-                                           // Copy headers
-                                           ImmutableListMultimap.Builder<String, String> headerBuilder =
-                                             ImmutableListMultimap.builder();
-                                           for (Map.Entry<String, List<String>> entry : response.getHeaders()) {
-                                             headerBuilder.putAll(entry.getKey(), entry.getValue());
-                                           }
-
-                                           responder.sendContent(OK,
-                                                                 content,
-                                                                 contentType,
-                                                                 headerBuilder.build());
-                                         } else {
-                                           responder.sendStatus(HttpResponseStatus.valueOf(response.getStatusCode()));
-                                         }
-                                         return null;
-                                       }
-
-                                       @Override
-                                       public void onThrowable(Throwable t) {
-                                         LOG.trace("Got exception while posting {}", relayUri, t);
-                                         responder.sendStatus(INTERNAL_SERVER_ERROR);
-                                       }
-                                     });
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
-      responder.sendStatus(INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private int getContentLength(Response response) {
-    try {
-      return Integer.parseInt(response.getHeader(CONTENT_LENGTH));
-    } catch (NumberFormatException e) {
-      return 0;
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
