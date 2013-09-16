@@ -21,7 +21,7 @@ public class ScheduleCodec extends AbstractSpecificationCodec<Schedule> {
 
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-    jsonObj.add("cronExpression", new JsonPrimitive(src.getCronExpression()));
+    jsonObj.add("cronExpression", new JsonPrimitive(src.getCronEntry()));
     jsonObj.add("action", new JsonPrimitive(src.getAction().toString()));
     return jsonObj;
   }

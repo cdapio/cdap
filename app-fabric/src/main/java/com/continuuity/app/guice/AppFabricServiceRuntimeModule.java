@@ -13,9 +13,11 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
-import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
+import com.continuuity.internal.app.runtime.schedule.DefaultScheduleService;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
-import com.continuuity.internal.app.runtime.schedule.SimpleScheduleService;
+import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.app.runtime.schedule.DefaultScheduleService;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
@@ -29,6 +31,7 @@ import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.spi.JobStore;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -70,8 +73,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(StoreFactory.class).to(MDSStoreFactory.class);
       bind(org.quartz.Scheduler.class).toInstance(getSchedulerInstance());
-      bind(SchedulerService.class).to(SimpleScheduleService.class).in(Scopes.SINGLETON);
+      bind(SchedulerService.class).to(DefaultScheduleService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(SchedulerService.class);
+      bind(JobStore.class).to(DataSetBasedScheduleStore.class);
 
     }
 

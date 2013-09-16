@@ -22,11 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Default Schedule service implementation.
  */
-public class SimpleScheduleService extends AbstractIdleService implements SchedulerService {
+public class DefaultScheduleService extends AbstractIdleService implements SchedulerService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SimpleScheduleService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultScheduleService.class);
   private final Scheduler scheduler;
   private final ProgramRuntimeService programRuntimeService;
   private final StoreFactory storeFactory;
@@ -34,8 +34,8 @@ public class SimpleScheduleService extends AbstractIdleService implements Schedu
   private static ScheduleTaskRunner taskRunner;
 
   @Inject
-  public SimpleScheduleService(Scheduler scheduler, StoreFactory storeFactory,
-                               ProgramRuntimeService programRuntimeService) {
+  public DefaultScheduleService(Scheduler scheduler, StoreFactory storeFactory,
+                                ProgramRuntimeService programRuntimeService) {
     this.scheduler = scheduler;
     this.programRuntimeService = programRuntimeService;
     this.storeFactory = storeFactory;
@@ -44,10 +44,9 @@ public class SimpleScheduleService extends AbstractIdleService implements Schedu
   @Override
   public void startUp() {
     try {
-      LOG.info("Starting scheduler...");
       taskRunner = new ScheduleTaskRunner(storeFactory, programRuntimeService);
       scheduler.start();
-      LOG.info("Scheduler started!");
+      LOG.debug("Scheduler started!");
     } catch (Throwable e) {
       throw Throwables.propagate(e);
     }
@@ -56,9 +55,8 @@ public class SimpleScheduleService extends AbstractIdleService implements Schedu
   @Override
   public void shutDown() {
     try {
-      LOG.info("Stopping scheduler...");
       scheduler.shutdown();
-      LOG.info("Scheduler stopped!");
+      LOG.debug("Scheduler stopped!");
     } catch (SchedulerException e){
       throw Throwables.propagate(e);
     }
@@ -67,9 +65,8 @@ public class SimpleScheduleService extends AbstractIdleService implements Schedu
   @Override
   public void schedule(Program program, Schedule schedule) {
 
-
     String scheduleName = schedule.getName();
-    String cronExpression = schedule.getCronExpression();
+    String cronEntry = schedule.getCronEntry();
 
     String programName = program.getName();
     String accountId = program.getAccountId();
@@ -79,11 +76,10 @@ public class SimpleScheduleService extends AbstractIdleService implements Schedu
     String key = String.format("%s:%s:%s", accountId, applicationId, programName);
 
     JobDetail job = JobBuilder.newJob(ScheduledJob.class).withIdentity(key, scheduleName).build();
-    LOG.info("Scheduling job {} with cron {}", scheduleName, cronExpression);
+    LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
     Trigger trigger = TriggerBuilder.newTrigger()
                                     .withIdentity(scheduleName)
-                                    //Add 0 for seconds since quartz needs resolution in seconds
-                                .withSchedule(CronScheduleBuilder.cronSchedule(getQuartzCronExpression(cronExpression)))
+                                .withSchedule(CronScheduleBuilder.cronSchedule(getQuartzCronExpression(cronEntry)))
                                     .build();
     try {
       scheduler.scheduleJob(job, trigger);
@@ -92,26 +88,19 @@ public class SimpleScheduleService extends AbstractIdleService implements Schedu
     }
   }
 
-  private String getQuartzCronExpression(String cronExpression) {
-
-    StringBuilder cronStringBuilder = new StringBuilder("0 " +cronExpression);
-
+  //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
+  //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month
+  //2. Quartz resolution is in seconds which cron entry doesn't support.
+  private String getQuartzCronExpression(String cronEntry) {
+    StringBuilder cronStringBuilder = new StringBuilder("0 " + cronEntry);
     if (cronStringBuilder.charAt(cronStringBuilder.length()-1) == '*'){
-     // cronExpression..(cronExpression.length()-1)
       cronStringBuilder.setCharAt(cronStringBuilder.length()-1, '?');
     }
-
     return cronStringBuilder.toString();
-
-  }
-
-  @Override
-  public void unSchedule(Program program) {
-
   }
 
   /**
-   *
+   * Handler that gets called by quartz to schedule a job.
    */
   public static class ScheduledJob implements Job {
 

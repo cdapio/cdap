@@ -18,7 +18,7 @@ public interface Schedule {
   /**
    * @return cronExpression for the schedule.
    */
-  String getCronExpression();
+  String getCronEntry();
 
   /**
    * @return Action for the schedule.
