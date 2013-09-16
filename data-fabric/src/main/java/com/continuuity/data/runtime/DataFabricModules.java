@@ -36,12 +36,29 @@ import com.google.inject.Module;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 /**
  * DataFabricModules defines all of the bindings for the different data
  * fabric modes.
  */
 public class DataFabricModules extends RuntimeModule {
+  private final CConfiguration cConf;
+  private final Configuration hbaseConf;
+
+  public DataFabricModules() {
+    this(CConfiguration.create(), HBaseConfiguration.create());
+  }
+
+  public DataFabricModules(CConfiguration cConf) {
+    this(cConf, HBaseConfiguration.create());
+  }
+
+  public DataFabricModules(CConfiguration cConf, Configuration hbaseConf) {
+    this.cConf = cConf;
+    this.hbaseConf = hbaseConf;
+  }
 
   public Module getNoopModules() {
     return new AbstractModule() {
@@ -79,9 +96,9 @@ public class DataFabricModules extends RuntimeModule {
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
 
         // We don't need caching for in-memory
-        conf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
+        cConf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
-          .toInstance(conf);
+          .toInstance(cConf);
 
         install(new FactoryModuleBuilder()
                   .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
@@ -101,7 +118,7 @@ public class DataFabricModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return new DataFabricDistributedModule();
+    return new DataFabricDistributedModule(cConf, hbaseConf);
   }
 
 } // end of DataFabricModules

@@ -42,14 +42,13 @@ define([], function () {
 				}
 				
 				for (var i = 0; i < cx.length; i ++) {
-					if (cx[i][direction]['flowlet'] === flowlet &&
-						cx[i][direction]['stream'] === input.replace('_IN', '').replace('_OUT', '')) {
+					if (cx[i][direction]['flowlet'] === flowlet) {
 						res.push({name: cx[i][opp]['flowlet'] || cx[i][opp]['stream']});
 					}
 				}
 				return res;
 			}
-			var streams = flow.flowletStreams.filter(function  (stream) {
+			var streams = flow.flowletStreams.filter(function (stream) {
 				return stream.name === model.name;
 			})[0];
 			var inputs = [], outputs = [];
