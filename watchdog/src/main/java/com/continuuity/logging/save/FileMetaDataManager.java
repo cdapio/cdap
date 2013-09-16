@@ -105,26 +105,27 @@ public final class FileMetaDataManager {
       public Integer call() throws Exception {
         byte [] tillTimeBytes = Bytes.toBytes(tillTime);
 
-        Scanner scanner = metaTable.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
-
         int deletedColumns = 0;
-        ImmutablePair<byte[], Map<byte[], byte[]>> row;
-        while ((row = scanner.next()) != null) {
-          byte [] rowKey = row.getFirst();
-          byte [] maxCol = getMaxKey(row.getSecond());
+        Scanner scanner = metaTable.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
+        try {
+          ImmutablePair<byte[], Map<byte[], byte[]>> row;
+          while ((row = scanner.next()) != null) {
+            byte [] rowKey = row.getFirst();
+            byte [] maxCol = getMaxKey(row.getSecond());
 
-          for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
-            byte [] colName = entry.getKey();
-            // Delete if colName is less than tillTime, but don't delete the last one
-            if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
-              callback.handle(new Path(URI.create(Bytes.toString(entry.getValue()))));
-              metaTable.delete(rowKey, colName);
-              deletedColumns++;
+            for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
+              byte [] colName = entry.getKey();
+              // Delete if colName is less than tillTime, but don't delete the last one
+              if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
+                callback.handle(new Path(URI.create(Bytes.toString(entry.getValue()))));
+                metaTable.delete(rowKey, colName);
+                deletedColumns++;
+              }
             }
           }
+        } finally {
+          scanner.close();
         }
-
-        scanner.close();
 
         return deletedColumns;
       }
