@@ -57,12 +57,8 @@ public class NettyRouter extends AbstractIdleService {
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
 
   private volatile ServerBootstrap serverBootstrap;
-  private volatile ExecutorService serverBossExecutor;
-  private volatile ExecutorService serverWorkerExecutor;
 
   private volatile ClientBootstrap clientBootstrap;
-  private volatile ExecutorService clientBossExecutor;
-  private volatile ExecutorService clientWorkerExecutor;
   private volatile InetSocketAddress boundAddress;
 
   @Inject
@@ -93,10 +89,14 @@ public class NettyRouter extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting Netty Router for service {} on address {}...", destinationServiceName, bindAddress);
 
-    serverBossExecutor = createExecutorService(serverBossThreadPoolSize, "router-server-boss-thread-%d");
-    serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize, "router-server-worker-thread-%d");
-    clientBossExecutor = createExecutorService(clientBossThreadPoolSize, "router-client-boss-thread-%d");
-    clientWorkerExecutor = createExecutorService(clientWorkerThreadPoolSize, "router-client-worker-thread-%d");
+    ExecutorService serverBossExecutor = createExecutorService(serverBossThreadPoolSize,
+                                                               "router-server-boss-thread-%d");
+    ExecutorService serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize,
+                                                                 "router-server-worker-thread-%d");
+    ExecutorService clientBossExecutor = createExecutorService(clientBossThreadPoolSize,
+                                                               "router-client-boss-thread-%d");
+    ExecutorService clientWorkerExecutor = createExecutorService(clientWorkerThreadPoolSize,
+                                                                 "router-client-worker-thread-%d");
 
     final EndpointStrategy discoverableEndpoints = new RandomEndpointStrategy(
       discoveryServiceClient.discover(destinationServiceName));
