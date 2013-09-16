@@ -255,7 +255,7 @@ public class SimpleTimeseriesTable extends DataSet
   }
 
   private void init(String name, long timeIntervalToStorePerRow) {
-    this.tableName = "ts_" + name;
+    this.tableName = "ts." + name;
     this.timeIntervalToStorePerRow = timeIntervalToStorePerRow;
   }
 

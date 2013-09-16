@@ -41,13 +41,13 @@ public class AssociationTable extends DataSet {
 
   public AssociationTable(String name) {
     super(name);
-    this.table = new Table("word_assoc_" + name);
+    this.table = new Table("word.assoc." + name);
   }
 
   public AssociationTable(DataSetSpecification spec) {
     super(spec);
     this.table = new Table(
-      spec.getSpecificationFor("word_assoc_" + this.getName()));
+      spec.getSpecificationFor("word.assoc." + this.getName()));
   }
 
   @Override
