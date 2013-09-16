@@ -34,6 +34,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,24 +53,27 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
 
   private String name;
   private String cConfName;
+  private String hConfName;
   private CountDownLatch runLatch;
 
   private CConfiguration cConf;
+  private Configuration hConf;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private Gateway gateway;
 
-  public GatewayWeaveRunnable(String name, String cConfName) {
+  public GatewayWeaveRunnable(String name, String cConfName, String hConfName) {
     this.name = name;
     this.cConfName = cConfName;
+    this.hConfName = hConfName;
   }
 
   @Override
   public WeaveRunnableSpecification configure() {
     return WeaveRunnableSpecification.Builder.with()
       .setName(name)
-      .withConfigs(ImmutableMap.of("cConf", cConfName))
+      .withConfigs(ImmutableMap.of("cConf", cConfName, "hConf", hConfName))
       .build();
   }
 
@@ -87,6 +91,10 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
+
+      hConf = new Configuration();
+      hConf.clear();
+      hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
 
       // Set Gateway port to 0, so that it binds to any free port.
       cConf.setInt(Constants.Gateway.PORT, 0);
@@ -161,7 +169,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
     return Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new GatewayModules(cConf).getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),

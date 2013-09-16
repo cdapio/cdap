@@ -14,12 +14,16 @@ import java.io.File;
 @SuppressWarnings("UnusedDeclaration")
 public class GatewayWeaveApplication implements WeaveApplication {
   private static final String name = "GatewayWeaveApplication";
+
   private final CConfiguration cConf;
   private final File cConfFile;
 
-  public GatewayWeaveApplication(CConfiguration cConf, File cConfFile) {
+  private final File hConfFile;
+
+  public GatewayWeaveApplication(CConfiguration cConf, File cConfFile, File hConfFile) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
+    this.hConfFile = hConfFile;
   }
 
   @Override
@@ -40,9 +44,10 @@ public class GatewayWeaveApplication implements WeaveApplication {
       .build();
 
     WeaveSpecification.Builder.RunnableSetter runnableSetter =
-      moreRunnable.add(new GatewayWeaveRunnable("GatewayWeaveRunnable", "cConf.xml"), spec)
+      moreRunnable.add(new GatewayWeaveRunnable("GatewayWeaveRunnable", "cConf.xml", "hConf.xml"), spec)
         .withLocalFiles()
         .add("cConf.xml", cConfFile.toURI())
+        .add("hConf.xml", hConfFile.toURI())
         .apply();
 
     return runnableSetter.anyOrder().build();

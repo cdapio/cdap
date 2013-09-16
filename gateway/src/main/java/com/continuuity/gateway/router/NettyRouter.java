@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Proxies request to a set of servers.
+ * Proxies request to a set of servers. Experimental.
  */
 public class NettyRouter extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouter.class);
