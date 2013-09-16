@@ -7,8 +7,13 @@ define([
 	], function (Template) {
 
 		var Embeddable = Em.View.extend({
+
 			template: Em.Handlebars.compile(Template),
+
 			classNames: ['window'],
+
+			classNameBindings: ['className'],
+
 			init: function () {
 
 				this._super();
@@ -21,7 +26,7 @@ define([
 				this.set('elementId', id);
 
 			},
-			classNameBindings: ['className'],
+	
 			className: function () {
 				var model;
 				if ((model = this.get('model'))) {
@@ -31,6 +36,7 @@ define([
 					return 'unknown';
 				}
 			}.property(),
+
 			click: function (event) {
 
 				if (C.currentPath !== 'Flow.History') {
