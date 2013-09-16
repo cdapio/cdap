@@ -180,38 +180,6 @@ define([], function () {
 				this[action.toLowerCase()](app, id, -1);
 			}
 		},
-		// "delete": function () {
-
-		// 	var self = this;
-
-		// 	if (this.get('model').get('currentState') !== 'STOPPED' &&
-		// 		this.get('model').get('currentState') !== 'DEPLOYED') {
-		// 		C.Modal.show('Cannot Delete', 'Please stop the Flow before deleting.');
-		// 	} else {
-		// 		C.Modal.show(
-		// 			"Delete Flow",
-		// 			"You are about to remove a Flow, which is irreversible. You can upload this Flow again if you'd like. Do you want to proceed?",
-		// 			$.proxy(function (event) {
-
-		// 				var flow = this.get('model');
-
-		// 				self.HTTP.rpc('runnable', 'remove', [flow.app, flow.name, flow.version],
-		// 					function (response) {
-
-		// 					C.Modal.hide(function () {
-
-		// 						if (response.error) {
-		// 							C.Modal.show('Delete Error', response.error.message || 'No reason given. Please check the logs.');
-		// 						} else {
-		// 							window.history.go(-1);
-		// 						}
-
-		// 					});
-
-		// 				});
-		// 			}, this));
-		// 	}
-		// },
 
 		setFlowletLabel: function (label) {
 
@@ -238,6 +206,7 @@ define([], function () {
 			this.set('__currentFlowletLabel', label);
 
 		},
+
 		flowletLabelName: function () {
 
 			return {

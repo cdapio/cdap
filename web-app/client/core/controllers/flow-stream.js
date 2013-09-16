@@ -91,7 +91,6 @@ define([], function () {
 
 			this.set('injectValue', '');
 			this.HTTP.post('rest', 'streams', streamId, {
-				name: flow,
 				stream: streamId,
 				payload: payload
 			}, function (response, status) {
