@@ -265,8 +265,8 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     return createOperationResult(result);
   }
 
-  public void put(byte [] row, byte [] columns, byte[] values) throws Exception {
-    put(row, new byte[][] {columns}, new byte[][] {values});
+  public void put(byte [] row, byte [] column, byte[] values) throws Exception {
+    put(row, new byte[][] {column}, new byte[][] {values});
   }
 
   /**

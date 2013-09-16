@@ -12,13 +12,13 @@ import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
@@ -170,10 +170,10 @@ public class ClearFabricHandlerTest {
 
     OperationResult<Map<byte[], byte[]>> result;
     Table table = instantiator.getDataSet(name, context);
-    TxManager txManager = new TxManager(txClient, instantiator.getInstantiator().getTransactionAware());
-    txManager.start();
+    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+    txContext.start();
     result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
-    txManager.commit();
+    txContext.finish();
     return !result.isEmpty();
   }
 

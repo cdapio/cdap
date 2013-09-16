@@ -27,7 +27,7 @@ public interface OrderedColumnarTable {
    * Reads the latest versions of the specified columns in the specified row.
    * @return map of columns to values, never null
    */
-  OperationResult<Map<byte[], byte[]>> get(byte [] row, byte[][] columns) throws Exception;
+  OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns) throws Exception;
 
   /**
    * Reads the latest versions of all columns in the specified row that are
@@ -37,28 +37,28 @@ public interface OrderedColumnarTable {
    * @param limit maximum number of columns to return
    * @return map of columns to values, never null
    */
-  OperationResult<Map<byte [], byte []>> get(byte [] row, byte[] startColumn, byte[] stopColumn, int limit)
+  OperationResult<Map<byte [], byte []>> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
     throws Exception;
 
   /**
    * Writes the specified values for the specified columns for the specified row.
    */
-  void put(byte [] row, byte [][] columns, byte[][] values) throws Exception;
+  void put(byte[] row, byte[][] columns, byte[][] values) throws Exception;
 
   /**
    * Writes the specified value for the specified column for the specified row.
    */
-  void put(byte [] row, byte [] columns, byte[] values) throws Exception;
+  void put(byte[] row, byte[] column, byte[] values) throws Exception;
 
   /**
    * Deletes specified column of the specified row.
    */
-  void delete(byte [] row, byte [] columns) throws Exception;
+  void delete(byte[] row, byte[] column) throws Exception;
 
   /**
    * Deletes specified columns of the specified row.
    */
-  void delete(byte [] row, byte [][] columns) throws Exception;
+  void delete(byte[] row, byte[][] columns) throws Exception;
 
   /**
    * Increments (atomically) the specified row and columns by the specified
@@ -66,7 +66,7 @@ public interface OrderedColumnarTable {
    * @param amounts amounts to increment columns by
    * @return values of counters after the increments are performed, never null
    */
-  Map<byte[], Long> increment(byte [] row, byte[][] columns, long[] amounts) throws Exception;
+  Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts) throws Exception;
 
 
   /**

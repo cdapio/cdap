@@ -7,11 +7,11 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
@@ -55,11 +55,11 @@ public class TableHandlerTest {
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TxManager txManager = new TxManager(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
-    txManager.start();
+    txContext.start();
     t.write(new Write(rowKey, cols, vals));
-    txManager.commit();
+    txContext.finish();
 
     // now read back in various ways
     String queryPrefix = "/v2/tables/" + t.getName() + "/row/" + row;
@@ -103,10 +103,11 @@ public class TableHandlerTest {
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TxManager txManager = new TxManager(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionContext txContext = new TransactionContext(txClient,
+                                                          instantiator.getInstantiator().getTransactionAware());
 
     // read back directly and verify
-    txManager.start();
+    txContext.start();
     OperationResult<Map<byte[], byte[]>> result = t.read(new Read(row.getBytes()));
     Assert.assertFalse(result.isEmpty());
     Assert.assertArrayEquals(v1, result.getValue().get(c1));
@@ -118,9 +119,9 @@ public class TableHandlerTest {
     assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row + "?columns=c1;columns=c2");
 
     // starting new tx so that we see what was committed
-    txManager.commit();
+    txContext.finish();
 
-    txManager.start();
+    txContext.start();
 
     // read back directly and verify they're gone
     result = t.read(new Read(row.getBytes()));
@@ -155,18 +156,18 @@ public class TableHandlerTest {
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TxManager txManager = new TxManager(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
-    txManager.start();
+    txContext.start();
     t.write(new Write(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b }));
-    txManager.commit();
+    txContext.finish();
 
     // submit increment for row with c1 and c3, should succeed
     String json = "{\"a\":35, \"c\":11}";
     Map<String, Long> map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/row/" + row, json);
 
     // starting new tx so that we see what was committed
-    txManager.start();
+    txContext.start();
     // verify result is the incremented value
     Assert.assertNotNull(map);
     Assert.assertEquals(2L, map.size());
@@ -186,8 +187,8 @@ public class TableHandlerTest {
     assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/row/" + row, json);
 
     // starting new tx so that we see what was committed
-    txManager.commit();
-    txManager.start();
+    txContext.finish();
+    txContext.start();
     // verify directly that the row is unchanged
     result = t.read(new Read(row.getBytes()));
     Assert.assertFalse(result.isEmpty());
@@ -201,8 +202,8 @@ public class TableHandlerTest {
     map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/row/xyz", json);
 
     // starting new tx so that we see what was committed
-    txManager.commit();
-    txManager.start();
+    txContext.finish();
+    txContext.start();
     // verify return value is equal to increments
     Assert.assertNotNull(map);
     Assert.assertEquals(2L, map.size());
@@ -243,9 +244,9 @@ public class TableHandlerTest {
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TxManager txManager = new TxManager(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
-    txManager.start();
+    txContext.start();
     OperationResult<Map<byte[], byte[]>> result = table.read(new Read(x));
     Assert.assertFalse(result.isEmpty());
     Assert.assertEquals(1, result.getValue().size());
@@ -262,8 +263,8 @@ public class TableHandlerTest {
     assertDelete(tablePrefix, 200, "78" + "?columns=79" + "&encoding=hex");
 
     // starting new tx so that we see what was committed
-    txManager.commit();
-    txManager.start();
+    txContext.finish();
+    txContext.start();
     // and verify that it is really gone
     OperationResult<Map<byte[], byte[]>> read = table.read(new Read(x));
     Assert.assertTrue(read.isEmpty());
@@ -272,8 +273,8 @@ public class TableHandlerTest {
     assertIncrement(tablePrefix, 200, "eA" + "?encoding=base64", "{\"YQ\":42}");
     // verify the value was written using the Table
     // starting new tx so that we see what was committed
-    txManager.commit();
-    txManager.start();
+    txContext.finish();
+    txContext.start();
     result = table.read(new Read(x));
     Assert.assertFalse(result.isEmpty());
     Assert.assertEquals(1, result.getValue().size());
@@ -288,11 +289,11 @@ public class TableHandlerTest {
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TxManager txManager = new TxManager(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
-    txManager.start();
+    txContext.start();
     table.write(new Write(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'}));
-    txManager.commit();
+    txContext.finish();
     return table;
   }
 

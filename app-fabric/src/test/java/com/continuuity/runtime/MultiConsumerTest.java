@@ -171,13 +171,14 @@ public class MultiConsumerTest {
     TransactionExecutorFactory txExecutorFactory =
       TestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
 
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        byte[] value = accumulated.read(KEY);
-        // Sum(1..100) * 3
-        Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
-      }
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware())
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          byte[] value = accumulated.read(KEY);
+          // Sum(1..100) * 3
+          Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
+        }
     });
 
     for (ProgramController controller : controllers) {
