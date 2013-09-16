@@ -20,6 +20,7 @@ package com.continuuity.examples.helloworld;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -87,7 +88,7 @@ public class HelloWorld implements Application {
     KeyValueTable whom;
     Metrics flowletMetrics;
 
-
+    @ProcessInput
     public void processInput(StreamEvent event) throws OperationException {
       byte[] name = Bytes.toBytes(event.getBody());
       if (name != null && name.length > 0) {

@@ -134,6 +134,7 @@ public class WordCountApp implements Application {
     private OutputEmitter<MyRecord> output;
     private Metrics metrics;
 
+    @ProcessInput
     public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
       if (!"text".equals(context.getOrigin())) {
         return;

@@ -101,6 +101,7 @@ public class ToyApp implements Application {
         .build();
     }
 
+    @ProcessInput
     public void process(StreamEvent event) {
       KeyValueTable table = getContext().getDataSet("data2");
       out.emit("out");
@@ -118,6 +119,7 @@ public class ToyApp implements Application {
       super("B");
     }
 
+    @ProcessInput
     public void process(StreamEvent event) {
       out.emit(false);
     }
@@ -137,6 +139,7 @@ public class ToyApp implements Application {
       super("C");
     }
 
+    @ProcessInput
     public void process(String a) {
       c1.emit(1L);
       c2.emit(1);
@@ -158,6 +161,7 @@ public class ToyApp implements Application {
       out.emit(1.2);
     }
 
+    @ProcessInput
     void process(Boolean b) {
       out.emit(1.5);
     }
@@ -216,6 +220,7 @@ public class ToyApp implements Application {
 
     }
 
+    @ProcessInput
     public void process(Double d) {
 
     }

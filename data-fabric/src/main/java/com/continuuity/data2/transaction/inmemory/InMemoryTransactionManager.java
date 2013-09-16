@@ -76,6 +76,7 @@ import java.util.concurrent.TimeUnit;
  * are not tracked, and therefore cannot be rolled back. Hence, when a long transaction is aborted, it remains in the
  * list of excluded transactions to make its writes invisible.
  */
+// TODO: extract persistence logic from this guy: it is "inMemory" one. Subclass or whatever, but decouple it please
 public class InMemoryTransactionManager {
   // todo: optimize heavily
 
@@ -97,13 +98,14 @@ public class InMemoryTransactionManager {
 
   private static final long[] NO_INVALID_TX = { };
 
-  // the set of transactions that are in progress, with their expiration time stamp,
-  // or with the negative start time to specify no expiration. We remember the start
-  // time to allow diagnostics and possible manual cleanup/invalidation (not implemented yet).
+  // Transactions that are in progress, with their expiration time stamp (negative means no expiration).
   private final NavigableMap<Long, Long> inProgress = new ConcurrentSkipListMap<Long, Long>();
+
   // the list of transactions that are invalid (not properly committed/aborted, or timed out)
+  // TODO: explain usage of two arrays
   private final LongArrayList invalid = new LongArrayList();
   private long[] invalidArray = NO_INVALID_TX;
+
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
   // todo: should this be consolidated with inProgress?
   // commit time nextWritePointer -> changes made by this tx
@@ -368,7 +370,14 @@ public class InMemoryTransactionManager {
         }
 
         // Record the committed change set with the nextWritePointer as the commit time.
-        committedChangeSets.put(nextWritePointer, changeSet);
+        // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
+        //       stored under one key
+        Set<ChangeId> changeIds = committedChangeSets.get(nextWritePointer);
+        if (changeIds != null) {
+          changeIds.addAll(changeSet);
+        } else {
+          committedChangeSets.put(nextWritePointer, changeSet);
+        }
       }
       makeVisible(tx);
     }
@@ -394,14 +403,15 @@ public class InMemoryTransactionManager {
     committingChangeSets.remove(tx.getWritePointer());
     // makes tx visible (assumes that all operations were rolled back)
     // remove from in-progress set, so that it does not get excluded in the future
-    Long previous = inProgress.remove(tx.getWritePointer());
-    if (previous != null && previous < 0) {
+    Long expirationTs = inProgress.remove(tx.getWritePointer());
+    // TODO: this is bad/misleading/not clear logic. We should have special flags/tx attributes instead of it. Refactor!
+    if (expirationTs != null && expirationTs < 0) {
       // tx was long-running: it must be moved to invalid because its operations cannot be rolled back
       invalid.add(tx.getWritePointer());
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
       Collections.sort(invalid);
       invalidArray = invalid.toLongArray();
-    } else if (previous == null) {
+    } else if (expirationTs == null) {
       // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
       if (invalid.rem(tx.getWritePointer())) {
         invalidArray = invalid.toLongArray();

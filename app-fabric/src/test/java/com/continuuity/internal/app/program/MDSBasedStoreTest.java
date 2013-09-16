@@ -27,11 +27,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.NoOperationExecutor;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
@@ -45,11 +41,7 @@ import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Charsets;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,28 +60,12 @@ public class MDSBasedStoreTest {
   public void before() throws OperationException {
     metadataService = TestHelper.getInjector().getInstance(MetadataService.Iface.class);
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
-    // cleanups data
-    TestHelper.getInjector().getInstance(OperationExecutor.class)
-      .execute(new OperationContext(DefaultId.ACCOUNT.getId()), new ClearFabric());
-  }
 
-  @Test
-  public void testMetaDataServiceInjection() {
-    final Injector injector =
-      Guice.createInjector(
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(OperationExecutor.class).to(NoOperationExecutor.class);
-            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-            bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-            bind(LocationFactory.class).to(LocalLocationFactory.class);
-          }
-        }
-      );
-
-    MDSBasedStore store = injector.getInstance(MDSBasedStore.class);
-    Assert.assertNotNull(store.getMetaDataService());
+    // clean up data
+    MetaDataStore mds = TestHelper.getInjector().getInstance(MetaDataStore.class);
+    for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
+      mds.clear(new OperationContext(account), account, null);
+    }
   }
 
   @Test

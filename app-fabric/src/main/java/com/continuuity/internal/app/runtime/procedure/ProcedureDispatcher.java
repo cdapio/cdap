@@ -1,10 +1,12 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.api.procedure.ProcedureRequest;
+import com.continuuity.common.metrics.MetricsCollector;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
@@ -40,15 +42,10 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureDispatcher.class);
   private static final Type REQUEST_TYPE = new TypeToken<Map<String, String>>() {}.getType();
   private static final Pattern REQUEST_URI_PATTERN = Pattern.compile("apps/(.+)/procedures/(.+)/(.+)$");
+  private static final Gson GSON = new Gson();
 
   private final MetricsCollector metrics;
   private final ThreadLocal<HandlerMethod> handlerMethod;
-  private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
-    @Override
-    protected Gson initialValue() {
-      return new Gson();
-    }
-  };
 
   ProcedureDispatcher(final HandlerMethodFactory handlerMethodFactory, MetricsCollector metrics) {
     this.metrics = metrics;
@@ -122,8 +119,15 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
 
   private ProcedureRequest createProcedureRequest(HttpRequest request, Channel channel, String requestMethod) {
     try {
-      Map<String, String> args = gson.get().fromJson(
-        new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8), REQUEST_TYPE);
+      Map<String, String> args;
+      ChannelBuffer content = request.getContent();
+
+      if (content == null || !content.readable()) {
+        args = ImmutableMap.of();
+      } else {
+        args = GSON.fromJson(new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8),
+                             REQUEST_TYPE);
+      }
 
       return new DefaultProcedureRequest(requestMethod, args);
 

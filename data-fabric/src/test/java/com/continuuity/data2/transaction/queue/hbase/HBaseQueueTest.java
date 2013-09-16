@@ -17,6 +17,7 @@ import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.NoopPersistor;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
@@ -28,6 +29,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -61,16 +64,21 @@ public class HBaseQueueTest extends QueueTest {
   public static void init() throws Exception {
     // Start hbase
     HBaseTestBase.startHBase();
-
-    final DataFabricDistributedModule dataFabricModule =
+    final DataFabricDistributedModule dfModule =
       new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
-
+    // turn off persistence in tx manager to get rid of ugly zookeeper warnings
+    final Module dataFabricModule = Modules.override(dfModule).with(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(StatePersistor.class).to(NoopPersistor.class);
+        }
+      });
     // Customize test configuration
-    cConf = dataFabricModule.getConfiguration();
+    cConf = dfModule.getConfiguration();
     cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
     cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
               Integer.toString(Networks.getRandomPort()));
-
     cConf.set(HBaseTableUtil.CFG_TABLE_PREFIX, "test");
     cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
 

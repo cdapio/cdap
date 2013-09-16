@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.countcounts;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -33,6 +34,7 @@ public class Incrementer extends AbstractFlowlet {
   @UseDataSet(CountCounts.TABLE_NAME)
   CountCounterTable counters;
 
+  @ProcessInput
   public void process(Counts counts) throws OperationException {
     LOG.debug(this.getContext().getName() + ": Received counts " + counts);
 
