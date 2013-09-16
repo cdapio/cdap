@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Specification for {@link Workflow}. Instance of this class is created by the {@link Builder} class.
  */
 public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
@@ -36,8 +36,8 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
 
   /**
-   *
-   * @param <T>
+   * Builder to add the first action in the workflow.
+   * @param <T> Type of the next builder object.
    */
   public interface FirstAction<T> {
 
@@ -47,8 +47,8 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
   }
 
   /**
-   *
-   * @param <T>
+   * Builder for adding more workflow actions.
+   * @param <T> Type of the next builder object.
    */
   public interface MoreAction<T> {
 
@@ -62,22 +62,21 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
   }
 
   /**
-   *
-   * @param <T>
+   * Builder for setting up schedule of the workflow.
+   * @param <T> Type of the next builder object.
    */
   public interface ScheduleSetter<T> {
     T addSchedule(Schedule schedule);
   }
 
-
   /**
-   *
+   * Builder interface for the last stage of building the {@link WorkflowSpecification}.
    */
   interface SpecificationCreator extends Creator<WorkflowSpecification>,
                                          ScheduleSetter<SpecificationCreator> { }
 
   /**
-   *
+   * Builder class for constructing {@link WorkflowSpecification}.
    */
   final class Builder extends BaseBuilder<WorkflowSpecification> implements SpecificationCreator {
 
@@ -85,6 +84,9 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
     private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
     private final List<Schedule> schedules = Lists.newArrayList();
 
+    /**
+     * Returns an instance of builder.
+     */
     public static NameSetter<DescriptionSetter<FirstAction<MoreAction<SpecificationCreator>>>> with() {
       Builder builder = new Builder();
 
@@ -101,9 +103,9 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
     }
 
     /**
-     * Adds a MapReduce to this workflow.
-     * @param mapReduce
-     * @return
+     * Adds a {@link MapReduce} to this workflow.
+     * @param mapReduce The map reduce job to add.
+     * @return A {@link MapReduceSpecification} used for the given map reduce job.
      */
     private MapReduceSpecification addWorkflowMapReduce(MapReduce mapReduce) {
       MapReduceSpecification mapReduceSpec = new DefaultMapReduceSpecification(mapReduce);
