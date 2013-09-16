@@ -3,6 +3,7 @@ package com.continuuity.gateway;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.Write;
@@ -100,10 +101,10 @@ public class DataClientAuthTest {
     // and make sure to pass the data fabric executor to the gateway.
     gateway = new Gateway();
     gateway.setExecutor(this.executor);
+    gateway.setMetaDataStore(injector.getInstance(MetaDataStore.class));
     gateway.setConsumer(new TestUtil.NoopConsumer());
     gateway.setPassportClient(new MockedPassportClient(keysAndClusters));
-    gateway.setDiscoveryServiceClient(
-        injector.getInstance(DiscoveryServiceClient.class));
+    gateway.setDiscoveryServiceClient(injector.getInstance(DiscoveryServiceClient.class));
     gateway.start(null, configuration);
   }
 

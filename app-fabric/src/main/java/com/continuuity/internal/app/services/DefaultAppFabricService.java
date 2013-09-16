@@ -48,6 +48,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.StackTraceUtil;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -214,7 +215,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public DefaultAppFabricService(CConfiguration configuration, OperationExecutor opex,
+  public DefaultAppFabricService(CConfiguration configuration, OperationExecutor opex, MetaDataStore mds,
                                  LocationFactory locationFactory, ManagerFactory managerFactory,
                                  AuthorizationFactory authFactory, StoreFactory storeFactory,
                                  ProgramRuntimeService runtimeService, DiscoveryServiceClient discoveryServiceClient,
@@ -230,7 +231,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.store = storeFactory.create();
     this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                         System.getProperty("java.io.tmpdir")) + "/archive";
-    this.mds = new MetadataService(opex);
+    this.mds = new MetadataService(mds);
     this.scheduler = scheduler;
 
     // Note: This is hacky to start service like this.

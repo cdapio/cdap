@@ -13,7 +13,7 @@ import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowContext;
 import com.continuuity.api.workflow.WorkflowSpecification;
-import com.continuuity.internal.app.runtime.batch.hadoop.WordCount;
+import com.continuuity.internal.app.runtime.batch.WordCount;
 import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

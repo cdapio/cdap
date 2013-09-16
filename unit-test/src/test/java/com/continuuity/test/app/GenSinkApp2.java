@@ -5,16 +5,17 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -56,7 +57,7 @@ public final class GenSinkApp2 implements Application {
    * @param <T>
    * @param <U>
    */
-  public abstract static class GenFlowletBase<T, U> extends AbstractFlowlet implements GeneratorFlowlet {
+  public abstract static class GenFlowletBase<T, U> extends AbstractFlowlet {
 
     protected OutputEmitter<T> output;
 
@@ -71,7 +72,7 @@ public final class GenSinkApp2 implements Application {
 
     private int i;
 
-    @Override
+    @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
     public void generate() throws Exception {
       if (i < 100) {
         output.emit("Testing " + ++i);
@@ -89,8 +90,9 @@ public final class GenSinkApp2 implements Application {
    * @param <U>
    */
   public abstract static class SinkFlowletBase<T, U> extends AbstractFlowlet {
-    private static final Logger LOG = LoggerFactory.getLogger(SinkFlowlet.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SinkFlowletBase.class);
 
+    @ProcessInput
     public void process(T event, InputContext context) throws InterruptedException {
       LOG.info(event.toString());
     }

@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
@@ -9,7 +8,8 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Function;
@@ -204,21 +204,17 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
 
           // Begin transaction and dequeue
-          TransactionAgent txAgent = dataFabricFacade.createAndUpdateTransactionAgentProxy();
+          TransactionContext txContext = dataFabricFacade.createTransactionManager();
           try {
-            txAgent.start();
+            txContext.start();
 
             InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
             if (!input.needProcess()) {
               entry.backOff();
               // End the transaction if nothing in the queue
-              txAgent.finish();
+              txContext.finish();
               continue;
             }
-
-            // Resetting back-off time to minimum back-off time, since an entry to process was de-queued and most likely
-            // more entries will follow.
-            entry.resetBackOff();
 
             if (!entry.isRetry()) {
               // Only increment the inflight count for non-retry entries.
@@ -231,17 +227,20 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
               // Call the process method and commit the transaction
               ProcessMethod.ProcessResult result =
                 processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
-              postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txAgent, input,
+              postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txContext, input,
                           result);
             } finally {
               invoked = true;
+              // Resetting back-off time to minimum back-off time,
+              // since an entry to process was de-queued and most likely more entries will follow.
+              entry.resetBackOff();
             }
 
           } catch (Throwable t) {
             LOG.error("Unexpected exception: {}", flowletContext, t);
             try {
-              txAgent.abort();
-            } catch (OperationException e) {
+              txContext.abort();
+            } catch (TransactionFailureException e) {
               LOG.error("Fail to abort transaction: {}", flowletContext, e);
             }
           }
@@ -273,7 +272,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     };
   }
 
-  private void postProcess(Executor executor, final ProcessMethodCallback callback, final TransactionAgent txAgent,
+  private void postProcess(Executor executor, final ProcessMethodCallback callback, final TransactionContext txContext,
                            final InputDatum input, final ProcessMethod.ProcessResult result) {
     executor.execute(new Runnable() {
       @Override
@@ -286,24 +285,21 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             if (input.getRetry() > 0) {
               input.reclaim();
             }
-            txAgent.finish();
+            txContext.finish();
           } else {
             failureCause = result.getCause();
-            txAgent.abort();
+            txContext.abort();
           }
-        } catch (OperationException e) {
+        } catch (TransactionFailureException e) {
           LOG.error("Transaction operation failed: {}", e.getMessage(), e);
           failureCause = e;
           try {
             if (result.isSuccess()) {
-              txAgent.abort();
+              txContext.abort();
             }
-          } catch (OperationException ex) {
+          } catch (TransactionFailureException ex) {
             LOG.error("Fail to abort transaction: {}", inputContext, ex);
           }
-        } finally {
-          // we want to emit metrics after every retry after finish() so that deferred operations are also logged
-          flowletContext.getSystemMetrics().gauge("store.ops", txAgent.getSucceededCount());
         }
 
         if (failureCause == null) {
@@ -320,11 +316,11 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private InputAcknowledger createInputAcknowledger(final InputDatum input) {
     return new InputAcknowledger() {
       @Override
-      public void ack() throws OperationException {
-        TransactionAgent txAgent = dataFabricFacade.createTransactionAgent();
-        txAgent.start();
+      public void ack() throws TransactionFailureException {
+        TransactionContext txContext = dataFabricFacade.createTransactionManager();
+        txContext.start();
         input.reclaim();
-        txAgent.finish();
+        txContext.finish();
       }
     };
   }
@@ -351,22 +347,22 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         hasRetry = true;
         ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
 
-        TransactionAgent txAgent = dataFabricFacade.createAndUpdateTransactionAgentProxy();
+        TransactionContext txContext = dataFabricFacade.createTransactionManager();
         try {
-          txAgent.start();
+          txContext.start();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
           flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", input.size());
 
           // Call the process method and commit the transaction
           ProcessMethod.ProcessResult result =
             processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
-          postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txAgent, input, result);
+          postProcess(transactionExecutor, processMethodCallback(processQueue, entry, input), txContext, input, result);
 
         } catch (Throwable t) {
           LOG.error("Unexpected exception: {}", flowletContext, t);
           try {
-            txAgent.abort();
-          } catch (OperationException e) {
+            txContext.abort();
+          } catch (TransactionFailureException e) {
             LOG.error("Fail to abort transaction: {}", flowletContext, e);
           }
         }
@@ -444,14 +440,15 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             FlowletProcessEntry.create(processEntry.getProcessSpec(),
                                        new ProcessSpecification<T>(new SingleItemQueueReader(input),
                                                                    processEntry.getProcessSpec().getInputDecoder(),
-                                                                   processEntry.getProcessSpec().getProcessMethod()));
+                                                                   processEntry.getProcessSpec().getProcessMethod(),
+                                                                   null));
           processQueue.offer(retryEntry);
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
             flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
             inputAcknowledger.ack();
-          } catch (OperationException e) {
+          } catch (TransactionFailureException e) {
             LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);
           } finally {
             enqueueEntry();

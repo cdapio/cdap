@@ -1,5 +1,6 @@
 package com.continuuity.internal.flowlet;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.google.common.collect.ImmutableMap;
@@ -19,27 +20,25 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   private final FailurePolicy failurePolicy;
   private final Set<String> dataSets;
   private final Map<String, String> arguments;
+  private final ResourceSpecification resources;
 
   public DefaultFlowletSpecification(String name, String description,
                                      FailurePolicy failurePolicy, Set<String> dataSets,
-                                     Map<String, String> arguments) {
-    this(null, name, description, failurePolicy, dataSets, arguments);
-  }
-
-  public DefaultFlowletSpecification(String className, FlowletSpecification other) {
-    this(className, other.getName(), other.getDescription(),
-         other.getFailurePolicy(), other.getDataSets(), other.getArguments());
+                                     Map<String, String> arguments, ResourceSpecification resources) {
+    this(null, name, description, failurePolicy, dataSets, arguments, resources);
   }
 
   public DefaultFlowletSpecification(String className, String name,
                                      String description, FailurePolicy failurePolicy,
-                                     Set<String> dataSets, Map<String, String> arguments) {
+                                     Set<String> dataSets, Map<String, String> arguments,
+                                     ResourceSpecification resources) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.failurePolicy = failurePolicy;
     this.dataSets = ImmutableSet.copyOf(dataSets);
     this.arguments = arguments == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(arguments);
+    this.resources = resources;
   }
 
   @Override
@@ -70,5 +69,10 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   @Override
   public Map<String, String> getArguments() {
     return arguments;
+  }
+
+  @Override
+  public ResourceSpecification getResources() {
+    return resources;
   }
 }

@@ -7,6 +7,7 @@ import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -87,23 +88,22 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   @Override
   protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) throws Exception {
-    // NOTE: we use Put with null values because we need to delete only specific version, while Delete op deletes all
-    //       up to specified
-    List<Put> puts = Lists.newArrayList();
+    // NOTE: we use Delete with the write pointer as the specific version to delete.
+    List<Delete> deletes = Lists.newArrayList();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
-      Put put = new Put(row.getKey());
+      Delete delete = new Delete(row.getKey());
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
-          put.add(DATA_COLFAM, column.getKey(), tx.getWritePointer(), null);
+          delete.deleteColumn(DATA_COLFAM, column.getKey(), tx.getWritePointer());
         } else {
-          put.add(DATA_COLFAM, column.getKey(), null);
+          delete.deleteColumn(DATA_COLFAM, column.getKey());
         }
       }
-      puts.add(put);
+      deletes.add(delete);
     }
-    hTable.put(puts);
+    hTable.delete(deletes);
     hTable.flushCommits();
   }
 
@@ -183,8 +183,8 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
       return unwrapDeletes(rowMap);
     }
 
-//   todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
-//         on the other hand, looks like the above suggestion WILL NOT WORK
+    // todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
+    //       on the other hand, looks like the above suggestion WILL NOT WORK
     get.setMaxVersions(tx.excludesSize() + 1);
 
     // todo: push filtering logic to server
