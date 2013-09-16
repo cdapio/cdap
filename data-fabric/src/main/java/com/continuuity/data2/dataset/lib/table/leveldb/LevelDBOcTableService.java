@@ -67,6 +67,7 @@ public class LevelDBOcTableService {
   }
 
   public Collection<String> list() {
+    // todo: this will not list all tables, we need to go to physical store to find all or do smth else ENG-3265
     return ImmutableList.copyOf(tables.keySet());
   }
 
