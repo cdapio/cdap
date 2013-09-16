@@ -282,8 +282,8 @@ define([], function () {
 				}
 			}
 
-			// Determine if there are any anomolies i.e. node at column 3 --> another node at column 3 and
-			// increment to push node to column 4.
+			// Determine if there are any anomolies i.e. nodelevel3 --> nodelevel3 and increment to push
+			// node to column 4.
 			for (var i = 0, len = connections.length; i < len; i++) {
 				var conn = connections[i];
 				if (assignments[conn['sourceName']] === assignments[conn['targetName']]) {
