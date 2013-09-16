@@ -27,6 +27,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
@@ -110,6 +111,17 @@ public class HttpResponder {
   public void sendByteArray(HttpResponseStatus status, byte [] bytes, Multimap<String, String> headers) {
     ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(bytes);
     sendContent(status, channelBuffer, "application/octet-stream", headers);
+  }
+
+  /**
+   * Sends a response containing raw bytes. Default content type is "application/octet-stream", but can be
+   * overridden in the headers.
+   * @param status status of the Http response
+   * @param buffer bytes to send
+   * @param headers Headers to send.
+   */
+  public void sendBytes(HttpResponseStatus status, ByteBuffer buffer, Multimap<String, String> headers) {
+    sendContent(status, ChannelBuffers.wrappedBuffer(buffer), "application/octet-stream", headers);
   }
 
   /**
