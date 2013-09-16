@@ -6,9 +6,14 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.commons.lang.SerializationUtils;
 import org.quartz.JobDetail;
@@ -20,6 +25,7 @@ import org.quartz.spi.SchedulerSignaler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,11 +42,13 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   private static final byte[] TRIGGER_KEY = Bytes.toBytes("trigger");
 
   private final DataSetAccessor dataSetAccessor;
+  private final TransactionExecutorFactory factory;
 
   @Inject
-  public DataSetBasedScheduleStore(DataSetAccessor dataSetAccessor)
+  public DataSetBasedScheduleStore(TransactionExecutorFactory factory, DataSetAccessor dataSetAccessor)
                        throws UnsupportedTypeException, OperationException, JobPersistenceException {
     this.dataSetAccessor = dataSetAccessor;
+    this.factory = factory;
   }
 
   @Override
@@ -64,21 +72,28 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   }
 
   @Override
-  public void storeJobAndTrigger(JobDetail newJob, OperableTrigger newTrigger)
+  public void storeJobAndTrigger(final JobDetail newJob, final OperableTrigger newTrigger)
                                  throws JobPersistenceException {
     super.storeJob(newJob, true);
     super.storeTrigger(newTrigger, true);
 
     try {
-      LOG.debug("Schedule: storing job with key {}", newJob.getKey());
-      OrderedColumnarTable table = dataSetAccessor.getDataSetClient(SCHEDULE_STORE_DATASET_NAME,
+
+      final OrderedColumnarTable table = dataSetAccessor.getDataSetClient(SCHEDULE_STORE_DATASET_NAME,
                                                                     OrderedColumnarTable.class);
       Preconditions.checkNotNull(table, String.format("Could not get dataset client for data set: %s",
                                                       SCHEDULE_STORE_DATASET_NAME));
-      persistJob(table, newJob);
+      factory.createExecutor(ImmutableList.of((TransactionAware) table))
+                            .execute(new TransactionExecutor.Subroutine() {
+                              @Override
+                              public void apply() throws Exception {
+                                persistJob(table, newJob);
+                                LOG.debug("Schedule: stored job with key {}", newJob.getKey());
+                                persistTrigger(table, newTrigger);
+                                LOG.debug("Schedule: stored trigger with key {}", newTrigger.getKey());
+                              }
+                            });
 
-      LOG.debug("Schedule: storing trigger with key {}", newTrigger.getKey());
-      persistTrigger(table, newTrigger);
     } catch (Throwable th) {
       throw Throwables.propagate(th);
     }
@@ -110,35 +125,49 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   // Get schedule information from persistent store
   private void readSchedulesFromPersistentStore() throws Exception {
 
-    OrderedColumnarTable table = dataSetAccessor.getDataSetClient(SCHEDULE_STORE_DATASET_NAME,
-                                                                  OrderedColumnarTable.class);
+    final OrderedColumnarTable table = dataSetAccessor.getDataSetClient(SCHEDULE_STORE_DATASET_NAME,
+                                                                        OrderedColumnarTable.class);
+
     Preconditions.checkNotNull(table, String.format("Could not get dataset client for data set: %s",
                                                     SCHEDULE_STORE_DATASET_NAME));
 
-    try {
-      OperationResult<Map<byte[], byte[]>> result = table.get(JOB_KEY, null, null, -1);
-      if (!result.isEmpty()) {
-        for (byte[] bytes : result.getValue().values()){
-          JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(bytes);
-          LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
-          super.storeJob(jobDetail, true);
-        }
-      } else {
-        LOG.debug("Schedule: No Jobs found in Job store");
-      }
+    final List<JobDetail> jobs = Lists.newArrayList();
+    final List<OperableTrigger> triggers = Lists.newArrayList();
 
-      result = table.get(TRIGGER_KEY, null, null, -1);
-      if (!result.isEmpty()) {
-        for (byte[] bytes : result.getValue().values()){
-          OperableTrigger trigger = (OperableTrigger) SerializationUtils.deserialize(bytes);
-          super.storeTrigger(trigger, true);
-          LOG.debug("Schedule: trigger with key {} found", trigger.getKey());
-        }
-      } else {
-        LOG.debug("Schedule: No triggers found in job store");
+    factory.createExecutor(ImmutableList.of((TransactionAware) table))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          OperationResult<Map<byte[], byte[]>> result = table.get(JOB_KEY, null, null, -1);
+          if (!result.isEmpty()) {
+            for (byte[] bytes : result.getValue().values()){
+              JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(bytes);
+              LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
+              jobs.add(jobDetail);
+            }
+          } else {
+            LOG.debug("Schedule: No Jobs found in Job store");
+          }
+
+          result = table.get(TRIGGER_KEY, null, null, -1);
+          if (!result.isEmpty()) {
+            for (byte[] bytes : result.getValue().values()){
+              OperableTrigger trigger = (OperableTrigger) SerializationUtils.deserialize(bytes);
+              triggers.add(trigger);
+              LOG.debug("Schedule: trigger with key {} found", trigger.getKey());
+            }
+          } else {
+            LOG.debug("Schedule: No triggers found in job store");
+          }
       }
-    } catch (Throwable th) {
-      throw Throwables.propagate(th);
+    });
+
+    for (JobDetail job : jobs) {
+      super.storeJob(job, true);
+    }
+
+    for (OperableTrigger trigger : triggers){
+      super.storeTrigger(trigger, true);
     }
   }
 }
