@@ -122,7 +122,7 @@ public abstract class WeaveRunnerMain extends DaemonMain {
       weaveController.addListener(new ServiceListenerAdapter() {
         @Override
         public void failed(Service.State from, Throwable failure) {
-          LOG.error("{} failed with exception... stopping LogSaverMain.", serviceName, failure);
+          LOG.error("{} failed with exception... stopping.", serviceName, failure);
           System.exit(1);
         }
       }, MoreExecutors.sameThreadExecutor());

@@ -56,10 +56,9 @@ public class NettyRouter extends AbstractIdleService {
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
 
-  private volatile ServerBootstrap serverBootstrap;
-
-  private volatile ClientBootstrap clientBootstrap;
-  private volatile InetSocketAddress boundAddress;
+  private ServerBootstrap serverBootstrap;
+  private ClientBootstrap clientBootstrap;
+  private InetSocketAddress boundAddress;
 
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
@@ -154,12 +153,12 @@ public class NettyRouter extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping Netty Router for service {} on address {}...", destinationServiceName, boundAddress);
 
-    serverBootstrap.shutdown();
     try {
       if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT_SECS, TimeUnit.SECONDS)) {
         LOG.warn("Timeout when closing all channels.");
       }
     } finally {
+      serverBootstrap.shutdown();
       clientBootstrap.shutdown();
       clientBootstrap.releaseExternalResources();
       serverBootstrap.releaseExternalResources();

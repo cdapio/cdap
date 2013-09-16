@@ -32,10 +32,6 @@ public class GatewayWeaveApplication implements WeaveApplication {
     int memoryMb = cConf.getInt(Constants.Gateway.MEMORY_MB, Constants.Gateway.DEFAULT_MEMORY_MB);
     int instances = cConf.getInt(Constants.Gateway.NUM_INSTANCES, Constants.Gateway.DEFAULT_NUM_INSTANCES);
 
-    WeaveSpecification.Builder.MoreRunnable moreRunnable = WeaveSpecification.Builder.with()
-      .setName(name)
-      .withRunnable();
-
     ResourceSpecification spec = ResourceSpecification.Builder
       .with()
       .setCores(numCores)
@@ -43,13 +39,13 @@ public class GatewayWeaveApplication implements WeaveApplication {
       .setInstances(instances)
       .build();
 
-    WeaveSpecification.Builder.RunnableSetter runnableSetter =
-      moreRunnable.add(new GatewayWeaveRunnable("GatewayWeaveRunnable", "cConf.xml", "hConf.xml"), spec)
-        .withLocalFiles()
-        .add("cConf.xml", cConfFile.toURI())
-        .add("hConf.xml", hConfFile.toURI())
-        .apply();
-
-    return runnableSetter.anyOrder().build();
+    return WeaveSpecification.Builder.with()
+      .setName(name)
+      .withRunnable()
+      .add(new GatewayWeaveRunnable("GatewayWeaveRunnable", "cConf.xml", "hConf.xml"), spec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply().anyOrder().build();
   }
 }

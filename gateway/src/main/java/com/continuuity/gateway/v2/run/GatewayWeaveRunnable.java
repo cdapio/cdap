@@ -142,8 +142,8 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
   @Override
   public void run() {
     LOG.info("Starting runnable " + name);
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
-    gateway.startAndWait();
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService,
+                                             metricsCollectionService, gateway));
     LOG.info("Runnable started " + name);
 
     try {
@@ -160,8 +160,8 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
   public void stop() {
     LOG.info("Stopping runnable " + name);
 
-    gateway.stopAndWait();
-    Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
+    Futures.getUnchecked(Services.chainStop(gateway, metricsCollectionService,
+                                            kafkaClientService, zkClientService));
     runLatch.countDown();
   }
 
