@@ -85,12 +85,15 @@ define([], function () {
 			return true;
 
 		}.property('currentState'),
+
 		started: function () {
 			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
 		}.property('timeTrigger'),
+
 		stopped: function () {
 			return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'No Date';
 		}.property('timeTrigger'),
+
 		actionIcon: function () {
 
 			if (this.currentState === 'RUNNING' ||
@@ -101,6 +104,7 @@ define([], function () {
 			}
 
 		}.property('currentState').cacheable(false),
+
 		stopDisabled: function () {
 
 			if (this.currentState === 'RUNNING') {
@@ -109,12 +113,14 @@ define([], function () {
 			return true;
 
 		}.property('currentState'),
+
 		startDisabled: function () {
 			if (this.currentState === 'RUNNING') {
 				return true;
 			}
 			return false;
 		}.property('currentState'),
+
 		startPauseDisabled: function () {
 
 			if (this.currentState !== 'STOPPED' &&
@@ -126,6 +132,7 @@ define([], function () {
 			return false;
 
 		}.property('currentState'),
+
 		defaultAction: function () {
 			if (!this.currentState) {
 				return '...';
@@ -209,18 +216,14 @@ define([], function () {
 
 					var strObj = {};
 					if (!jQuery.isEmptyObject(flowlet.inputs)) {
-						if (flowlet.inputs.hasOwnProperty('')) {
-							strObj['queue_IN'] = {
-								second: 'IN'
-							};
-						}
+						strObj['queue_IN'] = {
+							second: 'IN'
+						};
 					}
 					if (!jQuery.isEmptyObject(flowlet.outputs)) {
-						if (flowlet.outputs.hasOwnProperty('queue')) {
-							strObj['queue_OUT'] = {
-								second: 'OUT'
-							};
-						}
+						strObj['queue_OUT'] = {
+							second: 'OUT'
+						};
 					}
 					flowletStreams[descriptor] = strObj;
 				}
@@ -230,6 +233,7 @@ define([], function () {
 			obj.flowlets = flowlets;
 			var connections = [];
 			var flowStreams = [];
+			model.connections = this.validateConnections(model.connections);
 			for (var i = 0; i < model.connections.length; i++) {
 				var cn = model.connections[i];
 				var from = {};
@@ -247,8 +251,66 @@ define([], function () {
 				}
 			}
 			obj.flowStreams = flowStreams;
+
 			obj.connections = connections;
 			return obj;
+		},
+
+		validateConnections: function (connections) {
+			var assignments = {};
+			var count = 0;
+			for (var i = 0, len = connections.length; i < len; i++) {
+				var conn = connections[i];
+				if (!(conn['sourceName'] in assignments)) {
+					count++;
+					assignments[conn['sourceName']] = count;
+				}
+				if (!(conn['targetName'] in assignments)) {
+					count = assignments[conn['targetName']] = assignments[conn['sourceName']] + 1;
+				}
+			}
+			var assignmentMap = {};
+			for (var i = 0; i < assignments.length; i++) {
+				assignmentMap[assignments[i]] = i;
+			}
+			for (var i = 0, len = connections.length; i < len; i++) {
+				var conn = connections[i];
+				if (assignments[conn['sourceName']] === assignments[conn['targetName']]) {
+					assignments[conn['targetName']]++;
+				}
+			}
+			var newConnections = [];
+			for (var i = 0, len = connections.length; i < len; i++) {
+				var source = connections[i].sourceName;
+				var destination = connections[i].targetName;
+				if (assignments[destination] - assignments[source] > 1) {
+					var diff = assignments[destination] - assignments[source];
+					for (var z = 0; z < diff; z++) {
+						if (z === 0) {
+							newConnections.push({
+								sourceType: connections[i].sourceType,
+								sourceName: connections[i].sourceName,
+								targetName: 'dummy'
+							});
+						} else if (z > 0 && z !== diff -1) {
+							newConnections.push({
+								sourceType: 'dummy',
+								sourceName: 'dummy',
+								targetName: 'dummy'
+							});
+						} else if (z === diff - 1) {
+							newConnections.push({
+								sourceType: connections[i].sourceType,
+								sourceName: 'dummy',
+								targetName: connections[i].targetName
+							});
+						}
+					}
+				} else {
+					newConnections.push(connections[i]);
+				}
+			}
+			return newConnections;
 		}
 
 	});

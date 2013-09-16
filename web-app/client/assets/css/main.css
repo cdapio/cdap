@@ -1421,6 +1421,18 @@ a strong {
 	margin: 0px;
 	padding: 5px 0px;
 }
+
+#flowletdummy {
+	width: 104px;
+	height: 104px;
+	background: url('../img/empty-dag.png');
+	border: 0px;
+	z-index: 20;
+	float: left;	
+	clear: left;
+	position: relative;
+}
+
 #flowlet-popup-tabs {
 	width: 100%;
 	height: 36px;
