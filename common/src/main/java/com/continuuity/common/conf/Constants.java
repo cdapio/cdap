@@ -13,6 +13,7 @@ public final class Constants {
     public static final String METADATA = "metadata";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
+    public static final String GATEWAY = "gateway";
   }
 
   /**
@@ -66,7 +67,7 @@ public final class Constants {
   public static final class Gateway {
     public static final String ADDRESS = "gateway.server.address";
     public static final String PORT = "stream.rest.port";
-    public static final String BACKLOG = "gateway.connection.backlog";
+    public static final String BACKLOG_CONNECTIONS = "gateway.connection.backlog";
     public static final String EXEC_THREADS = "gateway.exec.threads";
     public static final String BOSS_THREADS = "gateway.boss.threads";
     public static final String WORKER_THREADS = "gateway.worker.threads";
@@ -80,7 +81,6 @@ public final class Constants {
     public static final String NUM_CORES = "gateway.num.cores";
     public static final String NUM_INSTANCES = "gateway.num.instances";
     public static final String MEMORY_MB = "gateway.memory.mb";
-    public static final String SERVICE_NAME = "gateway.service.name";
 
     /**
      * Defaults.
@@ -100,7 +100,6 @@ public final class Constants {
     public static final int DEFAULT_NUM_CORES = 2;
     public static final int DEFAULT_NUM_INSTANCES = 1;
     public static final int DEFAULT_MEMORY_MB = 2048;
-    public static final String DEFAULT_SERVICE_NAME = "gateway.server";
 
 
     /**
@@ -122,7 +121,7 @@ public final class Constants {
     public static final String ADDRESS = "router.server.address";
     public static final String PORT = "router.port";
     public static final String DEST_SERVICE_NAME = "router.dest.service.name";
-    public static final String BACKLOG = "router.connection.backlog";
+    public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
     public static final String CLIENT_BOSS_THREADS = "router.client.boss.threads";
@@ -132,7 +131,7 @@ public final class Constants {
      * Defaults.
      */
     public static final int DEFAULT_PORT = 10000;
-    public static final String DEFAULT_DEST_SERVICE_NAME = Gateway.DEFAULT_SERVICE_NAME;
+    public static final String DEFAULT_DEST_SERVICE_NAME = Service.GATEWAY;
     public static final int DEFAULT_BACKLOG = 20000;
     public static final int DEFAULT_SERVER_BOSS_THREADS = 1;
     public static final int DEFAULT_SERVER_WORKER_THREADS = 10;

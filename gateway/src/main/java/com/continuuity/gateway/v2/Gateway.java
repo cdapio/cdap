@@ -41,7 +41,8 @@ public class Gateway extends AbstractIdleService {
     builder.addHttpHandlers(handlers);
     builder.setHost(hostname.getCanonicalHostName());
     builder.setPort(cConf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT));
-    builder.setConnectionBacklog(cConf.getInt(Constants.Gateway.BACKLOG, Constants.Gateway.DEFAULT_BACKLOG));
+    builder.setConnectionBacklog(cConf.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
+                                              Constants.Gateway.DEFAULT_BACKLOG));
     builder.setExecThreadPoolSize(cConf.getInt(Constants.Gateway.EXEC_THREADS,
                                                Constants.Gateway.DEFAULT_EXEC_THREADS));
     builder.setBossThreadPoolSize(cConf.getInt(Constants.Gateway.BOSS_THREADS,
@@ -62,7 +63,7 @@ public class Gateway extends AbstractIdleService {
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return cConf.get(Constants.Gateway.SERVICE_NAME, Constants.Gateway.DEFAULT_SERVICE_NAME);
+        return cConf.get(Constants.Service.GATEWAY);
       }
 
       @Override

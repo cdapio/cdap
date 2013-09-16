@@ -72,7 +72,7 @@ public class NettyRouter extends AbstractIdleService {
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
     this.serverWorkerThreadPoolSize = cConf.getInt(Constants.Router.SERVER_WORKER_THREADS,
                                                    Constants.Router.DEFAULT_SERVER_WORKER_THREADS);
-    this.serverConnectionBacklog = cConf.getInt(Constants.Router.BACKLOG,
+    this.serverConnectionBacklog = cConf.getInt(Constants.Router.BACKLOG_CONNECTIONS,
                                                 Constants.Router.DEFAULT_BACKLOG);
 
     this.clientBossThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_BOSS_THREADS,
