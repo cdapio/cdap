@@ -29,6 +29,7 @@ import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.weave.api.RunId;
@@ -64,8 +65,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
-
-  private static final String LOGICAL_START_TIME = "logicalStartTime";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -113,8 +112,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    long logicalStartTime = options.getArguments().hasOption(LOGICAL_START_TIME)
-                                ? Long.parseLong(options.getArguments().getOption(LOGICAL_START_TIME))
+    long logicalStartTime = options.getArguments().hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
+                                ? Long.parseLong(options.getArguments()
+                                                        .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);

@@ -10,6 +10,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.io.InstantiatorFactory;
 import com.google.common.base.Preconditions;
@@ -33,7 +34,6 @@ import java.util.Map;
 final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
-  private static final String LOGICAL_START_TIME = "logicalStartTime";
 
   private final Program program;
   private final InetAddress hostname;
@@ -51,8 +51,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
     this.workflowSpec = workflowSpec;
-    this.logicalStartTime = options.getArguments().hasOption(LOGICAL_START_TIME)
-                                ? Long.parseLong(options.getArguments().getOption(LOGICAL_START_TIME))
+    this.logicalStartTime = options.getArguments().hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
+                                ? Long.parseLong(options.getArguments()
+                                                         .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
     this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner,

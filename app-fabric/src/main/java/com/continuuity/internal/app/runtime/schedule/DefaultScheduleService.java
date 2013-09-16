@@ -2,10 +2,15 @@ package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.StoreFactory;
+import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.quartz.CronScheduleBuilder;
@@ -20,6 +25,8 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * Default Schedule service implementation.
@@ -93,8 +100,8 @@ public class DefaultScheduleService extends AbstractIdleService implements Sched
   //2. Quartz resolution is in seconds which cron entry doesn't support.
   private String getQuartzCronExpression(String cronEntry) {
     StringBuilder cronStringBuilder = new StringBuilder("0 " + cronEntry);
-    if (cronStringBuilder.charAt(cronStringBuilder.length()-1) == '*'){
-      cronStringBuilder.setCharAt(cronStringBuilder.length()-1, '?');
+    if (cronStringBuilder.charAt(cronStringBuilder.length() - 1) == '*'){
+      cronStringBuilder.setCharAt(cronStringBuilder.length() - 1, '?');
     }
     return cronStringBuilder.toString();
   }
@@ -121,7 +128,17 @@ public class DefaultScheduleService extends AbstractIdleService implements Sched
       String applicationId = parts[1];
       String programId = parts[2];
       LOG.info("Account ID "+ accountId + " application:  "+ applicationId + " programId: " + programId);
-      taskRunner.run(accountId, applicationId, programId, null);
+      Map<String, String> options = new ImmutableMap.Builder<String, String>()
+                                                    .put(ProgramOptionConstants.LOGICAL_START_TIME,
+                                                           Long.toString(context.getScheduledFireTime().getTime()))
+                                                    .put(ProgramOptionConstants.RETRY_COUNT,
+                                                           Integer.toString(context.getRefireCount()))
+                                                    .build();
+
+
+      ProgramOptions programOptions = new SimpleProgramOptions(ProgramOptionConstants.SCHEDULER,
+                                                               new BasicArguments(options), new BasicArguments());
+      taskRunner.run(accountId, applicationId, programId, programOptions);
     }
   }
 }
