@@ -1431,6 +1431,7 @@ a strong {
 	float: left;	
 	clear: left;
 	position: relative;
+	cursor: default;
 }
 
 #flowlet-popup-tabs {

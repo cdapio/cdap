@@ -191,6 +191,10 @@ define([], function () {
 
 		},
 
+		/**
+		 * HAX. Transforms v2 json to v1 format for rendering flow status diagram.
+		 * TODO: Change frontend to accept v2 json and remove this code.
+		 */
 		transformModel: function (model) {
 			var obj = {};
 			var meta = {};
@@ -256,9 +260,17 @@ define([], function () {
 			return obj;
 		},
 
+		/**
+		 * Validates connections and inserts a dummy node where there are overlapping flowlets.
+		 * @param  {Array} connections JSON received from server.
+		 * @return {Array} Validated connections with dummy nodes appropriately inserted.
+		 */	
 		validateConnections: function (connections) {
 			var assignments = {};
 			var count = 0;
+
+			// First determine which order the nodes are rendered visually. This is based on a horizontal
+			// column format.
 			for (var i = 0, len = connections.length; i < len; i++) {
 				var conn = connections[i];
 				if (!(conn['sourceName'] in assignments)) {
@@ -269,16 +281,19 @@ define([], function () {
 					count = assignments[conn['targetName']] = assignments[conn['sourceName']] + 1;
 				}
 			}
-			var assignmentMap = {};
-			for (var i = 0; i < assignments.length; i++) {
-				assignmentMap[assignments[i]] = i;
-			}
+
+			// Determine if there are any anomolies i.e. node at column 3 --> another node at column 3 and
+			// increment to push node to column 4.
 			for (var i = 0, len = connections.length; i < len; i++) {
 				var conn = connections[i];
 				if (assignments[conn['sourceName']] === assignments[conn['targetName']]) {
 					assignments[conn['targetName']]++;
 				}
 			}
+			
+			// Set up dummy connections if anomoly is detected and there is distance between connecting
+			// nodes. This changes connection nodelevel2 --> nodelevel5 to:
+			// nodelevel2 --> dummylevel3, dummylevel3 --> dummylevel4, dummylevel4 --> nodelevel5.
 			var newConnections = [];
 			for (var i = 0, len = connections.length; i < len; i++) {
 				var source = connections[i].sourceName;
