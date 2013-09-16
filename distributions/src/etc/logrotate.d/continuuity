@@ -1,0 +1,8 @@
+/var/log/continuuity/*-continuuity-*.log {
+    rotate 7
+    daily
+    missingok
+    notifempty
+    copytruncate
+    compress
+}

@@ -137,6 +137,11 @@ define (['core/application'], function (Application) {
 
 		});
 
+		this.resource('Workflow', {path: '/workflows/:workflow_id'}, function () {
+			this.route('History', { path: '/history' });
+			this.route('Schedule', { path: '/schedule' });
+		});
+
 		this.route('Analyze', { path: '/analyze' });
 
 		this.route("PageNotFound", { path: "*:" });
@@ -278,6 +283,25 @@ define (['core/application'], function (Application) {
 			}
 		}),
 
+		/*
+		 * Ensures that the model is handled properly (see basicRouter)
+		 */
+		WorflowRoute: Ember.Route.extend({
+			model: modelFinder
+		}),
+
+		WorkflowStatusRoute: basicRouter.extend({
+			model: function() {
+				return this.modelFor('Workflow');
+			}
+		}),
+
+		WorkflowStatusConfigRoute: basicRouter.extend({
+			renderTemplate: function () {
+				this.render('Runnable/Config');
+			}
+		}),
+
 		DatasetRoute: basicRouter.extend(),
 
 		/*
@@ -365,7 +389,9 @@ define (['core/application'], function (Application) {
 
 		StreamsRoute: Em.Route.extend(getListHandler(['Stream'])),
 
-		FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Batch'])),
+		FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Batch', 'Workflow'])),
+
+		WorkflowsRoute: Em.Route.extend(getListHandler(['Workflow'])),
 
 		BatchesRoute: Em.Route.extend(getListHandler(['Batch'])),
 
