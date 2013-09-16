@@ -5,10 +5,11 @@ import ch.qos.logback.core.util.StatusPrinter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.InMemoryDataSetAccessor;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.KafkaTestBase;
 import com.continuuity.logging.LoggingConfiguration;
-import com.continuuity.logging.Util;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.kafka.KafkaLogAppender;
 import com.continuuity.logging.context.FlowletLoggingContext;
@@ -50,10 +51,11 @@ import static com.continuuity.logging.appender.LoggingTester.LogCallback;
  */
 public class LogSaverTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
-  private static final OperationExecutor OPEX = Util.getOpex();
 
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private static InMemoryTxSystemClient txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -72,7 +74,9 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS, "600");
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
-    LogSaver logSaver = new LogSaver(OPEX, 0, new Configuration(), cConf);
+    txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+    LogSaver logSaver =
+      new LogSaver(new InMemoryDataSetAccessor(cConf), txClient, 0, new Configuration(), cConf);
     logSaver.startAndWait();
     publishLogs();
     waitTillLogSaverDone(logBaseDir);
@@ -85,8 +89,8 @@ public class LogSaverTest extends KafkaTestBase {
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "developer");
-    DistributedLogReader distributedLogReader = new DistributedLogReader(OPEX, conf,
-                                                                         new SeekableLocalLocationFactory());
+    DistributedLogReader distributedLogReader =
+      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new SeekableLocalLocationFactory());
 
     LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
 

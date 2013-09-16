@@ -10,6 +10,8 @@ import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -20,6 +22,8 @@ import java.util.Map;
  */
 public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumnarTable>
   extends OrderedColumnarTableTest<T> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OrderedColumnarTableConcurrentTest.class);
 
   private static final byte[] ROW_TO_INCREMENT = Bytes.toBytes("row_to_increment");
   private static final byte[] COLUMN_TO_INCREMENT = Bytes.toBytes("column_to_increment");
@@ -145,6 +149,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
             }
           });
         } catch (Throwable t) {
+          LOG.warn("failed to increment, will retry again", t);
           // do nothing: we'll retry execution
           t.printStackTrace();
           continue;
@@ -190,6 +195,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
                 }
               });
             } catch (Throwable t) {
+              LOG.warn("failed to append, will retry again", t);
               // do nothing: we'll retry
               appended = false;
               continue;

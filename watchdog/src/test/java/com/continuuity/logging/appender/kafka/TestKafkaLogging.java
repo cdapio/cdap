@@ -5,6 +5,9 @@ import ch.qos.logback.core.util.StatusPrinter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.data.InMemoryDataSetAccessor;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.KafkaTestBase;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -25,6 +28,7 @@ import java.io.PrintStream;
  * Kafka Test for logging.
  */
 public class TestKafkaLogging extends KafkaTestBase {
+  private static InMemoryTxSystemClient txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
 
   @BeforeClass
   public static void init() throws IOException {
@@ -60,7 +64,8 @@ public class TestKafkaLogging extends KafkaTestBase {
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
-    DistributedLogReader logReader = new DistributedLogReader(null, conf, new LocalLocationFactory());
+    DistributedLogReader logReader =
+      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
     logReader.close();
@@ -74,7 +79,8 @@ public class TestKafkaLogging extends KafkaTestBase {
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
-    DistributedLogReader logReader = new DistributedLogReader(null, conf, new LocalLocationFactory());
+    DistributedLogReader logReader =
+      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
     logReader.close();
