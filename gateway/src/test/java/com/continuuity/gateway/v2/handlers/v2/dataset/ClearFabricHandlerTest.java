@@ -4,9 +4,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -169,19 +167,13 @@ public class ClearFabricHandlerTest {
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    OperationExecutor executor = GatewayFastTestsSuite.getInjector().getInstance(OperationExecutor.class);
 
     OperationResult<Map<byte[], byte[]>> result;
-    try {
-      Table table = instantiator.getDataSet(name, context);
-      TxManager txManager = new TxManager(txClient, instantiator.getInstantiator().getTransactionAware());
-      txManager.start();
-      result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
-      txManager.commit();
-    } catch (DataSetInstantiationException e) {
-      result = executor.execute(
-        context, new com.continuuity.data.operation.Read(name, new byte[]{'a'}, new byte[]{'b'}));
-    }
+    Table table = instantiator.getDataSet(name, context);
+    TxManager txManager = new TxManager(txClient, instantiator.getInstantiator().getTransactionAware());
+    txManager.start();
+    result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
+    txManager.commit();
     return !result.isEmpty();
   }
 
