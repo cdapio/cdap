@@ -67,12 +67,26 @@ public class HttpResponder {
    * @param type Type of object.
    */
   public void sendJson(HttpResponseStatus status, Object object, Type type){
+    sendJson(status, object, type, gson.get());
+  }
+
+  /**
+   * Sends json response back to the client using the given gson object.
+   * @param status Status of the response.
+   * @param object Object that will be serialized into Json and sent back as content.
+   * @param type Type of object.
+   * @param gson Gson object for serialization.
+   */
+  public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
     try {
       ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
       JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(channelBuffer),
                                                                     Charsets.UTF_8));
-      gson.get().toJson(object, type, jsonWriter);
-      jsonWriter.close();
+      try {
+        gson.toJson(object, type, jsonWriter);
+      } finally {
+        jsonWriter.close();
+      }
 
       sendContent(status, channelBuffer, "application/json", ImmutableMultimap.<String, String>of());
     } catch (IOException e) {
