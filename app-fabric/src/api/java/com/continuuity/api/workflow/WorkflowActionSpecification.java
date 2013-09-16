@@ -14,26 +14,38 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- *
+ * Specification for {@link WorkflowAction}.
  */
 public interface WorkflowActionSpecification {
 
+  /**
+   * @return Class name for the action.
+   */
   String getClassName();
 
+  /**
+   * @return Name for the action.
+   */
   String getName();
 
+  /**
+   * @return Descriptive message for the action.
+   */
   String getDescription();
 
+  /**
+   * @return An immutable map of arguments that was passed in when constructing the {@link WorkflowActionSpecification}.
+   */
   Map<String, String> getOptions();
 
   /**
-   *
+   * Builder interface for the last stage of building {@link WorkflowActionSpecification}.
    */
   interface SpecificationCreator extends Creator<WorkflowActionSpecification>,
                                          OptionsSetter<Creator<WorkflowActionSpecification>> { }
 
   /**
-   *
+   * Builder class for building {@link WorkflowActionSpecification}.
    */
   final class Builder extends BaseBuilder<WorkflowActionSpecification> implements SpecificationCreator {
 
