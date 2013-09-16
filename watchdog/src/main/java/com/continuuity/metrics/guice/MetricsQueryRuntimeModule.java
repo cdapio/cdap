@@ -4,6 +4,7 @@
 package com.continuuity.metrics.guice;
 
 import com.continuuity.common.runtime.RuntimeModule;
+import com.google.inject.Binder;
 import com.google.inject.Module;
 
 /**
@@ -15,8 +16,8 @@ public class MetricsQueryRuntimeModule extends RuntimeModule {
   public Module getInMemoryModules() {
     return new AbstractMetricsQueryModule() {
       @Override
-      protected void bindMetricsTable() {
-        install(new InMemoryMetricsTableModule());
+      protected void bindMetricsTable(Binder binder) {
+        binder.install(new InMemoryMetricsTableModule());
       }
     };
   }
@@ -25,8 +26,8 @@ public class MetricsQueryRuntimeModule extends RuntimeModule {
   public Module getSingleNodeModules() {
     return new AbstractMetricsQueryModule() {
       @Override
-      protected void bindMetricsTable() {
-        install(new LocalMetricsTableModule());
+      protected void bindMetricsTable(Binder binder) {
+        binder.install(new LocalMetricsTableModule());
       }
     };
   }
@@ -35,8 +36,8 @@ public class MetricsQueryRuntimeModule extends RuntimeModule {
   public Module getDistributedModules() {
     return new AbstractMetricsQueryModule() {
       @Override
-      protected void bindMetricsTable() {
-        install(new DistributedMetricsTableModule());
+      protected void bindMetricsTable(Binder binder) {
+        binder.install(new DistributedMetricsTableModule());
       }
     };
   }

@@ -24,12 +24,12 @@
 	</property>
 
 	<property>
-		<name>gateway.hostname</name>
+		<name>gateway.server.address</name>
 		<value>localhost</value>
 	</property>
 
 	<property>
-		<name>gateway.port</name>
+		<name>gateway.server.port</name>
 		<value>10000</value>
 	</property>
 
@@ -41,16 +41,6 @@
 	<property>
 		<name>cookie-secret</name>
 		<value>not-a-cookie</value>
-	</property>
-
-	<property>
-		<name>metrics.service.host</name>
-		<value>127.0.0.1</value>
-	</property>
-
-	<property>
-		<name>metrics.service.port</name>
-		<value>45005</value>
 	</property>
 
 </configuration>

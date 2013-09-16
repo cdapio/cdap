@@ -22,8 +22,6 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
-import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
@@ -52,12 +50,12 @@ public class SingleNodeMain {
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
   private final Gateway gateway;
+  private final com.continuuity.gateway.v2.Gateway gatewayV2;
   private final MetricsFrontendServerInterface overloadFrontend;
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
 
   private final MetricsCollectionService metricsCollectionService;
-  private final MetricsQueryService metricsQueryService;
 
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionManager transactionManager;
@@ -71,13 +69,13 @@ public class SingleNodeMain {
     Injector injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     gateway = injector.getInstance(Gateway.class);
+    gatewayV2 = injector.getInstance(com.continuuity.gateway.v2.Gateway.class);
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsQueryService = injector.getInstance(MetricsQueryService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -111,7 +109,6 @@ public class SingleNodeMain {
     // Start all the services.
     transactionManager.init();
     metricsCollectionService.startAndWait();
-    metricsQueryService.startAndWait();
 
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
@@ -121,6 +118,7 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
+    gatewayV2.startAndWait();
     webCloudAppService.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -134,6 +132,7 @@ public class SingleNodeMain {
   public void shutDown() {
     try {
       webCloudAppService.stopAndWait();
+      gatewayV2.startAndWait();
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
@@ -238,11 +237,11 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
-      new GatewayModules(configuration).getInMemoryModules(),
+      new GatewayModules().getInMemoryModules(),
+      new com.continuuity.gateway.v2.runtime.GatewayModules(configuration).getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new MetricsQueryRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules()
     );
   }
@@ -267,11 +266,11 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
-      new GatewayModules(configuration).getSingleNodeModules(),
+      new GatewayModules().getSingleNodeModules(),
+      new com.continuuity.gateway.v2.runtime.GatewayModules(configuration).getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new MetricsQueryRuntimeModule().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules()
     );

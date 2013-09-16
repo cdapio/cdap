@@ -100,7 +100,6 @@ public final class Constants {
      */
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String GATEWAY_PREFIX = "gateway.";
-    public static final String GATEWAY_V2_HTTP_HANDLERS = "gateway.http.handler";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";

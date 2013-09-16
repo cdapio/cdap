@@ -53,7 +53,6 @@ public class Gateway implements Server {
   /**
    * New Gateway.
    */
-  @Inject
   com.continuuity.gateway.v2.Gateway gatewayV2;
 
   /**

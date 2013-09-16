@@ -25,7 +25,7 @@ public class Gateway extends AbstractIdleService {
   @Inject
   public Gateway(CConfiguration cConf,
                  @Named(Constants.Gateway.ADDRESS) InetAddress hostname,
-                 @Named(Constants.Gateway.GATEWAY_V2_HTTP_HANDLERS) Set<HttpHandler> handlers) {
+                 Set<HttpHandler> handlers) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
