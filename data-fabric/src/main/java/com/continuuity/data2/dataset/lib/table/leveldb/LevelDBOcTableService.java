@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.engine.leveldb.KeyValue;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
@@ -62,6 +64,10 @@ public class LevelDBOcTableService {
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     writeOptions = new WriteOptions().sync(
       config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
+  }
+
+  public Collection<String> list() {
+    return ImmutableList.copyOf(tables.keySet());
   }
 
   public WriteOptions getWriteOptions() {

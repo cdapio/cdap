@@ -2,6 +2,9 @@ package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
 
 /**
  * Holds namespacing logic.
@@ -10,6 +13,8 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 public abstract class AbstractDataSetAccessor implements DataSetAccessor {
   protected abstract <T> T getDataSetClient(String name, Class<? extends T> type) throws Exception;
   protected abstract <T> DataSetManager getDataSetManager(Class<? extends T> type) throws Exception;
+  // todo: for now simplest support for managing datasets, should be improved with DataSetService
+  protected abstract Map<String, Class<?>> list(String prefix) throws Exception;
 
   private final String reactorNameSpace;
 
@@ -31,6 +36,34 @@ public abstract class AbstractDataSetAccessor implements DataSetAccessor {
   @Override
   public String namespace(String name, Namespace namespace) {
     return reactorNameSpace + "." + namespace.namespace(name);
+  }
+
+  @Override
+  public Map<String, Class<?>> list(Namespace namespace) throws Exception {
+    Map<String, Class<?>> namespaced = list(namespace("", namespace));
+    Map<String, Class<?>> unnamespaced = Maps.newHashMap();
+    for (Map.Entry<String, Class<?>> ds : namespaced.entrySet()) {
+      unnamespaced.put(unnamespace(ds.getKey(), namespace), ds.getValue());
+    }
+    return unnamespaced;
+  }
+
+  @Override
+  public void dropAll(Namespace namespace) throws Exception {
+    for (Map.Entry<String, Class<?>> dataset : list(namespace).entrySet()) {
+      getDataSetManager(dataset.getValue(), namespace).drop(dataset.getKey());
+    }
+  }
+
+  @Override
+  public void truncateAll(Namespace namespace) throws Exception {
+    for (Map.Entry<String, Class<?>> dataset : list(namespace).entrySet()) {
+      getDataSetManager(dataset.getValue(), namespace).truncate(dataset.getKey());
+    }
+  }
+
+  private String unnamespace(String name, Namespace namespace) {
+    return name.substring(namespace("", namespace).length());
   }
 
   private class NamespacedDataSetManager implements DataSetManager {
