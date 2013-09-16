@@ -21,6 +21,7 @@ define([], function () {
 				conns[cx[i].to.flowlet] = [];
 			}
 			conns[cx[i].to.flowlet].push(cx[i].from.flowlet || cx[i].from.stream);
+			
 		}
 
 		var flowlets = this.get('controller').elements.Flowlet;
@@ -188,13 +189,15 @@ define([], function () {
 
 				/*
 				 * Pretty rendering fix.
-				 * Check whether this connects to an 'input-less' flowlet. If so, render the 'input-less' flowlet just behind it.
+				 * Check whether this connects to an 'input-less' flowlet. If so, render the 'input-less'
+				 * flowlet just behind it.
 				 */
 				for (k = this.__positioningWatch.length - 1; k >= 0; k --) {
 					if (this.__cxn[id]) {
 						for (j = 0; j < this.__cxn[id].length; j ++) {
 							if (this.__cxn[id][j] === this.__positioningWatch[k]) {
-								this.__append(this.get('controller').get_flowlet(this.__positioningWatch[k]), this.__location[id].col - 1);
+								this.__append(this.get('controller').get_flowlet(
+									this.__positioningWatch[k]), this.__location[id].col - 1);
 								this.__positioningWatch.splice(k, 1);
 							}
 						}
@@ -221,12 +224,23 @@ define([], function () {
 
 		},
 
-		__append: function (model, col) {
-
-			var id = model.id,
-				flowletView = C.Embed.DagNode.create({
+		__append: function (model, col) {			
+			if (model) {
+				var id = model.id;	
+				var flowletView = C.Embed.DagNode.create({
 					model: model
 				});
+			} else {
+				var id = 'dummy';
+				model = C.Flowlet.create({
+					id: 'dummy',
+					name: 'dummy'
+				});
+				var flowletView = C.Embed.EmptyDagNode.create({
+					model: model
+				});
+			}
+		  
 
 			if (!this.objectAt(col)) {
 				var colView = Em.ContainerView.create({
@@ -272,6 +286,7 @@ define([], function () {
 			});
 
 		},
+
 		__connect: function (from, to) {
 
 			var self = this;
