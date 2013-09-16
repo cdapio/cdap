@@ -18,7 +18,6 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
@@ -62,6 +61,7 @@ public class MapReduceProgramRunnerTest {
   private static TransactionExecutorFactory txExecutorFactory;
 
   private DataSetInstantiator dataSetInstantiator;
+  private DataSetAccessor dataSetAccessor;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -81,15 +81,15 @@ public class MapReduceProgramRunnerTest {
   public void before() {
     injector.getInstance(InMemoryTransactionManager.class).init();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
+    dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               getClass().getClassLoader());
   }
 
   @After
-  public void after() {
-    InMemoryOcTableService.dropAll();
+  public void after() throws Exception {
+    cleanupData();
   }
 
   @Test
@@ -152,18 +152,6 @@ public class MapReduceProgramRunnerTest {
   @Test
   public void testJobSuccess() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
-
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
-
-    TransactionProxy proxy = new TransactionProxy();
-    DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, dataSetAccessor, opCtx),
-                              proxy,
-                              getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
@@ -248,6 +236,14 @@ public class MapReduceProgramRunnerTest {
       }
     });
   }
+
+  private void cleanupData() throws Exception {
+    // quite hacky way to drop all user datasets and cleanup all system datasets
+    // todo: To be improved with DataSetService
+    dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
+    dataSetAccessor.truncateAll(DataSetAccessor.Namespace.SYSTEM);
+  }
+
 
   private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
                                  DataSetInstantiator dataSetInstantiator,

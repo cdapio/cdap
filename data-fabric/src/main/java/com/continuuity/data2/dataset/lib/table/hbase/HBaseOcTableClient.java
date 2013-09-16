@@ -1,6 +1,5 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.transaction.Transaction;
@@ -36,10 +35,10 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   private Transaction tx;
 
-  public HBaseOcTableClient(String name, CConfiguration cConf, Configuration hConf)
+  public HBaseOcTableClient(String name, Configuration hConf)
     throws IOException {
     super(name);
-    hTableName = HBaseTableUtil.getHBaseTableName(cConf, name);
+    hTableName = HBaseTableUtil.getHBaseTableName(name);
     HTable hTable = new HTable(hConf, hTableName);
     // todo: make configurable
     hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
@@ -48,7 +47,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   // for testing only
-  String getHBaseTableName() {
+  public String getHBaseTableName() {
     return this.hTableName;
   }
 

@@ -47,9 +47,9 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   public Queue2Producer createProducer(QueueName queueName) throws IOException {
     try {
       // it will create table if it is missing
-      queueAdmin.create(LevelDBQueueAdmin.QUEUE_TABLE_NAME);
+      queueAdmin.create(queueAdmin.getTableName());
     } catch (Exception e) {
-      throw new IOException("Failed to open queue table " + LevelDBQueueAdmin.QUEUE_TABLE_NAME, e);
+      throw new IOException("Failed to open queue table " + queueAdmin.getTableName(), e);
     }
     return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
@@ -59,11 +59,11 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
     throws IOException {
     try {
       // it will create table if it is missing
-      queueAdmin.create(LevelDBQueueAdmin.QUEUE_TABLE_NAME);
+      queueAdmin.create(queueAdmin.getTableName());
     } catch (Exception e) {
-      throw new IOException("Failed to open queue table " + LevelDBQueueAdmin.QUEUE_TABLE_NAME, e);
+      throw new IOException("Failed to open queue table " + queueAdmin.getTableName(), e);
     }
-    LevelDBOcTableCore core = new LevelDBOcTableCore(LevelDBQueueAdmin.QUEUE_TABLE_NAME, service);
+    LevelDBOcTableCore core = new LevelDBOcTableCore(queueAdmin.getTableName(), service);
     // only the first consumer of each group runs eviction; and only if the number of consumers is known (> 0).
     QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0) ? QueueEvictor.NOOP :
       new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
@@ -72,7 +72,7 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
 
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    return new LevelDBQueue2Producer(new LevelDBOcTableCore(LevelDBQueueAdmin.QUEUE_TABLE_NAME, service),
+    return new LevelDBQueue2Producer(new LevelDBOcTableCore(queueAdmin.getTableName(), service),
                                      queueName, queueMetrics);
   }
 

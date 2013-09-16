@@ -47,7 +47,9 @@ public class Serializing2MetaDataStore implements MetaDataStore {
     protected PerThread initialValue() {
       OrderedColumnarTable table;
       try {
-        table = datasetAccessor.getDataSetClient(META_DATA_TABLE_NAME, OrderedColumnarTable.class);
+        table = datasetAccessor.getDataSetClient(META_DATA_TABLE_NAME,
+                                                 OrderedColumnarTable.class,
+                                                 DataSetAccessor.Namespace.SYSTEM);
       } catch (Exception e) {
         LOG.error("Failed to get a dataset client for meta data table.", e);
         throw Throwables.propagate(e);
@@ -76,7 +78,8 @@ public class Serializing2MetaDataStore implements MetaDataStore {
 
     // ensure the meta data table exists
     try {
-      DataSetManager tableManager = accessor.getDataSetManager(OrderedColumnarTable.class);
+      DataSetManager tableManager = accessor.getDataSetManager(OrderedColumnarTable.class,
+                                                               DataSetAccessor.Namespace.SYSTEM);
       if (!tableManager.exists(META_DATA_TABLE_NAME)) {
         tableManager.create(META_DATA_TABLE_NAME);
       }

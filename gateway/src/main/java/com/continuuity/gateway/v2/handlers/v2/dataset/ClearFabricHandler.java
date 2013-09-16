@@ -149,7 +149,8 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
     for (DataSetSpecification spec : allDataSets) {
       DataSet ds = datasetInstantiator.getDataSet(spec.getName(), opContext);
       try {
-        DataSetManager dataSetManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class);
+        DataSetManager dataSetManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class,
+                                                                          DataSetAccessor.Namespace.USER);
         dataSetManager.drop(ds.getName());
       } catch (Exception e) {
         throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);

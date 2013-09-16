@@ -23,7 +23,7 @@ public class LevelDBSerializing2MetaDataStoreTest extends LevelDBMetaDataStoreTe
   void clearMetaData() throws OperationException {
     try {
       injector.getInstance(DataSetAccessor.class)
-              .getDataSetManager(OrderedColumnarTable.class)
+              .getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.SYSTEM)
               .truncate(MetaDataStore.META_DATA_TABLE_NAME);
     } catch (Exception e) {
       throw Throwables.propagate(e);

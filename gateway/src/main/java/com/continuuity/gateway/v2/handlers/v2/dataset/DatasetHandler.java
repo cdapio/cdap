@@ -112,7 +112,7 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
       // also truncating using TxDs2
       try {
         DataSetManager dataSetManager =
-          dataSetAccessor.getDataSetManager(OrderedColumnarTable.class);
+          dataSetAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
         dataSetManager.truncate(ds.getName());
       } catch (Exception e) {
         throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);
