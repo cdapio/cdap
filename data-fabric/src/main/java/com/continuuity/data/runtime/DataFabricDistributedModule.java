@@ -66,7 +66,7 @@ public class DataFabricDistributedModule extends AbstractModule {
    * be used both for HBase and for Continuuity.
    */
   public DataFabricDistributedModule(CConfiguration conf) {
-    this(conf, new Configuration());
+    this(conf, HBaseConfiguration.create());
   }
 
   /**
