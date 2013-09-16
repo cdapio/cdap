@@ -706,7 +706,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}")
-  public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
+  public void workflowSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("workflow-id") final String workflowId) {
     ProgramId id = new ProgramId();
@@ -721,7 +721,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/mapreduces/{mapreduce-id}")
-  public void workflowSpecification(HttpRequest request, HttpResponder responder,
+  public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("mapreduce-id") final String mapreduceId) {
     ProgramId id = new ProgramId();

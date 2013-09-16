@@ -9,16 +9,21 @@ import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.io.InstantiatorFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -31,15 +36,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private static final String LOGICAL_START_TIME = "logicalStartTime";
 
   private final Program program;
+  private final InetAddress hostname;
   private final Map<String, String> runtimeArgs;
   private final WorkflowSpecification workflowSpec;
   private final long logicalStartTime;
   private final MapReduceRunnerFactory runnerFactory;
+  private NettyHttpService httpService;
   private volatile boolean running;
+  private volatile WorkflowActionSpecification currentAction;
 
-  WorkflowDriver(Program program, ProgramOptions options,
+  WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, MapReduceProgramRunner programRunner) {
     this.program = program;
+    this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
     this.workflowSpec = workflowSpec;
     this.logicalStartTime = options.getArguments().hasOption(LOGICAL_START_TIME)
@@ -53,7 +62,22 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting Workflow {}", workflowSpec);
+
+    // Using small size thread pool is enough, as the API we supported are just simple lookup.
+    httpService = NettyHttpService.builder()
+      .setWorkerThreadPoolSize(2)
+      .setExecThreadPoolSize(4)
+      .setHost(hostname.getHostName())
+      .addHttpHandlers(ImmutableList.of(new WorkflowServiceHandler(createStatusSupplier())))
+      .build();
+
+    httpService.startAndWait();
     running = true;
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    httpService.stopAndWait();
   }
 
   @Override
@@ -62,11 +86,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     InstantiatorFactory instantiator = new InstantiatorFactory(false);
     ClassLoader classLoader = program.getClassLoader();
 
+    // Executes actions step by step. Individually invoke the init()->run()->destroy() sequence.
     Iterator<WorkflowActionSpecification> iterator = workflowSpec.getActions().iterator();
     while (running && iterator.hasNext()) {
       WorkflowActionSpecification actionSpec = iterator.next();
-      WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
+      currentAction = actionSpec;
 
+      WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
       try {
         action.run();
       } catch (Throwable t) {
@@ -95,6 +121,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     running = false;
   }
 
+  /**
+   * Returns the endpoint that the http service is bind to.
+   *
+   * @throws IllegalStateException if the service is not started.
+   */
+  InetSocketAddress getServiceEndpoint() {
+    Preconditions.checkState(httpService != null && httpService.isRunning(), "Workflow service is not started.");
+    return httpService.getBindAddress();
+  }
+
+  /**
+   * Instantiates and initialize a WorkflowAction.
+   */
   private WorkflowAction initialize(WorkflowActionSpecification actionSpec,
                                     ClassLoader classLoader, InstantiatorFactory instantiator) throws Exception {
     Class<?> clz = Class.forName(actionSpec.getClassName(), true, classLoader);
@@ -113,6 +152,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return action;
   }
 
+  /**
+   * Calls the destroy method on the given WorkflowAction.
+   */
   private void destroy(WorkflowActionSpecification actionSpec, WorkflowAction action) {
     try {
       action.destroy();
@@ -128,5 +170,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       builder.put(entry);
     }
     return builder.build();
+  }
+
+  private Supplier<WorkflowStatus> createStatusSupplier() {
+    return new Supplier<WorkflowStatus>() {
+      @Override
+      public WorkflowStatus get() {
+        return new WorkflowStatus(state(), currentAction);
+      }
+    };
   }
 }

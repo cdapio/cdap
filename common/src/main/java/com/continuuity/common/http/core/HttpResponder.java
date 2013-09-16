@@ -27,6 +27,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
@@ -66,12 +67,26 @@ public class HttpResponder {
    * @param type Type of object.
    */
   public void sendJson(HttpResponseStatus status, Object object, Type type){
+    sendJson(status, object, type, gson.get());
+  }
+
+  /**
+   * Sends json response back to the client using the given gson object.
+   * @param status Status of the response.
+   * @param object Object that will be serialized into Json and sent back as content.
+   * @param type Type of object.
+   * @param gson Gson object for serialization.
+   */
+  public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
     try {
       ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
       JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(channelBuffer),
                                                                     Charsets.UTF_8));
-      gson.get().toJson(object, type, jsonWriter);
-      jsonWriter.close();
+      try {
+        gson.toJson(object, type, jsonWriter);
+      } finally {
+        jsonWriter.close();
+      }
 
       sendContent(status, channelBuffer, "application/json", ImmutableMultimap.<String, String>of());
     } catch (IOException e) {
@@ -110,6 +125,17 @@ public class HttpResponder {
   public void sendByteArray(HttpResponseStatus status, byte [] bytes, Multimap<String, String> headers) {
     ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(bytes);
     sendContent(status, channelBuffer, "application/octet-stream", headers);
+  }
+
+  /**
+   * Sends a response containing raw bytes. Default content type is "application/octet-stream", but can be
+   * overridden in the headers.
+   * @param status status of the Http response
+   * @param buffer bytes to send
+   * @param headers Headers to send.
+   */
+  public void sendBytes(HttpResponseStatus status, ByteBuffer buffer, Multimap<String, String> headers) {
+    sendContent(status, ChannelBuffers.wrappedBuffer(buffer), "application/octet-stream", headers);
   }
 
   /**
