@@ -46,6 +46,16 @@ public interface OrderedColumnarTable {
   void put(byte [] row, byte [][] columns, byte[][] values) throws Exception;
 
   /**
+   * Writes the specified value for the specified column for the specified row.
+   */
+  void put(byte [] row, byte [] columns, byte[] values) throws Exception;
+
+  /**
+   * Deletes specified column of the specified row.
+   */
+  void delete(byte [] row, byte [] columns) throws Exception;
+
+  /**
    * Deletes specified columns of the specified row.
    */
   void delete(byte [] row, byte [][] columns) throws Exception;
