@@ -47,8 +47,9 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
     this.entityCodecs = CacheBuilder.newBuilder().build(new CacheLoader<String, MetricsEntityCodec>() {
       @Override
       public MetricsEntityCodec load(String namespace) throws Exception {
-        String tableName = namespace + "." + cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+        String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                                        MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+        tableName = dataSetAccessor.namespace(tableName, DataSetAccessor.Namespace.SYSTEM);
         EntityTable entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes(tableName)));
 
         return new MetricsEntityCodec(entityTable,
@@ -103,8 +104,9 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   @Override
   public KafkaConsumerMetaTable createKafkaConsumerMeta(String namespace) {
     try {
-      String tableName = namespace + "." + cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
+      String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
                                                      MetricsConstants.DEFAULT_KAFKA_META_TABLE);
+      tableName = dataSetAccessor.namespace(tableName, DataSetAccessor.Namespace.SYSTEM);
 
       LOG.info("KafkaConsumerMetaTable created: {}", tableName);
       return new KafkaConsumerMetaTable(tableHandle.getTable(Bytes.toBytes(tableName)));
