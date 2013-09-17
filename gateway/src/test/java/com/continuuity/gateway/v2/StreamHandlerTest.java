@@ -13,6 +13,7 @@ import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Throwables;
@@ -87,6 +88,7 @@ public class StreamHandlerTest {
           bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class).in(Scopes.SINGLETON);
           bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+          bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
           bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
           bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
         }
