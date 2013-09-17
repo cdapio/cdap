@@ -1,9 +1,9 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import junit.framework.Assert;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**

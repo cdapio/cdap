@@ -10,11 +10,11 @@ import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import junit.framework.Assert;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -142,7 +142,7 @@ public class AppFabricServiceHandlerTest {
   }
 
   /**
-   * Tests history of a flow
+   * Tests history of a flow.
    */
   @Test
   public void testFlowHistory() throws Exception {

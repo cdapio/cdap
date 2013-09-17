@@ -6,10 +6,10 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import junit.framework.Assert;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
