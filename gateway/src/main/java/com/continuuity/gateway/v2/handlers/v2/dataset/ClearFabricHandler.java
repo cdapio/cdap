@@ -10,9 +10,9 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
@@ -42,21 +42,20 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
 
   private final MetaDataStore metadataStore;
   private final MetadataService metadataService;
+  private final QueueAdmin queueAdmin;
   private final DataSetInstantiatorFromMetaData datasetInstantiator;
   private final DataSetAccessor dataSetAccessor;
-  private final OperationExecutor opex;
 
   @Inject
   public ClearFabricHandler(MetaDataStore metaDataStore, MetadataService metadataService,
-                            DataSetInstantiatorFromMetaData datasetInstantiator,
-                            DataSetAccessor dataSetAccessor, OperationExecutor opex,
-                            GatewayAuthenticator authenticator) {
+                            QueueAdmin queueAdmin, DataSetInstantiatorFromMetaData datasetInstantiator,
+                            DataSetAccessor dataSetAccessor, GatewayAuthenticator authenticator) {
     super(authenticator);
     this.metadataStore = metaDataStore;
     this.metadataService = metadataService;
+    this.queueAdmin = queueAdmin;
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
-    this.opex = opex;
   }
 
   @Override
@@ -104,18 +103,22 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       OperationContext context = new OperationContext(accountId);
 
-      ClearFabric clearFabric = new ClearFabric(toClear);
-
       try {
         // remove from ds2 if needed (it uses mds, so doing it before mds cleanup)
         if (toClear == ClearFabric.ToClear.ALL || toClear == ClearFabric.ToClear.TABLES) {
           removeDs2Tables(context.getAccount(), context);
+          // todo: remove all user tables using DataSetAccessor?
         }
         if (toClear == ClearFabric.ToClear.ALL || toClear == ClearFabric.ToClear.META) {
           metadataStore.clear(context, context.getAccount(), null);
         }
-
-        opex.execute(context, clearFabric);
+        if (toClear == ClearFabric.ToClear.ALL || toClear == ClearFabric.ToClear.QUEUES) {
+          queueAdmin.dropAll();
+        }
+        if (toClear == ClearFabric.ToClear.ALL || toClear == ClearFabric.ToClear.STREAMS) {
+          // NOTE: for now we store all streams data in same queue table, TODO: fix this
+          queueAdmin.dropAll();
+        }
 
         responder.sendStatus(OK);
       } catch (Exception e) {

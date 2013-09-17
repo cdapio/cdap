@@ -1,7 +1,5 @@
 package com.continuuity.data;
 
-import com.continuuity.common.conf.Constants;
-import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClient;
@@ -19,7 +17,7 @@ public class InMemoryDataSetAccessorTest extends AbstractDataSetAccessorTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     AbstractDataSetAccessorTest.beforeClass();
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(conf));
+    Injector injector = Guice.createInjector(new DataFabricModules(conf).getInMemoryModules());
     dsAccessor = injector.getInstance(DataSetAccessor.class);
   }
 

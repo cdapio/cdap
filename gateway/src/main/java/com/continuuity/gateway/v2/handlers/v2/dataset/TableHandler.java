@@ -13,12 +13,12 @@ import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
-import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
@@ -163,15 +163,16 @@ public class TableHandler extends AuthenticatedHttpHandler {
       Write write = new Write(rowKey, cols, vals);
 
       // now execute the write
-      TxManager txManager = new TxManager(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
-      txManager.start();
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
       try {
         table.write(write);
-        txManager.commit();
+        txContext.finish();
         responder.sendStatus(OK);
       } catch (OperationException e) {
         LOG.trace("Error during Write: ", e);
-        txManager.abort();
+        txContext.abort();
         responder.sendStatus(INTERNAL_SERVER_ERROR);
       }
     } catch (DataSetInstantiationException e) {
@@ -229,11 +230,12 @@ public class TableHandler extends AuthenticatedHttpHandler {
         read = new Read(rowKey, cols);
       }
 
-      TxManager txManager = new TxManager(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
-      txManager.start();
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
       try {
         OperationResult<Map<byte[], byte[]>> result = table.read(read);
-        txManager.commit();
+        txContext.finish();
 
         // read successful, now respond with result
         if (result.isEmpty() || result.getValue().isEmpty()) {
@@ -250,7 +252,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
         }
       } catch (OperationException e) {
         LOG.trace("Error during Read: ", e);
-        txManager.abort();
+        txContext.abort();
         responder.sendStatus(INTERNAL_SERVER_ERROR);
       }
     } catch (DataSetInstantiationException e) {
@@ -302,11 +304,12 @@ public class TableHandler extends AuthenticatedHttpHandler {
       Increment increment = new Increment(rowKey, cols, vals);
 
       // now execute the increment
-      TxManager txManager = new TxManager(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
-      txManager.start();
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
       try {
         Map<byte[], Long> results = table.incrementAndGet(increment);
-        txManager.commit();
+        txContext.finish();
 
         // first convert the bytes to strings
         Map<String, Long> map = Maps.newTreeMap();
@@ -325,7 +328,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
           LOG.trace("Error during Increment: ", e);
           responder.sendStatus(INTERNAL_SERVER_ERROR);
         }
-        txManager.abort();
+        txContext.abort();
       }
 
     } catch (DataSetInstantiationException e) {
@@ -372,15 +375,16 @@ public class TableHandler extends AuthenticatedHttpHandler {
       Delete delete = new Delete(rowKey, cols);
 
       // now execute the delete operation
-      TxManager txManager = new TxManager(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
-      txManager.start();
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
       try {
         table.write(delete);
-        txManager.commit();
+        txContext.finish();
         responder.sendStatus(OK);
       } catch (OperationException e) {
         LOG.trace("Error during Delete: ", e);
-        txManager.abort();
+        txContext.abort();
         responder.sendStatus(INTERNAL_SERVER_ERROR);
       }
 

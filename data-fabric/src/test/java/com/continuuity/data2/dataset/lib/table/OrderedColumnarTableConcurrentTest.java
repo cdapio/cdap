@@ -10,9 +10,12 @@ import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This test emulates usage table by multiple concurrent clients.
@@ -20,6 +23,8 @@ import java.util.Map;
  */
 public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumnarTable>
   extends OrderedColumnarTableTest<T> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OrderedColumnarTableConcurrentTest.class);
 
   private static final byte[] ROW_TO_INCREMENT = Bytes.toBytes("row_to_increment");
   private static final byte[] COLUMN_TO_INCREMENT = Bytes.toBytes("column_to_increment");
@@ -145,6 +150,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
             }
           });
         } catch (Throwable t) {
+          LOG.warn("failed to increment, will retry again", t);
           // do nothing: we'll retry execution
           t.printStackTrace();
           continue;
@@ -190,6 +196,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
                 }
               });
             } catch (Throwable t) {
+              LOG.warn("failed to append, will retry again", t);
               // do nothing: we'll retry
               appended = false;
               continue;
@@ -201,5 +208,47 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
       }
     }
   }
+
+  /**
+   * tests that creating a table concurrently from two different clients does not fail.
+   */
+  @Test(timeout = 6000) // table create wait time is 5 sec
+  public void testConcurrentCreate() throws Exception {
+    AtomicBoolean success1 = new AtomicBoolean(false);
+    AtomicBoolean success2 = new AtomicBoolean(false);
+    // start two threads both attempting to create the same table
+    Thread t1 = new CreateThread(success1);
+    Thread t2 = new CreateThread(success2);
+    t1.start();
+    t2.start();
+    t1.join();
+    t2.join();
+    // make sure both threads report success
+    Assert.assertTrue("First thread failed. ", success1.get());
+    Assert.assertTrue("Second thread failed. ", success2.get());
+    // perform a read - if the table was not opened successfully this will fail
+    getTable("conccreate").get(new byte[] { 'a' }, new byte[][] { { 'b' } });
+  }
+
+  class CreateThread extends Thread {
+    private final AtomicBoolean success;
+
+    CreateThread(AtomicBoolean success) {
+      this.success = success;
+    }
+
+    @Override
+    public void run() {
+      try {
+        success.set(false);
+        getTableManager().create("conccreate");
+        success.set(true);
+      } catch (Throwable throwable) {
+        success.set(false);
+        throwable.printStackTrace(System.err);
+      }
+    }
+  }
+
 
 }

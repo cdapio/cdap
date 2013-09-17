@@ -34,7 +34,7 @@ public class DatasetHandlerTest {
   }
 
   void assertTruncate(String prefix, int expected, String query) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.DELETE(prefix + query);
+    HttpResponse response = GatewayFastTestsSuite.doDelete(prefix + query);
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 

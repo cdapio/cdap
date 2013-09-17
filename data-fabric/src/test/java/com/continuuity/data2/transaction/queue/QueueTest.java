@@ -1,10 +1,7 @@
 package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
@@ -14,15 +11,16 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +47,7 @@ public abstract class QueueTest {
   private static final int ROUNDS = 1000;
   private static final long TIMEOUT_MS = 2 * 60 * 1000L;
 
-  protected static OperationExecutor opex;
+  protected static TransactionSystemClient txSystemClient;
   protected static QueueClientFactory queueClientFactory;
   protected static QueueAdmin queueAdmin;
   protected static InMemoryTransactionManager transactionManager;
@@ -107,62 +104,62 @@ public abstract class QueueTest {
     Queue2Consumer hashConsumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(1, 0, 1, DequeueStrategy.HASH, "key"), 2);
 
-    TxManager txManager = new TxManager((TransactionAware) fifoConsumer, (TransactionAware) hashConsumer);
-    txManager.start();
+    TransactionContext txContext = createTxContext(fifoConsumer, hashConsumer);
+    txContext.start();
 
     Assert.assertEquals(0, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
     Assert.assertEquals(0, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
 
     // Abort the consumer transaction
-    txManager.abort();
+    txContext.abort();
 
     // Dequeue again in a new transaction, should see the same entries
-    txManager.start();
+    txContext.start();
     Assert.assertEquals(0, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
     Assert.assertEquals(0, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
-    txManager.commit();
+    txContext.finish();
 
     // Dequeue again, now should get next entry
-    txManager.start();
+    txContext.start();
     Assert.assertEquals(1, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
     Assert.assertEquals(1, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
-    txManager.commit();
+    txContext.finish();
 
     // Dequeue a result and abort.
-    txManager.start();
+    txContext.start();
     DequeueResult fifoResult = fifoConsumer.dequeue();
     DequeueResult hashResult = hashConsumer.dequeue();
 
     Assert.assertEquals(2, Bytes.toInt(fifoResult.iterator().next()));
     Assert.assertEquals(2, Bytes.toInt(hashResult.iterator().next()));
-    txManager.abort();
+    txContext.abort();
 
     // Now skip the result with a new transaction.
-    txManager.start();
+    txContext.start();
     fifoResult.reclaim();
     hashResult.reclaim();
-    txManager.commit();
+    txContext.finish();
 
     // Dequeue again, it should see a new entry
-    txManager.start();
+    txContext.start();
     Assert.assertEquals(3, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
     Assert.assertEquals(3, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
-    txManager.commit();
+    txContext.finish();
 
     // Dequeue again, it should see a new entry
-    txManager.start();
+    txContext.start();
     Assert.assertEquals(4, Bytes.toInt(fifoConsumer.dequeue().iterator().next()));
     Assert.assertEquals(4, Bytes.toInt(hashConsumer.dequeue().iterator().next()));
-    txManager.commit();
+    txContext.finish();
 
-    txManager.start();
+    txContext.start();
     if (fifoConsumer instanceof Closeable) {
       ((Closeable) fifoConsumer).close();
     }
     if (hashConsumer instanceof Closeable) {
       ((Closeable) hashConsumer).close();
     }
-    txManager.commit();
+    txContext.finish();
 
     verifyQueueIsEmpty(queueName, 2);
   }
@@ -174,8 +171,7 @@ public abstract class QueueTest {
     Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
 
-    TxManager txManager = new TxManager((TransactionAware) producer,
-                                        (TransactionAware) consumer,
+    TransactionContext txContext = createTxContext(producer, consumer,
                                         new TransactionAware() {
 
       boolean canCommit = false;
@@ -214,37 +210,37 @@ public abstract class QueueTest {
     });
 
     // First, try to enqueue and commit would fail
-    txManager.start();
+    txContext.start();
     try {
       producer.enqueue(new QueueEntry(Bytes.toBytes(1)));
-      txManager.commit();
+      txContext.finish();
       // If reaches here, it's wrong, as exception should be thrown.
       Assert.assertTrue(false);
-    } catch (OperationException e) {
-      txManager.abort();
+    } catch (TransactionFailureException e) {
+      txContext.abort();
     }
 
     // Try to enqueue again. Within the same transaction, dequeue should be empty.
-    txManager.start();
+    txContext.start();
     producer.enqueue(new QueueEntry(Bytes.toBytes(1)));
     Assert.assertTrue(consumer.dequeue().isEmpty());
-    txManager.commit();
+    txContext.finish();
 
     // This time, enqueue has been committed, dequeue would see the item
-    txManager.start();
+    txContext.start();
     try {
       Assert.assertEquals(1, Bytes.toInt(consumer.dequeue().iterator().next()));
-      txManager.commit();
+      txContext.finish();
       // If reaches here, it's wrong, as exception should be thrown.
       Assert.assertTrue(false);
-    } catch (OperationException e) {
-      txManager.abort();
+    } catch (TransactionFailureException e) {
+      txContext.abort();
     }
 
     // Dequeue again, since last tx was rollback, this dequeue should see the item again.
-    txManager.start();
+    txContext.start();
     Assert.assertEquals(1, Bytes.toInt(consumer.dequeue().iterator().next()));
-    txManager.commit();
+    txContext.finish();
   }
 
   @Test
@@ -255,12 +251,12 @@ public abstract class QueueTest {
     Queue2Consumer consumer1 = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
 
-    TxManager txManager = new TxManager((TransactionAware) consumer1);
+    TransactionContext txContext = createTxContext(consumer1);
 
     // Check that there's smth in the queue, but do not consume: abort tx after check
-    txManager.start();
+    txContext.start();
     Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
-    txManager.abort();
+    txContext.abort();
 
     System.out.println("Before drop");
 
@@ -272,11 +268,11 @@ public abstract class QueueTest {
     // we gonna need another one to check again to avoid caching side-affects
     Queue2Consumer consumer2 = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(1, 0, 1, DequeueStrategy.FIFO, null), 2);
-    txManager = new TxManager((TransactionAware) consumer2);
+    txContext = createTxContext(consumer2);
     // Check again: should be nothing in the queue
-    txManager.start();
+    txContext.start();
     Assert.assertFalse(consumer2.dequeue().iterator().hasNext());
-    txManager.commit();
+    txContext.finish();
   }
 
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
@@ -312,18 +308,18 @@ public abstract class QueueTest {
             Queue2Consumer consumer = queueClientFactory.createConsumer(
               queueName, new ConsumerConfig(0, instanceId, consumerSize, dequeueStrategy, "key"), 1);
             try {
-              TxManager txManager = new TxManager((TransactionAware) consumer);
+              TransactionContext txContext = createTxContext(consumer);
 
               Stopwatch stopwatch = new Stopwatch();
               stopwatch.start();
 
               int dequeueCount = 0;
               while (valueSum.get() < expectedSum) {
-                txManager.start();
+                txContext.start();
 
                 try {
                   DequeueResult result = consumer.dequeue(dequeueBatchSize);
-                  txManager.commit();
+                  txContext.finish();
 
                   if (result.isEmpty()) {
                     continue;
@@ -333,9 +329,9 @@ public abstract class QueueTest {
                     valueSum.addAndGet(Bytes.toInt(data));
                     dequeueCount++;
                   }
-                } catch (OperationException e) {
+                } catch (TransactionFailureException e) {
                   LOG.error("Operation error", e);
-                  txManager.abort();
+                  txContext.abort();
                   throw Throwables.propagate(e);
                 }
               }
@@ -346,9 +342,9 @@ public abstract class QueueTest {
                        (double) dequeueCount * 1000 / elapsed, queueName.getSimpleName());
 
               if (consumer instanceof Closeable) {
-                txManager.start();
+                txContext.start();
                 ((Closeable) consumer).close();
-                txManager.commit();
+                txContext.finish();
               }
 
               completeLatch.countDown();
@@ -378,6 +374,14 @@ public abstract class QueueTest {
     executor.shutdownNow();
   }
 
+  private TransactionContext createTxContext(Object... txAwares) {
+    TransactionAware[] casted = new TransactionAware[txAwares.length];
+    for (int i = 0; i < txAwares.length; i++) {
+      casted[i] = (TransactionAware) txAwares[i];
+    }
+    return new TransactionContext(txSystemClient, casted);
+  }
+  
   private Runnable createEnqueueRunnable(final QueueName queueName, final int count,
                                          final int batchSize, final CyclicBarrier barrier) {
     return new Runnable() {
@@ -390,7 +394,7 @@ public abstract class QueueTest {
           }
           Queue2Producer producer = queueClientFactory.createProducer(queueName);
           try {
-            TxManager txManager = new TxManager((TransactionAware) producer);
+            TransactionContext txContext = createTxContext(producer);
 
             LOG.info("Start enqueue {} entries.", count);
 
@@ -401,7 +405,7 @@ public abstract class QueueTest {
             int batches = count / batchSize;
             List<QueueEntry> queueEntries = Lists.newArrayListWithCapacity(batchSize);
             for (int i = 0; i < batches; i++) {
-              txManager.start();
+              txContext.start();
 
               try {
                 queueEntries.clear();
@@ -412,10 +416,10 @@ public abstract class QueueTest {
                 }
 
                 producer.enqueue(queueEntries);
-                txManager.commit();
-              } catch (OperationException e) {
+                txContext.finish();
+              } catch (TransactionFailureException e) {
                 LOG.error("Operation error", e);
-                txManager.abort();
+                txContext.abort();
                 throw Throwables.propagate(e);
               }
             }
@@ -437,92 +441,15 @@ public abstract class QueueTest {
     };
   }
 
-  /**
-   *
-   */
-  protected static final class TxManager {
-    private final Collection<TransactionAware> txAwares;
-    private Transaction transaction;
-
-    protected TxManager(TransactionAware...txAware) {
-      txAwares = ImmutableList.copyOf(txAware);
-    }
-
-    public void start() throws OperationException {
-      transaction = opex.startShort();
-      for (TransactionAware txAware : txAwares) {
-        txAware.startTx(transaction);
-      }
-    }
-
-    public void commit() throws OperationException {
-      // Collects change sets
-      Set<byte[]> changeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-      for (TransactionAware txAware : txAwares) {
-        changeSet.addAll(txAware.getTxChanges());
-      }
-
-      // Check for conflicts
-      if (!opex.canCommit(transaction, changeSet)) {
-        throw new OperationException(StatusCode.TRANSACTION_CONFLICT, "Cannot commit tx: conflict detected");
-      }
-
-      // Persist changes
-      for (TransactionAware txAware : txAwares) {
-        try {
-          if (!txAware.commitTx()) {
-            throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to commit tx.");
-          }
-        } catch (Exception e) {
-          throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to commit tx.", e);
-        }
-      }
-
-      // Make visible
-      if (!opex.commit(transaction)) {
-        throw new OperationException(StatusCode.INVALID_TRANSACTION, "Fails to make tx visible.");
-      }
-
-      // Post commit call
-      for (TransactionAware txAware : txAwares) {
-        try {
-          txAware.postTxCommit();
-        } catch (Throwable t) {
-          LOG.error("Post commit call failure.", t);
-        }
-      }
-    }
-
-    public void abort() throws OperationException {
-      boolean success = true;
-      for (TransactionAware txAware : txAwares) {
-        try {
-          if (!txAware.rollbackTx()) {
-            LOG.error("Fail to rollback: {}", txAware);
-            success = false;
-          }
-        } catch (Exception e) {
-          LOG.error("Exception in rollback: {}", txAware, e);
-          success = false;
-        }
-      }
-      if (success) {
-        opex.abort(transaction);
-      } else {
-        opex.invalidate(transaction);
-      }
-    }
-  }
-
   protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
     // the queue has been consumed by n consumers. Use a consumerId greater than n to make sure it can dequeue.
     Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(numActualConsumers + 1, 0, 1, DequeueStrategy.FIFO, null), -1);
 
-    TxManager txManager = new TxManager((TransactionAware) consumer);
-    txManager.start();
+    TransactionContext txContext = createTxContext(consumer);
+    txContext.start();
     Assert.assertTrue("Entire queue should be evicted after test but dequeue succeeds.",
                        consumer.dequeue().isEmpty());
-    txManager.abort();
+    txContext.abort();
   }
 }

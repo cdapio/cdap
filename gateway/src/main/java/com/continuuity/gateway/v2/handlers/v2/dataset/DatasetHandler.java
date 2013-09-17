@@ -11,8 +11,6 @@ import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.TruncateTable;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -46,17 +44,14 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetHandler.class);
 
   private final DataSetInstantiatorFromMetaData datasetInstantiator;
-  private final OperationExecutor opex;
   private final DataSetAccessor dataSetAccessor;
 
   @Inject
   public DatasetHandler(GatewayAuthenticator authenticator,
                         DataSetInstantiatorFromMetaData datasetInstantiator,
-                        OperationExecutor opex,
                         DataSetAccessor dataSetAccessor) {
     super(authenticator);
     this.datasetInstantiator = datasetInstantiator;
-    this.opex = opex;
     this.dataSetAccessor = dataSetAccessor;
   }
 
@@ -107,15 +102,13 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
     for (DataSetSpecification spec : allDataSets) {
       DataSet ds = datasetInstantiator.getDataSet(spec.getName(), opContext);
       if (ds instanceof Table) {
-        opex.execute(opContext, new TruncateTable(ds.getName()));
-      }
-      // also truncating using TxDs2
-      try {
-        DataSetManager dataSetManager =
-          dataSetAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
-        dataSetManager.truncate(ds.getName());
-      } catch (Exception e) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);
+        try {
+          DataSetManager dataSetManager =
+            dataSetAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
+          dataSetManager.truncate(ds.getName());
+        } catch (Exception e) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);
+        }
       }
     }
   }

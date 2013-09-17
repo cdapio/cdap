@@ -9,25 +9,23 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.Scan;
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.WriteOperation;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.concurrent.Callable;
 
 /**
  * Handles reading/writing of file metadata.
@@ -38,14 +36,12 @@ public final class FileMetaDataManager {
   private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte [] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
 
-  private final OperationExecutor opex;
-  private final OperationContext operationContext;
-  private final String table;
+  private final TransactionExecutor txExecutor;
+  private final OrderedColumnarTable metaTable;
 
-  public FileMetaDataManager(OperationExecutor opex, OperationContext operationContext, String table) {
-    this.opex = opex;
-    this.operationContext = operationContext;
-    this.table = table;
+  public FileMetaDataManager(OrderedColumnarTable metaTable, TransactionSystemClient txClient) {
+    this.metaTable = metaTable;
+    this.txExecutor = new DefaultTransactionExecutor(txClient, ImmutableList.of((TransactionAware) metaTable));
   }
 
   /**
@@ -55,16 +51,20 @@ public final class FileMetaDataManager {
    * @param path log file.
    * @throws OperationException
    */
-  public void writeMetaData(LoggingContext loggingContext, long startTimeMs, Path path) throws OperationException {
+  public void writeMetaData(final LoggingContext loggingContext,
+                            final long startTimeMs,
+                            final Path path) throws Exception {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and path {}",
               loggingContext.getLogPartition(), startTimeMs, path);
 
-    Write writeOp = new Write(table,
-                              Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition())),
-                              Bytes.toBytes(startTimeMs),
-                              Bytes.toBytes(path.toUri().toString())
-                              );
-    opex.commit(operationContext, writeOp);
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        metaTable.put(getRowKey(loggingContext),
+                      Bytes.toBytes(startTimeMs),
+                      Bytes.toBytes(path.toUri().toString()));
+      }
+    });
   }
 
   /**
@@ -73,23 +73,23 @@ public final class FileMetaDataManager {
    * @return Sorted map containing key as start time, and value as log file.
    * @throws OperationException
    */
-  public SortedMap<Long, Path> listFiles(LoggingContext loggingContext)
-    throws OperationException {
-    OperationResult<Map<byte[], byte[]>> cols =
-      opex.execute(operationContext,
-                   new ReadColumnRange(table,
-                     Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition())),
-                                       null, null));
+  public SortedMap<Long, Path> listFiles(final LoggingContext loggingContext) throws Exception {
+    return txExecutor.execute(new Callable<SortedMap<Long, Path>>() {
+      @Override
+      public SortedMap<Long, Path> call() throws Exception {
+        OperationResult<Map<byte[], byte[]>> cols = metaTable.get(getRowKey(loggingContext), null);
 
-    if (cols.isEmpty() || cols.getValue() == null) {
-      return ImmutableSortedMap.of();
-    }
+        if (cols.isEmpty() || cols.getValue() == null) {
+          return ImmutableSortedMap.of();
+        }
 
-    SortedMap<Long, Path> files = Maps.newTreeMap();
-    for (Map.Entry<byte[], byte[]> entry : cols.getValue().entrySet()) {
-      files.put(Bytes.toLong(entry.getKey()), new Path(Bytes.toString(entry.getValue())));
-    }
-    return files;
+        SortedMap<Long, Path> files = Maps.newTreeMap();
+        for (Map.Entry<byte[], byte[]> entry : cols.getValue().entrySet()) {
+          files.put(Bytes.toLong(entry.getKey()), new Path(Bytes.toString(entry.getValue())));
+        }
+        return files;
+      }
+    });
   }
 
   /**
@@ -99,33 +99,41 @@ public final class FileMetaDataManager {
    * @return total number of columns deleted.
    * @throws OperationException
    */
-  public int cleanMetaData(long tillTime, DeleteCallback callback) throws OperationException {
-    byte [] tillTimeBytes = Bytes.toBytes(tillTime);
+  public int cleanMetaData(final long tillTime, final DeleteCallback callback) throws Exception {
+    return txExecutor.execute(new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        byte [] tillTimeBytes = Bytes.toBytes(tillTime);
 
-    Scan scan = new Scan(table, ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
-    Scanner scanner = opex.scan(operationContext, null, scan);
+        int deletedColumns = 0;
+        Scanner scanner = metaTable.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
+        try {
+          ImmutablePair<byte[], Map<byte[], byte[]>> row;
+          while ((row = scanner.next()) != null) {
+            byte [] rowKey = row.getFirst();
+            byte [] maxCol = getMaxKey(row.getSecond());
 
-    DeleteExecutor deleteExecutor = new DeleteExecutor();
-    ImmutablePair<byte[], Map<byte[], byte[]>> row;
-    while ((row = scanner.next()) != null) {
-      byte [] rowKey = row.getFirst();
-      byte [] maxCol = getMaxKey(row.getSecond());
-
-      for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
-        byte [] colName = entry.getKey();
-        // Delete if colName is less than tillTime, but don't delete the last one
-        if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
-          callback.handle(new Path(URI.create(Bytes.toString(entry.getValue()))));
-          deleteExecutor.delete(new Delete(rowKey, colName));
+            for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
+              byte [] colName = entry.getKey();
+              // Delete if colName is less than tillTime, but don't delete the last one
+              if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
+                callback.handle(new Path(URI.create(Bytes.toString(entry.getValue()))));
+                metaTable.delete(rowKey, colName);
+                deletedColumns++;
+              }
+            }
+          }
+        } finally {
+          scanner.close();
         }
+
+        return deletedColumns;
       }
-    }
+    });
+  }
 
-    // Flush any remaining deletes
-    deleteExecutor.flush();
-    scanner.close();
-
-    return deleteExecutor.getTotalDeletes();
+  private byte[] getRowKey(LoggingContext loggingContext) {
+    return Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition()));
   }
 
   private byte [] getMaxKey(Map<byte[], byte[]> map) {
@@ -147,47 +155,5 @@ public final class FileMetaDataManager {
    */
   public interface DeleteCallback {
     public void handle(Path path);
-  }
-
-
-  /**
-   * Executes delete operation in batches.
-   */
-  private final class DeleteExecutor {
-    private static final int MAX_OPS = 100;
-    private List<WriteOperation> deleteList = Lists.newArrayListWithExpectedSize(MAX_OPS);
-    private int totalDeletes = 0;
-
-    /**
-     * Buffers delete operations, and executes them in batches.
-     * @param delete delete operation.
-     * @throws OperationException
-     */
-    public void delete(Delete delete) throws OperationException {
-      deleteList.add(delete);
-
-      if (deleteList.size() >= MAX_OPS) {
-        flush();
-      }
-    }
-
-    /**
-     * Executes buffered delete operations immediately.
-     * @throws OperationException
-     */
-    public void flush() throws OperationException {
-      if (!deleteList.isEmpty()) {
-        opex.commit(operationContext, deleteList);
-        totalDeletes += deleteList.size();
-        deleteList.clear();
-      }
-    }
-
-    /**
-     * @return total number of deletes executed. Any buffered deletes are not included in the count.
-     */
-    public int getTotalDeletes() {
-      return totalDeletes;
-    }
   }
 }

@@ -6,15 +6,11 @@ package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
-import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
-import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.weave.api.AbstractWeaveRunnable;
@@ -22,12 +18,6 @@ import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.Singleton;
-import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +38,6 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   private String name;
   private String hConfName;
   private String cConfName;
-
-  private CConfiguration cConf;
 
   public LogSaverWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -83,7 +71,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
 
-      cConf = CConfiguration.create();
+      CConfiguration cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
       String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
@@ -96,9 +84,10 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
 
       int instanceId = context.getInstanceId();
 
-      Injector injector = Guice.createInjector(createModule());
+      DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf);
+      TransactionSystemClient txClient = new TalkingToOpexTxSystemClient(new RemoteOperationExecutor(cConf));
 
-      logSaver = new LogSaver(injector.getInstance(OperationExecutor.class), instanceId, hConf, cConf);
+      logSaver = new LogSaver(dataSetAccessor, txClient, instanceId, hConf, cConf);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
@@ -122,25 +111,5 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   public void stop() {
     logSaver.stopAndWait();
     runLatch.countDown();
-  }
-
-  private Module createModule() {
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        if (cConf.getBoolean("log.saver.run.opex.remote", true)) {
-          // Bind remote operation executor
-          bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
-          bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);
-        } else {
-          // Bind local opex for testing purpose.
-          bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-          bind(TransactionOracle.class).to(MemoryOracle.class);
-          bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class);
-          bind(OVCTableHandle.class).toInstance(MemoryOVCTableHandle.getInstance());
-          bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(cConf);
-        }
-      }
-    };
   }
 }

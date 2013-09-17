@@ -46,16 +46,17 @@ public class TransactionExecutorTest {
   static final byte[] A = { 'a' };
   static final byte[] B = { 'b' };
 
-  final TransactionExecutor.Function<Integer, Integer> testFunction = new TransactionExecutor.Function<Integer, Integer>() {
-    @Override
-    public Integer apply(@Nullable Integer input) {
-      ds1.addChange(A);
-      ds2.addChange(B);
-      if (input == null) {
-        throw new RuntimeException("function failed");
+  final TransactionExecutor.Function<Integer, Integer> testFunction =
+    new TransactionExecutor.Function<Integer, Integer>() {
+      @Override
+      public Integer apply(@Nullable Integer input) {
+        ds1.addChange(A);
+        ds2.addChange(B);
+        if (input == null) {
+          throw new RuntimeException("function failed");
+        }
+        return input * input;
       }
-      return input * input;
-    }
   };
 
   @Before

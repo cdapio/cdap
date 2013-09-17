@@ -3,7 +3,6 @@
  */
 
 /**
- * Transaction managers.
+ * Handlers for Router.
  */
-package com.continuuity.gateway.v2.txmanager;
-
+package com.continuuity.gateway.router.handlers;

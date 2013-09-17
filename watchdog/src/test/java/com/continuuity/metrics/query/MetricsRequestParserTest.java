@@ -4,14 +4,11 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
-import junit.framework.Assert;
-import org.apache.commons.httpclient.util.URIUtil;
-import org.apache.http.client.utils.URIUtils;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 
 /**
  *

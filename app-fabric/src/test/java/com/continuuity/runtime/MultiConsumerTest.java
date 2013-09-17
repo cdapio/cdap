@@ -17,19 +17,14 @@ import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
-import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
-import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
@@ -164,32 +159,27 @@ public class MultiConsumerTest {
 
     TimeUnit.SECONDS.sleep(4);
 
-    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
     LocationFactory locationFactory = TestHelper.getInjector().getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = TestHelper.getInjector().getInstance(DataSetAccessor.class);
-    TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
 
-    TransactionProxy proxy = new TransactionProxy();
     DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, dataSetAccessor, opCtx),
-                              proxy,
+      new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new MultiApp().configure().getDataSets().values()));
 
-    TransactionAgent txAgent = new SynchronousTransactionAgent(opex, opCtx,
-                                                               dataSetInstantiator.getTransactionAware(),
-                                                               txSystemClient);
-    proxy.setTransactionAgent(txAgent);
+    final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
+    TransactionExecutorFactory txExecutorFactory =
+      TestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
 
-    KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
-    txAgent.start();
-    byte[] value = accumulated.read(KEY);
-    txAgent.finish();
-
-    // Sum(1..100) * 3
-    Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware())
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          byte[] value = accumulated.read(KEY);
+          // Sum(1..100) * 3
+          Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
+        }
+    });
 
     for (ProgramController controller : controllers) {
       controller.stop().get();
