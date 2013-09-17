@@ -2,7 +2,7 @@
  * Flow Status Controller
  */
 
-define([], function () {
+define(['helpers/plumber'], function (Plumber) {
 
   var Controller = Ember.Controller.extend({
 
@@ -13,14 +13,15 @@ define([], function () {
       this.clearTriggers(true);
       var model = this.get('model');
       var self = this;
-      this.set('elements.Mapreduces', Em.ArrayProxy.create({content: []}));
+      this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
       for (var i = 0; i < model.actions.length; i++) {
-        this.get('elements.Mapreduces.content').pushObject(
-          C.Workflow.create(model.mapReduces[model.actions[i].name]));
+        model.actions[i].state = 'IDLE';
+        model.actions[i].isRunning = false;
+        model.actions[i].completionPercentage = 50;
+        this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));      
       }
-      console.log(this.get('elements.Mapreduces.content'));
 
-
+      console.log(this.get('elements.Actions.content'))
 
       this.interval = setInterval(function () {
         self.updateStats();
@@ -32,6 +33,7 @@ define([], function () {
        */
       setTimeout(function () {
         self.updateStats();
+        self.connectEntities();
       }, C.EMBEDDABLE_DELAY);
 
     },
@@ -41,32 +43,62 @@ define([], function () {
       clearInterval(this.interval);
 
     },
+
+    connectEntities: function() {
+      var actions = this.get('elements.Actions.content').map(function (item) {
+        return item.name || item.get('name');
+      });
+      for (var i = 0; i < actions.length; i++) {
+        if (i + 1 < actions.length) {
+          Plumber.connect(actions[i], actions[i+1]);    
+        }
+      }
+    },
     
     ajaxCompleted: function () {
-      return this.get('timeseriesCompleted') && this.get('aggregatesCompleted') &&
-        this.get('ratesCompleted');
+      return this.get('statsCompleted');
     },
 
     clearTriggers: function (value) {
-      this.set('timeseriesCompleted', value);
-      this.set('aggregatesCompleted', value);
-      this.set('ratesCompleted', value);
+      this.set('statsCompleted', value);
     },
 
     updateStats: function () {
+      var self = this;
       if (!this.ajaxCompleted()) {
         return;
       }
       this.clearTriggers(false);
-      this.get('model').updateState(this.HTTP);
-      C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
+      var appId = this.get('model.app'),
+        workflowId = this.get('model.name');
 
-      var models = this.get('elements.Flowlet.content').concat(
-        this.get('elements.Stream.content'));
+      this.HTTP.rest('apps', appId, 'workflows', workflowId, 'status', function (response) {
+        if (!jQuery.isEmptyObject(response)) {
+          self.set('model.currentState', response.status);
+        }
+        self.set('statsCompleted', true);
+        var path = '/rest/apps/' + appId + '/workflows/' + workflowId + '/currentAction';
 
-      C.Util.updateAggregates(models, this.HTTP, this);
+        jQuery.getJSON(path, function (res) {
+          for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
+            var action = self.get('elements.Actions.content')[i];
+            if (res.currentStep === i) {
+              action.set('isRunning', true); 
+              action.set('state', 'RUNNING'); 
+            } else {
+              action.set('isRunning', false);
+              action.set('state', 'IDLE'); 
+            }
+          }
+        }).fail(function() {
+          for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
+            var action = self.get('elements.Actions.content')[i];
+            action.set('isRunning', false);
+            action.set('state', 'IDLE'); 
+          }
+        });
 
-      C.Util.updateRates(models, this.HTTP, this);
+      });
 
     },
 

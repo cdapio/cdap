@@ -19,15 +19,12 @@ define([], function () {
 			path = queryString ? path + '?' + queryString : path;
 
 			$.getJSON(path, callback).fail(function (req) {
-				var error = JSON.parse(req.responseText || "null");
 
-				if (error && error.error) {
-					error = error.error;
-				}
+				var error = req.responseText || '';
 
-				if (error && error.fatal) {
+				if (error) {
 
-					$('#warning').html('<div>' + error.fatal + '</div>').show();
+					$('#warning').html('<div>' + error + '</div>').show();
 
 				} else {
 
