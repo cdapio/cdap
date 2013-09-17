@@ -72,7 +72,6 @@ public class DataFabricModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-
       return new AbstractModule() {
       @Override
       protected void configure() {

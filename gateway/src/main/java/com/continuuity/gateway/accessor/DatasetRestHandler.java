@@ -13,6 +13,7 @@ import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.StackTraceUtil;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.TruncateTable;
@@ -272,7 +273,8 @@ public class DatasetRestHandler extends NettyRestHandler {
       // also truncating using TxDs2
       try {
         DataSetManager dataSetManager =
-          this.accessor.getDataSetAccessor().getDataSetManager(OrderedColumnarTable.class);
+          this.accessor.getDataSetAccessor().getDataSetManager(OrderedColumnarTable.class,
+                                                               DataSetAccessor.Namespace.USER);
         dataSetManager.truncate(ds.getName());
       } catch (Exception e) {
         throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);
@@ -824,7 +826,8 @@ public class DatasetRestHandler extends NettyRestHandler {
       DataSet ds = this.accessor.getInstantiator().getDataSet(spec.getName(), opContext);
       try {
         DataSetManager dataSetManager =
-          this.accessor.getDataSetAccessor().getDataSetManager(OrderedColumnarTable.class);
+          this.accessor.getDataSetAccessor().getDataSetManager(OrderedColumnarTable.class,
+                                                               DataSetAccessor.Namespace.USER);
         dataSetManager.drop(ds.getName());
       } catch (Exception e) {
         throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);

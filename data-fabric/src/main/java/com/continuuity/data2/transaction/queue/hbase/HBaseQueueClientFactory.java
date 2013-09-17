@@ -3,14 +3,11 @@
  */
 package com.continuuity.data2.transaction.queue.hbase;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -33,10 +30,9 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   @Inject
   public HBaseQueueClientFactory(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                                 @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                                  HBaseQueueAdmin queueAdmin) {
     this.hConf = hConf;
-    this.tableName = HBaseTableUtil.getHBaseTableName(cConf, cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME));
+    this.tableName = queueAdmin.getTableName();
     this.queueAdmin = queueAdmin;
   }
 

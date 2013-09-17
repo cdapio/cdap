@@ -4,8 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.dataset.api.DataSetManager;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTableTest;
+import com.continuuity.data2.dataset.lib.table.BufferingOcTableClientTest;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -15,7 +14,7 @@ import java.io.IOException;
 /**
  * test for LevelDB tables.
  */
-public class LevelDBOcTableClientTest extends OrderedColumnarTableTest {
+public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDBOcTableClient> {
 
   static LevelDBOcTableService service;
 
@@ -28,7 +27,7 @@ public class LevelDBOcTableClientTest extends OrderedColumnarTableTest {
   }
 
   @Override
-  protected OrderedColumnarTable getTable(String name) throws IOException {
+  protected LevelDBOcTableClient getTable(String name) throws IOException {
     return new LevelDBOcTableClient(name, service);
   }
 

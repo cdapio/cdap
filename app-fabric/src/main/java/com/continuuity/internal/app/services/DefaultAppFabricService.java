@@ -46,10 +46,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.StackTraceUtil;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.operation.ClearFabric;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
@@ -150,10 +148,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private final MetadataService mds;
 
   /**
-   * Instance of operation executor needed by MetadataService.
+   * Used to manage datasets. TODO: implement and use DataSetService instead
    */
-  private final OperationExecutor opex;
-
+  private final DataSetAccessor dataSetAccessor;
   /**
    * Configuration object passed from higher up.
    */
@@ -211,12 +208,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public DefaultAppFabricService(CConfiguration configuration, OperationExecutor opex, MetaDataStore mds,
-                                 LocationFactory locationFactory, ManagerFactory managerFactory,
-                                 AuthorizationFactory authFactory, StoreFactory storeFactory,
-                                 ProgramRuntimeService runtimeService, DiscoveryServiceClient discoveryServiceClient,
-                                 QueueAdmin queueAdmin) {
-    this.opex = opex;
+  public DefaultAppFabricService(CConfiguration configuration, DataSetAccessor dataSetAccessor,
+                                 MetaDataStore mds, LocationFactory locationFactory,
+                                 ManagerFactory managerFactory, AuthorizationFactory authFactory,
+                                 StoreFactory storeFactory, ProgramRuntimeService runtimeService,
+                                 DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin) {
+    this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -1080,10 +1077,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       queueAdmin.dropAll();
 
       LOG.info("Deleting all data for account '" + account + "'.");
-      opex.execute(
-        new OperationContext(account),
-        new ClearFabric(ClearFabric.ToClear.ALL)
-      );
+      dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
+      // NOTE: there could be services running at the moment that rely on the system datasets to be available
+      dataSetAccessor.truncateAll(DataSetAccessor.Namespace.SYSTEM);
+
       LOG.info("All data for account '" + account + "' deleted.");
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));

@@ -132,7 +132,7 @@ public class SingleNodeMain {
   public void shutDown() {
     try {
       webCloudAppService.stopAndWait();
-      gatewayV2.startAndWait();
+      gatewayV2.stopAndWait();
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);

@@ -5,12 +5,13 @@
 package com.continuuity.logging.save;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
@@ -22,48 +23,57 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
  */
 public final class CheckpointManager {
-  private final OperationExecutor opex;
-  private final OperationContext operationContext;
-  private final String table;
-  private final byte [] rowKey;
 
   private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(100);
   private static final byte [] OFFSET_COLNAME = Bytes.toBytes("lastOffset");
   private static final byte [] FILE_COLNAME = Bytes.toBytes("openedFiles");
   private static final byte [][] COLUMN_NAMES = new byte[][] {OFFSET_COLNAME, FILE_COLNAME};
 
-  public CheckpointManager(OperationExecutor opex, OperationContext operationContext,
-                           String topic, int partition, String table) {
-    this.opex = opex;
-    this.operationContext = operationContext;
-    this.table = table;
+  private final TransactionExecutor txExecutor;
+  private final OrderedColumnarTable metaTable;
+  private final byte [] rowKey;
+
+  public CheckpointManager(OrderedColumnarTable metaTable,
+                           TransactionSystemClient txClient,
+                           String topic, int partition) {
+    this.metaTable = metaTable;
+    this.txExecutor = new DefaultTransactionExecutor(txClient, ImmutableList.of((TransactionAware) metaTable));
     this.rowKey = Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(topic), Bytes.toBytes(partition));
   }
 
-  public void saveCheckpoint(CheckpointInfo checkpointInfo) throws IOException, OperationException {
-      Write writeOp = new Write(table, rowKey, COLUMN_NAMES,
-                                new byte[][]{
-                                  Bytes.toBytes(checkpointInfo.getOffset()),
-                                  encodeStringSet(checkpointInfo.getFiles())
-                                });
-      opex.commit(operationContext, writeOp);
+  public void saveCheckpoint(final CheckpointInfo checkpointInfo) throws Exception {
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        metaTable.put(rowKey, COLUMN_NAMES,
+                      new byte[][]{
+                        Bytes.toBytes(checkpointInfo.getOffset()),
+                        encodeStringSet(checkpointInfo.getFiles())
+                      });
+      }
+    });
   }
 
-  public CheckpointInfo getCheckpoint() throws OperationException, IOException {
-    Read readOp = new Read(table, rowKey, COLUMN_NAMES);
-    OperationResult<Map<byte [], byte []>> result = opex.execute(operationContext, readOp);
-    if (result.isEmpty() || result.getValue() == null || result.getValue().isEmpty()) {
-      return null;
-    }
+  public CheckpointInfo getCheckpoint() throws Exception {
+    return txExecutor.execute(new Callable<CheckpointInfo>() {
+      @Override
+      public CheckpointInfo call() throws Exception {
+        OperationResult<Map<byte [], byte []>> result = metaTable.get(rowKey, COLUMN_NAMES);
+        if (result.isEmpty() || result.getValue() == null || result.getValue().isEmpty()) {
+          return null;
+        }
 
-    long offset = Bytes.toLong(result.getValue().get(OFFSET_COLNAME));
-    Set<String> files = decodeStringSet(result.getValue().get(FILE_COLNAME));
-    return new CheckpointInfo(offset, files);
+        long offset = Bytes.toLong(result.getValue().get(OFFSET_COLNAME));
+        Set<String> files = decodeStringSet(result.getValue().get(FILE_COLNAME));
+        return new CheckpointInfo(offset, files);
+      }
+    });
   }
 
   /**

@@ -80,7 +80,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
   /**
    * @return name of this table
    */
-  protected String getTableName() {
+  public String getTableName() {
     return name;
   }
 
@@ -265,6 +265,10 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     return createOperationResult(result);
   }
 
+  public void put(byte [] row, byte [] column, byte[] value) throws Exception {
+    put(row, new byte[][] {column}, new byte[][] {value});
+  }
+
   /**
    * NOTE: if value is null corresponded column is deleted. It will not be in result set when reading.
    *
@@ -282,6 +286,11 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     for (int i = 0; i < columns.length; i++) {
       colVals.put(columns[i], values[i]);
     }
+  }
+
+  @Override
+  public void delete(byte[] row, byte[] column) throws Exception {
+    delete(row, new byte[][] {column});
   }
 
   @Override

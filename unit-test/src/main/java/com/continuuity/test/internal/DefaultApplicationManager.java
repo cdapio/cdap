@@ -2,7 +2,6 @@ package com.continuuity.test.internal;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramStatus;
@@ -10,19 +9,13 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.FlowDescriptor;
-import com.continuuity.app.services.FlowIdentifier;
-import com.continuuity.app.services.FlowStatus;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
-import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
@@ -58,15 +51,13 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final String accountId;
   private final String applicationId;
   private final AppFabricService.Iface appFabricServer;
+  private final TransactionSystemClient txSystemClient;
   private final DataSetInstantiator dataSetInstantiator;
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
 
-  private final TransactionAgent agent;
-
   @Inject
-  public DefaultApplicationManager(OperationExecutor opex,
-                                   LocationFactory locationFactory,
+  public DefaultApplicationManager(LocationFactory locationFactory,
                                    DataSetAccessor dataSetAccessor,
                                    TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
@@ -83,9 +74,9 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.appFabricServer = appFabricServer;
     this.streamWriterFactory = streamWriterFactory;
     this.procedureClientFactory = procedureClientFactory;
+    this.txSystemClient = txSystemClient;
 
-    OperationContext ctx = new OperationContext(accountId, applicationId);
-    DataFabric dataFabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, ctx);
+    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     TransactionProxy proxy = new TransactionProxy();
 
     try {
@@ -97,11 +88,6 @@ public class DefaultApplicationManager implements ApplicationManager {
       throw Throwables.propagate(e);
     }
     this.dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
-
-    agent = new SynchronousTransactionAgent(opex, ctx,
-                                            dataSetInstantiator.getTransactionAware(),
-                                            txSystemClient);
-    proxy.setTransactionAgent(agent);
   }
 
   @Override
@@ -254,10 +240,12 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public <T extends DataSet> T getDataSet(String dataSetName) {
     T dataSet = dataSetInstantiator.getDataSet(dataSetName);
+
     // now we have to start tx of TxDs2 on agent. This will go way once agent is removed
     try {
-      agent.start();
-    } catch (OperationException e) {
+      TransactionContext txContext = new TransactionContext(txSystemClient, dataSetInstantiator.getTransactionAware());
+      txContext.start();
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
     return dataSet;

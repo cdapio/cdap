@@ -21,9 +21,10 @@ public class TransactionContext {
 
   private Transaction currentTx;
 
-  /**
-   * Constructor for a transaction executor.
-   */
+  public TransactionContext(TransactionSystemClient txClient, TransactionAware... txAwares) {
+    this(txClient, ImmutableList.copyOf(txAwares));
+  }
+
   public TransactionContext(TransactionSystemClient txClient, Iterable<TransactionAware> txAwares) {
     this.txAwares = ImmutableList.copyOf(txAwares);
     this.txClient = txClient;

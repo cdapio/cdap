@@ -9,13 +9,13 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.NoopPersistor;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
@@ -79,7 +79,7 @@ public class HBaseQueueTest extends QueueTest {
     cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
     cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
               Integer.toString(Networks.getRandomPort()));
-    cConf.set(HBaseTableUtil.CFG_TABLE_PREFIX, "test");
+    cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
     cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
 
     final Injector injector = Guice.createInjector(dataFabricModule, new AbstractModule() {
@@ -111,8 +111,7 @@ public class HBaseQueueTest extends QueueTest {
     };
     t.start();
 
-    // Get the remote opex
-    opex = injector.getInstance(OperationExecutor.class);
+    txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
@@ -200,7 +199,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testPrefix() {
-    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName().startsWith("test_"));
+    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName().startsWith("test."));
   }
 
   @Override

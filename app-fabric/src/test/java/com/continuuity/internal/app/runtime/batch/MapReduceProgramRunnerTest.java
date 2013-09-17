@@ -10,26 +10,17 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric2Impl;
-import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
-import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
@@ -62,6 +53,7 @@ public class MapReduceProgramRunnerTest {
   private static TransactionExecutorFactory txExecutorFactory;
 
   private DataSetInstantiator dataSetInstantiator;
+  private DataSetAccessor dataSetAccessor;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -81,50 +73,36 @@ public class MapReduceProgramRunnerTest {
   public void before() {
     injector.getInstance(InMemoryTransactionManager.class).init();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
+    dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               getClass().getClassLoader());
   }
 
   @After
-  public void after() {
-    InMemoryOcTableService.dropAll();
+  public void after() throws Exception {
+    cleanupData();
   }
 
   @Test
   public void testWordCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
+    final String inputPath = createInput();
+    final File outputDir = new File(tmpFolder.newFolder(), "output");
 
-    String inputPath = createInput();
-    File outputDir = new File(tmpFolder.newFolder(), "output");
-
-    TransactionProxy proxy = new TransactionProxy();
-    DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, dataSetAccessor, opCtx),
-                              proxy,
-                              getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
+    final KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
 
-    TransactionAgent txAgent = new SynchronousTransactionAgent(opex, opCtx,
-                                                               dataSetInstantiator.getTransactionAware(),
-                                                               txSystemClient);
-    proxy.setTransactionAgent(txAgent);
-    KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
-
-    txAgent.start();
-
-    jobConfigTable.write(Bytes.toBytes("inputPath"), Bytes.toBytes(inputPath));
-    jobConfigTable.write(Bytes.toBytes("outputPath"), Bytes.toBytes(outputDir.getPath()));
-
-    txAgent.finish();
+    // write config into dataset
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws OperationException {
+          jobConfigTable.write(Bytes.toBytes("inputPath"), Bytes.toBytes(inputPath));
+          jobConfigTable.write(Bytes.toBytes("outputPath"), Bytes.toBytes(outputDir.getPath()));
+        }
+      });
 
     runProgram(app, AppWithMapReduce.ClassicWordCount.class);
 
@@ -152,18 +130,6 @@ public class MapReduceProgramRunnerTest {
   @Test
   public void testJobSuccess() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
-
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
-
-    TransactionProxy proxy = new TransactionProxy();
-    DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, dataSetAccessor, opCtx),
-                              proxy,
-                              getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
@@ -248,6 +214,14 @@ public class MapReduceProgramRunnerTest {
       }
     });
   }
+
+  private void cleanupData() throws Exception {
+    // quite hacky way to drop all user datasets and cleanup all system datasets
+    // todo: To be improved with DataSetService
+    dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
+    dataSetAccessor.truncateAll(DataSetAccessor.Namespace.SYSTEM);
+  }
+
 
   private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
                                  DataSetInstantiator dataSetInstantiator,

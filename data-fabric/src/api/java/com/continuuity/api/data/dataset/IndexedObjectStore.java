@@ -40,7 +40,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
 
   private static final byte[] EMPTY_VALUE = new byte[0];
   //KEY_PREFIX is used to prefix primary key when it stores PrimaryKey -> Categories mapping.
-  private static final byte[] KEY_PREFIX = Bytes.toBytes("_keyToSecondaryKey");
+  private static final byte[] KEY_PREFIX = Bytes.toBytes("_fk");
 
   /**
    * Construct IndexObjectStore with name and type.
@@ -65,8 +65,9 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   }
 
   private void init(String name) {
-    this.indexName = "i_" + name;
+    this.indexName = "indexed." + name;
   }
+
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(super.configure()).
