@@ -77,7 +77,7 @@ define(['helpers/plumber'], function (Plumber) {
           self.set('model.currentState', response.status);
         }
         self.set('statsCompleted', true);
-        var path = '/rest/apps/' + appId + '/workflows/' + workflowId + '/currentAction';
+        var path = '/rest/apps/' + appId + '/workflows/' + workflowId + '/current';
 
         jQuery.getJSON(path, function (res) {
           for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
