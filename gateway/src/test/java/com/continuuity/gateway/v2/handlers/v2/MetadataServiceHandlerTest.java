@@ -72,7 +72,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetStreams() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/streams");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/streams");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {
@@ -84,7 +84,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetStreamsByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/streams");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/streams");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -95,13 +95,13 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetInvalidStreamsByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app2/streams");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app2/streams");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   @Test
   public void testGetDatasets() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/datasets");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/datasets");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -112,7 +112,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetDatasetsByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/datasets");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/datasets");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -123,7 +123,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetQueries() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/procedures");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -135,7 +135,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetQueriesByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/procedures");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -147,7 +147,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetMapReduces() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/mapreduces");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/mapreduces");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -159,7 +159,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetMapReducesByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/mapreduces");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/mapreduces");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -171,7 +171,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetApps() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -181,7 +181,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetFlows() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/flows");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -192,7 +192,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetFlowsByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET("/v2/apps/app1/flows");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());

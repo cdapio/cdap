@@ -54,8 +54,10 @@ public class TableHandlerTest {
 
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
-    TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionSystemClient txClient =
+      GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
     t.write(new Write(rowKey, cols, vals));
@@ -155,8 +157,10 @@ public class TableHandlerTest {
     final byte[] a = { 'a' }, b = { 'b' }, c = { 'c' };
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
-    TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionSystemClient txClient =
+      GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
     t.write(new Write(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b }));
@@ -243,8 +247,10 @@ public class TableHandlerTest {
     // starting new tx so that we see what was committed
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
-    TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionSystemClient txClient =
+      GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
     OperationResult<Map<byte[], byte[]>> result = table.read(new Read(x));
@@ -288,8 +294,10 @@ public class TableHandlerTest {
     Table table = newTable(name);
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
-    TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
-    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionSystemClient txClient =
+      GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
     table.write(new Write(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'}));
@@ -315,7 +323,7 @@ public class TableHandlerTest {
   }
 
   static void assertRead(String prefix, int start, int end, String query) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(prefix + query);
+    HttpResponse response = GatewayFastTestsSuite.doGet(prefix + query);
     Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
@@ -328,7 +336,7 @@ public class TableHandlerTest {
   }
 
   static void assertRead(String prefix, String query, String col, String val) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(prefix + query);
+    HttpResponse response = GatewayFastTestsSuite.doGet(prefix + query);
     Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
@@ -338,27 +346,27 @@ public class TableHandlerTest {
   }
 
   static void assertReadFails(String prefix, String query, int expected) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(prefix + query);
+    HttpResponse response = GatewayFastTestsSuite.doGet(prefix + query);
       Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
   static void assertWrite(String prefix, int expected, String query, String json) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.PUT(prefix + query, json);
+    HttpResponse response = GatewayFastTestsSuite.doPut(prefix + query, json);
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
   static void assertDelete(String prefix, int expected, String query) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.DELETE(prefix + query);
+    HttpResponse response = GatewayFastTestsSuite.doDelete(prefix + query);
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
   static void assertCreate(String prefix, int expected, String query) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.PUT(prefix + query);
+    HttpResponse response = GatewayFastTestsSuite.doPut(prefix + query);
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
   static Map<String, Long> assertIncrement(String prefix, int expected, String query, String json) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.POST(prefix + query, json);
+    HttpResponse response = GatewayFastTestsSuite.doPost(prefix + query, json);
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
     if (expected != HttpStatus.SC_OK) {
       return null;

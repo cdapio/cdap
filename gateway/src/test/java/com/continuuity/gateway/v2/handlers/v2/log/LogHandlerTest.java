@@ -88,7 +88,7 @@ public class LogHandlerTest {
 
   private void testNext(String appId, String entityType, String entityId) throws Exception {
     HttpResponse response =
-      GatewayFastTestsSuite.GET(
+      GatewayFastTestsSuite.doGet(
         String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=5&max=10", appId, entityType, entityId)
       );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -106,7 +106,7 @@ public class LogHandlerTest {
   }
 
   private void testNextNoMax(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(
+    HttpResponse response = GatewayFastTestsSuite.doGet(
       String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=10", appId, entityType, entityId)
     );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -124,7 +124,7 @@ public class LogHandlerTest {
   }
 
   private void testNextFilter(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(
+    HttpResponse response = GatewayFastTestsSuite.doGet(
       String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=12&max=16&filter=loglevel=EVEN",
                     appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -142,7 +142,7 @@ public class LogHandlerTest {
   }
 
   private void testNextNoFrom(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(
+    HttpResponse response = GatewayFastTestsSuite.doGet(
       String.format("/v2/apps/%s/%s/%s/logs/next", appId, entityType, entityId)
     );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -161,7 +161,7 @@ public class LogHandlerTest {
 
   private void testPrev(String appId, String entityType, String entityId) throws Exception {
     HttpResponse response =
-      GatewayFastTestsSuite.GET(
+      GatewayFastTestsSuite.doGet(
         String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=25&max=10", appId, entityType, entityId)
       );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -179,7 +179,7 @@ public class LogHandlerTest {
   }
 
   private void testPrevNoMax(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(
+    HttpResponse response = GatewayFastTestsSuite.doGet(
       String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=70", appId, entityType, entityId)
     );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -197,7 +197,7 @@ public class LogHandlerTest {
   }
 
   private void testPrevFilter(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(
+    HttpResponse response = GatewayFastTestsSuite.doGet(
       String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=41&max=16&filter=loglevel=EVEN",
                     appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -215,7 +215,7 @@ public class LogHandlerTest {
   }
 
   private void testPrevNoFrom(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(
+    HttpResponse response = GatewayFastTestsSuite.doGet(
       String.format("/v2/apps/%s/%s/%s/logs/prev", appId, entityType, entityId)
     );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -233,7 +233,7 @@ public class LogHandlerTest {
   }
 
   private void testLogs(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(
+    HttpResponse response = GatewayFastTestsSuite.doGet(
       String.format("/v2/apps/%s/%s/%s/logs?fromTime=20&toTime=35", appId, entityType, entityId)
     );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -250,7 +250,7 @@ public class LogHandlerTest {
   }
 
   private void testLogsFilter(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.GET(
+    HttpResponse response = GatewayFastTestsSuite.doGet(
       String.format("/v2/apps/%s/%s/%s/logs?fromTime=20&toTime=35&filter=loglevel=EVEN", appId, entityType, entityId)
     );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
