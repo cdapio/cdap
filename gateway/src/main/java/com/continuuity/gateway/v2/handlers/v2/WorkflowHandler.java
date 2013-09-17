@@ -85,7 +85,7 @@ public final class WorkflowHandler extends AuthenticatedHttpHandler {
       Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)).pick();
 
       if (discoverable == null) {
-        LOG.info("No endpoint for service {}", serviceName);
+        LOG.debug("No endpoint for service {}", serviceName);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
