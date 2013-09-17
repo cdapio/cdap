@@ -18,6 +18,7 @@ import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.program.ForwardingProgram;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramController;
 import com.continuuity.weave.common.Threads;
@@ -60,7 +61,7 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
     final Program mapReduceProgram = createMapReduceProgram(mapReduceSpec);
     final ProgramOptions options = new SimpleProgramOptions(
       mapReduceProgram.getName(),
-      new BasicArguments(ImmutableMap.of("logicalStartTime", Long.toString(logicalStartTime))),
+      new BasicArguments(ImmutableMap.of(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime))),
       userArguments
     );
 

@@ -23,13 +23,12 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Task runner that runs a schedule.
  */
 public final class ScheduleTaskRunner {
 
 
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleTaskRunner.class);
-
 
   private final StoreFactory storeFactory;
   private final ProgramRuntimeService runtimeService;
@@ -43,13 +42,9 @@ public final class ScheduleTaskRunner {
   }
 
 
-  //TODO: Separate out the programloader into a class
-  //TODO: block the call by attaching listener.
-  //ProgramLoader {  }
   public  synchronized  RunIdentifier run(String accountId, String applicationId, String flowId,
                                           ProgramOptions options) {
 
-    //TODO: Merge from develop to get the new api changes.
     FlowIdentifier id = new FlowIdentifier(accountId, applicationId, flowId, 1);
     ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
     Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage(UserErrors.ALREADY_RUNNING));
@@ -73,8 +68,6 @@ public final class ScheduleTaskRunner {
     return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
 
   }
-
-
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(FlowIdentifier identifier) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = null;

@@ -243,6 +243,8 @@ a, a:visited {
 	border-top: 0;
 	padding: 0px 8px;
 	line-height: 20px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 #warning div a {
 	color: #fff;

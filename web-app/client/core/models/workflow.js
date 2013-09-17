@@ -40,27 +40,6 @@ define([], function () {
 
     },
 
-    updateState: function (http) {
-
-      var self = this;
-
-      var appId = this.get('app'),
-        workflowId = this.get('name');
-
-      http.rest('apps', appId, 'workflows', workflowId, 'status', function (response) {
-
-          if (!jQuery.isEmptyObject(response)) {
-            self.set('currentState', response.status);
-          }
-        });
-    },
-
-    isRunning: function() {
-
-      return this.get('currentState') === 'RUNNING';
-
-    }.property('currentState'),
-
     started: function () {
       return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
     }.property('timeTrigger'),
