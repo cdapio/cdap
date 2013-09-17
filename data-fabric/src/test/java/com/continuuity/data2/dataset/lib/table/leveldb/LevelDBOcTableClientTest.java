@@ -40,9 +40,7 @@ public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDB
 
   @BeforeClass
   public static void init() throws Exception {
-    CConfiguration conf = CConfiguration.create();
-    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
-    Injector injector = Guice.createInjector(new DataFabricLevelDBModule(conf));
+    Injector injector = getInjector(null);
     service = injector.getInstance(LevelDBOcTableService.class);
   }
 
