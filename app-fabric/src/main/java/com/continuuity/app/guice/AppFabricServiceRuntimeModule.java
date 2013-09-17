@@ -29,7 +29,8 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
-import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.impl.DirectSchedulerFactory;
+import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
 
 import java.net.InetAddress;
@@ -71,11 +72,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(AppFabricService.Iface.class).to(DefaultAppFabricService.class);
 
       bind(StoreFactory.class).to(MDSStoreFactory.class);
-      bind(org.quartz.Scheduler.class).toInstance(getSchedulerInstance());
       bind(SchedulerService.class).to(DefaultScheduleService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(SchedulerService.class);
       bind(JobStore.class).to(DataSetBasedScheduleStore.class);
-
     }
 
     @Provides
@@ -85,14 +84,16 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                               new InetSocketAddress("localhost", 0).getAddress());
     }
 
-    //TODO: Set up persistence.
-    private static org.quartz.Scheduler getSchedulerInstance() {
+    @Provides
+    public org.quartz.Scheduler getSchedulerInstance(DataSetBasedScheduleStore scheduleStore) {
       try {
-        return StdSchedulerFactory.getDefaultScheduler();
+        //TODO: Use unbound thread pool using Executors
+        SimpleThreadPool threadPool = new SimpleThreadPool(10, Thread.NORM_PRIORITY);
+        DirectSchedulerFactory.getInstance().createScheduler(threadPool, scheduleStore);
+        return DirectSchedulerFactory.getInstance().getScheduler();
       } catch (Throwable th){
         throw Throwables.propagate(th);
       }
-
     }
   }
 }
