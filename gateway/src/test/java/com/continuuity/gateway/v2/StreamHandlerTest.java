@@ -13,6 +13,7 @@ import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Throwables;
@@ -73,6 +74,8 @@ public class StreamHandlerTest {
     configuration.set(com.continuuity.common.conf.Constants.CFG_LOCAL_DATA_DIR,
                       System.getProperty("java.io.tmpdir"));
 
+    final InMemoryDiscoveryService inMemoryDiscoveryService = new InMemoryDiscoveryService();
+
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
       new DataFabricModules().getInMemoryModules(),
@@ -87,7 +90,8 @@ public class StreamHandlerTest {
           bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class).in(Scopes.SINGLETON);
           bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-          bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
+          bind(DiscoveryServiceClient.class).toInstance(inMemoryDiscoveryService);
+          bind(DiscoveryService.class).toInstance(inMemoryDiscoveryService);
           bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
         }
       }
