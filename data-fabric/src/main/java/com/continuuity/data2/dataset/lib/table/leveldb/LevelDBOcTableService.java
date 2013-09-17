@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.engine.leveldb.KeyValue;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
@@ -40,23 +42,18 @@ public class LevelDBOcTableService {
 
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
-  private static final LevelDBOcTableService SINGLETON = new LevelDBOcTableService();
-
-  public static LevelDBOcTableService getInstance() {
-    return SINGLETON;
-  }
-
   /**
    * Protect the constructor as this class needs to be singleton.
    */
-  private LevelDBOcTableService() {
+  @Inject
+  private LevelDBOcTableService(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
+    setConfiguration(config);
   }
 
   /**
    * For guice injecting configuration object to this singleton.
    */
-  @Inject
-  public void setConfiguration(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
+  private void setConfiguration(CConfiguration config) throws IOException {
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
 
@@ -66,9 +63,14 @@ public class LevelDBOcTableService {
       config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
   }
 
-  public Collection<String> list() {
-    // todo: this will not list all tables, we need to go to physical store to find all or do smth else ENG-3265
-    return ImmutableList.copyOf(tables.keySet());
+  public Collection<String> list() throws Exception {
+    File baseDir = new File(basePath);
+    String[] subDirs = baseDir.list();
+    ImmutableCollection.Builder<String> builder = ImmutableList.builder();
+    for (String dir : subDirs) {
+      builder.add(getTableName(dir));
+    }
+    return builder.build();
   }
 
   public WriteOptions getWriteOptions() {
@@ -126,8 +128,7 @@ public class LevelDBOcTableService {
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
 
-    DB db = null;
-    db = factory.open(new File(dbPath), options);
+    DB db = factory.open(new File(dbPath), options);
     tables.put(name, db);
   }
 
@@ -144,12 +145,16 @@ public class LevelDBOcTableService {
   private static String getDBPath(String basePath, String tableName) {
     String encodedTableName;
     try {
-      encodedTableName = URLEncoder.encode(tableName, "ASCII");
+      encodedTableName = URLEncoder.encode(tableName, "UTF-8");
     } catch (UnsupportedEncodingException e) {
       LOG.error("Error encoding table name '" + tableName + "'", e);
       throw new RuntimeException(e);
     }
     return new File(basePath, encodedTableName).getAbsolutePath();
+  }
+
+  private static String getTableName(String tableDir) throws UnsupportedEncodingException {
+    return URLDecoder.decode(tableDir, "UTF-8");
   }
 
   /**
