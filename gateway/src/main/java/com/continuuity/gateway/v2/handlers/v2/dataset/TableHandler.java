@@ -163,7 +163,8 @@ public class TableHandler extends AuthenticatedHttpHandler {
       Write write = new Write(rowKey, cols, vals);
 
       // now execute the write
-      TransactionContext txContext = new TransactionContext(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
       txContext.start();
       try {
         table.write(write);
@@ -229,7 +230,8 @@ public class TableHandler extends AuthenticatedHttpHandler {
         read = new Read(rowKey, cols);
       }
 
-      TransactionContext txContext = new TransactionContext(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
       txContext.start();
       try {
         OperationResult<Map<byte[], byte[]>> result = table.read(read);
@@ -302,7 +304,8 @@ public class TableHandler extends AuthenticatedHttpHandler {
       Increment increment = new Increment(rowKey, cols, vals);
 
       // now execute the increment
-      TransactionContext txContext = new TransactionContext(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
       txContext.start();
       try {
         Map<byte[], Long> results = table.incrementAndGet(increment);
@@ -372,7 +375,8 @@ public class TableHandler extends AuthenticatedHttpHandler {
       Delete delete = new Delete(rowKey, cols);
 
       // now execute the delete operation
-      TransactionContext txContext = new TransactionContext(txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
       txContext.start();
       try {
         table.write(delete);

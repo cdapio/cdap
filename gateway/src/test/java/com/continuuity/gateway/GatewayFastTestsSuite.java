@@ -109,11 +109,11 @@ public class GatewayFastTestsSuite {
     return port;
   }
 
-  public static HttpResponse GET(String resource) throws Exception {
-    return GET(resource, null);
+  public static HttpResponse doGet(String resource) throws Exception {
+    return doGet(resource, null);
   }
 
-  public static HttpResponse GET(String resource, Header[] headers) throws Exception {
+  public static HttpResponse doGet(String resource, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet("http://" + hostname + ":" + port + resource);
 
@@ -123,13 +123,13 @@ public class GatewayFastTestsSuite {
     return client.execute(get);
   }
 
-  public static HttpResponse PUT(String resource) throws Exception {
+  public static HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
     return client.execute(put);
   }
 
-  public static HttpResponse PUT(String resource, String body) throws Exception {
+  public static HttpResponse doPut(String resource, String body) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
     if (body != null) {
@@ -138,20 +138,20 @@ public class GatewayFastTestsSuite {
     return client.execute(put);
   }
 
-  public static HttpResponse PUT(HttpPut put) throws Exception {
+  public static HttpResponse doPut(HttpPut put) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     return client.execute(put);
   }
 
-  public static HttpPut getPUT(String resource) {
+  public static HttpPut getPut(String resource) {
     return new HttpPut("http://" + hostname + ":" + port + resource);
   }
 
-  public static HttpResponse POST(String resource, String body) throws Exception {
-    return POST(resource, body, null);
+  public static HttpResponse doPost(String resource, String body) throws Exception {
+    return doPost(resource, body, null);
   }
 
-  public static HttpResponse POST(String resource, String body, Header[] headers) throws Exception {
+  public static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
 
@@ -165,7 +165,7 @@ public class GatewayFastTestsSuite {
     return client.execute(post);
   }
 
-  public static HttpResponse DELETE(String resource) throws Exception {
+  public static HttpResponse doDelete(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpDelete delete = new HttpDelete("http://" + hostname + ":" + port + resource);
     return client.execute(delete);

@@ -38,10 +38,12 @@ public final class HBaseQueueUtils {
    * @param coProcessors
    * @throws IOException
    */
+
   public static void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
                                             byte[] columnFamily, long maxWaitMs,
                                             int splits, Location coProcessorJar,
                                             String... coProcessors) throws IOException {
+    // todo consolidate this method with HBaseTableUtil
     if (!admin.tableExists(tableName)) {
       HTableDescriptor htd = new HTableDescriptor(tableName);
       if (coProcessorJar != null) {

@@ -53,7 +53,7 @@ public class ClearFabricHandlerTest {
     Assert.assertTrue(verifyQueue(queueName));
 
     // clear all
-    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/all").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/all").getStatusLine().getStatusCode());
     // verify all are gone
     Assert.assertFalse(verifyTable(tableName));
     Assert.assertFalse(verifyStream(streamName));
@@ -78,7 +78,7 @@ public class ClearFabricHandlerTest {
     Assert.assertTrue(verifyQueue(queueName));
 
     // clear all
-    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/datasets").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/datasets").getStatusLine().getStatusCode());
     // verify all are gone
     Assert.assertFalse(verifyTable(tableName));
     Assert.assertTrue(verifyStream(streamName));
@@ -103,7 +103,7 @@ public class ClearFabricHandlerTest {
     Assert.assertTrue(verifyQueue(queueName));
 
     // clear all
-    Assert.assertEquals(200, GatewayFastTestsSuite.DELETE("/v2/queues").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/queues").getStatusLine().getStatusCode());
     // verify all are gone
     Assert.assertTrue(verifyTable(tableName));
     // NOTE: actually streams data gone too since we store it in same place where we store queues TODO: fix it
@@ -170,7 +170,8 @@ public class ClearFabricHandlerTest {
 
     OperationResult<Map<byte[], byte[]>> result;
     Table table = instantiator.getDataSet(name, context);
-    TransactionContext txContext = new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
     txContext.start();
     result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
     txContext.finish();
