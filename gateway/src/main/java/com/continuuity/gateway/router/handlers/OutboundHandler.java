@@ -17,35 +17,28 @@ public class OutboundHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(OutboundHandler.class);
 
   private final Channel inboundChannel;
-  private final Object trafficLock;
 
-  public OutboundHandler(Channel inboundChannel, Object trafficLock) {
+  public OutboundHandler(Channel inboundChannel) {
     this.inboundChannel = inboundChannel;
-    this.trafficLock = trafficLock;
   }
 
   @Override
   public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
     ChannelBuffer msg = (ChannelBuffer) e.getMessage();
-
-    synchronized (trafficLock) {
-      inboundChannel.write(msg);
-      // If inboundChannel is saturated, do not read until notified in
-      // HexDumpProxyInboundHandler.channelInterestChanged().
-      if (!inboundChannel.isWritable()) {
-        e.getChannel().setReadable(false);
-      }
-    }
+    inboundChannel.write(msg);
   }
 
   @Override
   public void channelInterestChanged(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     // If outboundChannel is not saturated anymore, continue accepting
     // the incoming traffic from the inboundChannel.
-    synchronized (trafficLock) {
-      if (e.getChannel().isWritable()) {
-        inboundChannel.setReadable(true);
-      }
+    if (e.getChannel().isWritable()) {
+      inboundChannel.setReadable(true);
+    }
+
+    // If outboundChannel is saturated, do not read inboundChannel
+    if (!e.getChannel().isWritable()) {
+      inboundChannel.setReadable(false);
     }
   }
 

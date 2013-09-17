@@ -28,10 +28,6 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private final EndpointStrategy discoverableEndpoints;
   private final String serviceName;
 
-  // This lock guards against the race condition that overrides the
-  // OP_READ flag incorrectly.
-  // See the related discussion: http://markmail.org/message/x7jc6mqx6ripynqf
-  private final Object trafficLock = new Object();
   private volatile Channel outboundChannel;
 
   public InboundHandler(ClientBootstrap clientBootstrap, EndpointStrategy discoverableEndpoints,
@@ -65,7 +61,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     outFuture.addListener(new ChannelFutureListener() {
       public void operationComplete(ChannelFuture future) throws Exception {
         if (future.isSuccess()) {
-          outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel, trafficLock));
+          outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
 
           // Connection attempt succeeded:
           // Begin to accept incoming traffic.
@@ -85,26 +81,21 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
     ChannelBuffer msg = (ChannelBuffer) e.getMessage();
-
-    synchronized (trafficLock) {
-      outboundChannel.write(msg);
-      // If outboundChannel is saturated, do not read until notified in
-      // OutboundHandler.channelInterestChanged().
-      if (!outboundChannel.isWritable()) {
-        e.getChannel().setReadable(false);
-      }
-    }
+    outboundChannel.write(msg);
   }
 
   @Override
   public void channelInterestChanged(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-    // If inboundChannel is not saturated anymore, continue accepting
-    // the incoming traffic from the outboundChannel.
-    synchronized (trafficLock) {
+    if (outboundChannel != null) {
+      // If inboundChannel is not saturated anymore, continue accepting
+      // the incoming traffic from the outboundChannel.
       if (e.getChannel().isWritable()) {
-        if (outboundChannel != null) {
-          outboundChannel.setReadable(true);
-        }
+        outboundChannel.setReadable(true);
+      }
+
+      // If inboundChannel is saturated, do not read from outboundChannel
+      if (!e.getChannel().isWritable()) {
+        outboundChannel.setReadable(false);
       }
     }
   }

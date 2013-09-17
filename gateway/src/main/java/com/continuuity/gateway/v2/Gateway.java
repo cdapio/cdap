@@ -80,7 +80,7 @@ public class Gateway extends AbstractIdleService {
     cancelDiscovery.cancel();
     // Wait for a few seconds for requests to stop
     try {
-      TimeUnit.SECONDS.sleep(8);
+      TimeUnit.SECONDS.sleep(3);
     } catch (InterruptedException e) {
       LOG.error("Interrupted while waiting...", e);
     }
