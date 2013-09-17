@@ -237,7 +237,7 @@ define([], function () {
 			obj.flowlets = flowlets;
 			var connections = [];
 			var flowStreams = [];
-			//model.connections = this.validateConnections(model.connections);
+			model.connections = this.validateConnections(model.connections);
 			for (var i = 0; i < model.connections.length; i++) {
 				var cn = model.connections[i];
 				var from = {};
@@ -267,18 +267,16 @@ define([], function () {
 		 */	
 		validateConnections: function (connections) {
 			var assignments = {};
-			var count = 0;
 
 			// First determine which order the nodes are rendered visually. This is based on a horizontal
 			// column format.
 			for (var i = 0, len = connections.length; i < len; i++) {
 				var conn = connections[i];
 				if (!(conn['sourceName'] in assignments)) {
-					count++;
-					assignments[conn['sourceName']] = count;
+					assignments[conn['sourceName']] = 0;
 				}
 				if (!(conn['targetName'] in assignments)) {
-					count = assignments[conn['targetName']] = assignments[conn['sourceName']] + 1;
+					assignments[conn['targetName']] = assignments[conn['sourceName']] + 1;
 				}
 			}
 
