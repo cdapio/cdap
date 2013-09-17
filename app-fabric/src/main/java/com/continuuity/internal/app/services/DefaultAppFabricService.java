@@ -14,7 +14,6 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
@@ -1218,10 +1217,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
       Id.Program programId = Id.Program.from(accountId, applicationId, entry.getKey());
-      Program program = store.loadProgram(programId, Type.WORKFLOW);
-      for (Schedule schedule : entry.getValue().getSchedules()) {
-        scheduler.schedule(program, schedule);
-      }
+      scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
     }
   }
 }

@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.app.Id;
-import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramRuntimeService;
@@ -84,28 +83,30 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
   }
 
   @Override
-  public void schedule(Program program, Schedule schedule) {
+  public void schedule(Id.Program programId, Type programType, Iterable<Schedule> schedules) {
 
-    String scheduleName = schedule.getName();
-    String cronEntry = schedule.getCronEntry();
+    int idx = 0;
+    for (Schedule schedule : schedules) {
+      String scheduleName = schedule.getName();
+      String cronEntry = schedule.getCronEntry();
 
-    String programName = program.getName();
-    String accountId = program.getAccountId();
-    String applicationId = program.getApplicationId();
+      //TODO: Make key in a single place
+      String key = String.format("%s:%s:%s:%s:%d",
+                                 programType.name(), programId.getAccountId(),
+                                 programId.getApplicationId(), programId.getId(),
+                                 idx++);
 
-    //TODO: Make key in a single place
-    String key = String.format("%s:%s:%s:%s", program.getType().name(), accountId, applicationId, programName);
-
-    JobDetail job = JobBuilder.newJob(ScheduledJob.class).withIdentity(key, scheduleName).build();
-    LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
-    Trigger trigger = TriggerBuilder.newTrigger()
-                                    .withIdentity(scheduleName)
-                                .withSchedule(CronScheduleBuilder.cronSchedule(getQuartzCronExpression(cronEntry)))
-                                    .build();
-    try {
-      scheduler.scheduleJob(job, trigger);
-    } catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      JobDetail job = JobBuilder.newJob(ScheduledJob.class).withIdentity(key, scheduleName).build();
+      LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
+      Trigger trigger = TriggerBuilder.newTrigger()
+                                      .withIdentity(scheduleName)
+                                  .withSchedule(CronScheduleBuilder.cronSchedule(getQuartzCronExpression(cronEntry)))
+                                      .build();
+      try {
+        scheduler.scheduleJob(job, trigger);
+      } catch (SchedulerException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
@@ -138,7 +139,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
       String key = context.getJobDetail().getKey().getName();
       //TODO: Single place for key logic
       String[] parts = key.split(":");
-      Preconditions.checkArgument(parts.length == 4);
+      Preconditions.checkArgument(parts.length == 5);
 
       Type programType = Type.valueOf(parts[0]);
       String accountId = parts[1];
