@@ -38,7 +38,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
    */
   public MyKeyValueTable(String name) {
     super(name);
-    this.table = new Table("kv_" + name);
+    this.table = new Table("kv." + name);
   }
 
   /**
@@ -48,7 +48,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
   @SuppressWarnings("unused")
   public MyKeyValueTable(DataSetSpecification spec) {
     super(spec);
-    this.table = new Table(spec.getSpecificationFor("kv_" + this.getName()));
+    this.table = new Table(spec.getSpecificationFor("kv." + this.getName()));
   }
 
   @Override
