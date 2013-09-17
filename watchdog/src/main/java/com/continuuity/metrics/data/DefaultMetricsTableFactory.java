@@ -6,8 +6,11 @@ package com.continuuity.metrics.data;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.AbstractDataSetAccessor;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsAnnotation;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
@@ -19,6 +22,8 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 /**
  * Implementation of {@link MetricsTableFactory} that reuses the same instance of {@link MetricsEntityCodec} for
  * creating instances of various type of metrics table.
@@ -28,13 +33,16 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetricsTableFactory.class);
 
   private final CConfiguration cConf;
+  private final DataSetAccessor dataSetAccessor;
   private final OVCTableHandle tableHandle;
   // Stores the MetricsEntityCodec per namespace
   private final LoadingCache<String, MetricsEntityCodec> entityCodecs;
 
   @Inject
-  public DefaultMetricsTableFactory(final CConfiguration cConf, @MetricsAnnotation final OVCTableHandle tableHandle) {
+  public DefaultMetricsTableFactory(final CConfiguration cConf,
+                                    @MetricsAnnotation final OVCTableHandle tableHandle) {
     this.cConf = cConf;
+    this.dataSetAccessor = createNoopDatasetAccessor();
     this.tableHandle = tableHandle;
     this.entityCodecs = CacheBuilder.newBuilder().build(new CacheLoader<String, MetricsEntityCodec>() {
       @Override
@@ -54,9 +62,10 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   @Override
   public TimeSeriesTable createTimeSeries(String namespace, int resolution) {
     try {
-      String tableName = namespace + "." +
+      String tableName = namespace.toLowerCase() + "." +
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+      tableName = dataSetAccessor.namespace(tableName, DataSetAccessor.Namespace.SYSTEM);
       int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
       OrderedVersionedColumnarTable table;
@@ -78,9 +87,10 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   @Override
   public AggregatesTable createAggregates(String namespace) {
     try {
-      String tableName = namespace + "." +
+      String tableName = namespace.toLowerCase() + "." +
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
+      tableName = dataSetAccessor.namespace(tableName, DataSetAccessor.Namespace.SYSTEM);
 
       LOG.info("AggregatesTable created: {}", tableName);
       return new AggregatesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodecs.getUnchecked(namespace));
@@ -117,5 +127,25 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
     }
     return cConf.getInt(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME,
                         MetricsConstants.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
+  }
+
+  private DataSetAccessor createNoopDatasetAccessor() {
+    // So far we need it only for figuring out dataset name; later we need to convert metrics tables into datasets
+    return new AbstractDataSetAccessor(cConf) {
+      @Override
+      protected <T> T getDataSetClient(String name, Class<? extends T> type) throws Exception {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      protected <T> DataSetManager getDataSetManager(Class<? extends T> type) throws Exception {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      protected Map<String, Class<?>> list(String prefix) throws Exception {
+        throw new UnsupportedOperationException();
+      }
+    };
   }
 }
