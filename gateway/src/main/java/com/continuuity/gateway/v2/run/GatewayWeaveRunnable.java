@@ -54,8 +54,6 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
   private String hConfName;
   private CountDownLatch runLatch;
 
-  private CConfiguration cConf;
-  private Configuration hConf;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
@@ -86,11 +84,11 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
     LOG.info("Initializing runnable " + name);
     try {
       // Load configuration
-      cConf = CConfiguration.create();
+      CConfiguration cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
-      hConf = new Configuration();
+      Configuration hConf = new Configuration();
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
 
@@ -126,7 +124,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
           : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
       );
 
-      Injector injector = createGuiceInjector();
+      Injector injector = createGuiceInjector(kafkaClientService, zkClientService, cConf, hConf);
       // Get the metrics collection service
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
@@ -166,7 +164,8 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
     runLatch.countDown();
   }
 
-  private Injector createGuiceInjector() {
+  static Injector createGuiceInjector(KafkaClientService kafkaClientService, ZKClientService zkClientService,
+                                      CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new GatewayModules(cConf).getDistributedModules(),
