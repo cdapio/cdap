@@ -4,8 +4,10 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionConflictException;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
@@ -102,9 +104,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
             boolean isIncrementedColumn = Arrays.equals(ROW_TO_INCREMENT, row);
             Assert.assertEquals(appendingClients.length * 100 + (isIncrementedColumn ? 1 : 0), cols.getValue().size());
 
-            for (int i = isIncrementedColumn ? 1 : 0;
-                 i < appendingClients.length * 100 + (isIncrementedColumn ? 1 : 0);
-                 i++) {
+            for (int i = 0; i < appendingClients.length * 100; i++) {
               Assert.assertArrayEquals(Bytes.toBytes("foo" + i), cols.getValue().get(Bytes.toBytes("column" + i)));
             }
           }
@@ -149,11 +149,13 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
                               new long[]{(long) executed[0]});
             }
           });
-        } catch (Throwable t) {
-          LOG.warn("failed to increment, will retry again", t);
-          // do nothing: we'll retry execution
-          t.printStackTrace();
+        } catch (TransactionConflictException t) {
+          // LOG.warn("conflict on increment, will retry again");
+          // do nothing: we'll retry
           continue;
+        } catch (Throwable t) {
+          LOG.warn("failed to increment, bailing out", t);
+          throw Throwables.propagate(t);
         }
         executed[0]++;
       }
@@ -190,16 +192,27 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
 
                 private void appendColumn(byte[] row) throws Exception {
                   OperationResult<Map<byte[], byte[]>> columns = table.get(row, null);
-                  int columnsCount = columns.isEmpty() ? 0 : columns.getValue().size();
+                  int columnsCount;
+                  if (columns.isEmpty()) {
+                    columnsCount = 0;
+                  } else if (!columns.getValue().containsKey(COLUMN_TO_INCREMENT)) {
+                    columnsCount =  columns.getValue().size();
+                  } else {
+                    // when counting columns, ignore the increment column
+                    columnsCount =  columns.getValue().size() - 1;
+                  }
                   byte[] columnToAppend = Bytes.toBytes("column" + columnsCount);
-                  table.put(row, new byte[][]{columnToAppend}, new byte[][]{Bytes.toBytes("foo" + columnsCount)});
+                  table.put(row, new byte[][]{columnToAppend}, new byte[][] { Bytes.toBytes("foo" + columnsCount) });
                 }
               });
-            } catch (Throwable t) {
-              LOG.warn("failed to append, will retry again", t);
+            } catch (TransactionConflictException t) {
+              // LOG.warn("conflict on append, will retry again");
               // do nothing: we'll retry
               appended = false;
               continue;
+            } catch (Throwable t) {
+              LOG.warn("failed to append, bailing out", t);
+              throw Throwables.propagate(t);
             }
 
             appended = true;
