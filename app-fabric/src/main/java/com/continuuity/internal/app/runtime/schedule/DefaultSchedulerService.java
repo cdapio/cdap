@@ -1,13 +1,15 @@
 package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.schedule.Schedule;
+import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.program.Type;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramRuntimeService;
+import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
-import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -23,50 +25,62 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.quartz.spi.JobFactory;
+import org.quartz.spi.TriggerFiredBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * Default Schedule service implementation.
  */
-public class DefaultScheduleService extends AbstractIdleService implements SchedulerService {
+public class DefaultSchedulerService extends AbstractIdleService implements SchedulerService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultScheduleService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultSchedulerService.class);
   private final Scheduler scheduler;
   private final ProgramRuntimeService programRuntimeService;
   private final StoreFactory storeFactory;
 
-  private static ScheduleTaskRunner taskRunner;
+//  private static ScheduleTaskRunner taskRunner;
 
   @Inject
-  public DefaultScheduleService(Scheduler scheduler, StoreFactory storeFactory,
-                                ProgramRuntimeService programRuntimeService) {
+  public DefaultSchedulerService(Scheduler scheduler, StoreFactory storeFactory,
+                                 ProgramRuntimeService programRuntimeService) {
     this.scheduler = scheduler;
     this.programRuntimeService = programRuntimeService;
     this.storeFactory = storeFactory;
   }
 
-  @Override
-  public void startUp() {
-    try {
-      taskRunner = new ScheduleTaskRunner(storeFactory, programRuntimeService);
-      scheduler.start();
-      LOG.debug("Scheduler started!");
-    } catch (Throwable e) {
-      throw Throwables.propagate(e);
-    }
+  private JobFactory createJobFactory(final Store store) {
+    return new JobFactory() {
+
+      @Override
+      public Job newJob(TriggerFiredBundle bundle, Scheduler scheduler) throws SchedulerException {
+        Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
+
+        if (ScheduledJob.class.isAssignableFrom(jobClass)) {
+          return new ScheduledJob(store, programRuntimeService);
+        } else {
+          try {
+            return jobClass.newInstance();
+          } catch (Exception e) {
+            throw new SchedulerException("Failed to create instance of " + jobClass, e);
+          }
+        }
+      }
+    };
   }
 
   @Override
-  public void shutDown() {
-    try {
-      scheduler.shutdown();
-      LOG.debug("Scheduler stopped!");
-    } catch (SchedulerException e){
-      throw Throwables.propagate(e);
-    }
+  public void startUp() throws Exception {
+      scheduler.setJobFactory(createJobFactory(storeFactory.create()));
+      scheduler.start();
+      LOG.debug("Scheduler started!");
+  }
+
+  @Override
+  public void shutDown() throws Exception {
+    scheduler.shutdown();
+    LOG.debug("Scheduler stopped!");
   }
 
   @Override
@@ -80,7 +94,7 @@ public class DefaultScheduleService extends AbstractIdleService implements Sched
     String applicationId = program.getApplicationId();
 
     //TODO: Make key in a single place
-    String key = String.format("%s:%s:%s", accountId, applicationId, programName);
+    String key = String.format("%s:%s:%s:%s", program.getType().name(), accountId, applicationId, programName);
 
     JobDetail job = JobBuilder.newJob(ScheduledJob.class).withIdentity(key, scheduleName).build();
     LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
@@ -109,10 +123,12 @@ public class DefaultScheduleService extends AbstractIdleService implements Sched
   /**
    * Handler that gets called by quartz to schedule a job.
    */
-  public static class ScheduledJob implements Job {
+  private static final class ScheduledJob implements Job {
 
-    public ScheduledJob() {
+    private final ScheduleTaskRunner taskRunner;
 
+    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService) {
+      taskRunner = new ScheduleTaskRunner(store, programRuntimeService);
     }
 
     @Override
@@ -122,23 +138,19 @@ public class DefaultScheduleService extends AbstractIdleService implements Sched
       String key = context.getJobDetail().getKey().getName();
       //TODO: Single place for key logic
       String[] parts = key.split(":");
-      Preconditions.checkArgument(parts.length == 3);
+      Preconditions.checkArgument(parts.length == 4);
 
-      String accountId = parts[0];
-      String applicationId = parts[1];
-      String programId = parts[2];
-      LOG.info("Account ID " + accountId + " application:  " + applicationId + " programId: " + programId);
-      Map<String, String> options = new ImmutableMap.Builder<String, String>()
-                                                    .put(ProgramOptionConstants.LOGICAL_START_TIME,
-                                                           Long.toString(context.getScheduledFireTime().getTime()))
-                                                    .put(ProgramOptionConstants.RETRY_COUNT,
-                                                           Integer.toString(context.getRefireCount()))
-                                                    .build();
+      Type programType = Type.valueOf(parts[0]);
+      String accountId = parts[1];
+      String applicationId = parts[2];
+      String programId = parts[3];
+      LOG.debug("Schedule execute {}", key);
+      Arguments args = new BasicArguments(ImmutableMap.of(
+          ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()),
+          ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount())
+      ));
 
-
-      ProgramOptions programOptions = new SimpleProgramOptions(ProgramOptionConstants.SCHEDULER,
-                                                               new BasicArguments(options), new BasicArguments());
-      taskRunner.run(accountId, applicationId, programId, programOptions);
+      taskRunner.run(Id.Program.from(accountId, applicationId, programId), programType, args);
     }
   }
 }

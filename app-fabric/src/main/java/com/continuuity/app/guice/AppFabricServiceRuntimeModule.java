@@ -14,7 +14,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
-import com.continuuity.internal.app.runtime.schedule.DefaultScheduleService;
+import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
@@ -72,7 +72,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(AppFabricService.Iface.class).to(DefaultAppFabricService.class);
 
       bind(StoreFactory.class).to(MDSStoreFactory.class);
-      bind(SchedulerService.class).to(DefaultScheduleService.class).in(Scopes.SINGLETON);
+      bind(SchedulerService.class).to(DefaultSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(SchedulerService.class);
       bind(JobStore.class).to(DataSetBasedScheduleStore.class);
     }
