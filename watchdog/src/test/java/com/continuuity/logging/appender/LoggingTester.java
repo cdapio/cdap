@@ -7,7 +7,7 @@ import com.continuuity.logging.read.Callback;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.LogReader;
 import com.google.common.collect.Lists;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;

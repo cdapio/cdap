@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This test emulates usage table by multiple concurrent clients.
@@ -207,5 +208,47 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
       }
     }
   }
+
+  /**
+   * tests that creating a table concurrently from two different clients does not fail.
+   */
+  @Test(timeout = 6000) // table create wait time is 5 sec
+  public void testConcurrentCreate() throws Exception {
+    AtomicBoolean success1 = new AtomicBoolean(false);
+    AtomicBoolean success2 = new AtomicBoolean(false);
+    // start two threads both attempting to create the same table
+    Thread t1 = new CreateThread(success1);
+    Thread t2 = new CreateThread(success2);
+    t1.start();
+    t2.start();
+    t1.join();
+    t2.join();
+    // make sure both threads report success
+    Assert.assertTrue("First thread failed. ", success1.get());
+    Assert.assertTrue("Second thread failed. ", success2.get());
+    // perform a read - if the table was not opened successfully this will fail
+    getTable("conccreate").get(new byte[] { 'a' }, new byte[][] { { 'b' } });
+  }
+
+  class CreateThread extends Thread {
+    private final AtomicBoolean success;
+
+    CreateThread(AtomicBoolean success) {
+      this.success = success;
+    }
+
+    @Override
+    public void run() {
+      try {
+        success.set(false);
+        getTableManager().create("conccreate");
+        success.set(true);
+      } catch (Throwable throwable) {
+        success.set(false);
+        throwable.printStackTrace(System.err);
+      }
+    }
+  }
+
 
 }
