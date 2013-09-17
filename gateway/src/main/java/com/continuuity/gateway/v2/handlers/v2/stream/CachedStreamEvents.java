@@ -1,6 +1,5 @@
 package com.continuuity.gateway.v2.handlers.v2.stream;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
@@ -10,9 +9,10 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
-import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
@@ -161,7 +161,7 @@ final class CachedStreamEvents {
     private static final Logger LOG = LoggerFactory.getLogger(ProducerStreamEntries.class);
 
     private final Queue2Producer producer;
-    private final TxManager txManager;
+    private final TransactionContext txContext;
     private final BlockingQueue<StreamEntry> streamEntries;
 
     private final ExecutorService callbackExecutorService;
@@ -175,7 +175,7 @@ final class CachedStreamEvents {
                                  TransactionSystemClient txClient, ExecutorService callbackExecutorService,
                                  AtomicLong cachedBytes, AtomicInteger cachedNumEntries) {
       this.producer = producer;
-      this.txManager = new TxManager(txClient, (TransactionAware) producer);
+      this.txContext = new TransactionContext(txClient, (TransactionAware) producer);
       this.streamEntries = streamEntries;
 
       this.callbackExecutorService = callbackExecutorService;
@@ -234,13 +234,13 @@ final class CachedStreamEvents {
         StreamEntryToQueueEntryFunction transformer = new StreamEntryToQueueEntryFunction();
 
         try {
-          txManager.start();
+          txContext.start();
 
           try {
             producer.enqueue(Iterables.transform(entries, transformer));
 
             // Commit
-            txManager.commit();
+            txContext.finish();
 
             // Notify callbacks
             callbackNotifier.notifySuccess();
@@ -249,15 +249,15 @@ final class CachedStreamEvents {
             LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
 
             try {
-              txManager.abort();
-            } catch (OperationException e1) {
+              txContext.abort();
+            } catch (TransactionFailureException e1) {
               LOG.error("Exception while aborting txn", e1);
             } finally {
               // Notify callbacks
               callbackNotifier.notifyFailure(e);
             }
           }
-        } catch (OperationException e) {
+        } catch (TransactionFailureException e) {
           LOG.error("Caught exception", e);
           callbackNotifier.notifyFailure(e);
         } finally {
@@ -292,7 +292,7 @@ final class CachedStreamEvents {
     public String toString() {
       return Objects.toStringHelper(this)
         .add("producer", producer)
-        .add("txManager", txManager)
+        .add("txContext", txContext)
         .toString();
     }
 

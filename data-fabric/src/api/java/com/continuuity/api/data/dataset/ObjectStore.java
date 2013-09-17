@@ -61,7 +61,7 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
    */
   public ObjectStore(String name, Type type) throws UnsupportedTypeException {
     super(name);
-    this.kvTable = new KeyValueTable(name + "_kv");
+    this.kvTable = new KeyValueTable("objects." + name);
     this.schema = new ReflectionSchemaGenerator().generate(type);
     this.typeRep = new TypeRepresentation(type);
   }
@@ -92,7 +92,7 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
       .create();
     this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
     this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
-    this.kvTable = new KeyValueTable(spec.getSpecificationFor(this.getName() + "_kv"));
+    this.kvTable = new KeyValueTable(spec.getSpecificationFor("objects." + this.getName()));
   }
 
   /**

@@ -5,11 +5,11 @@
 package com.continuuity.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
@@ -18,6 +18,7 @@ import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.save.FileMetaDataManager;
+import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -67,7 +68,10 @@ public final class DistributedLogReader implements LogReader {
    * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public DistributedLogReader(OperationExecutor opex, CConfiguration cConfig, LocationFactory locationFactory) {
+  public DistributedLogReader(DataSetAccessor dataSetAccessor,
+                              TransactionSystemClient txClient,
+                              CConfiguration cConfig,
+                              LocationFactory locationFactory) {
     try {
       this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(
         cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
@@ -84,8 +88,8 @@ public final class DistributedLogReader implements LogReader {
 
       String account = cConfig.get(LoggingConfiguration.LOG_RUN_ACCOUNT);
       Preconditions.checkNotNull(account, "Account cannot be null");
-      this.fileMetaDataManager = new FileMetaDataManager(opex, new OperationContext(account),
-                                                         LoggingConfiguration.LOG_META_DATA_TABLE);
+      this.fileMetaDataManager =
+        new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor, new OperationContext(account)), txClient);
 
       this.locationFactory = locationFactory;
       this.schema = new LogSchema().getAvroSchema();
@@ -238,7 +242,7 @@ public final class DistributedLogReader implements LogReader {
               avroFileLogReader.readLog(locationFactory.create(file.toUri()), logFilter, fromTimeMs, toTimeMs,
                                         Integer.MAX_VALUE, callback);
             }
-          } catch (OperationException e) {
+          } catch (Exception e) {
             throw  Throwables.propagate(e);
           } finally {
             callback.close();

@@ -47,7 +47,7 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   @Override
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns) throws Exception {
-    return core.getRow(row, columns, null, null, columns.length, tx);
+    return core.getRow(row, columns, null, null, columns == null ? Integer.MAX_VALUE : columns.length, tx);
   }
 
   @Override

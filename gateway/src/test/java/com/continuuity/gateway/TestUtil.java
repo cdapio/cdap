@@ -324,7 +324,7 @@ public class TestUtil {
   }
 
   /**
-   * Verify that a given value can be retrieved for a given key via http GET
+   * Verify that a given value can be retrieved for a given key via http doGet
    * request.
    *
    * @param executor the operation executor to use for access to data fabric
@@ -346,9 +346,9 @@ public class TestUtil {
     // make a get URL
     String getUrl = baseUri + (table == null ? "default" : table) + "/" +
         URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
-    LOG.info("GET request URI for key '" + new String(key) + "' is " + getUrl);
+    LOG.info("doGet request URI for key '" + new String(key) + "' is " + getUrl);
 
-    // and issue a GET request to the server
+    // and issue a doGet request to the server
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(getUrl);
     if (TestUtil.apiKey != null) {
@@ -382,7 +382,7 @@ public class TestUtil {
   }
 
   /**
-   * Verify that a given value can be retrieved for a given key via http GET
+   * Verify that a given value can be retrieved for a given key via http doGet
    * request. This converts the key and value from String to bytes and calls
    * the byte-based method writeAndGet.
    *
@@ -401,7 +401,7 @@ public class TestUtil {
   }
 
   /**
-   * Verify that a given value can be retrieved for a given key via http GET
+   * Verify that a given value can be retrieved for a given key via http doGet
    * request. This converts the key and value from String to bytes and calls
    * the byte-based method writeAndGet. Uses default table
    *
@@ -502,7 +502,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a GET request to the given URL and return the HTTP status.
+   * Send a doGet request to the given URL and return the HTTP status.
    *
    * @param url the URL to get
    */
@@ -514,7 +514,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a GET request to the given URL and return the HTTP status.
+   * Send a doGet request to the given URL and return the HTTP status.
    *
    * @param baseUrl the baseURL
    * @param table    the name of the table to test on
@@ -528,7 +528,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a GET request to the given URL and return the HTTP status. Use
+   * Send a doGet request to the given URL and return the HTTP status. Use
    * default table.
    *
    * @param baseUrl the baseURL
@@ -579,7 +579,7 @@ public class TestUtil {
   }
 
   /**
-   * Send a GET request to the given URL and return the Http response.
+   * Send a doGet request to the given URL and return the Http response.
    *
    * @param url the URL to get
    * @param headers map with header data

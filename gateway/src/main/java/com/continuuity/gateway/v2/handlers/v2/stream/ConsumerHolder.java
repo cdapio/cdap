@@ -7,8 +7,8 @@ import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.gateway.v2.txmanager.TxManager;
 import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ final class ConsumerHolder implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(ConsumerHolder.class);
 
   private final Queue2Consumer consumer;
-  private final TxManager txManager;
+  private final TransactionContext txContext;
 
   public ConsumerHolder(ConsumerKey key, TransactionSystemClient txClient,
                         QueueClientFactory queueClientFactory) throws Exception {
@@ -31,20 +31,20 @@ final class ConsumerHolder implements Closeable {
     this.consumer =
       queueClientFactory.createConsumer(key.getQueueName(),
                                         new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null), 1);
-    this.txManager = new TxManager(txClient, (TransactionAware) consumer);
+    this.txContext = new TransactionContext(txClient, (TransactionAware) consumer);
   }
 
   public synchronized DequeueResult dequeue() throws Throwable {
     try {
-      txManager.start();
+      txContext.start();
 
       try {
         DequeueResult result = consumer.dequeue();
-        txManager.commit();
+        txContext.finish();
         return result;
       } catch (Throwable e) {
         LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
-        txManager.abort();
+        txContext.abort();
         throw e;
       }
     } catch (OperationException e) {
@@ -64,7 +64,7 @@ final class ConsumerHolder implements Closeable {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("consumer", consumer)
-      .add("txManager", txManager)
+      .add("txContext", txContext)
       .toString();
   }
 }

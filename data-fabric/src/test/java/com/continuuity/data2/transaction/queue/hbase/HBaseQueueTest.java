@@ -11,11 +11,11 @@ import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.NoopPersistor;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
@@ -111,8 +111,7 @@ public class HBaseQueueTest extends QueueTest {
     };
     t.start();
 
-    // Get the remote opex
-    opex = injector.getInstance(OperationExecutor.class);
+    txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);

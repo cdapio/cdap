@@ -25,6 +25,9 @@ public interface DataSetAccessor {
   // TODO: this should not be exposed, but since queues do not follow dataset semantic we have to do that
   String namespace(String datasetName, Namespace namespace);
 
+  /**
+   * Namespace of the dataset
+   */
   static enum Namespace {
     USER("user"),
     SYSTEM("system");

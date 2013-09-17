@@ -41,8 +41,9 @@ public class IndexedTable extends DataSet {
 
   // Helper method for both constructors to set the names of the underlying two tables
   private void init(String name, byte[] column) {
-    this.tableName = "t_" + name;
-    this.indexName = "i_" + name;
+    // "d" for "data"
+    this.tableName = "d." + name;
+    this.indexName = "i." + name;
     this.column = column;
   }
 

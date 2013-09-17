@@ -66,11 +66,11 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * Tests Data Rest Accessor
+ * Tests Data Rest Accessor.
  */
 public class DatasetRestAccessorTest {
 
-  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
+  static final OperationContext CONTEXT = TestUtil.DEFAULT_CONTEXT;
 
   // this is the executor for all access to the data fabric
   private static OperationExecutor executor;
@@ -116,8 +116,8 @@ public class DatasetRestAccessorTest {
     ds.setName(spec.getName());
     ds.setType(spec.getType());
     ds.setSpecification(new Gson().toJson(spec));
-    mds.assertDataset(new Account(context.getAccount()), ds);
-    return instantiator.getDataSet(name, context);
+    mds.assertDataset(new Account(CONTEXT.getAccount()), ds);
+    return instantiator.getDataSet(name, CONTEXT);
   }
 
   static Transaction startTx(DataSetInstantiatorFromMetaData instantiator) throws Exception {
@@ -280,7 +280,7 @@ public class DatasetRestAccessorTest {
 
     // starting new tx so that we see what was committed
     commitTx(instantiator, tx);
-    tx = startTx(instantiator);
+    startTx(instantiator);
     // read back directly and verify they're gone
     result = t.read(new Read(row.getBytes()));
     Assert.assertFalse(result.isEmpty());
@@ -380,7 +380,7 @@ public class DatasetRestAccessorTest {
 
     // starting new tx so that we see what was committed
     commitTx(instantiator, tx);
-    tx = startTx(instantiator);
+    startTx(instantiator);
     // verify return value is equal to increments
     Assert.assertNotNull(map);
     Assert.assertEquals(2L, map.size());
@@ -416,9 +416,8 @@ public class DatasetRestAccessorTest {
     String urlPrefix = setupAccessor("data", "", "/data/");
     urlPrefix += "Table/";
     String table = "tCTbl";
-    String table2 = "tCTbl2";
     try {
-      instantiator.getDataSet(table, context);
+      instantiator.getDataSet(table, CONTEXT);
       Assert.fail("instantiator should have failed for non-existent table.");
     } catch (DataSetInstantiationException e) {
       // expected
@@ -433,14 +432,14 @@ public class DatasetRestAccessorTest {
 /*
    // todo: commented out because it looks incorrect: we use different names for spec and dataset. Very weird.
    //       Discuss it!
-
+    String table2 = "tCTbl2";
     // try to create a table that exists with a different dataset type
     DataSetSpecification spec = new KeyValueTable(table2).configure();
     Dataset ds = new Dataset(spec.getName());
     ds.setName(spec.getName());
     ds.setType(spec.getType());
     ds.setSpecification(new Gson().toJson(spec));
-    mds.assertDataset(new Account(context.getAccount()), ds);
+    mds.assertDataset(new Account(CONTEXT.getAccount()), ds);
     // should now fail with conflict
     assertCreate(urlPrefix, HttpStatus.SC_CONFLICT, table2);
 
@@ -494,12 +493,12 @@ public class DatasetRestAccessorTest {
   static void createStream(String name) throws Exception {
     Stream stream = new Stream(name);
     stream.setName(name);
-    mds.assertStream(new Account(context.getAccount()), stream);
-    executor.commit(context, addToStream(name));
+    mds.assertStream(new Account(CONTEXT.getAccount()), stream);
+    executor.commit(CONTEXT, addToStream(name));
   }
 
   static void createQueue(String name) throws Exception {
-    executor.commit(context, addToQueue(name));
+    executor.commit(CONTEXT, addToQueue(name));
   }
 
   static Write addToTable = new Write(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'});
@@ -513,17 +512,17 @@ public class DatasetRestAccessorTest {
   }
 
   boolean dequeueOne(String queue) throws Exception {
-    long groupId = executor.execute(context, new GetGroupID(queue.getBytes()));
+    long groupId = executor.execute(CONTEXT, new GetGroupID(queue.getBytes()));
     QueueConsumer consumer = new QueueConsumer(0, groupId, 1,
                                                new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
-    executor.execute(context, new QueueConfigure(queue.getBytes(), consumer));
-    DequeueResult result = executor.execute(context,
+    executor.execute(CONTEXT, new QueueConfigure(queue.getBytes(), consumer));
+    DequeueResult result = executor.execute(CONTEXT,
                                             new QueueDequeue(queue.getBytes(), consumer, consumer.getQueueConfig()));
     return !result.isEmpty();
   }
 
   boolean verifyStream(String name) throws Exception {
-    Stream stream = mds.getStream(new Account(context.getAccount()), new Stream(name));
+    Stream stream = mds.getStream(new Account(CONTEXT.getAccount()), new Stream(name));
     boolean streamExists = stream.isExists();
     boolean dataExists = dequeueOne("stream:" + name);
     return streamExists || dataExists;
@@ -536,13 +535,13 @@ public class DatasetRestAccessorTest {
   boolean verifyTable(String name) throws Exception {
     OperationResult<Map<byte[], byte[]>> result;
     try {
-      Table table = instantiator.getDataSet(name, context);
+      Table table = instantiator.getDataSet(name, CONTEXT);
       Transaction tx = startTx(instantiator);
       result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
       commitTx(instantiator, tx);
     } catch (DataSetInstantiationException e) {
       result = executor.execute(
-        context, new com.continuuity.data.operation.Read(name, new byte[]{'a'}, new byte[]{'b'}));
+        CONTEXT, new com.continuuity.data.operation.Read(name, new byte[]{'a'}, new byte[]{'b'}));
     }
     return !result.isEmpty();
   }
@@ -635,7 +634,7 @@ public class DatasetRestAccessorTest {
     // verify the value was written using the Table
     // starting new tx so that we see what was committed
     commitTx(instantiator, tx);
-    tx = startTx(instantiator);
+    startTx(instantiator);
     result = table.read(new Read(x));
     Assert.assertFalse(result.isEmpty());
     Assert.assertEquals(1, result.getValue().size());
