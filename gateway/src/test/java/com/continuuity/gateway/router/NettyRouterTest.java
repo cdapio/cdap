@@ -20,13 +20,12 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
-import junit.framework.Assert;
 import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -139,7 +138,7 @@ public class NettyRouterTest {
     }
   }
 
-  @Test(expected = NoHttpResponseException.class)
+  @Test(expected = Exception.class)
   public void testRouterAllServersDown() throws Exception {
     try {
       // Bring down all servers

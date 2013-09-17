@@ -74,6 +74,8 @@ public class StreamHandlerTest {
     configuration.set(com.continuuity.common.conf.Constants.CFG_LOCAL_DATA_DIR,
                       System.getProperty("java.io.tmpdir"));
 
+    final InMemoryDiscoveryService inMemoryDiscoveryService = new InMemoryDiscoveryService();
+
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
       new DataFabricModules().getInMemoryModules(),
