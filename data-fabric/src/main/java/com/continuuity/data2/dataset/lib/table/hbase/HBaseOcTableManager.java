@@ -4,8 +4,10 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
 
 import java.io.IOException;
 
@@ -35,7 +37,19 @@ public class HBaseOcTableManager implements DataSetManager {
 
   @Override
   public void create(String name) throws Exception {
-    HBaseTableUtil.createTableIfNotExists(admin, HBaseTableUtil.getHBaseTableName(name), DATA_COLUMN_FAMILY);
+    final String tableName = HBaseTableUtil.getHBaseTableName(name);
+
+    final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
+    // todo: make stuff configurable
+    // todo: using snappy compression for some reason breaks mini-hbase cluster (i.e. unit-test doesn't work)
+    //    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
+    columnDescriptor.setMaxVersions(100);
+    columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW);
+
+    final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+    tableDescriptor.addFamily(columnDescriptor);
+
+    HBaseTableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
   }
 
   @Override

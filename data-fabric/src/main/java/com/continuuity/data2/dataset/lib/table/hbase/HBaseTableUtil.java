@@ -1,11 +1,9 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.google.common.base.Stopwatch;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,21 +40,11 @@ public class HBaseTableUtil {
    * create the table.
    * @param admin the hbase admin
    * @param tableName the name of the table
-   * @param columnFamily the column family for data
+   * @param tableDescriptor hbase table descriptor for the new table
    */
   public static void createTableIfNotExists(HBaseAdmin admin, String tableName,
-                                            byte[] columnFamily) throws IOException {
+                                            HTableDescriptor tableDescriptor) throws IOException {
     if (!admin.tableExists(tableName)) {
-
-      HColumnDescriptor columnDescriptor = new HColumnDescriptor(columnFamily);
-      // todo: make stuff configurable
-      // todo: using snappy compression for some reason breaks mini-hbase cluster (i.e. unit-test doesn't work)
-      //    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
-      columnDescriptor.setMaxVersions(100);
-      columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW);
-
-      HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-      tableDescriptor.addFamily(columnDescriptor);
 
       try {
         LOG.info("Creating table '{}'", tableName);
@@ -65,7 +53,7 @@ public class HBaseTableUtil {
       } catch (TableExistsException e) {
         // table may exist because someone else is creating it at the same
         // time. But it may not be available yet, and opening it might fail.
-        LOG.info("Failed to create queue table '{}'. {}.", tableName, e.getMessage(), e);
+        LOG.info("Failed to create table '{}'. {}.", tableName, e.getMessage(), e);
       }
 
       // Wait for table to materialize
