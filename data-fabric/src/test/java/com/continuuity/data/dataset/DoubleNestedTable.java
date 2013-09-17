@@ -16,14 +16,14 @@ class DoubleNestedTable extends DataSet {
 
   public DoubleNestedTable(String name) {
     super(name);
-    t = new Table(name + ".table");
-    kv = new KeyValueTable(name + ".keyvalue");
+    t = new Table("table." + name);
+    kv = new KeyValueTable("keyvalue." + name);
   }
 
   public DoubleNestedTable(DataSetSpecification spec) {
     super(spec);
-    t = new Table(spec.getSpecificationFor(getName() + ".table"));
-    kv = new KeyValueTable(spec.getSpecificationFor(getName() + ".keyvalue"));
+    t = new Table(spec.getSpecificationFor("table." + getName()));
+    kv = new KeyValueTable(spec.getSpecificationFor("keyvalue." + getName()));
   }
 
   @Override
