@@ -94,6 +94,9 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
 
+      LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
+      cConf.set(Constants.Gateway.ADDRESS, context.getHost().getCanonicalHostName());
+
       // Set Gateway port to 0, so that it binds to any free port.
       cConf.setInt(Constants.Gateway.PORT, 0);
 
