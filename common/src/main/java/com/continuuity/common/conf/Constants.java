@@ -13,6 +13,7 @@ public final class Constants {
     public static final String METADATA = "metadata";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
+    public static final String GATEWAY = "gateway";
   }
 
   /**
@@ -32,7 +33,7 @@ public final class Constants {
   }
 
   /**
-   * Dangerous Options
+   * Dangerous Options.
    */
   public static final class Dangerous {
     public static final String UNRECOVERABLE_RESET = "enable.unrecoverable.reset";
@@ -40,7 +41,7 @@ public final class Constants {
   }
 
   /**
-   * App Fabric Configuration
+   * App Fabric Configuration.
    */
   public static final class AppFabric {
     /**
@@ -61,12 +62,12 @@ public final class Constants {
   }
 
   /**
-   * Gateway Configurations
+   * Gateway Configurations.
    */
   public static final class Gateway {
     public static final String ADDRESS = "gateway.server.address";
     public static final String PORT = "stream.rest.port";
-    public static final String BACKLOG = "gateway.connection.backlog";
+    public static final String BACKLOG_CONNECTIONS = "gateway.connection.backlog";
     public static final String EXEC_THREADS = "gateway.exec.threads";
     public static final String BOSS_THREADS = "gateway.boss.threads";
     public static final String WORKER_THREADS = "gateway.worker.threads";
@@ -77,9 +78,12 @@ public final class Constants {
     public static final String STREAM_EVENTS_CALLBACK_NUM_THREADS = "gateway.stream.callback.exec.num.threads";
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "authentication.required";
     public static final String CLUSTER_NAME = "cluster.name";
+    public static final String NUM_CORES = "gateway.num.cores";
+    public static final String NUM_INSTANCES = "gateway.num.instances";
+    public static final String MEMORY_MB = "gateway.memory.mb";
 
     /**
-     * Defaults
+     * Defaults.
      */
     public static final int DEFAULT_PORT = 10000;
     public static final int DEFAULT_BACKLOG = 20000;
@@ -93,10 +97,13 @@ public final class Constants {
     public static final int DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS = 5;
     public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
     public static final String CLUSTER_NAME_DEFAULT = "localhost";
+    public static final int DEFAULT_NUM_CORES = 2;
+    public static final int DEFAULT_NUM_INSTANCES = 1;
+    public static final int DEFAULT_MEMORY_MB = 2048;
 
 
     /**
-     * Others
+     * Others.
      */
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String GATEWAY_PREFIX = "gateway.";
@@ -105,6 +112,31 @@ public final class Constants {
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
+  }
+
+  /**
+   * Router Configuration.
+   */
+  public static final class Router {
+    public static final String ADDRESS = "router.server.address";
+    public static final String PORT = "router.port";
+    public static final String DEST_SERVICE_NAME = "router.dest.service.name";
+    public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
+    public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
+    public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
+    public static final String CLIENT_BOSS_THREADS = "router.client.boss.threads";
+    public static final String CLIENT_WORKER_THREADS = "router.client.worker.threads";
+
+    /**
+     * Defaults.
+     */
+    public static final int DEFAULT_PORT = 10000;
+    public static final String DEFAULT_DEST_SERVICE_NAME = Service.GATEWAY;
+    public static final int DEFAULT_BACKLOG = 20000;
+    public static final int DEFAULT_SERVER_BOSS_THREADS = 1;
+    public static final int DEFAULT_SERVER_WORKER_THREADS = 10;
+    public static final int DEFAULT_CLIENT_BOSS_THREADS = 1;
+    public static final int DEFAULT_CLIENT_WORKER_THREADS = 10;
   }
 
   /**
