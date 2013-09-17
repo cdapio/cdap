@@ -127,7 +127,7 @@ public class DefaultScheduleService extends AbstractIdleService implements Sched
       String accountId = parts[0];
       String applicationId = parts[1];
       String programId = parts[2];
-      LOG.info("Account ID "+ accountId + " application:  "+ applicationId + " programId: " + programId);
+      LOG.info("Account ID " + accountId + " application:  " + applicationId + " programId: " + programId);
       Map<String, String> options = new ImmutableMap.Builder<String, String>()
                                                     .put(ProgramOptionConstants.LOGICAL_START_TIME,
                                                            Long.toString(context.getScheduledFireTime().getTime()))
