@@ -9,8 +9,6 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
@@ -95,6 +93,9 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       hConf = new Configuration();
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
+
+      LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
+      cConf.set(Constants.Gateway.ADDRESS, context.getHost().getCanonicalHostName());
 
       // Set Gateway port to 0, so that it binds to any free port.
       cConf.setInt(Constants.Gateway.PORT, 0);
@@ -181,7 +182,6 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
           // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
           // AppFabricServiceModule
           bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-          bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
           bind(StoreFactory.class).to(MDSStoreFactory.class);
         }
       }

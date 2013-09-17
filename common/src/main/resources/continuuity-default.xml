@@ -374,6 +374,15 @@
         <description>Directory temp.</description>
     </property>
 
+    <!--
+        Router configuration
+    -->
+    <property>
+        <name>router.server.address</name>
+        <value>0.0.0.0</value>
+        <description>Specifies the address for router</description>
+    </property>
+
 
     <!-- Sets whether Devsuite is in Cloud or no -->
     <!-- AppFabric will become Reactor later -->
