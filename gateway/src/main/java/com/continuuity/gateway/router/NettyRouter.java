@@ -6,6 +6,7 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.gateway.router.handlers.InboundHandler;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +53,8 @@ public class NettyRouter extends AbstractIdleService {
 
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
-  private final InetSocketAddress bindAddress;
+  private final InetAddress hostname;
+  private final int port;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final String destinationServiceName;
 
@@ -76,8 +79,8 @@ public class NettyRouter extends AbstractIdleService {
     this.clientWorkerThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_WORKER_THREADS,
                                                    Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
 
-    this.bindAddress = new InetSocketAddress(hostname.getCanonicalHostName(),
-                                             cConf.getInt(Constants.Router.PORT, Constants.Router.DEFAULT_PORT));
+    this.hostname = hostname;
+    this.port = cConf.getInt(Constants.Router.PORT, Constants.Router.DEFAULT_PORT);
 
     this.discoveryServiceClient = discoveryServiceClient;
 
@@ -87,6 +90,16 @@ public class NettyRouter extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    InetAddress address = hostname;
+    if (address.isAnyLocalAddress()) {
+      try {
+        address = InetAddress.getLocalHost();
+      } catch (UnknownHostException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    InetSocketAddress bindAddress = new InetSocketAddress(address.getCanonicalHostName(), port);
     LOG.info("Starting Netty Router for service {} on address {}...", destinationServiceName, bindAddress);
 
     ExecutorService serverBossExecutor = createExecutorService(serverBossThreadPoolSize,
