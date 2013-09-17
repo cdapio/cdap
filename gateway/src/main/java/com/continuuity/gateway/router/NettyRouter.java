@@ -12,6 +12,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.buffer.DirectChannelBufferFactory;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -131,6 +132,8 @@ public class NettyRouter extends AbstractIdleService {
       }
     );
 
+    serverBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
+
     clientBootstrap.setPipelineFactory(
       new ChannelPipelineFactory() {
         @Override
@@ -141,6 +144,8 @@ public class NettyRouter extends AbstractIdleService {
         }
       }
     );
+
+    clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
 
     Channel channel = serverBootstrap.bind(bindAddress);
     channelGroup.add(channel);
