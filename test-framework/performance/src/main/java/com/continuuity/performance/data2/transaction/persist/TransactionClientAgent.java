@@ -42,4 +42,8 @@ public class TransactionClientAgent extends Agent {
     }
     return batchSize;
   }
+
+  public ClientMetrics getMetrics() {
+    return metrics;
+  }
 }

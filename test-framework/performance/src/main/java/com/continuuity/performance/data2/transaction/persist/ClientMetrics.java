@@ -17,30 +17,42 @@ public class ClientMetrics {
   private String failedCountKey;
 
   private Stopwatch timer;
+  private Stopwatch totalTimer;
 
   public ClientMetrics(long agentId, BenchmarkMetric metrics, MetricsHistogram latencyMetrics) {
     this.metrics = metrics;
     this.writeLatencyMetrics = latencyMetrics;
     this.timer = new Stopwatch();
+    this.totalTimer = new Stopwatch();
     this.successCountKey = String.format("agent.%d.success", agentId);
     this.failedCountKey = String.format("agent.%d.failed", agentId);
   }
 
   public void startTransaction() {
     timer.start();
+    totalTimer.start();
   }
 
   public void finishTransaction() {
     timer.stop();
+    totalTimer.stop();
     metrics.increment(successCountKey, 1);
-    writeLatencyMetrics.update(timer.elapsedTime(TimeUnit.MILLISECONDS));
+    writeLatencyMetrics.update(timer.elapsedTime(TimeUnit.MICROSECONDS));
     timer.reset();
   }
 
   public void failTransaction() {
     timer.stop();
+    totalTimer.stop();
     metrics.increment(failedCountKey, 1);
-    writeLatencyMetrics.update(timer.elapsedTime(TimeUnit.MILLISECONDS));
+    writeLatencyMetrics.update(timer.elapsedTime(TimeUnit.MICROSECONDS));
     timer.reset();
+  }
+
+  /**
+   * Returns total time in milliseconds
+   */
+  public Stopwatch getTotalTimer() {
+    return totalTimer;
   }
 }

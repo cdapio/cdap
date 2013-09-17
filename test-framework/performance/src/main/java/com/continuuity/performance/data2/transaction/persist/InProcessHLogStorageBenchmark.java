@@ -11,15 +11,19 @@ import com.continuuity.performance.benchmark.BenchmarkMetric;
 import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.continuuity.performance.benchmark.SimpleBenchmark;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.DaemonThreadFactory;
 import org.apache.hadoop.hbase.metrics.histogram.MetricsHistogram;
+import org.apache.hadoop.metrics.MetricsRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.management.resources.agent;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +48,8 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
   private BenchmarkMetric localMetrics = new BenchmarkMetric();
   private MetricsHistogram latencyMetrics = new MetricsHistogram("HLogStorageBenchmark", null);
+
+  private List<TransactionClientAgent> agents = Lists.newArrayList();
 
   @Override
   public void configure(CConfiguration config) throws BenchmarkException {
@@ -87,9 +93,19 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
   public void shutdown() {
     try {
       txStorage.close();
+
+      // print out client metrics
+      for (TransactionClientAgent agent : agents) {
+        ClientMetrics metrics = agent.getMetrics();
+        LOG.info("Agent " + agent.getAgentId() + ": total time " + agent.getMetrics().getTotalTimer());
+      }
     } catch (IOException ioe) {
       LOG.error("Failed closing HLog transaction storage", ioe);
     }
+
+    StringBuilderMetricsRecord metricsRecord = new StringBuilderMetricsRecord();
+    latencyMetrics.pushMetric(metricsRecord);
+    LOG.info("All client metrics: " + metricsRecord.toString());
   }
 
   @Override
@@ -103,8 +119,10 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
         @Override
         public Agent newAgent(int agentId, int numAgents) {
           TransactionEditSupplier txSupplier = new TransactionEditSupplier(changeSetSize);
-          ClientMetrics metrics = new NoOpClientMetrics(agentId, localMetrics, latencyMetrics);
-          return new TransactionClientAgent(agentId, batchSize, txStorage, txSupplier, metrics);
+          ClientMetrics metrics = new ClientMetrics(agentId, localMetrics, latencyMetrics);
+          TransactionClientAgent agent = new TransactionClientAgent(agentId, batchSize, txStorage, txSupplier, metrics);
+          agents.add(agent);
+          return agent;
         }
 
       }
@@ -153,6 +171,119 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
     private TransactionEdit abortTransaction(long txId) {
       return new TransactionEdit(txId, TransactionEdit.State.INVALID, EMPTY_BYTES);
+    }
+  }
+
+  private static class StringBuilderMetricsRecord implements MetricsRecord {
+    private StringBuilder buf = new StringBuilder();
+
+    @Override
+    public String getRecordName() {
+      return null;
+    }
+
+    @Override
+    public void setTag(String tagName, String tagValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("tag: ").append(tagName).append("=").append(tagValue);
+    }
+
+    @Override
+    public void setTag(String tagName, int tagValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("tag: ").append(tagName).append("=").append(tagValue);
+    }
+
+    @Override
+    public void setTag(String tagName, long tagValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("tag: ").append(tagName).append("=").append(tagValue);
+    }
+
+    @Override
+    public void setTag(String tagName, short tagValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("tag: ").append(tagName).append("=").append(tagValue);
+    }
+
+    @Override
+    public void setTag(String tagName, byte tagValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("tag: ").append(tagName).append("=").append(tagValue);
+    }
+
+    @Override
+    public void removeTag(String tagName) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void setMetric(String metricName, int metricValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("metric: ").append(metricName).append("=").append(metricValue);
+    }
+
+    @Override
+    public void setMetric(String metricName, long metricValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("metric: ").append(metricName).append("=").append(metricValue);
+    }
+
+    @Override
+    public void setMetric(String metricName, short metricValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("metric: ").append(metricName).append("=").append(metricValue);
+    }
+
+    @Override
+    public void setMetric(String metricName, byte metricValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("metric: ").append(metricName).append("=").append(metricValue);
+    }
+
+    @Override
+    public void setMetric(String metricName, float metricValue) {
+      if (buf.length() > 0) buf.append(", ");
+      buf.append("metric: ").append(metricName).append("=").append(metricValue);
+    }
+
+    @Override
+    public void incrMetric(String metricName, int metricValue) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void incrMetric(String metricName, long metricValue) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void incrMetric(String metricName, short metricValue) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void incrMetric(String metricName, byte metricValue) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void incrMetric(String metricName, float metricValue) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void update() {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void remove() {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public String toString() {
+      return buf.toString();
     }
   }
 }
