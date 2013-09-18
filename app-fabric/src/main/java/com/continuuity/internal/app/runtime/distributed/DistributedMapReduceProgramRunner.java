@@ -17,6 +17,7 @@ import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     // TODO (ENG-2526): deal with logging
     WeavePreparer preparer
       = weaveRunner.prepare(new MapReduceWeaveApplication(program, spec, hConfFile, cConfFile))
+          // NOTE: we need YarnClientProtocolProvider to be available when submitting MR job in program runner container
+          //       and it is not traceable from program or continuuity framework classes. So adding it here explicitly
+          .withDependencies(YarnClientProtocolProvider.class)
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .withArguments(spec.getName(),
                          String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())

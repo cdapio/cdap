@@ -120,9 +120,12 @@ public abstract class AbstractMapReduceContextBuilder {
       CAppender.logWriter = injector.getInstance(LogWriter.class);
     }
 
+    // TODO: fix logging issue in mapreduce and uncomment:  ENG-3279
     // Initialize log appender
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-    logAppenderInitializer.initialize();
+//    if (injector.getBindings().containsKey(Key.get(LogAppenderInitializer.class))) {
+//      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+//      logAppenderInitializer.initialize();
+//    }
 
     return context;
   }
