@@ -10,6 +10,7 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -35,16 +36,17 @@ import org.slf4j.LoggerFactory;
 public class DefaultSchedulerService extends AbstractIdleService implements SchedulerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSchedulerService.class);
-  private final Scheduler scheduler;
+  private final Supplier<Scheduler> schedulerSupplier;
   private final ProgramRuntimeService programRuntimeService;
   private final StoreFactory storeFactory;
+  private Scheduler scheduler;
 
 //  private static ScheduleTaskRunner taskRunner;
 
   @Inject
-  public DefaultSchedulerService(Scheduler scheduler, StoreFactory storeFactory,
+  public DefaultSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
                                  ProgramRuntimeService programRuntimeService) {
-    this.scheduler = scheduler;
+    this.schedulerSupplier = schedulerSupplier;
     this.programRuntimeService = programRuntimeService;
     this.storeFactory = storeFactory;
   }
@@ -71,9 +73,10 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
 
   @Override
   public void startUp() throws Exception {
-      scheduler.setJobFactory(createJobFactory(storeFactory.create()));
-      scheduler.start();
-      LOG.debug("Scheduler started!");
+    scheduler = schedulerSupplier.get();
+    scheduler.setJobFactory(createJobFactory(storeFactory.create()));
+    scheduler.start();
+    LOG.debug("Scheduler started!");
   }
 
   @Override

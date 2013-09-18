@@ -22,16 +22,17 @@ import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.pipeline.PipelineFactory;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 import org.quartz.impl.DirectSchedulerFactory;
 import org.quartz.simpl.SimpleThreadPool;
-import org.quartz.spi.JobStore;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -74,7 +75,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(StoreFactory.class).to(MDSStoreFactory.class);
       bind(SchedulerService.class).to(DefaultSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(SchedulerService.class);
-      bind(JobStore.class).to(DataSetBasedScheduleStore.class);
     }
 
     @Provides
@@ -84,16 +84,32 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                               new InetSocketAddress("localhost", 0).getAddress());
     }
 
+    /**
+     * Provides a supplier of quartz scheduler so that initialization of the scheduler can be done after guice
+     * injection. It returns a singleton of Scheduler.
+     */
     @Provides
-    public org.quartz.Scheduler getSchedulerInstance(DataSetBasedScheduleStore scheduleStore) {
-      try {
-        //TODO: Use unbound thread pool using Executors
-        SimpleThreadPool threadPool = new SimpleThreadPool(10, Thread.NORM_PRIORITY);
-        DirectSchedulerFactory.getInstance().createScheduler(threadPool, scheduleStore);
-        return DirectSchedulerFactory.getInstance().getScheduler();
-      } catch (Throwable th){
-        throw Throwables.propagate(th);
-      }
+    @Singleton
+    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore) {
+      return new Supplier<org.quartz.Scheduler>() {
+        private org.quartz.Scheduler scheduler;
+
+        @Override
+        public synchronized org.quartz.Scheduler get() {
+          try {
+            if (scheduler == null) {
+              //TODO: Executor based thread pool.
+              SimpleThreadPool threadPool = new SimpleThreadPool(10, Thread.NORM_PRIORITY);
+              DirectSchedulerFactory factory = DirectSchedulerFactory.getInstance();
+              factory.createScheduler(threadPool, scheduleStore);
+              scheduler = factory.getScheduler();
+            }
+            return scheduler;
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
     }
   }
 }
