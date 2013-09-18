@@ -19,9 +19,10 @@ define([], function () {
 					$('#drop-hover').fadeOut();
 				});
 				$('#drop-hover').fadeIn();
+			} else {
+				$('#app-upload-input').trigger('click');	
 			}
 			
-			$('#app-upload-input').trigger('click');
 		},
 
 		/**
