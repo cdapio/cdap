@@ -8,6 +8,9 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
   // Used for local storage, which is used to store our metrics selection.
   var STORED_APP_NAME = 'continuuity-analyze';
 
+  // Used to query for available element types from REST.
+  var AVAILABLE_TYPES = ['apps', 'streams', 'flows', 'mapreduces', 'datasets', 'procedures'];
+
   var Controller = Em.Controller.extend(Em.Evented, {
 
     elementModels: [],
@@ -256,46 +259,68 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       /*
        * Get all available Elements for selection.
        */
-      this.HTTP.rest('all', function (models, status) {
+      var i = AVAILABLE_TYPES.length;
+      var singular = {
+        'apps': 'App',
+        'streams': 'Stream',
+        'flows': 'Flow',
+        'mapreduces': 'Batch',
+        'datasets': 'Dataset',
+        'procedures': 'Procedure'
+      };
 
-        var i = models.length;
-        while (i--) {
-          if (C[models[i].type]) {
-            models[i] = C[models[i].type].create(models[i]);
-            self.elementModels.push(models[i]);
-          }
-        }
+      // This format is used by the select2 box to render in groups.
+      var byType = {};
+      var remaining = i;
 
-        var byType = {};
+      while (i--) {
+        (function (nextType) {
 
-        $.each(models, function (i, element) {
+          self.HTTP.rest(nextType, function (models, status) {
 
-          var id = element.type + '|' + element.id;
+            var i = models.length;
+            while (i--) {
+              if (C[singular[nextType]]) {
+                models[i] = C[singular[nextType]].create(models[i]);
+                self.elementModels.push(models[i]);
+              }
+            }
 
-          if (byType[element.type]) {
-            byType[element.type].push({
-              id: id,
-              text: element.name
+            $.each(models, function (i, element) {
+
+              var id = element.type + '|' + element.id;
+
+              if (byType[element.type]) {
+                byType[element.type].push({
+                  id: id,
+                  text: element.name
+                });
+              } else {
+                byType[element.type] = [{
+                  id: id,
+                  text: element.name
+                }];
+              }
+
             });
-          } else {
-            byType[element.type] = [{
-              id: id,
-              text: element.name
-            }];
-          }
 
-        });
+            if (!--remaining) {
 
-        byType = sortByKey(byType);
+              byType = sortByKey(byType);
 
-        for (var type in byType) {
-          self.elementsCache.push({
-            text: type + 's',
-            children: byType[type]
+              for (var type in byType) {
+                self.elementsCache.push({
+                  text: type + 's',
+                  children: byType[type]
+                });
+              }
+
+            }
+
           });
-        }
 
-      });
+        })(AVAILABLE_TYPES[i]);
+      }
 
     },
 
