@@ -22,6 +22,9 @@ import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
@@ -309,6 +312,10 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
             return context.announce(serviceName, port);
           }
         });
+
+        install(new FactoryModuleBuilder()
+                  .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+                  .build(TransactionExecutorFactory.class));
       }
     });
   }
