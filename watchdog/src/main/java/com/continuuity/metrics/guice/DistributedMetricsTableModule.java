@@ -15,8 +15,6 @@ public final class DistributedMetricsTableModule extends AbstractMetricsTableMod
 
   @Override
   protected void bindTableHandle() {
-    // In distributed mode, this module won't be created with the data-fabric one, hence needs to provide a
-    // TransactionOracle.
     bind(OVCTableHandle.class).annotatedWith(MetricsAnnotation.class).
       to(HBaseFilterableOVCTableHandle.class).in(Scopes.SINGLETON);
   }

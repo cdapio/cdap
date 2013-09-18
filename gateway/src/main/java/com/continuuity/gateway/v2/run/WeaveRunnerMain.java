@@ -68,7 +68,7 @@ public abstract class WeaveRunnerMain extends DaemonMain {
     serviceName = weaveApplication.configure().getName();
 
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
+      new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override

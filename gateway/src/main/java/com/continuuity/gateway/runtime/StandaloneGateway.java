@@ -25,7 +25,7 @@ public class StandaloneGateway {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-      new GatewayModules(configuration).getInMemoryModules(),
+      new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules());
 
     // Get our fully wired Gateway
