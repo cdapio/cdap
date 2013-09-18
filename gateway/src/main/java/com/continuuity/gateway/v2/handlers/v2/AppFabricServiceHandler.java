@@ -562,7 +562,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}/status")
   public void flowStatus(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
+                         @PathParam("app-id") final String appId,
+                         @PathParam("flow-id") final String flowId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(flowId);
@@ -576,8 +577,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}/status")
   public void procedureStatus(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") final String appId,
-                         @PathParam("procedure-id") final String procedureId) {
+                              @PathParam("app-id") final String appId,
+                              @PathParam("procedure-id") final String procedureId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
@@ -596,7 +597,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(mapreduceId);
-    id.setType(EntityType.PROCEDURE);
+    id.setType(EntityType.MAPREDUCE);
     runnableStatus(request, responder, id);
   }
 

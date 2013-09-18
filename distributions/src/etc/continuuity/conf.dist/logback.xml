@@ -5,6 +5,7 @@
 <!--
   Disabling some chatty loggers.
 -->
+    <logger name="org.apache.commons.beanutils" level="ERROR"/>
     <logger name="org.apache.mina.core.filterchain" level="WARN"/>
     <logger name="org.apache.mina.filter.codec" level="WARN"/>
     <logger name="org.apache.zookeeper.server" level="ERROR"/>
