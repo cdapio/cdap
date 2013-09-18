@@ -98,7 +98,8 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       // Set Gateway port to 0, so that it binds to any free port.
       cConf.setInt(Constants.Gateway.PORT, 0);
 
-      LOG.info("{}", cConf);
+      LOG.info("Continuuity conf {}", cConf);
+      LOG.info("HBase conf {}", hConf);
 
       // Initialize ZK client
       String zookeeper = cConf.get(CFG_ZOOKEEPER_ENSEMBLE);
@@ -170,7 +171,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new GatewayModules(cConf).getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
-      new ConfigModule(cConf),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
