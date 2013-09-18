@@ -54,8 +54,6 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
   private String hConfName;
   private CountDownLatch runLatch;
 
-  private CConfiguration cConf;
-  private Configuration hConf;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
@@ -86,11 +84,11 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
     LOG.info("Initializing runnable " + name);
     try {
       // Load configuration
-      cConf = CConfiguration.create();
+      CConfiguration cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
-      hConf = new Configuration();
+      Configuration hConf = new Configuration();
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
 
@@ -100,7 +98,8 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       // Set Gateway port to 0, so that it binds to any free port.
       cConf.setInt(Constants.Gateway.PORT, 0);
 
-      LOG.info("{}", cConf);
+      LOG.info("Continuuity conf {}", cConf);
+      LOG.info("HBase conf {}", hConf);
 
       // Initialize ZK client
       String zookeeper = cConf.get(CFG_ZOOKEEPER_ENSEMBLE);
@@ -126,7 +125,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
           : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
       );
 
-      Injector injector = createGuiceInjector();
+      Injector injector = createGuiceInjector(kafkaClientService, zkClientService, cConf, hConf);
       // Get the metrics collection service
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
@@ -166,12 +165,13 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
     runLatch.countDown();
   }
 
-  private Injector createGuiceInjector() {
+  static Injector createGuiceInjector(KafkaClientService kafkaClientService, ZKClientService zkClientService,
+                                      CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new GatewayModules(cConf).getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
-      new ConfigModule(cConf),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),

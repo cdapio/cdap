@@ -403,8 +403,8 @@ WebAppServer.prototype.bindRoutes = function(io) {
     self.logger.trace('User Metrics', path);
 
     var options = {
-      host: self.config['metrics.service.host'],
-      port: self.config['metrics.service.port'],
+      host: self.config['gateway.server.address'],
+      port: self.config['gateway.server.port'],
       path: '/metrics/available' + path,
       method: 'GET'
     };
@@ -455,7 +455,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
    */
   this.app.del('/rest/*', function (req, res) {
 
-    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
+    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     request.del('http://' + path, function (error, response, body) {
 
@@ -473,7 +473,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
    * REST PUT handler.
    */
   this.app.put('/rest/*', function (req, res) {
-    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
+    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     request.put('http://' + path, function (error, response, body) {
 
@@ -491,7 +491,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
    * REST POST handler.
    */
   this.app.post('/rest/*', function (req, res) {
-    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
+    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {url: 'http://' + path};
     if (req.body) {
@@ -514,7 +514,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
    */
   this.app.get('/rest/*', function (req, res) {
 
-    var url = self.config['gateway.hostname'] + ':' + self.config['gateway.port'];
+    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     request('http://' + path, function (error, response, body) {
@@ -542,8 +542,8 @@ WebAppServer.prototype.bindRoutes = function(io) {
     var content = JSON.stringify(pathList);
 
     var options = {
-      host: self.config['metrics.service.host'],
-      port: self.config['metrics.service.port'],
+      host: self.config['gateway.server.address'],
+      port: self.config['gateway.server.port'],
       path: '/metrics',
       method: 'POST',
       headers: {
@@ -607,8 +607,8 @@ WebAppServer.prototype.bindRoutes = function(io) {
           res.send(err);
         } else {
           var options = {
-            host: self.config['gateway.hostname'],
-            port: self.config['gateway.port'],
+            host: self.config['gateway.server.address'],
+            port: self.config['gateway.server.port'],
             path: '/' + self.API_VERSION + '/apps',
             method: 'PUT',
             headers: {

@@ -74,7 +74,7 @@ public class Main {
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new GatewayModules(configuration).getDistributedModules(),
+      new GatewayModules().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
         new ConfigModule(configuration),
         new IOModule(),

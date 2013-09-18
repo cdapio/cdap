@@ -22,8 +22,6 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
-import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
@@ -58,7 +56,6 @@ public class SingleNodeMain {
   private final AppFabricServer appFabricServer;
 
   private final MetricsCollectionService metricsCollectionService;
-  private final MetricsQueryService metricsQueryService;
 
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionManager transactionManager;
@@ -79,7 +76,6 @@ public class SingleNodeMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsQueryService = injector.getInstance(MetricsQueryService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -113,7 +109,6 @@ public class SingleNodeMain {
     // Start all the services.
     transactionManager.init();
     metricsCollectionService.startAndWait();
-    metricsQueryService.startAndWait();
 
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
@@ -242,11 +237,11 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
-      new GatewayModules(configuration).getInMemoryModules(),
+      new GatewayModules().getInMemoryModules(),
+      new com.continuuity.gateway.v2.runtime.GatewayModules(configuration).getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new MetricsQueryRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules()
     );
   }
@@ -271,11 +266,11 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
-      new GatewayModules(configuration).getSingleNodeModules(),
+      new GatewayModules().getSingleNodeModules(),
+      new com.continuuity.gateway.v2.runtime.GatewayModules(configuration).getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new MetricsQueryRuntimeModule().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules()
     );

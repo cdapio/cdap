@@ -24,7 +24,7 @@ public class NoopGateway {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-      new GatewayModules(configuration).getNoopModules(),
+      new GatewayModules().getNoopModules(),
       new DataFabricModules().getNoopModules());
 
     // Get our fully wired Gateway
