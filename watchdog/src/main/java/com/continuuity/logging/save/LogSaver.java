@@ -8,8 +8,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
@@ -65,7 +68,6 @@ public final class LogSaver extends AbstractIdleService {
 
   private final CConfiguration cConfig;
   private final Configuration hConfig;
-  private final OperationExecutor opex;
   private final OperationContext operationContext;
   private final CheckpointManager checkpointManager;
   private final FileMetaDataManager fileMetaDataManager;
@@ -89,11 +91,10 @@ public final class LogSaver extends AbstractIdleService {
   private volatile Future<?> subTaskFutures;
   private volatile ScheduledFuture<?> scheduledFutures;
 
-  public LogSaver(OperationExecutor opex, int partition, Configuration hConfig, CConfiguration cConfig)
-    throws IOException {
+  public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient,
+                  int partition, Configuration hConfig, CConfiguration cConfig)
+    throws Exception {
     LOG.info("Initializing LogSaver...");
-
-    Preconditions.checkNotNull(opex, "Opex cannot be null");
 
     String kafkaSeedBrokers = cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS);
     Preconditions.checkArgument(kafkaSeedBrokers != null && !kafkaSeedBrokers.isEmpty(),
@@ -113,10 +114,11 @@ public final class LogSaver extends AbstractIdleService {
 
     this.cConfig = cConfig;
     this.hConfig = hConfig;
-    this.opex = opex;
     this.operationContext = new OperationContext(account);
-    this.checkpointManager = new CheckpointManager(this.opex, operationContext, topic, partition, TABLE_NAME);
-    this.fileMetaDataManager = new FileMetaDataManager(opex, operationContext, TABLE_NAME);
+
+    OrderedColumnarTable metaTable = getMetaTable(dataSetAccessor, operationContext);
+    this.checkpointManager = new CheckpointManager(metaTable, txClient, topic, partition);
+    this.fileMetaDataManager = new FileMetaDataManager(metaTable, txClient);
     this.messageTable = HashBasedTable.create();
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
@@ -162,6 +164,17 @@ public final class LogSaver extends AbstractIdleService {
                                                   LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
     Preconditions.checkArgument(this.topicCreationSleepMs > 0,
                                 "Topic creation wait sleep is invalid: %s", this.topicCreationSleepMs);
+  }
+
+  public static OrderedColumnarTable getMetaTable(DataSetAccessor dataSetAccessor,
+                                                  OperationContext operationContext) throws Exception {
+    DataSetManager dsManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class,
+                                                                 DataSetAccessor.Namespace.SYSTEM);
+    if (!dsManager.exists(TABLE_NAME)) {
+      dsManager.create(TABLE_NAME);
+    }
+
+    return dataSetAccessor.getDataSetClient(TABLE_NAME, OrderedColumnarTable.class, DataSetAccessor.Namespace.SYSTEM);
   }
 
   @Override

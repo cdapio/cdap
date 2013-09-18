@@ -1,9 +1,9 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,12 +19,12 @@ final class TransactionResponder extends AbstractProcedureResponder {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionResponder.class);
 
-  private final TransactionAgent txAgent;
+  private final TransactionContext txContext;
   private final ProcedureResponder responder;
   private ProcedureResponse.Writer writer;
 
-  TransactionResponder(TransactionAgent txAgent, ProcedureResponder responder) {
-    this.txAgent = txAgent;
+  TransactionResponder(TransactionContext txContext, ProcedureResponder responder) {
+    this.txContext = txContext;
     this.responder = responder;
   }
 
@@ -41,7 +41,7 @@ final class TransactionResponder extends AbstractProcedureResponder {
     }
 
     try {
-      writer = new TransactionWriter(responder.stream(response), txAgent);
+      writer = new TransactionWriter(responder.stream(response), txContext);
     } catch (Throwable t) {
       writer = ResponseWriters.CLOSED_WRITER;
       throw propagate(t);
@@ -57,7 +57,7 @@ final class TransactionResponder extends AbstractProcedureResponder {
 
     // Commit the transaction and send out the json.
     try {
-      txAgent.finish();
+      txContext.finish();
       responder.sendJson(response, object);
     } catch (Throwable t) {
       throw propagate(t);
@@ -75,7 +75,7 @@ final class TransactionResponder extends AbstractProcedureResponder {
     // TODO: Should we abort?
     // Abort the transaction and send out error.
     try {
-      txAgent.abort();
+      txContext.abort();
       responder.error(errorCode, errorMessage);
     } catch (Throwable t) {
       throw propagate(t);
@@ -95,12 +95,12 @@ final class TransactionResponder extends AbstractProcedureResponder {
   private static final class TransactionWriter implements ProcedureResponse.Writer {
 
     private final ProcedureResponse.Writer delegate;
-    private final TransactionAgent txAgent;
+    private final TransactionContext txContext;
     private final AtomicBoolean closed;
 
-    private TransactionWriter(ProcedureResponse.Writer delegate, TransactionAgent txAgent) {
+    private TransactionWriter(ProcedureResponse.Writer delegate, TransactionContext txContext) {
       this.delegate = delegate;
-      this.txAgent = txAgent;
+      this.txContext = txContext;
       this.closed = new AtomicBoolean(false);
     }
 
@@ -111,10 +111,10 @@ final class TransactionResponder extends AbstractProcedureResponder {
         return this;
       } catch (IOException e) {
         try {
-          txAgent.abort();
+          txContext.abort();
           LOG.info("Transaction aborted due to IOException", e);
-        } catch (OperationException oe) {
-          LOG.error("Fail to abort transaction.", oe);
+        } catch (TransactionFailureException te) {
+          LOG.error("Fail to abort transaction.", te);
         }
         throw e;
       }
@@ -127,10 +127,10 @@ final class TransactionResponder extends AbstractProcedureResponder {
         return this;
       } catch (IOException e) {
         try {
-          txAgent.abort();
+          txContext.abort();
           LOG.info("Transaction aborted due to IOException", e);
-        } catch (OperationException oe) {
-          LOG.error("Fail to abort transaction.", oe);
+        } catch (TransactionFailureException te) {
+          LOG.error("Fail to abort transaction.", te);
         }
         throw e;
       }
@@ -143,10 +143,10 @@ final class TransactionResponder extends AbstractProcedureResponder {
         return this;
       } catch (IOException e) {
         try {
-          txAgent.abort();
+          txContext.abort();
           LOG.info("Transaction aborted due to IOException", e);
-        } catch (OperationException oe) {
-          LOG.error("Fail to abort transaction.", oe);
+        } catch (TransactionFailureException te) {
+          LOG.error("Fail to abort transaction.", te);
         }
         throw e;
       }
@@ -159,10 +159,10 @@ final class TransactionResponder extends AbstractProcedureResponder {
         return this;
       } catch (IOException e) {
         try {
-          txAgent.abort();
+          txContext.abort();
           LOG.info("Transaction aborted due to IOException", e);
-        } catch (OperationException oe) {
-          LOG.error("Fail to abort transaction.", oe);
+        } catch (TransactionFailureException te) {
+          LOG.error("Fail to abort transaction.", te);
         }
         throw e;
       }
@@ -175,17 +175,17 @@ final class TransactionResponder extends AbstractProcedureResponder {
       }
       try {
         delegate.close();
-        txAgent.finish();
+        txContext.finish();
       } catch (IOException e) {
         try {
-          txAgent.abort();
+          txContext.abort();
           LOG.info("Transaction aborted due to IOException", e);
-        } catch (OperationException oe) {
-          LOG.error("Fail to abort transaction.", oe);
+        } catch (TransactionFailureException te) {
+          LOG.error("Fail to abort transaction.", te);
         }
         throw e;
-      } catch (OperationException e) {
-        LOG.info("Transaction finish failed.", e);
+      } catch (TransactionFailureException te) {
+        LOG.info("Transaction finish failed.", te);
       }
     }
   }

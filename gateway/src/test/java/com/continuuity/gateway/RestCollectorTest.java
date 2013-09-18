@@ -2,8 +2,9 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.metadata.MetadataService;
@@ -34,9 +35,9 @@ public class RestCollectorTest {
   static Collector newCollectorWithRealOpexAndMDS(String name) {
     Injector injector = Guice.createInjector(new MetadataModules().getInMemoryModules(),
                                              new DataFabricModules().getInMemoryModules());
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    injector.getInstance(InMemoryTransactionManager.class).init();
     Collector collector = new RestCollector();
-    collector.setMetadataService(new MetadataService(opex));
+    collector.setMetadataService(new MetadataService(injector.getInstance(MetaDataStore.class)));
     collector.setName(name);
     return collector;
   }

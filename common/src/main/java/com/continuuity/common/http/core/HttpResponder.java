@@ -26,6 +26,8 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
@@ -36,6 +38,13 @@ import java.util.Map;
 public class HttpResponder {
   private final Channel channel;
   private final boolean keepalive;
+
+  private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
+    @Override
+    protected Gson initialValue() {
+      return new Gson();
+    }
+  };
 
   public HttpResponder(Channel channel, boolean keepalive) {
     this.channel = channel;
@@ -48,12 +57,36 @@ public class HttpResponder {
    * @param object Object that will be serialized into Json and sent back as content.
    */
   public void sendJson(HttpResponseStatus status, Object object){
+    sendJson(status, object, object.getClass());
+  }
+
+  /**
+   * Sends json response back to the client.
+   * @param status Status of the response.
+   * @param object Object that will be serialized into Json and sent back as content.
+   * @param type Type of object.
+   */
+  public void sendJson(HttpResponseStatus status, Object object, Type type){
+    sendJson(status, object, type, gson.get());
+  }
+
+  /**
+   * Sends json response back to the client using the given gson object.
+   * @param status Status of the response.
+   * @param object Object that will be serialized into Json and sent back as content.
+   * @param type Type of object.
+   * @param gson Gson object for serialization.
+   */
+  public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
     try {
       ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
       JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(channelBuffer),
                                                                     Charsets.UTF_8));
-      new Gson().toJson(object, object.getClass(), jsonWriter);
-      jsonWriter.close();
+      try {
+        gson.toJson(object, type, jsonWriter);
+      } finally {
+        jsonWriter.close();
+      }
 
       sendContent(status, channelBuffer, "application/json", ImmutableMultimap.<String, String>of());
     } catch (IOException e) {
@@ -92,6 +125,17 @@ public class HttpResponder {
   public void sendByteArray(HttpResponseStatus status, byte [] bytes, Multimap<String, String> headers) {
     ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(bytes);
     sendContent(status, channelBuffer, "application/octet-stream", headers);
+  }
+
+  /**
+   * Sends a response containing raw bytes. Default content type is "application/octet-stream", but can be
+   * overridden in the headers.
+   * @param status status of the Http response
+   * @param buffer bytes to send
+   * @param headers Headers to send.
+   */
+  public void sendBytes(HttpResponseStatus status, ByteBuffer buffer, Multimap<String, String> headers) {
+    sendContent(status, ChannelBuffers.wrappedBuffer(buffer), "application/octet-stream", headers);
   }
 
   /**
@@ -148,8 +192,15 @@ public class HttpResponder {
     }
   }
 
-  private void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
-                           Multimap<String, String> headers){
+  /**
+   * Send response back to client.
+   * @param status Status of the response.
+   * @param content Content to be sent back.
+   * @param contentType Type of content.
+   * @param headers Headers to be sent back.
+   */
+  public void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
+                          Multimap<String, String> headers){
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
 
     if (content != null) {

@@ -11,14 +11,10 @@ import com.continuuity.logging.filter.FilterParser;
 import com.continuuity.logging.read.Callback;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.LogReader;
-import com.continuuity.metrics2.thrift.Counter;
-import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import com.continuuity.metrics2.thrift.MetricsServiceException;
-import com.continuuity.metrics2.thrift.Points;
 import com.continuuity.metrics2.thrift.TEntityType;
 import com.continuuity.metrics2.thrift.TLogResult;
-import com.continuuity.metrics2.thrift.TimeseriesRequest;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -56,44 +52,6 @@ public class MetricsFrontendServiceImpl
   @Inject
   public MetricsFrontendServiceImpl(CConfiguration configuration) {
     this.logPattern = configuration.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
-  }
-
-  /**
-   * Returns the requested counter for a given account, application, flow
-   * & run. All the counter for the combination could be retrieved by specifying
-   * ALL in the metric name.
-   *
-   * @param request
-   */
-  @Override
-  public List<Counter> getCounters(CounterRequest request) throws MetricsServiceException, TException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  /**
-   * API to request time series data for a set of metrics.
-   *
-   * @param request
-   */
-  @Override
-  public Points getTimeSeries(TimeseriesRequest request) throws MetricsServiceException, TException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public void clear(String accountId, String applicationId) throws MetricsServiceException, TException {
-  }
-
-  /**
-   * Resets the metrics for a given account.
-   *
-   * @param accountId for which the metrics needs to be set.
-   * @throws MetricsServiceException thrown when there is issue with reseting
-   * metrics.
-   * @throws TException for Thrift level issues
-   */
-  @Override
-  public void reset(String accountId) throws MetricsServiceException, TException {
   }
 
   @Override

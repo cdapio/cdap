@@ -11,10 +11,8 @@ import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -81,7 +79,7 @@ public class OpexServiceMain {
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE))
+            ZKClientService.Builder.of(configuration.get(Constants.Zookeeper.QUORUM))
                                    .setSessionTimeout(10000)
                                    .build(),
             RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
@@ -133,13 +131,8 @@ public class OpexServiceMain {
 
       // Creates HBase queue table
       QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
-      String queueTableName = HBaseTableUtil.getHBaseTableName(
-        configuration, configuration.get(QueueConstants.ConfigKeys.QUEUE_TABLE_NAME)
-      );
-
-      if (!queueAdmin.exists(queueTableName)) {
-        queueAdmin.create(queueTableName);
-      }
+      // NOTE: queues currently stored in one table, so it doesn't matter what you pass a param
+      queueAdmin.create("queue");
 
       // start it. start is blocking, hence main won't terminate
       try {

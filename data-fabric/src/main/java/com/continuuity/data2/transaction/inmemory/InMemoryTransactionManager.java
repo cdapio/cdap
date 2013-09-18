@@ -7,36 +7,78 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.Transaction;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongListIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * This is the central place to manage all active transactions in the system.
  *
+ * A transaction consists of
+ * <ul>
+ *   <li>A write pointer: This is the version used for all writes of that transaction.</li>
+ *   <li>A read pointer: All reads under the transaction use this as an upper bound for the version.</li>
+ *   <li>A set of excluded versions: These are the write versions of other transactions that must be excluded from
+ *   reads, because those transactions are still in progress, or they failed but couldn't be properly rolled back.</li>
+ * </ul>
+ * To use the transaction system, a client must follow this sequence of steps:
+ * <ol>
+ *   <li>Request a new transaction.</li>
+ *   <li>Use the transaction to read and write datasets. Datasets are encouraged to cache the writes of the
+ *     transaction in memory, to reduce the cost of rollback in case the transaction fails. </li>
+ *   <li>Check whether the transaction has conflicts. For this, the set of change keys are submitted via canCommit(),
+ *     and the transaction manager verifies that none of these keys are in conflict with other transactions that
+ *     committed since the start of this transaction.</li>
+ *   <li>If the transaction has conflicts:
+ *   <ol>
+ *     <li>Roll back the changes in every dataset that was changed. This can happen in-memory if the
+ *       changes were cached.</li>
+ *     <li>Abort the transaction to remove it from the active transactions.</li>
+ *   </ol>
+ *   <li>If the transaction has no conflicts:</li>
+ *   <ol>
+ *     <li>Persist all datasets changes to storage.</li>
+ *     <li>Commit the transaction. This will repeat the conflict detection, because more overlapping transactions
+ *       may have committed since the first conflict check.</li>
+ *     <li>If the transaction has conflicts:</li>
+ *     <ol>
+ *       <li>Roll back the changes in every dataset that was changed. This is more expensive because
+ *         changes must be undone in persistent storage.</li>
+ *       <li>Abort the transaction to remove it from the active transactions.</li>
+ *     </ol>
+ *   </ol>
+ * </ol>
+ * Transactions may be short or long-running. A short transaction is started with a timeout, and if it is not
+ * committed before that timeout, it is invalidated and excluded from future reads. A long-running transaction has
+ * no timeout and will remain active until it is committed or aborted. Long transactions are typically used in
+ * map/reduce jobs and can produce enormous amounts of changes. Therefore, long transactions do not participate in
+ * conflict detection (they would almost always have conflicts). We also assume that the changes of long transactions
+ * are not tracked, and therefore cannot be rolled back. Hence, when a long transaction is aborted, it remains in the
+ * list of excluded transactions to make its writes invisible.
  */
-// todo: optimize heavily
+// TODO: extract persistence logic from this guy: it is "inMemory" one. Subclass or whatever, but decouple it please
 public class InMemoryTransactionManager {
+  // todo: optimize heavily
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionManager.class);
 
@@ -54,18 +96,23 @@ public class InMemoryTransactionManager {
   private static final String ALL_STATE_TAG = "all";
   private static final String WATERMARK_TAG = "mark";
 
-  // the set of transactions that are in progress, with their expiration time stamp,
-  // or with the negative start time to specify no expiration. We remember the start
-  // time to allow diagnostics and possible manual cleanup/invalidation (not implemented yet).
-  private final NavigableMap<Long, Long> inProgress = Maps.newTreeMap();
+  private static final long[] NO_INVALID_TX = { };
+
+  // Transactions that are in progress, with their expiration time stamp (negative means no expiration).
+  private final NavigableMap<Long, Long> inProgress = new ConcurrentSkipListMap<Long, Long>();
+
   // the list of transactions that are invalid (not properly committed/aborted, or timed out)
+  // TODO: explain usage of two arrays
   private final LongArrayList invalid = new LongArrayList();
+  private long[] invalidArray = NO_INVALID_TX;
+
   // todo: use moving array instead (use Long2ObjectMap<byte[]> in fastutil)
   // todo: should this be consolidated with inProgress?
   // commit time nextWritePointer -> changes made by this tx
-  private final NavigableMap<Long, Set<byte[]>> committedChangeSets = Maps.newTreeMap();
+  private final NavigableMap<Long, Set<ChangeId>> committedChangeSets =
+    new ConcurrentSkipListMap<Long, Set<ChangeId>>();
   // not committed yet
-  private final Map<Long, Set<byte[]>> committingChangeSets = Maps.newHashMap();
+  private final Map<Long, Set<ChangeId>> committingChangeSets = Maps.newConcurrentMap();
 
   private long readPointer;
   private long nextWritePointer;
@@ -109,6 +156,7 @@ public class InMemoryTransactionManager {
 
   private void clear() {
     invalid.clear();
+    invalidArray = NO_INVALID_TX;
     inProgress.clear();
     committedChangeSets.clear();
     committingChangeSets.clear();
@@ -172,6 +220,7 @@ public class InMemoryTransactionManager {
       }
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
       Collections.sort(invalid);
+      invalidArray = invalid.toLongArray();
       LOG.info("Invalidated {} transactions due to timeout.", timedOut.size());
     }
   }
@@ -227,6 +276,7 @@ public class InMemoryTransactionManager {
 
   // not synchronized because it is only called from start() which is synchronized
   private void saveWaterMarkIfNeeded() {
+    ensureInitialized();
     try {
       if (nextWritePointer >= waterMark) {
         waterMark += claimSize;
@@ -246,115 +296,147 @@ public class InMemoryTransactionManager {
   }
 
   /**
-   * Start a transaction with the default timeout.
+   * Start a short transaction with the default timeout.
    */
-  public Transaction start() {
-    return start(defaultTimeout);
+  public Transaction startShort() {
+    return startShort(defaultTimeout);
   }
 
   /**
-   * Start a transaction with a given timeout. The contract is that transactions that have no timeout are considered
-   * long-running transactions and do not participate in conflict detection. Also, aborting a long-running transaction
-   * moves it to the invalid list because we assume that its writes cannot be rolled back.
-   * @param timeoutInSeconds the time out period in seconds. Null means no timeout.
+   * Start a short transaction with a given timeout.
+   * @param timeoutInSeconds the time out period in seconds.
    */
-  public synchronized Transaction start(@Nullable Integer timeoutInSeconds) {
-    ensureInitialized();
-    saveWaterMarkIfNeeded();
-    Transaction tx = new Transaction(readPointer, nextWritePointer, getExcludedListAsArray());
-    long currentTime =  System.currentTimeMillis();
-    long expiration = timeoutInSeconds == null ? -currentTime : currentTime + 1000L * timeoutInSeconds;
-    inProgress.put(nextWritePointer, expiration);
-    nextWritePointer++;
-    return tx;
+  public Transaction startShort(int timeoutInSeconds) {
+    Preconditions.checkArgument(timeoutInSeconds > 0, "timeout must be positive but is %s", timeoutInSeconds);
+    long currentTime = System.currentTimeMillis();
+    synchronized (this) {
+      saveWaterMarkIfNeeded();
+      Transaction tx = createTransaction();
+      inProgress.put(nextWritePointer++, currentTime + 1000L * timeoutInSeconds);
+      return tx;
+    }
   }
 
-  public synchronized boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
+  /**
+   * Start a long transaction. Long transactions and do not participate in conflict detection. Also, aborting a long
+   * transaction moves it to the invalid list because we assume that its writes cannot be rolled back.
+   */
+  public Transaction startLong() {
+    long currentTime = System.currentTimeMillis();
+    synchronized (this) {
+      saveWaterMarkIfNeeded();
+      Transaction tx = createTransaction();
+      inProgress.put(nextWritePointer++, -currentTime);
+      return tx;
+    }
+  }
+
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-      inProgress.remove(tx.getWritePointer());
       return false;
     }
 
-    if (hasConflicts(tx, changeIds)) {
-      return false;
+    // todo: is there an immutable hash set?
+    HashSet<ChangeId> set = Sets.newHashSetWithExpectedSize(changeIds.size());
+    for (byte[] change : changeIds) {
+      set.add(new ChangeId(change));
     }
 
-    // The change set will never get modified. Using a immutable has smaller footprint and could perform better.
-    Set<byte[]> set = ImmutableSortedSet.copyOf(Bytes.BYTES_COMPARATOR, changeIds);
+    if (hasConflicts(tx, set)) {
+      return false;
+    }
     committingChangeSets.put(tx.getWritePointer(), set);
-
     return true;
   }
 
-  public synchronized boolean commit(Transaction tx) {
+  public boolean commit(Transaction tx) {
 
     // todo: these should be atomic
     // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot be attempted to
     //       commit twice
-    Set<byte[]> changeSet = committingChangeSets.remove(tx.getWritePointer());
+    Set<ChangeId> changeSet = committingChangeSets.remove(tx.getWritePointer());
 
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
       return false;
     }
 
-    if (changeSet != null) {
-      // double-checking if there are conflicts: someone may have committed since canCommit check
-      if (hasConflicts(tx, changeSet)) {
-        return false;
-      }
+    synchronized (this) {
+      if (changeSet != null) {
+        // double-checking if there are conflicts: someone may have committed since canCommit check
+        if (hasConflicts(tx, changeSet)) {
+          return false;
+        }
 
-      // Record the committed change set with the nextWritePointer as the commit time.
-      if (committedChangeSets.containsKey(nextWritePointer)) {
-        // todo: can this ever happen?
-        committedChangeSets.get(nextWritePointer).addAll(changeSet);
-      } else {
-        TreeSet<byte[]> committedChangeSet = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-        committedChangeSet.addAll(changeSet);
-        committedChangeSets.put(nextWritePointer, committedChangeSet);
+        // Record the committed change set with the nextWritePointer as the commit time.
+        // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
+        //       stored under one key
+        Set<ChangeId> changeIds = committedChangeSets.get(nextWritePointer);
+        if (changeIds != null) {
+          changeIds.addAll(changeSet);
+        } else {
+          committedChangeSets.put(nextWritePointer, changeSet);
+        }
       }
+      makeVisible(tx);
     }
-    makeVisible(tx);
 
     // All committed change sets that are smaller than the earliest started transaction can be removed.
     // here we ignore transactions that have no timeout, they are long-running and don't participate in
     // conflict detection.
-    committedChangeSets.headMap(firstInProgressWithTimeout()).clear();
+    committedChangeSets.headMap(firstShortInProgress()).clear();
     return true;
   }
 
   // find the first non long-running in-progress tx, or Long.MAX if none such exists
-  private long firstInProgressWithTimeout() {
+  private long firstShortInProgress() {
     for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
       if (tx.getValue() >= 0) {
         return tx.getKey();
       }
     }
-    return Long.MAX_VALUE;
+    return Transaction.NO_TX_IN_PROGRESS;
   }
 
-  public synchronized boolean abort(Transaction tx) {
+  public synchronized void abort(Transaction tx) {
     committingChangeSets.remove(tx.getWritePointer());
     // makes tx visible (assumes that all operations were rolled back)
     // remove from in-progress set, so that it does not get excluded in the future
-    Long previous = inProgress.remove(tx.getWritePointer());
-    if (previous != null && previous < 0) {
+    Long expirationTs = inProgress.remove(tx.getWritePointer());
+    // TODO: this is bad/misleading/not clear logic. We should have special flags/tx attributes instead of it. Refactor!
+    if (expirationTs != null && expirationTs < 0) {
       // tx was long-running: it must be moved to invalid because its operations cannot be rolled back
       invalid.add(tx.getWritePointer());
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
       Collections.sort(invalid);
-    } else if (previous == null) {
-        // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
-        if (invalid.rem(tx.getWritePointer())) {
-          // removed a tx from excludes: must move read pointer
-          moveReadPointerIfNeeded(tx.getWritePointer());
-        }
+      invalidArray = invalid.toLongArray();
+    } else if (expirationTs == null) {
+      // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
+      if (invalid.rem(tx.getWritePointer())) {
+        invalidArray = invalid.toLongArray();
+        // removed a tx from excludes: must move read pointer
+        moveReadPointerIfNeeded(tx.getWritePointer());
+      }
     } else {
       // removed a tx from excludes: must move read pointer
       moveReadPointerIfNeeded(tx.getWritePointer());
     }
-    return true;
+  }
+
+  public synchronized void invalidate(Transaction tx) {
+    committingChangeSets.remove(tx.getWritePointer());
+    // add tx to invalids
+    invalid.add(tx.getWritePointer());
+    // todo: find a more efficient way to keep this sorted. Could it just be an array?
+    Collections.sort(invalid);
+    invalidArray = invalid.toLongArray();
+    // remove from in-progress set, so that it does not get excluded in the future
+    Long previous = inProgress.remove(tx.getWritePointer());
+    if (previous != null && previous >= 0) {
+      // tx was short-running: must move read pointer
+      moveReadPointerIfNeeded(tx.getWritePointer());
+    }
   }
 
   // hack for exposing important metric
@@ -369,30 +451,16 @@ public class InMemoryTransactionManager {
     return this.committedChangeSets.size();
   }
 
-//  private static boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
-//    if (changeIds.isEmpty()) {
-//      return false;
-//    }
-//
-//    // Go thru all tx committed after given tx was started and check if any of them has change
-//    // conflicting with the given
-//    return hasConflicts(tx, changeIds);
-//
-//    // NOTE: we could try to optimize for some use-cases and also check those being committed for conflicts to
-//    //       avoid later the cost of rollback. This is very complex, but the cost of rollback is so high that we
-//    //       can go a bit crazy optimizing stuff around it...
-//  }
-
-  private boolean hasConflicts(Transaction tx, Collection<byte[]> changeIds) {
+  private boolean hasConflicts(Transaction tx, Set<ChangeId> changeIds) {
     if (changeIds.isEmpty()) {
       return false;
     }
 
-    for (Map.Entry<Long, Set<byte[]>> changeSet : committedChangeSets.entrySet()) {
+    for (Map.Entry<Long, Set<ChangeId>> changeSet : committedChangeSets.entrySet()) {
       // If commit time is greater than tx read-pointer,
       // basically not visible but committed means "tx committed after given tx was started"
       if (changeSet.getKey() > tx.getWritePointer()) {
-        if (containsAny(changeSet.getValue(), changeIds)) {
+        if (overlap(changeSet.getValue(), changeIds)) {
           return true;
         }
       }
@@ -400,10 +468,19 @@ public class InMemoryTransactionManager {
     return false;
   }
 
-  private static boolean containsAny(Set<byte[]> set, Collection<byte[]> toSearch) {
-    for (byte[] item : toSearch) {
-      if (set.contains(item)) {
-        return true;
+  private boolean overlap(Set<ChangeId> a, Set<ChangeId> b) {
+    // iterate over the smaller set, and check for every element in the other set
+    if (a.size() > b.size()) {
+      for (ChangeId change : b) {
+        if (a.contains(change)) {
+          return true;
+        }
+      }
+    } else {
+      for (ChangeId change : a) {
+        if (b.contains(change)) {
+          return true;
+        }
       }
     }
     return false;
@@ -414,7 +491,9 @@ public class InMemoryTransactionManager {
     Long previous = inProgress.remove(tx.getWritePointer());
     if (previous == null) {
       // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
-      invalid.rem(tx.getWritePointer());
+      if (invalid.rem(tx.getWritePointer())) {
+        invalidArray = invalid.toLongArray();
+      }
     }
     // moving read pointer
     moveReadPointerIfNeeded(tx.getWritePointer());
@@ -426,6 +505,27 @@ public class InMemoryTransactionManager {
     }
   }
 
+  /**
+   * Creates a new Transaction. This method only get called from start transaction, which is already
+   * synchronized.
+   */
+  private Transaction createTransaction() {
+    // For holding the first in progress short transaction Id (with timeout >= 0).
+    long firstShortTx = Transaction.NO_TX_IN_PROGRESS;
+    long[] array = new long[inProgress.size()];
+    int i = 0;
+    for (Map.Entry<Long, Long> entry : inProgress.entrySet()) {
+      long txId = entry.getKey();
+      array[i++] = txId;
+      if (firstShortTx == Transaction.NO_TX_IN_PROGRESS && entry.getValue() >= 0) {
+        firstShortTx = txId;
+      }
+    }
+
+    return new Transaction(readPointer, nextWritePointer, invalidArray, array, firstShortTx);
+  }
+
+/*
   private long[] getExcludedListAsArray() {
     // todo: optimize (cache, etc. etc.)
     long[] elements = new long[invalid.size() + inProgress.size()];
@@ -464,6 +564,7 @@ public class InMemoryTransactionManager {
     }
     return elements;
   }
+*/
 
   //--------- helpers to encode or decode the transaction state --------------
   //--------- all these must be called from synchronized context -------------
@@ -556,10 +657,10 @@ public class InMemoryTransactionManager {
     }
   }
 
-  private void encodeChangeSets(Encoder encoder, Map<Long, Set<byte[]>> changes) throws IOException {
+  private void encodeChangeSets(Encoder encoder, Map<Long, Set<ChangeId>> changes) throws IOException {
     if (!changes.isEmpty()) {
       encoder.writeInt(changes.size());
-      for (Map.Entry<Long, Set<byte[]>> entry : changes.entrySet()) {
+      for (Map.Entry<Long, Set<ChangeId>> entry : changes.entrySet()) {
         encoder.writeLong(entry.getKey());
         encodeChanges(encoder, entry.getValue());
       }
@@ -567,7 +668,7 @@ public class InMemoryTransactionManager {
     encoder.writeInt(0); // zero denotes end of list as per AVRO spec
   }
 
-  private void decodeChangeSets(Decoder decoder, Map<Long, Set<byte[]>> changeSets) throws IOException {
+  private void decodeChangeSets(Decoder decoder, Map<Long, Set<ChangeId>> changeSets) throws IOException {
     changeSets.clear();
     int size = decoder.readInt();
     while (size != 0) { // zero denotes end of list as per AVRO spec
@@ -578,26 +679,27 @@ public class InMemoryTransactionManager {
     }
   }
 
-  private void encodeChanges(Encoder encoder, Set<byte[]> changes) throws IOException {
+  private void encodeChanges(Encoder encoder, Set<ChangeId> changes) throws IOException {
     if (!changes.isEmpty()) {
       encoder.writeInt(changes.size());
-      for (byte[] change : changes) {
-        encoder.writeBytes(change);
+      for (ChangeId change : changes) {
+        encoder.writeBytes(change.getKey());
       }
     }
     encoder.writeInt(0); // zero denotes end of list as per AVRO spec
   }
 
-  private Set<byte[]> decodeChanges(Decoder decoder) throws IOException {
-    List<byte[]> changes = Lists.newArrayList();
+  private Set<ChangeId> decodeChanges(Decoder decoder) throws IOException {
     int size = decoder.readInt();
+    HashSet<ChangeId> changes = Sets.newHashSetWithExpectedSize(size);
     while (size != 0) { // zero denotes end of list as per AVRO spec
       for (int remaining = size; remaining > 0; --remaining) {
-        changes.add(Bytes.toBytes(decoder.readBytes()));
+        changes.add(new ChangeId(Bytes.toBytes(decoder.readBytes())));
       }
       size = decoder.readInt();
     }
-    return ImmutableSortedSet.copyOf(Bytes.BYTES_COMPARATOR, changes);
+    // todo is there an immutable hash set?
+    return changes;
   }
 
   /**
@@ -612,4 +714,36 @@ public class InMemoryTransactionManager {
                ", committing = " + committingChangeSets.size() +
                ", committed = " + committedChangeSets.size());
   }
+
+  static final class ChangeId {
+    private final byte[] key;
+    private final int hash;
+
+    ChangeId(byte[] bytes) {
+      key = bytes;
+      hash = Bytes.hashCode(key);
+    }
+
+    byte[] getKey() {
+      return key;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      }
+      if (o == null || o.getClass() != ChangeId.class) {
+        return false;
+      }
+      ChangeId other = (ChangeId) o;
+      return hash == other.hash && Bytes.equals(key, other.key);
+    }
+
+    @Override
+    public int hashCode() {
+      return hash;
+    }
+  }
+
 }

@@ -46,12 +46,16 @@ public final class Converters {
   public static Transaction convert(TTransaction tx) {
     return new Transaction(tx.getReadPointer(),
                            tx.getWritePointer(),
-                           decodeLongs(tx.bufferForExcludedList()));
+                           decodeLongs(tx.bufferForInvalids()),
+                           decodeLongs(tx.bufferForInProgress()),
+                           tx.getFirstShort());
   }
 
   public static TTransaction convert(Transaction transaction) {
     return new TTransaction(transaction.getReadPointer(),
                             transaction.getWritePointer(),
-                            encodeLongs(transaction.getExcludedList()));
+                            encodeLongs(transaction.getInvalids()),
+                            encodeLongs(transaction.getInProgress()),
+                            transaction.getFirstShortInProgress());
   }
 }

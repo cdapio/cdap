@@ -75,4 +75,9 @@ public interface TransactionAware {
    */
   // todo: rename to onTxRollback()
   boolean rollbackTx() throws Exception;
+
+  /**
+   * Used for error reporting.
+   */
+  String getName();
 }

@@ -16,7 +16,7 @@ public class IncompleteDataSet extends DataSet {
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this).
-        dataset(new Table("t_" + getName()).configure()).
+        dataset(new Table("t." + getName()).configure()).
         create();
   }
 }

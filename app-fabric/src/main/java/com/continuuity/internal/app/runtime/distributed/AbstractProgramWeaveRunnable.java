@@ -4,6 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
@@ -16,14 +17,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data.operation.executor.NoOperationExecutor;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.AbstractListener;
@@ -63,7 +57,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -147,7 +140,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         ZKClientServices.delegate(
           ZKClients.reWatchOnExpire(
             ZKClients.retryOnFailure(
-              ZKClientService.Builder.of(cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE))
+              ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
                 .setSessionTimeout(10000)
                 .build(),
               RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
@@ -274,35 +267,24 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                            new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
                            new LocationRuntimeModule().getDistributedModules(),
                            new LoggingModules().getDistributedModules(),
+                           new DataFabricModules(cConf, hConf).getDistributedModules(),
                            new AbstractModule() {
       @Override
       protected void configure() {
-        bind(InetAddress.class).annotatedWith(Names.named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS))
+        bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
                                .toInstance(context.getHost());
-
         // For program loading
         install(createProgramFactoryModule());
+
+        // For Binding queue reader stuff (for flowlets)
+        install(createFactoryModule(QueueReaderFactory.class,
+                                    QueueReader.class,
+                                    SingleQueue2Reader.class));
 
         // For binding DataSet transaction stuff
         install(createFactoryModule(DataFabricFacadeFactory.class,
                                     DataFabricFacade.class,
                                     SmartDataFabricFacade.class));
-
-        // For Binding queue stuff
-        install(createQueueFactoryModule());
-
-        // Bind remote operation executor
-        // NOTE: for demo purposes in 1.7 we do not contact Tx Manager remotly. TODO: this should not go into production
-//        bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
-        bind(OperationExecutor.class).to(NoOperationExecutor.class).in(Singleton.class);
-        bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);
-
-        // Bind TxDs2 stuff
-        bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
-        bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
-        bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(cConf);
-        bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hConf);
-        bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
 
         bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
           @Override
@@ -322,11 +304,6 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       .build(factoryClass);
   }
 
-  private Module createQueueFactoryModule() {
-    return new FactoryModuleBuilder()
-      .implement(QueueReader.class, SingleQueue2Reader.class)
-      .build(QueueReaderFactory.class);
-  }
 
   private Module createProgramFactoryModule() {
     return new PrivateModule() {
@@ -355,7 +332,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     }
 
     public Program create(String path) throws IOException {
-      return new Program(locationFactory.create(path));
+      return Programs.create(locationFactory.create(path));
     }
   }
 }

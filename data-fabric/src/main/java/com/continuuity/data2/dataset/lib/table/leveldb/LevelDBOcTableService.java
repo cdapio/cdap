@@ -4,6 +4,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.engine.leveldb.KeyValue;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -18,7 +20,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
@@ -45,9 +49,9 @@ public class LevelDBOcTableService {
   }
 
   /**
-   * Protect the constructor as this class needs to be singleton.
+   * Protect the constructor as this class needs to be singleton, but keep it package visible for testing.
    */
-  private LevelDBOcTableService() {
+  LevelDBOcTableService() {
   }
 
   /**
@@ -62,6 +66,16 @@ public class LevelDBOcTableService {
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     writeOptions = new WriteOptions().sync(
       config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
+  }
+
+  public Collection<String> list() throws Exception {
+    File baseDir = new File(basePath);
+    String[] subDirs = baseDir.list();
+    ImmutableCollection.Builder<String> builder = ImmutableList.builder();
+    for (String dir : subDirs) {
+      builder.add(getTableName(dir));
+    }
+    return builder.build();
   }
 
   public WriteOptions getWriteOptions() {
@@ -104,7 +118,9 @@ public class LevelDBOcTableService {
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
 
-    return factory.open(new File(dbPath), options);
+    DB db = factory.open(new File(dbPath), options);
+    tables.put(tableName, db);
+    return db;
   }
 
   private void createTable(String name) throws IOException {
@@ -117,19 +133,8 @@ public class LevelDBOcTableService {
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
 
-    DB db = null;
-    try {
-      db = factory.open(new File(dbPath), options);
-    } finally {
-      try {
-        if (db != null) {
-          db.close();
-        }
-      } catch (IOException e) {
-        LOG.warn("Error closing LevelDB database", e);
-        // but what else can we do? nothing?
-      }
-    }
+    DB db = factory.open(new File(dbPath), options);
+    tables.put(name, db);
   }
 
   public void dropTable(String name) throws Exception {
@@ -145,12 +150,16 @@ public class LevelDBOcTableService {
   private static String getDBPath(String basePath, String tableName) {
     String encodedTableName;
     try {
-      encodedTableName = URLEncoder.encode(tableName, "ASCII");
+      encodedTableName = URLEncoder.encode(tableName, "UTF-8");
     } catch (UnsupportedEncodingException e) {
       LOG.error("Error encoding table name '" + tableName + "'", e);
       throw new RuntimeException(e);
     }
     return new File(basePath, encodedTableName).getAbsolutePath();
+  }
+
+  private static String getTableName(String tableDir) throws UnsupportedEncodingException {
+    return URLDecoder.decode(tableDir, "UTF-8");
   }
 
   /**

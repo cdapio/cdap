@@ -34,18 +34,30 @@ public final class DistributedTransactionClient implements TransactionSystemClie
   }
 
   @Override
-  public Transaction start() {
+  public Transaction startLong() {
     try {
-      return Converters.convert(rpcClient.start());
+      return Converters.convert(rpcClient.startLong());
     } catch (TException e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public Transaction start(Integer timeout) {
-    // todo implement this when we replace opex with a tx manager service.
-    throw new UnsupportedOperationException();
+  public Transaction startShort() {
+    try {
+      return Converters.convert(rpcClient.startShort());
+    } catch (TException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public Transaction startShort(int timeout) {
+    try {
+      return Converters.convert(rpcClient.startShortTimeout(timeout));
+    } catch (TException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
@@ -69,9 +81,18 @@ public final class DistributedTransactionClient implements TransactionSystemClie
   }
 
   @Override
-  public boolean abort(Transaction tx) {
+  public void abort(Transaction tx) {
     try {
-      return rpcClient.abort(Converters.convert(tx));
+      rpcClient.abort(Converters.convert(tx));
+    } catch (TException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void invalidate(Transaction tx) {
+    try {
+      rpcClient.invalidate(Converters.convert(tx));
     } catch (TException e) {
       throw Throwables.propagate(e);
     }

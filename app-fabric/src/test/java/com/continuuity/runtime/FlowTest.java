@@ -12,20 +12,21 @@ import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
-import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.test.internal.DefaultId;
@@ -33,6 +34,7 @@ import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -69,11 +71,11 @@ public class FlowTest {
     // load on procedure.
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override
         public String getName() {
-          return program.getProgramName();
+          return program.getName();
         }
 
         @Override
@@ -121,14 +123,14 @@ public class FlowTest {
 
     for (final Program program : app.getPrograms()) {
       // running mapreduce is out of scope of this tests (there's separate unit-test for that)
-      if (program.getProcessorType() == Type.MAPREDUCE) {
+      if (program.getType() == Type.MAPREDUCE) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override
         public String getName() {
-          return program.getProgramName();
+          return program.getName();
         }
 
         @Override
@@ -152,7 +154,7 @@ public class FlowTest {
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
 
     // start tx to write in queue in tx
-    Transaction tx = txSystemClient.start();
+    Transaction tx = txSystemClient.startShort();
     ((TransactionAware) producer).startTx(tx);
 
     StreamEventCodec codec = new StreamEventCodec();
@@ -203,14 +205,17 @@ public class FlowTest {
   public void testCountRandomApp() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(TestCountRandomApp.class);
 
+    System.out.println(ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator())
+                                                      .toJson(app.getAppSpecLoc().getSpecification()));
+
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
-      if (program.getProcessorType() == Type.FLOW) {
+      if (program.getType() == Type.FLOW) {
         ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
         controller = runner.run(program, new ProgramOptions() {
           @Override
           public String getName() {
-            return program.getProgramName();
+            return program.getName();
           }
 
           @Override
@@ -236,12 +241,12 @@ public class FlowTest {
 
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
-      if (program.getProcessorType() == Type.FLOW) {
+      if (program.getType() == Type.FLOW) {
         ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
         controller = runner.run(program, new ProgramOptions() {
           @Override
           public String getName() {
-            return program.getProgramName();
+            return program.getName();
           }
 
           @Override
@@ -258,20 +263,29 @@ public class FlowTest {
     }
 
     TimeUnit.SECONDS.sleep(1);
-    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
 
-    QueueProducer queueProducer = new QueueProducer("Testing");
     QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "text");
+    QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
+    final Queue2Producer producer = queueClientFactory.createProducer(queueName);
+
+    TransactionExecutorFactory txExecutorFactory =
+      TestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
+    DefaultTransactionExecutor txExecutor =
+      txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer));
+
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 1; i++) {
       String msg = "Testing message " + i;
       StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of("title", "test"),
                                                  ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
-      QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
-                                              new QueueEntry(codec.encodePayload(event)));
-      opex.commit(opCtx, enqueue);
+      final QueueEntry entry = new QueueEntry(codec.encodePayload(event));
+
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          producer.enqueue(entry);
+        }
+      });
     }
 
     TimeUnit.SECONDS.sleep(5);

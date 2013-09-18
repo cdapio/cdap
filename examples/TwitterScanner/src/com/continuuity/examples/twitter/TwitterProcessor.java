@@ -16,6 +16,7 @@
  */
 package com.continuuity.examples.twitter;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -38,6 +39,7 @@ public class TwitterProcessor extends AbstractFlowlet {
   @UseDataSet(TwitterScanner.HASH_TAG_WORD_ASSOCS)
   private CounterTable hashTagWordAssocs;
 
+  @ProcessInput
   public void process(Tweet tweet) throws OperationException {
     String[] words = tweet.getText().split("\\s+");
 

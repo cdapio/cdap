@@ -56,7 +56,7 @@ public final class TransactionServer extends AbstractService {
         cancelDiscovery = discoveryService.register(new Discoverable() {
           @Override
           public String getName() {
-            return com.continuuity.common.conf.Constants.SERVICE_TRANSACTION_SERVER;
+            return com.continuuity.common.conf.Constants.Service.TRANSACTION;
           }
 
           @Override

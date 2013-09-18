@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class NettyHttpService extends AbstractIdleService {
 
   private static final Logger LOG  = LoggerFactory.getLogger(NettyHttpService.class);
-  private static final int MAX_INPUT_SIZE = 128 * 1024;
+  private static final int MAX_INPUT_SIZE = 1024 * 1024 * 1024;
 
   private ServerBootstrap bootstrap;
   private int bossThreadPoolSize;
@@ -191,12 +191,12 @@ public final class NettyHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting service on address {}", bindAddress);
+    LOG.info("Starting service on address {}...", bindAddress);
     bootStrap(execThreadPoolSize, execThreadKeepAliveSecs, httpHandlers);
     Channel channel = bootstrap.bind(bindAddress);
     channelGroup.add(channel);
     bindAddress = ((InetSocketAddress) channel.getLocalAddress());
-
+    LOG.info("Started service on address {}", bindAddress);
   }
 
   /**
@@ -208,7 +208,7 @@ public final class NettyHttpService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping service on address {}", bindAddress);
+    LOG.info("Stopping service on address {}...", bindAddress);
     bootstrap.shutdown();
     try {
       if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT, TimeUnit.SECONDS)) {

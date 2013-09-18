@@ -374,13 +374,14 @@ public interface OperationExecutor
     throws OperationException;
 
   // temporary TxDs2 stuff
-  public com.continuuity.data2.transaction.Transaction start() throws OperationException;
-  public com.continuuity.data2.transaction.Transaction start(Integer timeout) throws OperationException;
+  public com.continuuity.data2.transaction.Transaction startShort() throws OperationException;
+  public com.continuuity.data2.transaction.Transaction startShort(int timeout) throws OperationException;
+  public com.continuuity.data2.transaction.Transaction startLong() throws OperationException;
 
   public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
     throws OperationException;
 
   public boolean commit(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
-
-  public boolean abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
+  public void abort(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
+  public void invalidate(com.continuuity.data2.transaction.Transaction tx) throws OperationException;
 }

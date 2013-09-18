@@ -208,7 +208,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       // a different value already exists
       String message = String.format("Meta data entry for %s already exists.", entry);
       LOG.debug(message);
-      throw new OperationException(StatusCode.WRITE_CONFLICT, message);
+      throw new OperationException(StatusCode.ENTRY_EXISTS, message);
     }
     if (isUpdate) {
       if (bytesRead == null) {
@@ -233,7 +233,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
           String message = String.format("Existing meta data entry " + "for %s does not match expected entry.", entry);
           LOG.trace(message);
           // existing entry is there but does not match expected entry
-          throw new OperationException(StatusCode.WRITE_CONFLICT, message);
+          throw new OperationException(StatusCode.ENTRY_DOES_NOT_MATCH, message);
         }
       }
     }

@@ -17,6 +17,7 @@
 
 package com.continuuity.examples.simplewriteandread;
 
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -36,6 +37,7 @@ public class WriterFlowlet extends AbstractFlowlet {
   KeyValueTable kvTable;
   private OutputEmitter<byte[]> output;
 
+  @ProcessInput
   public void process(KeyAndValue kv) throws OperationException {
     logger.debug(this.getContext().getName() + ": Received KeyValue " + kv);
 

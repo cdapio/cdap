@@ -32,7 +32,7 @@ define([], function () {
 			/*
 			 * Load Streams
 			 */
-			this.HTTP.get('rest', 'apps', model.id, 'streams', function (objects) {
+			this.HTTP.rest('apps', model.id, 'streams', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -48,7 +48,7 @@ define([], function () {
 			/*
 			 * Load Flows
 			 */
-			this.HTTP.get('rest', 'apps', model.id, 'flows', function (objects) {
+			this.HTTP.rest('apps', model.id, 'flows', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -62,7 +62,7 @@ define([], function () {
       /*
        * Load Mapreduces
        */
-      this.HTTP.get('rest', 'apps', model.id, 'mapreduce', function (objects) {
+      this.HTTP.rest('apps', model.id, 'mapreduces', function (objects) {
 
           var i = objects.length;
           while (i--) {
@@ -76,7 +76,7 @@ define([], function () {
 			/*
 			 * Load Datasets
 			 */
-			this.HTTP.get('rest', 'apps', model.id, 'datasets', function (objects) {
+			this.HTTP.rest('apps', model.id, 'datasets', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -90,7 +90,7 @@ define([], function () {
 			/*
 			 * Load Procedures
 			 */
-			this.HTTP.get('rest', 'apps', model.id, 'procedures', function (objects) {
+			this.HTTP.rest('apps', model.id, 'procedures', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -192,7 +192,7 @@ define([], function () {
 
 		transition: function (elements, action, transition, endState, done) {
 
-			var i = elements.length, model, app = this.get('model.id');
+			var i = elements.length, model, appId = this.get('model.id');
 			var remaining = i;
 
 			var HTTP = this.HTTP;
@@ -205,23 +205,18 @@ define([], function () {
 					continue;
 				}
 
-				(function () {
+				var model = elements[i];
+				var entityType = model.get('type').toLowerCase() + 's';
+				model.set('currentState', transition);
+				HTTP.post('rest', 'apps', appId, entityType, model.get('name'), action,
+					function (response) {
 
-					var model = elements[i];
-					model.set('currentState', transition);
+						model.set('currentState', endState);
+						if (!--remaining && typeof done === 'function') {
+							done();
+						}
 
-					HTTP.rpc('runnable', action, [app, model.get('name'),
-						model.get('version'), model.get('type').toUpperCase()],
-						function (response) {
-
-							model.set('currentState', endState);
-							if (!--remaining && typeof done === 'function') {
-								done();
-							}
-
-					});
-
-				})();
+				});
 
 			}
 
@@ -260,14 +255,9 @@ define([], function () {
 
 					var app = this.get('model');
 
-					C.get('far', {
-						method: 'remove',
-						params: [app.id]
-					}, function () {
-
+					this.HTTP.del('rest', 'apps', app.id, function (response) {
 						self.transitionToRoute('index');
-
-					});
+					})
 
 				}, this));
 
@@ -348,8 +338,9 @@ define([], function () {
 
 			destination += '.continuuity.net';
 
-			this.HTTP.rpc('fabric', 'promote', [model.id, destination, C.Env.get('credential')],
-				function (response) {
+			this.HTTP.post('rest', 'apps', model.id, 'promote', {
+				hostname: destination
+			}, function (response) {
 
 				if (response.error) {
 

@@ -4,7 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.weave.common.Threads;
 import com.google.inject.Inject;
 import org.apache.thrift.server.THsHaServer;
@@ -22,16 +22,11 @@ import java.util.concurrent.Executors;
 /**
  * Metadata server.
  */
-public class MetadataServer extends AbstractRegisteredServer
-  implements MetadataServerInterface {
-  private static final Logger Log = LoggerFactory.getLogger(
-    MetadataServer.class
-  );
+public class MetadataServer extends AbstractRegisteredServer implements MetadataServerInterface {
 
-  /**
-   * Instance of operation executor.
-   */
-  private final OperationExecutor opex;
+  private static final Logger Log = LoggerFactory.getLogger(MetadataServer.class);
+
+  private final MetaDataStore mds;
 
   /**
    * Manages threads.
@@ -45,8 +40,8 @@ public class MetadataServer extends AbstractRegisteredServer
   private THsHaServer server;
 
   @Inject
-  public MetadataServer(OperationExecutor opex) {
-    this.opex = opex;
+  public MetadataServer(MetaDataStore store) {
+    mds = store;
   }
 
   /**
@@ -115,8 +110,7 @@ public class MetadataServer extends AbstractRegisteredServer
       );
 
       // Attach and handler to the metadata service thrift interface.
-      MetadataService service
-        = new MetadataService(opex);
+      MetadataService service = new MetadataService(mds);
 
       // configure the server
       THsHaServer.Args serverArgs =
@@ -138,7 +132,7 @@ public class MetadataServer extends AbstractRegisteredServer
       server = new THsHaServer(serverArgs);
 
       // Set the server name.
-      setServerName(Constants.SERVICE_METADATA_SERVER);
+      setServerName(Constants.Service.METADATA);
 
       // Provide the registration info of service.
       RegisteredServerInfo info

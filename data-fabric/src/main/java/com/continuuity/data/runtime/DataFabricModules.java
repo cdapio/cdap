@@ -10,6 +10,8 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
@@ -18,6 +20,9 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
@@ -29,13 +34,31 @@ import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueClientFacto
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 /**
  * DataFabricModules defines all of the bindings for the different data
  * fabric modes.
  */
 public class DataFabricModules extends RuntimeModule {
+  private final CConfiguration cConf;
+  private final Configuration hbaseConf;
+
+  public DataFabricModules() {
+    this(CConfiguration.create(), HBaseConfiguration.create());
+  }
+
+  public DataFabricModules(CConfiguration cConf) {
+    this(cConf, HBaseConfiguration.create());
+  }
+
+  public DataFabricModules(CConfiguration cConf, Configuration hbaseConf) {
+    this.cConf = cConf;
+    this.hbaseConf = hbaseConf;
+  }
 
   public Module getNoopModules() {
     return new AbstractModule() {
@@ -49,15 +72,14 @@ public class DataFabricModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-
       return new AbstractModule() {
       @Override
       protected void configure() {
-        CConfiguration conf = CConfiguration.create();
         bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
         bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
         bind(OVCTableHandle.class).toInstance(MemoryOVCTableHandle.getInstance());
         bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
+        bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
 
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
@@ -68,9 +90,13 @@ public class DataFabricModules extends RuntimeModule {
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
 
         // We don't need caching for in-memory
-        conf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
+        cConf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
-          .toInstance(conf);
+          .toInstance(cConf);
+
+        install(new FactoryModuleBuilder()
+                  .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+                  .build(TransactionExecutorFactory.class));
       }
     };
   }
@@ -86,7 +112,7 @@ public class DataFabricModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return new DataFabricDistributedModule();
+    return new DataFabricDistributedModule(cConf, hbaseConf);
   }
 
 } // end of DataFabricModules

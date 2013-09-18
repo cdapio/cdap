@@ -4,18 +4,15 @@
 package com.continuuity.app.runtime;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.runtime.DaemonMain;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
-import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.common.Services;
@@ -24,13 +21,11 @@ import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Singleton;
-import com.google.inject.name.Names;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * or started using apache commons daemon (jsvc)
  */
 public final class AppFabricMain extends DaemonMain {
-
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricMain.class);
   private ZKClientService zkClientService;
   private AppFabricServer appFabricServer;
   private Injector injector;
@@ -55,7 +50,7 @@ public final class AppFabricMain extends DaemonMain {
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE)).setSessionTimeout(10000).build(),
+            ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM)).setSessionTimeout(10000).build(),
             RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
           )
         )
@@ -68,28 +63,13 @@ public final class AppFabricMain extends DaemonMain {
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // Bind the remote opex
-          bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
-          bind(QueueAdmin.class).to(HBaseQueueAdmin.class);
-          bind(CConfiguration.class)
-            .annotatedWith(Names.named("HBaseOVCTableHandleCConfig"))
-            .to(CConfiguration.class);
-          bind(Configuration.class)
-            .annotatedWith(Names.named("HBaseOVCTableHandleHConfig"))
-            .to(Configuration.class);
-          bind(CConfiguration.class)
-                 .annotatedWith(Names.named("RemoteOperationExecutorConfig"))
-                 .to(CConfiguration.class);
-        }
-      }
+      new DataFabricModules().getDistributedModules()
     );
   }
 
   @Override
   public void start() {
+    LOG.info("Starting App Fabric ...");
     injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     Futures.getUnchecked(Services.chainStart(zkClientService, appFabricServer));
@@ -100,11 +80,12 @@ public final class AppFabricMain extends DaemonMain {
    */
   @Override
   public void stop() {
+    LOG.info("Stopping App Fabric ...");
     Futures.getUnchecked(Services.chainStop(appFabricServer, zkClientService));
   }
 
   /**
-   * Invoked by jsvc for resource cleanup
+   * Invoked by jsvc for resource cleanup.
    */
   @Override
   public void destroy() {

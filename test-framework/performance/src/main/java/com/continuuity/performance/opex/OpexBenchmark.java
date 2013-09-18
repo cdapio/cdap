@@ -53,6 +53,8 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
       this.opexProvider = new HBaseOpexProvider();
     } else if ("remote".equals(opexName)) {
       this.opexProvider = new RemoteOpexProvider();
+    } else if ("service".equals(opexName)) {
+      this.opexProvider = new OpexServiceProvider();
     } else if ("noop".equals(opexName)) {
       this.opexProvider = new NoOpexProvider();
     } else {
@@ -86,6 +88,8 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
   @Override
   public void shutdown() {
     LOG.debug("Shutting down opex provider.");
-    this.opexProvider.shutdown(this.opex);
+    if (this.opex != null) {
+      this.opexProvider.shutdown(this.opex);
+    }
   }
 }

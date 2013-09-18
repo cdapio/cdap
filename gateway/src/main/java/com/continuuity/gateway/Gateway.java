@@ -51,12 +51,6 @@ public class Gateway implements Server {
   private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
 
   /**
-   * New Gateway.
-   */
-  @Inject
-  com.continuuity.gateway.v2.Gateway gatewayV2;
-
-  /**
    * This is the consumer that all collectors will use.
    * Gateway can not function without a valid Consumer.
    */
@@ -183,13 +177,6 @@ public class Gateway implements Server {
   public void start(String[] args, CConfiguration conf) throws
     ServerException {
 
-    // Start gateway v2
-    if (gatewayV2 != null) {
-      gatewayV2.startAndWait();
-    } else {
-      LOG.warn("Gateway v2 is null, not starting it.");
-    }
-
     // Configure ourselves first
     configure(conf);
 
@@ -267,10 +254,6 @@ public class Gateway implements Server {
 
     LOG.info("Gateway Shutting down");
 
-    if (gatewayV2 != null) {
-      gatewayV2.stopAndWait();
-    }
-
     // Stop all our connectors
     for (Connector connector : this.connectorList) {
       try {
@@ -327,7 +310,10 @@ public class Gateway implements Server {
     LOG.info("Setting Operations Executor to " +
                executor.getClass().getName() + ".");
     this.executor = executor;
-    this.mds = new MetadataService(executor);
+  }
+
+  public void setMetaDataStore(MetaDataStore store) {
+    this.metaDataStore = store;
   }
 
   public void setDiscoveryServiceClient(
@@ -359,7 +345,7 @@ public class Gateway implements Server {
     LOG.info("Configuring Gateway..");
 
     if (this.mds == null) {
-      this.mds = new MetadataService(executor);
+      this.mds = new MetadataService(this.metaDataStore);
     }
 
     if (storeFactory != null) {

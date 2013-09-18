@@ -13,6 +13,7 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
@@ -83,7 +84,7 @@ public class MDSBasedStore implements Store {
   public MDSBasedStore(CConfiguration configuration,
                        MetaDataStore metaDataStore,
                        MetadataService.Iface metaDataService,
-                       com.continuuity.weave.filesystem.LocationFactory locationFactory) {
+                       LocationFactory locationFactory) {
     this.metaDataStore = metaDataStore;
     this.metaDataService = metaDataService;
     this.metadataServiceHelper = new MetadataServiceHelper(metaDataService);
@@ -102,7 +103,7 @@ public class MDSBasedStore implements Store {
   @Override
   public Program loadProgram(Id.Program id, Type type) throws IOException {
     Location programLocation = getProgramLocation(id, type);
-    return new Program(programLocation);
+    return Programs.create(programLocation);
   }
 
   /**
@@ -110,7 +111,7 @@ public class MDSBasedStore implements Store {
    * @throws RuntimeException if program can't be found.
    */
   private Location getProgramLocation(Id.Program id, Type type) throws IOException {
-    Location allAppsLocation = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR,
+    Location allAppsLocation = locationFactory.create(configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                                                         System.getProperty("java.io.tmpdir")));
     Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
     String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
@@ -327,6 +328,22 @@ public class MDSBasedStore implements Store {
 
     LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
               id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
+  }
+
+  /**
+   * Gets number of instances of specific flowlet.
+   *
+   * @param id        flow id
+   * @param flowletId flowlet id
+   * @throws com.continuuity.api.data.OperationException
+   *
+   */
+  @Override
+  public int getFlowletInstances(Id.Program id, String flowletId) throws OperationException {
+    ApplicationSpecification appSpec = getAppSpecSafely(id);
+    FlowSpecification flowSpec = getFlowSpecSafely(id, appSpec);
+    FlowletDefinition flowletDef = getFlowletDefinitionSafely(flowSpec, flowletId, id);
+    return flowletDef.getInstances();
   }
 
   private ApplicationSpecification setFlowletInstancesInAppSpecInMDS(Id.Program id, String flowletId, int count)

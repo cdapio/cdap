@@ -40,7 +40,7 @@ public final class LoggingConfiguration {
 
   // Constants
   // Table used to store log metadata
-  public static final String LOG_META_DATA_TABLE = "__log_meta";
+  public static final String LOG_META_DATA_TABLE = "log.meta";
   // Defaults
   public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n";
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";

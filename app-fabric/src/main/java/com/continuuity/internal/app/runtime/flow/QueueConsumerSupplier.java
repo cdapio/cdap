@@ -3,11 +3,11 @@
  */
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -22,7 +22,7 @@ import java.io.IOException;
  * A helper class for managing queue consumer instances.
  */
 @NotThreadSafe
-final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
+final class QueueConsumerSupplier implements Supplier<Queue2Consumer>, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(QueueConsumerSupplier.class);
 
@@ -36,49 +36,62 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer> {
                         QueueName queueName, ConsumerConfig consumerConfig, int numGroups) {
     this.dataFabricFacade = dataFabricFacade;
     this.queueName = queueName;
-    this.consumerConfig = consumerConfig;
     this.numGroups = numGroups;
-    this.consumer = createConsumer(null);
+    this.consumerConfig = consumerConfig;
+    open(consumerConfig.getGroupSize());
   }
 
-  void updateInstanceCount(int groupSize) {
-    consumerConfig = new ConsumerConfig(consumerConfig.getGroupId(),
-                                        consumerConfig.getInstanceId(),
-                                        groupSize,
-                                        consumerConfig.getDequeueStrategy(),
-                                        consumerConfig.getHashKey());
-    consumer = createConsumer(consumer);
-  }
-
-  @Override
-  public Queue2Consumer get() {
-    return consumer;
-  }
-
-
-  private Queue2Consumer createConsumer(Queue2Consumer oldConsumer) {
+  /**
+   * Updates number of instances for the consumer group that this instance belongs to. It'll close existing
+   * consumer and create a new one with the new group size.
+   *
+   * @param groupSize New group size.
+   */
+  void open(int groupSize) {
     try {
-      if (oldConsumer != null && oldConsumer instanceof Closeable) {
+      close();
+      ConsumerConfig config = consumerConfig;
+      if (groupSize != config.getGroupSize()) {
+        config = new ConsumerConfig(consumerConfig.getGroupId(),
+                                    consumerConfig.getInstanceId(),
+                                    groupSize,
+                                    consumerConfig.getDequeueStrategy(),
+                                    consumerConfig.getHashKey());
+      }
+      consumer = dataFabricFacade.createConsumer(queueName, config, numGroups);
+      consumerConfig = consumer.getConfig();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Close the current consumer if there is one.
+   */
+  @Override
+  public void close() throws IOException {
+    try {
+      if (consumer != null && consumer instanceof Closeable) {
         // Call close in a new transaction.
         // TODO (terence): Actually need to coordinates with other flowlets to drain the queue.
-        TransactionAgent txAgent = dataFabricFacade.createTransactionAgent();
-        txAgent.start();
+        TransactionContext txContext = dataFabricFacade.createTransactionManager();
+        txContext.start();
         try {
-          ((Closeable) oldConsumer).close();
-          txAgent.finish();
-        } catch (OperationException e) {
+          ((Closeable) consumer).close();
+          txContext.finish();
+        } catch (TransactionFailureException e) {
           LOG.warn("Fail to commit transaction when closing consumer.");
-          txAgent.abort();
+          txContext.abort();
         }
       }
     } catch (Exception e) {
       LOG.warn("Fail to close queue consumer.", e);
     }
+    consumer = null;
+  }
 
-    try {
-      return dataFabricFacade.createConsumer(queueName, consumerConfig, numGroups);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+  @Override
+  public Queue2Consumer get() {
+    return consumer;
   }
 }

@@ -18,8 +18,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * {@link Store} operates on a {@link com.continuuity.app.program.Program}. It's responsible
- * for managing the non-runtime lifecycle of a {@link com.continuuity.app.program.Program}
+ * {@link Store} operates on a {@link Program}. It's responsible
+ * for managing the non-runtime lifecycle of a {@link Program}
  */
 public interface Store {
 
@@ -28,7 +28,7 @@ public interface Store {
    *
    * @param program id of the program
    * @param type of program
-   * @return An instance of {@link Program} if found.
+   * @return An instance of {@link com.continuuity.app.program.DefaultProgram} if found.
    * @throws IOException
    */
   Program loadProgram(Id.Program program, Type type) throws IOException;
@@ -111,6 +111,14 @@ public interface Store {
    * @throws OperationException
    */
   void setFlowletInstances(Id.Program id, String flowletId, int count) throws OperationException;
+
+  /**
+   * Gets number of instances of specific flowlet.
+   * @param id flow id
+   * @param flowletId flowlet id
+   * @throws OperationException
+   */
+  int getFlowletInstances(Id.Program id, String flowletId) throws OperationException;
 
   /**
    * Removes program data.

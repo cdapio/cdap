@@ -87,15 +87,12 @@ define([], function () {
 
 			var payload = this.get('injectValue');
 			var flow = this.get('controllers').get('FlowStatus').get('model');
-			var stream = this.get('model').id;
+			var streamId = this.get('model').id;
 
 			this.set('injectValue', '');
-
-			this.HTTP.rpc('gateway', 'inject', {
-				name: flow,
-				stream: stream,
-				payload: payload,
-                                version: C.API_VERSION
+			this.HTTP.post('rest', 'streams', streamId, {
+				stream: streamId,
+				payload: payload
 			}, function (response, status) {
 
 				if (response && response.error) {

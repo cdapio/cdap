@@ -32,6 +32,7 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public final class LogSaverMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    hConf = new Configuration();
+    hConf = HBaseConfiguration.create();
     cConf = CConfiguration.create();
 
     Injector injector = Guice.createInjector(
@@ -81,7 +82,7 @@ public final class LogSaverMain extends DaemonMain {
                                                                      LocationFactory locationFactory) {
           String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
           return new YarnWeaveRunnerService(yarnConfiguration,
-                                            configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE) + zkNamespace,
+                                            configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
                                             LocationFactories.namespace(locationFactory, "weave"));
         }
       }

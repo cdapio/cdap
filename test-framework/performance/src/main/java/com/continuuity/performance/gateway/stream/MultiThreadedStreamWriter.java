@@ -59,7 +59,8 @@ public class MultiThreadedStreamWriter implements StreamWriter {
       numThreads = 1;
     }
 
-    String gateway = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS, Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
+    String gateway = config.get(Constants.AppFabric.SERVER_ADDRESS,
+                                Constants.AppFabric.DEFAULT_SERVER_ADDRESS);
     if (StringUtils.isEmpty(gateway)) {
       gateway = "localhost";
     }

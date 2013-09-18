@@ -5,14 +5,14 @@
 define(['core/lib/date'], function (Datejs) {
 
   var METRICS_PATHS = {
-    //'/process/busyness/{{appId}}/mapreduce/{{jobId}}?count=30': 'busyness',
-    '/process/completion/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersCompletion',
-    '/process/completion/{{appId}}/mapreduce/{{jobId}}/reducers?count=30': 'reducersCompletion',
-    //'/process/bytes/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/ins?aggregate=true': 'mappersEntriesIn',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/outs?aggregate=true': 'mappersEntriesOut',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/ins?aggregate=true': 'reducersEntriesIn',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut'
+    //'/process/busyness/{{appId}}/mapreduces/{{jobId}}?count=30': 'busyness',
+    '/process/completion/{{appId}}/mapreduces/{{jobId}}/mappers?count=30': 'mappersCompletion',
+    '/process/completion/{{appId}}/mapreduces/{{jobId}}/reducers?count=30': 'reducersCompletion',
+    //'/process/bytes/{{appId}}/mapreduces/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
+    '/process/entries/{{appId}}/mapreduces/{{jobId}}/mappers/ins?aggregate=true': 'mappersEntriesIn',
+    '/process/entries/{{appId}}/mapreduces/{{jobId}}/mappers/outs?aggregate=true': 'mappersEntriesOut',
+    '/process/entries/{{appId}}/mapreduces/{{jobId}}/reducers/ins?aggregate=true': 'reducersEntriesIn',
+    '/process/entries/{{appId}}/mapreduces/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut'
   };
 
   var METRIC_TYPES = {
@@ -57,7 +57,7 @@ define(['core/lib/date'], function (Datejs) {
 
       this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
-      this.set('app', this.get('applicationId') || this.get('application'));
+      this.set('app', this.get('applicationId') || this.get('app'));
       this.set('id', this.get('app') + ':' +
         (this.get('flowId') || this.get('id') || this.get('meta').name));
 
@@ -127,13 +127,12 @@ define(['core/lib/date'], function (Datejs) {
       var self = this;
 
       var app_id = this.get('app'),
-        flow_id = this.get('name');
+        mapreduce_id = this.get('name');
 
-      http.rpc('runnable', 'status', [app_id, flow_id, -1],
-        function (response) {
+      http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
 
-          if (response.result) {
-            self.set('currentState', response.result.status);
+          if (!jQuery.isEmptyObject(response)) {
+            self.set('currentState', response.status);
           }
         });
     },
@@ -142,7 +141,7 @@ define(['core/lib/date'], function (Datejs) {
 
       var appId = this.get('app');
       var jobId = this.get('name');
-      var datasetId = this.get('datasets')[0];
+      var datasetId = this.get('inputDataSet');
 
       var paths = [];
       var pathMap = {};
@@ -288,25 +287,26 @@ define(['core/lib/date'], function (Datejs) {
     type: 'Batch',
     kind: 'Model',
     find: function(model_id, http) {
-
+      var self = this;
       var promise = Ember.Deferred.create();
 
       var model_id = model_id.split(':');
       var app_id = model_id[0];
       var mapreduce_id = model_id[1];
 
-      http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
-
+      http.rest('apps', app_id, 'mapreduces', mapreduce_id, function (model, error) {
+        var model = self.transformModel(model);
+        model.app = app_id;
         model = C.Batch.create(model);
-        http.rpc('runnable', 'status', [app_id, mapreduce_id, -1],
-          function (response) {
 
-            if (response.error) {
-              promise.reject(response.error);
-            } else {
-              model.set('currentState', response.result.status);
-              promise.resolve(model);
-            }
+        http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
+
+          if (jQuery.isEmptyObject(response)) {
+            promise.reject('Status could not retrieved.');
+          } else {
+            model.set('currentState', response.status);
+            promise.resolve(model);
+          }
 
         });
 
@@ -314,6 +314,17 @@ define(['core/lib/date'], function (Datejs) {
 
       return promise;
 
+    },
+
+    transformModel: function (model) {
+      return {
+        id: model.name,
+        name: model.name,
+        description: model.description,
+        datasets: model.datasets,
+        inputDataSet: model.inputDataSet,
+        outputDataSet: model.outputDataSet 
+      };
     }
   });
 

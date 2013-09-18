@@ -83,7 +83,7 @@ public final class AvroFileWriter implements Closeable {
    * @param events Log event
    * @throws IOException
    */
-  public void append(List<KafkaLogEvent> events) throws IOException, OperationException {
+  public void append(List<KafkaLogEvent> events) throws Exception {
     if (events.isEmpty()) {
       LOG.debug("Empty append list.");
       return;
@@ -109,7 +109,7 @@ public final class AvroFileWriter implements Closeable {
     // First checkpoint state
     try {
       checkPoint(true);
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.error("Caught exception while checkpointing", e);
     }
 
@@ -125,7 +125,7 @@ public final class AvroFileWriter implements Closeable {
     fileMap.clear();
   }
 
-  private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws IOException, OperationException {
+  private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
     AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment());
     if (avroFile == null) {
       avroFile = createAvroFile(loggingContext, timestamp);
@@ -133,7 +133,7 @@ public final class AvroFileWriter implements Closeable {
     return avroFile;
   }
 
-  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws IOException,
+  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws Exception,
     OperationException {
     long currentTs = System.currentTimeMillis();
     Path path = createPath(loggingContext.getLogPathFragment(), currentTs);
@@ -155,8 +155,7 @@ public final class AvroFileWriter implements Closeable {
     return new Path(pathRoot, String.format("%s/%s/%s.avro", pathFragment, date, timestamp));
   }
 
-  private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws IOException,
-    OperationException {
+  private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {
     if (avroFile.getPos() > maxFileSize) {
       LOG.info(String.format("Rotating file %s", avroFile.getPath()));
       checkPoint(true);
@@ -166,7 +165,7 @@ public final class AvroFileWriter implements Closeable {
     return avroFile;
   }
 
-  private void checkPoint(boolean force) throws IOException, OperationException {
+  private void checkPoint(boolean force) throws Exception {
     long currentTs = System.currentTimeMillis();
     if (!force && currentTs - lastCheckpointTime < checkpointIntervalMs) {
       return;

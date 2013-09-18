@@ -54,14 +54,14 @@ define([], function () {
 		 * Lifecycle
 		 */
 
-		start: function (app, id, version, config) {
+		start: function (appId, id, version, config) {
 
 			var self = this;
 			var model = this.get('model');
 
 			model.set('currentState', 'STARTING');
 
-			this.HTTP.rpc('runnable', 'start', [app, id, version, 'QUERY', config],
+			this.HTTP.post('rest', 'apps', appId, 'procedures', id, 'start',
 				function (response) {
 
 					if (response.error) {
@@ -73,14 +73,14 @@ define([], function () {
 			});
 
 		},
-		stop: function (app, id, version) {
+		stop: function (appId, id, version) {
 
 			var self = this;
 			var model = this.get('model');
 
 			model.set('currentState', 'STOPPING');
 
-			this.HTTP.rpc('runnable', 'stop', [app, id, version, 'QUERY'],
+			this.HTTP.post('rest', 'apps', appId, 'procedures', id, 'stop',
 				function (response) {
 
 					if (response.error) {
@@ -101,28 +101,23 @@ define([], function () {
 		submit: function (event) {
 
 			var self = this;
-			C.get('gateway', {
-				method: 'query',
-				params: {
-					service: this.get('model').serviceName,
-					app: this.get('model').applicationId,
-					method: this.get('requestMethod'),
-					payload: this.get('requestParams')
-				}
-			}, function (error, response) {
+			var appId = this.get('model').applicationId;
+			var procedureName = this.get('model').serviceName;
+			var methodName = this.get('requestMethod');
 
-				if (error) {
-					self.set('responseCode', error.statusCode);
-					self.set('responseBody', JSON.stringify(error.response, undefined, 2) || '[ No Content ]');
-				} else {
-					self.set('responseCode', response.statusCode);
-					var pretty;
-					try {
-						pretty = JSON.stringify(JSON.parse(response.params.response), undefined, 2);
-					} catch (e) {
-						pretty = response.params.response;
+			this.HTTP.post('rest', 'apps', appId, 'procedures', procedureName, 'methods', methodName, {
+					data: this.get('requestParams')
+				}, function (response) {
+
+				if (response) {
+					if (typeof(response) === 'object') {
+						self.set('responseBody', JSON.stringify(response, undefined, 2) || '[ No content ]');	
+					} else {
+						self.set('responseBody', response || '[ No content ]');	
 					}
-					self.set('responseBody', pretty || '[ No Content ]');
+					
+				} else {
+					self.set('responseBody', '[ No response recevied ]');
 				}
 
 			});
@@ -142,39 +137,6 @@ define([], function () {
 
 			if (action && action.toLowerCase() in this) {
 				this[action.toLowerCase()](app, id, -1);
-			}
-		},
-
-		'delete': function () {
-
-			if (this.get('model').get('currentState') !== 'STOPPED' &&
-				this.get('model').get('currentState') !== 'DEPLOYED') {
-				C.Modal.show('Cannot Delete', 'Please stop the Procedure before deleting.');
-			} else {
-				C.Modal.show(
-					"Delete Procedure",
-					"You are about to remove a Procedure, which is irreversible. You can upload this Procedure again if you'd like. Do you want to proceed?",
-					$.proxy(function (event) {
-
-						var procedure = this.get('model');
-
-						C.get('far', {
-							method: 'remove',
-							params: [procedure.app, procedure.name, procedure.version, 'QUERY']
-						}, function (error, response) {
-
-							C.Modal.hide(function () {
-
-								if (error) {
-									C.Modal.show('Delete Error', error.message || 'No reason given. Please check the logs.');
-								} else {
-									window.history.go(-1);
-								}
-
-							});
-
-						});
-					}, this));
 			}
 		}
 

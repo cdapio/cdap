@@ -1,12 +1,12 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -35,10 +35,10 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   private Transaction tx;
 
-  public HBaseOcTableClient(String name, CConfiguration cConf, Configuration hConf)
+  public HBaseOcTableClient(String name, Configuration hConf)
     throws IOException {
     super(name);
-    hTableName = HBaseTableUtil.getHBaseTableName(cConf, name);
+    hTableName = HBaseTableUtil.getHBaseTableName(name);
     HTable hTable = new HTable(hConf, hTableName);
     // todo: make configurable
     hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
@@ -47,7 +47,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   // for testing only
-  String getHBaseTableName() {
+  public String getHBaseTableName() {
     return this.hTableName;
   }
 
@@ -87,23 +87,22 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   @Override
   protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) throws Exception {
-    // NOTE: we use Put with null values because we need to delete only specific version, while Delete op deletes all
-    //       up to specified
-    List<Put> puts = Lists.newArrayList();
+    // NOTE: we use Delete with the write pointer as the specific version to delete.
+    List<Delete> deletes = Lists.newArrayList();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
-      Put put = new Put(row.getKey());
+      Delete delete = new Delete(row.getKey());
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
-          put.add(DATA_COLFAM, column.getKey(), tx.getWritePointer(), null);
+          delete.deleteColumn(DATA_COLFAM, column.getKey(), tx.getWritePointer());
         } else {
-          put.add(DATA_COLFAM, column.getKey(), null);
+          delete.deleteColumn(DATA_COLFAM, column.getKey());
         }
       }
-      puts.add(put);
+      deletes.add(delete);
     }
-    hTable.put(puts);
+    hTable.delete(deletes);
     hTable.flushCommits();
   }
 
@@ -145,10 +144,10 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
     scan.setTimeRange(0, getMaxStamp(tx));
     // todo: optimise for no excluded list separately
-    scan.setMaxVersions(tx.getExcludedList().length + 1);
+    scan.setMaxVersions(tx.excludesSize() + 1);
 
     ResultScanner resultScanner = hTable.getScanner(scan);
-    return new HBaseScanner(resultScanner, tx.getExcludedList());
+    return new HBaseScanner(resultScanner, tx);
   }
 
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, byte[][] columns) throws IOException {
@@ -173,7 +172,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     get.setTimeRange(0L, getMaxStamp(tx));
 
     // if exclusion list is empty, do simple "read last" value call todo: explain
-    if (tx.getExcludedList().length == 0) {
+    if (!tx.hasExcludes()) {
       get.setMaxVersions(1);
       Result result = hTable.get(get);
       if (result.isEmpty()) {
@@ -183,23 +182,23 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
       return unwrapDeletes(rowMap);
     }
 
-//   todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
-//         on the other hand, looks like the above suggestion WILL NOT WORK
-    get.setMaxVersions(tx.getExcludedList().length + 1);
+    // todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
+    //       on the other hand, looks like the above suggestion WILL NOT WORK
+    get.setMaxVersions(tx.excludesSize() + 1);
 
     // todo: push filtering logic to server
     // todo: cache fetched from server locally
 
     Result result = hTable.get(get);
-    return getRowMap(result, tx.getExcludedList());
+    return getRowMap(result, tx);
   }
 
-  static NavigableMap<byte[], byte[]> getRowMap(Result result, long[] excludedVersions) {
+  static NavigableMap<byte[], byte[]> getRowMap(Result result, Transaction tx) {
     if (result.isEmpty()) {
       return EMPTY_ROW_MAP;
     }
 
-    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(DATA_COLFAM), excludedVersions);
+    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(DATA_COLFAM), tx);
     return unwrapDeletes(rowMap);
   }
 

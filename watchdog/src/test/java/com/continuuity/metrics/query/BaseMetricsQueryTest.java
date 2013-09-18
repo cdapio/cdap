@@ -45,7 +45,7 @@ public class BaseMetricsQueryTest {
 
   protected InetSocketAddress getMetricsQueryEndpoint() throws InterruptedException {
     Iterable<Discoverable> endpoints = injector.getInstance(DiscoveryServiceClient.class)
-                                               .discover(Constants.SERVICE_METRICS);
+                                               .discover(Constants.Service.METRICS);
     Iterator<Discoverable> itor = endpoints.iterator();
     while (!itor.hasNext()) {
       TimeUnit.SECONDS.sleep(1);

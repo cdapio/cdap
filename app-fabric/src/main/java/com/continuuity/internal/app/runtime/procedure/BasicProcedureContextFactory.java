@@ -48,8 +48,7 @@ final class BasicProcedureContextFactory {
 
     // hack for propagating metrics collector to datasets
     if (dataSetContext instanceof DataSetInstantiationBase) {
-      ((DataSetInstantiationBase) dataSetContext).setMetricsCollector(collectionService,
-                                                                      context.getSystemMetrics());
+      ((DataSetInstantiationBase) dataSetContext).setMetricsCollector(context.getSystemMetrics());
     }
     return context;
   }

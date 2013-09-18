@@ -18,6 +18,8 @@ import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 
+import java.io.File;
+
 /**
  *
  */
@@ -28,7 +30,6 @@ public final class AppFabricTestModule extends AbstractModule {
 
   public AppFabricTestModule(CConfiguration configuration) {
     this.cConf = configuration;
-    cConf.set(Constants.CFG_APP_FABRIC_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();

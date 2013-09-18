@@ -9,7 +9,6 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.store.StoreFactory;
@@ -18,9 +17,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
@@ -330,7 +328,7 @@ public final class PerformanceTestRunner {
             ZKClients.reWatchOnExpire(
               ZKClients.retryOnFailure(
                 ZKClientService.Builder.of(
-                  config.get(Constants.CFG_ZOOKEEPER_ENSEMBLE)).setSessionTimeout(10000).build(),
+                  config.get(Constants.Zookeeper.QUORUM)).setSessionTimeout(10000).build(),
                 RetryStrategies.fixDelay(2, TimeUnit.SECONDS))));
         discoveryServiceModule = new DiscoveryRuntimeModule(zkClientService).getDistributedModules();
       } else {
@@ -345,7 +343,7 @@ public final class PerformanceTestRunner {
             bind(DiscoveryServiceClient.class).toInstance(new DiscoveryServiceClient() {
               @Override
               public Iterable<Discoverable> discover(final String name) {
-                if (Constants.SERVICE_METRICS.equals(name)) {
+                if (Constants.Service.METRICS.equals(name)) {
                   return ImmutableList.<Discoverable>of(new Discoverable() {
                     @Override
                     public String getName() {
@@ -397,15 +395,14 @@ public final class PerformanceTestRunner {
               binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
               binder.bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
               binder.bind(AppFabricService.Iface.class).toInstance(appFabricServer);
-              binder.bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
               binder.bind(StoreFactory.class).to(MDSStoreFactory.class);
               binder.bind(AuthToken.class).toInstance(TestHelper.DUMMY_AUTH_TOKEN);
             }
             @Provides
-            @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS)
+            @Named(Constants.AppFabric.SERVER_ADDRESS)
             @SuppressWarnings(value = "unused")
             public InetAddress providesHostname(CConfiguration cConf) {
-              return Networks.resolve(cConf.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS),
+              return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                                       new InetSocketAddress("localhost", 0).getAddress());
             }
           }
@@ -420,10 +417,10 @@ public final class PerformanceTestRunner {
 
   // Get an AppFabricClient for communication with the AppFabric of a local or remote Reactor.
   private static AppFabricService.Client getAppFabricClient(CConfiguration config) throws TTransportException  {
-    String  appFabricServerHost = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
-                                             Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
-    int  appFabricServerPort = config.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT,
-                                             Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+    String  appFabricServerHost = config.get(Constants.AppFabric.SERVER_ADDRESS,
+                                             Constants.AppFabric.DEFAULT_SERVER_ADDRESS);
+    int  appFabricServerPort = config.getInt(Constants.AppFabric.SERVER_PORT,
+                                             Constants.AppFabric.DEFAULT_SERVER_PORT);
     LOG.debug("Connecting with AppFabric Server at {}:{}", appFabricServerHost, appFabricServerPort);
     return new AppFabricService.Client(getThriftProtocol(appFabricServerHost, appFabricServerPort));
   }

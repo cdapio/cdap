@@ -54,15 +54,15 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
   public void start() throws OperationException {
     succeeded.set(0);
     failed.set(0);
-    currentTx = txSystemClient.start();
+    currentTx = txSystemClient.startShort();
     propagateToTxAwares(currentTx);
   }
 
   @Override
-  public void start(Integer timeout) throws OperationException {
+  public void startLong() throws OperationException {
     succeeded.set(0);
     failed.set(0);
-    currentTx = txSystemClient.start(timeout);
+    currentTx = txSystemClient.startShort();
     propagateToTxAwares(currentTx);
   }
 

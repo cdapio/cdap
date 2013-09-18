@@ -2,10 +2,10 @@ package com.continuuity.metadata;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
@@ -46,8 +46,8 @@ public class MetadataServiceTest {
       new DataFabricModules().getInMemoryModules()
     );
     /* Instance of operation executor */
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-    mds = new MetadataService(opex);
+    injector.getInstance(InMemoryTransactionManager.class).init();
+    mds = new MetadataService(injector.getInstance(MetaDataStore.class));
     account = new Account("demo");
   }
 
@@ -57,10 +57,9 @@ public class MetadataServiceTest {
   }
 
   @Before
-  public void cleanDataFabric() throws OperationException {
-    // cleanups data
-    injector.getInstance(OperationExecutor.class)
-      .execute(new OperationContext(Constants.DEVELOPER_ACCOUNT_ID), new ClearFabric());
+  public void cleanMetaData() throws OperationException {
+    injector.getInstance(MetaDataStore.class).clear(
+      new OperationContext(Constants.DEVELOPER_ACCOUNT_ID), "demo", null);
   }
 
   /**
@@ -245,7 +244,7 @@ public class MetadataServiceTest {
   }
 
   /**
-   * Tests update of a application
+   * Tests update of a application.
    * @throws Exception
    */
   @Test

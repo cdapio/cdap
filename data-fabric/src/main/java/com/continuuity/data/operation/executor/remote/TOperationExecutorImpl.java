@@ -871,22 +871,32 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
   // Temporary TxDs2 stuff
 
   @Override
-  public TTransaction2 startTx() throws TOperationException, TException {
+  public TTransaction2 startLong() throws TOperationException, TException {
     try {
-      return wrap(this.opex.start());
+      return wrap(this.opex.startLong());
     } catch (OperationException e) {
       throw wrap(e);
     }
   }
 
   @Override
-  public TTransaction2 startTxTimeout(int timeout) throws TOperationException, TException {
+  public TTransaction2 startShort() throws TOperationException, TException {
     try {
-      return wrap(this.opex.start(timeout == -1 ? null : timeout));
+      return wrap(this.opex.startShort());
     } catch (OperationException e) {
       throw wrap(e);
     }
   }
+
+  @Override
+  public TTransaction2 startShortTimeout(int timeout) throws TOperationException, TException {
+    try {
+      return wrap(this.opex.startShort(timeout));
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
+
 
   @Override
   public boolean canCommitTx(TTransaction2 tx, Set<ByteBuffer> changes) throws TOperationException, TException {
@@ -911,9 +921,18 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
   }
 
   @Override
-  public boolean abortTx(TTransaction2 tx) throws TOperationException, TException {
+  public void abortTx(TTransaction2 tx) throws TOperationException, TException {
     try {
-      return this.opex.abort(unwrap(tx));
+      this.opex.abort(unwrap(tx));
+    } catch (OperationException e) {
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public void invalidateTx(TTransaction2 tx) throws TOperationException, TException {
+    try {
+      this.opex.invalidate(unwrap(tx));
     } catch (OperationException e) {
       throw wrap(e);
     }

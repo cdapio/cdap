@@ -19,7 +19,6 @@
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
   <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
-  <script type="text/javascript" src="/core/lib/biginteger.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
 
@@ -129,6 +128,7 @@
 
       <div class="panel" style="clear: both;">
         <div class="panel-head">
+          <input type="file" id="app-upload-input"/>
           {{view C.Embed.CreateButton entityType="Application"}}
           <div class="panel-title">Apps</div>
         </div>
@@ -259,16 +259,6 @@
       <h1>{{model.name}} <span>Stream</span></h1>
     </div>
     <div id="info">
-      <div class="info-box" style="float: right; border: 0;">
-        <div id="action-buttons">
-          <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:16px;">Actions
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a {{action "delete" on="click"}}>Delete This Stream</a></li>
-          </ul>
-        </div>
-      </div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Events In" metrics="/collect/events/streams/{id}"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
@@ -288,6 +278,56 @@
       </div>
     </div>
   </script>
+
+  <script type="text/x-handlebars" data-template-name="Workflow">
+    <div id="title">
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo WorkflowStatus model}}Status{{/linkTo}}</li>
+        <li>{{#linkTo Workflow.History model}}History{{/linkTo}}</li>
+      </ul>
+      <h1>{{model.name}} <span>Workflow</span></h1>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="WorkflowStatus">
+    <div id="info">
+      <div class="info-box" style="float: right; border: 0;">
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+
+      </div>
+
+    </div>
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="batchviz-container">
+          <div class="clearfix chart">
+            {{#each elements.Actions}}
+            <div class="batch-item" {{bindAttr id="id"}}>
+              <div class="batch-icon batch-map">
+                <div class="info-window">
+                  <div class="label">{{name}}</div>
+                  <div>{{state}}</div>
+                  {{#if isRunning}}
+                    <progress {{bindAttr value="completionPercentage" }} max="100"></progress>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+            {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
 
   <script type="text/x-handlebars" data-template-name="Batch">
 
@@ -316,7 +356,7 @@
             <li><a {{action "delete"}} {{bindAttr state="model.currentState"}} {{bindAttr batchId="model.id"}} {{bindAttr applicationId="model.application"}}>Delete This Job</a></li>
           </ul>
 
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.applicationId"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.app"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
           <button style="border-right:0;" class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
@@ -325,8 +365,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduce/{id}/reducers" title="Mapping" unit="percent"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduce/{id}/reducers" title="Reducing" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduces/{id}/reducers" title="Mapping" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/process/completion/{parent}/mapreduces/{id}/reducers" title="Reducing" unit="percent"}}</div>
 
     </div>
     <div id="panels">
@@ -405,9 +445,9 @@
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
           </ul>
 
-          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.meta.app"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Stop" ><span class="btn-stop"></span><span>Stop</span></button>
+          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "stop" model.app model.meta.name }}><span class="btn-stop"></span><span>Stop</span></button>
 
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.meta.app"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startDisabled"}} style="border-right:0;width:64px;" {{action "start" model.app model.meta.name}}><span {{bindAttr class="model.actionIcon"}}></span><span>Start</span></button>
 
           <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
@@ -634,7 +674,7 @@
             </thead>
             <tbody>
             {{#each runs}}
-              <tr class="run-list" {{action "loadRun" runId}}>
+              <tr class="run-list" {{action "loadRun" runid}}>
                 <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
                 <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>
@@ -667,16 +707,6 @@
       <h1>{{model.name}} <span>Dataset</span></h1>
     </div>
     <div id="info">
-      <div class="info-box" style="float: right; border: 0;">
-        <div id="action-buttons">
-            <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:16px;">Actions
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a {{action "delete" on="click"}}>Delete This Dataset</a></li>
-          </ul>
-        </div>
-      </div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Write Rate" metrics="/store/writes/datasets/{id}"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Read Rate (All)" metrics="/store/reads/datasets/{id}"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
@@ -715,14 +745,7 @@
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
 
-          <button class="btn dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a {{action "delete"}} {{bindAttr state="model.currentState"}} {{bindAttr flowId="model.id"}} {{bindAttr applicationId="model.application"}}>Delete This Procedure</a></li>
-          </ul>
-
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
         </div>
 
@@ -914,6 +937,9 @@
           <tr>
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a>
+            <br />
+            <span class="app-list-status">{{description}}</span>
+            
             </td>
             <td class="app-list-count">{{counts.Stream}}</strong></td>
             <td class="app-list-count">{{counts.Flow}}</strong></td>
@@ -1022,8 +1048,8 @@
               <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
               </td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduce/{id}/mappers" unit="percent"}}</td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduce/{id}/reducers" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduces/{id}/mappers" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/process/completion/{parent}/mapreduces/{id}/reducers" unit="percent"}}</td>
             </tr>
           {{/each}}
           </tbody>

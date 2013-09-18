@@ -15,21 +15,23 @@ import java.util.NavigableMap;
  * unit-test
  * @param <T> table type
  */
-public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClient> extends OrderedColumnarTableTest<T> {
+public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClient>
+  extends OrderedColumnarTableConcurrentTest<T> {
+
   @Test
   public void testRollingBackAfterExceptionDuringPersist() throws Exception {
     DataSetManager manager = getTableManager();
     manager.create("myTable");
     try {
-      Transaction tx1 = txClient.start();
+      Transaction tx1 = txClient.startShort();
       BufferingOcTableClient myTable1 = new BufferingOcTableWithPersistingFailure(getTable("myTable"));
       myTable1.startTx(tx1);
       // write some data but not commit
-      myTable1.put(R1, $(C1), $(V1));
-      myTable1.put(R2, $(C2), $(V2));
+      myTable1.put(R1, a(C1), a(V1));
+      myTable1.put(R2, a(C2), a(V2));
       // verify can see changes inside tx
-      verify($(C1, V1), myTable1.get(R1, $(C1)));
-      verify($(C2, V2), myTable1.get(R2, $(C2)));
+      verify(a(C1, V1), myTable1.get(R1, a(C1)));
+      verify(a(C2, V2), myTable1.get(R2, a(C2)));
 
       // persisting changes
       try {
@@ -48,13 +50,13 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
       txClient.abort(tx1);
 
       // start new tx
-      Transaction tx2 = txClient.start();
+      Transaction tx2 = txClient.startShort();
       OrderedColumnarTable myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify don't see rolled back changes
-      verify($(), myTable2.get(R1, $(C1)));
-      verify($(), myTable2.get(R2, $(C2)));
+      verify(a(), myTable2.get(R1, a(C1)));
+      verify(a(), myTable2.get(R2, a(C2)));
 
     } finally {
       manager.drop("myTable");
@@ -69,7 +71,7 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
     private BufferingOcTableClient delegate;
 
     private BufferingOcTableWithPersistingFailure(BufferingOcTableClient delegate) {
-      super(delegate.getName());
+      super(delegate.getTableName());
       this.delegate = delegate;
     }
 

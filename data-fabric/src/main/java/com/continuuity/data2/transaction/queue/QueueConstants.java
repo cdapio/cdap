@@ -12,12 +12,11 @@ public final class QueueConstants {
    * Configuration keys for queues in HBase.
    */
   public static final class ConfigKeys {
-    public static final String QUEUE_TABLE_NAME = "data.queue.table.name";
     public static final String QUEUE_TABLE_COPROCESSOR_DIR = "data.queue.table.coprocessor.dir";
     public static final String QUEUE_TABLE_PRESPLITS = "data.queue.table.presplits";
   }
 
-  public static final String DEFAULT_QUEUE_TABLE_NAME = "__queues";
+  public static final String DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR = "/queue";
   public static final int DEFAULT_QUEUE_TABLE_PRESPLITS = 16;
 
   public static final byte[] COLUMN_FAMILY = new byte[] {'q'};

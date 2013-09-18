@@ -38,6 +38,11 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
   }
 
   @Override
+  public String getName() {
+    return getClass().getSimpleName() + "(queue = " + queueName + ")";
+  }
+
+  @Override
   public QueueName getQueueName() {
     return queueName;
   }

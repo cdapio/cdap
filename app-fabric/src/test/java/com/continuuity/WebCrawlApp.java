@@ -6,6 +6,7 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -153,6 +154,7 @@ public class WebCrawlApp implements Application {
       super("UrlSanitizer");
     }
 
+    @ProcessInput
     public void process(StreamEvent event) {
       // Does some-fancy sanitization of url.
       output.emit(new DocumentURLImpl(event.getHeaders().get("url")));
@@ -170,6 +172,7 @@ public class WebCrawlApp implements Application {
       super("UrlCrawler");
     }
 
+    @ProcessInput
     public void process(DocumentURL url) throws UnsupportedEncodingException, OperationException {
       // ... does some fancy crawling
       // Marks that the url has been crawled.

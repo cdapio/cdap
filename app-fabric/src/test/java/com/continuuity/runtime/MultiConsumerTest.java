@@ -4,33 +4,27 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.RoundRobin;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
-import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
-import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
@@ -91,14 +85,14 @@ public class MultiConsumerTest {
   /**
    *
    */
-  public static final class Generator extends AbstractGeneratorFlowlet {
+  public static final class Generator extends AbstractFlowlet {
 
     private OutputEmitter<Integer> output;
     @Output("str")
     private OutputEmitter<String> outString;
     private int i;
 
-    @Override
+    @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
     public void generate() throws Exception {
       if (i < 100) {
         output.emit(i);
@@ -144,11 +138,11 @@ public class MultiConsumerTest {
 
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
+      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
       controllers.add(runner.run(program, new ProgramOptions() {
         @Override
         public String getName() {
-          return program.getProgramName();
+          return program.getName();
         }
 
         @Override
@@ -165,32 +159,27 @@ public class MultiConsumerTest {
 
     TimeUnit.SECONDS.sleep(4);
 
-    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
     LocationFactory locationFactory = TestHelper.getInjector().getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = TestHelper.getInjector().getInstance(DataSetAccessor.class);
-    TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
-    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
-                                                  app.getAppSpecLoc().getSpecification().getName());
 
-    TransactionProxy proxy = new TransactionProxy();
     DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(new DataFabricImpl(opex, locationFactory, dataSetAccessor, opCtx),
-                              proxy,
+      new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               getClass().getClassLoader());
     dataSetInstantiator.setDataSets(ImmutableList.copyOf(new MultiApp().configure().getDataSets().values()));
 
-    TransactionAgent txAgent = new SynchronousTransactionAgent(opex, opCtx,
-                                                               dataSetInstantiator.getTransactionAware(),
-                                                               txSystemClient);
-    proxy.setTransactionAgent(txAgent);
+    final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
+    TransactionExecutorFactory txExecutorFactory =
+      TestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
 
-    KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
-    txAgent.start();
-    byte[] value = accumulated.read(KEY);
-    txAgent.finish();
-
-    // Sum(1..100) * 3
-    Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware())
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          byte[] value = accumulated.read(KEY);
+          // Sum(1..100) * 3
+          Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
+        }
+    });
 
     for (ProgramController controller : controllers) {
       controller.stop().get();

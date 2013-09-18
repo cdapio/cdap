@@ -5,6 +5,7 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.weave.api.ResourceSpecification;
@@ -20,8 +21,6 @@ import java.util.Map;
  *
  */
 public final class FlowWeaveApplication implements WeaveApplication {
-
-  private static final int FLOWLET_MEMORY_MB = 512;
 
   private final FlowSpecification spec;
   private final Program program;
@@ -42,14 +41,16 @@ public final class FlowWeaveApplication implements WeaveApplication {
                              Type.FLOW.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable();
 
-    Location programLocation = program.getProgramJarLocation();
+    Location programLocation = program.getJarLocation();
     String programName = programLocation.getName();
     WeaveSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
+      FlowletDefinition flowletDefinition = entry.getValue();
+      FlowletSpecification flowletSpec = flowletDefinition.getFlowletSpec();
       ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-        .setCores(1)
-        .setMemory(FLOWLET_MEMORY_MB, ResourceSpecification.SizeUnit.MEGA)  // TODO (ENG-2526): have it exposed to user
-        .setInstances(entry.getValue().getInstances())
+        .setCores(flowletSpec.getResources().getVirtualCores())
+        .setMemory(flowletSpec.getResources().getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
+        .setInstances(flowletDefinition.getInstances())
         .build();
 
       String flowletName = entry.getKey();

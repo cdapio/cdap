@@ -42,14 +42,12 @@ define([], function () {
 				}
 				
 				for (var i = 0; i < cx.length; i ++) {
-					if (cx[i][direction]['flowlet'] === flowlet &&
-						cx[i][direction]['stream'] === input.replace('_IN', '').replace('_OUT', '')) {
+					if (cx[i][direction]['flowlet'] === flowlet) {
 						res.push({name: cx[i][opp]['flowlet'] || cx[i][opp]['stream']});
 					}
 				}
 				return res;
 			}
-
 			var streams = flow.flowletStreams.filter(function (stream) {
 				return stream.name === model.name;
 			})[0];
@@ -77,7 +75,6 @@ define([], function () {
 					});
 				}
 			}
-			
 			this.get('model').set('inputs', inputs);
 			this.get('model').set('outputs', outputs);
 
@@ -161,6 +158,7 @@ define([], function () {
 			$('#flowlet-popup-' + tabName + '-tab').addClass('tab-selected');
 
 		},
+
 		close: function () {
 
 			var model = this.get('controllers').get('FlowStatus').get('model');
@@ -178,6 +176,7 @@ define([], function () {
 			this.transitionToRoute('FlowStatus', model);
 
 		},
+		
 		navigate: function (flowletName) {
 
 			var model = this.get('controllers.FlowStatus').get_flowlet(flowletName);
@@ -188,9 +187,11 @@ define([], function () {
 			}
 
 		},
+
 		addOneInstance: function () {
 			this.confirm('Add 1 instance to ', +1);
 		},
+		
 		removeOneInstance: function () {
 
 			if (this.get('model').get('instances') > 1) {
@@ -205,6 +206,7 @@ define([], function () {
 			}
 
 		},
+		
 		confirm: function (message, value) {
 
 			var model = this.get('model');
@@ -221,6 +223,7 @@ define([], function () {
 				});
 
 		},
+		
 		addInstances: function (value, done) {
 
 			var flow = this.get('controllers').get('FlowStatus').get('model');
@@ -237,8 +240,8 @@ define([], function () {
 				var version = flow.version || -1;
 				var flowlet = model.name;
 
-				this.HTTP.rpc('runnable', 'setInstances', [app, flow, version, flowlet, instances],
-					function (response) {
+				this.HTTP.put('rest', 'apps', app, 'flows', flow, 'flowlets', flowlet, 'instances',
+					instances, function (response) {
 
 					if (response.error) {
 						C.Modal.show('Container Error', response.error);

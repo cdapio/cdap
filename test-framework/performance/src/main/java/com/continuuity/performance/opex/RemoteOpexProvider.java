@@ -2,6 +2,7 @@ package com.continuuity.performance.opex;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -33,13 +34,13 @@ public class RemoteOpexProvider extends OpexProvider {
         (new DataFabricModules().getDistributedModules());
 
     if (zkQuorum != null) {
-      module.getConfiguration().set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkQuorum);
+      module.getConfiguration().set(Constants.Zookeeper.QUORUM, zkQuorum);
     }
     if (host != null) {
       module.getConfiguration().set(com.continuuity.data.operation.executor
           .remote.Constants.CFG_DATA_OPEX_SERVER_ADDRESS, host);
       // don't use zookeeper-based service discovery if opex host is given
-      module.getConfiguration().unset(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+      module.getConfiguration().unset(Constants.Zookeeper.QUORUM);
     }
     if (port != -1) {
       module.getConfiguration().setInt(com.continuuity.data.operation.executor
@@ -50,7 +51,8 @@ public class RemoteOpexProvider extends OpexProvider {
           .remote.Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT, timeout);
     }
 
-    Injector injector = Guice.createInjector(module);
+    Injector injector = Guice.createInjector(module,
+                                             new LocationRuntimeModule().getDistributedModules());
     return injector.getInstance(OperationExecutor.class);
   }
 }

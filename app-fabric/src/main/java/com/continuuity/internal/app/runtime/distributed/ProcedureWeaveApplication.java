@@ -33,12 +33,12 @@ public final class ProcedureWeaveApplication implements WeaveApplication {
   @Override
   public WeaveSpecification configure() {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setCores(1)
-      .setMemory(512, ResourceSpecification.SizeUnit.MEGA)    // TODO(ENG-2526): have it exposed to user setting
+      .setCores(spec.getResources().getVirtualCores())
+      .setMemory(spec.getResources().getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
       .setInstances(1)
       .build();
 
-    Location programLocation = program.getProgramJarLocation();
+    Location programLocation = program.getJarLocation();
 
     return WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",

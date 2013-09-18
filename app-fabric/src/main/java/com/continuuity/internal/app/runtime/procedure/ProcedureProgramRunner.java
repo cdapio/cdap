@@ -74,7 +74,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
                                 ServiceAnnouncer serviceAnnouncer,
-                                @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS) InetAddress hostname,
+                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                 MetricsCollectionService metricsCollectionService) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -101,12 +101,12 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-      Type processorType = program.getProcessorType();
+      Type processorType = program.getType();
       Preconditions.checkNotNull(processorType, "Missing processor type.");
       Preconditions.checkArgument(processorType == Type.PROCEDURE, "Only PROCEDURE process type is supported.");
 
-      ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getProgramName());
-      Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getProgramName());
+      ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getName());
+      Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getName());
 
       int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "0"));
 
@@ -134,7 +134,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       channelGroup.add(serverChannel);
 
       LOG.info(String.format("Procedure server started for %s.%s listening on %s",
-                             program.getApplicationId(), program.getProgramName(), serverChannel.getLocalAddress()));
+                             program.getApplicationId(), program.getName(), serverChannel.getLocalAddress()));
 
       int servicePort = ((InetSocketAddress) serverChannel.getLocalAddress()).getPort();
       return new ProcedureProgramController(program, runId,
@@ -152,7 +152,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     Executor bossExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder()
         .setDaemon(true)
-        .setNameFormat("procedure-boss-" + program.getProgramName() + "-%d")
+        .setNameFormat("procedure-boss-" + program.getName() + "-%d")
         .build());
 
     // Worker threads pool
@@ -195,7 +195,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private String getServiceName(Program program) {
     return String.format("procedure.%s.%s.%s",
-                         program.getAccountId(), program.getApplicationId(), program.getProgramName());
+                         program.getAccountId(), program.getApplicationId(), program.getName());
   }
 
   private final class ProcedureProgramController extends AbstractProgramController {
@@ -203,7 +203,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     private final Cancellable cancellable;
 
     ProcedureProgramController(Program program, RunId runId, Cancellable cancellable) {
-      super(program.getProgramName(), runId);
+      super(program.getName(), runId);
       this.cancellable = cancellable;
       started();
     }

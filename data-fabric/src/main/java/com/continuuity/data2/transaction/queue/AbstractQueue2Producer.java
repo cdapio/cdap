@@ -3,6 +3,7 @@
  */
 package com.continuuity.data2.transaction.queue;
 
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.transaction.Transaction;
@@ -25,13 +26,20 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
 
   private final QueueMetrics queueMetrics;
   private final BlockingQueue<QueueEntry> queue;
+  private final QueueName queueName;
   private Transaction transaction;
   private int lastEnqueueCount;
   private int lastEnqueueBytes;
 
-  protected AbstractQueue2Producer(QueueMetrics queueMetrics) {
+  protected AbstractQueue2Producer(QueueMetrics queueMetrics, QueueName queueName) {
     this.queueMetrics = queueMetrics;
     this.queue = new LinkedBlockingQueue<QueueEntry>();
+    this.queueName = queueName;
+  }
+
+  @Override
+  public String getName() {
+    return getClass().getSimpleName() + "(queue = " + queueName + ")";
   }
 
   @Override

@@ -5,6 +5,8 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -13,6 +15,9 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.NoopPersistor;
@@ -24,6 +29,7 @@ import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -46,8 +52,7 @@ public class DataFabricDistributedModule extends AbstractModule {
    * Create a module with default configuration for HBase and Continuuity.
    */
   public DataFabricDistributedModule() {
-    this.conf = loadConfiguration();
-    this.hbaseConf = HBaseConfiguration.create();
+    this(CConfiguration.create(), HBaseConfiguration.create());
   }
 
   /**
@@ -55,8 +60,7 @@ public class DataFabricDistributedModule extends AbstractModule {
    * and defaults for Continuuity.
    */
   public DataFabricDistributedModule(Configuration conf) {
-    this.hbaseConf = new Configuration(conf);
-    this.conf = loadConfiguration();
+    this(CConfiguration.create(), conf);
   }
 
   /**
@@ -64,20 +68,15 @@ public class DataFabricDistributedModule extends AbstractModule {
    * be used both for HBase and for Continuuity.
    */
   public DataFabricDistributedModule(CConfiguration conf) {
-    this.hbaseConf = new Configuration();
-    this.conf = conf;
+    this(conf, HBaseConfiguration.create());
   }
 
-  private CConfiguration loadConfiguration() {
-    @SuppressWarnings("UnnecessaryLocalVariable") CConfiguration conf = CConfiguration.create();
-
-    // this expects the port and number of threads for the opex service
-    // - data.opex.server.port <int>
-    // - data.opex.server.threads <int>
-    // this expects the zookeeper quorum for continuuity and for hbase
-    // - zookeeper.quorum host:port,...
-    // - hbase.zookeeper.quorum host:port,...
-    return conf;
+  /**
+   * Create a module with custom configuration for HBase and Continuuity.
+   */
+  public DataFabricDistributedModule(CConfiguration conf, Configuration hbaseConf) {
+    this.conf = conf;
+    this.hbaseConf = hbaseConf;
   }
 
   @Override
@@ -110,6 +109,9 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(conf);
     bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
 
+    // bind meta data store
+    bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
+
     // Bind TxDs2 stuff
     if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
       bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
@@ -121,6 +123,10 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
+
+    install(new FactoryModuleBuilder()
+              .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+              .build(TransactionExecutorFactory.class));
   }
 
   public CConfiguration getConfiguration() {

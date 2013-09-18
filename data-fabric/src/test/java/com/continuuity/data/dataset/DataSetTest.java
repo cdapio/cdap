@@ -6,6 +6,7 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
@@ -107,14 +108,14 @@ public class DataSetTest extends DataSetTestBase {
     }
   }
 
-  // tests that nested tables inside datasets use the name of the top-level dataset as the metric name
+  // tests that nested datasets inside dataset use the name of the top-level dataset as the metric name
   @Test
   public void testDataSetInstantiationWithMetricName() throws OperationException {
     // setup a dummy opex, transaction proxy and instantiator
     OperationExecutor opex = new DummyOpex();
     TransactionProxy proxy = new TransactionProxy();
     LocationFactory locFactory = new LocalLocationFactory();
-    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor();
+    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(new CConfiguration());
     TransactionSystemClient txSystemClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
     DataSetInstantiator inst =
       new DataSetInstantiator(new DataFabricImpl(opex, locFactory, dataSetAccessor, OperationUtil.DEFAULT),

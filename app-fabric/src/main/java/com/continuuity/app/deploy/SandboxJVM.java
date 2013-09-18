@@ -7,6 +7,7 @@ package com.continuuity.app.deploy;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
@@ -106,7 +107,7 @@ public class SandboxJVM {
         return -1;
       }
 
-      Program archive = new Program(lf.create(jarFilename));
+      Program archive = Programs.create(lf.create(jarFilename));
       mainClass = archive.getMainClass().newInstance();
     } catch (Exception e) {
       LOG.error(e.getMessage());

@@ -1,11 +1,14 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Longs;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -25,8 +28,9 @@ public class InMemoryOcTableService {
   }
 
   public static synchronized void create(String tableName) {
-    tables.put(tableName,
-          new ConcurrentSkipListMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>(Bytes.BYTES_COMPARATOR));
+    tables
+      .put(tableName,
+           new ConcurrentSkipListMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>(Bytes.BYTES_COMPARATOR));
   }
 
   public static synchronized void truncate(String tableName) {
@@ -76,7 +80,9 @@ public class InMemoryOcTableService {
                                                                                   byte[] row,
                                                                                   long version) {
     // todo: handle nulls
-    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = tables.get(tableName).get(row);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
+    Preconditions.checkArgument(table != null, "table not found: " + tableName);
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = table.get(row);
     return getVisible(rowMap, version);
   }
 
@@ -105,6 +111,10 @@ public class InMemoryOcTableService {
     }
 
     return result;
+  }
+
+  public static synchronized Collection<String> list() {
+    return ImmutableList.copyOf(tables.keySet());
   }
 
   private static void write(NavigableMap<byte[], NavigableMap<Long, byte[]>> dest,

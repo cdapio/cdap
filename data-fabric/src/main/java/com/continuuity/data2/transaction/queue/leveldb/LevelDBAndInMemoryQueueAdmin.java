@@ -7,6 +7,8 @@ import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import java.util.Map;
+
 /**
  *
  */
@@ -25,6 +27,18 @@ public class LevelDBAndInMemoryQueueAdmin implements QueueAdmin {
   public void dropAll() throws Exception {
     levelDBQueueAdmin.dropAll();
     inMemoryQueueAdmin.dropAll();
+  }
+
+  @Override
+  public void configureInstances(QueueName queueName, long groupId, int instances) {
+    // No-op
+    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
+  }
+
+  @Override
+  public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
+    // No-op
+    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
   }
 
   @Override

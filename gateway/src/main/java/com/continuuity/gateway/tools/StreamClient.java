@@ -9,11 +9,10 @@ import com.continuuity.common.collect.Collector;
 import com.continuuity.common.collect.FirstNCollector;
 import com.continuuity.common.collect.LastNCollector;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.streamevent.DefaultStreamEvent;
@@ -70,7 +69,6 @@ public class StreamClient {
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
   int port = -1;               // the port of the gateway
-  String connector = null;       // the name of the rest collector
   String apikey = null;          // the api key for authentication.
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
@@ -106,7 +104,6 @@ public class StreamClient {
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --port <number>         To specify the port to use");
-    out.println("  --connector <name>      To specify the name of the rest collector");
     out.println("  --apikey <apikey>       To specify an API key for authentication");
     out.println("  --stream <id>           To specify the destination event stream of the");
     out.println("                          form <flow> or <flow>/<stream>.");
@@ -182,7 +179,6 @@ public class StreamClient {
         if (++pos >= args.length) {
           usage(true);
         }
-        connector = args[pos];
       } else if ("--apikey".equals(arg)) {
         if (++pos >= args.length) {
           usage(true);
@@ -282,9 +278,6 @@ public class StreamClient {
     }
     if (port > 0 && hostname == null) {
       usage("A hostname must be provided when a port is specified.");
-    }
-    if (connector != null && baseUrl != null) {
-      usage("Only one of --connector or --base may be specified.");
     }
     // verify that only one encoding is given for the body
     if (hex && urlenc) {
@@ -397,7 +390,7 @@ public class StreamClient {
 
     // determine the base url for the GET request
     if (baseUrl == null) {
-      baseUrl = Util.findBaseUrl(config, RestCollector.class, connector, hostname, port, apikey != null);
+      baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, apikey != null);
     }
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
@@ -410,7 +403,7 @@ public class StreamClient {
     }
 
     // build the full URI for the request and validate it
-    String requestUrl = baseUrl + destination;
+    String requestUrl = baseUrl + "/streams/" + destination;
 
     if ("send".equals(command)) {
       // get the body as a byte array
@@ -452,7 +445,7 @@ public class StreamClient {
       String id = getConsumerId(requestUrl);
       if (id != null) {
         System.out.println(id);
-        return "OK.";
+        return id;
       } else {
         return null;
       }
@@ -481,7 +474,7 @@ public class StreamClient {
       // print all the headers
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
-        if (!verbose && Constants.isContinuuityHeader(name)) {
+        if (!verbose && name.startsWith(Constants.Gateway.CONTINUUITY_PREFIX)) {
           continue;
         }
         System.out.println(name + ": " + event.getHeaders().get(name));
@@ -492,7 +485,7 @@ public class StreamClient {
       if (consumer == null) {
         // prepare for HTTP
         HttpClient client = new DefaultHttpClient();
-        HttpGet get = new HttpGet(requestUrl + "?q=newConsumer");
+        HttpGet get = new HttpGet(requestUrl + "/consumerid");
         if (apikey != null) {
           get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
         }
@@ -504,7 +497,7 @@ public class StreamClient {
           System.err.println("Error sending HTTP request: " + e.getMessage());
           return null;
         }
-        if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) {
+        if (!checkHttpStatus(response, HttpStatus.SC_OK)) {
           return null;
         }
         // read the binary value from the HTTP response
@@ -513,7 +506,7 @@ public class StreamClient {
           System.err.println("Unexpected response without body.");
           return null;
         }
-        consumer = new String(binaryValue);
+        consumer = Long.toString(Bytes.toLong(binaryValue));
       }
       Collector<StreamEvent> collector =
         all ? new AllCollector<StreamEvent>(StreamEvent.class) :
@@ -568,7 +561,7 @@ public class StreamClient {
   String getConsumerId(String requestUrl) {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(requestUrl + "?q=newConsumer");
+    HttpGet get = new HttpGet(requestUrl + "/consumerid");
     if (apikey != null) {
       get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
     }
@@ -580,8 +573,7 @@ public class StreamClient {
       System.err.println("Error sending HTTP request: " + e.getMessage());
       return null;
     }
-    // this call does not respond with 200 OK, but with 201 Created
-    if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) {
+    if (!checkHttpStatus(response, HttpStatus.SC_OK)) {
       return null;
     }
 
@@ -591,7 +583,7 @@ public class StreamClient {
       System.err.println("Unexpected response without body.");
       return null;
     }
-    return new String(binaryValue);
+    return Long.toString(Bytes.toLong(binaryValue));
   }
 
   /**
@@ -604,7 +596,7 @@ public class StreamClient {
   String getQueueInfo(String requestUrl) {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(requestUrl);
+    HttpGet get = new HttpGet(requestUrl + "/info");
     if (apikey != null) {
       get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
     }
@@ -669,8 +661,8 @@ public class StreamClient {
   StreamEvent fetchOne(String uri, String consumer) throws Exception {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(uri + "?q=dequeue");
-    get.addHeader(Constants.HEADER_STREAM_CONSUMER, consumer);
+    HttpGet get = new HttpGet(uri + "/dequeue");
+    get.addHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, consumer);
     if (apikey != null) {
       get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
     }
@@ -723,7 +715,7 @@ public class StreamClient {
       String sep = "";
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
-        if (!verbose && Constants.isContinuuityHeader(name)) {
+        if (!verbose && name.startsWith(Constants.Gateway.CONTINUUITY_PREFIX)) {
           continue;
         }
         System.out.print(sep + name + "=" + event.getHeaders().get(name));

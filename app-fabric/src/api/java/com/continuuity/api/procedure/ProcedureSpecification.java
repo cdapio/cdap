@@ -4,6 +4,9 @@
 
 package com.continuuity.api.procedure;
 
+import com.continuuity.api.ProgramSpecification;
+
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -18,22 +21,7 @@ import java.util.Set;
  * Instance of this class should be created through the {@link Builder} class
  * by invoking the {@link Builder#with()} method.
  */
-public interface ProcedureSpecification {
-
-  /**
-   * @return Class name of the {@link Procedure} class.
-   */
-  String getClassName();
-
-  /**
-   * @return Name of the {@link Procedure}
-   */
-  String getName();
-
-  /**
-   * @return Description to be associated with {@link Procedure}
-   */
-  String getDescription();
+public interface ProcedureSpecification extends ProgramSpecification {
 
   /**
    * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that
@@ -47,12 +35,18 @@ public interface ProcedureSpecification {
   Map<String, String> getArguments();
 
   /**
+   * @return The {@link ResourceSpecification} for the procedure, containing how many resources to use.
+   */
+  ResourceSpecification getResources();
+
+  /**
    * Builder for building {@link ProcedureSpecification}.
    */
   static final class Builder {
     private String name;
     private String description;
     private Map<String, String> arguments;
+    private ResourceSpecification resources = ResourceSpecification.BASIC;
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
 
     public static NameSetter with() {
@@ -123,11 +117,17 @@ public interface ProcedureSpecification {
         return this;
       }
 
+      public AfterDescription withResources(ResourceSpecification resourceSpec) {
+        Preconditions.checkArgument(resourceSpec != null, "Resources cannot be null.");
+        resources = resourceSpec;
+        return this;
+      }
+
       /**
        * @return build a {@link ProcedureSpecification}
        */
       public ProcedureSpecification build() {
-        return new DefaultProcedureSpecification(name, description, dataSets.build(), arguments);
+        return new DefaultProcedureSpecification(name, description, dataSets.build(), arguments, resources);
       }
     }
 

@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.batch.inmemory;
 
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -42,7 +43,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
 
   @Override
   protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
-    return new Program(locationFactory.create(programLocation));
+    return Programs.create(locationFactory.create(programLocation));
   }
 
   protected Injector createInjector() {
@@ -115,9 +116,9 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
     }
 
     @Provides
-    @Named(Constants.CFG_APP_FABRIC_SERVER_ADDRESS)
+    @Named(Constants.AppFabric.SERVER_ADDRESS)
     public InetAddress providesHostname(CConfiguration cConf) {
-      return Networks.resolve(cConf.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS),
+      return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
     }
   }

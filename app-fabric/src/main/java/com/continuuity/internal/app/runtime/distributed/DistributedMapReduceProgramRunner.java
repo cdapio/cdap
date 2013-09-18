@@ -40,14 +40,14 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getProcessorType();
+    Type processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.MAPREDUCE, "Only MAPREDUCE process type is supported.");
 
-    MapReduceSpecification spec = appSpec.getMapReduces().get(program.getProgramName());
-    Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getProgramName());
+    MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
+    Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + spec.getName());
+    LOG.info("Launching distributed flow: " + program.getName() + ":" + spec.getName());
 
     String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
     // TODO (ENG-2526): deal with logging
@@ -55,10 +55,10 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
       = weaveRunner.prepare(new MapReduceWeaveApplication(program, spec, hConfFile, cConfFile))
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .withArguments(spec.getName(),
-                         String.format("--%s", RunnableOptions.JAR), program.getProgramJarLocation().getName())
+                         String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
           .withArguments(spec.getName(),
                          String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
 
-    return new MapReduceWeaveProgramController(program.getProgramName(), preparer.start()).startListen();
+    return new MapReduceWeaveProgramController(program.getName(), preparer.start()).startListen();
   }
 }

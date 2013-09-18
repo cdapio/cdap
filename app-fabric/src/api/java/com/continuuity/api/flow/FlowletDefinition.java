@@ -4,14 +4,15 @@
 
 package com.continuuity.api.flow;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
@@ -41,7 +42,6 @@ import java.util.Set;
  * Class defining the definition for a flowlet.
  */
 public final class FlowletDefinition {
-  public static final String PROCESS_METHOD_PREFIX = "process";
   public static final String DEFAULT_OUTPUT = "queue";
   public static final String ANY_INPUT = "";
 
@@ -75,7 +75,8 @@ public final class FlowletDefinition {
     this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(),
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
-                                                       datasets, flowletSpec.getArguments());
+                                                       datasets, flowletSpec.getArguments(),
+                                                       flowletSpec.getResources());
   }
 
   /**
@@ -219,14 +220,23 @@ public final class FlowletDefinition {
 
       // Grab all process methods
       for (Method method : type.getRawType().getDeclaredMethods()) {
-        // There should be no process method on GeneratorFlowlet
-        if (GeneratorFlowlet.class.isAssignableFrom(type.getRawType())) {
-          continue;
-        }
         ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
-        if (!method.getName().startsWith(PROCESS_METHOD_PREFIX) && processInputAnnotation == null) {
+        Tick tickAnnotation = method.getAnnotation(Tick.class);
+
+        if (processInputAnnotation == null && tickAnnotation == null) {
           continue;
         }
+
+        // Check for tick method
+        if (tickAnnotation != null) {
+          checkArgument(processInputAnnotation == null, type, method, "Tick method should not have ProcessInput.");
+          checkArgument(method.getParameterTypes().length == 0, type, method, "Tick method cannot have any parameter.");
+          continue;
+        }
+
+        // A process method cannot be a tick method
+        checkArgument(tickAnnotation == null, type, method,
+                      "ProcessInput method should not be Tick method");
 
         Type[] methodParams = method.getGenericParameterTypes();
         checkArgument(methodParams.length > 0 && methodParams.length <= 2, type, method,

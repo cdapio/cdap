@@ -3,6 +3,7 @@ package com.continuuity.test.app;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -89,6 +90,7 @@ public class JoinMultiStreamApp implements Application {
       super(name);
     }
 
+    @ProcessInput
     public void process(StreamEvent event) {
       output.emit(new Entry(getContext().getName(), Charsets.UTF_8.decode(event.getBody()).toString()));
     }
@@ -101,6 +103,7 @@ public class JoinMultiStreamApp implements Application {
     @UseDataSet("mytable")
     private KeyValueTable table;
 
+    @ProcessInput
     public void process(Entry entry) throws OperationException {
       table.write(entry.name, entry.value);
     }

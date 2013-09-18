@@ -12,7 +12,6 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentMap;
@@ -61,7 +60,7 @@ public class InMemoryQueue {
       if (tx.getReadPointer() < key.txId) {
         // the entry is newer than the current transaction. so are all subsequent entries. bail out.
         break;
-      } else if (Arrays.binarySearch(tx.getExcludedList(), key.txId) >= 0) {
+      } else if (tx.isInProgress(key.txId)) {
         // the entry is in the exclude list of current transaction. There is a chance that visible entries follow.
         updateStartKey = false; // next time we have to revisit this entry
         continue;

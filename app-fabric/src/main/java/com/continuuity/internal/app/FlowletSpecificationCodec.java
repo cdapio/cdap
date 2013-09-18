@@ -4,18 +4,17 @@
 
 package com.continuuity.internal.app;
 
+import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -24,8 +23,7 @@ import java.util.Set;
 /**
  *
  */
-final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecification>,
-                                                 JsonDeserializer<FlowletSpecification> {
+final class FlowletSpecificationCodec extends AbstractSpecificationCodec<FlowletSpecification> {
 
   @Override
   public JsonElement serialize(FlowletSpecification src, Type typeOfSrc, JsonSerializationContext context) {
@@ -35,8 +33,9 @@ final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecifica
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("failurePolicy", new JsonPrimitive(src.getFailurePolicy().name()));
-    jsonObj.add("datasets", context.serialize(src.getDataSets(), new TypeToken<Set<String>>(){}.getType()));
-    jsonObj.add("arguments", context.serialize(src.getArguments(), new TypeToken<Map<String, String>>(){}.getType()));
+    jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
+    jsonObj.add("arguments", serializeMap(src.getArguments(), context, String.class));
+    jsonObj.add("resources", context.serialize(src.getResources(), new TypeToken<ResourceSpecification>(){}.getType()));
 
     return jsonObj;
   }
@@ -50,10 +49,11 @@ final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecifica
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     FailurePolicy policy = FailurePolicy.valueOf(jsonObj.get("failurePolicy").getAsString());
-    Set<String> dataSets = context.deserialize(jsonObj.get("datasets"), new TypeToken<Set<String>>(){}.getType());
-    Map<String, String> arguments = context.deserialize(jsonObj.get("arguments"),
-                                                        new TypeToken<Map<String, String>>(){}.getType());
+    Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
+    Map<String, String> arguments = deserializeMap(jsonObj.get("arguments"), context, String.class);
+    ResourceSpecification resources = context.deserialize(jsonObj.get("resources"),
+                                                          new TypeToken<ResourceSpecification>(){}.getType());
 
-    return new DefaultFlowletSpecification(className, name, description, policy, dataSets, arguments);
+    return new DefaultFlowletSpecification(className, name, description, policy, dataSets, arguments, resources);
   }
 }

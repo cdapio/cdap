@@ -2,26 +2,22 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletException;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.FlowDescriptor;
-import com.continuuity.app.services.FlowIdentifier;
+import com.continuuity.app.services.ProgramDescriptor;
+import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -86,12 +82,12 @@ public class DeployRunStopTest {
     /**
      *
      */
-    public static final class GenFlowlet extends AbstractFlowlet implements GeneratorFlowlet {
+    public static final class GenFlowlet extends AbstractFlowlet {
 
       private OutputEmitter<String> output;
       private int i;
 
-      @Override
+      @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
       public void generate() throws Exception {
         if (i < 10000) {
           output.emit("Testing " + ++i);
@@ -129,8 +125,8 @@ public class DeployRunStopTest {
     TestHelper.deployApplication(GenSinkApp.class);
 
     AuthToken token = new AuthToken("12345");
-    FlowIdentifier flowIdentifier = new FlowIdentifier(DefaultId.ACCOUNT.getId(), "GenSinkApp", "GenSinkFlow", 1);
-    server.start(token, new FlowDescriptor(flowIdentifier, ImmutableMap.<String, String>of()));
+    ProgramId flowIdentifier = new ProgramId(DefaultId.ACCOUNT.getId(), "GenSinkApp", "GenSinkFlow");
+    server.start(token, new ProgramDescriptor(flowIdentifier, ImmutableMap.<String, String>of()));
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 
@@ -150,16 +146,12 @@ public class DeployRunStopTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/temp");
-
-    final Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
+    final Injector injector = TestHelper.getInjector();
 
     server = injector.getInstance(AppFabricService.Iface.class);
 
     // Create location factory.
-    lf = injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class);
+    lf = injector.getInstance(LocationFactory.class);
 
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);

@@ -4,6 +4,7 @@
 
 package com.continuuity.api.flow;
 
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.internal.UserErrors;
@@ -36,22 +37,7 @@ import java.util.Map;
  * }
  * </pre>
  */
-public interface FlowSpecification {
-
-  /**
-   * @return Class name of the {@link Flow}.
-   */
-  String getClassName();
-
-  /**
-   * @return Name of the {@link Flow}.
-   */
-  String getName();
-
-  /**
-   * @return Description of the {@link Flow}.
-   */
-  String getDescription();
+public interface FlowSpecification extends ProgramSpecification {
 
   /**
    * @return Immutable Map from flowlet name to {@link FlowletDefinition}.
@@ -168,6 +154,7 @@ public interface FlowSpecification {
        * returned by {@link Flowlet#configure()}.
        * @param name Name of the flowlet
        * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @param instances Number of instances for the flowlet
        * @return An instance of {@link MoreFlowlet} for adding more flowlets.
        */
       MoreFlowlet add(String name, Flowlet flowlet, int instances);

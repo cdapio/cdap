@@ -70,7 +70,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    */
   public MultiObjectStore(String name, Type type) throws UnsupportedTypeException {
     super(name);
-    this.table = new Table(name + "_kv");
+    this.table = new Table("multiobjects." + name);
     this.schema = new ReflectionSchemaGenerator().generate(type);
     this.typeRep = new TypeRepresentation(type);
   }
@@ -101,7 +101,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
       .create();
     this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
     this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
-    this.table = new Table(spec.getSpecificationFor(this.getName() + "_kv"));
+    this.table = new Table(spec.getSpecificationFor("multiobjects." + this.getName()));
   }
 
   /**

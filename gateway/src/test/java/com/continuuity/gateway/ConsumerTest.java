@@ -12,12 +12,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Consumer Test
+ * Consumer Test.
  */
 public class ConsumerTest {
 
   /**
-   * This tests that testConsumer counts correctly
+   * This tests that testConsumer counts correctly.
    */
   @Test
   public void testConsumer() throws Exception {
@@ -53,8 +53,8 @@ public class ConsumerTest {
     Assert.assertEquals(0, consumer.eventsFailed());
 
     // send a good event and verify counters went up by one
-    String DEFAULT_ACCOUNT_ID = "default";
-    consumer.consumeEvent(goodEvent, DEFAULT_ACCOUNT_ID);
+    String defaultAccountId = "default";
+    consumer.consumeEvent(goodEvent, defaultAccountId);
     Assert.assertEquals(1, consumer.callsReceived());
     Assert.assertEquals(1, consumer.eventsReceived());
     Assert.assertEquals(1, consumer.callsSucceeded());
@@ -64,7 +64,7 @@ public class ConsumerTest {
 
     // send a bad event and verify counters went up by one
     try {
-      consumer.consumeEvent(badEvent, DEFAULT_ACCOUNT_ID);
+      consumer.consumeEvent(badEvent, defaultAccountId);
     } catch (Exception e) {
     }
     Assert.assertEquals(2, consumer.callsReceived());
@@ -75,7 +75,7 @@ public class ConsumerTest {
     Assert.assertEquals(1, consumer.eventsFailed());
 
     // send a batch of good events and verify counters went up
-    consumer.consumeEvents(goodBatch, DEFAULT_ACCOUNT_ID);
+    consumer.consumeEvents(goodBatch, defaultAccountId);
     Assert.assertEquals(3, consumer.callsReceived());
     Assert.assertEquals(4, consumer.eventsReceived());
     Assert.assertEquals(2, consumer.callsSucceeded());
@@ -85,7 +85,7 @@ public class ConsumerTest {
 
     // send a batch of bad events and verify counters went up
     try {
-      consumer.consumeEvents(badBatch, DEFAULT_ACCOUNT_ID);
+      consumer.consumeEvents(badBatch, defaultAccountId);
     } catch (Exception e) {
     }
     Assert.assertEquals(4, consumer.callsReceived());
@@ -97,7 +97,7 @@ public class ConsumerTest {
 
     // send a batch of mixed events and verify counters went up
     try {
-      consumer.consumeEvents(mixedBatch, DEFAULT_ACCOUNT_ID);
+      consumer.consumeEvents(mixedBatch, defaultAccountId);
     } catch (Exception e) {
     }
     Assert.assertEquals(5, consumer.callsReceived());

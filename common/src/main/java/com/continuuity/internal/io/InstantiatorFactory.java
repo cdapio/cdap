@@ -26,7 +26,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 
 /**
- *
+ * InstantiatorFactory
  */
 public final class InstantiatorFactory {
 

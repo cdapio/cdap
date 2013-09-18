@@ -2,6 +2,7 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
+import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.data.AggregatesTable;
@@ -49,6 +50,18 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
       this.metricsTableCaches.put(scope, cache);
       this.aggregatesTables.put(scope, metricsTableFactory.createAggregates(scope.name()));
     }
+  }
+
+  @Override
+  public void init(HandlerContext context) {
+    super.init(context);
+    LOG.info("Starting DeleteMetricsHandler");
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    super.destroy(context);
+    LOG.info("Stopping DeleteMetricsHandler");
   }
 
   @Path("/app/{app-id}")

@@ -9,22 +9,32 @@ import java.util.Collection;
  */
 public interface TransactionSystemClient {
   /**
-   * Starts new transaction.
+   * Starts new short transaction.
    * @return instance of {@link Transaction}
    */
-  Transaction start();
+  // TODO: "short" and "long" are very misleading names. Use transaction attributes like "detect conflicts or not", etc.
+  Transaction startShort();
 
   /**
-   * Starts new transaction.
-   * @param timeout the timeout for the transaction, or null for no timeout
+   * Starts new short transaction.
+   * @param timeout the timeout for the transaction
    * @return instance of {@link Transaction}
    */
-  Transaction start(Integer timeout);
+  Transaction startShort(int timeout);
+
+  /**
+   * Starts new long transaction.
+   * @return instance of {@link Transaction}
+   */
+  Transaction startLong();
 
   // this pre-commit detects conflicts with other transactions committed so far
   // NOTE: the changes set should not change after this operation, this may help us do some extra optimizations
   // NOTE: there should be time constraint on how long does it take to commit changes by the client after this operation
   //       is submitted so that we can cleanup related resources
+  // NOTE: as of now you can call this method multiple times, each time the changeSet of tx will be updated. Not sure
+  //       if we can call it a feature or a side-affect of implementation. It makes more sense to append changeset, but
+  //       before we really need it we don't do it because it will slow down tx manager throughput.
 
   /**
    * Checks if transaction with the set of changes can be committed. E.g. it can check conflicts with other changes and
@@ -42,22 +52,23 @@ public interface TransactionSystemClient {
    */
   boolean canCommit(Transaction tx, Collection<byte[]> changeIds);
 
-  // this is called to make tx changes visible (i.e. removes it from excluded list) after all changes are committed by
-  // client
-  // todo: can it return false
-
   /**
    * Makes transaction visible. It will again check conflicts of changes submitted previously with
    * {@link #canCommit(Transaction, java.util.Collection)}
    * @param tx transaction to make visible.
-   * @return
+   * @return true if transaction can be committed otherwise false
    */
   boolean commit(Transaction tx);
 
   /**
    * Makes transaction visible. You should call it only when all changes of this tx are undone.
    * @param tx transaction to make visible.
-   * @return
    */
-  boolean abort(Transaction tx);
+  void abort(Transaction tx);
+
+  /**
+   * Makes transaction invalid. You should call it if not all changes of this tx could be undone.
+   * @param tx transaction to invalidate.
+   */
+  void invalidate(Transaction tx);
 }
