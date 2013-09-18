@@ -14,6 +14,7 @@ import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowContext;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.app.runtime.batch.WordCount;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,10 +122,7 @@ public class WorkflowApp implements Application {
       LOG.info("Custom action run");
       File outputDir = new File(getContext().getRuntimeArguments().get("outputPath"));
 
-      LOG.info("output dir: {}", outputDir);
-      for (File file : outputDir.listFiles()) {
-        LOG.info("ouput: {}", file);
-      }
+      Preconditions.checkState(new File(outputDir, "_SUCCESS").exists());
 
       LOG.info("Custom run completed.");
     }
