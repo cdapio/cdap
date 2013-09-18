@@ -1,0 +1,4 @@
+To generate thrift classes:
+	thrift --gen "java:beans,hashcode" --out ./java/ ./thrift/metadataservice.thrift
+	thrift --gen "java:beans,hashcode" --out ./java/ ./thrift/logquery.thrift
+	thrift --gen "java:beans,hashcode" --out ./java/ ./thrift/metricsservice.thrift

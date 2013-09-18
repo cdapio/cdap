@@ -6,6 +6,7 @@
  */
 package com.continuuity.metadata.thrift;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -337,7 +338,7 @@ public class MetadataService {
      * @param account
      * @param mapreduce
      */
-    public boolean    deleteMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException;
+    public boolean deleteMapreduce(Account account, Mapreduce mapreduce) throws MetadataServiceException, org.apache.thrift.TException;
 
     /**
      * Returns a list of mapreduce associated with account.
@@ -4416,8 +4417,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createStream_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Stream stream; // required
+    private Account account; // required
+    private Stream stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4530,9 +4531,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public createStream_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -4554,9 +4554,8 @@ public class MetadataService {
       return this.stream;
     }
 
-    public createStream_args setStream(Stream stream) {
+    public void setStream(Stream stream) {
       this.stream = stream;
-      return this;
     }
 
     public void unsetStream() {
@@ -4658,7 +4657,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_stream = true && (isSetStream());
+      builder.append(present_stream);
+      if (present_stream)
+        builder.append(stream);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createStream_args other) {
@@ -4790,8 +4801,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -4873,8 +4882,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createStream_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4991,10 +5000,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public createStream_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -5014,9 +5022,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public createStream_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -5118,7 +5125,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createStream_result other) {
@@ -5198,8 +5217,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -5247,8 +5264,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -5327,8 +5342,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new assertStream_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Stream stream; // required
+    private Account account; // required
+    private Stream stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -5441,9 +5456,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public assertStream_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -5465,9 +5479,8 @@ public class MetadataService {
       return this.stream;
     }
 
-    public assertStream_args setStream(Stream stream) {
+    public void setStream(Stream stream) {
       this.stream = stream;
-      return this;
     }
 
     public void unsetStream() {
@@ -5569,7 +5582,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_stream = true && (isSetStream());
+      builder.append(present_stream);
+      if (present_stream)
+        builder.append(stream);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(assertStream_args other) {
@@ -5701,8 +5726,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -5784,8 +5807,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new assertStream_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -5902,10 +5925,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public assertStream_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -5925,9 +5947,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public assertStream_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -6029,7 +6050,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(assertStream_result other) {
@@ -6109,8 +6142,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -6158,8 +6189,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -6238,8 +6267,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteStream_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Stream stream; // required
+    private Account account; // required
+    private Stream stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -6352,9 +6381,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public deleteStream_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -6376,9 +6404,8 @@ public class MetadataService {
       return this.stream;
     }
 
-    public deleteStream_args setStream(Stream stream) {
+    public void setStream(Stream stream) {
       this.stream = stream;
-      return this;
     }
 
     public void unsetStream() {
@@ -6480,7 +6507,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_stream = true && (isSetStream());
+      builder.append(present_stream);
+      if (present_stream)
+        builder.append(stream);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteStream_args other) {
@@ -6612,8 +6651,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -6695,8 +6732,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteStream_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -6813,10 +6850,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public deleteStream_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -6836,9 +6872,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public deleteStream_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -6940,7 +6975,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteStream_result other) {
@@ -7020,8 +7067,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -7069,8 +7114,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -7148,7 +7191,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStreams_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
+    private Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -7250,9 +7293,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getStreams_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -7332,7 +7374,14 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getStreams_args other) {
@@ -7437,8 +7486,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -7504,8 +7551,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStreams_resultTupleSchemeFactory());
     }
 
-    public List<Stream> success; // required
-    public MetadataServiceException e; // required
+    private List<Stream> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -7638,9 +7685,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getStreams_result setSuccess(List<Stream> success) {
+    public void setSuccess(List<Stream> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -7662,9 +7708,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getStreams_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -7766,7 +7811,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getStreams_result other) {
@@ -7908,8 +7965,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -8013,8 +8068,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStream_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Stream stream; // required
+    private Account account; // required
+    private Stream stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -8127,9 +8182,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getStream_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -8151,9 +8205,8 @@ public class MetadataService {
       return this.stream;
     }
 
-    public getStream_args setStream(Stream stream) {
+    public void setStream(Stream stream) {
       this.stream = stream;
-      return this;
     }
 
     public void unsetStream() {
@@ -8255,7 +8308,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_stream = true && (isSetStream());
+      builder.append(present_stream);
+      if (present_stream)
+        builder.append(stream);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getStream_args other) {
@@ -8387,8 +8452,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -8470,8 +8533,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStream_resultTupleSchemeFactory());
     }
 
-    public Stream success; // required
-    public MetadataServiceException e; // required
+    private Stream success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -8584,9 +8647,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getStream_result setSuccess(Stream success) {
+    public void setSuccess(Stream success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -8608,9 +8670,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getStream_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -8712,7 +8773,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getStream_result other) {
@@ -8844,8 +8917,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -8927,8 +8998,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createDataset_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Dataset dataset; // required
+    private Account account; // required
+    private Dataset dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -9041,9 +9112,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public createDataset_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -9065,9 +9135,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public createDataset_args setDataset(Dataset dataset) {
+    public void setDataset(Dataset dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -9169,7 +9238,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createDataset_args other) {
@@ -9301,8 +9382,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -9384,8 +9463,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createDataset_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -9502,10 +9581,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public createDataset_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -9525,9 +9603,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public createDataset_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -9629,7 +9706,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createDataset_result other) {
@@ -9709,8 +9798,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -9758,8 +9845,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -9838,8 +9923,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new assertDataset_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Dataset dataset; // required
+    private Account account; // required
+    private Dataset dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -9952,9 +10037,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public assertDataset_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -9976,9 +10060,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public assertDataset_args setDataset(Dataset dataset) {
+    public void setDataset(Dataset dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -10080,7 +10163,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(assertDataset_args other) {
@@ -10212,8 +10307,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -10295,8 +10388,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new assertDataset_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -10413,10 +10506,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public assertDataset_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -10436,9 +10528,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public assertDataset_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -10540,7 +10631,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(assertDataset_result other) {
@@ -10620,8 +10723,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -10669,8 +10770,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -10749,8 +10848,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteDataset_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Dataset dataset; // required
+    private Account account; // required
+    private Dataset dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -10863,9 +10962,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public deleteDataset_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -10887,9 +10985,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public deleteDataset_args setDataset(Dataset dataset) {
+    public void setDataset(Dataset dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -10991,7 +11088,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteDataset_args other) {
@@ -11123,8 +11232,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -11206,8 +11313,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteDataset_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -11324,10 +11431,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public deleteDataset_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -11347,9 +11453,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public deleteDataset_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -11451,7 +11556,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteDataset_result other) {
@@ -11531,8 +11648,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -11580,8 +11695,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -11659,7 +11772,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDatasets_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
+    private Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -11761,9 +11874,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getDatasets_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -11843,7 +11955,14 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getDatasets_args other) {
@@ -11948,8 +12067,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -12015,8 +12132,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDatasets_resultTupleSchemeFactory());
     }
 
-    public List<Dataset> success; // required
-    public MetadataServiceException e; // required
+    private List<Dataset> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -12149,9 +12266,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getDatasets_result setSuccess(List<Dataset> success) {
+    public void setSuccess(List<Dataset> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -12173,9 +12289,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getDatasets_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -12277,7 +12392,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getDatasets_result other) {
@@ -12419,8 +12546,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -12524,8 +12649,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDataset_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Dataset dataset; // required
+    private Account account; // required
+    private Dataset dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -12638,9 +12763,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getDataset_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -12662,9 +12786,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public getDataset_args setDataset(Dataset dataset) {
+    public void setDataset(Dataset dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -12766,7 +12889,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getDataset_args other) {
@@ -12898,8 +13033,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -12981,8 +13114,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDataset_resultTupleSchemeFactory());
     }
 
-    public Dataset success; // required
-    public MetadataServiceException e; // required
+    private Dataset success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -13095,9 +13228,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getDataset_result setSuccess(Dataset success) {
+    public void setSuccess(Dataset success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -13119,9 +13251,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getDataset_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -13223,7 +13354,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getDataset_result other) {
@@ -13355,8 +13498,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -13438,8 +13579,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createApplication_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Application application; // required
+    private Account account; // required
+    private Application application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -13552,9 +13693,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public createApplication_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -13576,9 +13716,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public createApplication_args setApplication(Application application) {
+    public void setApplication(Application application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -13680,7 +13819,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createApplication_args other) {
@@ -13812,8 +13963,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -13895,8 +14044,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createApplication_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -14013,10 +14162,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public createApplication_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -14036,9 +14184,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public createApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -14140,7 +14287,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createApplication_result other) {
@@ -14220,8 +14379,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -14269,8 +14426,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -14349,8 +14504,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateApplication_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Application application; // required
+    private Account account; // required
+    private Application application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -14463,9 +14618,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public updateApplication_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -14487,9 +14641,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public updateApplication_args setApplication(Application application) {
+    public void setApplication(Application application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -14591,7 +14744,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(updateApplication_args other) {
@@ -14723,8 +14888,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -14806,8 +14969,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateApplication_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -14924,10 +15087,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public updateApplication_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -14947,9 +15109,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public updateApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -15051,7 +15212,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(updateApplication_result other) {
@@ -15131,8 +15304,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -15180,8 +15351,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -15260,8 +15429,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteApplication_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Application application; // required
+    private Account account; // required
+    private Application application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -15374,9 +15543,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public deleteApplication_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -15398,9 +15566,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public deleteApplication_args setApplication(Application application) {
+    public void setApplication(Application application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -15502,7 +15669,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteApplication_args other) {
@@ -15634,8 +15813,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -15717,8 +15894,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteApplication_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -15835,10 +16012,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public deleteApplication_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -15858,9 +16034,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public deleteApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -15962,7 +16137,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteApplication_result other) {
@@ -16042,8 +16229,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -16091,8 +16276,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -16170,7 +16353,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getApplications_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
+    private Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -16272,9 +16455,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getApplications_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -16354,7 +16536,14 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getApplications_args other) {
@@ -16459,8 +16648,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -16526,8 +16713,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getApplications_resultTupleSchemeFactory());
     }
 
-    public List<Application> success; // required
-    public MetadataServiceException e; // required
+    private List<Application> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -16660,9 +16847,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getApplications_result setSuccess(List<Application> success) {
+    public void setSuccess(List<Application> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -16684,9 +16870,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getApplications_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -16788,7 +16973,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getApplications_result other) {
@@ -16930,8 +17127,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -17035,8 +17230,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getApplication_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Application application; // required
+    private Account account; // required
+    private Application application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -17149,9 +17344,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getApplication_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -17173,9 +17367,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public getApplication_args setApplication(Application application) {
+    public void setApplication(Application application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -17277,7 +17470,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getApplication_args other) {
@@ -17409,8 +17614,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -17492,8 +17695,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getApplication_resultTupleSchemeFactory());
     }
 
-    public Application success; // required
-    public MetadataServiceException e; // required
+    private Application success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -17606,9 +17809,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getApplication_result setSuccess(Application success) {
+    public void setSuccess(Application success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -17630,9 +17832,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -17734,7 +17935,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getApplication_result other) {
@@ -17866,8 +18079,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -17949,8 +18160,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createQuery_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Query query; // required
+    private Account account; // required
+    private Query query; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -18063,9 +18274,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public createQuery_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -18087,9 +18297,8 @@ public class MetadataService {
       return this.query;
     }
 
-    public createQuery_args setQuery(Query query) {
+    public void setQuery(Query query) {
       this.query = query;
-      return this;
     }
 
     public void unsetQuery() {
@@ -18191,7 +18400,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_query = true && (isSetQuery());
+      builder.append(present_query);
+      if (present_query)
+        builder.append(query);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createQuery_args other) {
@@ -18323,8 +18544,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -18406,8 +18625,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createQuery_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -18524,10 +18743,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public createQuery_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -18547,9 +18765,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public createQuery_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -18651,7 +18868,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createQuery_result other) {
@@ -18731,8 +18960,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -18780,8 +19007,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -18860,8 +19085,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateQuery_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Query query; // required
+    private Account account; // required
+    private Query query; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -18974,9 +19199,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public updateQuery_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -18998,9 +19222,8 @@ public class MetadataService {
       return this.query;
     }
 
-    public updateQuery_args setQuery(Query query) {
+    public void setQuery(Query query) {
       this.query = query;
-      return this;
     }
 
     public void unsetQuery() {
@@ -19102,7 +19325,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_query = true && (isSetQuery());
+      builder.append(present_query);
+      if (present_query)
+        builder.append(query);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(updateQuery_args other) {
@@ -19234,8 +19469,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -19317,8 +19550,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateQuery_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -19435,10 +19668,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public updateQuery_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -19458,9 +19690,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public updateQuery_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -19562,7 +19793,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(updateQuery_result other) {
@@ -19642,8 +19885,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -19691,8 +19932,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -19773,10 +20012,10 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToQuery_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String app; // required
-    public String query; // required
-    public String dataset; // required
+    private String account; // required
+    private String app; // required
+    private String query; // required
+    private String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -19911,9 +20150,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public addDatasetToQuery_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -19935,9 +20173,8 @@ public class MetadataService {
       return this.app;
     }
 
-    public addDatasetToQuery_args setApp(String app) {
+    public void setApp(String app) {
       this.app = app;
-      return this;
     }
 
     public void unsetApp() {
@@ -19959,9 +20196,8 @@ public class MetadataService {
       return this.query;
     }
 
-    public addDatasetToQuery_args setQuery(String query) {
+    public void setQuery(String query) {
       this.query = query;
-      return this;
     }
 
     public void unsetQuery() {
@@ -19983,9 +20219,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public addDatasetToQuery_args setDataset(String dataset) {
+    public void setDataset(String dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -20131,7 +20366,29 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_app = true && (isSetApp());
+      builder.append(present_app);
+      if (present_app)
+        builder.append(app);
+
+      boolean present_query = true && (isSetQuery());
+      builder.append(present_query);
+      if (present_query)
+        builder.append(query);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(addDatasetToQuery_args other) {
@@ -20313,8 +20570,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -20424,8 +20679,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToQuery_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -20542,10 +20797,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public addDatasetToQuery_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -20565,9 +20819,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public addDatasetToQuery_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -20669,7 +20922,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(addDatasetToQuery_result other) {
@@ -20749,8 +21014,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -20798,8 +21061,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -20878,8 +21139,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteQuery_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Query query; // required
+    private Account account; // required
+    private Query query; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -20992,9 +21253,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public deleteQuery_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -21016,9 +21276,8 @@ public class MetadataService {
       return this.query;
     }
 
-    public deleteQuery_args setQuery(Query query) {
+    public void setQuery(Query query) {
       this.query = query;
-      return this;
     }
 
     public void unsetQuery() {
@@ -21120,7 +21379,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_query = true && (isSetQuery());
+      builder.append(present_query);
+      if (present_query)
+        builder.append(query);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteQuery_args other) {
@@ -21252,8 +21523,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -21335,8 +21604,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteQuery_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -21453,10 +21722,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public deleteQuery_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -21476,9 +21744,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public deleteQuery_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -21580,7 +21847,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteQuery_result other) {
@@ -21660,8 +21939,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -21709,8 +21986,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -21788,7 +22063,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueries_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
+    private Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -21890,9 +22165,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getQueries_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -21972,7 +22246,14 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getQueries_args other) {
@@ -22077,8 +22358,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -22144,8 +22423,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueries_resultTupleSchemeFactory());
     }
 
-    public List<Query> success; // required
-    public MetadataServiceException e; // required
+    private List<Query> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -22278,9 +22557,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getQueries_result setSuccess(List<Query> success) {
+    public void setSuccess(List<Query> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -22302,9 +22580,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getQueries_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -22406,7 +22683,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getQueries_result other) {
@@ -22548,8 +22837,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -22653,8 +22940,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQuery_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Query query; // required
+    private Account account; // required
+    private Query query; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -22767,9 +23054,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getQuery_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -22791,9 +23077,8 @@ public class MetadataService {
       return this.query;
     }
 
-    public getQuery_args setQuery(Query query) {
+    public void setQuery(Query query) {
       this.query = query;
-      return this;
     }
 
     public void unsetQuery() {
@@ -22895,7 +23180,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_query = true && (isSetQuery());
+      builder.append(present_query);
+      if (present_query)
+        builder.append(query);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getQuery_args other) {
@@ -23027,8 +23324,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -23110,8 +23405,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQuery_resultTupleSchemeFactory());
     }
 
-    public Query success; // required
-    public MetadataServiceException e; // required
+    private Query success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -23224,9 +23519,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getQuery_result setSuccess(Query success) {
+    public void setSuccess(Query success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -23248,9 +23542,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getQuery_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -23352,7 +23645,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getQuery_result other) {
@@ -23484,8 +23789,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -23567,8 +23870,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createMapreduce_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Mapreduce mapreduce; // required
+    private Account account; // required
+    private Mapreduce mapreduce; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -23681,9 +23984,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public createMapreduce_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -23705,9 +24007,8 @@ public class MetadataService {
       return this.mapreduce;
     }
 
-    public createMapreduce_args setMapreduce(Mapreduce mapreduce) {
+    public void setMapreduce(Mapreduce mapreduce) {
       this.mapreduce = mapreduce;
-      return this;
     }
 
     public void unsetMapreduce() {
@@ -23809,7 +24110,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_mapreduce = true && (isSetMapreduce());
+      builder.append(present_mapreduce);
+      if (present_mapreduce)
+        builder.append(mapreduce);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createMapreduce_args other) {
@@ -23941,8 +24254,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -24024,8 +24335,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createMapreduce_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -24142,10 +24453,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public createMapreduce_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -24165,9 +24475,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public createMapreduce_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -24269,7 +24578,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createMapreduce_result other) {
@@ -24349,8 +24670,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -24398,8 +24717,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -24478,8 +24795,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateMapreduce_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Mapreduce mapreduce; // required
+    private Account account; // required
+    private Mapreduce mapreduce; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -24592,9 +24909,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public updateMapreduce_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -24616,9 +24932,8 @@ public class MetadataService {
       return this.mapreduce;
     }
 
-    public updateMapreduce_args setMapreduce(Mapreduce mapreduce) {
+    public void setMapreduce(Mapreduce mapreduce) {
       this.mapreduce = mapreduce;
-      return this;
     }
 
     public void unsetMapreduce() {
@@ -24720,7 +25035,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_mapreduce = true && (isSetMapreduce());
+      builder.append(present_mapreduce);
+      if (present_mapreduce)
+        builder.append(mapreduce);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(updateMapreduce_args other) {
@@ -24852,8 +25179,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -24935,8 +25260,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateMapreduce_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -25053,10 +25378,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public updateMapreduce_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -25076,9 +25400,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public updateMapreduce_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -25180,7 +25503,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(updateMapreduce_result other) {
@@ -25260,8 +25595,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -25309,8 +25642,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -25391,10 +25722,10 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToMapreduce_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String app; // required
-    public String mapreduce; // required
-    public String dataset; // required
+    private String account; // required
+    private String app; // required
+    private String mapreduce; // required
+    private String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -25529,9 +25860,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public addDatasetToMapreduce_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -25553,9 +25883,8 @@ public class MetadataService {
       return this.app;
     }
 
-    public addDatasetToMapreduce_args setApp(String app) {
+    public void setApp(String app) {
       this.app = app;
-      return this;
     }
 
     public void unsetApp() {
@@ -25577,9 +25906,8 @@ public class MetadataService {
       return this.mapreduce;
     }
 
-    public addDatasetToMapreduce_args setMapreduce(String mapreduce) {
+    public void setMapreduce(String mapreduce) {
       this.mapreduce = mapreduce;
-      return this;
     }
 
     public void unsetMapreduce() {
@@ -25601,9 +25929,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public addDatasetToMapreduce_args setDataset(String dataset) {
+    public void setDataset(String dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -25749,7 +26076,29 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_app = true && (isSetApp());
+      builder.append(present_app);
+      if (present_app)
+        builder.append(app);
+
+      boolean present_mapreduce = true && (isSetMapreduce());
+      builder.append(present_mapreduce);
+      if (present_mapreduce)
+        builder.append(mapreduce);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(addDatasetToMapreduce_args other) {
@@ -25931,8 +26280,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -26042,8 +26389,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToMapreduce_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -26160,10 +26507,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public addDatasetToMapreduce_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -26183,9 +26529,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public addDatasetToMapreduce_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -26287,7 +26632,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(addDatasetToMapreduce_result other) {
@@ -26367,8 +26724,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -26416,8 +26771,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -26496,8 +26849,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteMapreduce_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Mapreduce mapreduce; // required
+    private Account account; // required
+    private Mapreduce mapreduce; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -26610,9 +26963,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public deleteMapreduce_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -26634,9 +26986,8 @@ public class MetadataService {
       return this.mapreduce;
     }
 
-    public deleteMapreduce_args setMapreduce(Mapreduce mapreduce) {
+    public void setMapreduce(Mapreduce mapreduce) {
       this.mapreduce = mapreduce;
-      return this;
     }
 
     public void unsetMapreduce() {
@@ -26738,7 +27089,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_mapreduce = true && (isSetMapreduce());
+      builder.append(present_mapreduce);
+      if (present_mapreduce)
+        builder.append(mapreduce);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteMapreduce_args other) {
@@ -26870,8 +27233,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -26953,8 +27314,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteMapreduce_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -27071,10 +27432,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public deleteMapreduce_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -27094,9 +27454,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public deleteMapreduce_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -27198,7 +27557,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteMapreduce_result other) {
@@ -27278,8 +27649,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -27327,8 +27696,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -27406,7 +27773,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getMapreduces_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
+    private Account account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -27508,9 +27875,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getMapreduces_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -27590,7 +27956,14 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getMapreduces_args other) {
@@ -27695,8 +28068,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -27762,8 +28133,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getMapreduces_resultTupleSchemeFactory());
     }
 
-    public List<Mapreduce> success; // required
-    public MetadataServiceException e; // required
+    private List<Mapreduce> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -27896,9 +28267,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getMapreduces_result setSuccess(List<Mapreduce> success) {
+    public void setSuccess(List<Mapreduce> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -27920,9 +28290,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getMapreduces_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -28024,7 +28393,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getMapreduces_result other) {
@@ -28166,8 +28547,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -28271,8 +28650,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getMapreduce_argsTupleSchemeFactory());
     }
 
-    public Account account; // required
-    public Mapreduce mapreduce; // required
+    private Account account; // required
+    private Mapreduce mapreduce; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -28385,9 +28764,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getMapreduce_args setAccount(Account account) {
+    public void setAccount(Account account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -28409,9 +28787,8 @@ public class MetadataService {
       return this.mapreduce;
     }
 
-    public getMapreduce_args setMapreduce(Mapreduce mapreduce) {
+    public void setMapreduce(Mapreduce mapreduce) {
       this.mapreduce = mapreduce;
-      return this;
     }
 
     public void unsetMapreduce() {
@@ -28513,7 +28890,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_mapreduce = true && (isSetMapreduce());
+      builder.append(present_mapreduce);
+      if (present_mapreduce)
+        builder.append(mapreduce);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getMapreduce_args other) {
@@ -28645,8 +29034,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -28728,8 +29115,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getMapreduce_resultTupleSchemeFactory());
     }
 
-    public Mapreduce success; // required
-    public MetadataServiceException e; // required
+    private Mapreduce success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -28842,9 +29229,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getMapreduce_result setSuccess(Mapreduce success) {
+    public void setSuccess(Mapreduce success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -28866,9 +29252,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getMapreduce_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -28970,7 +29355,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getMapreduce_result other) {
@@ -29102,8 +29499,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -29185,8 +29580,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createFlow_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public Flow flow; // required
+    private String account; // required
+    private Flow flow; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -29299,9 +29694,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public createFlow_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -29323,9 +29717,8 @@ public class MetadataService {
       return this.flow;
     }
 
-    public createFlow_args setFlow(Flow flow) {
+    public void setFlow(Flow flow) {
       this.flow = flow;
-      return this;
     }
 
     public void unsetFlow() {
@@ -29427,7 +29820,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_flow = true && (isSetFlow());
+      builder.append(present_flow);
+      if (present_flow)
+        builder.append(flow);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createFlow_args other) {
@@ -29558,8 +29963,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -29640,8 +30043,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new createFlow_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -29758,10 +30161,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public createFlow_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -29781,9 +30183,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public createFlow_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -29885,7 +30286,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(createFlow_result other) {
@@ -29965,8 +30378,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -30014,8 +30425,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -30094,8 +30503,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateFlow_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public Flow flow; // required
+    private String account; // required
+    private Flow flow; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -30208,9 +30617,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public updateFlow_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -30232,9 +30640,8 @@ public class MetadataService {
       return this.flow;
     }
 
-    public updateFlow_args setFlow(Flow flow) {
+    public void setFlow(Flow flow) {
       this.flow = flow;
-      return this;
     }
 
     public void unsetFlow() {
@@ -30336,7 +30743,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_flow = true && (isSetFlow());
+      builder.append(present_flow);
+      if (present_flow)
+        builder.append(flow);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(updateFlow_args other) {
@@ -30467,8 +30886,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -30549,8 +30966,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new updateFlow_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -30667,10 +31084,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public updateFlow_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -30690,9 +31106,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public updateFlow_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -30794,7 +31209,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(updateFlow_result other) {
@@ -30874,8 +31301,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -30923,8 +31348,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -31005,10 +31428,10 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToFlow_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String app; // required
-    public String flowid; // required
-    public String dataset; // required
+    private String account; // required
+    private String app; // required
+    private String flowid; // required
+    private String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -31143,9 +31566,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public addDatasetToFlow_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -31167,9 +31589,8 @@ public class MetadataService {
       return this.app;
     }
 
-    public addDatasetToFlow_args setApp(String app) {
+    public void setApp(String app) {
       this.app = app;
-      return this;
     }
 
     public void unsetApp() {
@@ -31191,9 +31612,8 @@ public class MetadataService {
       return this.flowid;
     }
 
-    public addDatasetToFlow_args setFlowid(String flowid) {
+    public void setFlowid(String flowid) {
       this.flowid = flowid;
-      return this;
     }
 
     public void unsetFlowid() {
@@ -31215,9 +31635,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public addDatasetToFlow_args setDataset(String dataset) {
+    public void setDataset(String dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -31363,7 +31782,29 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_app = true && (isSetApp());
+      builder.append(present_app);
+      if (present_app)
+        builder.append(app);
+
+      boolean present_flowid = true && (isSetFlowid());
+      builder.append(present_flowid);
+      if (present_flowid)
+        builder.append(flowid);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(addDatasetToFlow_args other) {
@@ -31545,8 +31986,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -31656,8 +32095,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addDatasetToFlow_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -31774,10 +32213,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public addDatasetToFlow_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -31797,9 +32235,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public addDatasetToFlow_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -31901,7 +32338,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(addDatasetToFlow_result other) {
@@ -31981,8 +32430,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -32030,8 +32477,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -32112,10 +32557,10 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addStreamToFlow_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String app; // required
-    public String flowid; // required
-    public String stream; // required
+    private String account; // required
+    private String app; // required
+    private String flowid; // required
+    private String stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -32250,9 +32695,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public addStreamToFlow_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -32274,9 +32718,8 @@ public class MetadataService {
       return this.app;
     }
 
-    public addStreamToFlow_args setApp(String app) {
+    public void setApp(String app) {
       this.app = app;
-      return this;
     }
 
     public void unsetApp() {
@@ -32298,9 +32741,8 @@ public class MetadataService {
       return this.flowid;
     }
 
-    public addStreamToFlow_args setFlowid(String flowid) {
+    public void setFlowid(String flowid) {
       this.flowid = flowid;
-      return this;
     }
 
     public void unsetFlowid() {
@@ -32322,9 +32764,8 @@ public class MetadataService {
       return this.stream;
     }
 
-    public addStreamToFlow_args setStream(String stream) {
+    public void setStream(String stream) {
       this.stream = stream;
-      return this;
     }
 
     public void unsetStream() {
@@ -32470,7 +32911,29 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_app = true && (isSetApp());
+      builder.append(present_app);
+      if (present_app)
+        builder.append(app);
+
+      boolean present_flowid = true && (isSetFlowid());
+      builder.append(present_flowid);
+      if (present_flowid)
+        builder.append(flowid);
+
+      boolean present_stream = true && (isSetStream());
+      builder.append(present_stream);
+      if (present_stream)
+        builder.append(stream);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(addStreamToFlow_args other) {
@@ -32652,8 +33115,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -32763,8 +33224,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new addStreamToFlow_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -32881,10 +33342,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public addStreamToFlow_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -32904,9 +33364,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public addStreamToFlow_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -33008,7 +33467,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(addStreamToFlow_result other) {
@@ -33088,8 +33559,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -33137,8 +33606,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -33218,9 +33685,9 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteFlow_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String app; // required
-    public String flowid; // required
+    private String account; // required
+    private String app; // required
+    private String flowid; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -33344,9 +33811,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public deleteFlow_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -33368,9 +33834,8 @@ public class MetadataService {
       return this.app;
     }
 
-    public deleteFlow_args setApp(String app) {
+    public void setApp(String app) {
       this.app = app;
-      return this;
     }
 
     public void unsetApp() {
@@ -33392,9 +33857,8 @@ public class MetadataService {
       return this.flowid;
     }
 
-    public deleteFlow_args setFlowid(String flowid) {
+    public void setFlowid(String flowid) {
       this.flowid = flowid;
-      return this;
     }
 
     public void unsetFlowid() {
@@ -33518,7 +33982,24 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_app = true && (isSetApp());
+      builder.append(present_app);
+      if (present_app)
+        builder.append(app);
+
+      boolean present_flowid = true && (isSetFlowid());
+      builder.append(present_flowid);
+      if (present_flowid)
+        builder.append(flowid);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteFlow_args other) {
@@ -33674,8 +34155,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -33770,8 +34249,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteFlow_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public MetadataServiceException e; // required
+    private boolean success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -33888,10 +34367,9 @@ public class MetadataService {
       return this.success;
     }
 
-    public deleteFlow_result setSuccess(boolean success) {
+    public void setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
-      return this;
     }
 
     public void unsetSuccess() {
@@ -33911,9 +34389,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public deleteFlow_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -34015,7 +34492,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteFlow_result other) {
@@ -34095,8 +34584,6 @@ public class MetadataService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -34144,8 +34631,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -34223,7 +34708,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlows_argsTupleSchemeFactory());
     }
 
-    public String account; // required
+    private String account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -34325,9 +34810,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getFlows_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -34407,7 +34891,14 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlows_args other) {
@@ -34511,8 +35002,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -34577,8 +35066,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlows_resultTupleSchemeFactory());
     }
 
-    public List<Flow> success; // required
-    public MetadataServiceException e; // required
+    private List<Flow> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -34711,9 +35200,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getFlows_result setSuccess(List<Flow> success) {
+    public void setSuccess(List<Flow> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -34735,9 +35223,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getFlows_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -34839,7 +35326,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlows_result other) {
@@ -34981,8 +35480,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -35087,9 +35584,9 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlow_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String app; // required
-    public String flowid; // required
+    private String account; // required
+    private String app; // required
+    private String flowid; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -35213,9 +35710,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getFlow_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -35237,9 +35733,8 @@ public class MetadataService {
       return this.app;
     }
 
-    public getFlow_args setApp(String app) {
+    public void setApp(String app) {
       this.app = app;
-      return this;
     }
 
     public void unsetApp() {
@@ -35261,9 +35756,8 @@ public class MetadataService {
       return this.flowid;
     }
 
-    public getFlow_args setFlowid(String flowid) {
+    public void setFlowid(String flowid) {
       this.flowid = flowid;
-      return this;
     }
 
     public void unsetFlowid() {
@@ -35387,7 +35881,24 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_app = true && (isSetApp());
+      builder.append(present_app);
+      if (present_app)
+        builder.append(app);
+
+      boolean present_flowid = true && (isSetFlowid());
+      builder.append(present_flowid);
+      if (present_flowid)
+        builder.append(flowid);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlow_args other) {
@@ -35543,8 +36054,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -35639,8 +36148,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlow_resultTupleSchemeFactory());
     }
 
-    public Flow success; // required
-    public MetadataServiceException e; // required
+    private Flow success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -35753,9 +36262,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getFlow_result setSuccess(Flow success) {
+    public void setSuccess(Flow success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -35777,9 +36285,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getFlow_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -35881,7 +36388,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlow_result other) {
@@ -36013,8 +36532,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -36096,8 +36613,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByApplication_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String application; // required
+    private String account; // required
+    private String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -36210,9 +36727,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getFlowsByApplication_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -36234,9 +36750,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public getFlowsByApplication_args setApplication(String application) {
+    public void setApplication(String application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -36338,7 +36853,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlowsByApplication_args other) {
@@ -36468,8 +36995,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -36549,8 +37074,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByApplication_resultTupleSchemeFactory());
     }
 
-    public List<Flow> success; // required
-    public MetadataServiceException e; // required
+    private List<Flow> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -36683,9 +37208,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getFlowsByApplication_result setSuccess(List<Flow> success) {
+    public void setSuccess(List<Flow> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -36707,9 +37231,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getFlowsByApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -36811,7 +37334,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlowsByApplication_result other) {
@@ -36953,8 +37488,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -37058,8 +37591,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueriesByApplication_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String application; // required
+    private String account; // required
+    private String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -37172,9 +37705,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getQueriesByApplication_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -37196,9 +37728,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public getQueriesByApplication_args setApplication(String application) {
+    public void setApplication(String application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -37300,7 +37831,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getQueriesByApplication_args other) {
@@ -37430,8 +37973,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -37511,8 +38052,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueriesByApplication_resultTupleSchemeFactory());
     }
 
-    public List<Query> success; // required
-    public MetadataServiceException e; // required
+    private List<Query> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -37645,9 +38186,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getQueriesByApplication_result setSuccess(List<Query> success) {
+    public void setSuccess(List<Query> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -37669,9 +38209,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getQueriesByApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -37773,7 +38312,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getQueriesByApplication_result other) {
@@ -37915,8 +38466,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -38020,8 +38569,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getMapreducesByApplication_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String application; // required
+    private String account; // required
+    private String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -38134,9 +38683,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getMapreducesByApplication_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -38158,9 +38706,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public getMapreducesByApplication_args setApplication(String application) {
+    public void setApplication(String application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -38262,7 +38809,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getMapreducesByApplication_args other) {
@@ -38392,8 +38951,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -38473,8 +39030,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getMapreducesByApplication_resultTupleSchemeFactory());
     }
 
-    public List<Mapreduce> success; // required
-    public MetadataServiceException e; // required
+    private List<Mapreduce> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -38607,9 +39164,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getMapreducesByApplication_result setSuccess(List<Mapreduce> success) {
+    public void setSuccess(List<Mapreduce> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -38631,9 +39187,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getMapreducesByApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -38735,7 +39290,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getMapreducesByApplication_result other) {
@@ -38877,8 +39444,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -38982,8 +39547,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStreamsByApplication_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String application; // required
+    private String account; // required
+    private String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -39096,9 +39661,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getStreamsByApplication_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -39120,9 +39684,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public getStreamsByApplication_args setApplication(String application) {
+    public void setApplication(String application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -39224,7 +39787,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getStreamsByApplication_args other) {
@@ -39354,8 +39929,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -39435,8 +40008,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getStreamsByApplication_resultTupleSchemeFactory());
     }
 
-    public List<Stream> success; // required
-    public MetadataServiceException e; // required
+    private List<Stream> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -39569,9 +40142,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getStreamsByApplication_result setSuccess(List<Stream> success) {
+    public void setSuccess(List<Stream> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -39593,9 +40165,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getStreamsByApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -39697,7 +40268,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getStreamsByApplication_result other) {
@@ -39839,8 +40422,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -39944,8 +40525,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDatasetsByApplication_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String application; // required
+    private String account; // required
+    private String application; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -40058,9 +40639,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getDatasetsByApplication_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -40082,9 +40662,8 @@ public class MetadataService {
       return this.application;
     }
 
-    public getDatasetsByApplication_args setApplication(String application) {
+    public void setApplication(String application) {
       this.application = application;
-      return this;
     }
 
     public void unsetApplication() {
@@ -40186,7 +40765,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getDatasetsByApplication_args other) {
@@ -40316,8 +40907,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -40397,8 +40986,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getDatasetsByApplication_resultTupleSchemeFactory());
     }
 
-    public List<Dataset> success; // required
-    public MetadataServiceException e; // required
+    private List<Dataset> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -40531,9 +41120,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getDatasetsByApplication_result setSuccess(List<Dataset> success) {
+    public void setSuccess(List<Dataset> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -40555,9 +41143,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getDatasetsByApplication_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -40659,7 +41246,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getDatasetsByApplication_result other) {
@@ -40801,8 +41400,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -40906,8 +41503,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByStream_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String stream; // required
+    private String account; // required
+    private String stream; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -41020,9 +41617,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getFlowsByStream_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -41044,9 +41640,8 @@ public class MetadataService {
       return this.stream;
     }
 
-    public getFlowsByStream_args setStream(String stream) {
+    public void setStream(String stream) {
       this.stream = stream;
-      return this;
     }
 
     public void unsetStream() {
@@ -41148,7 +41743,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_stream = true && (isSetStream());
+      builder.append(present_stream);
+      if (present_stream)
+        builder.append(stream);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlowsByStream_args other) {
@@ -41278,8 +41885,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -41359,8 +41964,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByStream_resultTupleSchemeFactory());
     }
 
-    public List<Flow> success; // required
-    public MetadataServiceException e; // required
+    private List<Flow> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -41493,9 +42098,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getFlowsByStream_result setSuccess(List<Flow> success) {
+    public void setSuccess(List<Flow> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -41517,9 +42121,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getFlowsByStream_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -41621,7 +42224,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlowsByStream_result other) {
@@ -41763,8 +42378,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -41868,8 +42481,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByDataset_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String dataset; // required
+    private String account; // required
+    private String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -41982,9 +42595,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getFlowsByDataset_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -42006,9 +42618,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public getFlowsByDataset_args setDataset(String dataset) {
+    public void setDataset(String dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -42110,7 +42721,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlowsByDataset_args other) {
@@ -42240,8 +42863,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -42321,8 +42942,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getFlowsByDataset_resultTupleSchemeFactory());
     }
 
-    public List<Flow> success; // required
-    public MetadataServiceException e; // required
+    private List<Flow> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -42455,9 +43076,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getFlowsByDataset_result setSuccess(List<Flow> success) {
+    public void setSuccess(List<Flow> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -42479,9 +43099,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getFlowsByDataset_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -42583,7 +43202,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getFlowsByDataset_result other) {
@@ -42725,8 +43356,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -42830,8 +43459,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueriesByDataset_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String dataset; // required
+    private String account; // required
+    private String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -42944,9 +43573,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getQueriesByDataset_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -42968,9 +43596,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public getQueriesByDataset_args setDataset(String dataset) {
+    public void setDataset(String dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -43072,7 +43699,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getQueriesByDataset_args other) {
@@ -43202,8 +43841,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -43283,8 +43920,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getQueriesByDataset_resultTupleSchemeFactory());
     }
 
-    public List<Query> success; // required
-    public MetadataServiceException e; // required
+    private List<Query> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -43417,9 +44054,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getQueriesByDataset_result setSuccess(List<Query> success) {
+    public void setSuccess(List<Query> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -43441,9 +44077,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getQueriesByDataset_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -43545,7 +44180,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getQueriesByDataset_result other) {
@@ -43687,8 +44334,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -43792,8 +44437,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getMapreducesByDataset_argsTupleSchemeFactory());
     }
 
-    public String account; // required
-    public String dataset; // required
+    private String account; // required
+    private String dataset; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -43906,9 +44551,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public getMapreducesByDataset_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -43930,9 +44574,8 @@ public class MetadataService {
       return this.dataset;
     }
 
-    public getMapreducesByDataset_args setDataset(String dataset) {
+    public void setDataset(String dataset) {
       this.dataset = dataset;
-      return this;
     }
 
     public void unsetDataset() {
@@ -44034,7 +44677,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getMapreducesByDataset_args other) {
@@ -44164,8 +44819,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -44245,8 +44898,8 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new getMapreducesByDataset_resultTupleSchemeFactory());
     }
 
-    public List<Mapreduce> success; // required
-    public MetadataServiceException e; // required
+    private List<Mapreduce> success; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -44379,9 +45032,8 @@ public class MetadataService {
       return this.success;
     }
 
-    public getMapreducesByDataset_result setSuccess(List<Mapreduce> success) {
+    public void setSuccess(List<Mapreduce> success) {
       this.success = success;
-      return this;
     }
 
     public void unsetSuccess() {
@@ -44403,9 +45055,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public getMapreducesByDataset_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -44507,7 +45158,19 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(getMapreducesByDataset_result other) {
@@ -44649,8 +45312,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -44753,7 +45414,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteAll_argsTupleSchemeFactory());
     }
 
-    public String account; // required
+    private String account; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -44855,9 +45516,8 @@ public class MetadataService {
       return this.account;
     }
 
-    public deleteAll_args setAccount(String account) {
+    public void setAccount(String account) {
       this.account = account;
-      return this;
     }
 
     public void unsetAccount() {
@@ -44937,7 +45597,14 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteAll_args other) {
@@ -45041,8 +45708,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
@@ -45106,7 +45771,7 @@ public class MetadataService {
       schemes.put(TupleScheme.class, new deleteAll_resultTupleSchemeFactory());
     }
 
-    public MetadataServiceException e; // required
+    private MetadataServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -45208,9 +45873,8 @@ public class MetadataService {
       return this.e;
     }
 
-    public deleteAll_result setE(MetadataServiceException e) {
+    public void setE(MetadataServiceException e) {
       this.e = e;
-      return this;
     }
 
     public void unsetE() {
@@ -45290,7 +45954,14 @@ public class MetadataService {
 
     @Override
     public int hashCode() {
-      return 0;
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
     }
 
     public int compareTo(deleteAll_result other) {
@@ -45395,8 +46066,6 @@ public class MetadataService {
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
         struct.validate();
       }
 
