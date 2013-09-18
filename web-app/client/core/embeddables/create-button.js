@@ -8,7 +8,7 @@ define([], function () {
 		
 		tagName: 'div',
 		classNames: ['create-btn', 'pull-right'],
-		template: Em.Handlebars.compile('<button class="btn">Add an App</button>'),
+		template: Em.Handlebars.compile('<button class="btn">Load an App</button>'),
 		entityType: 'Application',
 		
 		click: function () {
@@ -52,6 +52,9 @@ define([], function () {
 			}
 
 			$('#app-upload-input').change(function (e) {
+				$('#drop-label').hide();
+				$('#drop-loading').show();
+				$('#drop-hover').fadeIn();
 				if (self.doneLoading()) {
 					var file = $('#app-upload-input')[0].files[0];
 					var name = file.name;

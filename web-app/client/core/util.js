@@ -80,12 +80,19 @@ define([], function () {
 					}
 				}
 
-				element.bind('dragenter', function (e) {
+				element.bind('dragover', function (e) {
 
 					ignoreDrag(e);
 					$('#drop-hover').fadeIn();
 
-				}).bind('dragover', ignoreDrag).bind('drop', drop);
+				})
+				.bind('dragover', ignoreDrag)
+				.bind('drop', drop)
+				.bind('keydown', function (e) {
+					if (e.keyCode === 27) {
+						$('#drop-hover').fadeOut();	
+					}
+				});
 
 			},
 
