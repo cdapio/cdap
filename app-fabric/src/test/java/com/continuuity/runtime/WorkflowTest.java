@@ -18,6 +18,7 @@ import com.continuuity.weave.common.Threads;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
+import com.google.common.util.concurrent.SettableFuture;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -28,7 +29,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
 
 /**
  *
@@ -54,27 +54,27 @@ public class WorkflowTest {
       }
     }).next();
 
-    final CountDownLatch latch = new CountDownLatch(1);
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     BasicArguments userArgs = new BasicArguments(ImmutableMap.of("inputPath", inputPath, "outputPath", outputPath));
     ProgramOptions options = new SimpleProgramOptions(program.getName(), new BasicArguments(), userArgs);
 
+    final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {
       @Override
       public void stopped() {
         LOG.info("Stopped");
-        latch.countDown();
+        completion.set("Completed");
       }
 
       @Override
       public void error(Throwable cause) {
         LOG.info("Error", cause);
-        latch.countDown();
+        completion.setException(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    latch.await();
+    completion.get();
   }
 
   private String createInput() throws IOException {
