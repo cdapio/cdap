@@ -535,6 +535,18 @@ define([], function () {
 
 		},
 
+		/**
+		 * Pauses the thread for a predetermined amount of time, useful whenever execution needs to be
+		 * delayed.
+		 * @param  {number} milliseconds
+		 */
+		threadSleep: function (milliseconds) {
+			var time = new Date().getTime() + milliseconds;
+			while (new Date().getTime() <= time) {
+				//pass
+			}
+		},
+
 		reset: function () {
 
 			C.Modal.show(
