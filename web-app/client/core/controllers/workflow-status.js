@@ -46,28 +46,6 @@ define([], function () {
 
     },
 
-<<<<<<< Updated upstream
-    statusButtonAction: function () {
-      return 'No Action';
-    }.property(),
-
-    statusButtonClass: function () {
-      return 'btn btn-warning';
-    }.property(),
-
-    get_flowlet: function (id) {
-      id = id + "";
-      var content = this.elements.Flowlet.content;
-      for (var k = 0; k < content.length; k++) {
-        if (content[k].name === id) {
-          return content[k];
-        }
-      }
-      content = this.elements.Stream.content;
-      for (k = 0; k < content.length; k++) {
-        if (content[k].name === id) {
-          return content[k];
-=======
     connectEntities: function() {
       var actions = this.get('elements.Actions.content').map(function (item) {
         return item.id || item.get('id');
@@ -75,7 +53,6 @@ define([], function () {
       for (var i = 0; i < actions.length; i++) {
         if (i + 1 < actions.length) {
           Plumber.connect(actions[i], actions[i+1]);    
->>>>>>> Stashed changes
         }
       }
     },
