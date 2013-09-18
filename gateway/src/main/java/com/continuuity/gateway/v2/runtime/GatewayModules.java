@@ -20,6 +20,7 @@ import com.continuuity.gateway.v2.handlers.v2.dataset.DatasetHandler;
 import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandler;
 import com.continuuity.gateway.v2.handlers.v2.log.LogHandler;
 import com.continuuity.gateway.v2.handlers.v2.stream.StreamHandler;
+import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.inject.AbstractModule;
@@ -28,7 +29,6 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -45,20 +45,20 @@ public class GatewayModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return getCommonModules();
+    return getCommonModules(new MetricsQueryRuntimeModule().getInMemoryModules());
   }
 
   @Override
   public Module getSingleNodeModules() {
-    return getCommonModules();
+    return getCommonModules(new MetricsQueryRuntimeModule().getSingleNodeModules());
   }
 
   @Override
   public Module getDistributedModules() {
-    return getCommonModules();
+    return getCommonModules(new MetricsQueryRuntimeModule().getDistributedModules());
   }
 
-  private Module getCommonModules() {
+  private Module getCommonModules(final Module metricsQueryModule) {
     final CMetrics cMetrics = new CMetrics(MetricType.System);
 
     return new AbstractModule() {
@@ -67,8 +67,7 @@ public class GatewayModules extends RuntimeModule {
         bind(CMetrics.class).toInstance(cMetrics);
 
         Multibinder<HttpHandler> handlerBinder =
-          Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                   Names.named(Constants.Gateway.GATEWAY_V2_HTTP_HANDLERS));
+          Multibinder.newSetBinder(binder(), HttpHandler.class);
         handlerBinder.addBinding().to(StreamHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(PingHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(MetadataServiceHandler.class).in(Scopes.SINGLETON);
@@ -79,6 +78,8 @@ public class GatewayModules extends RuntimeModule {
         handlerBinder.addBinding().to(TableHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(DatasetHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(ClearFabricHandler.class).in(Scopes.SINGLETON);
+
+        install(metricsQueryModule);
 
         boolean requireAuthentication = cConf.getBoolean(
           Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED,

@@ -11,6 +11,8 @@ import com.continuuity.metrics.query.BatchMetricsHandler;
 import com.continuuity.metrics.query.DeleteMetricsHandler;
 import com.continuuity.metrics.query.MetricsDiscoveryHandler;
 import com.continuuity.metrics.query.MetricsQueryService;
+import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -23,19 +25,31 @@ import java.net.InetSocketAddress;
 /**
  * Base guice module for binding metrics query service classes.
  */
-public abstract class AbstractMetricsQueryModule extends PrivateModule {
+public abstract class AbstractMetricsQueryModule extends AbstractModule {
 
   @Override
   protected final void configure() {
-    bindMetricsTable();
+    install(new PrivateModule() {
+      @Override
+      protected void configure() {
+        bindMetricsTable(binder());
+
+        bind(BatchMetricsHandler.class).in(Scopes.SINGLETON);
+        bind(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
+        bind(MetricsDiscoveryHandler.class).in(Scopes.SINGLETON);
+
+        expose(BatchMetricsHandler.class);
+        expose(DeleteMetricsHandler.class);
+        expose(MetricsDiscoveryHandler.class);
+      }
+    });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
-    handlerBinder.addBinding().to(BatchMetricsHandler.class).in(Scopes.SINGLETON);
-    handlerBinder.addBinding().to(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
-    handlerBinder.addBinding().to(MetricsDiscoveryHandler.class).in(Scopes.SINGLETON);
+    handlerBinder.addBinding().to(BatchMetricsHandler.class);
+    handlerBinder.addBinding().to(DeleteMetricsHandler.class);
+    handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);
 
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
-    expose(MetricsQueryService.class);
   }
 
   @Provides
@@ -45,5 +59,5 @@ public abstract class AbstractMetricsQueryModule extends PrivateModule {
                             new InetSocketAddress("localhost", 0).getAddress());
   }
 
-  protected abstract void bindMetricsTable();
+  protected abstract void bindMetricsTable(Binder binder);
 }
