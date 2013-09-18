@@ -202,15 +202,15 @@ WebAppServer.prototype.configureIoHandlers = function(
       data.session_id = obj[cookieName];
       if ('continuuity-sso' in obj) {
         if ('api_key' in obj['continuuity-sso']) {
-          data.api_key = obj['continuuity-sso'].api_key;  
+          data.api_key = obj['continuuity-sso'].api_key;
         }
 
         if ('account_id' in obj['continuuity-sso']) {
-          data.account_id = obj['continuuity-sso'].account_id;  
+          data.account_id = obj['continuuity-sso'].account_id;
         }
 
         if ('name' in obj['continuuity-sso']) {
-          data.name = obj['continuuity-sso'].name;  
+          data.name = obj['continuuity-sso'].name;
         }
       }
 
@@ -230,12 +230,12 @@ WebAppServer.prototype.configureIoHandlers = function(
 
     // Join room based on session id.
     newSocket.join(newSocket.handshake.session_id);
-    
+
     var ip = '';
 
     if (typeof Env !== 'undefined') {
       if ('ip' in Env) {
-        ip = Env.ip;  
+        ip = Env.ip;
       }
     }
     var envVars = {
@@ -257,7 +257,7 @@ WebAppServer.prototype.configureIoHandlers = function(
         };
       }
     }
-    
+
     newSocket.emit('env', envVars);
 
     newSocket.on('metadata', function (request) {
@@ -319,39 +319,6 @@ WebAppServer.prototype.bindRoutes = function(io) {
     this.logger.info('Configuration file not set ', this.config);
     return false;
   }
-
-  var singularREST = {
-    'apps': 'getApplication',
-    'streams': 'getStream',
-    'flows': 'getFlow',
-    'mapreduce': 'getMapreduce',
-    'datasets': 'getDataset',
-    'procedures': 'getQuery'
-  };
-
-  var pluralREST = {
-    'apps': 'getApplications',
-    'streams': 'getStreams',
-    'flows': 'getFlows',
-    'mapreduce': 'getMapreduces',
-    'datasets': 'getDatasets',
-    'procedures': 'getQueries'
-  };
-
-  var typesREST = {
-    'apps': 'Application',
-    'streams': 'Stream',
-    'flows': 'Flow',
-    'mapreduce': 'Mapreduce',
-    'datasets': 'Dataset',
-    'procedures': 'Query'
-  };
-
-  var selectiveREST = {
-    'apps': 'ByApplication',
-    'streams': 'ByStream',
-    'datasets': 'ByDataset'
-  };
 
   var availableMetrics = {
     'App': [
@@ -466,7 +433,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
         res.status(500);
         res.send(path, error || response.statusCode);
       }
-    });        
+    });
   });
 
   /*
@@ -484,7 +451,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
         res.status(500);
         res.send(path, error || response.statusCode);
       }
-    });        
+    });
   });
 
   /*
@@ -506,7 +473,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
         res.status(500);
         res.send(path, error || response.statusCode);
       }
-    });        
+    });
   });
 
   /*
@@ -627,7 +594,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
           });
 
           request.on('error', function(e) {
-            
+
           });
           var stream = fs.createReadStream(location);
           stream.on('data', function(chunk) {
