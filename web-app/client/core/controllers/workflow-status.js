@@ -13,31 +13,15 @@ define([], function () {
       this.clearTriggers(true);
       var model = this.get('model');
       var self = this;
-      var flowlets = model.flowlets;
-      var objects = [];
-      for (var i = 0; i < flowlets.length; i ++) {
 
-        flowlets[i].flow = model.get('name');
-        flowlets[i].app = model.get('app');
-
-        objects.push(C.Flowlet.create(flowlets[i]));
-
+      this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
+      for (var i = 0; i < model.actions.length; i++) {
+        model.actions[i].state = 'IDLE';
+        model.actions[i].isRunning = false;
+        model.actions[i].completionPercentage = 50;
+        model.actions[i].id = model.actions[i].name.replace(' ', '');
+        this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));      
       }
-      this.set('elements.Flowlet', Em.ArrayProxy.create({content: objects}));
-
-      this.setFlowletLabel('aggregate');
-
-      var streams = model.flowStreams;
-      objects = [];
-
-      for (var i = 0; i < streams.length; i ++) {
-        streams[i]['level'] = 'stream';
-        objects.push(C.Stream.create(streams[i]));
-        objects[i].trackMetric('/collect/events/streams/{id}', 'aggregates', 'events');
-
-      }
-
-      this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
 
       this.interval = setInterval(function () {
         self.updateStats();
@@ -62,6 +46,7 @@ define([], function () {
 
     },
 
+<<<<<<< Updated upstream
     statusButtonAction: function () {
       return 'No Action';
     }.property(),
@@ -82,6 +67,15 @@ define([], function () {
       for (k = 0; k < content.length; k++) {
         if (content[k].name === id) {
           return content[k];
+=======
+    connectEntities: function() {
+      var actions = this.get('elements.Actions.content').map(function (item) {
+        return item.id || item.get('id');
+      });
+      for (var i = 0; i < actions.length; i++) {
+        if (i + 1 < actions.length) {
+          Plumber.connect(actions[i], actions[i+1]);    
+>>>>>>> Stashed changes
         }
       }
     },

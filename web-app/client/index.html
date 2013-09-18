@@ -231,6 +231,56 @@
     </div>
   </script>
 
+  <script type="text/x-handlebars" data-template-name="Workflow">
+    <div id="title">
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo WorkflowStatus model}}Status{{/linkTo}}</li>
+        <li>{{#linkTo Workflow.History model}}History{{/linkTo}}</li>
+      </ul>
+      <h1>{{model.name}} <span>Workflow</span></h1>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="WorkflowStatus">
+    <div id="info">
+      <div class="info-box" style="float: right; border: 0;">
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+
+      </div>
+
+    </div>
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="batchviz-container">
+          <div class="clearfix chart">
+            {{#each elements.Actions}}
+            <div class="batch-item" {{bindAttr id="id"}}>
+              <div class="batch-icon batch-map">
+                <div class="info-window">
+                  <div class="label">{{name}}</div>
+                  <div>{{state}}</div>
+                  {{#if isRunning}}
+                    <progress {{bindAttr value="completionPercentage" }} max="100"></progress>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+            {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+
   <script type="text/x-handlebars" data-template-name="Batch">
 
     <div id="title">
@@ -347,9 +397,9 @@
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
           </ul>
 
-          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.app"}} {{bindAttr flow-id="model.meta.name"}} flow-action="Stop" ><span class="btn-stop"></span><span>Stop</span></button>
+          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "stop" model.app model.meta.name }}><span class="btn-stop"></span><span>Stop</span></button>
 
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec"}} {{bindAttr flow-app="model.app"}} {{bindAttr flow-id="model.meta.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startDisabled"}} style="border-right:0;width:64px;" {{action "start" model.app model.meta.name}}><span {{bindAttr class="model.actionIcon"}}></span><span>Start</span></button>
 
           <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
@@ -647,7 +697,7 @@
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
 
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
         </div>
 

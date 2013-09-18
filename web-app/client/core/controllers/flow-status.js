@@ -117,7 +117,7 @@ define([], function () {
 		/**
 		 * Lifecycle
 		 */
-		start: function (appId, id, version, config) {
+		start: function (appId, id) {
 
 			var self = this;
 			var model = this.get('model');
@@ -136,7 +136,7 @@ define([], function () {
 
 		},
 
-		stop: function (appId, id, version) {
+		stop: function (appId, id) {
 
 			var self = this;
 			var model = this.get('model');

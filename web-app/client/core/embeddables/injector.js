@@ -16,6 +16,7 @@ define([], function () {
 		didInsertElement: function () {
 
 			$(this.get('element')).css({width: '222px'});
+			$(this.get('element')).attr({id: 'flow-injector-input'});
 
 		}
 	});

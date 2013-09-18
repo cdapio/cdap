@@ -121,33 +121,6 @@ define([], function () {
 			return false;
 		}.property('currentState'),
 
-		startPauseDisabled: function () {
-
-			if (this.currentState !== 'STOPPED' &&
-				this.currentState !== 'PAUSED' &&
-				this.currentState !== 'DEPLOYED' &&
-				this.currentState !== 'RUNNING') {
-				return true;
-			}
-			return false;
-
-		}.property('currentState'),
-
-		defaultAction: function () {
-			if (!this.currentState) {
-				return '...';
-			}
-			return {
-				'deployed': 'Start',
-				'stopped': 'Start',
-				'stopping': 'Start',
-				'starting': 'Start',
-				'running': 'Pause',
-				'adjusting': '...',
-				'draining': '...',
-				'failed': 'Start'
-			}[this.currentState.toLowerCase()];
-		}.property('currentState')
 	});
 
 	Model.reopenClass({
