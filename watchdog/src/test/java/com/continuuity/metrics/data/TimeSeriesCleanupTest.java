@@ -8,7 +8,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsAnnotation;
@@ -125,8 +124,6 @@ public class TimeSeriesCleanupTest {
         @Override
         protected void configure() {
           try {
-            bind(TransactionOracle.class).to(NoopTransactionOracle.class);
-
             bindConstant()
               .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
               .to(tmpFolder.newFolder().getAbsolutePath());

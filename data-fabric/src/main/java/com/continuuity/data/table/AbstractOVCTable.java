@@ -2,7 +2,6 @@ package com.continuuity.data.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;

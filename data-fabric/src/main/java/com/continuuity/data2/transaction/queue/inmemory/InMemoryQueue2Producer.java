@@ -1,7 +1,7 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.AbstractQueue2Producer;
 import com.continuuity.data2.transaction.queue.QueueMetrics;

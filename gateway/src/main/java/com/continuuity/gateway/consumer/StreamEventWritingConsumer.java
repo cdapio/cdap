@@ -2,11 +2,8 @@ package com.continuuity.gateway.consumer;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -55,7 +52,7 @@ public class StreamEventWritingConsumer extends Consumer {
     this.executor = executor;
   }
 
-  private QueueEnqueue constructOperation(StreamEvent event, String accountId) throws Exception {
+  private void writeToQueue(StreamEvent event, String accountId) throws Exception {
     StreamEventCodec serializer = getSerializer();
     byte[] bytes = serializer.encodePayload(event);
     if (bytes == null) {
@@ -69,19 +66,17 @@ public class StreamEventWritingConsumer extends Consumer {
       destination = "default";
     }
     // construct the stream URO to use for the data fabric
-    String queueURI = QueueName.fromStream(accountId, destination)
-      .toString();
-    LOG.trace("Sending event to " + queueURI + ", event = " + event);
-
-    return new QueueEnqueue(queueURI.getBytes(), new QueueEntry(bytes));
+    QueueName queueName = QueueName.fromStream(accountId, destination);
+    LOG.trace("Sending event to " + queueName.getSimpleName() + ", event = " + event);
+    QueueEntry entry = new QueueEntry(bytes);
+    // TODO: write entry in queue of queueName
   }
 
 
   @Override
   protected void single(StreamEvent event, String accountId) throws Exception {
     try {
-      QueueEnqueue enqueue = constructOperation(event, accountId);
-      this.executor.commit(new OperationContext(accountId), enqueue);
+      writeToQueue(event, accountId);
     } catch (Exception e) {
       Exception e1 = new Exception(
         "Failed to enqueue event(s): " + e.getMessage(), e);
@@ -92,12 +87,10 @@ public class StreamEventWritingConsumer extends Consumer {
 
   @Override
   protected void batch(List<StreamEvent> events, String accountId) throws Exception {
-    List<WriteOperation> operations = new ArrayList<WriteOperation>(events.size());
-    for (StreamEvent event : events) {
-      operations.add(constructOperation(event, accountId));
-    }
     try {
-      this.executor.commit(new OperationContext(accountId), operations);
+      for (StreamEvent event : events) {
+        writeToQueue(event, accountId);
+      }
     } catch (Exception e) {
       Exception e1 = new Exception(
         "Failed to enqueue event(s): " + e.getMessage(), e);

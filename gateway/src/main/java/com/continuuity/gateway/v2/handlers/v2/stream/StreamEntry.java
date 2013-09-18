@@ -1,6 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2.stream;
 
-import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data2.queue.QueueEntry;
 import com.google.common.util.concurrent.FutureCallback;
 
 /**
