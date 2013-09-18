@@ -1,0 +1,45 @@
+#!/bin/bash
+# Generates thrift java glue code for a thrift file
+# Usage thrift_gen_java.sh --file <thrift_file>
+
+
+script=`basename $0`
+
+function usage() {
+  echo "Generates thrift java glue code for a thrift file."
+  echo "Usage: $script --file <thrift_file>"
+  echo "  Options"
+  echo "    --file Thrift file."
+}
+
+pushd `dirname $0` > /dev/null
+basedir=`pwd`
+popd > /dev/null
+
+filename=""
+
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    --file) shift; filename="$1"; shift;;
+    *)  usage; exit 1
+  esac
+done
+
+if [ "x$filename" == "x" ]; then
+  usage
+  echo ""
+  echo "Thrift file not specified."
+  exit 1
+fi
+
+filepath="$basedir/thrift/$filename"
+
+if [ -f "$filepath" ]
+then
+        thrift --gen "java:beans,hashcode" --out ./java/  $filepath
+        echo "Thrift java bindings are generated"
+else
+        echo "Thrift java bindings are not generated."
+	echo "Thrift file: $filename not found in $basedir/thrift."
+fi

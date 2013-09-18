@@ -6,6 +6,7 @@
  */
 package com.continuuity.metadata.thrift;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -46,12 +47,12 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
     schemes.put(TupleScheme.class, new MapreduceTupleSchemeFactory());
   }
 
-  public String id; // required
-  public String application; // required
-  public String name; // optional
-  public String description; // optional
-  public List<String> datasets; // optional
-  public boolean exists; // optional
+  private String id; // required
+  private String application; // required
+  private String name; // optional
+  private String description; // optional
+  private List<String> datasets; // optional
+  private boolean exists; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -211,9 +212,8 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
     return this.id;
   }
 
-  public Mapreduce setId(String id) {
+  public void setId(String id) {
     this.id = id;
-    return this;
   }
 
   public void unsetId() {
@@ -235,9 +235,8 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
     return this.application;
   }
 
-  public Mapreduce setApplication(String application) {
+  public void setApplication(String application) {
     this.application = application;
-    return this;
   }
 
   public void unsetApplication() {
@@ -259,9 +258,8 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
     return this.name;
   }
 
-  public Mapreduce setName(String name) {
+  public void setName(String name) {
     this.name = name;
-    return this;
   }
 
   public void unsetName() {
@@ -283,9 +281,8 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
     return this.description;
   }
 
-  public Mapreduce setDescription(String description) {
+  public void setDescription(String description) {
     this.description = description;
-    return this;
   }
 
   public void unsetDescription() {
@@ -322,9 +319,8 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
     return this.datasets;
   }
 
-  public Mapreduce setDatasets(List<String> datasets) {
+  public void setDatasets(List<String> datasets) {
     this.datasets = datasets;
-    return this;
   }
 
   public void unsetDatasets() {
@@ -346,10 +342,9 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
     return this.exists;
   }
 
-  public Mapreduce setExists(boolean exists) {
+  public void setExists(boolean exists) {
     this.exists = exists;
     setExistsIsSet(true);
-    return this;
   }
 
   public void unsetExists() {
@@ -537,7 +532,39 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_id = true && (isSetId());
+    builder.append(present_id);
+    if (present_id)
+      builder.append(id);
+
+    boolean present_application = true && (isSetApplication());
+    builder.append(present_application);
+    if (present_application)
+      builder.append(application);
+
+    boolean present_name = true && (isSetName());
+    builder.append(present_name);
+    if (present_name)
+      builder.append(name);
+
+    boolean present_description = true && (isSetDescription());
+    builder.append(present_description);
+    if (present_description)
+      builder.append(description);
+
+    boolean present_datasets = true && (isSetDatasets());
+    builder.append(present_datasets);
+    if (present_datasets)
+      builder.append(datasets);
+
+    boolean present_exists = true && (isSetExists());
+    builder.append(present_exists);
+    if (present_exists)
+      builder.append(exists);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(Mapreduce other) {
@@ -685,12 +712,14 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
-    if (id == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'id' was not present! Struct: " + toString());
+    if (!isSetId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'id' is unset! Struct:" + toString());
     }
-    if (application == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'application' was not present! Struct: " + toString());
+
+    if (!isSetApplication()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'application' is unset! Struct:" + toString());
     }
+
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -793,8 +822,6 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 

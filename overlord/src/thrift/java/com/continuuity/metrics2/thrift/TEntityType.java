@@ -7,6 +7,10 @@
 package com.continuuity.metrics2.thrift;
 
 
+import java.util.Map;
+import java.util.HashMap;
+import org.apache.thrift.TEnum;
+
 public enum TEntityType implements org.apache.thrift.TEnum {
   FLOW(1),
   PROCEDURE(2),
