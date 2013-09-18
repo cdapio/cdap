@@ -41,8 +41,6 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
   private final StoreFactory storeFactory;
   private Scheduler scheduler;
 
-//  private static ScheduleTaskRunner taskRunner;
-
   @Inject
   public DefaultSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
                                  ProgramRuntimeService programRuntimeService) {
