@@ -7,8 +7,6 @@ package com.continuuity.performance.gateway.stream;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.gateway.collector.RestCollector;
-import com.continuuity.gateway.util.Util;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -41,7 +39,7 @@ public class MultiThreadedStreamWriter implements StreamWriter {
   private final StreamEventCodec codec;
 
 
-  private final List<StreamEventDispatcher> dispatchers;
+  private final List<com.continuuity.performance.gateway.stream.StreamEventDispatcher> dispatchers;
   private List<Future> dispatcherFutures;
 
   private final List<LinkedBlockingDeque<byte[]>> queues;
@@ -69,17 +67,20 @@ public class MultiThreadedStreamWriter implements StreamWriter {
     if (!StringUtils.isEmpty(apiKey)) {
       headers = ImmutableMap.of(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
     }
-    String url =  Util.findBaseUrl(config, RestCollector.class, null, gateway, -1, apiKey != null)
-      + queueName.getSimpleName();
+    // todo
+    String url = "Perf framework should be fixed towards new gateway";
+      // Util.findBaseUrl(config, RestCollector.class, null, gateway, -1, apiKey != null)
+      // + queueName.getSimpleName();
 
     dispatcherThreadPool = Executors.newFixedThreadPool(numThreads);
     queues = new ArrayList<LinkedBlockingDeque<byte[]>>(numThreads);
-    dispatchers = new ArrayList<StreamEventDispatcher>(numThreads);
+    dispatchers = new ArrayList<com.continuuity.performance.gateway.stream.StreamEventDispatcher>(numThreads);
     dispatcherFutures = new ArrayList<Future>(numThreads);
     for (int i = 0; i < numThreads; i++) {
       LinkedBlockingDeque<byte[]> queue = new LinkedBlockingDeque<byte[]>(50000);
       queues.add(queue);
-      StreamEventDispatcher dispatcher = new StreamEventDispatcher(url, headers, queue);
+      com.continuuity.performance.gateway.stream.StreamEventDispatcher dispatcher =
+        new StreamEventDispatcher(url, headers, queue);
       dispatchers.add(dispatcher);
       Future dispatcherFuture = dispatcherThreadPool.submit(dispatcher);
       dispatcherFutures.add(dispatcherFuture);

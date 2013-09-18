@@ -50,9 +50,4 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
     throws Exception {
     HBaseTestBase.stopHBase();
   }
-
-  @Override
-  public void testInjection() {
-    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof HBaseOVCTableHandle);
-  }
 }

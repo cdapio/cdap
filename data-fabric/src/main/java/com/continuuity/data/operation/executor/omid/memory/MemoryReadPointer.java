@@ -4,7 +4,6 @@
 package com.continuuity.data.operation.executor.omid.memory;
 
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.WritePointer;
 import com.google.common.base.Objects;
 
 import java.util.Set;
@@ -13,7 +12,7 @@ import java.util.Set;
  * A simple in-memory {@link ReadPointer} that supports a global read point,
  * an optional set of excludes, and an optional write pointer include. 
  */
-public class MemoryReadPointer implements ReadPointer, WritePointer {
+public class MemoryReadPointer implements ReadPointer {
   final long readPoint;
   final long writePoint;
   final Set<Long> excludes;
@@ -77,17 +76,8 @@ public class MemoryReadPointer implements ReadPointer, WritePointer {
     return this.readPoint;
   }
 
-  @Override
-  public long getWriteVersion() {
-    return this.writePoint;
-  }
-
   public long getReadPointer() {
     return this.readPoint;
-  }
-
-  public Set<Long> getReadExcludes() {
-    return this.excludes;
   }
 
   public static final MemoryReadPointer DIRTY_READ = new MemoryReadPointer(Long.MAX_VALUE);

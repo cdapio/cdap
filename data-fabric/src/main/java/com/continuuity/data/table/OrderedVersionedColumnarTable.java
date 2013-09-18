@@ -1,7 +1,6 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.executor.ReadPointer;
 
 import javax.annotation.Nullable;

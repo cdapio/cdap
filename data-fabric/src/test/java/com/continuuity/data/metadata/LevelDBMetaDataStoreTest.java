@@ -24,9 +24,4 @@ public abstract class LevelDBMetaDataStoreTest extends MetaDataStoreTest {
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     injector = Guice.createInjector(new DataFabricLevelDBModule(conf));
   }
-
-  @Override
-  public void testInjection() {
-    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof LevelDBOVCTableHandle);
-  }
 }
