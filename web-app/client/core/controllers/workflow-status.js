@@ -22,9 +22,6 @@ define(['helpers/plumber'], function (Plumber) {
         this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));      
       }
 
-        this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));      
-      }
-
       this.interval = setInterval(function () {
         self.updateStats();
       }, C.POLLING_INTERVAL);
@@ -48,11 +45,7 @@ define(['helpers/plumber'], function (Plumber) {
 
     connectEntities: function() {
       var actions = this.get('elements.Actions.content').map(function (item) {
-<<<<<<< HEAD
         return item.id || item.get('id');
-=======
-        return item.name || item.get('name');
->>>>>>> feature/workflow
       });
       for (var i = 0; i < actions.length; i++) {
         if (i + 1 < actions.length) {
