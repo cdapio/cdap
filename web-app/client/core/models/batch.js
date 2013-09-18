@@ -280,7 +280,12 @@ define(['core/lib/date'], function (Datejs) {
         'draining': '...',
         'failed': 'Start'
       }[this.currentState.toLowerCase()];
-    }.property('currentState')
+    }.property('currentState'),
+
+    truncatedName: function () {
+      return this.get('name').substring(0,6) + '...';
+    }.property('name'),
+
   });
 
   Model.reopenClass({

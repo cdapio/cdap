@@ -90,8 +90,8 @@ public class StreamHandlerTest {
           bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class).in(Scopes.SINGLETON);
           bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-          bind(DiscoveryServiceClient.class).toInstance(inMemoryDiscoveryService);
-          bind(DiscoveryService.class).toInstance(inMemoryDiscoveryService);
+          bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
+          bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
           bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
         }
       }

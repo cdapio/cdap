@@ -80,12 +80,19 @@ define([], function () {
 					}
 				}
 
-				element.bind('dragenter', function (e) {
+				element.bind('dragover', function (e) {
 
 					ignoreDrag(e);
 					$('#drop-hover').fadeIn();
 
-				}).bind('dragover', ignoreDrag).bind('drop', drop);
+				})
+				.bind('dragover', ignoreDrag)
+				.bind('drop', drop)
+				.bind('keydown', function (e) {
+					if (e.keyCode === 27) {
+						$('#drop-hover').fadeOut();	
+					}
+				});
 
 			},
 
@@ -533,6 +540,18 @@ define([], function () {
 				}
 			});
 
+		},
+
+		/**
+		 * Pauses the thread for a predetermined amount of time, useful whenever execution needs to be
+		 * delayed.
+		 * @param  {number} milliseconds
+		 */
+		threadSleep: function (milliseconds) {
+			var time = new Date().getTime() + milliseconds;
+			while (new Date().getTime() <= time) {
+				//pass
+			}
 		},
 
 		reset: function () {

@@ -9,7 +9,7 @@ public class DefaultSchedule implements Schedule {
 
   private final String name;
   private final String description;
-  private final String cronExpression;
+  private final String cronEntry;
   private final Action action;
 
   @Override
@@ -23,8 +23,8 @@ public class DefaultSchedule implements Schedule {
   }
 
   @Override
-  public String getCronExpression() {
-    return cronExpression;
+  public String getCronEntry() {
+    return cronEntry;
   }
 
 
@@ -33,10 +33,10 @@ public class DefaultSchedule implements Schedule {
     return action;
   }
 
-  public DefaultSchedule(String name, String description, String cronExpression, Action action) {
+  public DefaultSchedule(String name, String description, String cronEntry, Action action) {
     this.name = name;
     this.description = description;
-    this.cronExpression = cronExpression;
+    this.cronEntry = cronEntry;
     this.action = action;
   }
 }

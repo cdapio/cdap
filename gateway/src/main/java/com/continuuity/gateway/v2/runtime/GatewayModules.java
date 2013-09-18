@@ -14,6 +14,7 @@ import com.continuuity.gateway.v2.handlers.v2.AppFabricServiceHandler;
 import com.continuuity.gateway.v2.handlers.v2.MetadataServiceHandler;
 import com.continuuity.gateway.v2.handlers.v2.PingHandler;
 import com.continuuity.gateway.v2.handlers.v2.ProcedureHandler;
+import com.continuuity.gateway.v2.handlers.v2.WorkflowHandler;
 import com.continuuity.gateway.v2.handlers.v2.dataset.ClearFabricHandler;
 import com.continuuity.gateway.v2.handlers.v2.dataset.DatasetHandler;
 import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandler;
@@ -73,6 +74,7 @@ public class GatewayModules extends RuntimeModule {
         handlerBinder.addBinding().to(AppFabricServiceHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(LogHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(ProcedureHandler.class).in(Scopes.SINGLETON);
+        handlerBinder.addBinding().to(WorkflowHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(TableHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(DatasetHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(ClearFabricHandler.class).in(Scopes.SINGLETON);

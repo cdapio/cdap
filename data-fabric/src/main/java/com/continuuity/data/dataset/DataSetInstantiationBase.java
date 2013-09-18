@@ -285,35 +285,25 @@ public class DataSetInstantiationBase {
     return exn;
   }
 
-  private static final String DATASET_CONTEXT = "-.dataset";
-
-  public void setMetricsCollector(MetricsCollectionService metricsCollectionService,
-                                  final MetricsCollector programContextMetrics) {
-
-    final MetricsCollector dataSetMetrics =
-      metricsCollectionService.getCollector(MetricsScope.REACTOR, DATASET_CONTEXT, "0");
+  public void setMetricsCollector(final MetricsCollector programContextMetrics) {
 
     for (Map.Entry<TransactionAware, String> txAware : this.txAwareToMetricNames.entrySet()) {
       if (txAware.getKey() instanceof DataSetClient) {
-        final String metricName = txAware.getValue();
+        final String dataSetName = txAware.getValue();
         DataSetClient.DataOpsMetrics dataOpsMetrics = new DataSetClient.DataOpsMetrics() {
           @Override
           public void recordRead(int opsCount) {
-            if (dataSetMetrics != null) {
-              dataSetMetrics.gauge("store.reads", 1, metricName);
-            }
             if (programContextMetrics != null) {
+              programContextMetrics.gauge("store.reads", 1, dataSetName);
               programContextMetrics.gauge("store.ops", 1);
             }
           }
 
           @Override
           public void recordWrite(int opsCount, int dataSize) {
-            if (dataSetMetrics != null) {
-              dataSetMetrics.gauge("store.writes", 1, metricName);
-              dataSetMetrics.gauge("store.bytes", dataSize, metricName);
-            }
             if (programContextMetrics != null) {
+              programContextMetrics.gauge("store.writes", 1, dataSetName);
+              programContextMetrics.gauge("store.bytes", dataSize, dataSetName);
               programContextMetrics.gauge("store.ops", 1);
             }
           }

@@ -18,7 +18,8 @@ public interface ProgramRunnerFactory {
     FLOW,
     FLOWLET,
     PROCEDURE,
-    MAPREDUCE
+    MAPREDUCE,
+    WORKFLOW
   }
 
   ProgramRunner create(Type programType);

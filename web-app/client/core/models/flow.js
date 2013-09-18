@@ -121,33 +121,6 @@ define([], function () {
 			return false;
 		}.property('currentState'),
 
-		startPauseDisabled: function () {
-
-			if (this.currentState !== 'STOPPED' &&
-				this.currentState !== 'PAUSED' &&
-				this.currentState !== 'DEPLOYED' &&
-				this.currentState !== 'RUNNING') {
-				return true;
-			}
-			return false;
-
-		}.property('currentState'),
-
-		defaultAction: function () {
-			if (!this.currentState) {
-				return '...';
-			}
-			return {
-				'deployed': 'Start',
-				'stopped': 'Start',
-				'stopping': 'Start',
-				'starting': 'Start',
-				'running': 'Pause',
-				'adjusting': '...',
-				'draining': '...',
-				'failed': 'Start'
-			}[this.currentState.toLowerCase()];
-		}.property('currentState')
 	});
 
 	Model.reopenClass({
@@ -237,7 +210,7 @@ define([], function () {
 			obj.flowlets = flowlets;
 			var connections = [];
 			var flowStreams = [];
-			//model.connections = this.validateConnections(model.connections);
+			model.connections = this.validateConnections(model.connections);
 			for (var i = 0; i < model.connections.length; i++) {
 				var cn = model.connections[i];
 				var from = {};
@@ -260,73 +233,71 @@ define([], function () {
 			return obj;
 		},
 
-		// /**
-		//  * Validates connections and inserts a dummy node where there are overlapping flowlets.
-		//  * @param  {Array} connections JSON received from server.
-		//  * @return {Array} Validated connections with dummy nodes appropriately inserted.
-		//  */	
-		// validateConnections: function (connections) {
-		// 	var assignments = {};
-		// 	var count = 0;
+		/**
+		 * Validates connections and inserts a dummy node where there are overlapping flowlets.
+		 * @param  {Array} connections JSON received from server.
+		 * @return {Array} Validated connections with dummy nodes appropriately inserted.
+		 */	
+		validateConnections: function (connections) {
+			var assignments = {};
 
-		// 	// First determine which order the nodes are rendered visually. This is based on a horizontal
-		// 	// column format.
-		// 	for (var i = 0, len = connections.length; i < len; i++) {
-		// 		var conn = connections[i];
-		// 		if (!(conn['sourceName'] in assignments)) {
-		// 			count++;
-		// 			assignments[conn['sourceName']] = count;
-		// 		}
-		// 		if (!(conn['targetName'] in assignments)) {
-		// 			count = assignments[conn['targetName']] = assignments[conn['sourceName']] + 1;
-		// 		}
-		// 	}
+			// First determine which order the nodes are rendered visually. This is based on a horizontal
+			// column format.
+			for (var i = 0, len = connections.length; i < len; i++) {
+				var conn = connections[i];
+				if (!(conn['sourceName'] in assignments)) {
+					assignments[conn['sourceName']] = 0;
+				}
+				if (!(conn['targetName'] in assignments)) {
+					assignments[conn['targetName']] = assignments[conn['sourceName']] + 1;
+				}
+			}
 
-		// 	// Determine if there are any anomolies i.e. nodelevel3 --> nodelevel3 and increment to push
-		// 	// node to column 4.
-		// 	for (var i = 0, len = connections.length; i < len; i++) {
-		// 		var conn = connections[i];
-		// 		if (assignments[conn['sourceName']] === assignments[conn['targetName']]) {
-		// 			assignments[conn['targetName']]++;
-		// 		}
-		// 	}
+			// Determine if there are any anomolies i.e. nodelevel3 --> nodelevel3 and increment to
+			// nodelevel3 --> nodelevel4.
+			for (var i = 0, len = connections.length; i < len; i++) {
+				var conn = connections[i];
+				if (assignments[conn['sourceName']] === assignments[conn['targetName']]) {
+					assignments[conn['targetName']]++;
+				}
+			}
 			
-		// 	// Set up dummy connections if anomoly is detected and there is distance between connecting
-		// 	// nodes. This changes connection nodelevel2 --> nodelevel5 to:
-		// 	// nodelevel2 --> dummylevel3, dummylevel3 --> dummylevel4, dummylevel4 --> nodelevel5.
-		// 	var newConnections = [];
-		// 	for (var i = 0, len = connections.length; i < len; i++) {
-		// 		var source = connections[i].sourceName;
-		// 		var destination = connections[i].targetName;
-		// 		if (assignments[destination] - assignments[source] > 1) {
-		// 			var diff = assignments[destination] - assignments[source];
-		// 			for (var z = 0; z < diff; z++) {
-		// 				if (z === 0) {
-		// 					newConnections.push({
-		// 						sourceType: connections[i].sourceType,
-		// 						sourceName: connections[i].sourceName,
-		// 						targetName: 'dummy'
-		// 					});
-		// 				} else if (z > 0 && z !== diff -1) {
-		// 					newConnections.push({
-		// 						sourceType: 'dummy',
-		// 						sourceName: 'dummy',
-		// 						targetName: 'dummy'
-		// 					});
-		// 				} else if (z === diff - 1) {
-		// 					newConnections.push({
-		// 						sourceType: connections[i].sourceType,
-		// 						sourceName: 'dummy',
-		// 						targetName: connections[i].targetName
-		// 					});
-		// 				}
-		// 			}
-		// 		} else {
-		// 			newConnections.push(connections[i]);
-		// 		}
-		// 	}
-		// 	return newConnections;
-		// }
+			// Set up dummy connections if anomoly is detected and there is distance between connecting
+			// nodes. This changes connection nodelevel2 --> nodelevel5 to:
+			// nodelevel2 --> dummylevel3, dummylevel3 --> dummylevel4, dummylevel4 --> nodelevel5.
+			var newConnections = [];
+			for (var i = 0, len = connections.length; i < len; i++) {
+				var source = connections[i].sourceName;
+				var destination = connections[i].targetName;
+				if (assignments[destination] - assignments[source] > 1) {
+					var diff = assignments[destination] - assignments[source];
+					for (var z = 0; z < diff; z++) {
+						if (z === 0) {
+							newConnections.push({
+								sourceType: connections[i].sourceType,
+								sourceName: connections[i].sourceName,
+								targetName: 'dummy'
+							});
+						} else if (z > 0 && z !== diff -1) {
+							newConnections.push({
+								sourceType: 'dummy',
+								sourceName: 'dummy',
+								targetName: 'dummy'
+							});
+						} else if (z === diff - 1) {
+							newConnections.push({
+								sourceType: connections[i].sourceType,
+								sourceName: 'dummy',
+								targetName: connections[i].targetName
+							});
+						}
+					}
+				} else {
+					newConnections.push(connections[i]);
+				}
+			}
+			return newConnections;
+		}
 
 	});
 

@@ -72,7 +72,7 @@ abstract class AbstractWeaveProgramController extends AbstractProgramController 
       @Override
       public void failed(Service.State from, Throwable failure) {
         LOG.info("Weave program failed: {} {}", programName, weaveController.getRunId());
-        stop();
+        error(failure);
       }
     };
   }

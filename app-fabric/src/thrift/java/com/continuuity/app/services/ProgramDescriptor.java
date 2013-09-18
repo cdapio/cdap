@@ -446,8 +446,8 @@ public class ProgramDescriptor implements org.apache.thrift.TBase<ProgramDescrip
                 struct.arguments = new HashMap<String,String>(2*_map0.size);
                 for (int _i1 = 0; _i1 < _map0.size; ++_i1)
                 {
-                  String _key2; // required
-                  String _val3; // optional
+                  String _key2; // optional
+                  String _val3; // required
                   _key2 = iprot.readString();
                   _val3 = iprot.readString();
                   struct.arguments.put(_key2, _val3);
@@ -545,8 +545,8 @@ public class ProgramDescriptor implements org.apache.thrift.TBase<ProgramDescrip
           struct.arguments = new HashMap<String,String>(2*_map6.size);
           for (int _i7 = 0; _i7 < _map6.size; ++_i7)
           {
-            String _key8; // required
-            String _val9; // optional
+            String _key8; // optional
+            String _val9; // required
             _key8 = iprot.readString();
             _val9 = iprot.readString();
             struct.arguments.put(_key8, _val9);
