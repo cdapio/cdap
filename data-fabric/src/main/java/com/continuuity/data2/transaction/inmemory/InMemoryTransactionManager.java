@@ -1,12 +1,13 @@
 package com.continuuity.data2.transaction.inmemory;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionEdit;
+import com.continuuity.data2.transaction.persist.TransactionLog;
+import com.continuuity.data2.transaction.persist.TransactionLogReader;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -18,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -92,9 +91,9 @@ public class InMemoryTransactionManager {
   public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
   public static final int DEFAULT_TX_TIMEOUT = 300;
 
-  private static final int STATE_PERSIST_VERSION = 1;
-  private static final String ALL_STATE_TAG = "all";
-  private static final String WATERMARK_TAG = "mark";
+  // the frequency (in seconds) to perform periodic snapshots
+  public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
+  public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
 
   private static final long[] NO_INVALID_TX = { };
 
@@ -129,28 +128,41 @@ public class InMemoryTransactionManager {
   private long waterMark;
   private long claimSize = DEFAULT_TX_CLAIM_SIZE;
 
-  private final StatePersistor persistor;
+  private final TransactionStateStorage persistor;
 
   private final int cleanupInterval;
   private final int defaultTimeout;
   private Thread cleanupThread = null;
+
+  private volatile TransactionLog currentLog;
+
+  // timestamp of the last completed snapshot
+  private long lastSnapshotTime;
+  // frequency in millis to perform snapshots
+  private long snapshotFrequency;
+  // interval for polling to check whether a snapshot is needed
+  private long snapshotPollInterval;
+  private Thread snapshotThread;
 
   /**
    * This constructor should only be used for testing. It uses default configuration and a no-op persistor.
    * If this constructor is used, there is no need to call init().
    */
   public InMemoryTransactionManager() {
-    this(CConfiguration.create(), new NoopPersistor());
+    this(CConfiguration.create(), new NoOpTransactionStateStorage());
     persistor.startAndWait();
+    initLog();
     initialized = true;
   }
 
   @Inject
-  public InMemoryTransactionManager(CConfiguration conf, @Nonnull StatePersistor persistor) {
+  public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor) {
     this.persistor = persistor;
     claimSize = conf.getInt(CFG_TX_CLAIM_SIZE, DEFAULT_TX_CLAIM_SIZE);
     cleanupInterval = conf.getInt(CFG_TX_CLEANUP_INTERVAL, DEFAULT_TX_CLEANUP_INTERVAL);
     defaultTimeout = conf.getInt(CFG_TX_TIMEOUT, DEFAULT_TX_TIMEOUT);
+    snapshotFrequency = conf.getLong(CFG_TX_SNAPSHOT_INTERVAL, DEFAULT_TX_SNAPSHOT_INTERVAL);
+    snapshotPollInterval = snapshotFrequency / 10L;
     clear();
   }
 
@@ -176,7 +188,20 @@ public class InMemoryTransactionManager {
     recoverState();
     // start the periodic cleanup thread
     startCleanupThread();
+    startSnapshotThread();
+    // initialize the WAL if we did not force a snapshot in recoverState()
+    initLog();
     initialized = true;
+  }
+
+  private void initLog() {
+    if (currentLog == null) {
+      try {
+        currentLog = persistor.createLog(System.currentTimeMillis());
+      } catch (IOException ioe) {
+        throw Throwables.propagate(ioe);
+      }
+    }
   }
 
   private void startCleanupThread() {
@@ -202,6 +227,35 @@ public class InMemoryTransactionManager {
     cleanupThread.start();
   }
 
+  private void startSnapshotThread() {
+    if (snapshotFrequency > 0) {
+      LOG.info("Starting periodic snapshot thread, frequency = " + snapshotFrequency + " seconds");
+      this.snapshotThread = new Thread("tx-snapshot") {
+        @Override
+        public void run() {
+          // TODO: should we abort on persistence failure??
+          while (!isInterrupted()) {
+            long currentTime = System.currentTimeMillis();
+            if (lastSnapshotTime < (currentTime - snapshotFrequency * 1000)) {
+              try {
+                doSnapshot();
+              } catch (IOException ioe) {
+                LOG.error("Periodic snapshot failed!", ioe);
+              }
+            }
+            try {
+              Thread.sleep(snapshotPollInterval);
+            } catch (InterruptedException ie) {
+              break;
+            }
+          }
+        }
+      };
+      snapshotThread.setDaemon(true);
+      snapshotThread.start();
+    }
+  }
+
   private synchronized void cleanupTimedOutTransactions() {
     long currentTime = System.currentTimeMillis();
     List<Long> timedOut = Lists.newArrayList();
@@ -213,6 +267,11 @@ public class InMemoryTransactionManager {
       }
     }
     if (!timedOut.isEmpty()) {
+      List<TransactionEdit> invalidEdits = Lists.newArrayListWithCapacity(timedOut.size());
+      for (Long id : timedOut) {
+        invalidEdits.add(TransactionEdit.createInvalid(id));
+      }
+      appendToLog(invalidEdits);
       invalid.addAll(timedOut);
       for (long tx : timedOut) {
         committingChangeSets.remove(tx);
@@ -225,28 +284,63 @@ public class InMemoryTransactionManager {
     }
   }
 
-  public void recoverState() {
-    // try to recover persisted state
+  private void doSnapshot() throws IOException {
+    long snapshotTime = 0L;
+    TransactionSnapshot snapshot = null;
     try {
-      // attempt to restore the full state
-      byte[] state = persistor.readBack(ALL_STATE_TAG);
-      if (state != null) {
-        decodeState(state);
-        LOG.info("Restored transaction state successfully ({} bytes).", state.length);
-        persistor.delete(ALL_STATE_TAG);
-      } else {
-        // full state is not there, attempt to restore the watermark
-        state = persistor.readBack(WATERMARK_TAG);
-        if (state != null) {
-          waterMark = Bytes.toLong(state);
-          // must have crashed last time... need to claim the next batch of write versions
-          waterMark += claimSize;
-          readPointer = waterMark - 1;
-          nextWritePointer = waterMark; //
-          LOG.warn("Recovered transaction watermark successfully, but transaction state may have been lost.");
-        } else {
-          LOG.info("No persisted transaction state found. Initializing from scratch.");
+      synchronized (this) {
+        // copy in memory state
+        snapshot = getCurrentState();
+        snapshotTime = snapshot.getTimestamp();
+        LOG.info("Starting snapshot of transaction state with timestamp {}", snapshotTime);
+
+        // roll WAL
+        TransactionLog oldLog = currentLog;
+        currentLog = persistor.createLog(snapshotTime);
+        // there may not be an existing log on startup
+        if (oldLog != null) {
+          oldLog.close();
         }
+      }
+
+      // save snapshot
+      persistor.writeSnapshot(snapshot);
+      lastSnapshotTime = snapshotTime;
+
+      // TODO: clean any obsoleted snapshots and WALs
+    } catch (IOException ioe) {
+      LOG.error("Snapshot (timestamp " + snapshotTime + ") failed due to: " + ioe.getMessage(), ioe);
+      throw ioe;
+    }
+  }
+
+  public synchronized TransactionSnapshot getCurrentState() {
+    return TransactionSnapshot.copyFrom(System.currentTimeMillis(), readPointer, nextWritePointer, waterMark,
+                                            invalid, inProgress, committingChangeSets, committedChangeSets);
+  }
+
+  public synchronized void recoverState() {
+    try {
+      boolean restoredState = false;
+      TransactionSnapshot lastSnapshot = persistor.getLatestSnapshot();
+      // if we failed before a snapshot could complete, we might not have one to restore
+      if (lastSnapshot != null) {
+        restoredState = true;
+        restoreSnapshot(lastSnapshot);
+        lastSnapshotTime = lastSnapshot.getTimestamp();
+      }
+      // replay any WALs since the last snapshot
+      Collection<TransactionLog > logs = persistor.getLogsSince(lastSnapshotTime);
+      if (logs != null) {
+        restoredState = true;
+        replayLogs(logs);
+      }
+
+      // force a new snapshot to persist the current state
+      if (restoredState) {
+        // TODO: cleanup committed map -- truncate to inprogress
+        // TODO: move read pointer
+        doSnapshot();
       }
     } catch (IOException e) {
       LOG.error("Unable to read back transaction state:", e);
@@ -254,20 +348,97 @@ public class InMemoryTransactionManager {
     }
   }
 
+  /**
+   * Restore the initial in-memory transaction state from a snapshot.
+   */
+  private void restoreSnapshot(TransactionSnapshot snapshot) {
+    LOG.info("Restoring transaction state from snapshot at " + snapshot.getTimestamp());
+    // TODO: this should only be applying changes to a blank slate, should we do any prevalidation of current values?
+    Preconditions.checkState(lastSnapshotTime == 0, "lastSnapshotTime has been set!");
+    Preconditions.checkState(readPointer == 0, "readPointer has been set!");
+    Preconditions.checkState(nextWritePointer == 1, "nextWritePointer has been set!");
+    Preconditions.checkState(waterMark == 0, "waterMark has been set!");
+    Preconditions.checkState(invalid.isEmpty(), "invalid list should be empty!");
+    Preconditions.checkState(inProgress.isEmpty(), "inProgress map should be empty!");
+    Preconditions.checkState(committingChangeSets.isEmpty(), "committingChangeSets should be empty!");
+    Preconditions.checkState(committedChangeSets.isEmpty(), "committedChangeSets should be empty!");
+
+    lastSnapshotTime = snapshot.getTimestamp();
+    readPointer = snapshot.getReadPointer();
+    nextWritePointer = snapshot.getWritePointer();
+    waterMark = snapshot.getWatermark();
+    invalid.clear();
+    invalid.addAll(snapshot.getInvalid());
+    inProgress.clear();
+    inProgress.putAll(snapshot.getInProgress());
+    committingChangeSets.clear();
+    committingChangeSets.putAll(snapshot.getCommittingChangeSets());
+    committedChangeSets.clear();
+    committedChangeSets.putAll(snapshot.getCommittedChangeSets());
+
+    lastSnapshotTime = snapshot.getTimestamp();
+  }
+
+  /**
+   * Replay all logged edits from the given transaction logs.
+   */
+  private void replayLogs(Collection<TransactionLog> logs) {
+    for (TransactionLog log : logs) {
+      LOG.info("Replaying edits from transaction log " + log.getName());
+      int editCnt = 0;
+      try {
+        TransactionLogReader reader = log.getReader();
+        TransactionEdit edit = null;
+        while ((edit = reader.next()) != null) {
+          editCnt++;
+          switch (edit.getState()) {
+            case INPROGRESS:
+              addInProgressAndAdvance(edit.getWritePointer(), edit.getExpiration(), edit.getNextWritePointer());
+              break;
+            case COMMITTING:
+              addCommittingChangeSet(edit.getWritePointer(), edit.getChanges());
+              break;
+            case COMMITTED:
+              doCommit(edit.getWritePointer(), edit.getChanges(), edit.getNextWritePointer(), edit.getCanCommit());
+              break;
+            case INVALID:
+              doInvalidate(edit.getWritePointer());
+              break;
+            case ABORTED:
+              doAbort(edit.getWritePointer());
+              break;
+            case MOVE_WATERMARK:
+              waterMark = edit.getWritePointer();
+              break;
+            default:
+              // unknown type!
+              throw new IllegalArgumentException("Invalid state for WAL entry: " + edit.getState());
+          }
+        }
+      } catch (IOException ioe) {
+        throw Throwables.propagate(ioe);
+      }
+      LOG.info("Read " + editCnt + " edits from log " + log.getName());
+    }
+  }
+
   public synchronized void close() {
     // if initialized is false, then the service did not start up properly and the state is most likely corrupt.
+    // TODO: add closed flag to reject further requests by clients
     if (initialized) {
       LOG.info("Shutting down gracefully...");
       // signal the cleanup thread to stop
       if (cleanupThread != null) {
         cleanupThread.interrupt();
       }
-      byte[] state = encodeState();
+      if (snapshotThread != null) {
+        snapshotThread.interrupt();
+      }
+
       try {
-        persistor.persist(ALL_STATE_TAG, state);
-        LOG.info("Successfully persisted transaction state ({} bytes).", state.length);
+        doSnapshot();
       } catch (IOException e) {
-        LOG.error("Unable to persist transaction state (" + state.length + " bytes):", e);
+        LOG.error("Unable to persist transaction state on close:", e);
         throw Throwables.propagate(e);
       }
     }
@@ -279,8 +450,9 @@ public class InMemoryTransactionManager {
     ensureInitialized();
     try {
       if (nextWritePointer >= waterMark) {
-        waterMark += claimSize;
-        persistor.persist(WATERMARK_TAG, Bytes.toBytes(waterMark));
+        long nextWatermark = waterMark + claimSize;
+        appendToLog(TransactionEdit.createMoveWatermark(nextWatermark));
+        waterMark = nextWatermark;
         LOG.debug("Claimed {} write versions, new watermark is {}.", claimSize, waterMark);
       }
     } catch (Exception e) {
@@ -309,12 +481,16 @@ public class InMemoryTransactionManager {
   public Transaction startShort(int timeoutInSeconds) {
     Preconditions.checkArgument(timeoutInSeconds > 0, "timeout must be positive but is %s", timeoutInSeconds);
     long currentTime = System.currentTimeMillis();
+    long expiration = currentTime + 1000L * timeoutInSeconds;
+    Transaction tx = null;
     synchronized (this) {
       saveWaterMarkIfNeeded();
-      Transaction tx = createTransaction();
-      inProgress.put(nextWritePointer++, currentTime + 1000L * timeoutInSeconds);
-      return tx;
+      tx = createTransaction(nextWritePointer);
+      addInProgressAndAdvance(tx.getWritePointer(), expiration, nextWritePointer + 1);
+      // TODO: appending to a WAL under a global lock is going to kill us on performance
+      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), expiration, nextWritePointer));
     }
+    return tx;
   }
 
   /**
@@ -323,12 +499,19 @@ public class InMemoryTransactionManager {
    */
   public Transaction startLong() {
     long currentTime = System.currentTimeMillis();
+    Transaction tx = null;
     synchronized (this) {
       saveWaterMarkIfNeeded();
-      Transaction tx = createTransaction();
-      inProgress.put(nextWritePointer++, -currentTime);
-      return tx;
+      tx = createTransaction(nextWritePointer);
+      addInProgressAndAdvance(tx.getWritePointer(), -currentTime, nextWritePointer + 1);
+      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), -currentTime, nextWritePointer));
     }
+    return tx;
+  }
+
+  private void addInProgressAndAdvance(long writePointer, long expiration, long nextPointer) {
+    inProgress.put(writePointer, expiration);
+    nextWritePointer = nextPointer;
   }
 
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
@@ -345,41 +528,46 @@ public class InMemoryTransactionManager {
     if (hasConflicts(tx, set)) {
       return false;
     }
-    committingChangeSets.put(tx.getWritePointer(), set);
+    appendToLog(TransactionEdit.createCommitting(tx.getWritePointer(), set));
+    addCommittingChangeSet(tx.getWritePointer(), set);
     return true;
+  }
+
+  private void addCommittingChangeSet(long writePointer, Set<ChangeId> changes) {
+    committingChangeSets.put(writePointer, changes);
   }
 
   public boolean commit(Transaction tx) {
 
-    // todo: these should be atomic
-    // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot be attempted to
-    //       commit twice
-    Set<ChangeId> changeSet = committingChangeSets.remove(tx.getWritePointer());
-
-    if (inProgress.get(tx.getWritePointer()) == null) {
-      // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-      return false;
-    }
-
     synchronized (this) {
+      if (inProgress.get(tx.getWritePointer()) == null) {
+        // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
+        // if it is missing from inProgress, it is also removed from committing
+        return false;
+      }
+
+      // todo: these should be atomic
+      // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
+      //       be attempted to commit twice
+      Set<ChangeId> changeSet = committingChangeSets.get(tx.getWritePointer());
+
+      boolean canCommit = true;
+
       if (changeSet != null) {
         // double-checking if there are conflicts: someone may have committed since canCommit check
         if (hasConflicts(tx, changeSet)) {
+          canCommit = false;
+        }
+        appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, canCommit));
+        if (!canCommit) {
+          // encountered conflicts
           return false;
         }
-
-        // Record the committed change set with the nextWritePointer as the commit time.
-        // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
-        //       stored under one key
-        Set<ChangeId> changeIds = committedChangeSets.get(nextWritePointer);
-        if (changeIds != null) {
-          // NOTE: we modify the new set to prevent concurrent modification exception, as other threads (e.g. in
-          // canCommit) use it unguarded
-          changeSet.addAll(changeIds);
-        }
-        committedChangeSets.put(nextWritePointer, changeSet);
+      } else {
+        // no changes
+        canCommit = false;
       }
-      makeVisible(tx);
+      doCommit(tx.getWritePointer(), changeSet, nextWritePointer, canCommit);
     }
 
     // All committed change sets that are smaller than the earliest started transaction can be removed.
@@ -387,6 +575,36 @@ public class InMemoryTransactionManager {
     // conflict detection.
     committedChangeSets.headMap(firstShortInProgress()).clear();
     return true;
+  }
+
+  private void doCommit(long writePointer, Set<ChangeId> changes, long commitPointer, boolean addToCommitted) {
+    // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
+    //       be attempted to commit twice
+    committingChangeSets.remove(writePointer);
+
+    if (addToCommitted) {
+      // Record the committed change set with the nextWritePointer as the commit time.
+      // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
+      //       stored under one key
+      Set<ChangeId> changeIds = committedChangeSets.get(commitPointer);
+      if (changeIds != null) {
+        // NOTE: we modify the new set to prevent concurrent modification exception, as other threads (e.g. in
+        // canCommit) use it unguarded
+        changes.addAll(changeIds);
+      }
+
+      committedChangeSets.put(nextWritePointer, changes);
+    }
+    // remove from in-progress set, so that it does not get excluded in the future
+    Long previous = inProgress.remove(writePointer);
+    if (previous == null) {
+      // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
+      if (invalid.rem(writePointer)) {
+        invalidArray = invalid.toLongArray();
+      }
+    }
+    // moving read pointer
+    moveReadPointerIfNeeded(writePointer);
   }
 
   // find the first non long-running in-progress tx, or Long.MAX if none such exists
@@ -400,42 +618,52 @@ public class InMemoryTransactionManager {
   }
 
   public synchronized void abort(Transaction tx) {
-    committingChangeSets.remove(tx.getWritePointer());
+    appendToLog(TransactionEdit.createAborted(tx.getWritePointer()));
+    doAbort(tx.getWritePointer());
+  }
+
+  private void doAbort(long writePointer) {
+    committingChangeSets.remove(writePointer);
     // makes tx visible (assumes that all operations were rolled back)
     // remove from in-progress set, so that it does not get excluded in the future
-    Long expirationTs = inProgress.remove(tx.getWritePointer());
+    Long expirationTs = inProgress.remove(writePointer);
     // TODO: this is bad/misleading/not clear logic. We should have special flags/tx attributes instead of it. Refactor!
     if (expirationTs != null && expirationTs < 0) {
       // tx was long-running: it must be moved to invalid because its operations cannot be rolled back
-      invalid.add(tx.getWritePointer());
+      invalid.add(writePointer);
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
       Collections.sort(invalid);
       invalidArray = invalid.toLongArray();
     } else if (expirationTs == null) {
       // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
-      if (invalid.rem(tx.getWritePointer())) {
+      if (invalid.rem(writePointer)) {
         invalidArray = invalid.toLongArray();
         // removed a tx from excludes: must move read pointer
-        moveReadPointerIfNeeded(tx.getWritePointer());
+        moveReadPointerIfNeeded(writePointer);
       }
     } else {
       // removed a tx from excludes: must move read pointer
-      moveReadPointerIfNeeded(tx.getWritePointer());
+      moveReadPointerIfNeeded(writePointer);
     }
   }
 
   public synchronized void invalidate(Transaction tx) {
-    committingChangeSets.remove(tx.getWritePointer());
+    appendToLog(TransactionEdit.createInvalid(tx.getWritePointer()));
+    doInvalidate(tx.getWritePointer());
+  }
+
+  public void doInvalidate(long writePointer) {
+    committingChangeSets.remove(writePointer);
     // add tx to invalids
-    invalid.add(tx.getWritePointer());
+    invalid.add(writePointer);
     // todo: find a more efficient way to keep this sorted. Could it just be an array?
     Collections.sort(invalid);
     invalidArray = invalid.toLongArray();
     // remove from in-progress set, so that it does not get excluded in the future
-    Long previous = inProgress.remove(tx.getWritePointer());
+    Long previous = inProgress.remove(writePointer);
     if (previous != null && previous >= 0) {
       // tx was short-running: must move read pointer
-      moveReadPointerIfNeeded(tx.getWritePointer());
+      moveReadPointerIfNeeded(writePointer);
     }
   }
 
@@ -486,19 +714,6 @@ public class InMemoryTransactionManager {
     return false;
   }
 
-  private void makeVisible(Transaction tx) {
-    // remove from in-progress set, so that it does not get excluded in the future
-    Long previous = inProgress.remove(tx.getWritePointer());
-    if (previous == null) {
-      // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
-      if (invalid.rem(tx.getWritePointer())) {
-        invalidArray = invalid.toLongArray();
-      }
-    }
-    // moving read pointer
-    moveReadPointerIfNeeded(tx.getWritePointer());
-  }
-
   private void moveReadPointerIfNeeded(long committedWritePointer) {
     if (committedWritePointer > readPointer) {
       readPointer = committedWritePointer;
@@ -509,7 +724,7 @@ public class InMemoryTransactionManager {
    * Creates a new Transaction. This method only get called from start transaction, which is already
    * synchronized.
    */
-  private Transaction createTransaction() {
+  private Transaction createTransaction(long writePointer) {
     // For holding the first in progress short transaction Id (with timeout >= 0).
     long firstShortTx = Transaction.NO_TX_IN_PROGRESS;
     long[] array = new long[inProgress.size()];
@@ -522,7 +737,23 @@ public class InMemoryTransactionManager {
       }
     }
 
-    return new Transaction(readPointer, nextWritePointer, invalidArray, array, firstShortTx);
+    return new Transaction(readPointer, writePointer, invalidArray, array, firstShortTx);
+  }
+
+  private void appendToLog(TransactionEdit edit) {
+    try {
+      currentLog.append(edit);
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
+  }
+
+  private void appendToLog(List<TransactionEdit> edits) {
+    try {
+      currentLog.append(edits);
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
   }
 
 /*
@@ -566,142 +797,6 @@ public class InMemoryTransactionManager {
   }
 */
 
-  //--------- helpers to encode or decode the transaction state --------------
-  //--------- all these must be called from synchronized context -------------
-
-  private byte[] encodeState() {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    Encoder encoder = new BinaryEncoder(bos);
-
-    try {
-      encoder.writeInt(STATE_PERSIST_VERSION);
-      encoder.writeLong(readPointer);
-      encoder.writeLong(nextWritePointer);
-      encoder.writeLong(waterMark);
-      encodeInvalid(encoder);
-      encodeInProgress(encoder);
-      encodeChangeSets(encoder, committedChangeSets);
-      encodeChangeSets(encoder, committingChangeSets);
-
-    } catch (IOException e) {
-      LOG.error("Unable to serialize transaction state: ", e);
-      throw Throwables.propagate(e);
-    }
-    return bos.toByteArray();
-  }
-
-  private void decodeState(byte[] bytes) {
-    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-    Decoder decoder = new BinaryDecoder(bis);
-
-    try {
-      int persistedVersion = decoder.readInt();
-      if (persistedVersion != STATE_PERSIST_VERSION) {
-        throw new RuntimeException("Can't decode state persisted with version " + persistedVersion + ". Current " +
-                                     "version is " + STATE_PERSIST_VERSION);
-      }
-      readPointer = decoder.readLong();
-      nextWritePointer = decoder.readLong();
-      waterMark = decoder.readLong();
-      decodeInvalid(decoder);
-      decodeInProgress(decoder);
-      decodeChangeSets(decoder, committedChangeSets);
-      decodeChangeSets(decoder, committingChangeSets);
-
-    } catch (IOException e) {
-      LOG.error("Unable to deserialize transaction state: ", e);
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private void encodeInvalid(Encoder encoder) throws IOException {
-    if (!invalid.isEmpty()) {
-      encoder.writeInt(invalid.size());
-      for (long invalidTx : invalid) {
-        encoder.writeLong(invalidTx);
-      }
-    }
-    encoder.writeInt(0); // zero denotes end of list as per AVRO spec
-  }
-
-  private void decodeInvalid(Decoder decoder) throws IOException {
-    invalid.clear();
-    int size = decoder.readInt();
-    while (size != 0) { // zero denotes end of list as per AVRO spec
-      for (int remaining = size; remaining > 0; --remaining) {
-        invalid.add(decoder.readLong());
-      }
-      size = decoder.readInt();
-    }
-  }
-
-  private void encodeInProgress(Encoder encoder) throws IOException {
-    if (!inProgress.isEmpty()) {
-      encoder.writeInt(inProgress.size());
-      for (Map.Entry<Long, Long> entry : inProgress.entrySet()) {
-        encoder.writeLong(entry.getKey()); // tx id
-        encoder.writeLong(entry.getValue()); // time stamp;
-      }
-    }
-    encoder.writeInt(0); // zero denotes end of list as per AVRO spec
-  }
-
-  private void decodeInProgress(Decoder decoder) throws IOException {
-    inProgress.clear();
-    int size = decoder.readInt();
-    while (size != 0) { // zero denotes end of list as per AVRO spec
-      for (int remaining = size; remaining > 0; --remaining) {
-        inProgress.put(decoder.readLong(), decoder.readLong());
-      }
-      size = decoder.readInt();
-    }
-  }
-
-  private void encodeChangeSets(Encoder encoder, Map<Long, Set<ChangeId>> changes) throws IOException {
-    if (!changes.isEmpty()) {
-      encoder.writeInt(changes.size());
-      for (Map.Entry<Long, Set<ChangeId>> entry : changes.entrySet()) {
-        encoder.writeLong(entry.getKey());
-        encodeChanges(encoder, entry.getValue());
-      }
-    }
-    encoder.writeInt(0); // zero denotes end of list as per AVRO spec
-  }
-
-  private void decodeChangeSets(Decoder decoder, Map<Long, Set<ChangeId>> changeSets) throws IOException {
-    changeSets.clear();
-    int size = decoder.readInt();
-    while (size != 0) { // zero denotes end of list as per AVRO spec
-      for (int remaining = size; remaining > 0; --remaining) {
-        changeSets.put(decoder.readLong(), decodeChanges(decoder));
-      }
-      size = decoder.readInt();
-    }
-  }
-
-  private void encodeChanges(Encoder encoder, Set<ChangeId> changes) throws IOException {
-    if (!changes.isEmpty()) {
-      encoder.writeInt(changes.size());
-      for (ChangeId change : changes) {
-        encoder.writeBytes(change.getKey());
-      }
-    }
-    encoder.writeInt(0); // zero denotes end of list as per AVRO spec
-  }
-
-  private Set<ChangeId> decodeChanges(Decoder decoder) throws IOException {
-    int size = decoder.readInt();
-    HashSet<ChangeId> changes = Sets.newHashSetWithExpectedSize(size);
-    while (size != 0) { // zero denotes end of list as per AVRO spec
-      for (int remaining = size; remaining > 0; --remaining) {
-        changes.add(new ChangeId(Bytes.toBytes(decoder.readBytes())));
-      }
-      size = decoder.readInt();
-    }
-    // todo is there an immutable hash set?
-    return changes;
-  }
-
   /**
    * Called from the opex service every 10 seconds.
    * This hack is needed because current metrics system is not flexible when it comes to adding new metrics.
@@ -713,37 +808,6 @@ public class InMemoryTransactionManager {
                ", in progress = " + inProgress.size() +
                ", committing = " + committingChangeSets.size() +
                ", committed = " + committedChangeSets.size());
-  }
-
-  static final class ChangeId {
-    private final byte[] key;
-    private final int hash;
-
-    ChangeId(byte[] bytes) {
-      key = bytes;
-      hash = Bytes.hashCode(key);
-    }
-
-    byte[] getKey() {
-      return key;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == this) {
-        return true;
-      }
-      if (o == null || o.getClass() != ChangeId.class) {
-        return false;
-      }
-      ChangeId other = (ChangeId) o;
-      return hash == other.hash && Bytes.equals(key, other.key);
-    }
-
-    @Override
-    public int hashCode() {
-      return hash;
-    }
   }
 
 }

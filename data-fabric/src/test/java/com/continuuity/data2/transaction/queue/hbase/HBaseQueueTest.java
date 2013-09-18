@@ -19,6 +19,8 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.NoopPersistor;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
+import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
@@ -71,7 +73,7 @@ public class HBaseQueueTest extends QueueTest {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(StatePersistor.class).to(NoopPersistor.class);
+          bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
         }
       });
     // Customize test configuration
