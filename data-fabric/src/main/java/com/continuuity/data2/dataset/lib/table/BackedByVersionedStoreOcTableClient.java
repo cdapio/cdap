@@ -28,7 +28,7 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferingOcTab
       // todo: not cool to rely on external implementation specifics
       for (Map.Entry<Long, byte[]> versionAndValue : column.getValue().entrySet()) {
         // NOTE: we know that excluded versions are ordered
-        if (tx.isVisible(versionAndValue.getKey())) {
+        if (tx == null || tx.isVisible(versionAndValue.getKey())) {
           result.put(column.getKey(), versionAndValue.getValue());
           break;
         }

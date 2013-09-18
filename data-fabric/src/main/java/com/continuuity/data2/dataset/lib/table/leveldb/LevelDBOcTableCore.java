@@ -4,7 +4,9 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.leveldb.KeyValue;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.transaction.Transaction;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import org.iq80.leveldb.DB;
@@ -14,10 +16,11 @@ import org.iq80.leveldb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -56,7 +59,20 @@ public class LevelDBOcTableCore {
     this.writeOptions = service.getWriteOptions();
   }
 
+  public void persist(Map<byte[], Map<byte[], byte[]>> changes, long version) throws IOException {
+    // todo support writing null when no transaction
+    WriteBatch batch = db.createWriteBatch();
+    for (Map.Entry<byte[], Map<byte[], byte[]>> row : changes.entrySet()) {
+      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+        byte[] key = createPutKey(row.getKey(), column.getKey(), version);
+        batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
+      }
+    }
+    db.write(batch, writeOptions);
+  }
+
   public void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes, long version) throws IOException {
+    // todo support writing null when no transaction
     WriteBatch batch = db.createWriteBatch();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : changes.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
@@ -81,7 +97,9 @@ public class LevelDBOcTableCore {
     db.write(batch, writeOptions);
   }
 
-  public Scanner scan(byte[] startRow, byte[] stopRow, Transaction tx) throws IOException {
+  public Scanner scan(byte[] startRow, byte[] stopRow,
+                      @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx)
+    throws IOException {
     DBIterator iterator = db.iterator();
     try {
       if (startRow != null) {
@@ -99,7 +117,7 @@ public class LevelDBOcTableCore {
       throw e;
     }
     byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
-    return new LevelDBScanner(iterator, endKey, tx);
+    return new LevelDBScanner(iterator, endKey, filter, columns, tx);
   }
 
   public NavigableMap<byte[], byte[]> getRow(byte[] row, byte[][] columns, byte[] startCol, byte[] stopCol,
@@ -200,11 +218,54 @@ public class LevelDBOcTableCore {
     return new ImmutablePair<byte[], NavigableMap<byte[], byte[]>>(rowBeingRead, map);
   }
 
+  public void deleteRows(byte[] prefix) throws IOException {
+    Preconditions.checkNotNull(prefix, "prefix must not be null");
+    WriteBatch batch = db.createWriteBatch();
+    DBIterator iterator = db.iterator();
+    try {
+      iterator.seek(createStartKey(prefix));
+      db.write(batch);
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        if (!Bytes.startsWith(KeyValue.fromKey(entry.getKey()).getRow(), prefix)) {
+          // iterator is past prefix
+          break;
+        }
+        batch.delete(entry.getKey());
+      }
+    } finally {
+      iterator.close();
+    }
+  }
+
+  public void deleteRows(byte[] startRow, byte[] stopRow) throws IOException {
+    WriteBatch batch = db.createWriteBatch();
+    DBIterator iterator = db.iterator();
+    try {
+      if (startRow == null) {
+        iterator.seekToFirst();
+      } else {
+        iterator.seek(createStartKey(startRow));
+      }
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        if (stopRow != null && Bytes.compareTo(KeyValue.fromKey(entry.getKey()).getRow(), stopRow) >= 0) {
+          // iterator is past stopRow
+          break;
+        }
+        batch.delete(entry.getKey());
+      }
+      db.write(batch);
+    } finally {
+      iterator.close();
+    }
+  }
+
   /**
    * Delete a list of rows from the table entirely, disregarding transactions.
-   * @param toDelete the sorted list of row keys to delete.
+   * @param toDelete the row keys to delete
    */
-  public void deleteRows(List<byte[]> toDelete) throws IOException {
+  public void deleteRows(Collection<byte[]> toDelete) throws IOException {
     if (toDelete.isEmpty()) {
       return;
     }
@@ -253,19 +314,46 @@ public class LevelDBOcTableCore {
     private final Transaction tx;
     private byte[] endKey;
     private final DBIterator iterator;
+    private final byte[][] columns;
+    private final FuzzyRowFilter filter;
 
-    public LevelDBScanner(DBIterator iterator, byte[] endKey, Transaction tx) {
+    public LevelDBScanner(DBIterator iterator, byte[] endKey,
+                          @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx) {
       this.tx = tx;
       this.endKey = endKey;
       this.iterator = iterator;
+      this.filter = filter;
+      this.columns = columns;
     }
 
     @Override
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
       try {
-        ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, null, -1);
-        return result.getSecond().isEmpty() ? null :
-          ImmutablePair.of(result.getFirst(), (Map<byte[], byte[]>) result.getSecond());
+        while (true) {
+          ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, columns, -1);
+          if (result.getFirst() == null) {
+            return null;
+          }
+          // apply row filter if any
+          if (filter != null) {
+            FuzzyRowFilter.ReturnCode code = filter.filterRow(result.getFirst());
+            switch (code) {
+              case DONE: {
+                return null;
+              }
+              case SEEK_NEXT_USING_HINT: {
+                // row does not match but another one could. seek to next possible matching row and iterate
+                byte[] seekToRow = filter.getNextRowHint(result.getFirst());
+                iterator.seek(createStartKey(seekToRow));
+                continue;
+              }
+              case INCLUDE: {
+                break;
+              }
+            }
+          }
+          return ImmutablePair.of(result.getFirst(), (Map<byte[], byte[]>) result.getSecond());
+        }
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }

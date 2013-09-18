@@ -20,6 +20,9 @@ public class HBaseTableUtil {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
 
   public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
+  static final byte[] DATA_COLFAM = HBaseOcTableManager.DATA_COLUMN_FAMILY;
+  // 4Mb
+  static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
   public static String getHBaseTableName(String tableName) {
     return encodeTableName(tableName);

@@ -132,7 +132,7 @@ public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
 
   @Override
   protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
-    final Scanner scanner = core.scan(startRow, stopRow, Transaction.ALL_VISIBLE_LATEST);
+    final Scanner scanner = core.scan(startRow, stopRow, null, null, Transaction.ALL_VISIBLE_LATEST);
     return new QueueScanner() {
       @Override
       public ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException {
