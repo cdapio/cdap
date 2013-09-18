@@ -257,9 +257,9 @@
       <div id="informer"></div>
       <div class="panel">
         <div id="batchviz-container">
-          <div class="clearfix chart">
+          <div id="batchviz" class="clearfix chart">
             {{#each elements.Actions}}
-            <div class="batch-item" {{bindAttr id="id"}}>
+            <div class="batch-item" {{bindAttr id="name"}}>
               <div class="batch-icon batch-map">
                 <div class="info-window">
                   <div class="label">{{name}}</div>
@@ -280,7 +280,6 @@
     {{outlet}}
 
   </script>
-
 
   <script type="text/x-handlebars" data-template-name="Batch">
 

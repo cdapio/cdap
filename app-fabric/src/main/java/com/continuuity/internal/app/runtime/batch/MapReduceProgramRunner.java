@@ -28,8 +28,8 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.runtime.AbstractListener;
-import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.weave.api.RunId;
@@ -112,6 +112,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
+    long logicalStartTime = options.getArguments().hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
+                                ? Long.parseLong(options.getArguments()
+                                                        .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
+                                : System.currentTimeMillis();
+
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, program.getClassLoader());
     dataSetInstantiator.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
@@ -122,6 +127,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       new BasicMapReduceContext(program, runId, options.getUserArguments(),
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
+                                logicalStartTime,
                                 metricsCollectionService);
 
     try {
@@ -431,34 +437,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
       DataSetInputFormat.setInput(jobConf, inputDataset);
     }
     return inputDataset;
-  }
-
-  private static final class MapReduceProgramController extends AbstractProgramController {
-    MapReduceProgramController(BasicMapReduceContext context) {
-      super(context.getProgramName(), context.getRunId());
-      started();
-    }
-
-    @Override
-    protected void doSuspend() throws Exception {
-      // No-op
-    }
-
-    @Override
-    protected void doResume() throws Exception {
-      // No-op
-    }
-
-    @Override
-    protected void doStop() throws Exception {
-      // When job is stopped by controller doStop() method, the stopping() method of listener is also called.
-      // That is where we kill the job, so no need to do any extra job in doStop().
-    }
-
-    @Override
-    protected void doCommand(String name, Object value) throws Exception {
-      // No-op
-    }
   }
 
   private static Location buildJobJar(Location jobJarLocation) throws IOException {

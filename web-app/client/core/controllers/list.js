@@ -12,6 +12,7 @@ define([], function () {
 			'App': 'Applications',
 			'Flow': 'Process',
 			'Batch': 'Process',
+			'Workflow': 'Process',
 			'Stream': 'Collect',
 			'Procedure': 'Query',
 			'Dataset': 'Store'
@@ -21,6 +22,7 @@ define([], function () {
 			'App': 'apps',
 			'Flow': 'flows',
 			'Batch': 'mapreduces',
+			'Workflow': 'workflows',
 			'Stream': 'streams',
 			'Procedure': 'procedures',
 			'Dataset': 'datasets'

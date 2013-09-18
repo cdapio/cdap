@@ -14,10 +14,13 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.workflow.Workflow;
+import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.DefaultApplicationSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
+import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
@@ -63,10 +66,16 @@ public interface ApplicationSpecification {
   Map<String, ProcedureSpecification> getProcedures();
 
   /**
-   * @return An immutable {@link Map} from {@link com.continuuity.api.batch.MapReduceSpecification} name to
-   *         {@link com.continuuity.api.batch.MapReduceSpecification}
+   * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}
+   *         for {@link MapReduce} that are configured for the application.
    */
   Map<String, MapReduceSpecification> getMapReduces();
+
+  /**
+   * @return An immutable {@link Map} from {@link Workflow} name to {@link WorkflowSpecification}
+   *         for {@link Workflow}s that are configured for the application.
+   */
+  Map<String, WorkflowSpecification> getWorkflows();
 
   /**
    * Builder for creating instance of {@link ApplicationSpecification}. The builder instance is
@@ -109,8 +118,12 @@ public interface ApplicationSpecification {
      * Map from {@link MapReduceSpecification} name to {@link MapReduceSpecification}.
      * It is for all Hadoop mapreduce jobs defined in this application
      */
-    private final Map<String, MapReduceSpecification> mapReduces =
-      new HashMap<String, MapReduceSpecification>();
+    private final Map<String, MapReduceSpecification> mapReduces = new HashMap<String, MapReduceSpecification>();
+
+    /**
+     * Map from workflow name to {@link WorkflowSpecification} for all workflows defined in this application.
+     */
+    private final Map<String, WorkflowSpecification> workflows = new HashMap<String, WorkflowSpecification>();
 
     /**
      * @return A new instance of {@link Builder}.
@@ -453,8 +466,7 @@ public interface ApplicationSpecification {
       @Deprecated
       @Override
       public ApplicationSpecification build() {
-        return new DefaultApplicationSpecification(name, description, streams, dataSets,
-                                                   flows, procedures, mapReduces);
+        return Builder.this.build();
       }
 
       /**
@@ -498,7 +510,12 @@ public interface ApplicationSpecification {
        *
        * @return A new {@link ApplicationSpecification}.
        */
+      @Deprecated
       ApplicationSpecification build();
+
+      WorkflowAdder withWorkflow();
+
+      AfterWorkflow noWorkflow();
     }
 
     /**
@@ -510,10 +527,20 @@ public interface ApplicationSpecification {
        *
        * @return A new {@link ApplicationSpecification}.
        */
+      @Deprecated
       @Override
       public ApplicationSpecification build() {
-        return new DefaultApplicationSpecification(name, description, streams, dataSets,
-                                                   flows, procedures, mapReduces);
+        return Builder.this.build();
+      }
+
+      @Override
+      public WorkflowAdder withWorkflow() {
+        return new MoreWorkflow();
+      }
+
+      @Override
+      public AfterWorkflow noWorkflow() {
+        return new MoreWorkflow();
       }
 
       /**
@@ -529,6 +556,53 @@ public interface ApplicationSpecification {
         mapReduces.put(spec.getName(), spec);
         return this;
       }
+    }
+
+    /**
+     * Define interface for adding workflow to the application.
+     */
+    public interface WorkflowAdder {
+      MoreWorkflow add(Workflow workflow);
+    }
+
+    /**
+     * Defines interface for proceeding to the next step after adding workflows to the application.
+     */
+    public interface AfterWorkflow {
+      /**
+       * Builds the {@link ApplicationSpecification} based on what is being configured.
+       *
+       * @return A new {@link ApplicationSpecification}.
+       */
+      ApplicationSpecification build();
+    }
+
+    /**
+     * Class for adding workflows to the application.
+     */
+    public final class MoreWorkflow implements WorkflowAdder, AfterWorkflow {
+
+      @Override
+      public ApplicationSpecification build() {
+        return Builder.this.build();
+      }
+
+      @Override
+      public MoreWorkflow add(Workflow workflow) {
+        Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
+        WorkflowSpecification spec = new DefaultWorkflowSpecification(workflow.getClass().getName(),
+                                                                      workflow.configure());
+        workflows.put(spec.getName(), spec);
+
+        // Add MapReduces from workflow into application
+        mapReduces.putAll(spec.getMapReduces());
+        return this;
+      }
+    }
+
+    private ApplicationSpecification build() {
+      return new DefaultApplicationSpecification(name, description, streams, dataSets,
+                                                 flows, procedures, mapReduces, workflows);
     }
 
     /**
