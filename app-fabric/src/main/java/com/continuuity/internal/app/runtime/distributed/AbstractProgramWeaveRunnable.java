@@ -17,14 +17,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
-import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.AbstractListener;
@@ -64,7 +57,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -275,33 +267,24 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                            new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
                            new LocationRuntimeModule().getDistributedModules(),
                            new LoggingModules().getDistributedModules(),
+                           new DataFabricModules(cConf, hConf).getDistributedModules(),
                            new AbstractModule() {
       @Override
       protected void configure() {
         bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
                                .toInstance(context.getHost());
-
         // For program loading
         install(createProgramFactoryModule());
+
+        // For Binding queue reader stuff (for flowlets)
+        install(createFactoryModule(QueueReaderFactory.class,
+                                    QueueReader.class,
+                                    SingleQueue2Reader.class));
 
         // For binding DataSet transaction stuff
         install(createFactoryModule(DataFabricFacadeFactory.class,
                                     DataFabricFacade.class,
                                     SmartDataFabricFacade.class));
-
-        // For Binding queue stuff
-        install(createQueueFactoryModule());
-
-        // Bind remote operation executor
-        bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
-        bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(cConf);
-
-        // Bind TxDs2 stuff
-        bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
-        bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
-        bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(cConf);
-        bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hConf);
-        bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
 
         bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
           @Override
@@ -321,11 +304,6 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       .build(factoryClass);
   }
 
-  private Module createQueueFactoryModule() {
-    return new FactoryModuleBuilder()
-      .implement(QueueReader.class, SingleQueue2Reader.class)
-      .build(QueueReaderFactory.class);
-  }
 
   private Module createProgramFactoryModule() {
     return new PrivateModule() {
