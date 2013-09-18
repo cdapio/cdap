@@ -756,6 +756,10 @@ text {
 	background-image: url(../img/upload-pending.gif);
 }
 
+#app-upload-input {
+	display: none;
+}
+
 input {
 	margin: 0 !important;
 }
