@@ -200,6 +200,11 @@ public class TableTest extends DataSetTestBase {
     table.write(new Swap(key1, col2, null, val2));
     result = table.read(new Read(key1, col2));
     verifyColumn(result, col2, val2);
+
+    // delete all columns
+    table.write(new Delete(key1));
+    result = table.read(new Read(key1, col2));
+    Assert.assertTrue(result.isEmpty());
   }
 
 

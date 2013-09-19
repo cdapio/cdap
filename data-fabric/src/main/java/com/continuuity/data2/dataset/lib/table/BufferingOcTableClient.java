@@ -46,7 +46,10 @@ import java.util.NavigableMap;
  * NOTE: Using {@link #get(byte[], byte[], byte[], int)} is generally always not efficient since it always hits the
  *       persisted store even if all needed data is in-memory buffer. See more info at method javadoc
  */
-public abstract class BufferingOcTableClient implements OrderedColumnarTable, DataSetClient, TransactionAware {
+public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTable
+                                             implements DataSetClient, TransactionAware {
+  protected static final byte[] DELETE_MARKER = new byte[0];
+
   // name of the table
   private final String name;
   // name length + name of the table: handy to have one cached
@@ -109,27 +112,14 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     throws Exception;
 
   /**
-   * Fetches data from persisted store.
-   * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
-   * @param row row key
-   * @param column column name
-   * @return value if it exists, otherwise null
-   * @throws Exception
-   */
-  // even though not used at the moment, the implementation can be improved to use it for more efficient code
-  @SuppressWarnings("unused")
-  protected abstract byte[] getPersisted(byte[] row, byte[] column)
-    throws Exception;
-
-  /**
    * Fetches column->value pairs for set of columns from persistent store.
    * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
    * @param row row key defines the row to fetch columns from
-   * @param columns set of columns to fetch
+   * @param columns set of columns to fetch, can be null which means fetch everything
    * @return map of column->value pairs, never null.
    * @throws Exception
    */
-  protected abstract NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns)
+  protected abstract NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns)
     throws Exception;
 
   /**
@@ -223,6 +213,18 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     return true;
   }
 
+  /**
+   * NOTE: Depending on the use-case, calling this method may be much less
+   *       efficient than calling same method with columns as parameters because it may always require round trip to
+   *       persistent store
+   */
+  @Override
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row) throws Exception {
+    reportRead(1);
+    NavigableMap<byte[], byte[]> result = getRowMap(row);
+    return createOperationResult(result);
+  }
+
   @Override
   public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns) throws Exception {
     reportRead(1);
@@ -264,10 +266,6 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     return createOperationResult(result);
   }
 
-  public void put(byte [] row, byte [] column, byte[] value) throws Exception {
-    put(row, new byte[][] {column}, new byte[][] {value});
-  }
-
   /**
    * NOTE: if value is null corresponded column is deleted. It will not be in result set when reading.
    *
@@ -287,13 +285,26 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     }
   }
 
+  /**
+   * NOTE: Depending on the use-case, calling this method may be much less
+   *       efficient than calling same method with columns as parameters because it may always require round trip to
+   *       persistent store
+   */
   @Override
-  public void delete(byte[] row, byte[] column) throws Exception {
-    delete(row, new byte[][] {column});
+  public void delete(byte[] row) throws Exception {
+    // "0" because we don't know what gets deleted
+    reportWrite(1, 0);
+    // this is going to be expensive, but the only we can do as delete implementation act on per-column level
+    NavigableMap<byte[], byte[]> rowMap = getRowMap(row);
+    delete(row, rowMap.keySet().toArray(new byte[rowMap.keySet().size()][]));
   }
 
   @Override
   public void delete(byte[] row, byte[][] columns) throws Exception {
+    if (columns == null) {
+      delete(row);
+      return;
+    }
     // "0" because we don't know what gets deleted
     reportWrite(1, 0);
     // same as writing null for every column
@@ -379,6 +390,26 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
     return scanPersisted(startRow, stopRow);
   }
 
+  private NavigableMap<byte[], byte[]> getRowMap(byte[] row) throws Exception {
+    NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    // checking if the row was deleted inside this tx
+    NavigableMap<byte[], byte[]> buffCols = buff.get(row);
+    boolean rowDeleted = buffCols == null && buff.containsKey(row);
+    if (rowDeleted) {
+      return EMPTY_ROW_MAP;
+    }
+
+    NavigableMap<byte[], byte[]> persisted = getPersisted(row, null);
+
+    result.putAll(persisted);
+    if (buffCols != null) {
+      // buffered should override those returned from persistent store
+      result.putAll(buffCols);
+    }
+
+    return unwrapDeletes(result);
+  }
+
   private NavigableMap<byte[], byte[]> getRowMap(byte[] row, byte[][] columns) throws Exception {
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     // checking if the row was deleted inside this tx
@@ -403,10 +434,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
       }
 
       byte[] val = buffCols.get(column);
-      // if val == null it is a delete, skipping it (not placing in result and not fetching from persisted)
-      if (val != null) {
-        result.put(column, val);
-      }
+      result.put(column, val);
     }
 
     // fetching from server those that were not found in in-mem buffer
@@ -417,7 +445,7 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
         result.putAll(persistedCols);
       }
     }
-    return result;
+    return unwrapDeletes(result);
   }
 
   private OperationResult<Map<byte[], byte[]>> createOperationResult(NavigableMap<byte[], byte[]> result) {
@@ -471,6 +499,44 @@ public abstract class BufferingOcTableClient implements OrderedColumnarTable, Da
         dest.put(keyVal.getKey(), keyVal.getValue());
       }
     }
+  }
+
+  protected static byte[] wrapDeleteIfNeeded(byte[] value) {
+    return value == null ? DELETE_MARKER : value;
+  }
+
+  protected static byte[] unwrapDeleteIfNeeded(byte[] value) {
+    return Arrays.equals(DELETE_MARKER, value) ? null : value;
+  }
+
+  // todo: it is in-efficient to copy maps a lot, consider merging with getLatest methods
+  protected static NavigableMap<byte[], NavigableMap<byte[], byte[]>> unwrapDeletesForRows(
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows) {
+
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : rows.entrySet()) {
+      NavigableMap<byte[], byte[]> rowMap = unwrapDeletes(row.getValue());
+      if (rowMap.size() > 0) {
+        result.put(row.getKey(), rowMap);
+      }
+    }
+
+    return result;
+  }
+
+  // todo: it is in-efficient to copy maps a lot, consider merging with getLatest methods
+  protected static NavigableMap<byte[], byte[]> unwrapDeletes(NavigableMap<byte[], byte[]> rowMap) {
+    if (rowMap == null || rowMap.isEmpty()) {
+      return EMPTY_ROW_MAP;
+    }
+    NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], byte[]> keyVal : rowMap.entrySet()) {
+      byte[] val = unwrapDeleteIfNeeded(keyVal.getValue());
+      if (val != null) {
+        result.put(keyVal.getKey(), val);
+      }
+    }
+    return result;
   }
 
   private void reportWrite(int numOps, int dataSize) {

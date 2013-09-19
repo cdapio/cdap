@@ -362,15 +362,13 @@ public class TableHandler extends AuthenticatedHttpHandler {
       byte [] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
 
       List<String> columns = getColumns(queryParams);
-      if (columns == null || columns.isEmpty()) {
-        responder.sendString(BAD_REQUEST, "delete must have columns");
-        return;
-      }
-
-      byte[][] cols = new byte[columns.size()][];
-      int i = 0;
-      for (String column : columns) {
-        cols[i++] = Util.decodeBinary(column, encoding);
+      byte[][] cols = null;
+      if (columns != null && !columns.isEmpty()) {
+        cols = new byte[columns.size()][];
+        int i = 0;
+        for (String column : columns) {
+          cols[i++] = Util.decodeBinary(column, encoding);
+        }
       }
       Delete delete = new Delete(rowKey, cols);
 
