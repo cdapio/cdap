@@ -114,18 +114,9 @@ public abstract class AbstractMapReduceContextBuilder {
       context.setOutput((BatchWritable) context.getDataSet(outputDataSetName));
     }
 
-    // Hooking up with logging and metrics systems
-    // this is a hack for old logging system
-    if (injector.getBindings().containsKey(Key.get(LogWriter.class))) {
-      CAppender.logWriter = injector.getInstance(LogWriter.class);
-    }
-
-    // TODO: fix logging issue in mapreduce and uncomment:  ENG-3279
     // Initialize log appender
-//    if (injector.getBindings().containsKey(Key.get(LogAppenderInitializer.class))) {
-//      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-//      logAppenderInitializer.initialize();
-//    }
+    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
 
     return context;
   }

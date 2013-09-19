@@ -447,9 +447,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
   }
 
   private Location buildJobJar(Location jobJarLocation) throws IOException {
-    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"));
-                                                           // todo: below packages should be added as "force to include"
-                                                           // Lists.newArrayList("org.apache.hadoop.hbase"));
+    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
+                                                           Lists.newArrayList("org.apache.hadoop.hbase"));
     Location appFabricDependenciesJarLocation =
       locationFactory.create(jobJarLocation.getTempFile(".job.jar").toURI().getPath());
 

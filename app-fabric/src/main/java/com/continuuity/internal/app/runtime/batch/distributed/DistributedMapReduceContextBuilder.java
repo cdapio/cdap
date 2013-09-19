@@ -9,6 +9,8 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
+import com.continuuity.logging.appender.LogAppender;
+import com.continuuity.logging.appender.kafka.KafkaLogAppender;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.AbstractModule;
@@ -58,8 +60,8 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           // txds2
           bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
 
-          // For log publishing TODO: fix logging issue and uncomment
-//          bind(LogAppender.class).to(KafkaLogAppender.class);
+          // For log publishing
+          bind(LogAppender.class).to(KafkaLogAppender.class);
         }
       }
     );
