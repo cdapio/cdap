@@ -2088,6 +2088,9 @@ only screen and (min-device-pixel-ratio: 1.5) {
 
 .info-window .label {
 	margin-bottom: 8px;
+	word-wrap: break-word;
+	white-space: normal;
+	width: 100%;
 }
 
 .emphasized-letters {

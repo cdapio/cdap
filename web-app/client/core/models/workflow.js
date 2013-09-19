@@ -19,7 +19,7 @@ define([], function () {
     init: function() {
       this._super();
 
-      this.set('app', this.get('applicationId') || this.get('app'));
+      this.set('app', this.get('applicationId') || this.get('app') || this.get('appId'));
       this.set('id', this.get('app') + ':' + this.get('name'));
 
     },

@@ -262,14 +262,14 @@
         <div id="batchviz-container">
           <div class="clearfix chart">
             {{#each elements.Actions}}
-            <div class="batch-item" {{bindAttr id="id"}}>
+            <div class="batch-item" {{bindAttr id="divId"}}>
               <div class="batch-icon batch-map">
                 <div class="info-window">
                   <div class="label">{{name}}</div>
                   <div>{{state}}</div>
-                  {{#if isRunning}}
-                    <progress {{bindAttr value="completionPercentage" }} max="100"></progress>
-                  {{/if}}
+                  {{!-- {{#if isRunning}}
+                    <progress {{bindAttr value="totalCompletion" }} max="100"></progress>
+                  {{/if}} --}}
                 </div>
               </div>
             </div>
@@ -322,7 +322,7 @@
         <div id="batchviz-container" class="flowviz-fade">
           <div class="clearfix chart">
             {{#each elements.Actions}}
-            <div class="batch-item" {{bindAttr id="id"}}>
+            <div class="batch-item" {{bindAttr id="divId"}}>
               <div class="batch-icon batch-map">
                 <div class="info-window">
                   <div class="label">{{name}}</div>

@@ -17,9 +17,17 @@ define(['helpers/plumber'], function (Plumber) {
       for (var i = 0; i < model.actions.length; i++) {
         model.actions[i].state = 'IDLE';
         model.actions[i].isRunning = false;
-        model.actions[i].completionPercentage = 50;
-        model.actions[i].id = model.actions[i].name.replace(' ', '');
-        this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));      
+        model.actions[i].appId = self.get('model').app;
+        model.actions[i].divId = model.actions[i].name.replace(' ', '');
+
+        if ('mapReduceName' in model.actions[i].options) {
+          var transformedModel = C.Batch.transformModel(model.actions[i]);
+          var batchModel = C.Batch.create(transformedModel);
+          this.get('elements.Actions.content').push(batchModel);
+        } else {
+          this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));        
+        }
+        
       }
 
       this.interval = setInterval(function () {
@@ -46,8 +54,9 @@ define(['helpers/plumber'], function (Plumber) {
 
     connectEntities: function() {
       var actions = this.get('elements.Actions.content').map(function (item) {
-        return item.id || item.get('id');
+        return item.divId || item.get('divId');
       });
+
       for (var i = 0; i < actions.length; i++) {
         if (i + 1 < actions.length) {
           Plumber.connect(actions[i], actions[i+1]);    
@@ -89,6 +98,9 @@ define(['helpers/plumber'], function (Plumber) {
               action.set('isRunning', false);
               action.set('state', 'IDLE'); 
             }
+            if (typeof action.getMetricsRequest === 'function') {
+              action.getMetricsRequest(self.HTTP);
+            }
           }
         }).fail(function() {
           for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
@@ -121,38 +133,6 @@ define(['helpers/plumber'], function (Plumber) {
 
       });
 
-    },
-
-    stop: function (appId, id, version) {
-
-      var self = this;
-      var model = this.get('model');
-
-      model.set('currentState', 'STOPPING');
-
-      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'stop', function (response) {
-
-          if (response.error) {
-            C.Modal.show(response.error.name, response.error.message);
-          }
-
-      });
-
-    },
-
-    exec: function () {
-      var control = $(event.target);
-      if (event.target.tagName === "SPAN") {
-        control = control.parent();
-      }
-
-      var id = control.attr('flow-id');
-      var app = control.attr('flow-app');
-      var action = control.attr('flow-action');
-
-      if (action && action.toLowerCase() in this) {
-        this[action.toLowerCase()](app, id, -1);
-      }
     },
 
     /**
