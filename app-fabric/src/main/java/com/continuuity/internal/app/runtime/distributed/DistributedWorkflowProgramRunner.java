@@ -9,7 +9,10 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
@@ -28,10 +31,13 @@ import java.io.PrintWriter;
 public final class DistributedWorkflowProgramRunner extends AbstractDistributedProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public DistributedWorkflowProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
+  public DistributedWorkflowProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf,
+                                          MetricsCollectionService metricsCollectionService) {
     super(weaveRunner, hConf, cConf);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -58,7 +64,10 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
                      String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
       .withArguments(workflowSpec.getName(),
                      String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
+    WeaveController controller = preparer.start();
+    ProgramResourceReporter resourceReporter =
+      new DistributedResourceReporter(program, metricsCollectionService, controller);
 
-    return new WorkflowWeaveProgramController(program.getName(), preparer.start()).startListen();
+    return new WorkflowWeaveProgramController(program.getName(), preparer.start(), resourceReporter).startListen();
   }
 }

@@ -33,7 +33,7 @@ public final class MapReduceWeaveApplication implements WeaveApplication {
   @Override
   public WeaveSpecification configure() {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setCores(1)
+      .setVirtualCores(1)
       .setMemory(512, ResourceSpecification.SizeUnit.MEGA)    // TODO(ENG-2526): have it exposed to user setting
       .setInstances(1)
       .build();

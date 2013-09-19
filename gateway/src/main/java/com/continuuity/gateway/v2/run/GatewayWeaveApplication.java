@@ -34,7 +34,7 @@ public class GatewayWeaveApplication implements WeaveApplication {
 
     ResourceSpecification spec = ResourceSpecification.Builder
       .with()
-      .setCores(numCores)
+      .setVirtualCores(numCores)
       .setMemory(memoryMb, ResourceSpecification.SizeUnit.MEGA)
       .setInstances(instances)
       .build();

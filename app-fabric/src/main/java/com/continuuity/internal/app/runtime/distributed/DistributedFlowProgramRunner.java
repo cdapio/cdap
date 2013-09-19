@@ -13,7 +13,9 @@ import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -47,12 +49,15 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   private static final Logger LOG = LoggerFactory.getLogger(DistributedFlowProgramRunner.class);
 
   private final QueueAdmin queueAdmin;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   DistributedFlowProgramRunner(WeaveRunner weaveRunner, Configuration hConfig,
-                               CConfiguration cConfig, QueueAdmin queueAdmin) {
+                               CConfiguration cConfig, QueueAdmin queueAdmin,
+                               MetricsCollectionService metricsCollectionService) {
     super(weaveRunner, hConfig, cConfig);
     this.queueAdmin = queueAdmin;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -91,7 +96,10 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
                                                                                               weavelController,
                                                                                               queueAdmin,
                                                                                               flowletQueues);
-    return new FlowWeaveProgramController(program.getName(), weavelController, instanceUpdater).startListen();
+    ProgramResourceReporter resourceReporter =
+      new DistributedResourceReporter(program, metricsCollectionService, weavelController);
+    return new FlowWeaveProgramController(program.getName(), weavelController, instanceUpdater, resourceReporter)
+      .startListen();
   }
 
   /**
