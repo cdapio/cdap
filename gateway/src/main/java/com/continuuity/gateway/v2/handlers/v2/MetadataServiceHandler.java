@@ -11,6 +11,7 @@ import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.thrift.Workflow;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -640,5 +641,72 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  /**
+   * Returns a list of workflows associated with account.
+   */
+  @GET
+  @Path("/workflows")
+  public void getWorkflows(HttpRequest request, HttpResponder responder) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      List<Workflow> workflows = service.getWorkflows(accountId);
+      JsonArray s = new JsonArray();
+      for (Workflow workflow : workflows) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", workflow.getId());
+        object.addProperty("name", workflow.getName());
+        object.addProperty("app", workflow.getApplication());
+        s.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns a list of workflow associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows")
+  public void getWorkflowsByApp(HttpRequest request, HttpResponder responder,
+                            @PathParam("app-id") final String appId) {
+
+    if (appId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      List<Workflow> workflows = service.getWorkflowsByApplication(accountId, appId);
+      if (workflows.size() < 1) {
+        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
+        return;
+      }
+      JsonArray s = new JsonArray();
+      for (Workflow workflow : workflows) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", workflow.getId());
+        object.addProperty("name", workflow.getName());
+        object.addProperty("app", workflow.getApplication());
+        s.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
 }
 
