@@ -650,7 +650,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   public void getWorkflows(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-
       List<Workflow> workflows = service.getWorkflows(accountId);
       JsonArray s = new JsonArray();
       for (Workflow workflow : workflows) {

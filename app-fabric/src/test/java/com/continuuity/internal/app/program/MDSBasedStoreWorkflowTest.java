@@ -60,7 +60,6 @@ public class MDSBasedStoreWorkflowTest {
     }
   }
 
-
   /**
    *
    */
@@ -82,7 +81,6 @@ public class MDSBasedStoreWorkflowTest {
     }
   }
 
-
   /**
    *
    */
@@ -101,7 +99,6 @@ public class MDSBasedStoreWorkflowTest {
         .build();
     }
   }
-
 
   /**
    *
@@ -138,7 +135,6 @@ public class MDSBasedStoreWorkflowTest {
     }
   }
 
-
   /**
    *
    */
@@ -153,7 +149,6 @@ public class MDSBasedStoreWorkflowTest {
         .build();
     }
   }
-
 
   @Test
   public void testWorkflowMDSUpdateAndDeleteWorkflows()
