@@ -337,7 +337,7 @@ public class InMemoryTransactionManager {
       return false;
     }
 
-    HashSet<ChangeId> set = Sets.newHashSetWithExpectedSize(changeIds.size());
+    Set<ChangeId> set = Sets.newHashSetWithExpectedSize(changeIds.size());
     for (byte[] change : changeIds) {
       set.add(new ChangeId(change));
     }
