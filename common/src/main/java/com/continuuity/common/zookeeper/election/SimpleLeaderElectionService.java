@@ -1,0 +1,248 @@
+package com.continuuity.common.zookeeper.election;
+
+import com.continuuity.common.zookeeper.election.internal.RegisteredElection;
+import com.continuuity.weave.zookeeper.NodeChildren;
+import com.continuuity.weave.zookeeper.OperationFuture;
+import com.continuuity.weave.zookeeper.ZKClient;
+import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+/**
+ * Performs simple leader election.
+ */
+public class SimpleLeaderElectionService extends AbstractIdleService implements LeaderElectionService {
+  private static final Logger LOG = LoggerFactory.getLogger(SimpleLeaderElectionService.class);
+  private static final String NAMESPACE = "/simple_election";
+
+  private static final String GUID = Long.toString(Math.abs(UUID.randomUUID().getLeastSignificantBits()));
+
+  private final ZKClient zkClient;
+  private final Set<RegisteredElection> elections;
+  private final Set<RegisteredElection> leaders;
+
+  public SimpleLeaderElectionService(ZKClient zkClient) {
+    this(zkClient, NAMESPACE);
+  }
+
+  public SimpleLeaderElectionService(ZKClient zkClient, String namespace) {
+    this.zkClient = namespace == null ? zkClient : ZKClients.namespace(zkClient, namespace);
+    this.elections = new CopyOnWriteArraySet<RegisteredElection>();
+    this.leaders = new CopyOnWriteArraySet<RegisteredElection>();
+
+    this.zkClient.addConnectionWatcher(new ConnectionWatcher());
+    LOG.info("Using GUID {}", GUID);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // Nothing to do!
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    for (RegisteredElection election : elections) {
+      unregister(election);
+    }
+  }
+
+  @Override
+  public void registerElection(Election election) {
+    //noinspection SuspiciousMethodCalls
+    if (!elections.contains(election)) {
+      doRegister(election);
+    }
+  }
+
+  private void doRegister(Election election) {
+    String zkPath = null;
+    RegisteredElection registeredElection = null;
+
+    try {
+      // Register for election
+      String path = String.format("/%s/%s-", election.getId(), GUID);
+      LOG.debug("Registering for election {} with path", election, path);
+      OperationFuture<String> createFuture =
+        zkClient.create(path, null, CreateMode.EPHEMERAL_SEQUENTIAL, true);
+      zkPath = Futures.getUnchecked(createFuture);
+
+      long seqId = getSequenceId(zkPath);
+      registeredElection = new RegisteredElection(election, seqId, zkPath);
+      LOG.debug("Registered for election {}", registeredElection);
+
+      OperationFuture<Stat> watchFuture =
+        zkClient.exists(zkPath, new SelfWatcher(registeredElection));
+      Futures.getUnchecked(watchFuture);
+
+      elections.add(registeredElection);
+
+      // run election
+      runElection(registeredElection);
+    } catch (Throwable e) {
+      LOG.error("Exception while registering for election {}", election.getId(), e);
+      try {
+        if (zkPath != null) {
+          Futures.getUnchecked(zkClient.delete(zkPath));
+        }
+      } finally {
+        if (registeredElection != null) {
+          elections.remove(registeredElection);
+        }
+      }
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private void unregister(RegisteredElection election) {
+    LOG.info("Un-registering {}", election);
+    elections.remove(election);
+
+    // Delete node
+    OperationFuture<String> deleteFuture = zkClient.delete(election.getZkPath());
+    Futures.getUnchecked(deleteFuture);
+  }
+
+  private void runElection(RegisteredElection election) {
+    String zkpath = "/" + election.getId();
+    LOG.debug("Getting children for {}", election);
+    OperationFuture<NodeChildren> childrenFuture = zkClient.getChildren(zkpath);
+    List<String> childPaths = Futures.getUnchecked(childrenFuture).getChildren();
+
+    TreeMap<Long, String> childrenMap = new TreeMap<Long, String>();
+    for (String path : childPaths) {
+      LOG.debug("Got child {}", path);
+      childrenMap.put(getSequenceId(path), zkpath + "/" + path);
+    }
+
+    LOG.debug("Current leader is {}", childrenMap.firstEntry().getValue());
+
+    if (election.getSeqId() == childrenMap.firstKey()) {
+      // elected leader
+      becomeLeader(election);
+    } else {
+      // watch previous node
+      Map.Entry<Long, String> watchEntry = childrenMap.lowerEntry(election.getSeqId());
+      OperationFuture<Stat> watchFuture =
+        zkClient.exists(watchEntry.getValue(), new OtherLeaderWatcher(election));
+      Futures.getUnchecked(watchFuture);
+    }
+  }
+
+  private void becomeLeader(RegisteredElection election) {
+    leaders.add(election);
+    LOG.debug("Became leader for {}", election);
+
+    try {
+      election.getElectionHandler().elected(election.getId());
+    } catch (Throwable e) {
+      LOG.error("Election handler threw exception for election {}: ", election, e);
+    }
+  }
+
+  private void endLeader(RegisteredElection election) {
+    leaders.remove(election);
+    LOG.debug("End leader for {}", election);
+
+    try {
+      election.getElectionHandler().unelected(election.getId());
+    } catch (Throwable e) {
+      LOG.error("Election handler threw exception for election {}: ", election, e);
+    }
+  }
+
+  private long getSequenceId(String zkPath) {
+    int ind = zkPath.lastIndexOf('-');
+
+    if (ind == zkPath.length() - 1 || ind == -1) {
+      String message = String.format("No sequence ID found in zkPath %s", zkPath);
+      LOG.error(message);
+      throw new IllegalStateException(message);
+    }
+
+    return Long.parseLong(zkPath.substring(ind + 1));
+  }
+
+  /**
+   * Watches other node.
+   */
+  private class OtherLeaderWatcher implements Watcher {
+    private final RegisteredElection election;
+
+    private OtherLeaderWatcher(RegisteredElection election) {
+      this.election = election;
+    }
+
+    @Override
+    public void process(WatchedEvent event) {
+      if (event.getType() == Event.EventType.NodeDeleted) {
+        LOG.debug("Watched node deleted {} for election {}", event, election);
+        if (elections.contains(election)) {
+          runElection(election);
+        }
+      }
+    }
+  }
+
+  /**
+   * Watches self node.
+   */
+  private class SelfWatcher implements Watcher {
+    private final RegisteredElection election;
+
+    private SelfWatcher(RegisteredElection election) {
+      this.election = election;
+    }
+
+    @Override
+    public void process(WatchedEvent event) {
+      if (event.getType() == Event.EventType.NodeDeleted) {
+        LOG.debug("Self node deleted {} for election", event, election);
+        if (leaders.contains(election)) {
+          endLeader(election);
+        }
+        if (elections.contains(election)) {
+          doRegister(election);
+        }
+      }
+    }
+  }
+
+  private class ConnectionWatcher implements Watcher {
+    private final AtomicBoolean expired = new AtomicBoolean(false);
+
+    @Override
+    public void process(WatchedEvent event) {
+      if (event.getState() == Event.KeeperState.Expired) {
+        expired.set(true);
+        LOG.warn("ZK session expired: {}", zkClient.getConnectString());
+
+        // run end leader
+        for (RegisteredElection election : leaders) {
+          endLeader(election);
+        }
+      } else if (event.getState() == Event.KeeperState.SyncConnected && expired.get()) {
+        expired.set(false);
+        LOG.info("Reconnected after expiration: {}", zkClient.getConnectString());
+
+        for (Election election : elections) {
+          doRegister(election);
+        }
+      }
+    }
+  }
+}
