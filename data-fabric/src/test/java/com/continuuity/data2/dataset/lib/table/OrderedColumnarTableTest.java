@@ -423,6 +423,11 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   @Test
   public void testBasicDeleteWithTx() throws Exception {
+    // we will test 3 different delete column ops and one delete row op
+    // * delete column with delete
+    // * delete column with put null value
+    // * delete column with put byte[0] value
+    // * delete row with delete
     DataSetManager manager = getTableManager();
     manager.create("myTable");
     try {
@@ -432,6 +437,8 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1, C2), a(V1, V2));
       myTable1.put(R2, a(C1, C2), a(V2, V3));
+      myTable1.put(R3, a(C1, C2), a(V3, V4));
+      myTable1.put(R4, a(C1, C2), a(V4, V5));
       Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
       Assert.assertTrue(txClient.commit(tx1));
@@ -449,29 +456,42 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       // delete c1, r2
       myTable2.delete(R1, a(C1));
       myTable2.delete(R2);
+      // same as delete a column
+      myTable2.put(R3, C1, null);
+      // same as delete a column
+      myTable2.put(R4, C1, new byte[0]);
       // verify can see deletes in own changes before commit
       verify(a(C2, V2), myTable2.get(R1, a(C1, C2)));
       verify(null, myTable2.get(R1, C1));
       verify(V2, myTable2.get(R1, C2));
-      // verify can see deletes in own changes before commit
       verify(a(), myTable2.get(R2));
-      // overwrite c2 and write new value to c1 and new value to r2:c1
+      verify(a(C2, V4), myTable2.get(R3));
+      verify(a(C2, V5), myTable2.get(R4));
+      // overwrite c2 and write new value to c1
       myTable2.put(R1, a(C1, C2), a(V3, V4));
-      myTable2.put(R2, a(C2), a(V5));
+      myTable2.put(R2, a(C1, C2), a(V4, V5));
+      myTable2.put(R3, a(C1, C2), a(V1, V2));
+      myTable2.put(R4, a(C1, C2), a(V2, V3));
       // verify can see changes in own changes before commit
       verify(a(C1, V3, C2, V4), myTable2.get(R1, a(C1, C2, C3)));
       verify(V3, myTable2.get(R1, C1));
       verify(V4, myTable2.get(R1, C2));
       verify(null, myTable2.get(R1, C3));
-      verify(a(C2, V5), myTable2.get(R2));
+      verify(a(C1, V4, C2, V5), myTable2.get(R2));
+      verify(a(C1, V1, C2, V2), myTable2.get(R3));
+      verify(a(C1, V2, C2, V3), myTable2.get(R4));
       // delete c2 and r2
       myTable2.delete(R1, a(C2));
       myTable2.delete(R2);
+      myTable2.put(R1, C2, null);
+      myTable2.put(R1, C2, new byte[0]);
       // verify that delete is there (i.e. not reverted to whatever was persisted before)
       verify(a(C1, V3), myTable2.get(R1, a(C1, C2)));
       verify(V3, myTable2.get(R1, C1));
       verify(null, myTable2.get(R1, C2));
       verify(a(), myTable2.get(R2));
+      verify(V1, myTable2.get(R3, C1));
+      verify(V2, myTable2.get(R4, C1));
 
       // start tx3 and verify that changes of tx2 are not visible yet
       Transaction tx3 = txClient.startShort();
@@ -483,6 +503,8 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify(null, myTable1.get(R1, C3));
       verify(a(C1, V1, C2, V2), myTable1.get(R1));
       verify(a(C1, V2, C2, V3), myTable1.get(R2));
+      verify(a(C1, V3, C2, V4), myTable1.get(R3));
+      verify(a(C1, V4, C2, V5), myTable1.get(R4));
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
       Assert.assertTrue(txClient.commit(tx3));
@@ -506,6 +528,8 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify(null, myTable1.get(R1, C3));
       verify(a(C1, V1, C2, V2), myTable1.get(R1));
       verify(a(C1, V2, C2, V3), myTable1.get(R2));
+      verify(a(C1, V3, C2, V4), myTable1.get(R3));
+      verify(a(C1, V4, C2, V5), myTable1.get(R4));
 
       Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
@@ -524,6 +548,8 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify(null, myTable1.get(R1, C2));
       verify(a(C1, V3), myTable1.get(R1, a(C1, C2)));
       verify(a(), myTable1.get(R2));
+      verify(V1, myTable1.get(R3, C1));
+      verify(V2, myTable1.get(R4, C1));
 
       Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
@@ -538,6 +564,8 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify(null, myTable1.get(R1, C3));
       verify(a(C1, V1, C2, V2), myTable1.get(R1));
       verify(a(C1, V2, C2, V3), myTable1.get(R2));
+      verify(a(C1, V3, C2, V4), myTable1.get(R3));
+      verify(a(C1, V4, C2, V5), myTable1.get(R4));
 
       // writing to deleted column, to check conflicts are detected (delete-write conflict)
       myTable1.put(R1, a(C2), a(V5));
@@ -554,6 +582,9 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       verify(null, myTable1.get(R1, C3));
       verify(a(C1, V1, C2, V2), myTable1.get(R1));
       verify(a(C1, V2, C2, V3), myTable1.get(R2));
+      verify(a(C1, V3, C2, V4), myTable1.get(R3));
+      verify(a(C1, V4, C2, V5), myTable1.get(R4));
+      // NOTE: we are verifying conflict in one operation only. We may want to test each...
       myTable1.delete(R1, a(C1));
       Assert.assertFalse(txClient.canCommit(tx5, ((TransactionAware) myTable1).getTxChanges()));
       ((TransactionAware) myTable1).rollbackTx();
