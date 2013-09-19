@@ -1,0 +1,2 @@
+To generate thrift classes:
+	thrift --gen "java:beans,hashcode" --out ./java/ ./conf/appfabric.thrift
