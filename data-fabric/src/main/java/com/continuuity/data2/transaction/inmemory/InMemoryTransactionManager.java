@@ -337,7 +337,6 @@ public class InMemoryTransactionManager {
       return false;
     }
 
-    // todo: is there an immutable hash set?
     HashSet<ChangeId> set = Sets.newHashSetWithExpectedSize(changeIds.size());
     for (byte[] change : changeIds) {
       set.add(new ChangeId(change));
@@ -374,10 +373,11 @@ public class InMemoryTransactionManager {
         //       stored under one key
         Set<ChangeId> changeIds = committedChangeSets.get(nextWritePointer);
         if (changeIds != null) {
-          changeIds.addAll(changeSet);
-        } else {
-          committedChangeSets.put(nextWritePointer, changeSet);
+          // NOTE: we modify the new set to prevent concurrent modification exception, as other threads (e.g. in
+          // canCommit) use it unguarded
+          changeSet.addAll(changeIds);
         }
+        committedChangeSets.put(nextWritePointer, changeSet);
       }
       makeVisible(tx);
     }
