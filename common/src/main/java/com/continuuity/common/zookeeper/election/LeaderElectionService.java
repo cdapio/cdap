@@ -7,5 +7,5 @@ import com.continuuity.weave.common.Cancellable;
  */
 public interface LeaderElectionService {
 
-  Cancellable registerElection(Election election);
+  Cancellable addElection(Election election);
 }

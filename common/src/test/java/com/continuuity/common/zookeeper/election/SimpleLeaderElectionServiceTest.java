@@ -107,18 +107,18 @@ public class SimpleLeaderElectionServiceTest {
         zkClientService.startAndWait();
 
         numRunners.incrementAndGet();
-        electionService.registerElection(new Election(electionId,
-                                                      new ElectionHandler() {
-                                                        @Override
-                                                        public void elected(String id) {
-                                                          numLeaders.incrementAndGet();
-                                                        }
+        electionService.addElection(new Election(electionId,
+                                                 new ElectionHandler() {
+                                                   @Override
+                                                   public void elected(String id) {
+                                                     numLeaders.incrementAndGet();
+                                                   }
 
-                                                        @Override
-                                                        public void unelected(String id) {
-                                                          numLeaders.decrementAndGet();
-                                                        }
-                                                      }));
+                                                   @Override
+                                                   public void unelected(String id) {
+                                                     numLeaders.decrementAndGet();
+                                                   }
+                                                 }));
 
       } catch (Exception e) {
         throw Throwables.propagate(e);

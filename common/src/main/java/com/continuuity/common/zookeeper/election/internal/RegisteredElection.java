@@ -25,6 +25,16 @@ public class RegisteredElection extends Election {
   }
 
   @Override
+  public boolean equals(Object o) {
+    return super.equals(o);
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("seqId", seqId)
