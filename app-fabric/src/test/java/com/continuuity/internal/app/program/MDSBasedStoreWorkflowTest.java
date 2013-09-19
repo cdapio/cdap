@@ -40,6 +40,9 @@ public class MDSBasedStoreWorkflowTest {
     }
   }
 
+  /**
+   *
+   */
   private static class SampleAppWithOneWorkflow implements Application {
     @Override
     public ApplicationSpecification configure() {
@@ -57,6 +60,10 @@ public class MDSBasedStoreWorkflowTest {
     }
   }
 
+
+  /**
+   *
+   */
   private static class SampleAppWithTwoWorkflow implements Application {
     @Override
     public ApplicationSpecification configure() {
@@ -75,6 +82,10 @@ public class MDSBasedStoreWorkflowTest {
     }
   }
 
+
+  /**
+   *
+   */
   private static class SampleAppWithNoWorkflow implements Application {
     @Override
     public ApplicationSpecification configure() {
@@ -91,6 +102,10 @@ public class MDSBasedStoreWorkflowTest {
     }
   }
 
+
+  /**
+   *
+   */
   public static class MRJobWorkflowTest extends AbstractMapReduce {
     private final String name;
 
@@ -106,6 +121,10 @@ public class MDSBasedStoreWorkflowTest {
         .build();
     }
   }
+
+  /**
+   *
+   */
   private static class WorkflowWithThreeActions implements Workflow {
     @Override
     public WorkflowSpecification configure() {
@@ -119,6 +138,10 @@ public class MDSBasedStoreWorkflowTest {
     }
   }
 
+
+  /**
+   *
+   */
   private static class WorkflowWithTwoActions implements Workflow {
     @Override
     public WorkflowSpecification configure() {
