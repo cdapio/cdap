@@ -22,15 +22,15 @@
  *   <li>
  *     A stream named "purchaseStream". You can send sentences of the form "Tom bought 5 apples for $10" to the stream.
  *   </li><li>
- *     A dataset "history". It contains for every user the list of his purchases.
+ *     A dataset "history". It contains the list of purchases for each user.
  *   </li><li>
  *     A flow that reads the "purchaseStream" stream and converts every input String to a Purchase object and stores
  *     it in a dataset called "purchases".
  *
- *     A map-reduce job then reads "purchases" dataset and creates a purchase history and stores it in a dataset called
- *     "history"
+ *     A map-reduce job then reads the "purchases" dataset, creates a purchase history, and stores the purchase history
+ *     in a dataset called "history".
  *   </li><li>
- *     A procedure that allows to query the purchase history per user.
+ *     A procedure that can query the purchase history of each user.
  *   </li>
  * </ul>
  */
