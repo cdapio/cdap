@@ -84,10 +84,14 @@ public final class ScheduleTaskRunner {
                    TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
 
     final Id.Program programId = program.getId();
+    final String runId = controller.getRunId().getId();
     final CountDownLatch latch = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
       public void stopped() {
+        store.setStop(programId, runId,
+                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                      ProgramController.State.STOPPED.toString());
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getAccountId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
@@ -95,6 +99,9 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void error(Throwable cause) {
+        store.setStop(programId, runId,
+                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                      ProgramController.State.STOPPED.toString());
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getAccountId(), programId.getApplicationId(), programId.getId(),
                   cause);

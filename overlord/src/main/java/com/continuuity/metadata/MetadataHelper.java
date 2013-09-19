@@ -228,6 +228,7 @@ public class MetadataHelper {
   static Helper<Query> queryHelper = new QueryHelper();
   static Helper<Flow> flowHelper = new FlowHelper();
   static Helper<Mapreduce> mapreduceHelper = new MapreduceHelper();
+  static Helper<Workflow> workflowHelper = new WorkflowHelper();
 
   //-------------------------- Stream stuff ----------------------------------
 
@@ -908,5 +909,88 @@ public class MetadataHelper {
     }
 
   } // end FlowHelper
+
+  //-------------------------- Workflow stuff -------------------------------
+
+  static class WorkflowHelper implements Helper<Workflow> {
+
+    @Override
+    public void validate(Workflow workflow) throws MetadataServiceException {
+      if (workflow.getId() == null || workflow.getId().isEmpty()) {
+        throw new MetadataServiceException("Workflow id is empty or null.");
+      }
+
+      if (workflow.getName() == null || workflow.getName().isEmpty()) {
+        throw new MetadataServiceException("Workflow name is empty or null.");
+      }
+
+      if (workflow.getApplication() == null || workflow.getApplication().isEmpty()) {
+        throw new MetadataServiceException("Workflow's app name is empty or null.");
+      }
+    }
+
+    @Override
+    public MetaDataEntry makeEntry(Account account, Workflow workflow) {
+      // Create a new metadata entry.
+      MetaDataEntry entry = new MetaDataEntry(account.getId(),
+                                              workflow.getApplication(), FieldTypes.Workflow.ID, workflow.getId());
+      entry.addField(FieldTypes.Workflow.NAME, workflow.getName());
+      return entry;
+    }
+
+    @Override
+    public Workflow makeFromEntry(MetaDataEntry entry) {
+      Workflow fl = new Workflow(entry.getId(), entry.getApplication());
+      fl.setName(entry.getTextField(FieldTypes.Workflow.NAME));
+      return fl;
+    }
+
+    @Override
+    public Workflow makeNonExisting(Workflow fl) {
+      Workflow workflow = new Workflow();
+      workflow.setId(fl.getId());
+      workflow.setApplication(fl.getApplication());
+      workflow.setExists(false);
+      return workflow;
+    }
+
+    @Override
+    public CompareStatus compare(Workflow workflow, MetaDataEntry existingEntry) {
+      Workflow existing = makeFromEntry(existingEntry);
+      CompareStatus status = CompareStatus.EQUAL;
+
+      status = compareAlso(status, workflow.getId(), existing.getId());
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
+      status = compareAlso(status, workflow.getName(), workflow.getName());
+      if (status.equals(CompareStatus.DIFF)) {
+        return status;
+      }
+
+      return status;
+    }
+
+    @Override
+    public String getId(Workflow flow) {
+      return flow.getId();
+    }
+
+    @Override
+    public String getApplication(Workflow flow) {
+      return flow.getApplication();
+    }
+
+    @Override
+    public String getName() {
+      return "workflow";
+    }
+
+    @Override
+    public String getFieldType() {
+      return FieldTypes.Workflow.ID;
+    }
+  }
 
 }
