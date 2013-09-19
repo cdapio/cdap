@@ -718,6 +718,23 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Returns next scheduled runtime of a workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/nextRuntime")
+  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("workflow-id") final String workflowId) {
+    JsonArray array = new JsonArray();
+    JsonObject object = new JsonObject();
+    object.addProperty("time", 1379634094000L);
+    object.addProperty("id", "app:workflow:schedule");
+    array.add(object);
+    responder.sendJson(HttpResponseStatus.OK, array);
+
+  }
+
+  /**
    * Returns specification of a mapreduce.
    */
   @GET
