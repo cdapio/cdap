@@ -8,6 +8,7 @@ import com.continuuity.weave.zookeeper.ZKClient;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
@@ -130,18 +131,24 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
     }
   }
 
-  private void unregister(RegisteredElection election) {
+  private void unregister(final RegisteredElection election) {
     LOG.info("Un-registering {}", election);
 
     elections.remove(election);
 
-    // Delete node
-    try {
-      OperationFuture<String> deleteFuture = zkClient.delete(election.getZkPath());
-      deleteFuture.get();
-    } catch (Throwable e) {
-      LOG.error("Got exception while deleting path election {}", election, e);
-    }
+  // Delete node
+    OperationFuture<String> deleteFuture = zkClient.delete(election.getZkPath());
+    Futures.addCallback(deleteFuture, new FutureCallback<String>() {
+      @Override
+      public void onSuccess(String result) {
+        // Nothing to do
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        LOG.error("Got exception while deleting path election {}", election, t);
+      }
+    });
   }
 
   private RegisteredElection runElection(Election election) {

@@ -55,7 +55,7 @@ public class SimpleLeaderElectionServiceTest {
   @Rule
   public TestRule chain = RuleChain.outerRule(temporaryFolder).around(startServices);
 
-  @Test//(timeout = 5000)
+  @Test(timeout = 5000)
   public void testLeaderElection() throws Exception {
     int asyncCount = 5;
     AtomicInteger numLeaders = new AtomicInteger(0);
@@ -127,7 +127,7 @@ public class SimpleLeaderElectionServiceTest {
 
     public void stop() throws Exception {
       electionService.shutDown();
-      zkClientService.stopAndWait();
+      zkClientService.stop();
     }
   }
 
