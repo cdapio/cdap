@@ -80,6 +80,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
   @Override
   public void init(HandlerContext context) {
+    super.init(context);
     this.endpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)),
       1L, TimeUnit.SECONDS);
@@ -302,6 +303,18 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
   }
 
+  /**
+   * Returns workflow run history.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/history")
+  public void workflowHistory(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId,
+                              @PathParam("workflow-id") final String workflowId) {
+    getHistory(request, responder, appId, workflowId);
+
+  }
+
   private void getHistory(HttpRequest request, HttpResponder responder, String appId, String id) {
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -464,6 +477,21 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Starts a workflow.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/start")
+  public void startWorkflow(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") final String appId,
+                             @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    runnableStartStop(request, responder, id, "start");
+  }
+
+  /**
    * Stops a flow.
    */
   @POST
@@ -506,7 +534,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setType(EntityType.MAPREDUCE);
     runnableStartStop(request, responder, id, "stop");
   }
-
 
 
   private void runnableStartStop(HttpRequest request, HttpResponder responder,
@@ -602,6 +629,22 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
 
+  /**
+   * Returns status of a workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/status")
+  public void workflowStatus(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") final String appId,
+                             @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    runnableStatus(request, responder, id);
+  }
+
+
   private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -656,6 +699,21 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
     id.setType(EntityType.PROCEDURE);
+    runnableSpecification(request, responder, id);
+  }
+
+  /**
+   * Returns specification of a workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}")
+  public void workflowSpecification(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
     runnableSpecification(request, responder, id);
   }
 

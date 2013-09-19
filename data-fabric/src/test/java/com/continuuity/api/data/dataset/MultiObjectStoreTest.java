@@ -9,12 +9,11 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.dataset.DataSetTestBase;
-import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -118,7 +117,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
     // note: due to type erasure, this succeeds
     MultiObjectStore<Custom> store = instantiator.getDataSet("pairs");
     MultiObjectStore<ImmutablePair<Integer, String>> pairStore = instantiator.getDataSet("pairs");
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     // but now it must fail with incompatible type
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
@@ -133,9 +132,9 @@ public class MultiObjectStoreTest extends DataSetTestBase {
     // write a correct object to the pair store
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair); // should succeed
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
     // now try to read that as a custom object, should fail with class cast
-    txAgent = newTransaction();
+    txContext = newTransaction();
     try {
       custom = store.read(a);
       Assert.fail("read should have failed with class cast exception");
@@ -174,7 +173,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       }
     };
     // create an instantiator that uses the dummy class loader
-    DataSetInstantiator inst = new DataSetInstantiator(fabric, PROXY, loader);
+    DataSetInstantiator inst = new DataSetInstantiator(fabric, loader);
     inst.setDataSets(specs);
     // use that instantiator to get a data set instance
     inst.getDataSet("customs");
@@ -183,11 +182,11 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
-  public void testBatchReads() throws OperationException, InterruptedException {
+  public void testBatchReads() throws Exception {
     MultiObjectStore<String> t = instantiator.getDataSet("batch");
 
     // start a transaction
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
     // write 1000 random values to the table and remember them in a set
     SortedSet<Long> keysWritten = Sets.newTreeSet();
     Random rand = new Random(451);
@@ -198,20 +197,20 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       keysWritten.add(keyLong);
     }
     // commit transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a sync transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // get the splits for the table
     List<Split> splits = t.getSplits();
     // read each split and verify the keys
     SortedSet<Long> keysToVerify = Sets.newTreeSet(keysWritten);
     verifySplits(t, splits, keysToVerify);
 
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a sync transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // get specific number of splits for a subrange
     keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
     splits = t.getSplits(5, Bytes.toBytes(0x10000000L), Bytes.toBytes(0x40000000L));
@@ -219,7 +218,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
     // read each split and verify the keys
     verifySplits(t, splits, keysToVerify);
 
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
@@ -248,13 +247,13 @@ public class MultiObjectStoreTest extends DataSetTestBase {
 
 
   @Test
-  public void testBatchReadMultipleColumns() throws OperationException, InterruptedException {
+  public void testBatchReadMultipleColumns() throws Exception {
     MultiObjectStore<String> t = instantiator.getDataSet("batchTestsMultiCol");
     byte [] col1 = Bytes.toBytes("c1");
     byte [] col2 = Bytes.toBytes("c2");
 
     // start a transaction
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
     // write 1000 random values to the table and remember them in a set
     SortedSet<Integer> keysWritten = Sets.newTreeSet();
     Random rand = new Random(451);
@@ -268,10 +267,10 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       keysWritten.add(keyInt);
     }
     // commit transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a sync transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // get the splits for the table
     List<Split> splits = t.getSplits();
     // read each split and verify the keys
@@ -294,7 +293,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       }
     }
 
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
   }
 

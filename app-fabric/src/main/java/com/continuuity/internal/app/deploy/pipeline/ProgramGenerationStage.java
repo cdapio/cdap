@@ -53,7 +53,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     Iterable<ProgramSpecification> specifications = Iterables.concat(
       appSpec.getMapReduces().values(),
       appSpec.getFlows().values(),
-      appSpec.getProcedures().values()
+      appSpec.getProcedures().values(),
+      appSpec.getWorkflows().values()
     );
 
     for (ProgramSpecification spec: specifications) {

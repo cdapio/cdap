@@ -7,7 +7,7 @@ import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.data.dataset.DataSetTestBase;
-import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
@@ -43,10 +43,10 @@ public class KeyValueTableTest extends DataSetTestBase {
   }
 
   @Test
-  public void testSyncWriteReadSwapDelete() throws OperationException {
+  public void testSyncWriteReadSwapDelete() throws Exception {
 
     // this test runs all operations synchronously
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     // write a value and read it back
     kvTable.write(KEY1, VAL1);
@@ -75,38 +75,38 @@ public class KeyValueTableTest extends DataSetTestBase {
   }
 
   @Test
-  public void testASyncWriteReadSwapDelete() throws OperationException {
+  public void testASyncWriteReadSwapDelete() throws Exception {
 
     // defer all writes until commit
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
     // write a value
     kvTable.write(KEY2, VAL1);
     // commit the transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // verify synchronously
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // verify that the value is now visible
     Assert.assertArrayEquals(VAL1, kvTable.read(KEY2));
     // commit the transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // defer all writes until commit
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // update the value
     kvTable.write(KEY2, VAL2);
     // commit the transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // verify synchronously
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // verify that the value is now visible
     Assert.assertArrayEquals(VAL2, kvTable.read(KEY2));
     // commit the transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // defer all writes until commit
-    txAgent = newTransaction();
+    txContext = newTransaction();
     try {
       // write a swap, this should fail
       kvTable.swap(KEY2, VAL1, VAL3);
@@ -117,32 +117,32 @@ public class KeyValueTableTest extends DataSetTestBase {
     }
 
     // defer all writes until commit
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // swap the value
     kvTable.swap(KEY2, VAL2, VAL3);
     // commit the transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // verify synchronously
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // verify the value was swapped
     Assert.assertArrayEquals(VAL3, kvTable.read(KEY2));
     // commit the transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // defer all writes until commit
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // delete the value
     kvTable.delete(KEY2);
     // commit the transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // verify synchronously
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // verify it is gone now
     Assert.assertNull(kvTable.read(KEY2));
     // commit the transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
   }
 
   @Test
@@ -151,15 +151,15 @@ public class KeyValueTableTest extends DataSetTestBase {
     KeyValueTable table2 = instantiator.getDataSet("t2");
 
     // write a value to table1 and verify it
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
     table1.write(KEY1, VAL1);
     Assert.assertArrayEquals(VAL1, table1.read(KEY1));
     table2.write(KEY2, VAL2);
     Assert.assertArrayEquals(VAL2, table2.read(KEY2));
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a new transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // add a write for table 1 to the transaction
     table1.write(KEY1, VAL2);
     // submit a delete for table 2
@@ -176,18 +176,18 @@ public class KeyValueTableTest extends DataSetTestBase {
     // verify synchronously that old value are still there
     table1 = instantiator.getDataSet("t1");
     table2 = instantiator.getDataSet("t2");
-    txAgent = newTransaction();
+    txContext = newTransaction();
     Assert.assertArrayEquals(VAL1, table1.read(KEY1));
     Assert.assertArrayEquals(VAL2, table2.read(KEY2));
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
   }
 
   @Test
-  public void testBatchReads() throws OperationException, InterruptedException {
+  public void testBatchReads() throws Exception {
     KeyValueTable t = instantiator.getDataSet("tBatch");
 
     // start a transaction
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
     // write 1000 random values to the table and remember them in a set
     SortedSet<Long> keysWritten = Sets.newTreeSet();
     Random rand = new Random(451);
@@ -198,10 +198,10 @@ public class KeyValueTableTest extends DataSetTestBase {
       keysWritten.add(keyLong);
     }
     // commit transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a sync transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // get the splits for the table
     List<Split> splits = t.getSplits();
     // read each split and verify the keys
@@ -209,7 +209,7 @@ public class KeyValueTableTest extends DataSetTestBase {
     verifySplits(t, splits, keysToVerify);
 
     // start a sync transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // get specific number of splits for a subrange
     keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
     splits = t.getSplits(5, Bytes.toBytes(0x10000000L), Bytes.toBytes(0x40000000L));

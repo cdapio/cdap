@@ -17,6 +17,7 @@ enum EntityType {
   FLOW,
   PROCEDURE,
   MAPREDUCE,
+  WORKFLOW,
 }
 
 /**

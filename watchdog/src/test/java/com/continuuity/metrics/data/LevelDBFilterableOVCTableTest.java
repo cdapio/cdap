@@ -7,7 +7,6 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsAnnotation;
@@ -16,7 +15,6 @@ import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
@@ -30,7 +28,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -184,8 +181,6 @@ public class LevelDBFilterableOVCTableTest {
         @Override
         protected void configure() {
           try {
-            bind(TransactionOracle.class).to(NoopTransactionOracle.class);
-
             bindConstant()
               .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
               .to(tmpFolder.newFolder().getAbsolutePath());

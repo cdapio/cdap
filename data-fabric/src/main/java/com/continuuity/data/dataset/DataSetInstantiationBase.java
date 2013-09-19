@@ -57,22 +57,6 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * Set the read/only flag. If this is true, then the tables injected into each
-   * dataset will be ReadOnlyTable's, otherwise they will be ReadWriteTable's.
-   * Default is false.
-   */
-  public void setReadOnly() {
-    this.readOnly = true;
-  }
-
-  /**
-   * Whether this is a read-only instantiation.
-   */
-  public boolean isReadOnly() {
-    return readOnly;
-  }
-
-  /**
    * Set the data set spec for all data sets that this instantiator can
    * create. This should be a list of DataSetSpecification's obtained from actual
    * data sets' configure() method.

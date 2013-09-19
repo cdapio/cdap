@@ -8,7 +8,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
@@ -41,6 +41,19 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * This version of MemoryTable is currently NOT sorted by row.
  */
 public class MemoryOVCTable extends AbstractOVCTable {
+  /**
+   * Defines a dirty read pointer. This completely bypasses transactions and will include dirty and
+   * future writes, that is, writes that are performed after the dirty read pointer was received.
+   */
+  public static final ReadPointer DIRTY_READ_POINTER =
+    new MemoryReadPointer(Long.MAX_VALUE); // this will see everything
+
+  /**
+   * Defines a dirty write version. Writes made with this version are visible immediately to everyone,
+   * even transactions, so you should never use the dirty write version to write values that may be
+   * read with a non-dirty read pointer or a transaction.
+   */
+  public static final long DIRTY_WRITE_VERSION = 1L;  // this is visible to any read pointer
 
   private final byte[] name;
 
@@ -306,7 +319,7 @@ public class MemoryOVCTable extends AbstractOVCTable {
 
   @Override
   public OperationResult<byte[]> getDirty(byte[] row, byte[] column) throws OperationException {
-    return get(row, column, TransactionOracle.DIRTY_READ_POINTER);
+    return get(row, column, DIRTY_READ_POINTER);
   }
 
   @Override
@@ -600,7 +613,7 @@ public class MemoryOVCTable extends AbstractOVCTable {
       }
       newAmount = existingAmount + amount;
       // now we know all values are legal, we can apply all increments
-      versions.put(new Version(TransactionOracle.DIRTY_WRITE_VERSION), new Value(Bytes.toBytes(newAmount)));
+      versions.put(new Version(DIRTY_WRITE_VERSION), new Value(Bytes.toBytes(newAmount)));
       return newAmount;
 
     } finally {
@@ -657,9 +670,9 @@ public class MemoryOVCTable extends AbstractOVCTable {
       if ((oldValue == null && expectedValue == null) || Bytes.equals(oldValue, expectedValue)) {
         // if newValue is null, delete
         if (newValue == null || newValue.length == 0) {
-          deleteDirtyNoLock(map, new byte[][]{column}, TransactionOracle.DIRTY_WRITE_VERSION);
+          deleteDirtyNoLock(map, new byte[][]{column}, DIRTY_WRITE_VERSION);
         } else {
-          columnMap.put(new Version(TransactionOracle.DIRTY_WRITE_VERSION), new Value(newValue));
+          columnMap.put(new Version(DIRTY_WRITE_VERSION), new Value(newValue));
         }
         return true;
       }

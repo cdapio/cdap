@@ -8,8 +8,6 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.gateway.collector.RestCollector;
-import com.continuuity.gateway.util.Util;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.performance.gateway.SimpleHttpClient;
 import com.continuuity.streamevent.DefaultStreamEvent;
@@ -49,8 +47,10 @@ public class GatewayStreamWriter implements StreamWriter {
     if (StringUtils.isEmpty(gateway)) {
       gateway = "localhost";
     }
-    String url =  Util.findBaseUrl(config, RestCollector.class, null, gateway, -1, apiKey != null)
-      + queueName.getSimpleName();
+    // todo
+    String url = "Perf framework should be fixed towards new gateway";
+    //  Util.findBaseUrl(config, RestCollector.class, null, gateway, -1, apiKey != null)
+    //  + queueName.getSimpleName();
     httpClient = new SimpleHttpClient(url, headers);
   }
 

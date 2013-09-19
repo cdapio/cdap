@@ -9,10 +9,8 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.data.NoopTransactionOracle;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
 import com.continuuity.weave.discovery.Discoverable;
@@ -78,7 +76,6 @@ public class BaseMetricsQueryTest {
             .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
             .to(Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
 
-          bind(TransactionOracle.class).to(NoopTransactionOracle.class);
           bind(OVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
         }
       },

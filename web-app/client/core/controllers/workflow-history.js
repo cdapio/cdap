@@ -57,77 +57,7 @@ define([], function () {
 
       this.get('runs').set('content', []);
 
-    },
-
-    loadRun: function (runId) {
-
-      var app = this.get('model').app;
-      var id = this.get('model').name;
-      var self = this;
-
-      // C.get('monitor', {
-      //  method: 'getCounters',
-      //  params: [app, id, runId]
-      // }, function (error, response) {
-      //  var metrics = response.params;
-      //  var i = metrics.length;
-      //  while (i--) {
-
-      //    if (metrics[i].name === 'processed.count') {
-
-      //      self.get_flowlet(metrics[i].qualifier).set('label', C.Util.number(metrics[i].value));
-
-      //    }
-
-      //  }
-
-      //  $('#flowviz-container').removeClass('flowviz-fade');
-
-      // });
-
-    },
-
-    get_flowlet: function (id) {
-      id = id + "";
-      var content = this.elements.Flowlet.content;
-      for (var k = 0; k < content.length; k++) {
-        if (content[k].name === id) {
-          return content[k];
-        }
-      }
-      content = this.elements.Stream.content;
-      for (k = 0; k < content.length; k++) {
-        if (content[k].name === id) {
-          return content[k];
-        }
-      }
-    },
-
-    __currentFlowletLabel: 'processed.count',
-
-    setFlowletLabel: function (event) {
-
-      var label = $(event.target).html();
-      this.get('controller').set('__currentFlowletLabel', {
-        'Enqueue Rate': 'arrival.count',
-        'Queue Size': 'queue.depth',
-        'Max Queue Depth': 'queue.maxdepth',
-        'Total Processed': 'processed.count'
-      }[label]);
-
-      this.__resetFlowletLabels();
-
-    },
-    flowletLabelName: function () {
-
-      return {
-        'arrival.count': 'Enqueue Rate',
-        'queue.depth': 'Queue Size',
-        'queue.maxdepth': 'Max Queue Depth',
-        'processed.count': 'Total Processed'
-      }[this.__currentFlowletLabel];
-
-    }.property('__currentFlowletLabel')
+    }
   });
 
   Controller.reopenClass({

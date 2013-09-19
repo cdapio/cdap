@@ -14,6 +14,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
@@ -56,6 +57,7 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowStreamDefinitionImpl;
@@ -204,6 +206,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
 
+  private final Scheduler scheduler;
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
@@ -212,7 +215,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                  MetaDataStore mds, LocationFactory locationFactory,
                                  ManagerFactory managerFactory, AuthorizationFactory authFactory,
                                  StoreFactory storeFactory, ProgramRuntimeService runtimeService,
-                                 DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin) {
+                                 DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
+                                 Scheduler scheduler) {
     this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
@@ -225,6 +229,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                         System.getProperty("java.io.tmpdir")) + "/archive";
     this.mds = new MetadataService(mds);
+    this.scheduler = scheduler;
 
     // Note: This is hacky to start service like this.
     if (this.runtimeService.state() != Service.State.RUNNING) {
@@ -256,14 +261,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage(UserErrors.ALREADY_RUNNING));
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
 
-      Program program;
-      try {
-        program = store.loadProgram(programId, entityTypeToType(id));
-      } catch (Throwable th) {
-        // TODO: hack: in that case the flow is mapreduce ;)
-        id.setType(EntityType.MAPREDUCE);
-        program = store.loadProgram(programId, entityTypeToType(id));
-      }
+      Program program = store.loadProgram(programId, entityTypeToType(id));
 
       BasicArguments userArguments = new BasicArguments();
       if (descriptor.isSetArguments()) {
@@ -296,11 +294,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
-      // TODO: hack: this might be a mapreduce job ;)
-      if (runtimeInfo == null && id.getType() == EntityType.FLOW) {
-        id.setType(EntityType.MAPREDUCE);
-        runtimeInfo = findRuntimeInfo(id);
-      }
 
       int version = 1;  // Note, how to get version?
       if (runtimeInfo == null) {
@@ -489,6 +482,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           MapReduceSpecification specification = appSpec.getMapReduces().get(id.getFlowId());
           return new Gson().toJson(specification);
         }
+      } else if (id.getType() == EntityType.WORKFLOW) {
+        if (appSpec.getWorkflows().containsKey(runnableId)) {
+          WorkflowSpecification specification = appSpec.getWorkflows().get(id.getFlowId());
+          return new Gson().toJson(specification);
+        }
       }
     } catch (OperationException e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
@@ -520,28 +518,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // TODO: fill values (incl. list of datasets ) once they are added to ProcedureSpecification
     queryDef.setServiceName(procedureSpec.getName());
     return queryDef;
-  }
-
-  private FlowDefinitionImpl getFlowDef(final ProgramId id)
-    throws AppFabricServiceException, UnsupportedTypeException {
-    ApplicationSpecification appSpec = null;
-    try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
-                                                        id.getApplicationId()));
-    } catch (OperationException e) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      throw  new AppFabricServiceException("Could not retrieve application spec for " + id.toString() + "." +
-                                             e.getMessage());
-    }
-
-    Preconditions.checkArgument(appSpec != null, "Not application specification found.");
-    FlowSpecification flowSpec = appSpec.getFlows().get(id.getFlowId());
-    if (flowSpec == null) {
-      // TODO: this is hack for a mapreduce job ;)
-      return getFlowDef4MapReduce(id, appSpec.getMapReduces().get(id.getFlowId()));
-    } else {
-      return getFlowDef4Flow(id, flowSpec);
-    }
   }
 
   private FlowDefinitionImpl getFlowDef4Flow(ProgramId id, FlowSpecification flowSpec) {
@@ -800,8 +776,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Futures.addCallback(future, new FutureCallback<ApplicationWithPrograms>() {
         @Override
         public void onSuccess(ApplicationWithPrograms result) {
-          save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
-          sessions.remove(resource.getAccountId());
+          ApplicationSpecification specification = result.getAppSpecLoc().getSpecification();
+          try {
+            setupSchedules(resource.getAccountId(), result.getAppSpecLoc().getApplicationId().getId(), specification);
+            save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
+            sessions.remove(resource.getAccountId());
+          } catch (IOException e) {
+            LOG.warn(StackTraceUtil.toStringStackTrace(e));
+            DeployStatus status = DeployStatus.FAILED;
+            status.setMessage(e.getMessage());
+            sessions.remove(resource.getAccountId());
+          }
         }
 
         @Override
@@ -1225,5 +1210,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn("Failed to retrieve session info for account.");
     }
     return null;
+  }
+
+  private void setupSchedules(String accountId, String applicationId,
+                              ApplicationSpecification specification)  throws IOException {
+
+    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
+      Id.Program programId = Id.Program.from(accountId, applicationId, entry.getKey());
+      scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
+    }
   }
 }
