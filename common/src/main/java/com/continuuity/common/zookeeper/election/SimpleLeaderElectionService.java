@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -36,7 +37,7 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
 
   private final ZKClient zkClient;
   private final ConcurrentMap<Election, Boolean> activeElections;
-  private final ConcurrentMap<RegisteredElection, Cancellable> registeredElections;
+  private final ConcurrentMap<RegisteredElection, Boolean> registeredElections;
   private final ConcurrentMap<RegisteredElection, Boolean> leaders;
 
   public SimpleLeaderElectionService(ZKClient zkClient) {
@@ -67,33 +68,37 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
   }
 
   @Override
-  public Cancellable addElection(Election election) {
-    RegisteredElection registeredElection = null;
-
-    if (activeElections.putIfAbsent(election, true) == null) {
-      try {
-        registeredElection = doRegister(election);
-      } catch (Throwable e) {
-        activeElections.remove(election);
-      }
-    } else {
-      // Note: both Election and RegisteredElection can be used as keys to map.
-      //noinspection SuspiciousMethodCalls
-      return registeredElections.get(election);
-    }
-
-    final RegisteredElection regElection = registeredElection;
-    Cancellable cancellable = new Cancellable() {
+  protected Executor executor(final State state) {
+    return new Executor() {
       @Override
-      public void cancel() {
-        unregister(regElection);
+      public void execute(Runnable command) {
+        Thread t = new Thread(command, getClass().getSimpleName() + " " + state);
+        t.setDaemon(true);
+        t.start();
       }
     };
-    registeredElections.put(registeredElection, cancellable);
-    return cancellable;
   }
 
-  private RegisteredElection doRegister(Election election) {
+  @Override
+  public Cancellable addElection(final Election election) {
+    if (activeElections.putIfAbsent(election, true) == null) {
+      try {
+        doRegister(election);
+      } catch (Throwable e) {
+        activeElections.remove(election);
+        throw Throwables.propagate(e);
+      }
+    }
+
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        unregister(election);
+      }
+    };
+  }
+
+  private void doRegister(Election election) {
     String zkPath = null;
     RegisteredElection registeredElection = null;
 
@@ -118,7 +123,7 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
         zkClient.exists(registeredElection.getZkPath(), new SelfWatcher(registeredElection));
       Futures.getUnchecked(watchFuture);
 
-      return registeredElection;
+      registeredElections.put(registeredElection, true);
     } catch (Throwable e) {
       LOG.error("Exception while registering for election {}", election.getId(), e);
       if (zkPath != null) {
@@ -126,11 +131,16 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
       } else if (registeredElection != null) {
         Futures.getUnchecked(zkClient.delete(registeredElection.getZkPath()));
       }
+      if (registeredElection != null) {
+        registeredElections.remove(registeredElection);
+      }
       throw Throwables.propagate(e);
     }
   }
 
   private void unregister(Election election) {
+    activeElections.remove(election);
+
     final RegisteredElection actualElection = getRegisteredElection(election);
     if (actualElection == null || registeredElections.remove(actualElection) == null) {
       return;
@@ -138,9 +148,7 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
 
     LOG.info("Un-registering {}", actualElection);
 
-    if (leaders.remove(actualElection) != null) {
-      endLeader(actualElection);
-    }
+    endLeader(actualElection);
 
   // Delete node
     OperationFuture<String> deleteFuture = zkClient.delete(actualElection.getZkPath());
@@ -200,7 +208,6 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
           zkClient.exists(watchEntry.getValue(), new OtherLeaderWatcher(registeredElection));
         Futures.getUnchecked(watchFuture);
       }
-
 
       return registeredElection;
     } catch (Exception e) {
@@ -289,7 +296,7 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
     @Override
     public void process(WatchedEvent event) {
       if (event.getType() == Event.EventType.NodeDeleted) {
-        LOG.debug("Self node deleted {} for election", event, election);
+        LOG.debug("Self node deleted {} for election {}", event, election);
         if (leaders.containsKey(election)) {
           endLeader(election);
         }
