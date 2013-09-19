@@ -71,7 +71,8 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
-          put.add(HBaseTableUtil.DATA_COLFAM, column.getKey(), tx.getWritePointer(), wrapDeleteIfNeeded(column.getValue()));
+          put.add(HBaseTableUtil.DATA_COLFAM, column.getKey(), tx.getWritePointer(),
+                  wrapDeleteIfNeeded(column.getValue()));
         } else {
           put.add(HBaseTableUtil.DATA_COLFAM, column.getKey(), column.getValue());
         }

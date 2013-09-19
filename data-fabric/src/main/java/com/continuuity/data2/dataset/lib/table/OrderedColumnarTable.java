@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- * todo: docs
+ * todo: docs.
  */
 public interface OrderedColumnarTable {
   // empty result constant
@@ -61,8 +61,7 @@ public interface OrderedColumnarTable {
   void delete(byte[] row, byte[][] columns) throws Exception;
 
   /**
-   * Increments (atomically) the specified row and columns by the specified
-   * amounts
+   * Increments (atomically) the specified row and columns by the specified amounts.
    * @param amounts amounts to increment columns by
    * @return values of counters after the increments are performed, never null
    */

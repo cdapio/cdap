@@ -251,7 +251,7 @@ public class InMemoryQueue {
   }
 
   /**
-   * Represents the state of an item entry
+   * Represents the state of an item entry.
    */
   private static final class ItemEntryState {
     final int instanceId;

@@ -13,7 +13,7 @@ import com.google.inject.name.Named;
 import java.util.Map;
 
 /**
- * Provides access to datasets in in-memory mode
+ * Provides access to datasets in in-memory mode.
  */
 public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
   @Inject

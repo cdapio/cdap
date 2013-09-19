@@ -101,7 +101,7 @@ public class RuntimeTable extends Table {
 
   /**
    * Open the table in the data fabric, to ensure it exists and is accessible.
-   * @throws com.continuuity.api.data.OperationException if something goes wrong
+   * @throws OperationException if something goes wrong
    */
   public void open() throws OperationException {
     // todo: races? add createIfNotExists() or simply open()?

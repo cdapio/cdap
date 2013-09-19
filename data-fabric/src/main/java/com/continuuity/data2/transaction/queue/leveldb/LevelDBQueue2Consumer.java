@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Queue consumer for levelDB
+ * Queue consumer for levelDB.
  */
 public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
 

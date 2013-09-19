@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset.api;
 
 /**
- * Defines interface for DataSet client
+ * Defines interface for DataSet client.
  */
 public interface DataSetClient {
   void close();
@@ -10,7 +10,7 @@ public interface DataSetClient {
   void setMetricsCollector(DataOpsMetrics dataOpsMetrics);
 
   /**
-   * Collector for data ops metrics
+   * Collector for data ops metrics.
    */
   static interface DataOpsMetrics {
     void recordRead(int opsCount);
