@@ -5,18 +5,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.Gateway;
-import com.continuuity.gateway.v2.handlers.v2.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.MetadataServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.PingHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.ProcedureHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.dataset.ClearFabricHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.dataset.DatasetHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.log.LogHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
-import com.continuuity.gateway.v2.tools.DataSetClientTest;
-import com.continuuity.gateway.v2.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metadata.thrift.MetadataService;
@@ -43,9 +35,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
-  ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
-  DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class})
+@SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class})
 public class GatewayFastTestsSuite {
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";

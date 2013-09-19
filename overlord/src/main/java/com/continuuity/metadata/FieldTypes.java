@@ -68,4 +68,13 @@ public class FieldTypes {
     public static final String DATASETS = "datasets";
     public static final String DESCRIPTION = "description";
   }
+
+  /**
+   * Class representing constants for fields stored for Workflow.
+   */
+  public static class Workflow {
+    public static final String ID = "workflow";
+    public static final String NAME = "name";
+    public static final String DESCRIPTION = "description";
+  }
 }
