@@ -191,7 +191,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
     //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
 
     final Location jobJar = buildJobJar(jobJarLocation);
+    LOG.info("built jobJar at " + jobJar.toURI().toString());
     final Location programJarCopy = createJobJarTempCopy(jobJarLocation);
+    LOG.info("copied programJar to " + programJarCopy.toURI().toString() +
+               ", source: " + jobJarLocation.toURI().toString());
 
     jobConf.setJar(jobJar.toURI().toString());
     jobConf.addFileToClassPath(new Path(programJarCopy.toURI()));
@@ -225,6 +228,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
               // short) ;)
               TimeUnit.MILLISECONDS.sleep(1000);
             }
+
+            LOG.info("Job is complete, status: " + jobConf.getStatus() +
+                       ", success: " + success +
+                       ", job: " + context.toString());
 
             // NOTE: we want to report the final stats (they may change since last report and before job completed)
             reportStats(context);
@@ -316,7 +323,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   }
 
   private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {
-    Location programJarCopy = jobJarLocation.getTempFile("program.jar");
+    Location programJarCopy = locationFactory.create(jobJarLocation.getTempFile("program.jar").toURI().getPath());
     InputStream src = jobJarLocation.getInputStream();
     try {
       OutputStream dest = programJarCopy.getOutputStream();
@@ -439,9 +446,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return inputDataset;
   }
 
-  private static Location buildJobJar(Location jobJarLocation) throws IOException {
-    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"));
-    Location appFabricDependenciesJarLocation = jobJarLocation.getTempFile(".job.jar");
+  private Location buildJobJar(Location jobJarLocation) throws IOException {
+    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
+                                                           Lists.newArrayList("org.apache.hadoop.hbase"));
+    Location appFabricDependenciesJarLocation =
+      locationFactory.create(jobJarLocation.getTempFile(".job.jar").toURI().getPath());
 
     LOG.debug("Creating job jar: " + appFabricDependenciesJarLocation.toURI());
     appBundler.createBundle(appFabricDependenciesJarLocation,

@@ -114,12 +114,6 @@ public abstract class AbstractMapReduceContextBuilder {
       context.setOutput((BatchWritable) context.getDataSet(outputDataSetName));
     }
 
-    // Hooking up with logging and metrics systems
-    // this is a hack for old logging system
-    if (injector.getBindings().containsKey(Key.get(LogWriter.class))) {
-      CAppender.logWriter = injector.getInstance(LogWriter.class);
-    }
-
     // Initialize log appender
     LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
