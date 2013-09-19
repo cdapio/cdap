@@ -944,7 +944,7 @@ public class MetadataService extends MetadataHelper
     LOG.info("All meta data for account '" + accountId + "' deleted.");
   }
 
-
+  //---------------------------Workflow apis -----------------------------------
   @Override
   public boolean createWorkflow(String accountId, Workflow workflow) throws
     MetadataServiceException, TException {
@@ -971,7 +971,14 @@ public class MetadataService extends MetadataHelper
   }
 
   @Override
-  public boolean deleteWorkflow(String account, String app, String workflowId) throws MetadataServiceException, TException {
+  public boolean deleteWorkflow(String account, String app, String workflowId)
+                                throws MetadataServiceException, TException {
     return delete(workflowHelper, new Account(account), new Workflow(workflowId, app));
+  }
+
+  @Override
+  public boolean updateWorkflow(String accountId, Workflow workflow) throws
+    MetadataServiceException, TException {
+    return update(workflowHelper, new Account(accountId), workflow);
   }
 }
