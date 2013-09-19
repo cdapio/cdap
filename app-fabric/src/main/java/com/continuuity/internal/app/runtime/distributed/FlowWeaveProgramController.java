@@ -3,6 +3,7 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.weave.api.WeaveController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,7 @@ final class FlowWeaveProgramController extends AbstractWeaveProgramController {
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    if (!"instances".equals(name) || !(value instanceof Map)) {
+    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
       return;
     }
     Map<String, Integer> command = (Map<String, Integer>) value;
