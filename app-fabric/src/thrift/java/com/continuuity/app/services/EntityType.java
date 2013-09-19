@@ -17,7 +17,8 @@ import org.apache.thrift.TEnum;
 public enum EntityType implements org.apache.thrift.TEnum {
   FLOW(0),
   PROCEDURE(1),
-  MAPREDUCE(2);
+  MAPREDUCE(2),
+  WORKFLOW(3);
 
   private final int value;
 
@@ -44,6 +45,8 @@ public enum EntityType implements org.apache.thrift.TEnum {
         return PROCEDURE;
       case 2:
         return MAPREDUCE;
+      case 3:
+        return WORKFLOW;
       default:
         return null;
     }

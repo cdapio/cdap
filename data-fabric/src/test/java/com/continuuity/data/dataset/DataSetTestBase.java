@@ -4,14 +4,10 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SmartTransactionAgent;
-import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.util.OperationUtil;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -38,11 +34,8 @@ import java.util.List;
  */
 public class DataSetTestBase {
 
-  private static OperationExecutor opex;
   protected static DataFabric fabric;
   protected static TransactionSystemClient txSystemClient;
-
-  protected static final TransactionProxy PROXY = new TransactionProxy();
 
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
@@ -66,12 +59,11 @@ public class DataSetTestBase {
                              }
                            });
     injector.getInstance(InMemoryTransactionManager.class).init();
-    opex = injector.getInstance(OperationExecutor.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     // and create a data fabric with the default operation context
-    fabric = new DataFabricImpl(opex, locationFactory, dataSetAccessor, OperationUtil.DEFAULT);
+    fabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
   }
 
   /**
@@ -93,21 +85,21 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, PROXY, null);
+    instantiator = new DataSetInstantiator(fabric, null);
     instantiator.setDataSets(specs);
   }
 
   /**
    * Start a new transaction. This is similar to what a flowlet runner would do before
-   * processing each data object. It creates a new transaction agent, and all data sets
+   * processing each data object. It creates a new transaction context, and all data sets
    * configured through the instantiator (@see #setupInstantiator) will start using that
    * transaction agent immediately.
    */
-  public static TransactionAgent newTransaction() throws OperationException {
-    SmartTransactionAgent agent = new SmartTransactionAgent(opex, OperationUtil.DEFAULT,
-                                      instantiator.getTransactionAware(), txSystemClient);
-    agent.start();
-    return agent;
+  public static TransactionContext newTransaction() throws Exception {
+    TransactionContext txContext = new TransactionContext(txSystemClient,
+                                                      instantiator.getTransactionAware());
+    txContext.start();
+    return txContext;
   }
 
   /**
@@ -116,7 +108,7 @@ public class DataSetTestBase {
    * unsuccessful - a new transaction agent should be started for subsequent operations.
    * @throws OperationException if the transaction fails for any reason
    */
-  public static void commitTransaction(TransactionAgent agent) throws OperationException {
-    agent.finish();
+  public static void commitTransaction(TransactionContext txContext) throws Exception {
+    txContext.finish();
   }
 }

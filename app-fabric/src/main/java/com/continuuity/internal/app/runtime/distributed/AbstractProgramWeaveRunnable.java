@@ -292,6 +292,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
             return context.announce(serviceName, port);
           }
         });
+
       }
     });
   }

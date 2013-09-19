@@ -46,6 +46,8 @@ public abstract class AbstractMapReduceContextBuilder {
    * Build the instance of {@link BasicMapReduceContext}.
    * @param conf runtime configuration
    * @param runId program run id
+   * @param logicalStartTime The logical start time of the job.
+   * @param tx transaction to use
    * @param classLoader classloader to use
    * @param programLocation program location
    * @param inputDataSetName name of the input dataset if specified for this mapreduce job, null otherwise
@@ -54,6 +56,7 @@ public abstract class AbstractMapReduceContextBuilder {
    * @return instance of {@link BasicMapReduceContext}
    */
   public BasicMapReduceContext build(CConfiguration conf, String runId,
+                                     long logicalStartTime,
                                      Arguments runtimeArguments,
                                      Transaction tx,
                                      ClassLoader classLoader,
@@ -92,9 +95,10 @@ public abstract class AbstractMapReduceContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getName());
     BasicMapReduceContext context =
+
       new BasicMapReduceContext(program, RunIds.fromString(runId),
                                 runtimeArguments, dataSets, spec,
-                                dataSetContext.getTransactionAware());
+                                dataSetContext.getTransactionAware(), logicalStartTime);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code
@@ -108,12 +112,6 @@ public abstract class AbstractMapReduceContextBuilder {
     }
     if (outputDataSetName != null) {
       context.setOutput((BatchWritable) context.getDataSet(outputDataSetName));
-    }
-
-    // Hooking up with logging and metrics systems
-    // this is a hack for old logging system
-    if (injector.getBindings().containsKey(Key.get(LogWriter.class))) {
-      CAppender.logWriter = injector.getInstance(LogWriter.class);
     }
 
     // Initialize log appender

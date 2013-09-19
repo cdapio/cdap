@@ -7,25 +7,15 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.Transaction;
-import com.continuuity.data.operation.executor.omid.OmidTransactionException;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.operation.executor.omid.TransactionResult;
-import com.continuuity.data.operation.executor.omid.Undo;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.test.hbase.HBaseTestBase;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  *
@@ -97,49 +87,4 @@ public class EntityTableTest {
     HBaseTestBase.stopHBase();
   }
 
-  private static final class MetricModule extends AbstractModule {
-
-    @Override
-    protected void configure() {
-      bind(TransactionOracle.class).to(NoopTransactionOracle.class).in(Scopes.SINGLETON);
-    }
-  }
-
-  private static final class NoopTransactionOracle implements TransactionOracle {
-
-    @Override
-    public Transaction startTransaction(boolean trackChanges) {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public void validateTransaction(Transaction tx) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public void addToTransaction(Transaction tx, List<Undo> undos) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public TransactionResult commitTransaction(Transaction tx) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public TransactionResult abortTransaction(Transaction tx) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public void removeTransaction(Transaction tx) throws OmidTransactionException {
-      throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public ReadPointer getReadPointer() {
-      throw new UnsupportedOperationException("Not supported");
-    }
-  }
 }

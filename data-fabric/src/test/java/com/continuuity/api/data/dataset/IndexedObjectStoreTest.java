@@ -3,7 +3,7 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.data.dataset.DataSetTestBase;
-import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -32,7 +32,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   public void testLookupByIndex() throws Exception{
 
     indexedFeed = instantiator.getDataSet("index");
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     List<String> categories1 = ImmutableList.of("racing", "tech");
     List<String> categories2 = ImmutableList.of("electronics", "tech");
@@ -55,14 +55,14 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     List<Feed> feedResult3 = indexedFeed.readAllByIndex(Bytes.toBytes("tech"));
     Assert.assertEquals(2, feedResult3.size());
 
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
   }
 
   @Test
   public void testIndexRewrites() throws Exception {
 
     indexedFeed = instantiator.getDataSet("index");
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     List<String> categories1 = ImmutableList.of("big data", "startup");
     List<String> categories2 = ImmutableList.of("hadoop");
@@ -91,14 +91,14 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("hadoop"));
     Assert.assertEquals(0, feedResult.size());
 
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
   }
 
   @Test
   public void testIndexPruning() throws Exception{
 
     indexedFeed = instantiator.getDataSet("index");
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     List<String> categories = ImmutableList.of("running", "marathon", "drinking");
     Feed feed =  new Feed("rocknroll", "http://rock'n'roll.com", categories);
@@ -113,7 +113,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     feeds = indexedFeed.readAllByIndex(Bytes.toBytes("drinking"));
     Assert.assertEquals(0, feeds.size());
 
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
   }
 
   @Test
@@ -147,7 +147,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   @Test
   public void testIndexUpdates() throws Exception {
     indexedFeed = instantiator.getDataSet("index");
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     List<String> categories1 = ImmutableList.of("big data");
 
@@ -164,7 +164,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
     feedResult = indexedFeed.readAllByIndex(Bytes.toBytes("startup"));
     Assert.assertEquals(1, feedResult.size());
 
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
   }
 
 

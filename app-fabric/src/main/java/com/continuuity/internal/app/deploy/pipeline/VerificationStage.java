@@ -72,7 +72,8 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
 
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
                                                                    specification.getMapReduces().values(),
-                                                                   specification.getProcedures().values());
+                                                                   specification.getProcedures().values(),
+                                                                   specification.getWorkflows().values());
 
     for (ProgramSpecification programSpec : programSpecs) {
       result = getVerifier(programSpec.getClass()).verify(programSpec);

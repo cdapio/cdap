@@ -1,7 +1,6 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data.operation.KeyRange;
 import com.google.common.collect.Lists;
 
 import java.util.Collections;

@@ -672,13 +672,13 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
           case 3: // INVALIDS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list132 = iprot.readListBegin();
-                struct.invalids = new ArrayList<Long>(_list132.size);
-                for (int _i133 = 0; _i133 < _list132.size; ++_i133)
+                org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                struct.invalids = new ArrayList<Long>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                 {
-                  long _elem134; // required
-                  _elem134 = iprot.readI64();
-                  struct.invalids.add(_elem134);
+                  long _elem2; // required
+                  _elem2 = iprot.readI64();
+                  struct.invalids.add(_elem2);
                 }
                 iprot.readListEnd();
               }
@@ -690,13 +690,13 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
           case 4: // IN_PROGRESS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list135 = iprot.readListBegin();
-                struct.inProgress = new ArrayList<Long>(_list135.size);
-                for (int _i136 = 0; _i136 < _list135.size; ++_i136)
+                org.apache.thrift.protocol.TList _list3 = iprot.readListBegin();
+                struct.inProgress = new ArrayList<Long>(_list3.size);
+                for (int _i4 = 0; _i4 < _list3.size; ++_i4)
                 {
-                  long _elem137; // required
-                  _elem137 = iprot.readI64();
-                  struct.inProgress.add(_elem137);
+                  long _elem5; // required
+                  _elem5 = iprot.readI64();
+                  struct.inProgress.add(_elem5);
                 }
                 iprot.readListEnd();
               }
@@ -738,9 +738,9 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
         oprot.writeFieldBegin(INVALIDS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.invalids.size()));
-          for (long _iter138 : struct.invalids)
+          for (long _iter6 : struct.invalids)
           {
-            oprot.writeI64(_iter138);
+            oprot.writeI64(_iter6);
           }
           oprot.writeListEnd();
         }
@@ -750,9 +750,9 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
         oprot.writeFieldBegin(IN_PROGRESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.inProgress.size()));
-          for (long _iter139 : struct.inProgress)
+          for (long _iter7 : struct.inProgress)
           {
-            oprot.writeI64(_iter139);
+            oprot.writeI64(_iter7);
           }
           oprot.writeListEnd();
         }
@@ -804,18 +804,18 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       if (struct.isSetInvalids()) {
         {
           oprot.writeI32(struct.invalids.size());
-          for (long _iter140 : struct.invalids)
+          for (long _iter8 : struct.invalids)
           {
-            oprot.writeI64(_iter140);
+            oprot.writeI64(_iter8);
           }
         }
       }
       if (struct.isSetInProgress()) {
         {
           oprot.writeI32(struct.inProgress.size());
-          for (long _iter141 : struct.inProgress)
+          for (long _iter9 : struct.inProgress)
           {
-            oprot.writeI64(_iter141);
+            oprot.writeI64(_iter9);
           }
         }
       }
@@ -838,26 +838,26 @@ public class TTransaction2 implements org.apache.thrift.TBase<TTransaction2, TTr
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TList _list142 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-          struct.invalids = new ArrayList<Long>(_list142.size);
-          for (int _i143 = 0; _i143 < _list142.size; ++_i143)
+          org.apache.thrift.protocol.TList _list10 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+          struct.invalids = new ArrayList<Long>(_list10.size);
+          for (int _i11 = 0; _i11 < _list10.size; ++_i11)
           {
-            long _elem144; // required
-            _elem144 = iprot.readI64();
-            struct.invalids.add(_elem144);
+            long _elem12; // required
+            _elem12 = iprot.readI64();
+            struct.invalids.add(_elem12);
           }
         }
         struct.setInvalidsIsSet(true);
       }
       if (incoming.get(3)) {
         {
-          org.apache.thrift.protocol.TList _list145 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-          struct.inProgress = new ArrayList<Long>(_list145.size);
-          for (int _i146 = 0; _i146 < _list145.size; ++_i146)
+          org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+          struct.inProgress = new ArrayList<Long>(_list13.size);
+          for (int _i14 = 0; _i14 < _list13.size; ++_i14)
           {
-            long _elem147; // required
-            _elem147 = iprot.readI64();
-            struct.inProgress.add(_elem147);
+            long _elem15; // required
+            _elem15 = iprot.readI64();
+            struct.inProgress.add(_elem15);
           }
         }
         struct.setInProgressIsSet(true);
