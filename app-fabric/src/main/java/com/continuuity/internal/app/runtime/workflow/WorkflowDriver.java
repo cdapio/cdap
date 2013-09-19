@@ -13,6 +13,7 @@ import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.io.InstantiatorFactory;
+import com.continuuity.weave.api.RunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -36,6 +37,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
 
   private final Program program;
+  private final RunId runId;
   private final InetAddress hostname;
   private final Map<String, String> runtimeArgs;
   private final WorkflowSpecification workflowSpec;
@@ -45,9 +47,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private volatile boolean running;
   private volatile WorkflowStatus workflowStatus;
 
-  WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
+  WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, MapReduceProgramRunner programRunner) {
     this.program = program;
+    this.runId = runId;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
     this.workflowSpec = workflowSpec;
@@ -56,8 +59,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                          .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
-    this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner,
-                                                            program, options.getUserArguments(), logicalStartTime);
+    this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner, program,
+                                                            runId, options.getUserArguments(), logicalStartTime);
   }
 
   @Override

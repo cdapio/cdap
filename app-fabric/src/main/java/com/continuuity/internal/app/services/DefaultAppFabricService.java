@@ -55,7 +55,9 @@ import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinitionImpl;
@@ -75,6 +77,7 @@ import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
+import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.filesystem.Location;
@@ -259,7 +262,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       ProgramId id = descriptor.getIdentifier();
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
       Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage(UserErrors.ALREADY_RUNNING));
-      Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+      final Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
 
       Program program = store.loadProgram(programId, entityTypeToType(id));
 
@@ -272,9 +275,29 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         runtimeService.run(program, new SimpleProgramOptions(id.getFlowId(),
                                                              new BasicArguments(),
                                                              userArguments));
-      store.setStart(programId, runtimeInfo.getController().getRunId().getId(),
-                     TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-      return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
+      ProgramController controller = runtimeInfo.getController();
+      final String runId = controller.getRunId().getId();
+
+      controller.addListener(new AbstractListener() {
+        @Override
+        public void stopped() {
+          store.setStop(programId, runId,
+                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                        ProgramController.State.STOPPED.toString());
+        }
+
+        @Override
+        public void error(Throwable cause) {
+          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
+          store.setStop(programId, runId,
+                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                        ProgramController.State.ERROR.toString());
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+
+      store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+      return new RunIdentifier(runId);
 
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
@@ -341,9 +364,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       ProgramController controller = runtimeInfo.getController();
       RunId runId = controller.getRunId();
       controller.stop().get();
-      store.setStop(runtimeInfo.getProgramId(), runId.getId(),
-                    TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                    runtimeInfo.getController().getState().toString());
       return new RunIdentifier(runId.getId());
     } catch (Throwable throwable) {
       LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
@@ -370,7 +390,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
               identifier.getApplicationId(), identifier.getFlowId());
       store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                                 identifier.getFlowId()), flowletId, instances);
-      runtimeInfo.getController().command("instances", ImmutableMap.of(flowletId, (int) instances)).get();
+      runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                          ImmutableMap.of(flowletId, (int) instances)).get();
     } catch (Throwable throwable) {
       LOG.warn("Exception when setting instances for {}.{} to {}. {}",
                identifier.getFlowId(), flowletId, instances, throwable.getMessage(), throwable);

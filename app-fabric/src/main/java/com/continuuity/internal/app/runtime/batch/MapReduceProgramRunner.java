@@ -7,8 +7,10 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -112,8 +114,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    long logicalStartTime = options.getArguments().hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
-                                ? Long.parseLong(options.getArguments()
+    // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
+    Arguments arguments = options.getArguments();
+    RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
+                    ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
+                    : RunIds.generate();
+
+    long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
+                                ? Long.parseLong(arguments
                                                         .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
@@ -122,7 +130,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     dataSetInstantiator.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
     Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, spec.getDataSets());
 
-    RunId runId = RunIds.generate();
     final BasicMapReduceContext context =
       new BasicMapReduceContext(program, runId, options.getUserArguments(),
                                 dataSets, spec,
@@ -190,7 +197,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
     //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
 
-    final Location jobJar = buildJobJar(jobJarLocation);
+    final Location jobJar = buildJobJar(context);
     LOG.info("built jobJar at " + jobJar.toURI().toString());
     final Location programJarCopy = createJobJarTempCopy(jobJarLocation);
     LOG.info("copied programJar to " + programJarCopy.toURI().toString() +
@@ -446,13 +453,20 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return inputDataset;
   }
 
-  private Location buildJobJar(Location jobJarLocation) throws IOException {
+  private Location buildJobJar(BasicMapReduceContext context) throws IOException {
     ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
                                                            Lists.newArrayList("org.apache.hadoop.hbase"));
-    Location appFabricDependenciesJarLocation =
-      locationFactory.create(jobJarLocation.getTempFile(".job.jar").toURI().getPath());
+    Id.Program programId = context.getProgram().getId();
+    String programJarPath = context.getProgram().getJarLocation().toURI().getPath();
+    String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
 
-    LOG.debug("Creating job jar: " + appFabricDependenciesJarLocation.toURI());
+    Location appFabricDependenciesJarLocation =
+      locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
+                                           programDir, Type.MAPREDUCE.name(),
+                                           programId.getAccountId(), programId.getApplicationId(),
+                                           programId.getId(), context.getRunId().getId()));
+
+    LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
     appBundler.createBundle(appFabricDependenciesJarLocation,
                             MapReduce.class,
                             DataSetOutputFormat.class, DataSetInputFormat.class,

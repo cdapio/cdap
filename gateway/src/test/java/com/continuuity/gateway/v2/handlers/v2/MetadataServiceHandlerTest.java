@@ -8,6 +8,7 @@ import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -40,6 +41,7 @@ public class MetadataServiceHandlerTest {
     q1.setDatasets(ImmutableList.of("d1"));
     Mapreduce mr1 = new Mapreduce("mr1", "app1");
     mr1.setDatasets(ImmutableList.of("d1"));
+    Workflow workflow = new Workflow("wf1", "app1");
 
     app1.setName("app1-name");
     s1.setName("s1-name");
@@ -56,6 +58,8 @@ public class MetadataServiceHandlerTest {
     mr1.setName("mr1-name");
     mr1.setDescription("mr1-desc");
     mr1.setApplication("app1");
+    workflow.setName("wf1-name");
+    workflow.setApplication("app1");
 
     GatewayFastTestsSuite.getMds().createApplication(new Account(account), app1);
     GatewayFastTestsSuite.getMds().createStream(new Account(account), s1);
@@ -63,6 +67,7 @@ public class MetadataServiceHandlerTest {
     GatewayFastTestsSuite.getMds().createQuery(new Account(account), q1);
     GatewayFastTestsSuite.getMds().createFlow(account, f1);
     GatewayFastTestsSuite.getMds().createMapreduce(new Account(account), mr1);
+    GatewayFastTestsSuite.getMds().createWorkflow(account, workflow);
   }
 
   @After
@@ -198,6 +203,28 @@ public class MetadataServiceHandlerTest {
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
     Assert.assertEquals("f1", o.get(0).get("id"));
     Assert.assertEquals("f1-name", o.get(0).get("name"));
+    Assert.assertEquals("app1", o.get(0).get("app"));
+  }
+
+  @Test
+  public void testGetWorkflows() throws Exception{
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/workflows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String s = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("wf1", o.get(0).get("id"));
+    Assert.assertEquals("wf1-name", o.get(0).get("name"));
+    Assert.assertEquals("app1", o.get(0).get("app"));
+  }
+
+  @Test
+  public void testGetWorkflowsByApp() throws Exception {
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/workflows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String s = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals("wf1", o.get(0).get("id"));
+    Assert.assertEquals("wf1-name", o.get(0).get("name"));
     Assert.assertEquals("app1", o.get(0).get("app"));
   }
 }

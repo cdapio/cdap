@@ -31,6 +31,16 @@ struct Stream {
 }
 
 /**
+ * Defines a workflow
+ */
+struct Workflow {
+   1: required string id,
+   2: required string application,
+   3: optional string name,
+   4: optional bool exists = true,
+}
+
+/**
  * Defines a Flow
  */
 struct Flow {
@@ -540,6 +550,73 @@ service MetadataService {
   *     or deleting things.
   */
   void deleteAll(1: string account)
+    throws (1: MetadataServiceException e),
+
+  /**
+    * Workflowstuff
+    */
+
+  /**
+   * Creates a new Workflow.
+   *
+   * @return true if created successfully or already exists, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the Workflow.
+   */
+  bool createWorkflow(1: string account, 2: Workflow workflow)
+    throws (1: MetadataServiceException e),
+
+    /**
+     * Returns a list of workflows associated with account.
+     *
+     * @returns a list of workflows associated with account; else empty list.
+     * @throws MetadataServiceException thrown when there is issue listing
+     * workflows for a account.
+     */
+    list<Workflow> getWorkflows(1: string account)
+      throws (1: MetadataServiceException e),
+
+   /**
+    * Return more information about an workflow.
+    *
+    * @return workflow meta data if exists; else a workflow with the id and exists=false
+    * @throws MetadataServiceException thrown when there is issue retrieving
+    * a workflow from metadata store.
+    */
+    Workflow getWorkflow(1: string account, 2: string app, 3: string workflowId)
+      throws (1: MetadataServiceException e),
+
+   /**
+    * Return a list of all workflows of an application
+    *
+    * @return list of all workflows of the app
+    * @throws MetadataServiceException thrown when there is issue retrieving
+    * a workflow from metadata store.
+    */
+    list<Workflow> getWorkflowsByApplication(1: string account, 2: string application)
+      throws (1: MetadataServiceException e),
+
+  /**
+   * Deletes a workflow if exists.
+   *
+   * @return true if workflow was deleted successfully or did not exists to
+   * be deleted; false otherwise.
+   * @throws MetadataServiceException thrown when there is issue deleting a workflow.
+   */
+  bool deleteWorkflow(1: string account, 2: string app, 3: string workflowId)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Updates an existing workflow
+   *
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the workflow.
+   *
+   * @param account
+   * @param workflow
+   */
+  bool updateWorkflow(1: string account, 2: Workflow workflow)
     throws (1: MetadataServiceException e),
 
 }
