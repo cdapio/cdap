@@ -1007,6 +1007,22 @@
           </tbody>
         </table>
     {{/if}}
+    {{#if elements.Workflow.length}}
+      <table class="table">
+          <thead>
+            <th style="padding-left: 14px;">Workflows</th>
+          </thead>
+          <tbody>
+          {{#each elements.Workflow.content }}
+            <tr>
+              <td class="app-list-name">
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
+              </td>
+            </tr>
+          {{/each}}
+          </tbody>
+        </table>
+    {{/if}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="_datasets-list">

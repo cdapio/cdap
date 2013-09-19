@@ -20,7 +20,7 @@ define([], function () {
       this._super();
 
       this.set('app', this.get('applicationId') || this.get('app'));
-      this.set('id', this.get('name'));
+      this.set('id', this.get('app') + ':' + this.get('name'));
 
     },
 
@@ -79,6 +79,21 @@ define([], function () {
       return false;
 
     }.property('currentState'),
+
+    updateState: function (http) {
+
+      var self = this;
+
+      var app_id = this.get('app'),
+        workflowId = this.get('name');
+
+      http.rest('apps', app_id, 'workflows', workflowId, 'status', function (response) {
+
+        if (!jQuery.isEmptyObject(response)) {
+          self.set('currentState', response.status);
+        }
+      });
+    },
 
     defaultAction: function () {
 
