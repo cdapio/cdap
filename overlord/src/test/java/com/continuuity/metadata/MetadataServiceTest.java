@@ -157,7 +157,7 @@ public class MetadataServiceTest {
       }
     }
     Account account1 = new Account("abc");
-    Assert.assertTrue(mds.getStreams(account1).size() == 0);
+    Assert.assertTrue(mds.getStreams(account1)isEmpty());
   }
 
   public void testCreateDataset() throws Exception {
@@ -178,7 +178,7 @@ public class MetadataServiceTest {
     Dataset dataset = new Dataset("dataset1");
     Assert.assertNotNull(mds.deleteDataset(account, dataset));
     List<Dataset> dlist = mds.getDatasets(account);
-    Assert.assertTrue(dlist.size() == 0);
+    Assert.assertTrue(dlistisEmpty());
     Dataset dataset1 = mds.getDataset(account, dataset);
     Assert.assertNotNull(dataset1);
   }
@@ -201,7 +201,7 @@ public class MetadataServiceTest {
     Query query = new Query("query1", "appX");
     Assert.assertNotNull(mds.deleteQuery(account, query));
     List<Query> qlist = mds.getQueries(account);
-    Assert.assertTrue(qlist.size() == 0);
+    Assert.assertTrue(qlistisEmpty());
     Query query1 = mds.getQuery(account, query);
     Assert.assertNotNull(query1);
   }
@@ -224,7 +224,7 @@ public class MetadataServiceTest {
     Mapreduce query = new Mapreduce("query1", "appX");
     Assert.assertNotNull(mds.deleteMapreduce(account, query));
     List<Mapreduce> qlist = mds.getMapreduces(account);
-    Assert.assertTrue(qlist.size() == 0);
+    Assert.assertTrue(qlistisEmpty());
     Mapreduce query1 = mds.getMapreduce(account, query);
     Assert.assertNotNull(query1);
   }
@@ -314,7 +314,7 @@ public class MetadataServiceTest {
       }
     }
     Account account1 = new Account("abc");
-    Assert.assertTrue(mds.getApplications(account1).size() == 0);
+    Assert.assertTrue(mds.getApplications(account1)isEmpty());
   }
 
   /**
