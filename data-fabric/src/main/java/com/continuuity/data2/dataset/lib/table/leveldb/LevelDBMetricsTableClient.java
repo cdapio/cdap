@@ -1,15 +1,14 @@
 package com.continuuity.data2.dataset.lib.table.leveldb;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -21,8 +20,20 @@ public class LevelDBMetricsTableClient implements MetricsTable {
 
   private final LevelDBOcTableCore core;
 
-  public LevelDBMetricsTableClient(LevelDBOcTableCore core) {
-    this.core = core;
+  public LevelDBMetricsTableClient(String tableName, LevelDBOcTableService service) throws IOException {
+    this.core = new LevelDBOcTableCore(tableName, service);
+  }
+
+  @Override
+  public OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception {
+    NavigableMap<byte[], byte[]> result = core.getRow(row, new byte[][] { column }, null, null, -1, null);
+    if (!result.isEmpty()) {
+      byte[] value = result.get(column);
+      if (value != null) {
+        return new OperationResult<byte[]>(value);
+      }
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
@@ -31,25 +42,18 @@ public class LevelDBMetricsTableClient implements MetricsTable {
   }
 
   @Override
+  public synchronized boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
+    return core.swap(row, column, oldValue, newValue);
+  }
+
+  @Override
   public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
-    NavigableMap<byte[], byte[]> existing =
-      core.getRow(row, increments.keySet().toArray(new byte[increments.size()][]), null, null, -1, null);
-    Map<byte[], byte[]> replacing = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], Long> increment : increments.entrySet()) {
-      long existingValue = 0L;
-      byte[] existingBytes = existing.get(increment.getKey());
-      if (existingBytes != null) {
-        if (existingBytes.length != Bytes.SIZEOF_LONG) {
-          throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
-                                       "Attempted to increment a value that is not convertible to long," +
-                                         " row: " + Bytes.toStringBinary(row) +
-                                         " column: " + Bytes.toStringBinary(increment.getKey()));
-        }
-        existingValue = Bytes.toLong(existingBytes);
-      }
-      replacing.put(increment.getKey(), Bytes.toBytes(existingValue + increment.getValue()));
-    }
-    put(ImmutableMap.of(row, replacing));
+    core.increment(row, increments);
+  }
+
+  @Override
+  public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
+    return core.increment(row, ImmutableMap.of(column, delta)).get(column);
   }
 
   @Override

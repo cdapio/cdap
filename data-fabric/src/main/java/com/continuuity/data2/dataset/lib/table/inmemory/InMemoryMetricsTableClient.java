@@ -1,9 +1,12 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import javax.annotation.Nullable;
@@ -23,13 +26,35 @@ public class InMemoryMetricsTableClient implements MetricsTable {
   }
 
   @Override
+  public OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception {
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryOcTableService.get(tableName, row, null);
+    if (rowMap != null) {
+      NavigableMap<Long, byte[]> valueMap = rowMap.get(column);
+      if (valueMap != null && !valueMap.isEmpty()) {
+        return new OperationResult<byte[]>(valueMap.lastEntry().getValue());
+      }
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+  }
+
+  @Override
   public void put(Map<byte[], Map<byte[], byte[]>> updates) throws Exception {
     InMemoryOcTableService.merge(tableName, updates, System.currentTimeMillis());
   }
 
   @Override
+  public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
+    return InMemoryOcTableService.swap(tableName, row, column, oldValue, newValue);
+  }
+
+  @Override
   public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
-    InMemoryOcTableService.increment(tableName, row, increments, System.currentTimeMillis());
+    InMemoryOcTableService.increment(tableName, row, increments);
+  }
+
+  @Override
+  public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
+    return InMemoryOcTableService.increment(tableName, row, ImmutableMap.of(column, delta)).get(column);
   }
 
   @Override

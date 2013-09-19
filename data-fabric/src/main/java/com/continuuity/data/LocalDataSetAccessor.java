@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBMetricsTableClient;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableClient;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableManager;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
@@ -34,7 +35,7 @@ public class LocalDataSetAccessor extends AbstractDataSetAccessor {
       return (T) new LevelDBOcTableClient(name, service);
     }
     if (type == MetricsTable.class) {
-      return (T) new LevelDBOcTableClient(name, service);
+      return (T) new LevelDBMetricsTableClient(name, service);
     }
 
     return null;

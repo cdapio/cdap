@@ -2,6 +2,7 @@ package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
@@ -11,6 +12,7 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
@@ -44,6 +46,21 @@ public class HBaseMetricsTableClient implements MetricsTable {
   }
 
   @Override
+  public OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception {
+    Get get = new Get(row);
+    get.addColumn(HBaseTableUtil.DATA_COLFAM, column);
+    get.setMaxVersions(1);
+    Result getResult = hTable.get(get);
+    if (!getResult.isEmpty()) {
+      byte[] value = getResult.getValue(HBaseTableUtil.DATA_COLFAM, column);
+      if (value != null) {
+        return new OperationResult<byte[]>(value);
+      }
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+  }
+
+  @Override
   public void put(Map<byte[], Map<byte[], byte[]>> updates) throws Exception {
     List<Put> puts = Lists.newArrayList();
     for (Map.Entry<byte[], Map<byte[], byte[]>> row : updates.entrySet()) {
@@ -55,6 +72,19 @@ public class HBaseMetricsTableClient implements MetricsTable {
     }
     hTable.put(puts);
     hTable.flushCommits();
+  }
+
+  @Override
+  public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
+    if (newValue == null) {
+      Delete delete = new Delete(row);
+      delete.deleteColumn(HBaseTableUtil.DATA_COLFAM, column);
+      return hTable.checkAndDelete(row, HBaseTableUtil.DATA_COLFAM, column, oldValue, delete);
+    } else {
+      Put put = new Put(row);
+      put.add(HBaseTableUtil.DATA_COLFAM, column, newValue);
+      return hTable.checkAndPut(row, HBaseTableUtil.DATA_COLFAM, column, oldValue, put);
+    }
   }
 
   @Override
@@ -71,8 +101,26 @@ public class HBaseMetricsTableClient implements MetricsTable {
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
         throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
       }
+      throw e;
     }
     hTable.flushCommits();
+  }
+
+  @Override
+  public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
+    Increment increment = new Increment(row);
+    increment.addColumn(HBaseTableUtil.DATA_COLFAM, column, delta);
+    try {
+      Result result = hTable.increment(increment);
+      return Bytes.toLong(result.getValue(HBaseTableUtil.DATA_COLFAM, column));
+    } catch (IOException e) {
+      // figure out whether this is an illegal increment
+      // currently there is not other way to extract that from the HBase exception than string match
+      if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
+        throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+      }
+      throw e;
+    }
   }
 
   @Override

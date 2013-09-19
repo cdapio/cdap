@@ -31,7 +31,7 @@ import org.junit.rules.TemporaryFolder;
 import java.util.List;
 
 /**
- * Test case for timeseries table cleanup
+ * Test case for timeseries table cleanup.
  */
 public class TimeSeriesCleanupTest {
 

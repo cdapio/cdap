@@ -86,19 +86,25 @@ public class InMemoryOcTableService {
     }
   }
 
-  public static synchronized void increment(String tableName, byte[] row, Map<byte[], Long> increments, long version)
+  public static synchronized Map<byte[], Long> increment(String tableName, byte[] row, Map<byte[], Long> increments)
     throws OperationException {
+    Map<byte[], Long> resultMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
     // get the correct row from the table, create it if it doesn't exist
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = table.get(row);
+    if (rowMap == null) {
+      rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      table.put(row, rowMap);
+    }
     // now increment each column, one by one
-    for (Map.Entry<byte[], Long> keyVal : increments.entrySet()) {
+    long versionForWrite = System.currentTimeMillis();
+    for (Map.Entry<byte[], Long> inc : increments.entrySet()) {
       // create the column in the row if it does not exist
       long existingValue;
-      NavigableMap<Long, byte[]> colMap = rowMap.get(keyVal.getKey());
+      NavigableMap<Long, byte[]> colMap = rowMap.get(inc.getKey());
       if (colMap == null) {
         colMap = Maps.newTreeMap();
-        rowMap.put(keyVal.getKey(), colMap);
+        rowMap.put(inc.getKey(), colMap);
         existingValue = 0L;
       } else {
         byte[] existingBytes = colMap.lastEntry().getValue();
@@ -106,13 +112,55 @@ public class InMemoryOcTableService {
           throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
                                        "Attempted to increment a value that is not convertible to long," +
                                          " row: " + Bytes.toStringBinary(row) +
-                                         " column: " + Bytes.toStringBinary(keyVal.getKey()));
+                                         " column: " + Bytes.toStringBinary(inc.getKey()));
         }
         existingValue = Bytes.toLong(existingBytes);
       }
       // put into the column with given version
-      colMap.put(version, Bytes.toBytes(existingValue + keyVal.getValue()));
+      long newValue = existingValue + inc.getValue();
+      resultMap.put(inc.getKey(), newValue);
+      colMap.put(versionForWrite, Bytes.toBytes(newValue));
     }
+    return resultMap;
+  }
+
+  public static synchronized boolean swap(String tableName, byte[] row, byte[] column,
+                                          byte[] oldValue, byte[] newValue) {
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
+    // get the correct row from the table, create it if it doesn't exist
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = table.get(row);
+    byte[] existingValue = null;
+    if (rowMap != null) {
+      NavigableMap<Long, byte[]> columnMap = rowMap.get(column);
+      if (columnMap != null) {
+        existingValue = columnMap.lastEntry().getValue();
+      }
+    }
+    // verify existing value matches
+    if (oldValue == null && existingValue != null) {
+      return false;
+    }
+    if (oldValue != null && (existingValue == null || !Bytes.equals(oldValue, existingValue))) {
+      return false;
+    }
+    // write new value
+    if (newValue == null) {
+      if (rowMap != null) {
+        rowMap.remove(column);
+      }
+    } else {
+      if (rowMap == null) {
+        rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        table.put(row, rowMap);
+      }
+      NavigableMap<Long, byte[]> columnMap = rowMap.get(column);
+      if (columnMap == null) {
+        columnMap = Maps.newTreeMap();
+        rowMap.put(column, columnMap);
+      }
+      columnMap.put(System.currentTimeMillis(), newValue);
+    }
+    return true;
   }
 
   public static synchronized void undo(String tableName,
@@ -172,7 +220,7 @@ public class InMemoryOcTableService {
 
   public static synchronized NavigableMap<byte[], NavigableMap<Long, byte[]>> get(String tableName,
                                                                                   byte[] row,
-                                                                                  long version) {
+                                                                                  Long version) {
     // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
     Preconditions.checkArgument(table != null, "table not found: " + tableName);
@@ -213,14 +261,17 @@ public class InMemoryOcTableService {
   }
 
   private static NavigableMap<byte[], NavigableMap<Long, byte[]>> getVisible(
-    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap, long version) {
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap, Long version) {
 
     if (rowMap == null) {
       return null;
     }
     NavigableMap<byte[], NavigableMap<Long, byte[]>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<Long, byte[]>> column : rowMap.entrySet()) {
-      NavigableMap<Long, byte[]> visbleValues = column.getValue().headMap(version, true);
+      NavigableMap<Long, byte[]> visbleValues = column.getValue();
+      if (version != null) {
+        visbleValues = visbleValues.headMap(version, true);
+      }
       if (visbleValues.size() > 0) {
         NavigableMap<Long, byte[]> colMap = createVersionedValuesMap(visbleValues);
         result.put(column.getKey(), colMap);

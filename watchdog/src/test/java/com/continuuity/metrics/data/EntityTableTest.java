@@ -3,17 +3,18 @@
  */
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TransactionResult;
 import com.continuuity.data.operation.executor.omid.Undo;
-import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.test.hbase.HBaseTestBase;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -31,11 +32,16 @@ import java.util.List;
  */
 public class EntityTableTest {
 
-  private static OVCTableHandle tableHandle;
+  private static DataSetAccessor accessor;
+
+  protected MetricsTable getTable(String name) throws Exception {
+    accessor.getDataSetManager(MetricsTable.class, DataSetAccessor.Namespace.SYSTEM).create(name);
+    return accessor.getDataSetClient(name, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
+  }
 
   @Test
-  public void testGetId() throws OperationException {
-    EntityTable entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes("testGetId")));
+  public void testGetId() throws Exception {
+    EntityTable entityTable = new EntityTable(getTable("testGetId"));
 
     // Make sure it is created sequentially
     for (int i = 1; i <= 10; i++) {
@@ -48,7 +54,7 @@ public class EntityTableTest {
     }
 
     // Construct another entityTable, it should load from storage.
-    entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes("testGetId")));
+    entityTable = new EntityTable(getTable("testGetId"));
     for (int i = 1; i <= 10; i++) {
       Assert.assertEquals((long) i, entityTable.getId("app", "app" + i));
     }
@@ -60,8 +66,8 @@ public class EntityTableTest {
   }
 
   @Test
-  public void testGetName() throws OperationException {
-    EntityTable entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes("testGetName")));
+  public void testGetName() throws Exception {
+    EntityTable entityTable = new EntityTable(getTable("testGetName"));
 
     // Create some entities.
     for (int i = 1; i <= 10; i++) {
@@ -80,9 +86,10 @@ public class EntityTableTest {
     HBaseTestBase.startHBase();
     Injector injector = Guice.createInjector(new ConfigModule(CConfiguration.create(),
                                                               HBaseTestBase.getConfiguration()),
-                                             new MetricModule());
+                                             new DataFabricDistributedModule(HBaseTestBase.getConfiguration()),
+                                             new LocationRuntimeModule().getDistributedModules());
 
-    tableHandle = injector.getInstance(OVCTableHandle.class);
+    accessor = injector.getInstance(DataSetAccessor.class);
   }
 
   @AfterClass
@@ -94,7 +101,6 @@ public class EntityTableTest {
 
     @Override
     protected void configure() {
-      bind(OVCTableHandle.class).to(HBaseFilterableOVCTableHandle.class);
       bind(TransactionOracle.class).to(NoopTransactionOracle.class).in(Scopes.SINGLETON);
     }
   }
