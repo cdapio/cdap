@@ -163,8 +163,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
                                                options.getUserArguments(),
                                                flowletDef.getFlowletSpec(),
-//                                               flowletClass.isAnnotationPresent(Async.class),
-                                               false,
                                                metricsCollectionService);
 
       // hack for propagating metrics collector to datasets

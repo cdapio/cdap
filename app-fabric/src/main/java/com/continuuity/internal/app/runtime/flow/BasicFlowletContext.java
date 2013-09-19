@@ -30,7 +30,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private final FlowletSpecification flowletSpec;
 
   private volatile int instanceCount;
-  private final boolean asyncMode;
   private final FlowletMetrics flowletMetrics;
   private final Arguments runtimeArguments;
 
@@ -38,8 +37,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId, int instanceCount,
                       Map<String, DataSet> datasets, Arguments runtimeArguments,
-                      FlowletSpecification flowletSpec, boolean asyncMode,
-                      MetricsCollectionService metricsCollectionService) {
+                      FlowletSpecification flowletSpec, MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
     this.flowId = program.getName();
     this.flowletId = flowletId;
@@ -48,7 +46,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.instanceCount = instanceCount;
     this.runtimeArguments = runtimeArguments;
     this.flowletSpec = flowletSpec;
-    this.asyncMode = asyncMode;
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
     this.systemMetricsCollector = getMetricsCollector(MetricsScope.REACTOR,
                                                       metricsCollectionService, getMetricContext());
@@ -93,10 +90,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   public void setInstanceCount(int count) {
     instanceCount = count;
-  }
-
-  public boolean isAsyncMode() {
-    return asyncMode;
   }
 
   public String getFlowId() {
