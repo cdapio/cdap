@@ -248,8 +248,11 @@
   <script type="text/x-handlebars" data-template-name="WorkflowStatus">
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
-        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+        <div id="action-buttons" class="btn-group pull-right">
+          <button style="border-right:0;" class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
+        </div>
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
 
     </div>
@@ -279,6 +282,64 @@
 
     {{outlet}}
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Workflow/History">
+
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="object-list">
+          {{#if runs.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 215px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list" {{action "loadRun" runid}}>
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+            <div class="object-list-empty-content">
+            <div>No History.</div>
+            <span>This Workflow has not completed a run yet.</span>
+            </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+      <div class="panel" >
+        <div id="batchviz-container" class="flowviz-fade">
+          <div class="clearfix chart">
+            {{#each elements.Actions}}
+            <div class="batch-item" {{bindAttr id="id"}}>
+              <div class="batch-icon batch-map">
+                <div class="info-window">
+                  <div class="label">{{name}}</div>
+                  <div>{{state}}</div>
+                  {{#if isRunning}}
+                    <progress {{bindAttr value="completionPercentage" }} max="100"></progress>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+            {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Batch">

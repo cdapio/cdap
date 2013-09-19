@@ -40,6 +40,7 @@ define(['helpers/plumber'], function (Plumber) {
     unload: function () {
 
       clearInterval(this.interval);
+      this.set('elements.Actions.content', []);
 
     },
 
@@ -152,7 +153,19 @@ define(['helpers/plumber'], function (Plumber) {
       if (action && action.toLowerCase() in this) {
         this[action.toLowerCase()](app, id, -1);
       }
-    }
+    },
+
+    /**
+     * Action handlers from the View
+     */
+    config: function () {
+
+      var self = this;
+      var model = this.get('model');
+
+      this.transitionToRoute('WorkflowStatus.Config');
+
+    },
 
   });
 
