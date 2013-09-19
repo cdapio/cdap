@@ -124,10 +124,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Stream> streams = service.getStreamsByApplication(accountId, appId);
-      if (streams.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Stream stream : streams) {
         JsonObject object = new JsonObject();
@@ -228,10 +224,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Dataset> datasets = service.getDatasetsByApplication(accountId, appId);
-      if (datasets.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Dataset dataset : datasets) {
         JsonObject object = new JsonObject();
@@ -397,10 +389,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Mapreduce> mapreduces = service.getMapreducesByApplication(accountId, appId);
-      if (mapreduces.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Mapreduce mapreduce : mapreduces) {
         JsonObject object = new JsonObject();
@@ -583,10 +571,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Flow> flows = service.getFlowsByStream(accountId, streamId);
-      if (flows.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
+
       JsonArray s = new JsonArray();
       for (Flow flow : flows) {
         JsonObject object = new JsonObject();
@@ -620,10 +605,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Flow> flows = service.getFlowsByDataset(accountId, datasetId);
-      if (flows.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Flow flow : flows) {
         JsonObject object = new JsonObject();
@@ -685,10 +666,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Workflow> workflows = service.getWorkflowsByApplication(accountId, appId);
-      if (workflows.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Workflow workflow : workflows) {
         JsonObject object = new JsonObject();
@@ -706,6 +683,5 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
 }
 
