@@ -32,7 +32,7 @@ public class Election {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof Election)) {
       return false;
     }
 

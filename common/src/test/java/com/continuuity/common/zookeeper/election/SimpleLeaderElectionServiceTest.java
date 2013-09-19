@@ -6,6 +6,11 @@ import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,8 +19,7 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class SimpleLeaderElectionServiceTest {
   private static InMemoryZKServer zkServer;
-  private static ExecutorService executorService;
+  private static ListeningExecutorService executorService;
 
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -36,7 +40,7 @@ public class SimpleLeaderElectionServiceTest {
       zkServer = InMemoryZKServer.builder().setDataDir(temporaryFolder.newFolder()).build();
       zkServer.startAndWait();
 
-      executorService = Executors.newFixedThreadPool(10);
+      executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
     }
 
     @Override
@@ -51,58 +55,56 @@ public class SimpleLeaderElectionServiceTest {
   @Rule
   public TestRule chain = RuleChain.outerRule(temporaryFolder).around(startServices);
 
-  @Test
+  @Test//(timeout = 5000)
   public void testLeaderElection() throws Exception {
     int asyncCount = 5;
-    CountDownLatch electionCompleteLatch = new CountDownLatch(asyncCount);
-    CountDownLatch finishLatch = new CountDownLatch(1);
     AtomicInteger numLeaders = new AtomicInteger(0);
     AtomicInteger numRunners = new AtomicInteger(0);
 
+    List<RunElection> runElections = Lists.newArrayList();
+    List<ListenableFuture<?>> futures = Lists.newArrayList();
     for (int i = 0; i < asyncCount; ++i) {
-      executorService.submit(new RunElection("Election1", electionCompleteLatch, finishLatch,
-                                             numLeaders, numRunners));
+      RunElection runElection = new RunElection("Election1", numLeaders, numRunners);
+      runElections.add(runElection);
+      futures.add(executorService.submit(runElection));
     }
-    electionCompleteLatch.await();
+    Futures.allAsList(futures).get();
 
-    try {
-      Assert.assertEquals(asyncCount, numRunners.get());
-      Assert.assertEquals(1, numLeaders.get());
-    } finally {
-      finishLatch.countDown();
+    Assert.assertEquals(asyncCount, numRunners.get());
+    Assert.assertEquals(1, numLeaders.get());
+
+    for (RunElection runElection : runElections) {
+      runElection.stop();
     }
   }
 
   private static class RunElection implements Runnable {
     private final String electionId;
-    private final CountDownLatch electionCompleteLatch;
-    private final CountDownLatch finishLatch;
     private final AtomicInteger numLeaders;
     private final AtomicInteger numRunners;
+    private final ZKClientService zkClientService;
+    private final SimpleLeaderElectionService electionService;
 
-    private RunElection(String electionId, CountDownLatch electionCompleteLatch, CountDownLatch finishLatch,
-                        AtomicInteger numLeaders, AtomicInteger numRunners) {
+    private RunElection(String electionId, AtomicInteger numLeaders, AtomicInteger numRunners) {
       this.electionId = electionId;
-      this.electionCompleteLatch = electionCompleteLatch;
-      this.finishLatch = finishLatch;
       this.numLeaders = numLeaders;
       this.numRunners = numRunners;
+
+      this.zkClientService = ZKClientServices.delegate(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(zkServer.getConnectionStr()).build(),
+            RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+          )
+        ));
+
+      this.electionService = new SimpleLeaderElectionService(zkClientService);
     }
 
     @Override
     public void run() {
       try {
-        ZKClientService zkClientService = ZKClientServices.delegate(
-          ZKClients.reWatchOnExpire(
-            ZKClients.retryOnFailure(
-              ZKClientService.Builder.of(zkServer.getConnectionStr()).build(),
-              RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
-            )
-          ));
         zkClientService.startAndWait();
-
-        SimpleLeaderElectionService electionService =
-          new SimpleLeaderElectionService(zkClientService);
 
         numRunners.incrementAndGet();
         electionService.registerElection(new Election(electionId,
@@ -114,17 +116,18 @@ public class SimpleLeaderElectionServiceTest {
 
                                                         @Override
                                                         public void unelected(String id) {
-                                                          numLeaders.set(-100000);
+                                                          numLeaders.decrementAndGet();
                                                         }
                                                       }));
-        electionCompleteLatch.countDown();
-        finishLatch.await();
-        electionService.shutDown();
-        zkClientService.stopAndWait();
 
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
+    }
+
+    public void stop() throws Exception {
+      electionService.shutDown();
+      zkClientService.stopAndWait();
     }
   }
 

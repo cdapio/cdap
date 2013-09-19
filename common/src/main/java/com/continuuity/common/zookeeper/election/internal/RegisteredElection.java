@@ -27,9 +27,9 @@ public class RegisteredElection extends Election {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("election", super.toString())
       .add("seqId", seqId)
       .add("zkPath", zkPath)
+      .add("election", super.toString())
       .toString();
   }
 }

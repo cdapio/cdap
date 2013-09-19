@@ -1,6 +1,7 @@
 package com.continuuity.common.zookeeper.election;
 
 import com.continuuity.common.zookeeper.election.internal.RegisteredElection;
+import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.zookeeper.NodeChildren;
 import com.continuuity.weave.zookeeper.OperationFuture;
 import com.continuuity.weave.zookeeper.ZKClient;
@@ -30,7 +31,7 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
   private static final Logger LOG = LoggerFactory.getLogger(SimpleLeaderElectionService.class);
   private static final String NAMESPACE = "/simple_election";
 
-  private static final String GUID = Long.toString(Math.abs(UUID.randomUUID().getLeastSignificantBits()));
+  private final String guid = UUID.randomUUID().toString();
 
   private final ZKClient zkClient;
   private final Set<RegisteredElection> elections;
@@ -46,7 +47,7 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
     this.leaders = new CopyOnWriteArraySet<RegisteredElection>();
 
     this.zkClient.addConnectionWatcher(new ConnectionWatcher());
-    LOG.info("Using GUID {}", GUID);
+    LOG.info("Using guid {}", guid);
   }
 
   @Override
@@ -62,42 +63,63 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
   }
 
   @Override
-  public void registerElection(Election election) {
+  public Cancellable registerElection(Election election) {
+    RegisteredElection registeredElection = null;
+
     //noinspection SuspiciousMethodCalls
     if (!elections.contains(election)) {
-      doRegister(election);
+      registeredElection = doRegister(election);
+      elections.add(registeredElection);
+    } else {
+      for (RegisteredElection e : elections) {
+        if (e.equals(election)) {
+          registeredElection = e;
+        }
+      }
     }
+
+    final RegisteredElection regElection = registeredElection;
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        unregister(regElection);
+      }
+    };
   }
 
-  private void doRegister(Election election) {
+  private RegisteredElection doRegister(Election election) {
     String zkPath = null;
     RegisteredElection registeredElection = null;
 
     try {
       // Register for election
-      String path = String.format("/%s/%s-", election.getId(), GUID);
-      LOG.debug("Registering for election {} with path", election, path);
+      String path = String.format("/%s/%s-", election.getId(), guid);
+      LOG.debug("Registering for election {} with path {}", election, path);
+
       OperationFuture<String> createFuture =
         zkClient.create(path, null, CreateMode.EPHEMERAL_SEQUENTIAL, true);
-      zkPath = Futures.getUnchecked(createFuture);
-
-      long seqId = getSequenceId(zkPath);
-      registeredElection = new RegisteredElection(election, seqId, zkPath);
-      LOG.debug("Registered for election {}", registeredElection);
-
-      OperationFuture<Stat> watchFuture =
-        zkClient.exists(zkPath, new SelfWatcher(registeredElection));
-      Futures.getUnchecked(watchFuture);
-
-      elections.add(registeredElection);
+      try {
+        zkPath = Futures.getUnchecked(createFuture);
+      } catch (Throwable e) {
+        // Only log the exception, if path is not created then another exception is thrown later.
+        LOG.error("Got exception while creating path {} for election {}", path, election);
+      }
 
       // run election
-      runElection(registeredElection);
+      registeredElection = runElection(election);
+
+      OperationFuture<Stat> watchFuture =
+        zkClient.exists(registeredElection.getZkPath(), new SelfWatcher(registeredElection));
+      Futures.getUnchecked(watchFuture);
+
+      return registeredElection;
     } catch (Throwable e) {
       LOG.error("Exception while registering for election {}", election.getId(), e);
       try {
         if (zkPath != null) {
           Futures.getUnchecked(zkClient.delete(zkPath));
+        } else if (registeredElection != null) {
+          Futures.getUnchecked(zkClient.delete(registeredElection.getZkPath()));
         }
       } finally {
         if (registeredElection != null) {
@@ -110,36 +132,66 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
 
   private void unregister(RegisteredElection election) {
     LOG.info("Un-registering {}", election);
+
     elections.remove(election);
 
     // Delete node
-    OperationFuture<String> deleteFuture = zkClient.delete(election.getZkPath());
-    Futures.getUnchecked(deleteFuture);
+    try {
+      OperationFuture<String> deleteFuture = zkClient.delete(election.getZkPath());
+      deleteFuture.get();
+    } catch (Throwable e) {
+      LOG.error("Got exception while deleting path election {}", election, e);
+    }
   }
 
-  private void runElection(RegisteredElection election) {
+  private RegisteredElection runElection(Election election) {
     String zkpath = "/" + election.getId();
+
     LOG.debug("Getting children for {}", election);
-    OperationFuture<NodeChildren> childrenFuture = zkClient.getChildren(zkpath);
-    List<String> childPaths = Futures.getUnchecked(childrenFuture).getChildren();
 
-    TreeMap<Long, String> childrenMap = new TreeMap<Long, String>();
-    for (String path : childPaths) {
-      LOG.debug("Got child {}", path);
-      childrenMap.put(getSequenceId(path), zkpath + "/" + path);
-    }
+    try {
+      OperationFuture<NodeChildren> childrenFuture = zkClient.getChildren(zkpath);
+      List<String> childPaths = childrenFuture.get().getChildren();
 
-    LOG.debug("Current leader is {}", childrenMap.firstEntry().getValue());
+      long selfSeqId = -1;
+      TreeMap<Long, String> childrenMap = new TreeMap<Long, String>();
+      for (String path : childPaths) {
+        long seqId = getSequenceId(path);
+        LOG.debug("Got child = {}, seqId = {}", path, seqId);
+        childrenMap.put(getSequenceId(path), zkpath + "/" + path);
 
-    if (election.getSeqId() == childrenMap.firstKey()) {
-      // elected leader
-      becomeLeader(election);
-    } else {
-      // watch previous node
-      Map.Entry<Long, String> watchEntry = childrenMap.lowerEntry(election.getSeqId());
-      OperationFuture<Stat> watchFuture =
-        zkClient.exists(watchEntry.getValue(), new OtherLeaderWatcher(election));
-      Futures.getUnchecked(watchFuture);
+        if (path.startsWith(guid)) {
+          LOG.debug("Self path = {}", path);
+          selfSeqId = seqId;
+        }
+      }
+
+      if (selfSeqId == -1) {
+        String message = String.format("Cannot find self path after registration for %s", election);
+        LOG.error(message);
+        throw new IllegalStateException(message);
+      }
+
+      RegisteredElection registeredElection = new RegisteredElection(election, selfSeqId, childrenMap.get(selfSeqId));
+      LOG.debug("Registered for election {}", registeredElection);
+
+      LOG.debug("Current leader is {}", childrenMap.firstEntry().getValue());
+
+      if (registeredElection.getSeqId() == childrenMap.firstKey()) {
+        // elected leader
+        becomeLeader(registeredElection);
+      } else {
+        // watch previous node
+        Map.Entry<Long, String> watchEntry = childrenMap.lowerEntry(registeredElection.getSeqId());
+        OperationFuture<Stat> watchFuture =
+          zkClient.exists(watchEntry.getValue(), new OtherLeaderWatcher(registeredElection));
+        Futures.getUnchecked(watchFuture);
+      }
+
+
+      return registeredElection;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 
@@ -165,7 +217,7 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
     }
   }
 
-  private long getSequenceId(String zkPath) {
+  private static long getSequenceId(String zkPath) {
     int ind = zkPath.lastIndexOf('-');
 
     if (ind == zkPath.length() - 1 || ind == -1) {
