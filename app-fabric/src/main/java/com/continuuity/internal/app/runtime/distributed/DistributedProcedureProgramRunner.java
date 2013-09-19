@@ -49,7 +49,7 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
 
     LOG.info("Launching distributed flow: " + program.getName() + ":" + procedureSpec.getName());
 
-    String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
+    String runtimeArgs = new Gson().toJson(options.getUserArguments());
     // TODO (ENG-2526): deal with logging
     WeavePreparer preparer
       = weaveRunner.prepare(new ProcedureWeaveApplication(program, procedureSpec, hConfFile, cConfFile))
@@ -57,7 +57,7 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
           .withArguments(procedureSpec.getName(),
                          String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
           .withArguments(procedureSpec.getName(),
-                         String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
+                         String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
 
     return new ProcedureWeaveProgramController(program.getName(), preparer.start()).startListen();
   }

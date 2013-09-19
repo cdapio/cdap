@@ -16,6 +16,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.common.Cancellable;
@@ -108,7 +109,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getName());
       Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getName());
 
-      int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "0"));
+      int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "0"));
 
       RunId runId = RunIds.generate();
 

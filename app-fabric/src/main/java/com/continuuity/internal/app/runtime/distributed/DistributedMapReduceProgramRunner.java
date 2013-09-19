@@ -50,7 +50,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
     LOG.info("Launching distributed flow: " + program.getName() + ":" + spec.getName());
 
-    String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
+    String runtimeArgs = new Gson().toJson(options.getUserArguments());
     // TODO (ENG-2526): deal with logging
     WeavePreparer preparer
       = weaveRunner.prepare(new MapReduceWeaveApplication(program, spec, hConfFile, cConfFile))
@@ -61,7 +61,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
           .withArguments(spec.getName(),
                          String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
           .withArguments(spec.getName(),
-                         String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
+                         String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
 
     return new MapReduceWeaveProgramController(program.getName(), preparer.start()).startListen();
   }

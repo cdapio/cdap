@@ -49,7 +49,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
 
-    String escapedRuntimeArgs = "'" + new Gson().toJson(options.getUserArguments()) + "'";
+    String runtimeArgs = new Gson().toJson(options.getUserArguments());
     // TODO (ENG-2526): deal with logging
     WeavePreparer preparer
       = weaveRunner.prepare(new WorkflowWeaveApplication(program, workflowSpec, hConfFile, cConfFile))
@@ -57,7 +57,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       .withArguments(workflowSpec.getName(),
                      String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
       .withArguments(workflowSpec.getName(),
-                     String.format("--%s", RunnableOptions.RUNTIME_ARGS), escapedRuntimeArgs);
+                     String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
 
     return new WorkflowWeaveProgramController(program.getName(), preparer.start()).startListen();
   }

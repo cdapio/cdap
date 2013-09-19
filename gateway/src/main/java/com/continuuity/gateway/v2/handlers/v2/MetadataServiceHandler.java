@@ -11,6 +11,7 @@ import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.thrift.Workflow;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -123,10 +124,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Stream> streams = service.getStreamsByApplication(accountId, appId);
-      if (streams.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Stream stream : streams) {
         JsonObject object = new JsonObject();
@@ -227,10 +224,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Dataset> datasets = service.getDatasetsByApplication(accountId, appId);
-      if (datasets.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Dataset dataset : datasets) {
         JsonObject object = new JsonObject();
@@ -396,10 +389,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Mapreduce> mapreduces = service.getMapreducesByApplication(accountId, appId);
-      if (mapreduces.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Mapreduce mapreduce : mapreduces) {
         JsonObject object = new JsonObject();
@@ -582,10 +571,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Flow> flows = service.getFlowsByStream(accountId, streamId);
-      if (flows.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
+
       JsonArray s = new JsonArray();
       for (Flow flow : flows) {
         JsonObject object = new JsonObject();
@@ -619,16 +605,73 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<Flow> flows = service.getFlowsByDataset(accountId, datasetId);
-      if (flows.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
       JsonArray s = new JsonArray();
       for (Flow flow : flows) {
         JsonObject object = new JsonObject();
         object.addProperty("id", flow.getId());
         object.addProperty("name", flow.getName());
         object.addProperty("app", flow.getApplication());
+        s.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns a list of workflows associated with account.
+   */
+  @GET
+  @Path("/workflows")
+  public void getWorkflows(HttpRequest request, HttpResponder responder) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      List<Workflow> workflows = service.getWorkflows(accountId);
+      JsonArray s = new JsonArray();
+      for (Workflow workflow : workflows) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", workflow.getId());
+        object.addProperty("name", workflow.getName());
+        object.addProperty("app", workflow.getApplication());
+        s.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, s);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns a list of workflow associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows")
+  public void getWorkflowsByApp(HttpRequest request, HttpResponder responder,
+                            @PathParam("app-id") final String appId) {
+
+    if (appId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      List<Workflow> workflows = service.getWorkflowsByApplication(accountId, appId);
+      JsonArray s = new JsonArray();
+      for (Workflow workflow : workflows) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", workflow.getId());
+        object.addProperty("name", workflow.getName());
+        object.addProperty("app", workflow.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);

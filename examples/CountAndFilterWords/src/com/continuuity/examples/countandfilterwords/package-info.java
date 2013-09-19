@@ -16,12 +16,14 @@
  */
 
 /**
- * This package contains the CountAndFilterWords sample application.
+ * This package contains the CountAndFilterWords sample application,
  * A variation of CountTokens that illustrates that a flowlet's output can
  * be consumed by multiple downstream flowlets.
- * In addition to counting all tokens, also sends all tokens to a filter that
- * drops all tokens that are not upper case
- * The upper case tokens are then counted by a separately flowlet
+ *
+ * In addition to counting all tokens, CountAndFilterWords sends all tokens to a filter that
+ * drops all tokens that are not upper case.
+ *
+ * The upper case tokens are then counted by a separate flowlet
  */
 package com.continuuity.examples.countandfilterwords;
 

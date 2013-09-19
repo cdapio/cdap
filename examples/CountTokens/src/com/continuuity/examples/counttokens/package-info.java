@@ -16,16 +16,17 @@
  */
 
 /**
- * Package for Count tokens sample application.
- * Reads events (= byte[] body, Map<String,String> headers) from input stream
- * 'text'.
- * Tokenizes the text in the body and in the header named 'title', ignores
- * all other headers.
+ * Package for the CountTokens sample application.
+ * 
+ * Reads events (= byte[] body, Map<String,String> headers) from the 'text' input stream.
+ * 
+ * Tokenizes the text in the body and in the header named 'title', ignores all other headers.
+ * 
  * Each token is cloned into two tokens:
- *   a) the upper cased version of the token
- *   b) the original token with a field prefix ('title',
- *   or if the token is from
- * the body of the event, 'text')
+ *   a) the upper case version of the token
+ *   b) the original token with a field prefix 'title',
+ *   or 'text' if the token is from the body of the event.
+ *
  * All of the cloned tokens are counted using increment operations.
  */
 package com.continuuity.examples.counttokens;

@@ -16,10 +16,13 @@
  */
 
 /**
- * Package for countrandom sample application.
- * Generates Random numbers between 0 and 9999
+ * Package for CountRandom sample application.
+ *
+ * Generates Random numbers between 0 and 9999.
+ *
  * For each number i, spits out i%10000, i%1000, i%100, i%10
- * For each number increment its counter.
+ *
+ * Increment the counter For each number.
  */
 package com.continuuity.examples.countrandom;
 
