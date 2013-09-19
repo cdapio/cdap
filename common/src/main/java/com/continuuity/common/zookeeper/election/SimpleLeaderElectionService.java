@@ -23,8 +23,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Performs simple leader election.
@@ -39,6 +40,9 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
   private final ConcurrentMap<Election, Boolean> activeElections;
   private final ConcurrentMap<RegisteredElection, Boolean> registeredElections;
   private final ConcurrentMap<RegisteredElection, Boolean> leaders;
+
+  // Used to prevent watches from running during shutdown and vice versa
+  private final ReadWriteLock shutdownLock = new ReentrantReadWriteLock();
 
   public SimpleLeaderElectionService(ZKClient zkClient) {
     this(zkClient, NAMESPACE);
@@ -62,21 +66,16 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
   @Override
   protected void shutDown() throws Exception {
     activeElections.clear();
-    for (RegisteredElection election : registeredElections.keySet()) {
-      unregister(election);
-    }
-  }
 
-  @Override
-  protected Executor executor(final State state) {
-    return new Executor() {
-      @Override
-      public void execute(Runnable command) {
-        Thread t = new Thread(command, getClass().getSimpleName() + " " + state);
-        t.setDaemon(true);
-        t.start();
+    shutdownLock.writeLock().lock();
+    LOG.info("Shutting down SimpleLeaderElectionService...");
+    try {
+      for (RegisteredElection election : registeredElections.keySet()) {
+        unregister(election);
       }
-    };
+    } finally {
+      shutdownLock.writeLock().unlock();
+    }
   }
 
   @Override
@@ -88,6 +87,11 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
         activeElections.remove(election);
         throw Throwables.propagate(e);
       }
+    }
+
+    if (!activeElections.containsKey(election)) {
+      LOG.warn("Election {} has been cancelled during registration, un-registering it...");
+      unregister(election);
     }
 
     return new Cancellable() {
@@ -125,14 +129,19 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
 
       registeredElections.put(registeredElection, true);
     } catch (Throwable e) {
+
       LOG.error("Exception while registering for election {}", election.getId(), e);
-      if (zkPath != null) {
-        Futures.getUnchecked(zkClient.delete(zkPath));
-      } else if (registeredElection != null) {
-        Futures.getUnchecked(zkClient.delete(registeredElection.getZkPath()));
-      }
-      if (registeredElection != null) {
-        registeredElections.remove(registeredElection);
+      try {
+        if (zkPath != null) {
+          Futures.getUnchecked(zkClient.delete(zkPath));
+        } else if (registeredElection != null) {
+          Futures.getUnchecked(zkClient.delete(registeredElection.getZkPath()));
+        }
+      } finally {
+        if (registeredElection != null) {
+          endLeader(registeredElection);
+          registeredElections.remove(registeredElection);
+        }
       }
       throw Throwables.propagate(e);
     }
@@ -163,6 +172,7 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
         LOG.error("Got exception while deleting path election {}", actualElection, t);
       }
     });
+    Futures.getUnchecked(deleteFuture);
   }
 
   private RegisteredElection runElection(Election election) {
@@ -205,12 +215,13 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
         // watch previous node
         Map.Entry<Long, String> watchEntry = childrenMap.lowerEntry(registeredElection.getSeqId());
         OperationFuture<Stat> watchFuture =
-          zkClient.exists(watchEntry.getValue(), new OtherLeaderWatcher(registeredElection));
+          zkClient.exists(watchEntry.getValue(), new OtherWatcher(registeredElection));
         Futures.getUnchecked(watchFuture);
       }
 
       return registeredElection;
     } catch (Exception e) {
+      LOG.error("Got exception while running election {}", election, e);
       throw Throwables.propagate(e);
     }
   }
@@ -265,10 +276,10 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
   /**
    * Watches other node.
    */
-  private class OtherLeaderWatcher implements Watcher {
+  private class OtherWatcher implements Watcher {
     private final RegisteredElection election;
 
-    private OtherLeaderWatcher(RegisteredElection election) {
+    private OtherWatcher(RegisteredElection election) {
       this.election = election;
     }
 
@@ -276,8 +287,19 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
     public void process(WatchedEvent event) {
       if (event.getType() == Event.EventType.NodeDeleted) {
         LOG.debug("Watched node deleted {} for election {}", event, election);
-        if (activeElections.containsKey(election)) {
-          runElection(election);
+
+        if (!shutdownLock.readLock().tryLock()) {
+          // Shutdown is in progress
+          LOG.info("Shutdown in progress, returning from watch");
+          return;
+        }
+
+        try {
+          if (activeElections.containsKey(election)) {
+            runElection(election);
+          }
+        } finally {
+          shutdownLock.readLock().unlock();
         }
       }
     }
@@ -297,11 +319,22 @@ public class SimpleLeaderElectionService extends AbstractIdleService implements 
     public void process(WatchedEvent event) {
       if (event.getType() == Event.EventType.NodeDeleted) {
         LOG.debug("Self node deleted {} for election {}", event, election);
-        if (leaders.containsKey(election)) {
-          endLeader(election);
+
+        if (!shutdownLock.readLock().tryLock()) {
+          // Shutdown is in progress
+          LOG.info("Shutdown in progress, returning from watch");
+          return;
         }
-        if (activeElections.containsKey(election)) {
-          doRegister(election);
+
+        try {
+          if (activeElections.containsKey(election)) {
+            if (leaders.containsKey(election)) {
+              endLeader(election);
+            }
+            doRegister(election);
+          }
+        } finally {
+          shutdownLock.readLock().unlock();
         }
       }
     }
