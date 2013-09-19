@@ -131,7 +131,7 @@ struct ProgramRunRecord {
    2: string id
  }
 
- struct ScheduledRunTime {
+ struct ScheduleRunTime {
    1: ScheduleId id,
    2: i64 runTime,
  }
@@ -259,13 +259,13 @@ service AppFabricService {
   /**
    * Resume a schedule. Schedule will be resumed to run if it is not running already.
    */
-   ProgramStatus resumeSchedule(1:AuthToken token, 2: ScheduleId id)
+   ProgramStatus resumeSchedule(1:AuthToken token, 2: ScheduleId identifier)
      throws (1: AppFabricServiceException e),
 
   /**
    * Suspend a schedule. The schedule that is running will be stopped.
    */
-   ProgramStatus suspendSchedule(1:AuthToken token, 2: ScheduleId id)
+   ProgramStatus suspendSchedule(1:AuthToken token, 2: ScheduleId identifier)
     throws (1: AppFabricServiceException e),
 
    /**
@@ -277,8 +277,8 @@ service AppFabricService {
    /**
     * Get next scheduled run time.
     */
-    ScheduledRunTime getNextScheduledRunTime(1:AuthToken token,
-                                             2: ScheduleId identifier)
+    list<ScheduleRunTime> getNextScheduledRunTime(1:AuthToken token,
+                                             2:ProgramId identifier)
 
 
 }
