@@ -296,10 +296,6 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           }
         });
 
-        install(new FactoryModuleBuilder()
-                  .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
-                  .build(TransactionExecutorFactory.class));
-
       }
     });
   }
