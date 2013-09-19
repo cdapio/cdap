@@ -2,24 +2,21 @@ package com.continuuity.internal.app.scheduler;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.AbstractMapReduce;
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.schedule.Schedule;
+import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.internal.schedule.DefaultSchedule;
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- *  Sample application to test if the scheduler has run the map-reduce job.
- *  MR job does nothing but sets a global flag to indicate the job has run.
+ *  Sample application to test if the scheduler has run an action.
  */
 public class SampleApplication implements Application {
-
-  public static int hasRun = 0;
 
   @Override
   public ApplicationSpecification configure() {
@@ -52,8 +49,8 @@ public class SampleApplication implements Application {
       return WorkflowSpecification.Builder.with()
         .setName("SampleWorkflow")
         .setDescription("SampleWorkflow description")
-        .startWith(new DummyMR())
-        .last(new DummyMR())
+        .startWith(new DummyAction())
+        .last(new DummyAction())
         .addSchedule(new DefaultSchedule("Schedule", "Run every 1 minutes", "* * * * *",
                                          Schedule.Action.START))
         .build();
@@ -61,22 +58,13 @@ public class SampleApplication implements Application {
   }
 
   /**
-   * Dummy mapreduce job. Sets a flag in initialization.
+   * DummyAction
    */
-  public static class DummyMR extends AbstractMapReduce {
-   @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("SimpleMapreduce")
-        .setDescription("Mapreduce that does nothing")
-        .useInputDataSet("input")
-        .useOutputDataSet("output")
-        .build();
-    }
-
+  public static class DummyAction extends AbstractWorkflowAction {
+    private static Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-      SampleApplication.hasRun = 1;
+    public void run() {
+      LOG.info("Ran dummy action");
     }
   }
 }
