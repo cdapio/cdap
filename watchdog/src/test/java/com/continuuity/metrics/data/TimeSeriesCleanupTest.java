@@ -5,13 +5,9 @@ package com.continuuity.metrics.data;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.guice.MetricsAnnotation;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.base.Throwables;
@@ -21,7 +17,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.name.Names;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -117,33 +112,16 @@ public class TimeSeriesCleanupTest {
   public static void init() {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
-
     Injector injector = Guice.createInjector(
+      new DataFabricLevelDBModule(),
       new ConfigModule(cConf),
       new PrivateModule() {
 
         @Override
         protected void configure() {
           try {
-            bind(TransactionOracle.class).to(NoopTransactionOracle.class);
-
-            bindConstant()
-              .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
-              .to(tmpFolder.newFolder().getAbsolutePath());
-            bindConstant()
-              .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
-              .to(Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-            bindConstant()
-              .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
-              .to(Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
-
-            bind(OVCTableHandle.class)
-              .annotatedWith(MetricsAnnotation.class)
-              .toInstance(LevelDBOVCTableHandle.getInstance());
-
             bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
             expose(MetricsTableFactory.class);
-
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }

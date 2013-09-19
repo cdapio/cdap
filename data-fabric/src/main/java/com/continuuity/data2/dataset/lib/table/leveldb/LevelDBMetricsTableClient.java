@@ -68,7 +68,7 @@ public class LevelDBMetricsTableClient implements MetricsTable {
 
   @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
-                      @Nullable FuzzyRowFilter filter) {
-    return null; // TODO auto generated body
+                      @Nullable FuzzyRowFilter filter) throws IOException {
+    return core.scan(start, stop, filter, columns, null);
   }
 }

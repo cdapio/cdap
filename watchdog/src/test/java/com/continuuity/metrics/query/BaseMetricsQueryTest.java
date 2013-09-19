@@ -7,9 +7,11 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.NoopTransactionOracle;
@@ -64,24 +66,9 @@ public class BaseMetricsQueryTest {
 
     injector = Guice.createInjector(
       new ConfigModule(cConf),
+      new DataFabricLevelDBModule(),
+      new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
-            .to(dataDir.getAbsolutePath());
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
-            .to(Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
-            .to(Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
-
-          bind(TransactionOracle.class).to(NoopTransactionOracle.class);
-          bind(OVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
-        }
-      },
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new MetricsQueryRuntimeModule().getSingleNodeModules()
     );
