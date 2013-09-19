@@ -22,16 +22,18 @@ public class ScheduleRunnerTest {
 
     Assert.assertEquals(0, SampleApplication.hasRun);
     appFabricServer.startAndWait();
+    try {
+      AppFabricService.Iface appFabricService = TestHelper.getInjector().getInstance(AppFabricService.Iface.class);
 
-    AppFabricService.Iface appFabricService = TestHelper.getInjector().getInstance(AppFabricService.Iface.class);
+      TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
+                                   Id.Account.from("developer"), new AuthToken("token"), "SampleApplication",
+                                   "app", SampleApplication.class);
 
-    TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
-                                 Id.Account.from("developer"), new AuthToken("token"), "SampleApplication",
-                                 "app", SampleApplication.class);
+      TimeUnit.SECONDS.sleep(30);
 
-    TimeUnit.SECONDS.sleep(30);
-
-    Assert.assertEquals(1, SampleApplication.hasRun);
-    appFabricServer.stopAndWait();
+      Assert.assertEquals(1, SampleApplication.hasRun);
+    } finally {
+      appFabricServer.stopAndWait();
+    }
   }
 }
