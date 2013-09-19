@@ -482,7 +482,7 @@
                           {{id}}
                         </td>
                         <td class="flowlet-blue">
-                          {{view C.Embed.Chart entityType="Queue" title="Inbound Tuples per Second" width="305" entityIdBinding=id metrics="/process/events/{app}/flows/{flow}/{flowlet}/ins/{id}" classNames="sparkline-flowlet-box"}}
+                          {{view C.Embed.Chart entityType="Queue" title="Inbound Tuples per Second" width="305" entityIdBinding=id metrics="/process/events/{app}/flows/{flow}/{flowlet}/ins" classNames="sparkline-flowlet-box"}}
                         </td>
                       </tr>
                       {{/each}}
@@ -531,7 +531,7 @@
                       {{#each model.outputs}}
                       <tr>
                       <td class="flowlet-blue">
-                      {{view C.Embed.Chart entityType="Queue" title="Outbound Tuples per Second" width="305" entityIdBinding=id metrics="/process/events/{app}/flows/{flow}/{flowlet}/outs/{id}" classNames="sparkline-flowlet-box"}}
+                      {{view C.Embed.Chart entityType="Queue" title="Outbound Tuples per Second" width="305" entityIdBinding=id metrics="/process/events/{app}/flows/{flow}/{flowlet}/outs" classNames="sparkline-flowlet-box"}}
                       </td>
                       <td class="flowlet-popup-input">
                       {{id}}

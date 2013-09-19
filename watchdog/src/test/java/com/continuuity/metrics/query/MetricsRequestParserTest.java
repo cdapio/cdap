@@ -77,6 +77,10 @@ public class MetricsRequestParserTest {
     request = MetricsRequestParser.parse(URI.create("/process/events/app1/flows/flowId/flowletId/ins/q?summary=true"));
     Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
     Assert.assertEquals("process.events.ins.q", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(URI.create("/process/events/app1/flows/flowId/flowletId/ins?summary=true"));
+    Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
+    Assert.assertEquals("process.events.ins", request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
   }
 
