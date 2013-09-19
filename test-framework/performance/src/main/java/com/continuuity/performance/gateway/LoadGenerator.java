@@ -1,8 +1,6 @@
 package com.continuuity.performance.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.collector.RestCollector;
-import com.continuuity.gateway.util.Util;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
@@ -80,7 +78,9 @@ public class LoadGenerator extends SimpleBenchmark {
 
     // determine the base url for the GET request
     if (baseUrl == null) {
-      baseUrl = Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, ssl);
+      // todo
+      baseUrl = "Perf framework should be fixed towards new gateway";
+      // baseUrl = Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, ssl);
     }
 
     Preconditions.checkNotNull(baseUrl, "Can't figure out gateway URL. Please specify --base");

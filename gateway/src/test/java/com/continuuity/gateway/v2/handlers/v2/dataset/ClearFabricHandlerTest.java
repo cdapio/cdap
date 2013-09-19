@@ -5,7 +5,7 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;

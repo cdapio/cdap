@@ -5,7 +5,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.streamevent.StreamEventCodec;
