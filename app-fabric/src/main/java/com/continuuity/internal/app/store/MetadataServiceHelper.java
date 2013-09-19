@@ -13,6 +13,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
@@ -23,6 +24,7 @@ import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -78,6 +80,9 @@ class MetadataServiceHelper {
 
       // procedures
       updateProceduresInMetadataService(id, spec);
+
+      //workflows
+      updateWorkflowsInMetadataService(id, spec);
 
     } catch (MetadataServiceException e) {
       throw Throwables.propagate(e);
@@ -192,6 +197,44 @@ class MetadataServiceHelper {
     // all flows that remain in toStore are going to be created
     for (Flow flow : toStore.values()) {
       metaDataService.createFlow(id.getAccountId(), flow);
+    }
+  }
+
+  private void updateWorkflowsInMetadataService(Id.Application id, ApplicationSpecification spec)
+    throws MetadataServiceException, TException {
+    // Basic logic: we need to remove flows that were removed from the app, add those that were added and
+    //              update those that remained in the application.
+    Map<String, Workflow> toStore = Maps.newHashMap();
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      Workflow workflow = new Workflow(workflowSpec.getName(), id.getId());
+      workflow.setName(workflowSpec.getName());
+      toStore.put(workflow.getId(), workflow);
+    }
+
+    List<Workflow> toUpdate = Lists.newArrayList();
+    List<Workflow> toDelete = Lists.newArrayList();
+
+    List<Workflow> existingWorkflows = metaDataService.getWorkflows(id.getAccountId());
+    for (Workflow existing : existingWorkflows) {
+      if (id.getId().equals(existing.getApplication())) {
+        String workflowId = existing.getId();
+        if (toStore.containsKey(workflowId)) {
+          toUpdate.add(toStore.get(workflowId));
+          toStore.remove(workflowId);
+        } else {
+          toDelete.add(existing);
+        }
+      }
+    }
+    for (Workflow workflow : toDelete) {
+      metaDataService.deleteWorkflow(id.getAccountId(), id.getId(), workflow.getId());
+    }
+    for (Workflow workflow : toUpdate) {
+      metaDataService.updateWorkflow(id.getAccountId(), workflow);
+    }
+
+    for (Workflow workflow : toStore.values()) {
+      metaDataService.createWorkflow(id.getAccountId(), workflow);
     }
   }
 

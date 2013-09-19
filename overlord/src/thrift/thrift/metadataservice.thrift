@@ -605,4 +605,18 @@ service MetadataService {
    */
   bool deleteWorkflow(1: string account, 2: string app, 3: string workflowId)
     throws (1: MetadataServiceException e),
+
+  /**
+   * Updates an existing workflow
+   *
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the workflow.
+   *
+   * @param account
+   * @param workflow
+   */
+  bool updateWorkflow(1: string account, 2: Workflow workflow)
+    throws (1: MetadataServiceException e),
+
 }

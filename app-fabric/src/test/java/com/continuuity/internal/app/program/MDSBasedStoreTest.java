@@ -202,6 +202,7 @@ public class MDSBasedStoreTest {
     }
   }
 
+
   private static class ChangedFooApp implements com.continuuity.api.Application {
     @Override
     public ApplicationSpecification configure() {
@@ -226,6 +227,7 @@ public class MDSBasedStoreTest {
         .build();
     }
   }
+
 
   private static class FlowImpl implements com.continuuity.api.flow.Flow {
     private String name;
