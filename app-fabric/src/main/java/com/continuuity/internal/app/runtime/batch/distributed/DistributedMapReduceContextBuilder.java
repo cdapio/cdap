@@ -54,8 +54,6 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           // Data-fabric bindings
           bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).to(Configuration.class);
           bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).to(CConfiguration.class);
-          bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).to
-            (CConfiguration.class);
 
           // txds2
           bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
