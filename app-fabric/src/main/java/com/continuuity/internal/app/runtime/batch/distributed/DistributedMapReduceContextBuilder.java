@@ -1,20 +1,13 @@
 package com.continuuity.internal.app.runtime.batch.distributed;
 
-import com.continuuity.app.program.Programs;
-import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
-<<<<<<< HEAD
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-=======
-import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.table.OVCTableHandle;
->>>>>>> 9a0a8e09da56bd4b16591e6f973de702672fc2bf
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.logging.appender.LogAppender;
 import com.continuuity.logging.appender.kafka.KafkaLogAppender;
