@@ -25,7 +25,7 @@ public class InMemoryScanner implements Scanner {
     Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
     Map.Entry<byte[], NavigableMap<byte[], byte[]>> rowEntry = null;
 
-    while (columns.size() == 0 && this.rows.hasNext()){
+    while (columns.isEmpty() && this.rows.hasNext()){
       rowEntry = this.rows.next();
       //Try to read all columns for this row
       for (Map.Entry<byte[], byte[]> colEntry : rowEntry.getValue().entrySet()) {
