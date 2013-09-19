@@ -2,7 +2,9 @@ package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryMetricsTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
@@ -22,20 +24,25 @@ public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  public <T> T getDataSetClient(String name, Class<? extends T> type) {
+  protected <T> T getDataSetClient(String name, Class<? extends T> type) {
     if (type == OrderedColumnarTable.class) {
       return (T) new InMemoryOcTableClient(name);
+    }
+    if (type == MetricsTable.class) {
+      return (T) new InMemoryMetricsTableClient(name);
     }
 
     return null;
   }
 
   @Override
-  public DataSetManager getDataSetManager(Class type) {
+  protected DataSetManager getDataSetManager(Class type) {
     if (type == OrderedColumnarTable.class) {
       return new InMemoryOcTableManager();
     }
-
+    if (type == MetricsTable.class) {
+      return new InMemoryOcTableManager();
+    }
     return null;
   }
 

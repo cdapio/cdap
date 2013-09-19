@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.Map;
+import java.util.Properties;
 
 /**
  *
@@ -28,6 +29,11 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   @Override
   public void create(String name) throws Exception {
     // do nothing
+  }
+
+  @Override
+  public void create(String name, @SuppressWarnings("unused") Properties props) throws Exception {
+    create(name);
   }
 
   @Override

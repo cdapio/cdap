@@ -24,6 +24,8 @@ public class HBaseTableUtil {
   // 4Mb
   static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
+  public static final String PROPERTY_TTL = "ttl";
+
   public static String getHBaseTableName(String tableName) {
     return encodeTableName(tableName);
   }

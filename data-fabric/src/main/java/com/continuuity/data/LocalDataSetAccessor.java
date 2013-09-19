@@ -2,6 +2,7 @@ package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableClient;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableManager;
@@ -28,8 +29,11 @@ public class LocalDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  public <T> T getDataSetClient(String name, Class<? extends T> type) throws IOException {
+  protected <T> T getDataSetClient(String name, Class<? extends T> type) throws IOException {
     if (type == OrderedColumnarTable.class) {
+      return (T) new LevelDBOcTableClient(name, service);
+    }
+    if (type == MetricsTable.class) {
       return (T) new LevelDBOcTableClient(name, service);
     }
 
@@ -37,8 +41,11 @@ public class LocalDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  public DataSetManager getDataSetManager(Class type) throws IOException {
+  protected DataSetManager getDataSetManager(Class type) throws IOException {
     if (type == OrderedColumnarTable.class) {
+      return new LevelDBOcTableManager(service);
+    }
+    if (type == MetricsTable.class) {
       return new LevelDBOcTableManager(service);
     }
 
