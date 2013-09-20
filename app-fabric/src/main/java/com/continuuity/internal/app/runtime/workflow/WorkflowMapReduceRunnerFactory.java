@@ -21,6 +21,7 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramController;
+import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -39,14 +40,17 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
   private final WorkflowSpecification workflowSpec;
   private final ProgramRunner programRunner;
   private final Program workflowProgram;
+  private final RunId runId;
   private final Arguments userArguments;
   private final long logicalStartTime;
 
   WorkflowMapReduceRunnerFactory(WorkflowSpecification workflowSpec, ProgramRunner programRunner,
-                                        Program workflowProgram, Arguments userArguments, long logicalStartTime) {
+                                 Program workflowProgram, RunId runId,
+                                 Arguments userArguments, long logicalStartTime) {
     this.workflowSpec = workflowSpec;
     this.programRunner = programRunner;
     this.workflowProgram = workflowProgram;
+    this.runId = runId;
     this.logicalStartTime = logicalStartTime;
     this.userArguments = userArguments;
   }
@@ -61,7 +65,10 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
     final Program mapReduceProgram = createMapReduceProgram(mapReduceSpec);
     final ProgramOptions options = new SimpleProgramOptions(
       mapReduceProgram.getName(),
-      new BasicArguments(ImmutableMap.of(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime))),
+      new BasicArguments(ImmutableMap.of(
+        ProgramOptionConstants.RUN_ID, runId.getId(),
+        ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime)
+      )),
       userArguments
     );
 

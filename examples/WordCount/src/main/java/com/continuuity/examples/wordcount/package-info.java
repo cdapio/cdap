@@ -16,7 +16,28 @@
  */
 
 /**
- *  This package contains WordCount sample application.
+ * This package contains the WordCount sample application that counts words and tracks the associations between words.
+ * This is a slightly modified version of the classic WordCount example. 
+ * 
+ * This WordCount application, consists of:
+ * 
+ * 1. A stream named wordStream receives strings of words to be counted.
+ * 
+ * 2. A flow named WordCounter processes the strings from the stream and calculates the word counts and other word statistics using four flowlets:
+ *    - The splitter splits the input string into words and aggregates and persists global statistics.
+ *    - The counter takes words as inputs and calculates and persists per-word statistics.
+ *    - The unique flowlet calculates the unique number of words seen.
+ *    - The associator stores word associations between all the words in each input string.
+ *
+ * 3. A procedure named RetrieveCounts serves read requests for the calculated word counts, statistics, and associations.  It supports two methods:
+ *    - getCount accesses the word count of a specified word and it’s word associations.
+ *    - getStats accesses the global word statistics.
+ *
+ * 4. Four datasets used by the flow and query to model, store, and serve the necessary data:
+ *    - A core Table named wordStats to track global word statistics.
+ *    - A system KeyValueTable dataset named wordCounts counts the occurrences of each word.
+ *    - A custom UniqueCountTable dataset named uniqueCount determines and counts the number of unique words seen.
+ *    - A custom AssociationTable dataset named wordAssocs tracks associations between words.
  */
 package com.continuuity.examples.wordcount;
 

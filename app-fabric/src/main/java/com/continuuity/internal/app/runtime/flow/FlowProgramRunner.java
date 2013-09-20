@@ -15,6 +15,7 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.weave.api.RunId;
@@ -129,9 +130,9 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     return new SimpleProgramOptions(name,
                                     new BasicArguments(ImmutableMap.of(
-                                      "instanceId", Integer.toString(instanceId),
-                                      "instances", Integer.toString(instances),
-                                      "runId", runId.getId())),
+                                      ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
+                                      ProgramOptionConstants.INSTANCES, Integer.toString(instances),
+                                      ProgramOptionConstants.RUN_ID, runId.getId())),
                                     userArguments
                                     );
   }
@@ -212,7 +213,7 @@ public final class FlowProgramRunner implements ProgramRunner {
     @Override
     @SuppressWarnings("unchecked")
     protected void doCommand(String name, Object value) throws Exception {
-      if (!"instances".equals(name) || !(value instanceof Map)) {
+      if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
         return;
       }
       Map<String, Integer> command = (Map<String, Integer>) value;
@@ -270,7 +271,7 @@ public final class FlowProgramRunner implements ProgramRunner {
         new Function<ProgramController, ListenableFuture<?>>() {
           @Override
           public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.command("instances", newInstanceCount);
+            return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
           }
         })).get();
 
@@ -320,7 +321,7 @@ public final class FlowProgramRunner implements ProgramRunner {
         new Function<ProgramController, ListenableFuture<?>>() {
           @Override
           public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.command("instances", newInstanceCount);
+            return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
           }
         })).get();
 

@@ -1014,7 +1014,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
           }
         }
       }
-      if (columnValues.size() == 0) {
+      if (columnValues.isEmpty()) {
         return null;
       } else {
         return new ImmutablePair<byte[], Map<byte[], byte[]>>(lastRow, columnValues);

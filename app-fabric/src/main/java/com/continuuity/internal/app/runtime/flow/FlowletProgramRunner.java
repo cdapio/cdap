@@ -50,6 +50,7 @@ import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.InstantiatorFactory;
@@ -123,13 +124,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
       // Extract and verify parameters
       String flowletName = options.getName();
 
-      int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "-1"));
+      int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
 
-      int instanceCount = Integer.parseInt(options.getArguments().getOption("instances", "0"));
+      int instanceCount = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
       Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
-      String runIdOption = options.getArguments().getOption("runId");
+      String runIdOption = options.getArguments().getOption(ProgramOptionConstants.RUN_ID);
       Preconditions.checkNotNull(runIdOption, "Missing runId");
       RunId runId = RunIds.fromString(runIdOption);
 

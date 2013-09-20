@@ -371,7 +371,7 @@ public class Configuration {
         }
       }
     }
-    if (names.size() == 0) {
+    if (names.isEmpty()) {
       names.add(name);
     }
     for (String n : names) {
