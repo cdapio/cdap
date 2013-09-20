@@ -113,7 +113,6 @@ public class SimpleLeaderElection implements Cancellable {
                             if (selfSeqId == childrenMap.firstKey()) {
                               // elected leader
                               executeElected();
-                              watchNode(zkNodePath, new LeaderWatcher());
                             } else {
                               // watch lower node
                               Map.Entry<Long, String> watchEntry = childrenMap.lowerEntry(selfSeqId);
@@ -162,6 +161,18 @@ public class SimpleLeaderElection implements Cancellable {
   }
 
   private void deleteNode(final boolean propagateError) {
+    if (leader.get()) {
+      LOG.debug("Executing unelected handler for {}", zkNodePath);
+
+      try {
+        leader.set(false);
+        handler.unelected();
+      } catch (Throwable e) {
+        LOG.error("Unelected handler exception for {}", zkNodePath, e);
+        error(e);
+      }
+    }
+
     if (zkNodePath != null) {
       OperationFuture<String> deleteFuture = zkClient.delete(zkNodePath);
       Futures.addCallback(deleteFuture, new FutureCallback<String>() {
@@ -208,19 +219,6 @@ public class SimpleLeaderElection implements Cancellable {
       if (event.getType() == Event.EventType.NodeDeleted && !cancelled.get()) {
         LOG.debug("Lower node deleted {} for election {}", event, zkNodePath);
         runElection();
-      }
-    }
-  }
-
-  /**
-   * Watches leader.
-   */
-  private class LeaderWatcher implements Watcher {
-    @Override
-    public void process(WatchedEvent event) {
-      if (event.getType() == Event.EventType.NodeDeleted) {
-        LOG.debug("Leader deleted {}", event, zkNodePath);
-        handler.unelected();
       }
     }
   }
