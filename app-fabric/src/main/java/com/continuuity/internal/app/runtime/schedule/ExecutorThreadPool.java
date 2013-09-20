@@ -3,9 +3,8 @@ package com.continuuity.internal.app.runtime.schedule;
 import org.quartz.SchedulerConfigException;
 import org.quartz.spi.ThreadPool;
 
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Executor based ThreadPool used in quartz scheduler.
@@ -13,11 +12,12 @@ import java.util.concurrent.TimeUnit;
 
 public final class ExecutorThreadPool implements ThreadPool {
 
-  private static final int CORE_POOL_SIZE = 1;
-  private static final int MAX_THREAD_POOL_SIZE = 20;
-  private static final long KEEP_ALIVE_TIME = 60;
+  private static final int MAX_THREAD_POOL_SIZE = 500;
+  private final ExecutorService executor;
 
-  private ThreadPoolExecutor executor;
+  public ExecutorThreadPool() {
+    executor = Executors.newFixedThreadPool(MAX_THREAD_POOL_SIZE);
+  }
 
   @Override
   public boolean runInThread(Runnable runnable) {
@@ -27,15 +27,13 @@ public final class ExecutorThreadPool implements ThreadPool {
 
   @Override
   public int blockForAvailableThreads() {
-    //num of threads available
-    return executor.getMaximumPoolSize() - executor.getActiveCount();
+    //Always accept new work. Additional runnables will be in the executor queue.
+    return MAX_THREAD_POOL_SIZE;
   }
 
 
   @Override
   public void initialize() throws SchedulerConfigException {
-    executor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_THREAD_POOL_SIZE,
-                                      KEEP_ALIVE_TIME, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
   }
 
   @Override
