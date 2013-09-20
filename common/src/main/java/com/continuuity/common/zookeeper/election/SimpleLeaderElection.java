@@ -19,6 +19,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Performs leader election as specified in
@@ -35,8 +38,11 @@ public class SimpleLeaderElection implements Cancellable {
   private final ElectionHandler handler;
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
-  private volatile String zkNodePath = null;
+  private final AtomicReference<String> zkNodePath = new AtomicReference<String>();
   private final AtomicBoolean leader = new AtomicBoolean(false);
+
+  // Lock to prevent concurrent run of cancel and other methods.
+  private final ReadWriteLock cancelLock = new ReentrantReadWriteLock();
 
   public SimpleLeaderElection(ZKClient zkClient, String prefix, ElectionHandler handler) {
     this.zkClient = ZKClients.namespace(zkClient, NAMESPACE);
@@ -52,7 +58,12 @@ public class SimpleLeaderElection implements Cancellable {
   @Override
   public void cancel() {
     cancelled.set(true);
-    deleteNode(true);
+    cancelLock.writeLock().lock();
+    try {
+      deleteNode(true);
+    } finally {
+      cancelLock.writeLock().unlock();
+    }
   }
 
   private void register() {
@@ -67,7 +78,7 @@ public class SimpleLeaderElection implements Cancellable {
                           @Override
                           public void onSuccess(String result) {
                             LOG.debug("Created zk node {}", result);
-                            zkNodePath = result;
+                            zkNodePath.set(result);
                             runElection();
                           }
 
@@ -98,7 +109,7 @@ public class SimpleLeaderElection implements Cancellable {
                               if (path.startsWith(guid)) {
                                 LOG.debug("Self path = {}", path);
                                 selfSeqId = seqId;
-                                zkNodePath = childrenMap.get(selfSeqId);
+                                zkNodePath.set(childrenMap.get(selfSeqId));
                               }
                             }
 
@@ -171,18 +182,24 @@ public class SimpleLeaderElection implements Cancellable {
       }
     }
 
-    if (zkNodePath != null) {
-      LOG.debug("Deleting node {}", zkNodePath);
-      OperationFuture<String> deleteFuture = zkClient.delete(zkNodePath);
+    final String delPath = zkNodePath.get();
+    if (delPath == null) {
+      // Nothing to delete
+      return;
+    }
+
+    if (zkNodePath.compareAndSet(delPath, null)) {
+      LOG.debug("Deleting node {}", delPath);
+      OperationFuture<String> deleteFuture = zkClient.delete(delPath);
       Futures.addCallback(deleteFuture, new FutureCallback<String>() {
         @Override
         public void onSuccess(String result) {
-          zkNodePath = null;
+          // Nothing to do
         }
 
         @Override
         public void onFailure(Throwable t) {
-          LOG.error("Got exception while deleting node {}", zkNodePath, t);
+          LOG.error("Got exception while deleting node {}", delPath, t);
           if (propagateError) {
             handler.error(t);
           }
@@ -215,9 +232,19 @@ public class SimpleLeaderElection implements Cancellable {
   private class LowerNodeWatcher implements Watcher {
     @Override
     public void process(WatchedEvent event) {
-      if (event.getType() == Event.EventType.NodeDeleted && !cancelled.get()) {
+      if (event.getType() == Event.EventType.NodeDeleted) {
         LOG.debug("Lower node deleted {} for election {}", event, zkNodePath);
-        runElection();
+        if (!cancelLock.readLock().tryLock()) {
+          // Cancel is in progress, nothing to do
+          return;
+        }
+        try {
+          if (!cancelled.get()) {
+            runElection();
+          }
+        } finally {
+          cancelLock.readLock().unlock();
+        }
       }
     }
   }
@@ -247,14 +274,34 @@ public class SimpleLeaderElection implements Cancellable {
         if (leader.get()) {
           handler.unelected();
         }
-      } else if (event.getState() == Event.KeeperState.SyncConnected && expired.get() && !cancelled.get()) {
+      } else if (event.getState() == Event.KeeperState.SyncConnected && expired.get()) {
         expired.set(false);
         LOG.info("Reconnected after expiration: {}", zkClient.getConnectString());
-        register();
-      } else if (event.getState() == Event.KeeperState.SyncConnected && disconnect.get() && !cancelled.get()) {
+        if (!cancelLock.readLock().tryLock()) {
+          // Cancel is in progress, nothing to do
+          return;
+        }
+        try {
+          if (!cancelled.get()) {
+            register();
+          }
+        } finally {
+          cancelLock.readLock().unlock();
+        }
+      } else if (event.getState() == Event.KeeperState.SyncConnected && disconnect.get()) {
         disconnect.set(false);
         LOG.info("Reconnected after disconnect: {}", zkClient.getConnectString());
-        runElection();
+        if (!cancelLock.readLock().tryLock()) {
+          // Cancel is in progress, nothing to do
+          return;
+        }
+        try {
+          if (!cancelled.get()) {
+            runElection();
+          }
+        } finally {
+          cancelLock.readLock().unlock();
+        }
       }
     }
   }
