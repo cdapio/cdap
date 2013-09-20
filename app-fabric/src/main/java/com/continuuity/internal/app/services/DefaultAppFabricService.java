@@ -749,7 +749,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public void chunk(AuthToken token, ArchiveId resource, ByteBuffer chunk) throws AppFabricServiceException {
-    LOG.debug("Receiving chunk of application " + resource.toString());
     if (!sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("A session id has not been created for upload. Please call #init");
     }
