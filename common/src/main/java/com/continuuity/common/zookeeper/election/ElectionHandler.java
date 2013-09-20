@@ -5,7 +5,9 @@ package com.continuuity.common.zookeeper.election;
  */
 public interface ElectionHandler {
 
-  void elected(String id);
+  void elected();
 
-  void unelected(String id);
+  void unelected();
+
+  void error(Throwable t);
 }
