@@ -9,7 +9,6 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.data.table.Scanner;
 
 import javax.annotation.Nullable;
 import java.util.List;

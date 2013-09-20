@@ -8,6 +8,7 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Scanner;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
@@ -15,7 +16,6 @@ import com.continuuity.api.data.dataset.table.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -192,7 +192,7 @@ public class RuntimeTable extends Table {
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow) throws OperationException {
     try {
-      return ocTable.scan(startRow, stopRow);
+      return new ScannerAdapter(ocTable.scan(startRow, stopRow));
     } catch (OperationException oe) {
       throw oe;
     } catch (Exception e) {
@@ -271,7 +271,7 @@ public class RuntimeTable extends Table {
   public class TableScanner extends SplitReader<byte[], Map<byte[], byte[]>> {
 
     // the underlying scanner
-    private Scanner scanner;
+    private com.continuuity.data.table.Scanner scanner;
     // the current key
     private byte[] key = null;
     // the current row, that is, a map from column key to value
@@ -318,6 +318,25 @@ public class RuntimeTable extends Table {
     @Override
     public void close() {
       this.scanner.close();
+    }
+  }
+
+  // NOTE: we want this because we don't want to expose internal Scanner. This will change with Table API refactoring
+  private static class ScannerAdapter implements Scanner {
+    private final com.continuuity.data.table.Scanner delegate;
+
+    private ScannerAdapter(com.continuuity.data.table.Scanner delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+      return delegate.next();
+    }
+
+    @Override
+    public void close() {
+      delegate.close();
     }
   }
 }
