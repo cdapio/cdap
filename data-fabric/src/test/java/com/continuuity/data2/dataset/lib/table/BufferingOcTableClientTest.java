@@ -96,11 +96,6 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
     }
 
     @Override
-    protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
-      return delegate.getPersisted(row, column);
-    }
-
-    @Override
     protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns) throws Exception {
       return delegate.getPersisted(row, columns);
     }

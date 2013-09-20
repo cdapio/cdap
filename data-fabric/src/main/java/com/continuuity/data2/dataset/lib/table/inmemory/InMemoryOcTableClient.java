@@ -6,6 +6,7 @@ import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClie
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -40,12 +41,6 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
-    NavigableMap<byte[], byte[]> internal = getInternal(row, new byte[][]{column});
-    return internal.get(column);
-  }
-
-  @Override
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
     throws Exception {
 
@@ -57,7 +52,7 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns) throws Exception {
+  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
     return getInternal(row, columns);
   }
 
@@ -74,7 +69,7 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
     return new InMemoryScanner(rows.entrySet().iterator());
   }
 
-  private NavigableMap<byte[], byte[]> getInternal(byte[] row, byte[][] columns) throws IOException {
+  private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
     // no tx logic needed
     if (tx == null) {
       NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
@@ -99,7 +94,8 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
     return unwrapDeletes(result);
   }
 
-  private NavigableMap<byte[], byte[]> filterByColumns(NavigableMap<byte[], byte[]> rowMap, byte[][] columns) {
+  private NavigableMap<byte[], byte[]> filterByColumns(NavigableMap<byte[], byte[]> rowMap,
+                                                       @Nullable byte[][] columns) {
     if (columns == null) {
       return rowMap;
     }

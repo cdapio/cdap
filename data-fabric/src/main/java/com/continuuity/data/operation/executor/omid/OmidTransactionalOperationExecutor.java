@@ -111,6 +111,12 @@ public class OmidTransactionalOperationExecutor implements OperationExecutor {
     txSystemMetrics.gauge("tx.invalidate.successful", 1);
   }
 
+  public void shutdown() {
+    if (txSystemMetricsReporter != null) {
+      txSystemMetricsReporter.interrupt();
+    }
+  }
+
   // this is a hack for reporting gauge metric: current metrics system supports only counters that are aggregated on
   // 10-sec basis, so we need to report gauge not more frequently than every 10 sec.
   private void startTxSystemMetricsReporter() {
