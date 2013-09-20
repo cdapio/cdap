@@ -986,14 +986,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                              identifier.getFlowId());
 
       // Make sure it is not running
-      Preconditions.checkState(!anyRunning(new Predicate<Id.Program>() {
+      checkAnyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
           return programId.equals(programId);
         }
-      }, Type.values()), "Program still running for application %s, %s.",
-                               programId.getApplication(), programId.getId());
-
+      }, Type.values());
 
       Type programType = entityTypeToType(identifier);
       for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : runtimeService.list(programType).entrySet()) {
@@ -1018,12 +1016,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       final Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
 
       // Check if all are stopped.
-      Preconditions.checkState(!anyRunning(new Predicate<Id.Program>() {
+      checkAnyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
           return programId.getApplication().equals(appId);
         }
-      }, Type.values()), "There are program still running for application " + appId.getId());
+      }, Type.values());
 
       Location appArchive = store.getApplicationArchiveLocation(appId);
       Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
@@ -1040,17 +1038,19 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Check if any program that satisfy the given {@link Predicate} is running
    * @param predicate Get call on each running {@link Id.Program}.
    * @param types Types of program to check
-   * @return true if any of the running program satisfy the predicate, false otherwise.
+   * @throws IllegalStateException if a program is running as defined by the predicate.
    */
-  private boolean anyRunning(Predicate<Id.Program> predicate, Type...types) {
+  private void checkAnyRunning(Predicate<Id.Program> predicate, Type... types) {
     for (Type type : types) {
       for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
-        if (predicate.apply(entry.getValue().getProgramId())) {
-          return true;
+        Id.Program programId = entry.getValue().getProgramId();
+        if (predicate.apply(programId)) {
+          throw new IllegalStateException(String.format("Program still running: %s %s %s %s",
+                                                        programId.getApplicationId(), type, programId.getId(),
+                                                        entry.getValue().getController().getRunId()));
         }
       }
     }
-    return false;
   }
 
   @Override
@@ -1067,12 +1067,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       accountId = Id.Account.from(account);
 
       // Check if any program is still running
-      Preconditions.checkState(!anyRunning(new Predicate<Id.Program>() {
+      checkAnyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
           return programId.getAccountId().equals(accountId.getId());
         }
-      }, Type.values()), "There are programs still running on the Reactor. Please stop them first.");
+      }, Type.values());
 
       deleteMetrics(account);
       // delete all meta data

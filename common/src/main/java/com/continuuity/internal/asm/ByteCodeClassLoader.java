@@ -1,6 +1,6 @@
 package com.continuuity.internal.asm;
 
-import com.continuuity.archive.MultiClassLoader;
+import com.continuuity.common.lang.MultiClassLoader;
 import com.google.common.collect.Maps;
 
 import java.util.Map;

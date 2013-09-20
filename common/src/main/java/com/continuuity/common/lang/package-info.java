@@ -3,7 +3,7 @@
  */
 
 /**
- * Classes for managing archives.
+ * Classes related to Java language.
  */
-package com.continuuity.archive;
+package com.continuuity.common.lang;
 
