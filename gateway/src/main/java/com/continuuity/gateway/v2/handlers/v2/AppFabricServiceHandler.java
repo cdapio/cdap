@@ -491,6 +491,28 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     runnableStartStop(request, responder, id, "start");
   }
 
+
+  /**
+   * Saves a workflow spec.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/save")
+  public void saveWorkflow(HttpRequest request, HttpResponder responder,
+                            @PathParam("app-id") final String appId,
+                            @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    try {
+      Map<String, String> args = decodeRuntimeArguments(request);
+      LOG.info(args.toString());
+    } catch (Exception e) {
+
+    }
+
+  }
+
   /**
    * Stops a flow.
    */

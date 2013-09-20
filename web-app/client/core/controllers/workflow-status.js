@@ -123,7 +123,7 @@ define(['helpers/plumber'], function (Plumber) {
       var model = this.get('model');
 
       model.set('currentState', 'STARTING');
-      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'start', function (response) {
+      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'save', config, function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);
