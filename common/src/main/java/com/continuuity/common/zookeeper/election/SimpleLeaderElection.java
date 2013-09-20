@@ -36,8 +36,8 @@ public class SimpleLeaderElection implements Cancellable {
   private final ZKClient zkClient;
   private final String zkFolderPath;
   private final ElectionHandler handler;
-  private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
+  private final AtomicBoolean cancelled = new AtomicBoolean(false);
   private final AtomicReference<String> zkNodePath = new AtomicReference<String>();
   private final AtomicBoolean leader = new AtomicBoolean(false);
 
@@ -57,12 +57,14 @@ public class SimpleLeaderElection implements Cancellable {
 
   @Override
   public void cancel() {
-    cancelled.set(true);
-    cancelLock.writeLock().lock();
-    try {
-      deleteNode(true);
-    } finally {
-      cancelLock.writeLock().unlock();
+    if (cancelled.compareAndSet(false, true)) {
+      LOG.info("Cancelling election {}", zkNodePath.get());
+      cancelLock.writeLock().lock();
+      try {
+        deleteNode(true);
+      } finally {
+        cancelLock.writeLock().unlock();
+      }
     }
   }
 
@@ -141,14 +143,27 @@ public class SimpleLeaderElection implements Cancellable {
   }
 
   private void executeElected() {
-    LOG.debug("Executing elected handler for {}", zkNodePath);
+    if (leader.compareAndSet(false, true)) {
+      LOG.debug("Executing elected handler for {}", zkNodePath);
 
-    try {
-      handler.elected();
-      leader.set(true);
-    } catch (Throwable e) {
-      LOG.error("Elected handler exception for {}", zkNodePath, e);
-      error(e);
+      try {
+        handler.elected();
+      } catch (Throwable e) {
+        LOG.error("Elected handler exception for {}", zkNodePath, e);
+        error(e);
+      }
+    }
+  }
+
+  private void executeUnelected() {
+    if (leader.compareAndSet(true, false)) {
+      LOG.debug("Executing unelected handler for {}", zkNodePath);
+
+      try {
+        handler.unelected();
+      } catch (Throwable e) {
+        LOG.error("Unelected handler exception for {}", zkNodePath, e);
+      }
     }
   }
 
@@ -172,15 +187,7 @@ public class SimpleLeaderElection implements Cancellable {
   }
 
   private void deleteNode(final boolean propagateError) {
-    if (leader.compareAndSet(true, false)) {
-      LOG.debug("Executing unelected handler for {}", zkNodePath);
-
-      try {
-        handler.unelected();
-      } catch (Throwable e) {
-        LOG.error("Unelected handler exception for {}", zkNodePath, e);
-      }
-    }
+    executeUnelected();
 
     final String delPath = zkNodePath.get();
     if (delPath == null) {
@@ -264,7 +271,7 @@ public class SimpleLeaderElection implements Cancellable {
 
         // Give up leadership, if leader
         if (leader.get()) {
-          handler.unelected();
+          executeUnelected();
         }
       } else if (event.getState() == Event.KeeperState.Disconnected) {
         disconnect.set(true);
@@ -272,7 +279,7 @@ public class SimpleLeaderElection implements Cancellable {
 
         // Give up leadership, if leader
         if (leader.get()) {
-          handler.unelected();
+          executeUnelected();
         }
       } else if (event.getState() == Event.KeeperState.SyncConnected && expired.get()) {
         expired.set(false);
