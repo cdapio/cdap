@@ -21,7 +21,7 @@ define([], function () {
 
       this.set('app', this.get('applicationId') || this.get('app') || this.get('appId'));
       this.set('id', this.get('app') + ':' + this.get('name'));
-      this.set('nextRuns', [{id: 'blah', time: 1379634094000}, {id: 'blah', time: 1349634024020}]);
+      this.set('nextRuns', []);
 
     },
 

@@ -253,6 +253,9 @@
           {{#each formattedRuns}}
             <div class="sparkline-box-title">{{this}}</div>
           {{/each}}
+          {{#unless formattedRuns}}
+            <div class="sparkline-box-title">No Runs</div>
+          {{/unless}}
         </div>
       </div>
       <div class="info-box" style="float: right; border: 0;">
