@@ -12,8 +12,10 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -21,6 +23,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -63,7 +66,8 @@ public class TableTest extends DataSetTestBase {
     DataSet t3 = new Table("t3");
     DataSet t4 = new Table("t4");
     DataSet tBatch = new Table("tBatch");
-    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch));
+    DataSet scanTable = new Table("scanTable");
+    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch, scanTable));
     table = instantiator.getDataSet("test");
   }
 
@@ -71,10 +75,16 @@ public class TableTest extends DataSetTestBase {
                                    byte[][] columns, byte[][] expected) {
     Assert.assertEquals(columns.length, expected.length);
     Assert.assertFalse(result.isEmpty());
-    Assert.assertNotNull(result.getValue());
-    Assert.assertEquals(columns.length, result.getValue().size());
-    for (int i = 0; i < columns.length; i++) {
-      Assert.assertArrayEquals(expected[i], result.getValue().get(columns[i]));
+    Map<byte[], byte[]> colsMap = result.getValue();
+    Assert.assertNotNull(colsMap);
+
+    verify(columns, expected, colsMap);
+  }
+
+  private static void verify(byte[][] expectedCols, byte[][] expectedVals, Map<byte[], byte[]> toVerify) {
+    Assert.assertEquals(expectedCols.length, toVerify.size());
+    for (int i = 0; i < expectedCols.length; i++) {
+      Assert.assertArrayEquals(expectedVals[i], toVerify.get(expectedCols[i]));
     }
   }
 
@@ -470,6 +480,72 @@ public class TableTest extends DataSetTestBase {
     // read each split and verify the keys
     verifySplits(t, splits, keysToVerify);
   }
+
+  @Test
+  public void testScan() throws Exception {
+    // NOTE: the test is minimal: we'll be changing table API
+    Table table = instantiator.getDataSet("scanTable");
+
+    // start a transaction
+    TransactionContext txContext = newTransaction();
+
+    Write[] writes = new Write[5];
+    for (int i = 0; i < writes.length; i++) {
+      Write write = new Write(Bytes.toBytes("row" + i),
+                           Bytes.toBytes("column" + i),
+                           Bytes.toBytes("val" + i));
+      table.write(write);
+      writes[i] = write;
+    }
+
+    // commit transaction
+    commitTransaction(txContext);
+
+    // start a transaction
+    txContext = newTransaction();
+
+    Scanner scan;
+    // test bounded scan
+    scan = table.scan(writes[1].getRow(), writes[3].getRow());
+    verify(scan, Arrays.copyOfRange(writes, 1, 3));
+    scan.close();
+
+    // test scan with open start
+    scan = table.scan(null, writes[4].getRow());
+    verify(scan, Arrays.copyOfRange(writes, 0, 4));
+    scan.close();
+
+    // test scan with open end
+    scan = table.scan(writes[3].getRow(), null);
+    verify(scan, Arrays.copyOfRange(writes, 3, writes.length));
+    scan.close();
+
+    // test unbounded scan
+    scan = table.scan(null, null);
+    verify(scan, writes);
+    scan.close();
+
+    // commit transaction
+    commitTransaction(txContext);
+  }
+
+  private void verify(Scanner scan, Write... expected) {
+    int count = 0;
+    while (true) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> next = scan.next();
+      if (next == null) {
+        break;
+      }
+      Write toCompare = expected[count];
+      Assert.assertArrayEquals(toCompare.getRow(), next.getFirst());
+      verify(toCompare.getColumns(), toCompare.getValues(), next.getSecond());
+      count++;
+    }
+    Assert.assertEquals(expected.length, count);
+  }
+
+
+
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
   private void verifySplits(Table t, List<Split> splits, SortedSet<Long> keysToVerify)

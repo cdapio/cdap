@@ -190,6 +190,19 @@ public class RuntimeTable extends Table {
   }
 
   @Override
+  public Scanner scan(byte[] startRow, byte[] stopRow) throws OperationException {
+    try {
+      return ocTable.scan(startRow, stopRow);
+    } catch (OperationException oe) {
+      throw oe;
+    } catch (Exception e) {
+      // todo: add more details in error message
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                   "scan failed for table " + tableName(), e);
+    }
+  }
+
+  @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
     try {
       return ocTable.getSplits(numSplits, start, stop);

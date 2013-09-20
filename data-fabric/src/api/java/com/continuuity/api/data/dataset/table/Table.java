@@ -9,7 +9,9 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.data.table.Scanner;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -110,6 +112,20 @@ public class Table extends DataSet implements
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
     return this.delegate.incrementAndGet(increment);
+  }
+
+  /**
+   * Scan rows of this table.
+   * @param startRow start row inclusive. {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @return instance of {@link Scanner}
+   * @throws OperationException
+   */
+  public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.scan(startRow, stopRow);
   }
 
   @Override
