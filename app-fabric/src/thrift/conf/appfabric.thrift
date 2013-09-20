@@ -127,13 +127,12 @@ struct ProgramRunRecord {
  * Schedule Id.
  */
  struct ScheduleId {
-   1: ProgramId program,
-   2: string id
+   1: string id
  }
 
  struct ScheduleRunTime {
    1: ScheduleId id,
-   2: i64 runTime,
+   2: i64 time,
  }
 
 /**

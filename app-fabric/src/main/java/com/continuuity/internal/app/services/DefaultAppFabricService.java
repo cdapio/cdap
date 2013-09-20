@@ -40,6 +40,8 @@ import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.app.services.RunIdentifier;
+import com.continuuity.app.services.ScheduleId;
+import com.continuuity.app.services.ScheduleRunTime;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -59,6 +61,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
@@ -1093,6 +1096,44 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.RESET_FAIL),
                                                         throwable.getMessage()));
     }
+  }
+
+
+  @Override
+  public ProgramStatus resumeSchedule(AuthToken token, ScheduleId identifier)
+                                      throws AppFabricServiceException, TException {
+    return null;
+  }
+
+  @Override
+  public ProgramStatus suspendSchedule(AuthToken token, ScheduleId identifier)
+                                       throws AppFabricServiceException, TException {
+    return null;
+
+  }
+
+  @Override
+  public List<ScheduleId> getSchedules(AuthToken token, ProgramId id)
+                                       throws AppFabricServiceException, TException {
+    return null;
+
+  }
+
+  @Override
+  public List<ScheduleRunTime> getNextScheduledRunTime(AuthToken token, ProgramId identifier)
+                                                       throws TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    Type programType = entityTypeToType(identifier);
+
+    List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(programId, programType);
+    List<ScheduleRunTime> r = Lists.newArrayList();
+    for (ScheduledRuntime runtime : runtimes) {
+      r.add(new ScheduleRunTime(new ScheduleId(runtime.getScheduleId()), runtime.getTime()));
+    }
+    return r;
   }
 
   /**

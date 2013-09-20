@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.quartz.CronScheduleBuilder;
@@ -21,6 +22,7 @@ import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
@@ -29,6 +31,8 @@ import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Default Schedule service implementation.
@@ -85,30 +89,57 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
 
   @Override
   public void schedule(Id.Program programId, Type programType, Iterable<Schedule> schedules) {
+    Preconditions.checkNotNull(schedules);
 
+    String key = getJobKey(programId, programType);
+    JobDetail job = JobBuilder.newJob(ScheduledJob.class)
+                              .withIdentity(key)
+                              .storeDurably(true)
+                              .build();
+    try {
+      scheduler.addJob(job, true);
+    } catch (SchedulerException e) {
+      throw Throwables.propagate(e);
+    }
     int idx = 0;
     for (Schedule schedule : schedules) {
       String scheduleName = schedule.getName();
       String cronEntry = schedule.getCronEntry();
+      String triggerKey = String.format("%s:%s:%s:%s:%d:%s",
+                                        programType.name(), programId.getAccountId(),
+                                        programId.getApplicationId(), programId.getId(), idx, schedule.getName());
 
-      //TODO: Make key in a single place
-      String key = String.format("%s:%s:%s:%s:%d",
-                                 programType.name(), programId.getAccountId(),
-                                 programId.getApplicationId(), programId.getId(),
-                                 idx++);
-
-      JobDetail job = JobBuilder.newJob(ScheduledJob.class).withIdentity(key, scheduleName).build();
       LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
+
       Trigger trigger = TriggerBuilder.newTrigger()
-                                      .withIdentity(scheduleName)
-                                  .withSchedule(CronScheduleBuilder.cronSchedule(getQuartzCronExpression(cronEntry)))
+                                      .withIdentity(triggerKey)
+                                      .forJob(job)
+                                      .withSchedule(CronScheduleBuilder
+                                                      .cronSchedule(getQuartzCronExpression(cronEntry)))
                                       .build();
       try {
-        scheduler.scheduleJob(job, trigger);
+        scheduler.scheduleJob(trigger);
       } catch (SchedulerException e) {
         throw Throwables.propagate(e);
       }
     }
+  }
+
+  @Override
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, Type programType) {
+    List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
+    String key = getJobKey(program, programType);
+    try {
+      for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
+
+        ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(),
+                                                        trigger.getNextFireTime().getTime());
+        scheduledRuntimes.add(runtime);
+      }
+    } catch (SchedulerException e) {
+      throw Throwables.propagate(e);
+    }
+    return scheduledRuntimes;
   }
 
   //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
@@ -135,12 +166,12 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-      LOG.info("Trying run job {}", context.getJobDetail().getKey().toString());
+      LOG.info("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
+                                                       context.getTrigger().getKey().toString());
 
       String key = context.getJobDetail().getKey().getName();
-      //TODO: Single place for key logic
       String[] parts = key.split(":");
-      Preconditions.checkArgument(parts.length == 5);
+      Preconditions.checkArgument(parts.length == 4);
 
       Type programType = Type.valueOf(parts[0]);
       String accountId = parts[1];
@@ -154,5 +185,10 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
 
       taskRunner.run(Id.Program.from(accountId, applicationId, programId), programType, args);
     }
+  }
+
+  private String getJobKey(Id.Program program, Type programType) {
+    return String.format("%s:%s:%s:%s", programType.name(), program.getAccountId(),
+                                        program.getApplicationId(), program.getId());
   }
 }

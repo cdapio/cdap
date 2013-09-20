@@ -10,6 +10,7 @@ import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
+import com.continuuity.app.services.ScheduleRunTime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
@@ -725,13 +726,38 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("workflow-id") final String workflowId) {
-    JsonArray array = new JsonArray();
-    JsonObject object = new JsonObject();
-    object.addProperty("time", 1379634094000L);
-    object.addProperty("id", "app:workflow:schedule");
-    array.add(object);
-    responder.sendJson(HttpResponseStatus.OK, array);
 
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = null;
+      protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      List<ScheduleRunTime> runtimes = client.getNextScheduledRunTime(token, id);
+      JsonArray array = new JsonArray();
+
+      for (ScheduleRunTime runtime : runtimes) {
+        JsonObject object = new JsonObject();
+        object.addProperty("time", runtime.getTime());
+        object.addProperty("id", runtime.getId().getId());
+        array.add(object);
+      }
+
+      responder.sendJson(HttpResponseStatus.OK, array);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
   }
 
   /**
