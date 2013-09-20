@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -107,12 +108,6 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
-    NavigableMap<byte[], byte[]> result = getInternal(row, new byte[][]{column});
-    return result.get(column);
-  }
-
-  @Override
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
     throws Exception {
 
@@ -122,7 +117,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns) throws Exception {
+  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
     return getInternal(row, columns);
   }
 
@@ -150,7 +145,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     return new HBaseScanner(resultScanner, tx);
   }
 
-  private NavigableMap<byte[], byte[]> getInternal(byte[] row, byte[][] columns) throws IOException {
+  private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
     Get get = new Get(row);
     // todo: uncomment when doing caching fetching data in-memory
     // get.setCacheBlocks(false);

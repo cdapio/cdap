@@ -138,7 +138,9 @@ define (['core/application'], function (Application) {
 		});
 
 		this.resource('Workflow', {path: '/workflows/:workflow_id'}, function () {
-			this.resource('WorkflowStatus', {path: '/'});
+			this.resource('WorkflowStatus', {path: '/'}, function () {
+				this.route('Config', { path: '/config'});
+			});
 			this.route('History', { path: '/history' });
 		});
 
@@ -292,6 +294,12 @@ define (['core/application'], function (Application) {
 
 		WorkflowStatusRoute: basicRouter.extend({
 			model: function() {
+				return this.modelFor('Workflow');
+			}
+		}),
+
+		WorkflowHistoryRoute: basicRouter.extend({
+			model: function () {
 				return this.modelFor('Workflow');
 			}
 		}),

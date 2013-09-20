@@ -4,8 +4,8 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.transaction.Transaction;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Map;
 import java.util.NavigableMap;
 
 /**
@@ -41,12 +41,7 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
-    return core.getRow(row, new byte[][] { column }, null, null, 1, tx).get(column);
-  }
-
-  @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns) throws Exception {
+  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
     return core.getRow(row, columns, null, null, columns == null ? Integer.MAX_VALUE : columns.length, tx);
   }
 

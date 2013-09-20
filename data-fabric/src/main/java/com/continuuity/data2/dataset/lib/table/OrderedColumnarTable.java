@@ -13,6 +13,7 @@ import java.util.NavigableMap;
 
 /**
  * todo: docs
+ * todo: remove OperationResult from API - doesn't make sense
  */
 public interface OrderedColumnarTable {
   // empty result constant
@@ -28,6 +29,19 @@ public interface OrderedColumnarTable {
    * @return map of columns to values, never null
    */
   OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns) throws Exception;
+
+  /**
+   * Reads the latest versions of all columns.
+   * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
+   *       efficient than calling same method with columns as parameters because it may always require round trip to
+   *       persistent store
+   */
+  OperationResult<Map<byte [], byte []>> get(byte[] row) throws Exception;
+
+  /**
+   * Reads the value of the latest version of the specified column in the specified row.
+   */
+  byte[] get(byte[] row, byte[] column) throws Exception;
 
   /**
    * Reads the latest versions of all columns in the specified row that are
@@ -49,6 +63,14 @@ public interface OrderedColumnarTable {
    * Writes the specified value for the specified column for the specified row.
    */
   void put(byte[] row, byte[] column, byte[] values) throws Exception;
+
+  /**
+   * Deletes all columns of the specified row.
+   * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
+   *       efficient than calling same method with columns as parameters because it may always require round trip to
+   *       persistent store
+   */
+  void delete(byte[] row) throws Exception;
 
   /**
    * Deletes specified column of the specified row.
