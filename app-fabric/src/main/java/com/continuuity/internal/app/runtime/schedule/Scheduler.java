@@ -5,10 +5,9 @@ import com.continuuity.app.Id;
 import com.continuuity.app.program.Type;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * Scheduler that schedules a program.
+ * Interfaces that defines all methods related to scheduling, un-scheduling jobs.
  */
 public interface Scheduler {
 
@@ -30,10 +29,25 @@ public interface Scheduler {
    */
   public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, Type programType);
 
-  public Map<String, Schedule> getSchedules(Id.Program program, Type programType);
+  /**
+   * Get Schedule ids for a given program and program type.
+   * @param program program for which schedules needs to be determined.
+   * @param programType type of program.
+   * @return List of scheduleIds, empty List if there are no matching schedules.
+   */
+  public List<String> getScheduleIds(Id.Program program, Type programType);
 
+  /**
+   * Suspends a schedule with the given ScheduleId. Sub-sequent schedules will not be for the job.
+   * @param scheduleId schedule id.
+   */
   public void suspendSchedule(String scheduleId);
 
+  /**
+   * Resume given schedule. The scheduled job will trigger from the next possible runtime.
+   * The schedules between pause and resume calls will not be re-run.
+   * @param scheduleId schedule id.
+   */
   public void resumeSchedule(String scheduleId);
 
 }

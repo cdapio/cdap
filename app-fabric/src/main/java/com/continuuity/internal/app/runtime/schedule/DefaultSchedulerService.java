@@ -9,13 +9,11 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
-import com.continuuity.internal.schedule.DefaultSchedule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.quartz.CronScheduleBuilder;
@@ -36,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Default Schedule service implementation.
@@ -147,18 +144,17 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
   }
 
   @Override
-  public Map<String, Schedule> getSchedules(Id.Program program, Type programType) {
-    Map<String, Schedule> schedules = Maps.newHashMap();
+  public List<String> getScheduleIds(Id.Program program, Type programType) {
+    List<String> scheduleIds = Lists.newArrayList();
     String key = getJobKey(program, programType);
     try {
       for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
-        String triggerKey = trigger.getKey().getName();
-        schedules.put(triggerKey, new DefaultSchedule(triggerKey, triggerKey, triggerKey, Schedule.Action.START));
+        scheduleIds.add(trigger.getJobKey().getName());
       }
     }   catch (SchedulerException e) {
       throw Throwables.propagate(e);
     }
-    return schedules;
+    return scheduleIds;
   }
 
   @Override

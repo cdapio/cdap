@@ -737,9 +737,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
 
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol = null;
-      protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       List<ScheduleRunTime> runtimes = client.getNextScheduledRunTime(token, id);
@@ -761,7 +759,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/history/schedules")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
   public void workflowSchedules(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("workflow-id") final String workflowId) {
@@ -776,13 +774,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
 
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol = null;
-      protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       List<ScheduleId> schedules = client.getSchedules(token, id);
-
       JsonArray array = new JsonArray();
 
       for (ScheduleId schedule : schedules) {
@@ -791,6 +786,50 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         array.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, array);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("workflow-id") final String workflowId,
+                                @PathParam("schedule-id") final String scheduleId) {
+
+    try {
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      client.suspendSchedule(token, new ScheduleId(scheduleId));
+      responder.sendJson(HttpResponseStatus.OK, "OK");
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("workflow-id") final String workflowId,
+                                      @PathParam("schedule-id") final String scheduleId) {
+
+    try {
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      client.resumeSchedule(token, new ScheduleId(scheduleId));
+      responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (Exception e) {
