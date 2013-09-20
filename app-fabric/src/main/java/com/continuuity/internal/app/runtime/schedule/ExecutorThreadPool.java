@@ -9,7 +9,6 @@ import java.util.concurrent.Executors;
 /**
  * Executor based ThreadPool used in quartz scheduler.
  */
-
 public final class ExecutorThreadPool implements ThreadPool {
 
   private static final int MAX_THREAD_POOL_SIZE = 500;
