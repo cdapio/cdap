@@ -5,6 +5,8 @@ import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.internal.app.program.TypeId;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +41,10 @@ public abstract class AbstractResourceReporter implements ProgramResourceReporte
       return;
     }
     running = true;
-    executor = Executors.newFixedThreadPool(1);
+    executor = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder()
+      .setDaemon(true)
+      .setNameFormat("resource-reporter-thread-" + metricContextBase)
+      .build());
     executor.execute(new ReporterThread());
     LOG.info("resource reporter started");
   }
@@ -93,7 +98,7 @@ public abstract class AbstractResourceReporter implements ProgramResourceReporte
    * This function returns the base of the context, which is the part before the final '.' separator.
    */
   private String getMetricContextBase(Program program) {
-    String base = program.getApplicationId() + "." + program.getType().getMetricId();
+    String base = program.getApplicationId() + "." + TypeId.getMetricContextId(program.getType());
     switch (program.getType()) {
       case FLOW:
       case MAPREDUCE:

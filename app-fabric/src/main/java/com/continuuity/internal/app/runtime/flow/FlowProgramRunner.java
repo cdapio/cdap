@@ -202,7 +202,7 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     @Override
     protected void doStop() throws Exception {
-      LOG.info("Stoping flow: " + flowSpec.getName());
+      LOG.info("Stopping flow: " + flowSpec.getName());
       lock.lock();
       try {
         metricsReporter.stop();
@@ -348,7 +348,8 @@ public final class FlowProgramRunner implements ProgramRunner {
   }
 
   /**
-   * Writes what the flow spec has for resources.
+   * Writes what the flow spec has for resources.  Doesn't reflect reality when reactor is being
+   * run locally, but gives an approximation of what resource usage would look like in distributed mode.
    */
   private class FlowResourceReporter extends AbstractResourceReporter {
     private final Table<String, Integer, ProgramController> flowlets;

@@ -82,10 +82,7 @@ public class ResourceApp implements Application {
     public MapReduceSpecification configure() {
       return MapReduceSpecification.Builder.with()
         .setName("dummy-batch")
-        .setDescription("batch job that copies from foo to bar")
-        .useDataSet("foo")
-        .useInputDataSet("foo")
-        .useOutputDataSet("bar")
+        .setDescription("dummy mapred job")
         .setMapperMemoryMB(512)
         .setReducerMemoryMB(1024)
         .build();

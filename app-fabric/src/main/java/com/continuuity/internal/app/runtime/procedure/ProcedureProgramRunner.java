@@ -254,7 +254,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   }
 
   /**
-   * Writes what the procedure spec has for resources.
+   * Writes what the procedure spec has for resources. Doesn't reflect reality when reactor is being
+   * run locally, but gives an approximation of what resource usage would look like in distributed mode.
    */
   private class ProcedureResourceReporter extends AbstractResourceReporter {
     private final ResourceSpecification resources;

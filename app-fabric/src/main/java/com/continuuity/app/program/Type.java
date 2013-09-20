@@ -36,19 +36,4 @@ public enum Type {
     }
     throw new IllegalArgumentException("Unknown specification type: " + specClass);
   }
-
-  public String getMetricId() {
-    switch (this) {
-      case FLOW:
-        return "f";
-      case PROCEDURE:
-        return "p";
-      case MAPREDUCE:
-        return "b";
-      case WORKFLOW:
-        return "w";
-      default:
-        return "unknown";
-    }
-  }
 }
