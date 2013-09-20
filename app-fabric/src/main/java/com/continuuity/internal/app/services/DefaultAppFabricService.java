@@ -46,7 +46,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -300,7 +299,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return new RunIdentifier(runId);
 
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
@@ -333,7 +332,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       String status = controllerStateToString(runtimeInfo.getController().getState());
       return new ProgramStatus(programId.getApplicationId(), programId.getId(), runId, status);
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
@@ -366,7 +365,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       controller.stop().get();
       return new RunIdentifier(runId.getId());
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
@@ -450,7 +449,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return result;
 
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException("Exception while retrieving the run history. " + throwable.getMessage());
     }
   }
@@ -510,11 +509,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }
     } catch (OperationException e) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      LOG.warn(e.getMessage(), e);
       throw  new AppFabricServiceException("Could not retrieve application spec for " +
                                              id.toString() + ", reason: " + e.getMessage());
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
 
@@ -528,7 +527,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));
     } catch (OperationException e) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      LOG.warn(e.getMessage(), e);
       throw  new AppFabricServiceException("Could not retrieve application spec for " +
                                            identifier.toString() + ", reason: " + e.getMessage());
     }
@@ -662,7 +661,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       }
       return history;
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
@@ -689,12 +688,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         try {
           Futures.successfulAsList(futures).get();
         } catch (Exception e) {
-          LOG.warn(StackTraceUtil.toStringStackTrace(e));
+          LOG.warn(e.getMessage(), e);
           throw new AppFabricServiceException(e.getMessage());
         }
       }
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
@@ -734,7 +733,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       sessions.put(info.getAccountId(), sessionInfo);
       return identifier;
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
@@ -766,7 +765,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         throw new AppFabricServiceException("Invalid chunk received.");
       }
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       sessions.remove(resource.getAccountId());
       throw new AppFabricServiceException("Failed to write archive chunk.");
     }
@@ -802,7 +801,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
             save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
             sessions.remove(resource.getAccountId());
           } catch (IOException e) {
-            LOG.warn(StackTraceUtil.toStringStackTrace(e));
+            LOG.warn(e.getMessage(), e);
             DeployStatus status = DeployStatus.FAILED;
             status.setMessage(e.getMessage());
             sessions.remove(resource.getAccountId());
@@ -811,7 +810,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
         @Override
         public void onFailure(Throwable t) {
-          LOG.warn(StackTraceUtil.toStringStackTrace(t));
+          LOG.warn(t.getMessage(), t);
 
           DeployStatus status = DeployStatus.FAILED;
           Throwable cause = t.getCause();
@@ -831,7 +830,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       });
 
     } catch (Throwable e) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      LOG.warn(e.getMessage(), e);
 
       DeployStatus status = DeployStatus.FAILED;
       status.setMessage(e.getMessage());
@@ -865,7 +864,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         return status;
       }
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
@@ -915,7 +914,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         client.close();
       }
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getLocalizedMessage());
     }
   }
@@ -1005,7 +1004,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       // Delete the program from store.
       store.remove(programId);
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException("Fail to delete program " + throwable.getMessage());
     }
   }
@@ -1032,7 +1031,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
       store.removeApplication(appId);
     } catch (Throwable  throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException("Fail to delete program " + throwable.getMessage());
     }
   }
@@ -1088,7 +1087,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
       LOG.info("All data for account '" + account + "' deleted.");
     } catch (Throwable throwable) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(throwable));
+      LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.RESET_FAIL),
                                                         throwable.getMessage()));
     }
@@ -1191,7 +1190,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         Closeables.closeQuietly(w);
       }
     } catch (IOException e) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      LOG.warn(e.getMessage(), e);
       return false;
     }
     return true;

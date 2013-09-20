@@ -7,7 +7,6 @@ import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
@@ -76,8 +75,7 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
         truncateTable(tableName, new OperationContext(accountId));
         responder.sendStatus(OK);
       } catch (OperationException e) {
-        String errorMessage = "could not truncate dataset " + tableName + "\n" + StackTraceUtil.toStringStackTrace(e);
-        LOG.error(errorMessage);
+        LOG.error("could not truncate dataset {}", tableName, e);
         responder.sendStatus(CONFLICT);
       }
     } catch (DataSetInstantiationException e) {
