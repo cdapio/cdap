@@ -54,6 +54,7 @@ define([], function () {
 				type: 'POST',
 				timeout: AJAX_TIMEOUT
 			};
+
 			if (!jQuery.isEmptyObject(object)) {
 				options['data'] = JSON.stringify(object);
 				options['contentType'] = 'application/json';

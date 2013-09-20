@@ -13,37 +13,35 @@ define([], function () {
     elements: Em.Object.create(),
 
     load: function () {
-
       var model = this.get('model');
       var self = this;
+      this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
+      for (var i = 0; i < model.actions.length; i++) {
+        model.actions[i].state = 'IDLE';
+        model.actions[i].isRunning = false;
+        model.actions[i].appId = self.get('model').app;
+        model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
-      var flowlets = model.flowlets;
-      var objects = [];
-      for (var i = 0; i < flowlets.length; i ++) {
-        objects.push(C.Flowlet.create(flowlets[i]));
+        if ('mapReduceName' in model.actions[i].options) {
+          var transformedModel = C.Batch.transformModel(model.actions[i]);
+
+          this.get('elements.Actions.content').push(C.Batch.create(transformedModel));      
+        } else {
+          this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));        
+        }
+        
       }
-      this.set('elements.Flowlet', Em.ArrayProxy.create({content: objects}));
 
-      var streams = model.flowStreams;
-      objects = [];
-      for (var i = 0; i < streams.length; i ++) {
-        objects.push(C.Stream.create(streams[i]));
-      }
-      this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
-      this.set('elements.Batch', Em.ArrayProxy.create({content: objects}));
+      this.HTTP.rest('apps', model.app, 'workflows', model.name, 'history', function (response) {
+          if (response) {
+            var history = response;
 
-      this.HTTP.rest('apps', model.app, 'flows', model.name, 'history',
-          function (response) {
+            for (var i = 0; i < history.length; i ++) {
 
-            if (response) {
-              var history = response;
+              self.runs.pushObject(C.Run.create(history[i]));
 
-              for (var i = 0; i < history.length; i ++) {
-
-                self.runs.pushObject(C.Run.create(history[i]));
-
-              }
             }
+          }
 
       });
 
@@ -51,9 +49,7 @@ define([], function () {
 
     unload: function () {
 
-      this.set('elements.Flowlet', Em.Object.create());
-      this.set('elements.Stream', Em.Object.create());
-      this.set('elements.Batch', Em.Object.create());
+      this.set('elements.Actions.content', []);
 
       this.get('runs').set('content', []);
 
