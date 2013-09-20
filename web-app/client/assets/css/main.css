@@ -2469,3 +2469,9 @@ div.tooltip {
 	text-transform: uppercase;
 	margin-top: 3px;
 }
+
+#workflow-scheduled-runs {
+	max-height: 72px;
+	overflow: auto;
+	width: 300px;
+}

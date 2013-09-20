@@ -247,6 +247,14 @@
 
   <script type="text/x-handlebars" data-template-name="WorkflowStatus">
     <div id="info">
+      <div id="workflow-next-run" style="float: left">
+        <div class="sparkline-box-title">Next Run</div>
+        <div id="workflow-scheduled-runs">
+          {{#each formattedRuns}}
+            <div class="sparkline-box-title">{{this}}</div>
+          {{/each}}
+        </div>
+      </div>
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
           <button style="border-right:0;" class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
@@ -267,9 +275,9 @@
                 <div class="info-window">
                   <div class="label">{{name}}</div>
                   <div>{{state}}</div>
-                  {{!-- {{#if isRunning}}
+                  {{#if isRunning}}
                     <progress {{bindAttr value="totalCompletion" }} max="100"></progress>
-                  {{/if}} --}}
+                  {{/if}}
                 </div>
               </div>
             </div>

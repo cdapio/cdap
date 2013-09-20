@@ -45,6 +45,16 @@ define(['helpers/plumber'], function (Plumber) {
 
     },
 
+    formatNextRuns: function () {
+      this.set('formattedRuns', Em.ArrayProxy.create({content: []}));
+
+      for (var i = 0; i < this.get('model.nextRuns').length; i++) {
+        var run = this.get('model.nextRuns')[i];
+        this.get('formattedRuns.content').push(new Date(+run.time));
+      }
+
+    }.observes('model.nextRuns.@each'),
+
     unload: function () {
 
       clearInterval(this.interval);
@@ -81,35 +91,39 @@ define(['helpers/plumber'], function (Plumber) {
       var appId = this.get('model.app'),
         workflowId = this.get('model.name');
 
-      this.HTTP.rest('apps', appId, 'workflows', workflowId, 'status', function (response) {
-        if (!jQuery.isEmptyObject(response)) {
-          self.set('model.currentState', response.status);
-        }
+      self.get('model').updateState(this.HTTP, function () {
         self.set('statsCompleted', true);
-        var path = '/rest/apps/' + appId + '/workflows/' + workflowId + '/current';
+      });
 
-        jQuery.getJSON(path, function (res) {
-          for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
-            var action = self.get('elements.Actions.content')[i];
-            if (res.currentStep === i) {
-              action.set('isRunning', true); 
-              action.set('state', 'RUNNING'); 
-            } else {
-              action.set('isRunning', false);
-              action.set('state', 'IDLE'); 
-            }
-            if (typeof action.getMetricsRequest === 'function') {
-              action.getMetricsRequest(self.HTTP);
-            }
-          }
-        }).fail(function() {
-          for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
-            var action = self.get('elements.Actions.content')[i];
+      var currentPath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/current';
+      var runtimePath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/nextRuntime';
+
+      jQuery.getJSON(currentPath, function (res) {
+        for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
+          var action = self.get('elements.Actions.content')[i];
+          if (res.currentStep === i) {
+            action.set('isRunning', true); 
+            action.set('state', 'RUNNING'); 
+          } else {
             action.set('isRunning', false);
             action.set('state', 'IDLE'); 
           }
-        });
+          if (typeof action.getMetricsRequest === 'function') {
+            action.getMetricsRequest(self.HTTP);
+          }
+        }
+      }).fail(function() {
+        for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
+          var action = self.get('elements.Actions.content')[i];
+          action.set('isRunning', false);
+          action.set('state', 'IDLE'); 
+        }
+      });
 
+      jQuery.getJSON(runtimePath, function (res) {
+        if (!jQuery.isEmptyObject(res)) {
+          self.set('model.nextRuns', res);
+        }
       });
 
     },

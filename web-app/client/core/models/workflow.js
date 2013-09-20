@@ -21,6 +21,7 @@ define([], function () {
 
       this.set('app', this.get('applicationId') || this.get('app') || this.get('appId'));
       this.set('id', this.get('app') + ':' + this.get('name'));
+      this.set('nextRuns', [{id: 'blah', time: 1379634094000}, {id: 'blah', time: 1349634024020}]);
 
     },
 
@@ -80,7 +81,7 @@ define([], function () {
 
     }.property('currentState'),
 
-    updateState: function (http) {
+    updateState: function (http, opt_callback) {
 
       var self = this;
 
@@ -92,6 +93,7 @@ define([], function () {
         if (!jQuery.isEmptyObject(response)) {
           self.set('currentState', response.status);
         }
+        opt_callback();
       });
     },
 
