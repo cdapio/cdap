@@ -507,8 +507,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       Map<String, String> args = decodeRuntimeArguments(request);
       LOG.info(args.toString());
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
-
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
 
   }
