@@ -31,7 +31,7 @@ public class InMemoryMetricsTableClient implements MetricsTable {
     if (rowMap != null) {
       NavigableMap<Long, byte[]> valueMap = rowMap.get(column);
       if (valueMap != null && !valueMap.isEmpty()) {
-        return new OperationResult<byte[]>(valueMap.lastEntry().getValue());
+        return new OperationResult<byte[]>(valueMap.firstEntry().getValue());
       }
     }
     return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
@@ -85,7 +85,7 @@ public class InMemoryMetricsTableClient implements MetricsTable {
     for (Map.Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> versionedRow : versionedRows.entrySet()) {
       NavigableMap<byte[], byte[]> columns = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
       for (Map.Entry<byte[], NavigableMap<Long, byte[]>> versionedColumn : versionedRow.getValue().entrySet()) {
-        columns.put(versionedColumn.getKey(), versionedColumn.getValue().lastEntry().getValue());
+        columns.put(versionedColumn.getKey(), versionedColumn.getValue().firstEntry().getValue());
       }
       rows.put(versionedRow.getKey(), columns);
     }

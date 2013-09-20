@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * An HBase metrics table client.
@@ -52,6 +53,7 @@ public class HBaseMetricsTableClient implements MetricsTable {
     get.setMaxVersions(1);
     Result getResult = hTable.get(get);
     if (!getResult.isEmpty()) {
+      NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowMap = getResult.getMap();
       byte[] value = getResult.getValue(HBaseTableUtil.DATA_COLFAM, column);
       if (value != null) {
         return new OperationResult<byte[]>(value);
@@ -78,7 +80,8 @@ public class HBaseMetricsTableClient implements MetricsTable {
   public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
     if (newValue == null) {
       Delete delete = new Delete(row);
-      delete.deleteColumn(HBaseTableUtil.DATA_COLFAM, column);
+      // HBase API weirdness: we must use deleteColumns() because deleteColumn() deletes only the last version.
+      delete.deleteColumns(HBaseTableUtil.DATA_COLFAM, column);
       return hTable.checkAndDelete(row, HBaseTableUtil.DATA_COLFAM, column, oldValue, delete);
     } else {
       Put put = new Put(row);
