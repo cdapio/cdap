@@ -1,6 +1,7 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.table.Scanner;
 import com.google.common.collect.ImmutableList;
@@ -275,5 +276,22 @@ public abstract class MetricsTableTest {
     // we should have 81 (3^4) rows now
     Assert.assertEquals(81, countRange(table, null, null));
 
+    // now do a fuzzy scan of the table
+    FuzzyRowFilter filter = new FuzzyRowFilter(
+      ImmutableList.of(ImmutablePair.of(new byte[] { '*', 'b', '*', 'b' }, new byte[] { 0x01, 0x00, 0x01, 0x00 })));
+    Scanner scanner = table.scan(null, null, new byte[][] { A }, filter);
+    int count = 0;
+    while (true) {
+      ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
+      if (entry == null) {
+        break;
+      }
+      Assert.assertTrue(entry.getFirst()[1] == 'b' && entry.getFirst()[3] == 'b');
+      Assert.assertEquals(1, entry.getSecond().size());
+      Assert.assertTrue(entry.getSecond().containsKey(A));
+      Assert.assertFalse(entry.getSecond().containsKey(B));
+      count++;
+    }
+    Assert.assertEquals(9, count);
   }
 }
