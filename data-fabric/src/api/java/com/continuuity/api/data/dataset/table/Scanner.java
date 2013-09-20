@@ -1,16 +1,11 @@
 package com.continuuity.api.data.dataset.table;
 
-import com.continuuity.common.utils.ImmutablePair;
-
-import java.util.Map;
-
 /**
  * Interface for table scan operation.
  */
 public interface Scanner {
 
-  public ImmutablePair<byte[], Map<byte[], byte[]>> next();
+  public Row next();
 
   public void close();
-
 }

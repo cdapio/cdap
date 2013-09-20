@@ -9,11 +9,11 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Scanner;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.transaction.TransactionContext;
@@ -532,13 +532,13 @@ public class TableTest extends DataSetTestBase {
   private void verify(Scanner scan, Write... expected) {
     int count = 0;
     while (true) {
-      ImmutablePair<byte[], Map<byte[],byte[]>> next = scan.next();
+      Row next = scan.next();
       if (next == null) {
         break;
       }
       Write toCompare = expected[count];
-      Assert.assertArrayEquals(toCompare.getRow(), next.getFirst());
-      verify(toCompare.getColumns(), toCompare.getValues(), next.getSecond());
+      Assert.assertArrayEquals(toCompare.getRow(), next.getRow());
+      verify(toCompare.getColumns(), toCompare.getValues(), next.getColumns());
       count++;
     }
     Assert.assertEquals(expected.length, count);

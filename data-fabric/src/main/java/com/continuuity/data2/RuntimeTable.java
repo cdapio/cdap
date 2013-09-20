@@ -8,6 +8,7 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Scanner;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
@@ -330,13 +331,32 @@ public class RuntimeTable extends Table {
     }
 
     @Override
-    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
-      return delegate.next();
+    public Row next() {
+      ImmutablePair<byte[], Map<byte[], byte[]>> next = delegate.next();
+      return next == null ? null : new TableRow(next);
     }
 
     @Override
     public void close() {
       delegate.close();
+    }
+  }
+
+  private static class TableRow implements Row {
+    private final ImmutablePair<byte[], Map<byte[], byte[]>> row;
+
+    private TableRow(ImmutablePair<byte[], Map<byte[], byte[]>> row) {
+      this.row = row;
+    }
+
+    @Override
+    public byte[] getRow() {
+      return row.getFirst();
+    }
+
+    @Override
+    public Map<byte[], byte[]> getColumns() {
+      return row.getSecond();
     }
   }
 }
