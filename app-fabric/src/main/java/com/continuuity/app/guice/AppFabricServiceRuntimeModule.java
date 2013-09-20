@@ -149,21 +149,16 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       cch.initialize();
 
       store.initialize(cch, qs.getSchedulerSignaler());
-
       org.quartz.Scheduler scheduler = new StdScheduler(qs);
 
       jrsf.initialize(scheduler);
-
       qs.initialize();
 
       SchedulerRepository schedRep = SchedulerRepository.getInstance();
-
       qs.addNoGCObject(schedRep); // prevents the repository from being garbage collected
-
       schedRep.bind(scheduler);
 
       return scheduler;
-
     }
   }
 }
