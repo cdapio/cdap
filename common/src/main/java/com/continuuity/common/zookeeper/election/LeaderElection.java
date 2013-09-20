@@ -1,0 +1,312 @@
+package com.continuuity.common.zookeeper.election;
+
+import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.common.Threads;
+import com.continuuity.weave.zookeeper.NodeChildren;
+import com.continuuity.weave.zookeeper.OperationFuture;
+import com.continuuity.weave.zookeeper.ZKClient;
+import com.google.common.base.Charsets;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.InetAddress;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/**
+ * Performs leader election as specified in
+ * <a href="http://zookeeper.apache.org/doc/trunk/recipes.html#sc_leaderElection">Zookeeper recipes</a>.
+ */
+public final class LeaderElection implements Cancellable {
+  private static final Logger LOG = LoggerFactory.getLogger(LeaderElection.class);
+
+  private enum State {
+    IN_PROGRESS,
+    LEADER,
+    FOLLOWER
+  }
+
+  private final String guid = UUID.randomUUID().toString();
+
+  private final ZKClient zkClient;
+  private final String zkFolderPath;
+  private final ElectionHandler handler;
+  private final ExecutorService executor;
+  private String zkNodePath;
+  private boolean cancelled;
+  private State state;
+
+  public LeaderElection(ZKClient zkClient, String prefix, ElectionHandler handler) {
+    this.zkClient = zkClient;
+    this.zkFolderPath = prefix.startsWith("/") ? prefix : "/" + prefix;
+    this.executor = Executors.newSingleThreadExecutor(
+                                Threads.createDaemonThreadFactory("leader-election-" + prefix.replace('/', '-')));
+    this.handler = handler;
+
+    LOG.info("Using guid {}", guid);
+
+    register();
+    zkClient.addConnectionWatcher(wrapWatcher(new ConnectionWatcher()));
+  }
+
+  @Override
+  public void cancel() {
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        if (!cancelled) {
+          cancelled = true;
+          deleteNode();
+        }
+      }
+    });
+  }
+
+  private byte[] getNodeData() {
+    String hostname;
+    try {
+      hostname = InetAddress.getLocalHost().getCanonicalHostName();
+    } catch (Exception e) {
+      LOG.warn("Failed to get local hostname.", e);
+      hostname = "unknown";
+    }
+    return hostname.getBytes(Charsets.UTF_8);
+  }
+
+  private void register() {
+    if (cancelled) {
+      return;
+    }
+
+    state = State.IN_PROGRESS;
+    zkNodePath = null;
+
+    // Register for election
+    final String path = String.format("%s/%s-", zkFolderPath, guid);
+    LOG.debug("Registering for election {} with path {}", zkFolderPath, path);
+
+    OperationFuture<String> createFuture = zkClient.create(path, getNodeData(), CreateMode.EPHEMERAL_SEQUENTIAL, true);
+    Futures.addCallback(createFuture, wrapCallback(new FutureCallback<String>() {
+
+      @Override
+      public void onSuccess(String result) {
+        LOG.debug("Created zk node {}", result);
+        zkNodePath = result;
+        runElection();
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        LOG.error("Got exception during node creation for folder {}", path, t);
+        zkNodePath = null;
+        runElection();
+      }
+    }));
+  }
+
+  private void runElection() {
+    if (cancelled) {
+      return;
+    }
+
+    LOG.debug("Running election for {}", zkNodePath);
+
+    OperationFuture<NodeChildren> childrenFuture = zkClient.getChildren(zkFolderPath);
+    Futures.addCallback(childrenFuture, wrapCallback(new FutureCallback<NodeChildren>() {
+      @Override
+      public void onSuccess(NodeChildren result) {
+        if (cancelled) {
+          return;
+        }
+
+        List<String> childPaths = result.getChildren();
+        Collections.sort(childPaths);
+
+        int pathIdx = (zkNodePath == null)
+                        ? -1
+                        : Collections.binarySearch(childPaths, zkNodePath.substring(zkNodePath.indexOf('/') + 1));
+        if (pathIdx < 0) {
+          int idx = 0;
+          for (String path : childPaths) {
+            if (path.startsWith(guid)) {
+              zkNodePath = path;
+              pathIdx = idx;
+            }
+            idx++;
+          }
+        }
+        // If still cannot find the node supposed to be created by this participant, restart from beginning.
+        if (pathIdx < 0) {
+          register();
+          return;
+        }
+
+        if (pathIdx == 0) {
+          // This is leader
+          becomeLeader();
+          return;
+        }
+
+        // Watch for deletion of largest node smaller than current node
+        watchNode(zkFolderPath + "/" + childPaths.get(pathIdx - 1), new LowerNodeWatcher());
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        LOG.warn("Got exception during children fetch for {}. Retry.", zkFolderPath, t);
+        runElection();
+      }
+    }));
+  }
+
+  private void becomeLeader() {
+    state = State.LEADER;
+    LOG.debug("Become leader for {}.", zkNodePath);
+    handler.leader();
+  }
+
+  private void becomeFollower() {
+    state = State.FOLLOWER;
+    LOG.debug("Become follower for {}", zkNodePath);
+    handler.follower();
+  }
+
+  private void watchNode(final String nodePath, Watcher watcher) {
+    OperationFuture<Stat> watchFuture = zkClient.exists(nodePath, watcher);
+    Futures.addCallback(watchFuture, wrapCallback(new FutureCallback<Stat>() {
+      @Override
+      public void onSuccess(Stat result) {
+        becomeFollower();
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        LOG.warn("Exception while setting watch on node {}. Retry.", nodePath, t);
+        runElection();
+      }
+    }));
+  }
+
+  private void deleteNode() {
+    if (state == State.LEADER) {
+      becomeFollower();
+    }
+
+    if (zkNodePath != null) {
+      Futures.addCallback(zkClient.delete(zkNodePath), wrapCallback(new FutureCallback<String>() {
+        @Override
+        public void onSuccess(String result) {
+          LOG.debug("Node deleted: {}", result);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+          LOG.warn("Fail to delete node: {}", zkNodePath);
+          if (!(t instanceof KeeperException.NoNodeException)) {
+            LOG.debug("Retry delete node: {}", zkNodePath);
+            deleteNode();
+          }
+        }
+      }));
+    }
+  }
+
+
+  private <V> FutureCallback<V> wrapCallback(final FutureCallback<V> callback) {
+    return new FutureCallback<V>() {
+      @Override
+      public void onSuccess(final V result) {
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            callback.onSuccess(result);
+          }
+        });
+      }
+
+      @Override
+      public void onFailure(final Throwable t) {
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            callback.onFailure(t);
+          }
+        });
+      }
+    };
+  }
+
+  private Watcher wrapWatcher(final Watcher watcher) {
+    return new Watcher() {
+      @Override
+      public void process(final WatchedEvent event) {
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            watcher.process(event);
+          }
+        });
+      }
+    };
+  }
+
+  /**
+   * Watches lower node.
+   */
+  private class LowerNodeWatcher implements Watcher {
+    @Override
+    public void process(WatchedEvent event) {
+      if (event.getType() == Event.EventType.NodeDeleted) {
+        LOG.debug("Lower node deleted {} for election {}", event, zkNodePath);
+        runElection();
+      }
+    }
+  }
+
+  /**
+   * Watches zookeeper connection.
+   */
+  private class ConnectionWatcher implements Watcher {
+    private boolean expired;
+    private boolean disconnected;
+
+    @Override
+    public void process(WatchedEvent event) {
+      switch (event.getState()) {
+        case Disconnected:
+          disconnected = true;
+          if (state == State.LEADER) {
+            becomeFollower();
+          }
+        break;
+        case SyncConnected:
+          boolean runElection = disconnected && !expired && state != State.IN_PROGRESS;
+          boolean runRegister = disconnected && expired && state != State.IN_PROGRESS;
+          disconnected = false;
+          expired = false;
+          if (runElection) {
+            state = State.IN_PROGRESS;
+            runElection();
+          } else if (runRegister) {
+            register();
+          }
+
+        break;
+        case Expired:
+          LOG.info("ZK session expired: {} for {}", zkClient.getConnectString(), zkFolderPath);
+          expired = true;
+        break;
+      }
+    }
+  }
+}
