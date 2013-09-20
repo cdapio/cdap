@@ -4,6 +4,7 @@
 
 package com.continuuity.archive;
 
+import com.continuuity.common.lang.MultiClassLoader;
 import com.continuuity.weave.filesystem.Location;
 
 import javax.annotation.Nullable;
@@ -12,7 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * JarClassLoader extends {@link com.continuuity.archive.MultiClassLoader}
+ * JarClassLoader extends {@link com.continuuity.common.lang.MultiClassLoader}
  */
 public class JarClassLoader extends MultiClassLoader {
   private final JarResources jarResources;

@@ -61,6 +61,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
     // * n clients increment a value with increasing values (+1, +2, ...) at specific row:column 100 times
     // * n clients append 100 columns to a set of 4 rows which includes the row that gets incremented (2 at a time).
     //   Append is: read all columns, add <last_column+1>
+    // todo: improve to use deletes. E.g. in append - remove all existing before appending new
     int n = 5;
 
     getTableManager().create("myTable");
@@ -97,7 +98,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
 
         private void verifyAppends() throws Exception {
           for (byte[] row : ROWS_TO_APPEND_TO) {
-            OperationResult<Map<byte[], byte[]>> cols = table.get(row, null);
+            OperationResult<Map<byte[], byte[]>> cols = table.get(row);
             Assert.assertFalse(cols.isEmpty());
 
             // +1 because there was one extra column that we incremented
@@ -191,7 +192,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
                 }
 
                 private void appendColumn(byte[] row) throws Exception {
-                  OperationResult<Map<byte[], byte[]>> columns = table.get(row, null);
+                  OperationResult<Map<byte[], byte[]>> columns = table.get(row);
                   int columnsCount;
                   if (columns.isEmpty()) {
                     columnsCount = 0;

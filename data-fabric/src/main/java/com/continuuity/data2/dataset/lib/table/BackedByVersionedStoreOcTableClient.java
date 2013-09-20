@@ -4,7 +4,6 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -12,8 +11,6 @@ import java.util.NavigableMap;
  *
  */
 public abstract class BackedByVersionedStoreOcTableClient extends BufferingOcTableClient {
-  protected static final byte[] DELETE_MARKER = new byte[0];
-
   public BackedByVersionedStoreOcTableClient(String name) {
     super(name);
   }
@@ -51,43 +48,4 @@ public abstract class BackedByVersionedStoreOcTableClient extends BufferingOcTab
 
     return result;
   }
-
-  protected static byte[] wrapDeleteIfNeeded(byte[] value) {
-    return value == null ? DELETE_MARKER : value;
-  }
-
-  protected static byte[] unwrapDeleteIfNeeded(byte[] value) {
-    return Arrays.equals(DELETE_MARKER, value) ? null : value;
-  }
-
-  // todo: it is in-efficient to copy maps a lot, consider merging with getLatest methods
-  protected static NavigableMap<byte[], NavigableMap<byte[], byte[]>> unwrapDeletesForRows(
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows) {
-
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : rows.entrySet()) {
-      NavigableMap<byte[], byte[]> rowMap = unwrapDeletes(row.getValue());
-      if (rowMap.size() > 0) {
-        result.put(row.getKey(), rowMap);
-      }
-    }
-
-    return result;
-  }
-
-  // todo: it is in-efficient to copy maps a lot, consider merging with getLatest methods
-  protected static NavigableMap<byte[], byte[]> unwrapDeletes(NavigableMap<byte[], byte[]> rowMap) {
-    if (rowMap == null || rowMap.isEmpty()) {
-      return EMPTY_ROW_MAP;
-    }
-    NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], byte[]> keyVal : rowMap.entrySet()) {
-      byte[] val = unwrapDeleteIfNeeded(keyVal.getValue());
-      if (val != null) {
-        result.put(keyVal.getKey(), val);
-      }
-    }
-    return result;
-  }
-
 }

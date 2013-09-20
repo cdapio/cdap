@@ -168,7 +168,8 @@ public class LevelDBOcTableCore {
     return new LevelDBScanner(iterator, endKey, filter, columns, tx);
   }
 
-  public NavigableMap<byte[], byte[]> getRow(byte[] row, byte[][] columns, byte[] startCol, byte[] stopCol,
+  public NavigableMap<byte[], byte[]> getRow(byte[] row, @Nullable byte[][] columns,
+                                             byte[] startCol, byte[] stopCol,
                                              int limit, Transaction tx) throws IOException {
     if (columns != null) {
       if (columns.length == 0) {

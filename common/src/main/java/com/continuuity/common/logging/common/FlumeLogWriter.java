@@ -7,7 +7,6 @@ package com.continuuity.common.logging.common;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.LogEvent;
-import com.continuuity.common.utils.StackTraceUtil;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
@@ -55,8 +54,7 @@ public class FlumeLogWriter implements LogWriter {
         LOG.warn("Unable to send log to central log server. Check the server.");
       }
     } catch (EventDeliveryException e) {
-      LOG.warn("Failed to send log event. Reason : {}", e.getMessage());
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      LOG.warn("Failed to send log event. Reason : {}", e.getMessage(), e);
       return false;
     }
     return true;

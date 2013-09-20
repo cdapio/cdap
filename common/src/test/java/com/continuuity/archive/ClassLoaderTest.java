@@ -1,5 +1,6 @@
 package com.continuuity.archive;
 
+import com.continuuity.common.lang.MultiClassLoader;
 import org.junit.Assert;
 import org.junit.Test;
 import org.objectweb.asm.ClassWriter;

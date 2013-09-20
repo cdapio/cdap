@@ -19,8 +19,9 @@ define([], function () {
     init: function() {
       this._super();
 
-      this.set('app', this.get('applicationId') || this.get('app'));
-      this.set('id', this.get('name'));
+      this.set('app', this.get('applicationId') || this.get('app') || this.get('appId'));
+      this.set('id', this.get('app') + ':' + this.get('name'));
+      this.set('nextRuns', []);
 
     },
 
@@ -79,6 +80,22 @@ define([], function () {
       return false;
 
     }.property('currentState'),
+
+    updateState: function (http, opt_callback) {
+
+      var self = this;
+
+      var app_id = this.get('app'),
+        workflowId = this.get('name');
+
+      http.rest('apps', app_id, 'workflows', workflowId, 'status', function (response) {
+
+        if (!jQuery.isEmptyObject(response)) {
+          self.set('currentState', response.status);
+        }
+        opt_callback();
+      });
+    },
 
     defaultAction: function () {
 

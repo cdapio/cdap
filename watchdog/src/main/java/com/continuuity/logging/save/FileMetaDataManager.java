@@ -77,7 +77,7 @@ public final class FileMetaDataManager {
     return txExecutor.execute(new Callable<SortedMap<Long, Path>>() {
       @Override
       public SortedMap<Long, Path> call() throws Exception {
-        OperationResult<Map<byte[], byte[]>> cols = metaTable.get(getRowKey(loggingContext), null);
+        OperationResult<Map<byte[], byte[]>> cols = metaTable.get(getRowKey(loggingContext));
 
         if (cols.isEmpty() || cols.getValue() == null) {
           return ImmutableSortedMap.of();

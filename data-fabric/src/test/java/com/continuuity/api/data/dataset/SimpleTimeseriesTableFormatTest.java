@@ -91,7 +91,7 @@ public class SimpleTimeseriesTableFormatTest {
     long endTime = timeIntervalPerRow * 100;
     for (long i = startTime; i <= endTime; i += timeIntervalPerRow / 10) {
       byte[] row = SimpleTimeseriesTable.createRow(key, i, timeIntervalPerRow);
-      if (rows.size() == 0 || !Arrays.equals(rows.get(rows.size() - 1), row)) {
+      if (rows.isEmpty() || !Arrays.equals(rows.get(rows.size() - 1), row)) {
         rows.add(row);
       }
     }

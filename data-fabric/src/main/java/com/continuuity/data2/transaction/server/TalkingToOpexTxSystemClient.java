@@ -50,7 +50,7 @@ public class TalkingToOpexTxSystemClient implements TransactionSystemClient {
 
   @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
-    if (changeIds.size() == 0) {
+    if (changeIds.isEmpty()) {
       return true;
     }
 

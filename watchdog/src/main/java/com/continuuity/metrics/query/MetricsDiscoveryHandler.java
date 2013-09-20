@@ -187,7 +187,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
     List<String> prefixEntity = queryParams.get("prefixEntity");
     // shouldn't be in params more than once, but if it is, just take any one
-    String metricPrefix = (prefixEntity == null || prefixEntity.size() == 0) ? null : prefixEntity.get(0);
+    String metricPrefix = (prefixEntity == null || prefixEntity.isEmpty()) ? null : prefixEntity.get(0);
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
     for (AggregatesTable table : aggregatesTables.values()) {
