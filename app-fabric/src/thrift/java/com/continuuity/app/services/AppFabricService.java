@@ -189,7 +189,7 @@ public class AppFabricService {
      * @param token
      * @param identifier
      */
-    public ProgramStatus resumeSchedule(AuthToken token, ScheduleId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
+    public void resumeSchedule(AuthToken token, ScheduleId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Suspend a schedule. The schedule that is running will be stopped.
@@ -197,7 +197,7 @@ public class AppFabricService {
      * @param token
      * @param identifier
      */
-    public ProgramStatus suspendSchedule(AuthToken token, ScheduleId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
+    public void suspendSchedule(AuthToken token, ScheduleId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Get schedules for a given program.
@@ -748,10 +748,10 @@ public class AppFabricService {
       return;
     }
 
-    public ProgramStatus resumeSchedule(AuthToken token, ScheduleId identifier) throws AppFabricServiceException, org.apache.thrift.TException
+    public void resumeSchedule(AuthToken token, ScheduleId identifier) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_resumeSchedule(token, identifier);
-      return recv_resumeSchedule();
+      recv_resumeSchedule();
     }
 
     public void send_resumeSchedule(AuthToken token, ScheduleId identifier) throws org.apache.thrift.TException
@@ -762,23 +762,20 @@ public class AppFabricService {
       sendBase("resumeSchedule", args);
     }
 
-    public ProgramStatus recv_resumeSchedule() throws AppFabricServiceException, org.apache.thrift.TException
+    public void recv_resumeSchedule() throws AppFabricServiceException, org.apache.thrift.TException
     {
       resumeSchedule_result result = new resumeSchedule_result();
       receiveBase(result, "resumeSchedule");
-      if (result.isSetSuccess()) {
-        return result.success;
-      }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "resumeSchedule failed: unknown result");
+      return;
     }
 
-    public ProgramStatus suspendSchedule(AuthToken token, ScheduleId identifier) throws AppFabricServiceException, org.apache.thrift.TException
+    public void suspendSchedule(AuthToken token, ScheduleId identifier) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_suspendSchedule(token, identifier);
-      return recv_suspendSchedule();
+      recv_suspendSchedule();
     }
 
     public void send_suspendSchedule(AuthToken token, ScheduleId identifier) throws org.apache.thrift.TException
@@ -789,17 +786,14 @@ public class AppFabricService {
       sendBase("suspendSchedule", args);
     }
 
-    public ProgramStatus recv_suspendSchedule() throws AppFabricServiceException, org.apache.thrift.TException
+    public void recv_suspendSchedule() throws AppFabricServiceException, org.apache.thrift.TException
     {
       suspendSchedule_result result = new suspendSchedule_result();
       receiveBase(result, "suspendSchedule");
-      if (result.isSetSuccess()) {
-        return result.success;
-      }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "suspendSchedule failed: unknown result");
+      return;
     }
 
     public List<ScheduleId> getSchedules(AuthToken token, ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException
@@ -1529,13 +1523,13 @@ public class AppFabricService {
         prot.writeMessageEnd();
       }
 
-      public ProgramStatus getResult() throws AppFabricServiceException, org.apache.thrift.TException {
+      public void getResult() throws AppFabricServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_resumeSchedule();
+        (new Client(prot)).recv_resumeSchedule();
       }
     }
 
@@ -1564,13 +1558,13 @@ public class AppFabricService {
         prot.writeMessageEnd();
       }
 
-      public ProgramStatus getResult() throws AppFabricServiceException, org.apache.thrift.TException {
+      public void getResult() throws AppFabricServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_suspendSchedule();
+        (new Client(prot)).recv_suspendSchedule();
       }
     }
 
@@ -2056,7 +2050,7 @@ public class AppFabricService {
       protected resumeSchedule_result getResult(I iface, resumeSchedule_args args) throws org.apache.thrift.TException {
         resumeSchedule_result result = new resumeSchedule_result();
         try {
-          result.success = iface.resumeSchedule(args.token, args.identifier);
+          iface.resumeSchedule(args.token, args.identifier);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -2076,7 +2070,7 @@ public class AppFabricService {
       protected suspendSchedule_result getResult(I iface, suspendSchedule_args args) throws org.apache.thrift.TException {
         suspendSchedule_result result = new suspendSchedule_result();
         try {
-          result.success = iface.suspendSchedule(args.token, args.identifier);
+          iface.suspendSchedule(args.token, args.identifier);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -18671,7 +18665,6 @@ public class AppFabricService {
   public static class resumeSchedule_result implements org.apache.thrift.TBase<resumeSchedule_result, resumeSchedule_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("resumeSchedule_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -18680,12 +18673,10 @@ public class AppFabricService {
       schemes.put(TupleScheme.class, new resumeSchedule_resultTupleSchemeFactory());
     }
 
-    private ProgramStatus success; // required
     private AppFabricServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
       E((short)1, "e");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -18701,8 +18692,6 @@ public class AppFabricService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
           case 1: // E
             return E;
           default:
@@ -18748,8 +18737,6 @@ public class AppFabricService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramStatus.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -18760,11 +18747,9 @@ public class AppFabricService {
     }
 
     public resumeSchedule_result(
-      ProgramStatus success,
       AppFabricServiceException e)
     {
       this();
-      this.success = success;
       this.e = e;
     }
 
@@ -18772,9 +18757,6 @@ public class AppFabricService {
      * Performs a deep copy on <i>other</i>.
      */
     public resumeSchedule_result(resumeSchedule_result other) {
-      if (other.isSetSuccess()) {
-        this.success = new ProgramStatus(other.success);
-      }
       if (other.isSetE()) {
         this.e = new AppFabricServiceException(other.e);
       }
@@ -18786,31 +18768,7 @@ public class AppFabricService {
 
     @Override
     public void clear() {
-      this.success = null;
       this.e = null;
-    }
-
-    public ProgramStatus getSuccess() {
-      return this.success;
-    }
-
-    public void setSuccess(ProgramStatus success) {
-      this.success = success;
-    }
-
-    public void unsetSuccess() {
-      this.success = null;
-    }
-
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return this.success != null;
-    }
-
-    public void setSuccessIsSet(boolean value) {
-      if (!value) {
-        this.success = null;
-      }
     }
 
     public AppFabricServiceException getE() {
@@ -18838,14 +18796,6 @@ public class AppFabricService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((ProgramStatus)value);
-        }
-        break;
-
       case E:
         if (value == null) {
           unsetE();
@@ -18859,9 +18809,6 @@ public class AppFabricService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
-
       case E:
         return getE();
 
@@ -18876,8 +18823,6 @@ public class AppFabricService {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
       case E:
         return isSetE();
       }
@@ -18897,15 +18842,6 @@ public class AppFabricService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true && this.isSetSuccess();
-      boolean that_present_success = true && that.isSetSuccess();
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (!this.success.equals(that.success))
-          return false;
-      }
-
       boolean this_present_e = true && this.isSetE();
       boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
@@ -18921,11 +18857,6 @@ public class AppFabricService {
     @Override
     public int hashCode() {
       HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
 
       boolean present_e = true && (isSetE());
       builder.append(present_e);
@@ -18943,16 +18874,6 @@ public class AppFabricService {
       int lastComparison = 0;
       resumeSchedule_result typedOther = (resumeSchedule_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
@@ -18983,14 +18904,6 @@ public class AppFabricService {
       StringBuilder sb = new StringBuilder("resumeSchedule_result(");
       boolean first = true;
 
-      sb.append("success:");
-      if (this.success == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.success);
-      }
-      first = false;
-      if (!first) sb.append(", ");
       sb.append("e:");
       if (this.e == null) {
         sb.append("null");
@@ -19040,15 +18953,6 @@ public class AppFabricService {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new ProgramStatus();
-                struct.success.read(iprot);
-                struct.setSuccessIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
             case 1: // E
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
                 struct.e = new AppFabricServiceException();
@@ -19071,11 +18975,6 @@ public class AppFabricService {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.success != null) {
-          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          struct.success.write(oprot);
-          oprot.writeFieldEnd();
-        }
         if (struct.e != null) {
           oprot.writeFieldBegin(E_FIELD_DESC);
           struct.e.write(oprot);
@@ -19099,16 +18998,10 @@ public class AppFabricService {
       public void write(org.apache.thrift.protocol.TProtocol prot, resumeSchedule_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetE()) {
           optionals.set(0);
         }
-        if (struct.isSetE()) {
-          optionals.set(1);
-        }
-        oprot.writeBitSet(optionals, 2);
-        if (struct.isSetSuccess()) {
-          struct.success.write(oprot);
-        }
+        oprot.writeBitSet(optionals, 1);
         if (struct.isSetE()) {
           struct.e.write(oprot);
         }
@@ -19117,13 +19010,8 @@ public class AppFabricService {
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, resumeSchedule_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = new ProgramStatus();
-          struct.success.read(iprot);
-          struct.setSuccessIsSet(true);
-        }
-        if (incoming.get(1)) {
           struct.e = new AppFabricServiceException();
           struct.e.read(iprot);
           struct.setEIsSet(true);
@@ -19601,7 +19489,6 @@ public class AppFabricService {
   public static class suspendSchedule_result implements org.apache.thrift.TBase<suspendSchedule_result, suspendSchedule_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("suspendSchedule_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -19610,12 +19497,10 @@ public class AppFabricService {
       schemes.put(TupleScheme.class, new suspendSchedule_resultTupleSchemeFactory());
     }
 
-    private ProgramStatus success; // required
     private AppFabricServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
       E((short)1, "e");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -19631,8 +19516,6 @@ public class AppFabricService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
           case 1: // E
             return E;
           default:
@@ -19678,8 +19561,6 @@ public class AppFabricService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramStatus.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -19690,11 +19571,9 @@ public class AppFabricService {
     }
 
     public suspendSchedule_result(
-      ProgramStatus success,
       AppFabricServiceException e)
     {
       this();
-      this.success = success;
       this.e = e;
     }
 
@@ -19702,9 +19581,6 @@ public class AppFabricService {
      * Performs a deep copy on <i>other</i>.
      */
     public suspendSchedule_result(suspendSchedule_result other) {
-      if (other.isSetSuccess()) {
-        this.success = new ProgramStatus(other.success);
-      }
       if (other.isSetE()) {
         this.e = new AppFabricServiceException(other.e);
       }
@@ -19716,31 +19592,7 @@ public class AppFabricService {
 
     @Override
     public void clear() {
-      this.success = null;
       this.e = null;
-    }
-
-    public ProgramStatus getSuccess() {
-      return this.success;
-    }
-
-    public void setSuccess(ProgramStatus success) {
-      this.success = success;
-    }
-
-    public void unsetSuccess() {
-      this.success = null;
-    }
-
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return this.success != null;
-    }
-
-    public void setSuccessIsSet(boolean value) {
-      if (!value) {
-        this.success = null;
-      }
     }
 
     public AppFabricServiceException getE() {
@@ -19768,14 +19620,6 @@ public class AppFabricService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((ProgramStatus)value);
-        }
-        break;
-
       case E:
         if (value == null) {
           unsetE();
@@ -19789,9 +19633,6 @@ public class AppFabricService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
-
       case E:
         return getE();
 
@@ -19806,8 +19647,6 @@ public class AppFabricService {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
       case E:
         return isSetE();
       }
@@ -19827,15 +19666,6 @@ public class AppFabricService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true && this.isSetSuccess();
-      boolean that_present_success = true && that.isSetSuccess();
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (!this.success.equals(that.success))
-          return false;
-      }
-
       boolean this_present_e = true && this.isSetE();
       boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
@@ -19851,11 +19681,6 @@ public class AppFabricService {
     @Override
     public int hashCode() {
       HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
 
       boolean present_e = true && (isSetE());
       builder.append(present_e);
@@ -19873,16 +19698,6 @@ public class AppFabricService {
       int lastComparison = 0;
       suspendSchedule_result typedOther = (suspendSchedule_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
@@ -19913,14 +19728,6 @@ public class AppFabricService {
       StringBuilder sb = new StringBuilder("suspendSchedule_result(");
       boolean first = true;
 
-      sb.append("success:");
-      if (this.success == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.success);
-      }
-      first = false;
-      if (!first) sb.append(", ");
       sb.append("e:");
       if (this.e == null) {
         sb.append("null");
@@ -19970,15 +19777,6 @@ public class AppFabricService {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new ProgramStatus();
-                struct.success.read(iprot);
-                struct.setSuccessIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
             case 1: // E
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
                 struct.e = new AppFabricServiceException();
@@ -20001,11 +19799,6 @@ public class AppFabricService {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.success != null) {
-          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          struct.success.write(oprot);
-          oprot.writeFieldEnd();
-        }
         if (struct.e != null) {
           oprot.writeFieldBegin(E_FIELD_DESC);
           struct.e.write(oprot);
@@ -20029,16 +19822,10 @@ public class AppFabricService {
       public void write(org.apache.thrift.protocol.TProtocol prot, suspendSchedule_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetE()) {
           optionals.set(0);
         }
-        if (struct.isSetE()) {
-          optionals.set(1);
-        }
-        oprot.writeBitSet(optionals, 2);
-        if (struct.isSetSuccess()) {
-          struct.success.write(oprot);
-        }
+        oprot.writeBitSet(optionals, 1);
         if (struct.isSetE()) {
           struct.e.write(oprot);
         }
@@ -20047,13 +19834,8 @@ public class AppFabricService {
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, suspendSchedule_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = new ProgramStatus();
-          struct.success.read(iprot);
-          struct.setSuccessIsSet(true);
-        }
-        if (incoming.get(1)) {
           struct.e = new AppFabricServiceException();
           struct.e.read(iprot);
           struct.setEIsSet(true);

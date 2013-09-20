@@ -5,6 +5,7 @@ import com.continuuity.app.Id;
 import com.continuuity.app.program.Type;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Scheduler that schedules a program.
@@ -28,5 +29,11 @@ public interface Scheduler {
    *         or if the program is not found
    */
   public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, Type programType);
+
+  public Map<String, Schedule> getSchedules(Id.Program program, Type programType);
+
+  public void suspendSchedule(String scheduleId);
+
+  public void resumeSchedule(String scheduleId);
 
 }

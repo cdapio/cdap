@@ -14,6 +14,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
@@ -1100,23 +1101,34 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
 
   @Override
-  public ProgramStatus resumeSchedule(AuthToken token, ScheduleId identifier)
+  public void resumeSchedule(AuthToken token, ScheduleId identifier)
                                       throws AppFabricServiceException, TException {
-    return null;
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    scheduler.resumeSchedule(identifier.getId());
   }
 
   @Override
-  public ProgramStatus suspendSchedule(AuthToken token, ScheduleId identifier)
+  public void suspendSchedule(AuthToken token, ScheduleId identifier)
                                        throws AppFabricServiceException, TException {
-    return null;
-
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    scheduler.suspendSchedule(identifier.getId());
   }
 
   @Override
-  public List<ScheduleId> getSchedules(AuthToken token, ProgramId id)
+  public List<ScheduleId> getSchedules(AuthToken token, ProgramId identifier)
                                        throws AppFabricServiceException, TException {
-    return null;
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    Type programType = entityTypeToType(identifier);
 
+    List<ScheduleId> scheduleIds = Lists.newArrayList();
+    for (Map.Entry<String, Schedule> entry : scheduler.getSchedules(programId, programType).entrySet()) {
+      scheduleIds.add(new ScheduleId(entry.getKey()));
+    }
+
+    return scheduleIds;
   }
 
   @Override

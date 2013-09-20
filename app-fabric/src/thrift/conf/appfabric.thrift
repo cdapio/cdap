@@ -258,13 +258,13 @@ service AppFabricService {
   /**
    * Resume a schedule. Schedule will be resumed to run if it is not running already.
    */
-   ProgramStatus resumeSchedule(1:AuthToken token, 2: ScheduleId identifier)
+   void resumeSchedule(1:AuthToken token, 2: ScheduleId identifier)
      throws (1: AppFabricServiceException e),
 
   /**
    * Suspend a schedule. The schedule that is running will be stopped.
    */
-   ProgramStatus suspendSchedule(1:AuthToken token, 2: ScheduleId identifier)
+   void suspendSchedule(1:AuthToken token, 2: ScheduleId identifier)
     throws (1: AppFabricServiceException e),
 
    /**

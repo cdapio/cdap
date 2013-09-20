@@ -9,11 +9,13 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.schedule.DefaultSchedule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.quartz.CronScheduleBuilder;
@@ -27,12 +29,14 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.quartz.TriggerKey;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Default Schedule service implementation.
@@ -140,6 +144,39 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
       throw Throwables.propagate(e);
     }
     return scheduledRuntimes;
+  }
+
+  @Override
+  public Map<String, Schedule> getSchedules(Id.Program program, Type programType) {
+    Map<String, Schedule> schedules = Maps.newHashMap();
+    String key = getJobKey(program, programType);
+    try {
+      for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
+        String triggerKey = trigger.getKey().getName();
+        schedules.put(triggerKey, new DefaultSchedule(triggerKey, triggerKey, triggerKey, Schedule.Action.START));
+      }
+    }   catch (SchedulerException e) {
+      throw Throwables.propagate(e);
+    }
+    return schedules;
+  }
+
+  @Override
+  public void suspendSchedule(String scheduleId) {
+    try {
+      scheduler.pauseTrigger(new TriggerKey(scheduleId));
+    } catch (SchedulerException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void resumeSchedule(String scheduleId) {
+    try {
+      scheduler.resumeTrigger(new TriggerKey(scheduleId));
+    } catch (SchedulerException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   //Helper function to adapt cron entry to a cronExpression that is usable by quartz.

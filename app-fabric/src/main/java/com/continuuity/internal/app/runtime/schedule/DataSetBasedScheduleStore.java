@@ -18,6 +18,7 @@ import org.quartz.JobDetail;
 import org.quartz.JobPersistenceException;
 import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.Trigger;
+import org.quartz.TriggerKey;
 import org.quartz.simpl.RAMJobStore;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.OperableTrigger;
@@ -25,6 +26,7 @@ import org.quartz.spi.SchedulerSignaler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +42,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   private static final byte[] TRIGGER_KEY = Bytes.toBytes("trigger");
 
   private final DataSetAccessor dataSetAccessor;
+
   private final TransactionExecutorFactory factory;
   private OrderedColumnarTable table;
 
@@ -100,22 +103,54 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     executePersist(newJob, newTrigger);
   }
 
-  private void executePersist(final JobDetail newJob, final OperableTrigger newTrigger) {
+  @Override
+  public void pauseTrigger(TriggerKey triggerKey) {
+    super.pauseTrigger(triggerKey);
+    executePersist(triggerKey, Trigger.TriggerState.PAUSED);
+  }
+
+  @Override
+  public void resumeTrigger(TriggerKey triggerKey) {
+    super.resumeTrigger(triggerKey);
+    executePersist(triggerKey, Trigger.TriggerState.NORMAL);
+  }
+
+
+  private void executePersist(final TriggerKey triggerKey, final Trigger.TriggerState state) {
     try {
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
                             .execute(new TransactionExecutor.Subroutine() {
                               @Override
                               public void apply() throws Exception {
-                                if (newJob != null) {
-                                  persistJob(table, newJob);
-                                  LOG.debug("Schedule: stored job with key {}", newJob.getKey());
-                                }
-                                if (newTrigger != null) {
-                                  persistTrigger(table, newTrigger);
-                                  LOG.debug("Schedule: stored trigger with key {}", newTrigger.getKey());
+                                if (triggerKey != null) {
+                                  TriggerStatus trigger = readTrigger(triggerKey);
+                                  if (trigger != null) {
+                                    persistTrigger(table, trigger.trigger, state);
+                                  }
                                 }
                               }
                             });
+    } catch (Throwable th) {
+      throw Throwables.propagate(th);
+    }
+  }
+
+  private void executePersist(final JobDetail newJob, final OperableTrigger newTrigger) {
+    try {
+      factory.createExecutor(ImmutableList.of((TransactionAware) table))
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            if (newJob != null) {
+              persistJob(table, newJob);
+              LOG.debug("Schedule: stored job with key {}", newJob.getKey());
+            }
+            if (newTrigger != null) {
+              persistTrigger(table, newTrigger, Trigger.TriggerState.NORMAL);
+              LOG.debug("Schedule: stored trigger with key {}", newTrigger.getKey());
+            }
+          }
+        });
 
     } catch (Throwable th) {
       throw Throwables.propagate(th);
@@ -129,19 +164,33 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
 
     cols[0] = Bytes.toBytes(job.getKey().toString());
     values[0] = SerializationUtils.serialize(job);
-
     table.put(JOB_KEY, cols, values);
   }
 
+  private TriggerStatus readTrigger(TriggerKey key) throws Exception {
+    byte[][] col = new byte[1][];
+    col[0] = Bytes.toBytes(key.toString());
+    OperationResult<Map<byte[], byte[]>> result = table.get(TRIGGER_KEY, col);
+    byte[] bytes = null;
+    if (result.isEmpty()){
+      bytes = result.getValue().get(col[0]);
+    }
+    if (bytes != null){
+      return (TriggerStatus) SerializationUtils.deserialize(bytes);
+    } else {
+      return null;
+    }
+  }
+
   // Persist the trigger information to dataset
-  private void persistTrigger(OrderedColumnarTable table, OperableTrigger trigger) throws Exception {
+  private void persistTrigger(OrderedColumnarTable table, OperableTrigger trigger,
+                              Trigger.TriggerState state) throws Exception {
 
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
     cols[0] = Bytes.toBytes(trigger.getKey().toString());
-    values[0] = SerializationUtils.serialize(trigger);
-
+    values[0] = SerializationUtils.serialize(new TriggerStatus(trigger, state));
     table.put(TRIGGER_KEY, cols, values);
   }
 
@@ -169,9 +218,14 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
           result = table.get(TRIGGER_KEY, null, null, -1);
           if (!result.isEmpty()) {
             for (byte[] bytes : result.getValue().values()){
-              OperableTrigger trigger = (OperableTrigger) SerializationUtils.deserialize(bytes);
-              triggers.add(trigger);
-              LOG.debug("Schedule: trigger with key {} found", trigger.getKey());
+              TriggerStatus trigger = (TriggerStatus) SerializationUtils.deserialize(bytes);
+              if (trigger.state.equals(Trigger.TriggerState.NORMAL)) {
+                triggers.add(trigger.trigger);
+                LOG.debug("Schedule: trigger with key {} added", trigger.trigger.getKey());
+              } else {
+                LOG.debug("Schedule: trigger with key {} and state {} skipped", trigger.trigger.getKey(),
+                                                                                trigger.state.toString());
+              }
             }
           } else {
             LOG.debug("Schedule: No triggers found in job store");
@@ -185,6 +239,19 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
 
     for (OperableTrigger trigger : triggers){
       super.storeTrigger(trigger, true);
+    }
+  }
+
+  /**
+   * Trigger and state.
+   */
+  private static class TriggerStatus implements Serializable {
+    private OperableTrigger trigger;
+    private Trigger.TriggerState state;
+
+    private TriggerStatus(OperableTrigger trigger, Trigger.TriggerState state) {
+      this.trigger = trigger;
+      this.state = state;
     }
   }
 }
