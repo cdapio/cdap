@@ -45,8 +45,8 @@ public class SimpleLeaderElection implements Cancellable {
 
     LOG.info("Using guid {}", guid);
 
-    register();
     zkClient.addConnectionWatcher(new ConnectionWatcher());
+    register();
   }
 
   @Override
@@ -161,24 +161,23 @@ public class SimpleLeaderElection implements Cancellable {
   }
 
   private void deleteNode(final boolean propagateError) {
-    if (leader.get()) {
+    if (leader.compareAndSet(true, false)) {
       LOG.debug("Executing unelected handler for {}", zkNodePath);
 
       try {
-        leader.set(false);
         handler.unelected();
       } catch (Throwable e) {
         LOG.error("Unelected handler exception for {}", zkNodePath, e);
-        error(e);
       }
     }
 
     if (zkNodePath != null) {
+      LOG.debug("Deleting node {}", zkNodePath);
       OperationFuture<String> deleteFuture = zkClient.delete(zkNodePath);
       Futures.addCallback(deleteFuture, new FutureCallback<String>() {
         @Override
         public void onSuccess(String result) {
-          // Nothing to do
+          zkNodePath = null;
         }
 
         @Override
