@@ -14,6 +14,7 @@ import org.iq80.leveldb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -102,7 +103,8 @@ public class LevelDBOcTableCore {
     return new LevelDBScanner(iterator, endKey, tx);
   }
 
-  public NavigableMap<byte[], byte[]> getRow(byte[] row, byte[][] columns, byte[] startCol, byte[] stopCol,
+  public NavigableMap<byte[], byte[]> getRow(byte[] row, @Nullable byte[][] columns,
+                                             byte[] startCol, byte[] stopCol,
                                              int limit, Transaction tx) throws IOException {
     if (columns != null) {
       if (columns.length == 0) {
