@@ -301,13 +301,6 @@
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
 
-          <button class="btn dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a {{action "delete"}} {{bindAttr state="model.currentState"}} {{bindAttr batchId="model.id"}} {{bindAttr applicationId="model.application"}}>Delete This Job</a></li>
-          </ul>
-
           <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.app"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
           <button style="border-right:0;" class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
@@ -393,8 +386,6 @@
                 <div><strong>{{k}}</strong>: {{v}}
               {{/each}}
             </li>
-            <li class="divider"></li>
-            <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
           </ul>
 
           <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "stop" model.app model.meta.name }}><span class="btn-stop"></span><span>Stop</span></button>
@@ -891,7 +882,7 @@
             <a {{bindAttr href="href"}}>{{name}}</a>
             <br />
             <span class="app-list-status">{{description}}</span>
-            
+
             </td>
             <td class="app-list-count">{{counts.Stream}}</strong></td>
             <td class="app-list-count">{{counts.Flow}}</strong></td>

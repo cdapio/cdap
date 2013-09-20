@@ -241,10 +241,11 @@ a, a:visited {
 	color: #fff;
 	border: 1px solid #f4cece;
 	border-top: 0;
-	padding: 0px 8px;
-	line-height: 20px;
+	padding: 2px 8px;
+	line-height: 16px;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	border-bottom: 1px solid #eff0f0;
 }
 #warning div a {
 	color: #fff;
@@ -1434,7 +1435,7 @@ a strong {
 	background: url('../img/empty-dag.png');
 	border: 0px;
 	z-index: 20;
-	float: left;	
+	float: left;
 	clear: left;
 	position: relative;
 	cursor: default;

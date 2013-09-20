@@ -10,6 +10,9 @@ var util = require("util"),
 
 var WebAppServer = require('../common/server');
 
+// The location of continuuity-site.xml
+var CONF_DIRECTORY = '/etc/continuuity/conf';
+
 /**
  * Set environment.
  */
@@ -41,7 +44,7 @@ util.inherits(EntServer, WebAppServer);
  */
 EntServer.prototype.getConfig = function(opt_callback) {
   var self = this;
-  fs.readFile(__dirname + '/continuuity-local.xml', function(error, result) {
+  fs.readFile(CONF_DIRECTORY + '/continuuity-site.xml', function(error, result) {
     var parser = new xml2js.Parser();
     parser.parseString(result, function(err, result) {
       result = result.configuration.property;
