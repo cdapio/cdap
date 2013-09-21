@@ -8,6 +8,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -61,6 +63,7 @@ public class DataFabricModules extends RuntimeModule {
         bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
         bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
+        bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
 
         // We don't need caching for in-memory
         cConf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
