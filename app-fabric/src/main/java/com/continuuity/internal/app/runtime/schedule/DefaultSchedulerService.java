@@ -132,7 +132,6 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
     String key = getJobKey(program, programType);
     try {
       for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
-
         ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(),
                                                         trigger.getNextFireTime().getTime());
         scheduledRuntimes.add(runtime);
@@ -202,7 +201,6 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
   private static final class ScheduledJob implements Job {
 
     private final ScheduleTaskRunner taskRunner;
-
     ScheduledJob(Store store, ProgramRuntimeService programRuntimeService) {
       taskRunner = new ScheduleTaskRunner(store, programRuntimeService);
     }
