@@ -190,7 +190,7 @@ public class TestHelper {
         status = appFabricServer.dstatus(token, id).getOverall();
         TimeUnit.MILLISECONDS.sleep(100);
       }
-      Preconditions.checkState(status == 5, "Fail to deploy app.");
+      Preconditions.checkState(status == 5, "Fail to deploy app: %s", status);
       return deployedJar;
   }
 
