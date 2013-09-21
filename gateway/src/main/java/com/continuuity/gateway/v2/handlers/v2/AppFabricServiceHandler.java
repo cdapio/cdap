@@ -753,7 +753,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Returns next scheduled runtime of a workflow.
    */
   @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/nextRuntime")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("workflow-id") final String workflowId) {
