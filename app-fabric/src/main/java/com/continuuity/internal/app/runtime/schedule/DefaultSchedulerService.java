@@ -149,7 +149,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
     String key = getJobKey(program, programType);
     try {
       for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
-        scheduleIds.add(trigger.getJobKey().getName());
+        scheduleIds.add(trigger.getKey().getName());
       }
     }   catch (SchedulerException e) {
       throw Throwables.propagate(e);
@@ -179,11 +179,21 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
   //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month
   //2. Quartz resolution is in seconds which cron entry doesn't support.
   private String getQuartzCronExpression(String cronEntry) {
-    StringBuilder cronStringBuilder = new StringBuilder("0 " + cronEntry);
-    if (cronStringBuilder.charAt(cronStringBuilder.length() - 1) == '*'){
-      cronStringBuilder.setCharAt(cronStringBuilder.length() - 1, '?');
+    // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
+    // CronExpression will directly be used for tests.
+    String parts [] = cronEntry.split(" ");
+    Preconditions.checkArgument(parts.length >= 5 , "Invalid cron entry format");
+    if (parts.length == 5) {
+      //cron entry format
+      StringBuilder cronStringBuilder = new StringBuilder("0 " + cronEntry);
+      if (cronStringBuilder.charAt(cronStringBuilder.length() - 1) == '*'){
+        cronStringBuilder.setCharAt(cronStringBuilder.length() - 1, '?');
+      }
+      return cronStringBuilder.toString();
+    } else {
+      //Use the given cronExpression
+      return cronEntry;
     }
-    return cronStringBuilder.toString();
   }
 
   /**
@@ -210,6 +220,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
       String accountId = parts[1];
       String applicationId = parts[2];
       String programId = parts[3];
+
       LOG.debug("Schedule execute {}", key);
       Arguments args = new BasicArguments(ImmutableMap.of(
           ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()),

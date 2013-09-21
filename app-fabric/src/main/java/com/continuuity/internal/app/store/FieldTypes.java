@@ -14,6 +14,7 @@ final class FieldTypes {
     public static final String START_TS = "start";
     public static final String END_TS = "end";
     public static final String END_STATE = "stat";
+    public static final String ARGS = "args";
   }
 
   public static class Application {

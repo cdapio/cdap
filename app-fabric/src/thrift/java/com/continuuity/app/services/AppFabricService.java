@@ -213,7 +213,9 @@ public class AppFabricService {
      * @param token
      * @param identifier
      */
-    public List<ScheduleRunTime> getNextScheduledRunTime(AuthToken token, ProgramId identifier) throws org.apache.thrift.TException;
+    public List<ScheduleRunTime> getNextScheduledRunTime(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
+
+    public void storeRuntimeArguments(AuthToken token, ProgramId identifier, Map<String,String> arguments) throws AppFabricServiceException, org.apache.thrift.TException;
 
   }
 
@@ -262,6 +264,8 @@ public class AppFabricService {
     public void getSchedules(AuthToken token, ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSchedules_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getNextScheduledRunTime(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getNextScheduledRunTime_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void storeRuntimeArguments(AuthToken token, ProgramId identifier, Map<String,String> arguments, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.storeRuntimeArguments_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -823,7 +827,7 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getSchedules failed: unknown result");
     }
 
-    public List<ScheduleRunTime> getNextScheduledRunTime(AuthToken token, ProgramId identifier) throws org.apache.thrift.TException
+    public List<ScheduleRunTime> getNextScheduledRunTime(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException
     {
       send_getNextScheduledRunTime(token, identifier);
       return recv_getNextScheduledRunTime();
@@ -837,14 +841,42 @@ public class AppFabricService {
       sendBase("getNextScheduledRunTime", args);
     }
 
-    public List<ScheduleRunTime> recv_getNextScheduledRunTime() throws org.apache.thrift.TException
+    public List<ScheduleRunTime> recv_getNextScheduledRunTime() throws AppFabricServiceException, org.apache.thrift.TException
     {
       getNextScheduledRunTime_result result = new getNextScheduledRunTime_result();
       receiveBase(result, "getNextScheduledRunTime");
       if (result.isSetSuccess()) {
         return result.success;
       }
+      if (result.e != null) {
+        throw result.e;
+      }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getNextScheduledRunTime failed: unknown result");
+    }
+
+    public void storeRuntimeArguments(AuthToken token, ProgramId identifier, Map<String,String> arguments) throws AppFabricServiceException, org.apache.thrift.TException
+    {
+      send_storeRuntimeArguments(token, identifier, arguments);
+      recv_storeRuntimeArguments();
+    }
+
+    public void send_storeRuntimeArguments(AuthToken token, ProgramId identifier, Map<String,String> arguments) throws org.apache.thrift.TException
+    {
+      storeRuntimeArguments_args args = new storeRuntimeArguments_args();
+      args.setToken(token);
+      args.setIdentifier(identifier);
+      args.setArguments(arguments);
+      sendBase("storeRuntimeArguments", args);
+    }
+
+    public void recv_storeRuntimeArguments() throws AppFabricServiceException, org.apache.thrift.TException
+    {
+      storeRuntimeArguments_result result = new storeRuntimeArguments_result();
+      receiveBase(result, "storeRuntimeArguments");
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
     }
 
   }
@@ -1628,13 +1660,51 @@ public class AppFabricService {
         prot.writeMessageEnd();
       }
 
-      public List<ScheduleRunTime> getResult() throws org.apache.thrift.TException {
+      public List<ScheduleRunTime> getResult() throws AppFabricServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_getNextScheduledRunTime();
+      }
+    }
+
+    public void storeRuntimeArguments(AuthToken token, ProgramId identifier, Map<String,String> arguments, org.apache.thrift.async.AsyncMethodCallback<storeRuntimeArguments_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      storeRuntimeArguments_call method_call = new storeRuntimeArguments_call(token, identifier, arguments, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class storeRuntimeArguments_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private AuthToken token;
+      private ProgramId identifier;
+      private Map<String,String> arguments;
+      public storeRuntimeArguments_call(AuthToken token, ProgramId identifier, Map<String,String> arguments, org.apache.thrift.async.AsyncMethodCallback<storeRuntimeArguments_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.token = token;
+        this.identifier = identifier;
+        this.arguments = arguments;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("storeRuntimeArguments", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        storeRuntimeArguments_args args = new storeRuntimeArguments_args();
+        args.setToken(token);
+        args.setIdentifier(identifier);
+        args.setArguments(arguments);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws AppFabricServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_storeRuntimeArguments();
       }
     }
 
@@ -1673,6 +1743,7 @@ public class AppFabricService {
       processMap.put("suspendSchedule", new suspendSchedule());
       processMap.put("getSchedules", new getSchedules());
       processMap.put("getNextScheduledRunTime", new getNextScheduledRunTime());
+      processMap.put("storeRuntimeArguments", new storeRuntimeArguments());
       return processMap;
     }
 
@@ -2109,7 +2180,31 @@ public class AppFabricService {
 
       protected getNextScheduledRunTime_result getResult(I iface, getNextScheduledRunTime_args args) throws org.apache.thrift.TException {
         getNextScheduledRunTime_result result = new getNextScheduledRunTime_result();
-        result.success = iface.getNextScheduledRunTime(args.token, args.identifier);
+        try {
+          result.success = iface.getNextScheduledRunTime(args.token, args.identifier);
+        } catch (AppFabricServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class storeRuntimeArguments<I extends Iface> extends org.apache.thrift.ProcessFunction<I, storeRuntimeArguments_args> {
+      public storeRuntimeArguments() {
+        super("storeRuntimeArguments");
+      }
+
+      protected storeRuntimeArguments_args getEmptyArgsInstance() {
+        return new storeRuntimeArguments_args();
+      }
+
+      protected storeRuntimeArguments_result getResult(I iface, storeRuntimeArguments_args args) throws org.apache.thrift.TException {
+        storeRuntimeArguments_result result = new storeRuntimeArguments_result();
+        try {
+          iface.storeRuntimeArguments(args.token, args.identifier, args.arguments);
+        } catch (AppFabricServiceException e) {
+          result.e = e;
+        }
         return result;
       }
     }
@@ -21296,6 +21391,7 @@ public class AppFabricService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getNextScheduledRunTime_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -21304,10 +21400,12 @@ public class AppFabricService {
     }
 
     private List<ScheduleRunTime> success; // required
+    private AppFabricServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -21324,6 +21422,8 @@ public class AppFabricService {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // E
+            return E;
           default:
             return null;
         }
@@ -21370,6 +21470,8 @@ public class AppFabricService {
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
               new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ScheduleRunTime.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getNextScheduledRunTime_result.class, metaDataMap);
     }
@@ -21378,10 +21480,12 @@ public class AppFabricService {
     }
 
     public getNextScheduledRunTime_result(
-      List<ScheduleRunTime> success)
+      List<ScheduleRunTime> success,
+      AppFabricServiceException e)
     {
       this();
       this.success = success;
+      this.e = e;
     }
 
     /**
@@ -21395,6 +21499,9 @@ public class AppFabricService {
         }
         this.success = __this__success;
       }
+      if (other.isSetE()) {
+        this.e = new AppFabricServiceException(other.e);
+      }
     }
 
     public getNextScheduledRunTime_result deepCopy() {
@@ -21404,6 +21511,7 @@ public class AppFabricService {
     @Override
     public void clear() {
       this.success = null;
+      this.e = null;
     }
 
     public int getSuccessSize() {
@@ -21444,6 +21552,29 @@ public class AppFabricService {
       }
     }
 
+    public AppFabricServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(AppFabricServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -21454,6 +21585,14 @@ public class AppFabricService {
         }
         break;
 
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((AppFabricServiceException)value);
+        }
+        break;
+
       }
     }
 
@@ -21461,6 +21600,9 @@ public class AppFabricService {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case E:
+        return getE();
 
       }
       throw new IllegalStateException();
@@ -21475,6 +21617,8 @@ public class AppFabricService {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case E:
+        return isSetE();
       }
       throw new IllegalStateException();
     }
@@ -21501,6 +21645,15 @@ public class AppFabricService {
           return false;
       }
 
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
       return true;
     }
 
@@ -21512,6 +21665,11 @@ public class AppFabricService {
       builder.append(present_success);
       if (present_success)
         builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
 
       return builder.toHashCode();
     }
@@ -21530,6 +21688,16 @@ public class AppFabricService {
       }
       if (isSetSuccess()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -21559,6 +21727,14 @@ public class AppFabricService {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
       }
       first = false;
       sb.append(")");
@@ -21622,6 +21798,15 @@ public class AppFabricService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new AppFabricServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -21647,6 +21832,11 @@ public class AppFabricService {
           }
           oprot.writeFieldEnd();
         }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -21668,7 +21858,10 @@ public class AppFabricService {
         if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
@@ -21678,12 +21871,15 @@ public class AppFabricService {
             }
           }
         }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, getNextScheduledRunTime_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
             org.apache.thrift.protocol.TList _list39 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
@@ -21697,6 +21893,1002 @@ public class AppFabricService {
             }
           }
           struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new AppFabricServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class storeRuntimeArguments_args implements org.apache.thrift.TBase<storeRuntimeArguments_args, storeRuntimeArguments_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("storeRuntimeArguments_args");
+
+    private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField ARGUMENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("arguments", org.apache.thrift.protocol.TType.MAP, (short)3);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new storeRuntimeArguments_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new storeRuntimeArguments_argsTupleSchemeFactory());
+    }
+
+    private AuthToken token; // required
+    private ProgramId identifier; // required
+    private Map<String,String> arguments; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      TOKEN((short)1, "token"),
+      IDENTIFIER((short)2, "identifier"),
+      ARGUMENTS((short)3, "arguments");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // TOKEN
+            return TOKEN;
+          case 2: // IDENTIFIER
+            return IDENTIFIER;
+          case 3: // ARGUMENTS
+            return ARGUMENTS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
+      tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
+      tmpMap.put(_Fields.ARGUMENTS, new org.apache.thrift.meta_data.FieldMetaData("arguments", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(storeRuntimeArguments_args.class, metaDataMap);
+    }
+
+    public storeRuntimeArguments_args() {
+    }
+
+    public storeRuntimeArguments_args(
+      AuthToken token,
+      ProgramId identifier,
+      Map<String,String> arguments)
+    {
+      this();
+      this.token = token;
+      this.identifier = identifier;
+      this.arguments = arguments;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public storeRuntimeArguments_args(storeRuntimeArguments_args other) {
+      if (other.isSetToken()) {
+        this.token = new AuthToken(other.token);
+      }
+      if (other.isSetIdentifier()) {
+        this.identifier = new ProgramId(other.identifier);
+      }
+      if (other.isSetArguments()) {
+        Map<String,String> __this__arguments = new HashMap<String,String>();
+        for (Map.Entry<String, String> other_element : other.arguments.entrySet()) {
+
+          String other_element_key = other_element.getKey();
+          String other_element_value = other_element.getValue();
+
+          String __this__arguments_copy_key = other_element_key;
+
+          String __this__arguments_copy_value = other_element_value;
+
+          __this__arguments.put(__this__arguments_copy_key, __this__arguments_copy_value);
+        }
+        this.arguments = __this__arguments;
+      }
+    }
+
+    public storeRuntimeArguments_args deepCopy() {
+      return new storeRuntimeArguments_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.token = null;
+      this.identifier = null;
+      this.arguments = null;
+    }
+
+    public AuthToken getToken() {
+      return this.token;
+    }
+
+    public void setToken(AuthToken token) {
+      this.token = token;
+    }
+
+    public void unsetToken() {
+      this.token = null;
+    }
+
+    /** Returns true if field token is set (has been assigned a value) and false otherwise */
+    public boolean isSetToken() {
+      return this.token != null;
+    }
+
+    public void setTokenIsSet(boolean value) {
+      if (!value) {
+        this.token = null;
+      }
+    }
+
+    public ProgramId getIdentifier() {
+      return this.identifier;
+    }
+
+    public void setIdentifier(ProgramId identifier) {
+      this.identifier = identifier;
+    }
+
+    public void unsetIdentifier() {
+      this.identifier = null;
+    }
+
+    /** Returns true if field identifier is set (has been assigned a value) and false otherwise */
+    public boolean isSetIdentifier() {
+      return this.identifier != null;
+    }
+
+    public void setIdentifierIsSet(boolean value) {
+      if (!value) {
+        this.identifier = null;
+      }
+    }
+
+    public int getArgumentsSize() {
+      return (this.arguments == null) ? 0 : this.arguments.size();
+    }
+
+    public void putToArguments(String key, String val) {
+      if (this.arguments == null) {
+        this.arguments = new HashMap<String,String>();
+      }
+      this.arguments.put(key, val);
+    }
+
+    public Map<String,String> getArguments() {
+      return this.arguments;
+    }
+
+    public void setArguments(Map<String,String> arguments) {
+      this.arguments = arguments;
+    }
+
+    public void unsetArguments() {
+      this.arguments = null;
+    }
+
+    /** Returns true if field arguments is set (has been assigned a value) and false otherwise */
+    public boolean isSetArguments() {
+      return this.arguments != null;
+    }
+
+    public void setArgumentsIsSet(boolean value) {
+      if (!value) {
+        this.arguments = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case TOKEN:
+        if (value == null) {
+          unsetToken();
+        } else {
+          setToken((AuthToken)value);
+        }
+        break;
+
+      case IDENTIFIER:
+        if (value == null) {
+          unsetIdentifier();
+        } else {
+          setIdentifier((ProgramId)value);
+        }
+        break;
+
+      case ARGUMENTS:
+        if (value == null) {
+          unsetArguments();
+        } else {
+          setArguments((Map<String,String>)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case TOKEN:
+        return getToken();
+
+      case IDENTIFIER:
+        return getIdentifier();
+
+      case ARGUMENTS:
+        return getArguments();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case TOKEN:
+        return isSetToken();
+      case IDENTIFIER:
+        return isSetIdentifier();
+      case ARGUMENTS:
+        return isSetArguments();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof storeRuntimeArguments_args)
+        return this.equals((storeRuntimeArguments_args)that);
+      return false;
+    }
+
+    public boolean equals(storeRuntimeArguments_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_token = true && this.isSetToken();
+      boolean that_present_token = true && that.isSetToken();
+      if (this_present_token || that_present_token) {
+        if (!(this_present_token && that_present_token))
+          return false;
+        if (!this.token.equals(that.token))
+          return false;
+      }
+
+      boolean this_present_identifier = true && this.isSetIdentifier();
+      boolean that_present_identifier = true && that.isSetIdentifier();
+      if (this_present_identifier || that_present_identifier) {
+        if (!(this_present_identifier && that_present_identifier))
+          return false;
+        if (!this.identifier.equals(that.identifier))
+          return false;
+      }
+
+      boolean this_present_arguments = true && this.isSetArguments();
+      boolean that_present_arguments = true && that.isSetArguments();
+      if (this_present_arguments || that_present_arguments) {
+        if (!(this_present_arguments && that_present_arguments))
+          return false;
+        if (!this.arguments.equals(that.arguments))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_token = true && (isSetToken());
+      builder.append(present_token);
+      if (present_token)
+        builder.append(token);
+
+      boolean present_identifier = true && (isSetIdentifier());
+      builder.append(present_identifier);
+      if (present_identifier)
+        builder.append(identifier);
+
+      boolean present_arguments = true && (isSetArguments());
+      builder.append(present_arguments);
+      if (present_arguments)
+        builder.append(arguments);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(storeRuntimeArguments_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      storeRuntimeArguments_args typedOther = (storeRuntimeArguments_args)other;
+
+      lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetToken()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.token, typedOther.token);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetIdentifier()).compareTo(typedOther.isSetIdentifier());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetIdentifier()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.identifier, typedOther.identifier);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetArguments()).compareTo(typedOther.isSetArguments());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetArguments()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.arguments, typedOther.arguments);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("storeRuntimeArguments_args(");
+      boolean first = true;
+
+      sb.append("token:");
+      if (this.token == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.token);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("identifier:");
+      if (this.identifier == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.identifier);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("arguments:");
+      if (this.arguments == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.arguments);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class storeRuntimeArguments_argsStandardSchemeFactory implements SchemeFactory {
+      public storeRuntimeArguments_argsStandardScheme getScheme() {
+        return new storeRuntimeArguments_argsStandardScheme();
+      }
+    }
+
+    private static class storeRuntimeArguments_argsStandardScheme extends StandardScheme<storeRuntimeArguments_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, storeRuntimeArguments_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // TOKEN
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.token = new AuthToken();
+                struct.token.read(iprot);
+                struct.setTokenIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // IDENTIFIER
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.identifier = new ProgramId();
+                struct.identifier.read(iprot);
+                struct.setIdentifierIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // ARGUMENTS
+              if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
+                {
+                  org.apache.thrift.protocol.TMap _map42 = iprot.readMapBegin();
+                  struct.arguments = new HashMap<String,String>(2*_map42.size);
+                  for (int _i43 = 0; _i43 < _map42.size; ++_i43)
+                  {
+                    String _key44; // optional
+                    String _val45; // required
+                    _key44 = iprot.readString();
+                    _val45 = iprot.readString();
+                    struct.arguments.put(_key44, _val45);
+                  }
+                  iprot.readMapEnd();
+                }
+                struct.setArgumentsIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, storeRuntimeArguments_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.token != null) {
+          oprot.writeFieldBegin(TOKEN_FIELD_DESC);
+          struct.token.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.identifier != null) {
+          oprot.writeFieldBegin(IDENTIFIER_FIELD_DESC);
+          struct.identifier.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.arguments != null) {
+          oprot.writeFieldBegin(ARGUMENTS_FIELD_DESC);
+          {
+            oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, struct.arguments.size()));
+            for (Map.Entry<String, String> _iter46 : struct.arguments.entrySet())
+            {
+              oprot.writeString(_iter46.getKey());
+              oprot.writeString(_iter46.getValue());
+            }
+            oprot.writeMapEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class storeRuntimeArguments_argsTupleSchemeFactory implements SchemeFactory {
+      public storeRuntimeArguments_argsTupleScheme getScheme() {
+        return new storeRuntimeArguments_argsTupleScheme();
+      }
+    }
+
+    private static class storeRuntimeArguments_argsTupleScheme extends TupleScheme<storeRuntimeArguments_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, storeRuntimeArguments_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetToken()) {
+          optionals.set(0);
+        }
+        if (struct.isSetIdentifier()) {
+          optionals.set(1);
+        }
+        if (struct.isSetArguments()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
+        if (struct.isSetToken()) {
+          struct.token.write(oprot);
+        }
+        if (struct.isSetIdentifier()) {
+          struct.identifier.write(oprot);
+        }
+        if (struct.isSetArguments()) {
+          {
+            oprot.writeI32(struct.arguments.size());
+            for (Map.Entry<String, String> _iter47 : struct.arguments.entrySet())
+            {
+              oprot.writeString(_iter47.getKey());
+              oprot.writeString(_iter47.getValue());
+            }
+          }
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, storeRuntimeArguments_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(3);
+        if (incoming.get(0)) {
+          struct.token = new AuthToken();
+          struct.token.read(iprot);
+          struct.setTokenIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.identifier = new ProgramId();
+          struct.identifier.read(iprot);
+          struct.setIdentifierIsSet(true);
+        }
+        if (incoming.get(2)) {
+          {
+            org.apache.thrift.protocol.TMap _map48 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.arguments = new HashMap<String,String>(2*_map48.size);
+            for (int _i49 = 0; _i49 < _map48.size; ++_i49)
+            {
+              String _key50; // optional
+              String _val51; // required
+              _key50 = iprot.readString();
+              _val51 = iprot.readString();
+              struct.arguments.put(_key50, _val51);
+            }
+          }
+          struct.setArgumentsIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class storeRuntimeArguments_result implements org.apache.thrift.TBase<storeRuntimeArguments_result, storeRuntimeArguments_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("storeRuntimeArguments_result");
+
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new storeRuntimeArguments_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new storeRuntimeArguments_resultTupleSchemeFactory());
+    }
+
+    private AppFabricServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(storeRuntimeArguments_result.class, metaDataMap);
+    }
+
+    public storeRuntimeArguments_result() {
+    }
+
+    public storeRuntimeArguments_result(
+      AppFabricServiceException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public storeRuntimeArguments_result(storeRuntimeArguments_result other) {
+      if (other.isSetE()) {
+        this.e = new AppFabricServiceException(other.e);
+      }
+    }
+
+    public storeRuntimeArguments_result deepCopy() {
+      return new storeRuntimeArguments_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public AppFabricServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(AppFabricServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((AppFabricServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof storeRuntimeArguments_result)
+        return this.equals((storeRuntimeArguments_result)that);
+      return false;
+    }
+
+    public boolean equals(storeRuntimeArguments_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(storeRuntimeArguments_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      storeRuntimeArguments_result typedOther = (storeRuntimeArguments_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("storeRuntimeArguments_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class storeRuntimeArguments_resultStandardSchemeFactory implements SchemeFactory {
+      public storeRuntimeArguments_resultStandardScheme getScheme() {
+        return new storeRuntimeArguments_resultStandardScheme();
+      }
+    }
+
+    private static class storeRuntimeArguments_resultStandardScheme extends StandardScheme<storeRuntimeArguments_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, storeRuntimeArguments_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new AppFabricServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, storeRuntimeArguments_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class storeRuntimeArguments_resultTupleSchemeFactory implements SchemeFactory {
+      public storeRuntimeArguments_resultTupleScheme getScheme() {
+        return new storeRuntimeArguments_resultTupleScheme();
+      }
+    }
+
+    private static class storeRuntimeArguments_resultTupleScheme extends TupleScheme<storeRuntimeArguments_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, storeRuntimeArguments_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetE()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, storeRuntimeArguments_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.e = new AppFabricServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
         }
       }
     }

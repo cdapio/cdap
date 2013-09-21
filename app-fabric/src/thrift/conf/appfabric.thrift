@@ -130,10 +130,14 @@ struct ProgramRunRecord {
    1: string id
  }
 
+ /**
+  * Scheduled Runtime.
+  */
  struct ScheduleRunTime {
    1: ScheduleId id,
    2: i64 time,
  }
+
 
 /**
  * Program Service for managing flows. 
@@ -276,8 +280,11 @@ service AppFabricService {
    /**
     * Get next scheduled run time.
     */
-    list<ScheduleRunTime> getNextScheduledRunTime(1:AuthToken token,
-                                             2:ProgramId identifier)
+    list<ScheduleRunTime> getNextScheduledRunTime(1:AuthToken token, 2: ProgramId identifier)
+      throws (1: AppFabricServiceException e),
 
+    void storeRuntimeArguments(1: AuthToken token, 2: ProgramId identifier,
+                               3: map<string, string> arguments)
+           throws (1: AppFabricServiceException e),
 
 }

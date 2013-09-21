@@ -28,6 +28,9 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Scheduled Runtime.
+ */
 public class ScheduleRunTime implements org.apache.thrift.TBase<ScheduleRunTime, ScheduleRunTime._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ScheduleRunTime");
 

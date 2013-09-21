@@ -169,10 +169,10 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
 
   private TriggerStatus readTrigger(TriggerKey key) throws Exception {
     byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.toString());
+    col[0] = Bytes.toBytes(key.getName().toString());
     OperationResult<Map<byte[], byte[]>> result = table.get(TRIGGER_KEY, col);
     byte[] bytes = null;
-    if (result.isEmpty()){
+    if (!result.isEmpty()){
       bytes = result.getValue().get(col[0]);
     }
     if (bytes != null){
@@ -189,7 +189,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
-    cols[0] = Bytes.toBytes(trigger.getKey().toString());
+    cols[0] = Bytes.toBytes(trigger.getKey().getName().toString());
     values[0] = SerializationUtils.serialize(new TriggerStatus(trigger, state));
     table.put(TRIGGER_KEY, cols, values);
   }

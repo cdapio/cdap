@@ -1146,6 +1146,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return r;
   }
 
+  @Override
+  public void storeRuntimeArguments(AuthToken token, ProgramId identifier, Map<String, String> arguments)
+                                    throws AppFabricServiceException, TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    identifier.setType(identifier.getType());
+    try {
+      store.storeRunArguments(programId, arguments);
+    } catch (OperationException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw new AppFabricServiceException(e.getMessage());
+    }
+  }
+
   /**
    * Deletes metrics for a given account.
    *
