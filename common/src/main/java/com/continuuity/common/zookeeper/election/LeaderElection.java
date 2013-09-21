@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -99,28 +100,24 @@ public final class LeaderElection implements Cancellable {
     final String path = String.format("%s/%s-", zkFolderPath, guid);
     LOG.debug("Registering for election {} with path {}", zkFolderPath, path);
 
+    // Create needs to be sync operation to prevent multiple nodes getting created due to race condition.
     OperationFuture<String> createFuture = zkClient.create(path, getNodeData(), CreateMode.EPHEMERAL_SEQUENTIAL, true);
-    Futures.addCallback(createFuture, wrapCallback(new FutureCallback<String>() {
 
-      @Override
-      public void onSuccess(String result) {
-        LOG.debug("Created zk node {}", result);
-        zkNodePath = result;
+    try {
+      String result = createFuture.get();
+      LOG.debug("Created zk node {}", result);
+      zkNodePath = result;
 
-        if (cancelled) {
-          deleteNode();
-        } else {
-          runElection();
-        }
-      }
+      runElection();
 
-      @Override
-      public void onFailure(Throwable t) {
-        LOG.error("Got exception during node creation for folder {}", path, t);
-        zkNodePath = null;
-        register();
-      }
-    }));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+
+    } catch (ExecutionException e) {
+      LOG.error("Got exception during node creation for folder {}", path, e);
+      zkNodePath = null;
+      register();
+    }
   }
 
   private void runElection() {
