@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- *
+ * An implementation of {@link Request.EntityWriter} for sending request body from
+ * a {@link ChannelBuffer}.
  */
 public final class ChannelBufferEntityWriter implements Request.EntityWriter {
 
