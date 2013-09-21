@@ -505,9 +505,17 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(workflowId);
     id.setType(EntityType.WORKFLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
     try {
       Map<String, String> args = decodeRuntimeArguments(request);
-      LOG.info(args.toString());
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      client.storeRuntimeArguments(token, id, args);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
