@@ -43,7 +43,7 @@ public final class ExecutorThreadPool implements ThreadPool {
 
   @Override
   public int getPoolSize() {
-    return executor.getPoolSize();
+    return MAX_THREAD_POOL_SIZE;
   }
 
 
