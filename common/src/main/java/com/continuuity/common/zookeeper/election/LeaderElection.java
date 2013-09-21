@@ -6,6 +6,9 @@ import com.continuuity.weave.zookeeper.NodeChildren;
 import com.continuuity.weave.zookeeper.OperationFuture;
 import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import org.apache.zookeeper.CreateMode;
@@ -64,6 +67,7 @@ public final class LeaderElection implements Cancellable {
     executor.execute(new Runnable() {
       @Override
       public void run() {
+        LOG.info("Cancelling {}", zkNodePath == null ? zkFolderPath + "/" + guid : zkNodePath);
         if (!cancelled) {
           cancelled = true;
           deleteNode();
@@ -102,14 +106,19 @@ public final class LeaderElection implements Cancellable {
       public void onSuccess(String result) {
         LOG.debug("Created zk node {}", result);
         zkNodePath = result;
-        runElection();
+
+        if (cancelled) {
+          deleteNode();
+        } else {
+          runElection();
+        }
       }
 
       @Override
       public void onFailure(Throwable t) {
         LOG.error("Got exception during node creation for folder {}", path, t);
         zkNodePath = null;
-        runElection();
+        register();
       }
     }));
   }
@@ -129,23 +138,17 @@ public final class LeaderElection implements Cancellable {
           return;
         }
 
-        List<String> childPaths = result.getChildren();
+        NodeFunction nodeFunction = new NodeFunction();
+        List<ZkNode> childPaths = Lists.newArrayList(Iterables.transform(result.getChildren(), nodeFunction));
         Collections.sort(childPaths);
 
-        int pathIdx = (zkNodePath == null)
-                        ? -1
-                        : Collections.binarySearch(childPaths, zkNodePath.substring(zkNodePath.indexOf('/') + 1));
-        if (pathIdx < 0) {
-          int idx = 0;
-          for (String path : childPaths) {
-            if (path.startsWith(guid)) {
-              zkNodePath = path;
-              pathIdx = idx;
-            }
-            idx++;
-          }
+        int pathIdx = -1;
+        if (nodeFunction.getSelfNode() != null) {
+          zkNodePath = zkFolderPath + "/" +  nodeFunction.getSelfNode().getPath();
+          pathIdx = Collections.binarySearch(childPaths, nodeFunction.getSelfNode());
         }
-        // If still cannot find the node supposed to be created by this participant, restart from beginning.
+
+        // If cannot find the node supposed to be created by this participant, restart from beginning.
         if (pathIdx < 0) {
           register();
           return;
@@ -158,7 +161,7 @@ public final class LeaderElection implements Cancellable {
         }
 
         // Watch for deletion of largest node smaller than current node
-        watchNode(zkFolderPath + "/" + childPaths.get(pathIdx - 1), new LowerNodeWatcher());
+        watchNode(zkFolderPath + "/" + childPaths.get(pathIdx - 1).getPath(), new LowerNodeWatcher());
       }
 
       @Override
@@ -187,6 +190,7 @@ public final class LeaderElection implements Cancellable {
       @Override
       public void onSuccess(Stat result) {
         becomeFollower();
+        LOG.debug("{} watching {}", zkNodePath, nodePath);
       }
 
       @Override
@@ -307,6 +311,73 @@ public final class LeaderElection implements Cancellable {
           expired = true;
         break;
       }
+    }
+  }
+
+  /**
+   * Represents a zookeeper sequence path with path and sequence id.
+   */
+  private static final class ZkNode implements Comparable<ZkNode> {
+    private final String path;
+    private final long seqId;
+
+    private ZkNode(String path) {
+      this.path = path;
+      this.seqId = Integer.parseInt(path.substring(path.lastIndexOf('-') + 1));
+    }
+
+    public long getSeqId() {
+      return seqId;
+    }
+
+    public String getPath() {
+      return path;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      ZkNode zkNode = (ZkNode) o;
+
+      return seqId == zkNode.seqId;
+
+    }
+
+    @Override
+    public int hashCode() {
+      return (int) (seqId ^ (seqId >>> 32));
+    }
+
+    @Override
+    public int compareTo(ZkNode zkNode) {
+      return seqId < zkNode.getSeqId() ? -1 : seqId > zkNode.getSeqId() ? 1 : 0;
+    }
+  }
+
+  /**
+   * Converts zookeeper sequence path into ZkNode, and also remembers the ZkNode for self.
+   */
+  private final class NodeFunction implements Function<String, ZkNode> {
+    private ZkNode selfNode;
+
+    @Override
+    public ZkNode apply(String input) {
+      ZkNode zkNode = new ZkNode(input);
+      if (input.startsWith(guid)) {
+        selfNode = zkNode;
+      }
+
+      return zkNode;
+    }
+
+    public ZkNode getSelfNode() {
+      return selfNode;
     }
   }
 }
