@@ -151,6 +151,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       for (FlowletProcessEntry<?> entry : processList) {
         if (!entry.shouldProcess()) {
+          processQueue.offer(entry);
           continue;
         }
 
@@ -183,7 +184,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             inflight.getAndIncrement();
           }
 
-          // Call the process method and commit the transaction
+          // Call the process method and commit the transaction. The current process entry will put
+          // back to queue in the postProcess method (either a retry copy or itself).
           ProcessMethod.ProcessResult result =
             processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
           postProcess(processMethodCallback(processQueue, entry, input), txContext, input, result);
