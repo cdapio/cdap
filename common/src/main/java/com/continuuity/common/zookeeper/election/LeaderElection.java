@@ -88,6 +88,11 @@ public final class LeaderElection implements Cancellable {
     return hostname.getBytes(Charsets.UTF_8);
   }
 
+  /**
+   * Creates an ephemeral, sequential node in zookeeper to represent this participant in the election.
+   * This method is only called from {@link #runElection()} (after verifying the node does not exist in zookeeper) to
+   * prevent multiple node creation due to race.
+   */
   private void register() {
     if (cancelled) {
       return;
@@ -110,6 +115,7 @@ public final class LeaderElection implements Cancellable {
       runElection();
 
     } catch (InterruptedException e) {
+      LOG.error("Got exception during node creation for folder {}", path, e);
       Thread.currentThread().interrupt();
 
     } catch (ExecutionException e) {
@@ -124,14 +130,14 @@ public final class LeaderElection implements Cancellable {
       return;
     }
 
-    LOG.debug("Running election for {}", zkNodePath);
+    LOG.debug("Running election for {}", zkNodePath == null ? zkFolderPath + "/" + guid : zkNodePath);
     state = State.IN_PROGRESS;
 
     OperationFuture<NodeChildren> childrenFuture = zkClient.getChildren(zkFolderPath);
     Futures.addCallback(childrenFuture, wrapCallback(new FutureCallback<NodeChildren>() {
       @Override
       public void onSuccess(NodeChildren result) {
-        if (cancelled) {
+        if (cancelled && state != State.IN_PROGRESS) {
           return;
         }
 
@@ -188,6 +194,7 @@ public final class LeaderElection implements Cancellable {
   }
 
   private void watchNode(final String nodePath, Watcher watcher) {
+    state = State.FOLLOWER;
     OperationFuture<Stat> watchFuture = zkClient.exists(nodePath, watcher);
     Futures.addCallback(watchFuture, wrapCallback(new FutureCallback<Stat>() {
       @Override
@@ -284,34 +291,19 @@ public final class LeaderElection implements Cancellable {
    * Watches zookeeper connection.
    */
   private class ConnectionWatcher implements Watcher {
-    private boolean expired;
-    private boolean disconnected;
 
     @Override
     public void process(WatchedEvent event) {
       switch (event.getState()) {
         case Disconnected:
-          disconnected = true;
+          LOG.info("ZK session disconnected: {} for {}", zkClient.getConnectString(), zkFolderPath);
           if (state == State.LEADER) {
             becomeFollower();
           }
         break;
         case SyncConnected:
-          boolean runElection = disconnected && !expired && state != State.IN_PROGRESS;
-          boolean runRegister = disconnected && expired && state != State.IN_PROGRESS;
-          disconnected = false;
-          expired = false;
-          if (runElection) {
-            state = State.IN_PROGRESS;
-            runElection();
-          } else if (runRegister) {
-            runElection();
-          }
-
-        break;
-        case Expired:
-          LOG.info("ZK session expired: {} for {}", zkClient.getConnectString(), zkFolderPath);
-          expired = true;
+          LOG.info("ZK session connected: {} for {}", zkClient.getConnectString(), zkFolderPath);
+          runElection();
         break;
       }
     }
