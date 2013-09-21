@@ -140,8 +140,8 @@ public class TableHandlerTest {
     assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/row/" + row,
                 "{\"\"}"); // wrong json
 
-    // test errors for delete
-    assertDelete(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/row/" + row); // no columns
+    // we can delete whole row by providing no columns
+    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row);
     // specified
     assertDelete(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/row/" + row + "?columns=a"); // non-existent table
     assertDelete(urlPrefix, HttpStatus.SC_METHOD_NOT_ALLOWED, "/tables/" + t.getName()); // no/empty row key

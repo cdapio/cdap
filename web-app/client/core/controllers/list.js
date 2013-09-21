@@ -35,6 +35,7 @@ define([], function () {
 		}.property('entityType'),
 
 		load: function (type) {
+
 			this.clearTriggers(true);
 			var self = this;
 			this.set('entityType', type);

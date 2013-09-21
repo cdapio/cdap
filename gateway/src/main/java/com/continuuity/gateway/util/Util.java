@@ -79,7 +79,7 @@ public class Util {
       }
     }
     // make sure there is exactly one flume collector
-    if (connectorNames.size() == 0) {
+    if (connectorNames.isEmpty()) {
       LOG.error("No connector of type " + connectorBaseClass.getName() +
                   " found in configuration.");
       return null;
