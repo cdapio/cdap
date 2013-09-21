@@ -19,6 +19,8 @@
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
   <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.taboverride.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.cookie.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
 
@@ -633,11 +635,6 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-          <div class="popup-inject-wrapper" style="line-height: 10px;color: #CA6767;">
-            {{view C.Embed.Injector placeholder="Sends to all attached processors"}}
-            <button class="btn" {{action "inject" on="click"}}>Inject</button>
-          </div>
-
           <div class="popup-icon-stream"></div>
           <h1 class="popup-title"><a {{bindAttr href="controller.model.href"}}>{{model.name}}</a></h1>
 
@@ -657,6 +654,16 @@
             </tr>
             </tbody>
           </table>
+
+          <div class="popup-inject-wrapper">
+            {{view C.Embed.Injector placeholder="Events injected here will be consumed by all attached programs."}}
+            <button class="btn" style="float: right;" {{action "inject" on="click"}}>Inject</button>
+            <span class="sparkline-box-title">
+            {{view Em.Checkbox checkedBinding=controller.injectOnEnter}} Inject by pressing Enter
+            </span>
+
+          </div>
+
         </div>
       </div>
     </div>
