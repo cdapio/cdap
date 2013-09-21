@@ -78,8 +78,6 @@ define([], function () {
 
 		setPref: function () {
 
-			console.log('setting to', this.get('injectOnEnter'));
-
 			C.Util.Cookie('injectOnEnter', this.get('injectOnEnter'));
 
 		}.observes('injectOnEnter'),
