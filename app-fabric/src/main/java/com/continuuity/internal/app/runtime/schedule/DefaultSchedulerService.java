@@ -207,7 +207,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-      LOG.info("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
+      LOG.debug("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
                                                        context.getTrigger().getKey().toString());
 
       String key = context.getJobDetail().getKey().getName();
