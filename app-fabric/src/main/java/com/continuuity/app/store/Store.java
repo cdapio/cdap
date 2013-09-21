@@ -98,6 +98,7 @@ public interface Store {
 
   /**
    * Returns location of the application archive.
+   *
    * @param id application id
    * @return application archive location
    * @throws OperationException
@@ -106,6 +107,7 @@ public interface Store {
 
   /**
    * Sets number of instances of specific flowlet.
+   *
    * @param id flow id
    * @param flowletId flowlet id
    * @param count new number of instances
@@ -115,6 +117,7 @@ public interface Store {
 
   /**
    * Gets number of instances of specific flowlet.
+   *
    * @param id flow id
    * @param flowletId flowlet id
    * @throws OperationException
@@ -129,6 +132,7 @@ public interface Store {
 
   /**
    * Removes all program under the given application and also the application itself.
+   *
    * @param id Application id
    * @return An {@link ApplicationSpecification} of the application being removed.
    * @throws OperationException
@@ -137,18 +141,21 @@ public interface Store {
 
   /**
    * Removes all applications (with programs) of the given account.
+   *
    * @param id account id whose applications to remove
    */
   void removeAllApplications(Id.Account id) throws OperationException;
 
   /**
    * Remove all metadata associated with account.
+   *
    * @param id account id whose items to remove
    */
   void removeAll(Id.Account id) throws OperationException;
 
   /**
    * Store the user arguments needed in the run-time.
+   *
    * @param programId id of program
    * @param arguments Map of key value arguments
    * @throws OperationException
@@ -157,6 +164,7 @@ public interface Store {
 
   /**
    * Get run time arguments for a program.
+   *
    * @param programId id of the program.
    * @return Map of key, value pairs
    * @throws OperationException
