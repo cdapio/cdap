@@ -84,16 +84,16 @@ public class TxBenchmark extends OpexBenchmark {
             @Override
             public long runOnce(long iteration) throws BenchmarkException {
               try {
-                Transaction tx = opex.startShort();
+                Transaction tx = txClient.startShort();
                 if (sleep > 0) {
                   TimeUnit.MICROSECONDS.sleep(sleep);
                 } else if (sleep == 0) {
                   Thread.yield();
                 }
-                if (opex.canCommit(tx, changes)) {
-                  if (!opex.commit(tx)) {
+                if (txClient.canCommit(tx, changes)) {
+                  if (!txClient.commit(tx)) {
                     LOG.info("Transaction failed.");
-                    opex.abort(tx);
+                    txClient.abort(tx);
                   }
                 }
                 return 1;

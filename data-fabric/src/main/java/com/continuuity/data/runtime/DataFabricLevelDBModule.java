@@ -7,12 +7,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.Serializing2MetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -87,12 +83,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
   @Override
   public void configure() {
 
-    // Bind our implementations
-
-    // This is the primary mapping of the data fabric to underlying storage
-    bind(OVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
-    bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-
     // bind meta data store
     bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
 
@@ -125,7 +115,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
         .toInstance(cacheSize);
 
     bind(CConfiguration.class)
-      .annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
+      .annotatedWith(Names.named("DataSetAccessorConfig"))
       .toInstance(conf);
   }
 }

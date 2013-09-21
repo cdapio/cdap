@@ -23,7 +23,6 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
   private static final Logger Log =
       LoggerFactory.getLogger(DataSetInstantiator.class);
 
-  // the data fabric (an operation executor and an operation context
   private DataFabric fabric;
 
   /**

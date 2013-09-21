@@ -8,9 +8,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
+import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.weave.api.AbstractWeaveRunnable;
@@ -85,7 +84,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       int instanceId = context.getInstanceId();
 
       DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf);
-      TransactionSystemClient txClient = new TalkingToOpexTxSystemClient(new RemoteOperationExecutor(cConf));
+      TransactionSystemClient txClient = new TransactionServiceClient(cConf);
 
       logSaver = new LogSaver(dataSetAccessor, txClient, instanceId, hConf, cConf);
 

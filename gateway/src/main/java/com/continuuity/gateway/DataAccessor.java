@@ -1,7 +1,6 @@
 package com.continuuity.gateway;
 
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.weave.filesystem.LocationFactory;
 
@@ -12,19 +11,6 @@ import com.continuuity.weave.filesystem.LocationFactory;
  * common way to get the operations executor
  */
 public interface DataAccessor {
-  /**
-   * Set the operations executor to use for all data fabric access.
-   *
-   * @param executor the operation executor to use
-   */
-  public void setExecutor(OperationExecutor executor);
-
-  /*
-   * Get the executor to use for all data fabric access.
-   * @return the operations executor to use
-   */
-  public OperationExecutor getExecutor();
-
   /**
    * Set the location factory to use for data fabric access.
    *

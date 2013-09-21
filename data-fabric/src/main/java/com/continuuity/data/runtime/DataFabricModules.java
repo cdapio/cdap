@@ -8,11 +8,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.Serializing2MetaDataStore;
-import com.continuuity.data.operation.executor.NoOperationExecutor;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -54,24 +49,11 @@ public class DataFabricModules extends RuntimeModule {
     this.hbaseConf = hbaseConf;
   }
 
-  public Module getNoopModules() {
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(OperationExecutor.class).
-            to(NoOperationExecutor.class).in(Singleton.class);
-      }
-    };
-  }
-
   @Override
   public Module getInMemoryModules() {
       return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-        bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
-
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
         bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
@@ -82,7 +64,7 @@ public class DataFabricModules extends RuntimeModule {
 
         // We don't need caching for in-memory
         cConf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
-        bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
+        bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig"))
           .toInstance(cConf);
 
         install(new FactoryModuleBuilder()

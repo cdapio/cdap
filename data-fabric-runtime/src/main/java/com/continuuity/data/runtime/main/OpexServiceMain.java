@@ -8,7 +8,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Copyright;
-import com.continuuity.data.operation.executor.remote.OperationExecutorService;
+import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -36,7 +36,6 @@ public class OpexServiceMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(OpexServiceMain.class);
 
-  private static final int NOOP = 0;
   private static final int START = 1;
   private static final int STOP = 2;
 
@@ -99,14 +98,11 @@ public class OpexServiceMain {
       new LocationRuntimeModule().getDistributedModules(),
       module);
 
-    // start an opex service
-    final OperationExecutorService opexService =
-      injector.getInstance(OperationExecutorService.class);
+    // start a tx server
+    final TransactionService txService = injector.getInstance(TransactionService.class);
 
     if (START == command) {
       final InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
-      txManager.init();
-
       Runtime.getRuntime().addShutdownHook(new Thread() {
         @Override
         public void run() {
@@ -135,14 +131,14 @@ public class OpexServiceMain {
 
       // start it. start is blocking, hence main won't terminate
       try {
-        opexService.start(new String[] { }, configuration);
+        txService.start();
       } catch (Exception e) {
         System.err.println("Failed to start service: " + e.getMessage());
       }
     } else {
       Copyright.print(System.out);
       System.out.println("Stopping Operation Executor Service...");
-      opexService.stop(true);
+      txService.stop();
     }
   }
 }

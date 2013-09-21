@@ -41,7 +41,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static com.continuuity.data.operation.executor.remote.Constants.CFG_ZOOKEEPER_ENSEMBLE;
+import static com.continuuity.data2.transaction.distributed.Constants.CFG_ZOOKEEPER_ENSEMBLE;
 
 /**
  * WeaveRunnable to run Gateway through weave.

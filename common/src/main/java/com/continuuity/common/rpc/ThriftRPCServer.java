@@ -10,7 +10,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.apache.thrift.TProcessor;
-import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TFramedTransport;
@@ -152,7 +152,7 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
     TThreadedSelectorServer.Args args =
       new TThreadedSelectorServer.Args(new TNonblockingServerSocket(listenOn))
         .selectorThreads(ioThreads)
-        .protocolFactory(new TCompactProtocol.Factory())
+        .protocolFactory(new TBinaryProtocol.Factory())
         .transportFactory(new TFramedTransport.Factory())
         .processor(processor)
         .executorService(executor);

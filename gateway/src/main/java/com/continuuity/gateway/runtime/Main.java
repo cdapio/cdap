@@ -9,7 +9,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.data.operation.executor.remote.Constants;
+import com.continuuity.data2.transaction.distributed.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.internal.app.store.MDSStoreFactory;

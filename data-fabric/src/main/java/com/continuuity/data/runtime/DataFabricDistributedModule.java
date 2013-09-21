@@ -6,9 +6,7 @@ import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.Serializing2MetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
+import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -22,7 +20,6 @@ import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -81,16 +78,6 @@ public class DataFabricDistributedModule extends AbstractModule {
     Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
     Log.info("Table Handle is " + ovcTableHandle.getName());
 
-    // Bind our implementations
-
-    // Bind remote operation executor
-    bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
-
-    // For data fabric, bind to Omid and HBase
-    bind(OperationExecutor.class).annotatedWith(Names.named("DataFabricOperationExecutor"))
-        .to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-    bind(OVCTableHandle.class).to(ovcTableHandle);
-
     // Bind HBase configuration into ovctable
     bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);
 
@@ -98,8 +85,8 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(conf);
 
     // Bind our configurations
-    bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(conf);
-    bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerClientConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
 
     // bind meta data store
     bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
@@ -112,7 +99,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     }
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);
-    bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
+    bind(TransactionSystemClient.class).to(TransactionServiceClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
 

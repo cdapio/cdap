@@ -1,8 +1,7 @@
 package com.continuuity.performance.opex;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.performance.benchmark.BenchmarkException;
 import com.continuuity.performance.benchmark.SimpleBenchmark;
 import org.slf4j.Logger;
@@ -17,19 +16,18 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
 
   private static final Logger LOG = LoggerFactory.getLogger(OpexBenchmark.class);
 
-  OpexProvider opexProvider;
-  OperationExecutor opex;
-  OperationContext opContext = new OperationContext("benchmark");
+  TxProvider txProvider;
+  TransactionSystemClient txClient;
 
   @Override
   public Map<String, String> usage() {
     Map<String, String> usage = super.usage();
-    usage.put("--opex <name>", "To specify the operation executor to use. " +
+    usage.put("--tx <name>", "To specify the tx service to use. " +
         "Valid short values are 'memory', 'remote' and 'hbase'. " +
         "Alternatively, specify the name of a class that implements " +
-        "OpexProvider, and its create() method will be used to obtain the " +
-        "opex.");
-    usage.put("--zk", "For some opex providers, specifies the zookeeper " +
+        "TxProvider, and its create() method will be used to obtain the " +
+        "tx service/client.");
+    usage.put("--zk", "For some tx providers, specifies the zookeeper " +
         "quorum to use.");
     return usage;
   }
@@ -41,48 +39,48 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
     super.configure(config);
 
     // now try to figure out the operation executor
-    String opexName = config.get("opex");
-    if (opexName == null) {
-      throw new BenchmarkException("--opex must be specified.");
+    String txName = config.get("tx");
+    if (txName == null) {
+      throw new BenchmarkException("--tx must be specified.");
     }
-    if ("memory".equals(opexName)) {
-      this.opexProvider = new MemoryOpexProvider();
-    } else if ("hbase".equals(opexName)) {
-      this.opexProvider = new HBaseOpexProvider();
-    } else if ("remote".equals(opexName)) {
-      this.opexProvider = new RemoteOpexProvider();
-    } else if ("service".equals(opexName)) {
-      this.opexProvider = new OpexServiceProvider();
-    } else if ("noop".equals(opexName)) {
-      this.opexProvider = new NoOpexProvider();
+    if ("memory".equals(txName)) {
+      this.txProvider = new InMemoryTxProvider();
+    } else if ("hbase".equals(txName)) {
+      this.txProvider = new HBaseTxProvider();
+    } else if ("remote".equals(txName)) {
+      this.txProvider = new RemoteTxProvider();
+    } else if ("service".equals(txName)) {
+      this.txProvider = new TxServiceProvider();
+    } else if ("noop".equals(txName)) {
+      this.txProvider = new MinimalTxProvider();
     } else {
-      // consider opexName the class name of an opex provider
+      // consider txName the class name of an tx provider
       // if it is not a fully qualified class name, add package to it
-      if (!opexName.startsWith("com.continuuity")) {
-        opexName = this.getClass().getPackage().getName() + "." + opexName;
+      if (!txName.startsWith("com.continuuity")) {
+        txName = this.getClass().getPackage().getName() + "." + txName;
       }
       try {
-        this.opexProvider = (OpexProvider) Class.forName(opexName).newInstance();
+        this.txProvider = (TxProvider) Class.forName(txName).newInstance();
       } catch (Exception e) {
         throw new BenchmarkException(
-            "Cannot instantiate opex provider '" + opexName + "': " +
+            "Cannot instantiate tx provider '" + txName + "': " +
                 e.getMessage());
       }
     }
-    this.opexProvider.configure(config);
+    this.txProvider.configure(config);
   }
 
   @Override
   public void initialize() throws BenchmarkException {
     super.initialize();
-    this.opex = this.opexProvider.create();
+    this.txClient = this.txProvider.create();
   }
 
   @Override
   public void shutdown() {
-    LOG.debug("Shutting down opex provider.");
-    if (this.opex != null) {
-      this.opexProvider.shutdown(this.opex);
+    LOG.debug("Shutting down tx provider.");
+    if (this.txClient != null) {
+      this.txProvider.shutdown(this.txClient);
     }
   }
 }
