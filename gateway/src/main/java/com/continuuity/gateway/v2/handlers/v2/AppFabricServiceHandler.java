@@ -824,15 +824,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  @GET
+  @POST
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
   public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("workflow-id") final String workflowId,
                                 @PathParam("schedule-id") final String scheduleId) {
-
     try {
-
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
       TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
@@ -846,15 +844,14 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
   public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") final String appId,
                                       @PathParam("workflow-id") final String workflowId,
                                       @PathParam("schedule-id") final String scheduleId) {
 
     try {
-
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
       TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
