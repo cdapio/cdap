@@ -772,16 +772,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       List<ScheduleRunTime> runtimes = client.getNextScheduledRunTime(token, id);
-      JsonArray array = new JsonArray();
-
-      for (ScheduleRunTime runtime : runtimes) {
-        JsonObject object = new JsonObject();
-        object.addProperty("time", runtime.getTime());
-        object.addProperty("id", runtime.getId().getId());
-        array.add(object);
-      }
-
-      responder.sendJson(HttpResponseStatus.OK, array);
+      responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (Exception e) {
@@ -812,14 +803,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       List<ScheduleId> schedules = client.getSchedules(token, id);
-      JsonArray array = new JsonArray();
-
-      for (ScheduleId schedule : schedules) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", schedule.getId());
-        array.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, array);
+      responder.sendJson(HttpResponseStatus.OK, schedules);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } catch (Exception e) {

@@ -2,6 +2,7 @@ package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.api.Application;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.app.services.ScheduleId;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.AppWithSchedule;
 import com.continuuity.gateway.apps.wordcount.WordCount;
@@ -238,10 +239,10 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> schedules = new Gson().fromJson(json,
-                                                              new TypeToken<List<Map<String, String>>>(){}.getType());
+    List<ScheduleId> schedules = new Gson().fromJson(json,
+                                                              new TypeToken<List<ScheduleId>>(){}.getType());
     Assert.assertEquals(1, schedules.size());
-    String scheduleId = schedules.get(0).get("id");
+    String scheduleId = schedules.get(0).getId();
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
 
