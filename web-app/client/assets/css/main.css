@@ -31,7 +31,7 @@ a, abbr, acronym, address, big, cite, code,
 del, dfn, em, font, ins, kbd, q, s, samp,
 small, strike, strong, sub, sup, tt, var,
 dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend, textarea,
+fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td {
 	border: 0;
 	font-family: inherit;
@@ -1115,6 +1115,9 @@ a strong {
 	-o-transition:background-position 0.1s linear;
 	transition:background-position 0.1s linear;
 }
+.btn:focus {
+	background-position: 0;
+}
 
 .create-btn {
 	margin: 2px 0px 0px 8px;
@@ -1424,10 +1427,19 @@ a strong {
 	padding: 2px;
 }
 .popup-inject-wrapper {
-	float: right;
-	margin: 0px;
-	padding: 5px 0px;
+	padding: 10px 0px;
+	border-top: 1px solid #ddd;
+	margin-top: 10px;
 }
+#flow-injector-input {
+	width: 616px;
+	max-width: 616px;
+	height: 100px;
+}
+textarea {
+	font-family:monospace;
+}
+
 
 #flowletdummy {
 	width: 104px;
