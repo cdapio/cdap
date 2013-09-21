@@ -1155,7 +1155,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       store.storeRunArguments(programId, arguments);
     } catch (OperationException e) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      LOG.warn("Error storing runtime args {}", e.getMessage(), e);
       throw new AppFabricServiceException(e.getMessage());
     }
   }

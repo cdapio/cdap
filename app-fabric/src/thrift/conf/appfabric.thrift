@@ -283,6 +283,9 @@ service AppFabricService {
     list<ScheduleRunTime> getNextScheduledRunTime(1:AuthToken token, 2: ProgramId identifier)
       throws (1: AppFabricServiceException e),
 
+    /**
+     * Store run time arguments in metadata store.
+     */
     void storeRuntimeArguments(1: AuthToken token, 2: ProgramId identifier,
                                3: map<string, string> arguments)
            throws (1: AppFabricServiceException e),

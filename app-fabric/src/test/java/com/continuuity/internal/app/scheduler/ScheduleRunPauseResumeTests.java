@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Schedule pause and run
+ * Test schedule run, pause and resume.
  */
-public class SchedulePauseResumeTests {
+public class ScheduleRunPauseResumeTests {
 
   @Test
   public void testRunner() throws Exception {
