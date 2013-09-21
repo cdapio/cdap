@@ -92,7 +92,7 @@ define([], function () {
 
 			this.set('injectValue', '');
 			this.HTTP.post('rest', 'streams', streamId, {
-				payload: payload
+				data: payload
 			}, function (response, status) {
 
 				if (response && response.error) {
