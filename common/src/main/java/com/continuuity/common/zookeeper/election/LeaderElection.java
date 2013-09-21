@@ -59,7 +59,7 @@ public final class LeaderElection implements Cancellable {
 
     LOG.info("Using guid {}", guid);
 
-    register();
+    runElection();
     zkClient.addConnectionWatcher(wrapWatcher(new ConnectionWatcher()));
   }
 
@@ -93,7 +93,6 @@ public final class LeaderElection implements Cancellable {
       return;
     }
 
-    state = State.IN_PROGRESS;
     zkNodePath = null;
 
     // Register for election
@@ -116,7 +115,7 @@ public final class LeaderElection implements Cancellable {
     } catch (ExecutionException e) {
       LOG.error("Got exception during node creation for folder {}", path, e);
       zkNodePath = null;
-      register();
+      runElection();
     }
   }
 
@@ -126,6 +125,7 @@ public final class LeaderElection implements Cancellable {
     }
 
     LOG.debug("Running election for {}", zkNodePath);
+    state = State.IN_PROGRESS;
 
     OperationFuture<NodeChildren> childrenFuture = zkClient.getChildren(zkFolderPath);
     Futures.addCallback(childrenFuture, wrapCallback(new FutureCallback<NodeChildren>() {
@@ -163,6 +163,12 @@ public final class LeaderElection implements Cancellable {
 
       @Override
       public void onFailure(Throwable t) {
+        if (t instanceof KeeperException.NoNodeException) {
+          LOG.debug("Got exception during children fetch for {}. Retry.", zkFolderPath, t);
+          register();
+          return;
+        }
+
         LOG.warn("Got exception during children fetch for {}. Retry.", zkFolderPath, t);
         runElection();
       }
@@ -299,7 +305,7 @@ public final class LeaderElection implements Cancellable {
             state = State.IN_PROGRESS;
             runElection();
           } else if (runRegister) {
-            register();
+            runElection();
           }
 
         break;
