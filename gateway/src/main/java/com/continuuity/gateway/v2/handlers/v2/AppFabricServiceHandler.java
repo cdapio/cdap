@@ -789,6 +789,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   * Get list of schedules for a given workflow.
+   */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
   public void workflowSchedules(HttpRequest request, HttpResponder responder,
@@ -824,6 +827,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   * Suspend a workflow schedule.
+   */
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
   public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
@@ -844,6 +850,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   * Resume a workflow schedule.
+   */
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
   public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
