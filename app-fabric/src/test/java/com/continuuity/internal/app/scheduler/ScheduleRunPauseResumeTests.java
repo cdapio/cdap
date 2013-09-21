@@ -92,6 +92,9 @@ public class ScheduleRunPauseResumeTests {
       Assert.assertEquals("val1", argsRead.get("Key1"));
       Assert.assertEquals("val2", argsRead.get("Key2"));
 
+      Map<String, String> emptyArgs = store.getRunArguments(Id.Program.from("Br", "Ba", "d"));
+      Assert.assertEquals(0, emptyArgs.size());
+
     } finally {
       appFabricServer.stopAndWait();
     }

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -49,15 +50,17 @@ public final class ScheduleTaskRunner {
     if (existingRuntimeInfo != null) {
       throw new JobExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
     }
-
+    Map<String, String> userArgs;
     Program program;
     try {
       program =  store.loadProgram(programId, Type.WORKFLOW);
+      userArgs = store.getRunArguments(programId);
+
     } catch (Throwable t) {
       throw new JobExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }
 
-    executeAndBlock(program, new SimpleProgramOptions(programId.getId(), arguments, new BasicArguments()));
+    executeAndBlock(program, new SimpleProgramOptions(programId.getId(), arguments, new BasicArguments(userArgs)));
   }
 
   /**
