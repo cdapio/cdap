@@ -96,7 +96,7 @@ define(['helpers/plumber'], function (Plumber) {
       });
 
       var currentPath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/current';
-      var runtimePath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/nextRuntime';
+      var runtimePath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/nextruntime';
 
       jQuery.getJSON(currentPath, function (res) {
         for (var i = 0; i < self.get('elements.Actions.content').length; i++) {

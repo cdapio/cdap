@@ -38,6 +38,8 @@ import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -75,6 +77,7 @@ public class MDSBasedStore implements Store {
 
   private final CConfiguration configuration;
 
+  private final Gson gson;
   /**
    * We use metaDataStore directly to store user actions history.
    */
@@ -90,6 +93,7 @@ public class MDSBasedStore implements Store {
     this.metadataServiceHelper = new MetadataServiceHelper(metaDataService);
     this.locationFactory = locationFactory;
     this.configuration = configuration;
+    gson = new Gson();
   }
 
   /**
@@ -517,6 +521,45 @@ public class MDSBasedStore implements Store {
     } catch (MetadataServiceException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public void storeRunArguments(Id.Program id, Map<String, String> arguments)  throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry existing = metaDataStore.get(context, id.getAccountId(), id.getApplicationId(),
+                                               FieldTypes.ProgramRun.ARGS, id.getId());
+    if (existing == null) {
+
+      MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), id.getApplicationId(),
+                                              FieldTypes.ProgramRun.ARGS, id.getId());
+      entry.addField(FieldTypes.ProgramRun.ENTRY_TYPE, gson.toJson(arguments));
+      metaDataStore.add(context, entry);
+      LOG.trace("Added run time arguments to mds: id: {}, app: {}, prog: {} ", id.getAccountId(),
+                id.getApplicationId(), id.getId());
+    } else {
+      LOG.trace("Run time args exists in mds: id: {}, app: {}, prog: {}", id.getAccountId(),
+                id.getApplicationId(), id.getId());
+
+      metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(),
+                                FieldTypes.ProgramRun.ARGS, id.getId(),
+                                FieldTypes.ProgramRun.ENTRY_TYPE, gson.toJson(arguments), -1);
+      LOG.trace("Updated application in mds: id: {}, app: {}, prog: {}", id.getId(),
+                id.getApplicationId(), id.getId());
+    }
+  }
+
+  @Override
+  public Map<String, String> getRunArguments(Id.Program id) throws OperationException {
+
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry existing = metaDataStore.get(context, id.getAccountId(), id.getApplicationId(),
+                                               FieldTypes.ProgramRun.ARGS, id.getId());
+    Map<String, String> args = Maps.newHashMap();
+    if (existing != null) {
+      java.lang.reflect.Type type = new TypeToken<Map<String, String>>(){}.getType();
+      args = gson.fromJson(existing.getTextField(FieldTypes.ProgramRun.ENTRY_TYPE), type);
+    }
+    return args;
   }
 
   private void removeAllProceduresFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
