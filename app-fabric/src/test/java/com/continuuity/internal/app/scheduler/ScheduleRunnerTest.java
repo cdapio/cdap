@@ -24,23 +24,23 @@ public class ScheduleRunnerTest {
     AppFabricServer appFabricServer = TestHelper.getInjector().getInstance(AppFabricServer.class);
 
     try {
-    appFabricServer.startAndWait();
-    AppFabricService.Iface appFabricService = TestHelper.getInjector().getInstance(AppFabricService.Iface.class);
+      appFabricServer.startAndWait();
+      AppFabricService.Iface appFabricService = TestHelper.getInjector().getInstance(AppFabricService.Iface.class);
 
-    TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
-                                 Id.Account.from("developer"), new AuthToken("token"), "SampleApplication",
-                                 "SampleApp", SampleApplication.class);
+      TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
+                                   Id.Account.from("developer"), new AuthToken("token"), "SampleApplication",
+                                   "SampleApp", SampleApplication.class);
 
-    ProgramId id  = new ProgramId("developer", "SampleApp", "SampleWorkflow");
-    int count = 0;
-    int workflowRunCount = 0;
-    //Wait for 90 seconds or until there is one run of the workflow
-    while (count <= 90 && workflowRunCount == 0) {
-      count++;
-      List<ProgramRunRecord> result = appFabricService.getHistory(id);
-      workflowRunCount = result.size();
-      TimeUnit.SECONDS.sleep(1L);
-    }
+      ProgramId id  = new ProgramId("developer", "SampleApp", "SampleWorkflow");
+      int count = 0;
+      int workflowRunCount = 0;
+      //Wait for 90 seconds or until there is one run of the workflow
+      while (count <= 90 && workflowRunCount == 0) {
+        count++;
+        List<ProgramRunRecord> result = appFabricService.getHistory(id);
+        workflowRunCount = result.size();
+        TimeUnit.SECONDS.sleep(1L);
+      }
       Assert.assertTrue(workflowRunCount >= 1);
 
     } finally {

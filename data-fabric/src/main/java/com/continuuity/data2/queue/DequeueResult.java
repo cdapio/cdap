@@ -51,7 +51,7 @@ public interface DequeueResult extends Iterable<byte[]> {
   int size();
 
   /**
-   * An (immutable) empty dequeue result
+   * An (immutable) empty dequeue result.
    */
   static final DequeueResult EMPTY_RESULT = new DequeueResult() {
     @Override

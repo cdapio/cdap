@@ -7,9 +7,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
-import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
@@ -17,10 +17,8 @@ import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.name.Names;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -62,23 +60,9 @@ public class BaseMetricsQueryTest {
 
     injector = Guice.createInjector(
       new ConfigModule(cConf),
+      new DataFabricLevelDBModule(),
+      new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
-            .to(dataDir.getAbsolutePath());
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
-            .to(Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-          bindConstant()
-            .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
-            .to(Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
-
-          bind(OVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
-        }
-      },
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new MetricsQueryRuntimeModule().getSingleNodeModules()
     );

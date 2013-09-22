@@ -1,9 +1,9 @@
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryMetricsTableClient;
+import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,8 +14,8 @@ public class MetricsEntityCodecTest {
 
   @Test
   public void testCodec() throws OperationException {
-    OrderedVersionedColumnarTable table = MemoryOVCTableHandle.getInstance()
-                                                              .getTable(Bytes.toBytes("MetricEntityCodecTest"));
+    InMemoryOcTableService.create("MetricEntityCodecTest");
+    MetricsTable table = new InMemoryMetricsTableClient("MetricEntityCodecTest");
     MetricsEntityCodec codec = new MetricsEntityCodec(new EntityTable(table), 4, 2, 2);
 
     Assert.assertEquals("app.f.flow.flowlet", codec.decode(MetricsEntityType.CONTEXT,

@@ -4,7 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.google.common.collect.Maps;
 
+import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Holds namespacing logic.
@@ -83,6 +85,11 @@ public abstract class AbstractDataSetAccessor implements DataSetAccessor {
     @Override
     public void create(String name) throws Exception {
       delegate.create(namespace(name, namespace));
+    }
+
+    @Override
+    public void create(String name, @Nullable Properties props) throws Exception {
+      delegate.create(namespace(name, namespace), props);
     }
 
     @Override

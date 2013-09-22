@@ -60,10 +60,8 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOcTableService.getRowRange(getTableName(), startRow, stopRow, tx.getReadPointer());
-
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange =
-      getLatestNotExcludedRows(rowRange, tx);
+      InMemoryOcTableService.getRowRange(getTableName(), startRow, stopRow, tx == null ? null : tx.getReadPointer());
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange = getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
     return new InMemoryScanner(rows.entrySet().iterator());
