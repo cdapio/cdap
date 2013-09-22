@@ -32,7 +32,8 @@ public abstract class AbstractDataSetAccessor extends NamespacingDataSetAccessor
     if (type == OrderedColumnarTable.class) {
       ConflictDetection level = null;
       if (props != null) {
-        level = ConflictDetection.valueOf(props.getProperty("conflict.level"));
+        String levelProperty = props.getProperty("conflict.level");
+        level = levelProperty == null ? null : ConflictDetection.valueOf(levelProperty);
       }
       // using ROW by default
       level = level == null ? ConflictDetection.ROW : level;
