@@ -6,23 +6,19 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.program.TypeId;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Abstract implementation of a {@link com.continuuity.app.runtime.ProgramResourceReporter} that spins up a single
- * thread that will periodically report resource metrics.
+ * Abstract implementation of a {@link com.continuuity.app.runtime.ProgramResourceReporter}
+ * writes out resource metrics every second.
  */
-public abstract class AbstractResourceReporter implements ProgramResourceReporter {
+public abstract class AbstractResourceReporter extends AbstractScheduledService implements ProgramResourceReporter {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResourceReporter.class);
 
-  private boolean running = false;
-  private ExecutorService executor;
   private final MetricsCollectionService collectionService;
 
   protected final String metricContextBase;
@@ -35,47 +31,12 @@ public abstract class AbstractResourceReporter implements ProgramResourceReporte
     this.collectionService = collectionService;
   }
 
-  @Override
-  public void start() {
-    if (running) {
-      return;
-    }
-    running = true;
-    executor = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder()
-      .setDaemon(true)
-      .setNameFormat("resource-reporter-thread-" + metricContextBase)
-      .build());
-    executor.execute(new ReporterThread());
-    LOG.info("resource reporter started");
+  protected void runOneIteration() throws Exception {
+    reportResources();
   }
 
-  @Override
-  public void stop() {
-    running = false;
-    executor.shutdown();
-    try {
-      executor.awaitTermination(10L, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      LOG.error("unable to shutdown resource reporter thread", e);
-      executor.shutdownNow();
-    }
-  }
-
-  /**
-   * Thread that sleeps for a second then reports metrics.
-   */
-  private class ReporterThread extends Thread {
-    @Override
-    public void run() {
-      while (running) {
-        try {
-          reportResources();
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-          LOG.info("resource reporter thread interrupted");
-        }
-      }
-    }
+  protected Scheduler scheduler() {
+    return Scheduler.newFixedRateSchedule(0, 1, TimeUnit.SECONDS);
   }
 
   protected void sendAppMasterMetrics(int memory, int vcores) {
