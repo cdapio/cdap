@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * Dynamic loading of schema from classloader and caching of known schemas.
  */
-public final class  SchemaCache {
+public final class SchemaCache {
 
   private final LoadingCache<SchemaHash, Schema> cache;
 
