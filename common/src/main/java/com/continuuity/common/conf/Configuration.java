@@ -386,11 +386,11 @@ public class Configuration {
   }
 
   private void handleDeprecation() {
-    LOG.debug("Handling deprecation for all properties in config...");
+    LOG.trace("Handling deprecation for all properties in config...");
     Set<Object> keys = new HashSet<Object>();
     keys.addAll(getProps().keySet());
     for (Object item: keys) {
-      LOG.debug("Handling deprecation for " + item);
+      LOG.trace("Handling deprecation for " + item);
       handleDeprecation((String) item);
     }
   }
