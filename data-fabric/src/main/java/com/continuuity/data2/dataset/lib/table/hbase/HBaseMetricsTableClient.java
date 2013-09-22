@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * An HBase metrics table client.
@@ -53,7 +52,6 @@ public class HBaseMetricsTableClient implements MetricsTable {
     get.setMaxVersions(1);
     Result getResult = hTable.get(get);
     if (!getResult.isEmpty()) {
-      NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowMap = getResult.getMap();
       byte[] value = getResult.getValue(HBaseTableUtil.DATA_COLFAM, column);
       if (value != null) {
         return new OperationResult<byte[]>(value);
