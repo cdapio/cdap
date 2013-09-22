@@ -51,6 +51,8 @@ define([], function () {
 
 		},
 
+		Cookie: $.cookie,
+
 		Upload: Em.Object.create({
 
 			processing: false,
@@ -90,7 +92,7 @@ define([], function () {
 				.bind('drop', drop)
 				.bind('keydown', function (e) {
 					if (e.keyCode === 27) {
-						$('#drop-hover').fadeOut();	
+						$('#drop-hover').fadeOut();
 					}
 				});
 
@@ -571,14 +573,14 @@ define([], function () {
 						if (response.error) {
 							C.Util.proceed(function () {
 								C.Modal.show("Reset Error", error.message);
-							});							
+							});
 						} else {
 							window.location = '/';
 						}
 					}).fail(function (xhr, status, error) {
 						C.Util.proceed(function () {
 							C.Modal.show("Reset Error", error.message);
-						});							
+						});
 					});
 
 				});

@@ -23,6 +23,8 @@ define([], function () {
 				self.getStats();
 			}, C.EMBEDDABLE_DELAY);
 
+			this.set('injectOnEnter', C.Util.Cookie('injectOnEnter') === 'true');
+
 		},
 
 		unload: function () {
@@ -72,15 +74,14 @@ define([], function () {
 
 		},
 
-		injector: Ember.TextField.extend({
-			valueBinding: 'parentView.injectValue',
-			insertNewline: function() {
-				var value = this.get('value');
-				if (value) {
-					this.get('parentView').inject();
-				}
-			}
-		}),
+		injectOnEnter: false,
+
+		setPref: function () {
+
+			C.Util.Cookie('injectOnEnter', this.get('injectOnEnter'));
+
+		}.observes('injectOnEnter'),
+
 		__timeout: null,
 		injectValue: null,
 		inject: function () {
@@ -91,7 +92,7 @@ define([], function () {
 
 			this.set('injectValue', '');
 			this.HTTP.post('rest', 'streams', streamId, {
-				payload: payload
+				data: payload
 			}, function (response, status) {
 
 				if (response && response.error) {

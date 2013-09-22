@@ -196,8 +196,6 @@ define([], function () {
 				});
 			}
 
-			this.fillContainer();
-
 			if (!metrics.length) {
 
 				C.debug('No metric provided for sparkline.', this);
@@ -212,10 +210,13 @@ define([], function () {
 				// Now that we've set the listener, switch 'singular' charts back to listmode
 				if (this.get("mode") === 'singular') {
 					this.set('listMode', true);
+					this.set('overlapX', 50);
 				}
 
 				this.updateModel();
 			}
+
+			this.fillContainer();
 
 		},
 		willDestroyElement: function () {
