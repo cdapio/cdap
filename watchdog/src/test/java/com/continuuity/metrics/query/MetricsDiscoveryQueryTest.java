@@ -85,9 +85,10 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
 
     // Query for queue length
     InetSocketAddress endpoint = getMetricsQueryEndpoint();
-    URLConnection urlConn = new URL(String.format("http://%s:%d/metrics/available/apps/app10/flows/flow1/flowlet1",
-                                                  endpoint.getHostName(),
-                                                  endpoint.getPort())).openConnection();
+    URLConnection urlConn =
+      new URL(String.format("http://%s:%d/metrics/available/apps/app10/flows/flow1/flowlets/flowlet1",
+                            endpoint.getHostName(),
+                            endpoint.getPort())).openConnection();
     urlConn.setDoOutput(true);
     Reader reader = new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8);
     try {

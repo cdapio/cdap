@@ -55,7 +55,8 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     urlConn.addRequestProperty("Content-type", "application/json");
     Writer writer = new OutputStreamWriter(urlConn.getOutputStream(), Charsets.UTF_8);
     try {
-      new Gson().toJson(ImmutableList.of("/process/events/appId/flows/flowId/flowlet2/pending?aggregate=true"), writer);
+      new Gson().toJson(ImmutableList.of("/process.events.pending/reactor" +
+                          "/apps/appId/flows/flowId/flowlets/flowlet2?aggregate=true"), writer);
     } finally {
       writer.close();
     }
