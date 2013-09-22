@@ -93,7 +93,11 @@ define([], function () {
         if (!jQuery.isEmptyObject(response)) {
           self.set('currentState', response.status);
         }
-        opt_callback();
+
+        if (typeof opt_callback === 'function') {
+          opt_callback();
+        }
+
       });
     },
 
