@@ -90,28 +90,28 @@
     <div id="panels">
       <div class="quarter">
         <div class="panel">
-          <div class="quarter-title">Collecting</div>
+          <div class="quarter-title">Collect</div>
           <div class="quarter-value"><strong>{{value.collect}}</strong> EPS</div>
           {{view C.Embed.DashChart kind="collect"}}
         </div>
       </div>
       <div class="quarter">
         <div class="panel">
-          <div class="quarter-title">Processing</div>
+          <div class="quarter-title">Process</div>
           <div class="quarter-value"><strong>{{value.process}}</strong>%</div>
           {{view C.Embed.DashChart kind="process"}}
         </div>
       </div>
       <div class="quarter">
         <div class="panel">
-          <div class="quarter-title">Storing</div>
+          <div class="quarter-title">Store</div>
           <div class="quarter-value"><strong>{{value.store.label}}</strong> {{value.store.unit}}/s</div>
           {{view C.Embed.DashChart kind="store"}}
         </div>
       </div>
       <div class="quarter">
         <div class="panel" style="margin-right: 0;">
-          <div class="quarter-title">Serving</div>
+          <div class="quarter-title">Query</div>
           <div class="quarter-value"><strong>{{value.query}}</strong> QPS</div>
           {{view C.Embed.DashChart kind="query"}}
         </div>
@@ -306,7 +306,7 @@
           {{#if runs.length}}
             <table class="table table-condensed">
             <thead>
-              <tr><th style="width: 215px;">Started</th>
+              <tr><th style="width: 300px;">Started</th>
               <th>Ended</th>
               <th style="width:250px;">Result</th>
               </tr>
@@ -396,7 +396,7 @@
             <div class="batch-item">
               <div id="batch-map" class="batch-icon batch-map">
                 <div class="info-window">
-                  <div class="label">MAP</div>
+                  <div class="batch-phase">MAP</div>
                   <div class="mapper-icon"></div>
                   <div>{{model.metricData.mappersEntriesIn}} IN</div>
                   <div>{{model.metricData.mappersEntriesOut}} OUT</div>
@@ -410,7 +410,7 @@
             <div class="batch-item">
               <div id="batch-reduce" class="batch-icon batch-reduce">
                 <div class="info-window">
-                  <div class="label">REDUCE</div>
+                  <div class="batch-phase">REDUCE</div>
                   <div class="reducer-icon"></div>
                   <div>{{model.metricData.reducersEntriesIn}} IN</div>
                   <div>{{model.metricData.reducersEntriesOut}} OUT</div>
@@ -689,7 +689,7 @@
           {{#if runs.length}}
             <table class="table table-condensed">
             <thead>
-              <tr><th style="width: 215px;">Started</th>
+              <tr><th style="width: 300px;">Started</th>
               <th>Ended</th>
               <th style="width:250px;">Result</th>
               </tr>
@@ -827,6 +827,9 @@
   <script type="text/x-handlebars" data-template-name="Analyze">
     <div id="title">
       {{view C.Embed.TimeSelector}}
+      <div style="float: right;margin-top: 2px;">
+        <button class="btn" {{action togglePause}}>{{pausedLabel}}</button>
+      </div>
       <h1>Metrics <span>Explorer</span></h1>
     </div>
     <div id="panels">
@@ -1009,7 +1012,7 @@
         {{#each elements.Stream }}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Consumers: {{types.StreamFlow.length}}</span>
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Gateway Stream</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td class="app-list-count">{{eventsLabel}}<br /><span>Events</span></td>
@@ -1107,7 +1110,7 @@
         {{#each elements.Dataset }}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{type}}</span>
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/store/bytes/datasets/{id}"}}</td>

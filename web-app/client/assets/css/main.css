@@ -444,8 +444,8 @@ h1 span {
 	vertical-align: middle;
 	border-width: 1px 0px;
 }
-.panel table tr {
-
+.panel table th {
+	background-color: #fafafa;
 }
 .panel table th, .popup-container table th,
 	.sparkline-box-title, .drop-zone, .app-list-count span, .sparkline-box-value span
@@ -977,7 +977,6 @@ input[type="text"] {
 .app-list-name > .app-list-status {
 	color: #40AFD0;
 	font-size: 12px;
-	text-transform: uppercase;
 	height: 14px;
 	display: block;
 }
@@ -1929,6 +1928,7 @@ ol {
 	max-height: 32px;
 	overflow: hidden;
 	line-height: 12px;
+	word-wrap: break-word;
 }
 .window-title span {
 	color: #c5ecf4;
@@ -2099,7 +2099,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	color: #40AECF;
 }
 
-.info-window .label {
+.info-window .batch-phase {
 	margin-bottom: 8px;
 	word-wrap: break-word;
 	white-space: normal;
@@ -2457,6 +2457,10 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .rickshaw_graph .detail .item { line-height: 1.4; padding: 0.5em }
 .detail_swatch { float: right; display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 0 }
 .rickshaw_graph .detail .date { color: #a0a0a0 }
+
+.detail .x_label {
+	opacity: 0.95 !important;
+}
 
 #y_axis {
 	float: left;
