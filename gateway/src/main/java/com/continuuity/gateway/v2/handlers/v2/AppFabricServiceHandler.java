@@ -10,6 +10,8 @@ import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
+import com.continuuity.app.services.ScheduleId;
+import com.continuuity.app.services.ScheduleRunTime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
@@ -312,7 +314,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                               @PathParam("app-id") final String appId,
                               @PathParam("workflow-id") final String workflowId) {
     getHistory(request, responder, appId, workflowId);
-
   }
 
   private void getHistory(HttpRequest request, HttpResponder responder, String appId, String id) {
@@ -504,9 +505,17 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(workflowId);
     id.setType(EntityType.WORKFLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
     try {
       Map<String, String> args = decodeRuntimeArguments(request);
-      LOG.info(args.toString());
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      client.storeRuntimeArguments(token, id, args);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -739,6 +748,116 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setType(EntityType.WORKFLOW);
     runnableSpecification(request, responder, id);
   }
+
+  /**
+   * Returns next scheduled runtime of a workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
+  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("workflow-id") final String workflowId) {
+
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      List<ScheduleRunTime> runtimes = client.getNextScheduledRunTime(token, id);
+      responder.sendJson(HttpResponseStatus.OK, runtimes);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  /**
+   * Get list of schedules for a given workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
+  public void workflowSchedules(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("workflow-id") final String workflowId) {
+
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      List<ScheduleId> schedules = client.getSchedules(token, id);
+      responder.sendJson(HttpResponseStatus.OK, schedules);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  /**
+   * Suspend a workflow schedule.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("workflow-id") final String workflowId,
+                                @PathParam("schedule-id") final String scheduleId) {
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      client.suspendSchedule(token, new ScheduleId(scheduleId));
+      responder.sendJson(HttpResponseStatus.OK, "OK");
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
+  /**
+   * Resume a workflow schedule.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
+  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("workflow-id") final String workflowId,
+                                      @PathParam("schedule-id") final String scheduleId) {
+
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      client.resumeSchedule(token, new ScheduleId(scheduleId));
+      responder.sendJson(HttpResponseStatus.OK, "OK");
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+  }
+
 
   /**
    * Returns specification of a mapreduce.

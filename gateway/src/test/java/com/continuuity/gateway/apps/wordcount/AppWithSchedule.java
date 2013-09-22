@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.scheduler;
+package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -14,20 +14,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *  Sample application to test if the scheduler has run an action.
+ * An Application with schedule
  */
-public class SampleApplication implements Application {
+public class AppWithSchedule implements Application {
 
   @Override
   public ApplicationSpecification configure() {
     try {
       return ApplicationSpecification.Builder.with()
-        .setName("SampleApp")
+        .setName("AppWithSchedule")
         .setDescription("Sample application")
         .noStream()
         .withDataSets()
-          .add(new ObjectStore<String>("input", String.class))
-          .add(new ObjectStore<String>("output", String.class))
+        .add(new ObjectStore<String>("input", String.class))
+        .add(new ObjectStore<String>("output", String.class))
         .noFlow()
         .noProcedure()
         .noBatch()
