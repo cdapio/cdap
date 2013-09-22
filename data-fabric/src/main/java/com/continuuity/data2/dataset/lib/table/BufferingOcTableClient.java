@@ -52,6 +52,8 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
   // name of the table
   private final String name;
+  // conflict detection level
+  private final ConflictDetection conflictLevel;
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
 
@@ -70,11 +72,22 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
    * @param name table name
    */
   public BufferingOcTableClient(String name) {
+    this(name, ConflictDetection.ROW);
+  }
+
+  /**
+   * Creates an instance of {@link BufferingOcTableClient}.
+   * @param name table name
+   */
+  public BufferingOcTableClient(String name, ConflictDetection level) {
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
                                 "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
     this.name = name;
-    // we want it to be of format length+value to avoid conflicts
+    this.conflictLevel = level;
+    // TODO: having central dataset management service will allow us to use table ids instead of names, which will
+    //       reduce changeset size transferred to/from server
+    // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
     this.buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
   }
@@ -171,10 +184,42 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
   @Override
   public Collection<byte[]> getTxChanges() {
+    switch (conflictLevel) {
+      case ROW:
+        return getRowChanges();
+      case COLUMN:
+        return getColumnChanges();
+      default:
+        throw new RuntimeException("Unknown conflict detection level: " + conflictLevel);
+    }
+  }
+
+  private Collection<byte[]> getRowChanges() {
     // we resolve conflicts on row level of individual table
     List<byte[]> changes = new ArrayList<byte[]>(buff.size());
     for (byte[] changedRow : buff.keySet()) {
       changes.add(Bytes.add(nameAsTxChangePrefix, changedRow));
+    }
+    return changes;
+  }
+
+  private Collection<byte[]> getColumnChanges() {
+    // we resolve conflicts on row level of individual table
+    List<byte[]> changes = new ArrayList<byte[]>(buff.size());
+    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> rowChange : buff.entrySet()) {
+      if (rowChange.getValue() == null) {
+        // NOTE: as of now we cannot detect conflict between delete whole row and row's column value change.
+        //       this is not a big problem as of now, as row deletion is now act as deletion of every column, but this
+        //       will change in future, so we will have to address the issue.
+        continue;
+      }
+
+      // using length + value format to prevent conflicts like row="ab", column="cd" vs row="abc", column="d"
+      byte[] rowTxChange = Bytes.add(Bytes.toBytes(rowChange.getKey().length), rowChange.getKey());
+
+      for (byte[] column : rowChange.getValue().keySet()) {
+        changes.add(Bytes.add(nameAsTxChangePrefix, rowTxChange, column));
+      }
     }
     return changes;
   }

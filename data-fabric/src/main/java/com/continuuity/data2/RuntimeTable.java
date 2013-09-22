@@ -24,6 +24,7 @@ import com.google.common.base.Objects;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Base class for runtime implementations of Table.
@@ -52,9 +53,10 @@ public class RuntimeTable extends Table {
       dataSetManager.create(table.getName());
     }
 
-    RuntimeTable runtimeTable = new RuntimeTable(table.getName(),
-                                                 fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class),
-                                                 dataSetManager);
+    Properties props = new Properties();
+    props.put("conflict.level", table.getConflictLevel());
+    OrderedColumnarTable dsClient = fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class, props);
+    RuntimeTable runtimeTable = new RuntimeTable(table.getName(), dsClient, dataSetManager);
     runtimeTable.setMetricName(metricName);
     table.setDelegate(runtimeTable);
     return runtimeTable;

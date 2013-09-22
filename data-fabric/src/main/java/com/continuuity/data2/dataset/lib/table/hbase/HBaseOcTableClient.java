@@ -2,6 +2,7 @@ package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
@@ -33,9 +34,12 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   private Transaction tx;
 
-  public HBaseOcTableClient(String name, Configuration hConf)
-    throws IOException {
-    super(name);
+  public HBaseOcTableClient(String name, Configuration hConf) throws IOException {
+    this(name, ConflictDetection.ROW, hConf);
+  }
+
+  public HBaseOcTableClient(String name, ConflictDetection level, Configuration hConf) throws IOException {
+    super(name, level);
     hTableName = HBaseTableUtil.getHBaseTableName(name);
     HTable hTable = new HTable(hConf, hTableName);
     // todo: make configurable
