@@ -8,7 +8,7 @@ define([], function () {
 		insertNewline: function() {
 			var value = this.get('value');
 			if (value) {
-				this.get('parentView').submit();
+				this.get('controller').submit();
 			}
 		}
 	});

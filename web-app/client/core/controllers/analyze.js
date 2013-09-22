@@ -322,6 +322,16 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         })(AVAILABLE_TYPES[i]);
       }
 
+      this.set('paused', false);
+
+      this.set('interval', setInterval(function () {
+
+        if (!self.get('paused')) {
+          self.update();
+        }
+
+      }, 1000));
+
     },
 
     unload: function () {
@@ -329,6 +339,8 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       this.set('elementModels', []);
       this.set('elementsCache', []);
       this.set('metricsCache', Em.Object.create());
+
+      clearInterval(this.get('interval'));
 
       // This is set in the Analyze embeddable.
       C.removeResizeHandler('metrics-explorer');
@@ -397,14 +409,22 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
           }
 
-          setTimeout(function () {
-            self.update();
-          }, 1000);
-
         });
       }
 
     }.observes('selected.[]'),
+
+    paused: false,
+    pausedLabel: function () {
+
+      return this.get('paused') ? 'Continue' : 'Pause';
+
+    }.property('paused').cacheable(false),
+    togglePause: function () {
+
+      this.set('paused', !this.get('paused'));
+
+    },
 
     showConfigure: function (metric) {
 

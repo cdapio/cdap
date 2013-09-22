@@ -4,19 +4,21 @@
 
 define([], function () {
 
-	var Embeddable = Em.TextField.extend({
+	var Embeddable = Em.TextArea.extend({
 		valueBinding: 'controller.injectValue',
-		insertNewline: function() {
-			var value = this.get('value');
-			if (value) {
-				this.get('controller').inject(value);
-			}
-			this.set('value', '');
-		},
+		elementId: 'flow-injector-input',
 		didInsertElement: function () {
 
-			$(this.get('element')).css({width: '222px'});
-			$(this.get('element')).attr({id: 'flow-injector-input'});
+			tabOverride.set(this.get('element'));
+
+			var controller = this.get('controller');
+			$(this.get('element')).keydown(function (e) {
+				if (e.keyCode === 13 && controller.get('injectOnEnter')) {
+					controller.inject();
+					e.preventDefault();
+					return false;
+				}
+			});
 
 		}
 	});
