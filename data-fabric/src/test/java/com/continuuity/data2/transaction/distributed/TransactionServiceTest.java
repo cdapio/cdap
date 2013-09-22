@@ -7,41 +7,36 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
-import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.hbase.HBaseTestBase;
+import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.NoopPersistor;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
-import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.QueueConstants;
-import com.continuuity.data2.transaction.queue.QueueTest;
-import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import com.continuuity.data2.transaction.queue.hbase.HBaseQueueUtils;
+import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -49,177 +44,154 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.NavigableMap;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
  * HBase queue tests.
  */
-public class TransactionServiceTest extends QueueTest {
-
+public class TransactionServiceTest {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static TransactionService txService;
-  private static CConfiguration cConf;
+  @Test
+  public void testHA() throws Exception {
+    InMemoryZKServer zkServer = InMemoryZKServer.builder().build();
+    zkServer.startAndWait();
 
-  @BeforeClass
-  public static void init() throws Exception {
-    // Start hbase
-    HBaseTestBase.startHBase();
+    // NOTE: we play with blocking/nonblocking a lot below
+    //       as until we integrate with "leader election" stuff, service blocks on start if it is not a leader
+    // TODO: fix this by integration with generic leader election stuff
 
-    // Customize test configuration
-    cConf = new CConfiguration();
-    cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
+    try {
+      CConfiguration cConf = new CConfiguration();
+      cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+      final OrderedColumnarTable table = createTable("myTable", cConf);
+      try {
+        // tx service client
+        // NOTE: we can init it earlier than we start services, it should pick them up when they are available
+        TransactionSystemClient txClient = new TransactionServiceClient(cConf);
+
+        TransactionExecutor txExecutor = new DefaultTransactionExecutor(txClient,
+                                                                        ImmutableList.of((TransactionAware) table));
+
+        // starting tx service, tx client can pick it up
+        TransactionService first = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort());
+        first.startAndWait();
+        Assert.assertNotNull(txClient.startShort());
+        verifyGetAndPut(table, txExecutor, null, "val1");
+
+        // starting another tx service should not hurt
+        TransactionService second = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort());
+        ListenableFuture<Service.State> secondStarted = second.start();
+        // wait for affect a bit
+        TimeUnit.SECONDS.sleep(1);
+
+        Assert.assertNotNull(txClient.startShort());
+        verifyGetAndPut(table, txExecutor, "val1", "val2");
+
+        // shutting down the first one is fine: we have another one to pick up the leader role
+        first.stopAndWait();
+        // waiting for second to start, todo: we don't have to: client should wait
+//        secondStarted.get();
+
+        Assert.assertNotNull(txClient.startShort());
+        verifyGetAndPut(table, txExecutor, "val2", "val3");
+
+        // doing same trick again to failover to the third one
+        TransactionService third = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort());
+        ListenableFuture<Service.State> thirdStarted = third.start();
+        // stopping second one
+        second.stopAndWait();
+        // waiting for third to come up, todo: we don't have to: client should wait
+//        thirdStarted.get();
+        Assert.assertNotNull(txClient.startShort());
+        verifyGetAndPut(table, txExecutor, "val3", "val4");
+
+        // releasing resources
+        third.stop();
+      } finally {
+        dropTable("myTable", cConf);
+      }
+
+    } finally {
+      zkServer.stop();
+    }
+  }
+
+  private void verifyGetAndPut(final OrderedColumnarTable table, TransactionExecutor txExecutor, final String verifyGet, final String toPut) throws TransactionFailureException {
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        byte[] existing = table.get(Bytes.toBytes("row"), Bytes.toBytes("col"));
+        Assert.assertTrue((verifyGet == null && existing == null) ||
+                            Arrays.equals(Bytes.toBytes(verifyGet), existing));
+        table.put(Bytes.toBytes("row"), Bytes.toBytes("col"), Bytes.toBytes(toPut));
+      }
+    });
+  }
+
+  private OrderedColumnarTable createTable(String tableName, CConfiguration cConf) throws Exception {
+    DataSetAccessor dsAccessor = new InMemoryDataSetAccessor(cConf);
+    DataSetManager dsManager =
+      dsAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
+    dsManager.create(tableName);
+    return dsAccessor.getDataSetClient(tableName, OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
+  }
+
+  private void dropTable(String tableName, CConfiguration cConf) throws Exception {
+    DataSetAccessor dsAccessor = new InMemoryDataSetAccessor(cConf);
+    DataSetManager dsManager =
+      dsAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
+    dsManager.drop(tableName);
+  }
+
+  private TransactionService createTxService(String zkConnectionString, int txServicePort) {
+    final CConfiguration cConf = new CConfiguration();
+    cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);
     cConf.set(com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_SERVER_PORT,
-              Integer.toString(Networks.getRandomPort()));
-    cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
-    cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
+              Integer.toString(txServicePort));
+    // we want persisting for this test
+    cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, true);
 
     final DataFabricDistributedModule dfModule =
-      new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration());
-    // turn off persistence in tx manager to get rid of ugly zookeeper warnings
+      new DataFabricDistributedModule(cConf);
+    // configuring persistence
     final Module dataFabricModule = Modules.override(dfModule).with(
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(StatePersistor.class).to(NoopPersistor.class);
+          bind(StatePersistor.class).toInstance(new ZooKeeperPersistor(cConf));
         }
       });
 
-    ZKClientService zkClientService = getZkClientService();
+    ZKClientService zkClientService = getZkClientService(zkConnectionString);
     zkClientService.start();
 
-    final Injector injector = Guice.createInjector(dataFabricModule,
-                                                   new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
-                                                   new AbstractModule() {
+    final Injector injector =
+      Guice.createInjector(dataFabricModule,
+                           new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               try {
+                                 bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
+                               } catch (IOException e) {
+                                 throw Throwables.propagate(e);
+                               }
+                             }
+                           });
 
-      @Override
-      protected void configure() {
-        try {
-          bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    });
-
-    txService = injector.getInstance(TransactionService.class);
-    Thread t = new Thread() {
-      @Override
-      public void run() {
-        txService.start();
-      }
-    };
-    t.start();
-
-    txSystemClient = injector.getInstance(TransactionSystemClient.class);
-    queueClientFactory = injector.getInstance(QueueClientFactory.class);
-    queueAdmin = injector.getInstance(QueueAdmin.class);
-    executorFactory = injector.getInstance(TransactionExecutorFactory.class);
+    return injector.getInstance(TransactionService.class);
   }
 
-  @Test
-  public void testHTablePreSplitted() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
-    if (!queueAdmin.exists(tableName)) {
-      queueAdmin.create(tableName);
-    }
-
-    HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
-    Assert.assertEquals(QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
-                        hTable.getRegionsInRange(new byte[] {0}, new byte[] {(byte) 0xff}).size());
-  }
-
-  @Test
-  public void configTest() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
-
-    // Set a group info
-    queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
-
-    HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
-    try {
-      byte[] rowKey = queueName.toBytes();
-      Result result = hTable.get(new Get(rowKey));
-
-      NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
-
-      Assert.assertEquals(1 + 2 + 3, familyMap.size());
-
-      // Update the startRow of group 2.
-      Put put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
-      hTable.put(put);
-
-      // Add instance to group 2
-      queueAdmin.configureInstances(queueName, 2L, 3);
-
-      // The newly added instance should have startRow == smallest of old instances
-      result = hTable.get(new Get(rowKey));
-      int startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                        HBaseQueueUtils.getConsumerStateColumn(2L, 2)).getValue());
-      Assert.assertEquals(4, startRow);
-
-      // Advance startRow of group 2.
-      put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
-      hTable.put(put);
-
-      // Reduce instances of group 2 through group reconfiguration and also add a new group
-      queueAdmin.configureGroups(queueName, ImmutableMap.of(2L, 1, 4L, 1));
-
-      // The remaining instance should have startRow == smallest of all before reduction.
-      result = hTable.get(new Get(rowKey));
-      startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                        HBaseQueueUtils.getConsumerStateColumn(2L, 0)).getValue());
-      Assert.assertEquals(4, startRow);
-
-      result = hTable.get(new Get(rowKey));
-      familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
-
-      Assert.assertEquals(2, familyMap.size());
-
-      startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                    HBaseQueueUtils.getConsumerStateColumn(4L, 0)).getValue());
-      Assert.assertEquals(4, startRow);
-
-    } finally {
-      hTable.close();
-      queueAdmin.dropAll();
-    }
-  }
-
-
-  @AfterClass
-  public static void finish() throws Exception {
-    txService.stop();
-    HBaseTestBase.stopHBase();
-  }
-
-  @Test
-  public void testPrefix() {
-    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName().startsWith("test."));
-  }
-
-  @Override
-  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
-    // Force a table flush to trigger eviction
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
-    HBaseTestBase.getHBaseAdmin().flush(tableName);
-
-    super.verifyQueueIsEmpty(queueName, numActualConsumers);
-  }
-
-  private static ZKClientService getZkClientService() {
+  private static ZKClientService getZkClientService(String zkConnectionString) {
     return ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(
         ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM)).setSessionTimeout(10000).build(),
+          ZKClientService.Builder.of(zkConnectionString).setSessionTimeout(10000).build(),
           RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
         )
       )

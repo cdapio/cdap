@@ -3,11 +3,9 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -74,10 +72,6 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   @Override
   public void configure() {
-
-    Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
-    Log.info("Table Handle is " + ovcTableHandle.getName());
-
     // Bind HBase configuration into ovctable
     bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);
 
@@ -86,6 +80,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // Bind our configurations
     bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerClientConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(conf);
     bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
 
     // bind meta data store
