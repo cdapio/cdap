@@ -297,7 +297,7 @@ define(['core/lib/date'], function (Datejs) {
 
     truncatedName: function () {
       return this.get('name').substring(0,6) + '...';
-    }.property('name'),
+    }.property('name')
 
   });
 
@@ -340,7 +340,7 @@ define(['core/lib/date'], function (Datejs) {
         newModel[EXPECTED_FIELDS[i]] = model[EXPECTED_FIELDS[i]];
       }
       if ('appId' in model || 'applicationId' in model) {
-        newModel.appId = model.appId || mode.applicationId;
+        newModel.appId = model.appId || model.applicationId;
       }
       return newModel;
 

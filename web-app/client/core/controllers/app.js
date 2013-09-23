@@ -278,7 +278,7 @@ define([], function () {
 							self.transitionToRoute('index');
 						});
 
-					})
+					});
 
 				}, this));
 

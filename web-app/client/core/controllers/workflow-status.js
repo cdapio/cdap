@@ -99,7 +99,7 @@ define(['helpers/plumber'], function (Plumber) {
       var currentPath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/current';
       var runtimePath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/nextruntime';
 
-      jQuery.getJSON(currentPath, function (res) {
+      $.getJSON(currentPath, function (res) {
         for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
           var action = self.get('elements.Actions.content')[i];
           if (res.currentStep === i) {
@@ -121,8 +121,8 @@ define(['helpers/plumber'], function (Plumber) {
         }
       });
 
-      jQuery.getJSON(runtimePath, function (res) {
-        if (!jQuery.isEmptyObject(res)) {
+      $.getJSON(runtimePath, function (res) {
+        if (!$.isEmptyObject(res)) {
           self.set('model.nextRuns', res);
         }
       });
@@ -160,7 +160,7 @@ define(['helpers/plumber'], function (Plumber) {
 
       this.transitionToRoute('WorkflowStatus.Config');
 
-    },
+    }
 
   });
 
