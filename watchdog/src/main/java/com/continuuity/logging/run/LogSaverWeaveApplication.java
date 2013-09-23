@@ -15,13 +15,13 @@ import java.io.File;
  */
 public class LogSaverWeaveApplication implements WeaveApplication {
   private static final String NAME = "LogSaverWeaveApplication";
-  private final int partitions;
+  private final int numInstances;
   private final int memoryMb;
   private final File hConfig;
   private final File cConfig;
 
-  public LogSaverWeaveApplication(int partitions, int memoryMb, File hConfig, File cConfig) {
-    this.partitions = partitions;
+  public LogSaverWeaveApplication(int numInstances, int memoryMb, File hConfig, File cConfig) {
+    this.numInstances = numInstances;
     this.memoryMb = memoryMb;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
@@ -41,7 +41,7 @@ public class LogSaverWeaveApplication implements WeaveApplication {
       .with()
       .setCores(2)
       .setMemory(memoryMb, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(partitions)
+      .setInstances(numInstances)
       .build();
 
     WeaveSpecification.Builder.RunnableSetter runnableSetter =

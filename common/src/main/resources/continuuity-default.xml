@@ -422,7 +422,7 @@
 
     <property>
         <name>log.publish.num.partitions</name>
-        <value>1</value>
+        <value>10</value>
         <description>Number of Kafka partitions to publish the logs to</description>
     </property>
 
@@ -440,7 +440,7 @@
 
     <property>
         <name>log.retention.duration.days</name>
-        <value>30</value>
+        <value>7</value>
         <description>Log file retention duration in days</description>
     </property>
 
@@ -467,7 +467,7 @@
 
     <property>
         <name>kafka.num.partitions</name>
-        <value>1</value>
+        <value>10</value>
         <description>Default number of partitions for a topic</description>
     </property>
 

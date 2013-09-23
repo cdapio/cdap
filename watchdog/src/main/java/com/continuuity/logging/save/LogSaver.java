@@ -64,6 +64,7 @@ public final class LogSaver extends AbstractIdleService {
 
   private final long eventBucketIntervalMs;
   private final long eventProcessingDelayMs;
+  private final int logCleanupIntervalMins;
   private final int numPartitions;
 
   private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
@@ -75,15 +76,12 @@ public final class LogSaver extends AbstractIdleService {
   private Cancellable kafkaCancel;
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
-  private int leaderElectionSleepMs = 30 * 1000;
+  private int leaderElectionSleepMs = 3 * 1000;
 
   public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
                   ZKClient zkClient, Configuration hConfig, CConfiguration cConfig)
     throws Exception {
     LOG.info("Initializing LogSaver...");
-
-    String account = cConfig.get(LoggingConfiguration.LOG_RUN_ACCOUNT);
-    Preconditions.checkNotNull(account, "Account cannot be null");
 
     this.topic = KafkaTopic.getTopic();
     LOG.info(String.format("Kafka topic is %s", this.topic));
@@ -140,6 +138,11 @@ public final class LogSaver extends AbstractIdleService {
                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
     Preconditions.checkArgument(topicCreationSleepMs > 0,
                                 "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
+
+    this.logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
+                                                 LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
+    Preconditions.checkArgument(this.logCleanupIntervalMins > 0,
+                                "Log cleanup run interval is invalid: %s", this.logCleanupIntervalMins);
 
     this.numPartitions = Integer.parseInt(cConfig.get(LoggingConfiguration.NUM_PARTITIONS,
                                                       LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
@@ -206,7 +209,8 @@ public final class LogSaver extends AbstractIdleService {
 
       /*
       if (leaderPartitions.contains(0)) {
-        cleanupFuture = scheduledExecutor.scheduleWithFixedDelay(logCleanup, 10, 24 * 60, TimeUnit.MINUTES);
+        cleanupFuture = scheduledExecutor.scheduleWithFixedDelay(logCleanup, 10,
+                                                                 logCleanupIntervalMins, TimeUnit.MINUTES);
       }
       */
     } catch (Exception e) {

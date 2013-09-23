@@ -18,6 +18,6 @@ public final class KafkaConstants {
     public static final String REPLICATION_FACTOR = "kafka.default.replication.factor";
   }
 
-  public static final int DEFAULT_NUM_PARTITIONS = 1;
+  public static final int DEFAULT_NUM_PARTITIONS = 10;
   public static final int DEFAULT_REPLICATION_FACTOR = 1;
 }
