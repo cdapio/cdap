@@ -12,9 +12,10 @@ import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.NoopPersistor;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
-import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
+import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
@@ -88,9 +89,9 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // Bind TxDs2 stuff
     if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
-      bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
+      bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class).in(Singleton.class);
     } else {
-      bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
+      bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
     }
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);

@@ -237,6 +237,12 @@
         <description>Specifies the name of the table for queues.</description>
     </property>
 
+    <property>
+        <name>data.tx.snapshot.dir</name>
+        <value>${hdfs.namespace}/tx_snapshot</value>
+        <description>Specifies the name of the table for queues.</description>
+    </property>
+
     <!--
         Metadata service configuration
     -->
