@@ -23,6 +23,10 @@ public final class StringPartitioner implements Partitioner<String> {
                                 "numPartitions should be at least 1. Got %s", this.numPartitions);
   }
 
+  public StringPartitioner(int numPartitions) {
+    this.numPartitions = numPartitions;
+  }
+
   @Override
   public int partition(String key, int numPartitions) {
     return Math.abs(MD5Hash.digest(key).hashCode()) % this.numPartitions;

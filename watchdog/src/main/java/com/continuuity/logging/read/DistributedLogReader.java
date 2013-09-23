@@ -12,6 +12,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
+import com.continuuity.logging.appender.kafka.StringPartitioner;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
@@ -28,7 +29,6 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.MD5Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +59,7 @@ public final class DistributedLogReader implements LogReader {
   private final LocationFactory locationFactory;
   private final Schema schema;
   private final ExecutorService executor;
+  private final StringPartitioner partitioner;
 
   private final int kafkaTailFetchTimeoutMs = 300;
 
@@ -82,6 +83,7 @@ public final class DistributedLogReader implements LogReader {
       this.numPartitions = cConfig.getInt(LoggingConfiguration.NUM_PARTITIONS, -1);
       Preconditions.checkArgument(this.numPartitions > 0,
                                   "numPartitions should be greater than 0. Got numPartitions=%s", this.numPartitions);
+      this.partitioner = new StringPartitioner(numPartitions);
 
       this.serializer = new LoggingEventSerializer();
 
@@ -113,7 +115,7 @@ public final class DistributedLogReader implements LogReader {
       new Runnable() {
         @Override
         public void run() {
-          int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
+          int partition = partitioner.partition(loggingContext.getLogPartition(), numPartitions);
 
           callback.init();
 
@@ -159,7 +161,7 @@ public final class DistributedLogReader implements LogReader {
       new Runnable() {
         @Override
         public void run() {
-          int partition = MD5Hash.digest(loggingContext.getLogPartition()).hashCode() % numPartitions;
+          int partition = partitioner.partition(loggingContext.getLogPartition(), numPartitions);
 
           callback.init();
 
