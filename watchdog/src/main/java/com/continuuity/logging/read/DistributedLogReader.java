@@ -8,7 +8,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
@@ -86,10 +85,8 @@ public final class DistributedLogReader implements LogReader {
 
       this.serializer = new LoggingEventSerializer();
 
-      String account = cConfig.get(LoggingConfiguration.LOG_RUN_ACCOUNT);
-      Preconditions.checkNotNull(account, "Account cannot be null");
       this.fileMetaDataManager =
-        new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor, new OperationContext(account)), txClient);
+        new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient);
 
       this.locationFactory = locationFactory;
       this.schema = new LogSchema().getAvroSchema();

@@ -25,6 +25,6 @@ public final class StringPartitioner implements Partitioner<String> {
 
   @Override
   public int partition(String key, int numPartitions) {
-    return MD5Hash.digest(key).hashCode() % this.numPartitions;
+    return Math.abs(MD5Hash.digest(key).hashCode()) % this.numPartitions;
   }
 }

@@ -440,7 +440,7 @@
 
     <property>
         <name>log.retention.duration.days</name>
-        <value>7</value>
+        <value>30</value>
         <description>Log file retention duration in days</description>
     </property>
 
