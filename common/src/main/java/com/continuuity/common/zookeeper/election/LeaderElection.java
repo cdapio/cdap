@@ -70,6 +70,7 @@ public final class LeaderElection implements Cancellable {
       @Override
       public void run() {
         if (state != State.CANCELLED) {
+          // becomeFollower has to be called before deleting node to make sure no two active leader.
           if (state == State.LEADER) {
             becomeFollower();
           }
@@ -298,6 +299,7 @@ public final class LeaderElection implements Cancellable {
         case Disconnected:
           disconnected = true;
           if (state == State.LEADER) {
+            // becomeFollower has to be called in disconnect so that no two active leader is possible.
             becomeFollower();
           }
           break;
