@@ -6,6 +6,7 @@ import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.google.common.collect.Lists;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -106,6 +107,83 @@ public class LeaderElectionTest {
       for (ZKClientService zkClient : zkClients) {
         zkClient.stopAndWait();
       }
+    }
+  }
+
+  @Test (timeout = 10000)
+  public void testCancel() throws InterruptedException, IOException {
+    List<LeaderElection> leaderElections = Lists.newArrayList();
+    List<ZKClientService> zkClients = Lists.newArrayList();
+
+    // Creates two participants
+    final Semaphore leaderSem = new Semaphore(0);
+    final Semaphore followerSem = new Semaphore(0);
+    final AtomicInteger leaderIdx = new AtomicInteger();
+
+    for (int i = 0; i < 2; i++) {
+      ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+      zkClient.startAndWait();
+
+      zkClients.add(zkClient);
+
+      final int finalI = i;
+      leaderElections.add(new LeaderElection(zkClient, "/testCancel", new ElectionHandler() {
+        @Override
+        public void leader() {
+          leaderIdx.set(finalI);
+          leaderSem.release();
+        }
+
+        @Override
+        public void follower() {
+          followerSem.release();
+        }
+      }));
+    }
+
+    leaderSem.acquire();
+    followerSem.acquire();
+
+    int leader = leaderIdx.get();
+    int follower = 1 - leader;
+
+    // Kill the follower session
+    KillZKSession.kill(zkClients.get(follower).getZooKeeperSupplier().get(),
+                       zkClients.get(follower).getConnectString());
+
+    // Cancel the leader
+    leaderElections.get(leader).cancel();
+
+    // Now follower should still be able to become leader.
+    leaderSem.acquire();
+
+    leader = leaderIdx.get();
+    follower = 1 - leader;
+
+    // Create another participant (use the old leader zkClient)
+    leaderElections.set(follower, new LeaderElection(zkClients.get(follower), "/testCancel", new ElectionHandler() {
+      @Override
+      public void leader() {
+        leaderSem.release();
+      }
+
+      @Override
+      public void follower() {
+        followerSem.release();
+      }
+    }));
+
+    // Cancel the follower first.
+    leaderElections.get(follower).cancel();
+
+    // Cancel the leader.
+    leaderElections.get(leader).cancel();
+
+    // Since the follower has been cancelled before leader, there should be no leader.
+    Assert.assertFalse(leaderSem.tryAcquire(2, TimeUnit.SECONDS));
+
+    for (ZKClientService zkClient : zkClients) {
+      zkClient.stopAndWait();
     }
   }
 

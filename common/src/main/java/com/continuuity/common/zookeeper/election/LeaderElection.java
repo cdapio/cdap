@@ -127,7 +127,6 @@ public final class LeaderElection implements Cancellable {
   }
 
   private void runElection() {
-    state = State.IN_PROGRESS;
     LOG.debug("Running election for {}", zkNodePath);
 
     OperationFuture<NodeChildren> childrenFuture = zkClient.getChildren(zkFolderPath);
@@ -197,10 +196,8 @@ public final class LeaderElection implements Cancellable {
 
       @Override
       public void onFailure(Throwable t) {
-        if (state != State.CANCELLED) {
-          LOG.warn("Exception while setting watch on node {}. Retry.", nodePath, t);
-          runElection();
-        }
+        LOG.warn("Exception while setting watch on node {}. Retry.", nodePath, t);
+        runElection();
       }
     }, executor);
   }
@@ -281,8 +278,8 @@ public final class LeaderElection implements Cancellable {
   private class LowerNodeWatcher implements Watcher {
     @Override
     public void process(WatchedEvent event) {
-      if (event.getType() == Event.EventType.NodeDeleted) {
-        LOG.debug("Lower node deleted {} for election {}", event, zkNodePath);
+      if (state != State.CANCELLED && event.getType() == Event.EventType.NodeDeleted) {
+        LOG.debug("Lower node deleted {} for election {}.", event, zkNodePath);
         runElection();
       }
     }
@@ -314,6 +311,12 @@ public final class LeaderElection implements Cancellable {
           disconnected = false;
           expired = false;
           if (runElection) {
+            // If the state is cancelled (meaning a cancel happens between disconnect and connect),
+            // still runElection() so that it has chance to delete the node (as it's not expired, the node stays
+            // after reconnection).
+            if (state != State.CANCELLED) {
+              state = State.IN_PROGRESS;
+            }
             runElection();
           } else if (runRegister) {
             register();
