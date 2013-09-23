@@ -68,11 +68,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -100,11 +100,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       object.addProperty("specification", stream.getSpecification());
       responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -134,11 +134,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -163,11 +163,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -201,11 +201,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       object.addProperty("specification", dataset.getSpecification());
       responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -235,11 +235,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -263,11 +263,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -281,11 +281,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -319,11 +319,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -347,11 +347,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -365,11 +365,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -400,11 +400,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -428,11 +428,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -464,11 +464,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       object.addProperty("description", app.getDescription());
       responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -492,11 +492,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -510,11 +510,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -548,11 +548,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -582,11 +582,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -615,11 +615,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -642,11 +642,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -676,11 +676,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, s);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 }
